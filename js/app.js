@@ -4,7 +4,7 @@ class GuiaDevApp {
     this.currentCategory = null;
     this.currentSubcategory = null;
     this.currentLesson = null;
-    this.theme = localStorage.getItem("hc-theme") || "light";
+    this.theme = localStorage.getItem("gd-theme") || "light";
     this.searchOpen = false;
     this.mobileNavOpen = false;
     this.init();
@@ -37,7 +37,7 @@ class GuiaDevApp {
 
   toggleTheme() {
     this.theme = this.theme === "light" ? "dark" : "light";
-    localStorage.setItem("hc-theme", this.theme);
+    localStorage.setItem("gd-theme", this.theme);
     this.applyTheme();
     this.updateThemeToggle();
     const icon = document.querySelector("#theme-toggle i");
@@ -54,11 +54,11 @@ class GuiaDevApp {
   }
 
   moonIcon() {
-    return HC.moonIcon();
+    return GuiaDev.moonIcon();
   }
 
   sunIcon() {
-    return HC.sunIcon();
+    return GuiaDev.sunIcon();
   }
 
   bindGlobalEvents() {
@@ -128,14 +128,14 @@ class GuiaDevApp {
       return;
     }
 
-    const matches = HC.searchAllCategories(query);
+    const matches = GuiaDev.searchAllCategories(query);
 
     if (matches.length === 0) {
       results.innerHTML = `<div class="search-empty">No se encontraron resultados para "${query}"</div>`;
       return;
     }
 
-    results.innerHTML = HC.renderSearchResultsHTML(matches, (m) => {
+    results.innerHTML = GuiaDev.renderSearchResultsHTML(matches, (m) => {
       return `app.navigateToLesson('${m.category.id}', '${m.subcategory.id}', '${m.lesson.id}')`;
     });
 
@@ -246,7 +246,7 @@ class GuiaDevApp {
             <span class="logo-text">GuiaDev</span>
           </a>
         </div>
-        ${HC.renderHeaderNav(this.currentCategory, '')}
+        ${GuiaDev.renderHeaderNav(this.currentCategory, '')}
         <div class="header-right">
           <button class="btn-icon" onclick="app.toggleSearch()" title="Buscar (Ctrl+K)">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -485,11 +485,11 @@ class GuiaDevApp {
   }
 
   formatContent(content) {
-    return HC.formatContent(content);
+    return GuiaDev.formatContent(content);
   }
 
   escapeHtml(text) {
-    return HC.escapeHtml(text);
+    return GuiaDev.escapeHtml(text);
   }
 
   renderSubcategoryOverview(cat, sub) {
@@ -518,11 +518,11 @@ class GuiaDevApp {
   }
 
   renderTableOfContents(lesson) {
-    return HC.renderTableOfContents(lesson);
+    return GuiaDev.renderTableOfContents(lesson);
   }
 
   copyCode(btn) {
-    HC.copyCode(btn);
+    GuiaDev.copyCode(btn);
   }
 
   bindEvents() {
@@ -533,7 +533,7 @@ class GuiaDevApp {
   }
 
   highlightToc() {
-    HC.highlightToc();
+    GuiaDev.highlightToc();
   }
 }
 

@@ -4,7 +4,7 @@ class CategoryPage {
     this.category = DOCS_DATA.categories.find((c) => c.id === categoryId);
     this.currentSub = null;
     this.currentLesson = null;
-    this.theme = localStorage.getItem("hc-theme") || "light";
+    this.theme = localStorage.getItem("gd-theme") || "light";
     this.mobileNavOpen = false;
     this.contentCache = {};
     this.init();
@@ -60,7 +60,7 @@ class CategoryPage {
 
   toggleTheme() {
     this.theme = this.theme === "light" ? "dark" : "light";
-    localStorage.setItem("hc-theme", this.theme);
+    localStorage.setItem("gd-theme", this.theme);
     this.applyTheme();
     this.updateThemeToggle();
     const icon = document.querySelector("#theme-toggle i");
@@ -77,11 +77,11 @@ class CategoryPage {
   }
 
   moonIcon() {
-    return HC.moonIcon();
+    return GuiaDev.moonIcon();
   }
 
   sunIcon() {
-    return HC.sunIcon();
+    return GuiaDev.sunIcon();
   }
 
   bindGlobalEvents() {
@@ -149,7 +149,7 @@ class CategoryPage {
       return;
     }
 
-    const matches = HC.searchCategory(this.category, query);
+    const matches = GuiaDev.searchCategory(this.category, query);
 
     if (matches.length === 0) {
       results.innerHTML = `<div class="search-empty">No se encontraron resultados para "${query}"</div>`;
@@ -218,8 +218,8 @@ class CategoryPage {
       </div>
     `).join('');
     this.rebuildToc(parsed);
-    if (typeof HC !== 'undefined' && typeof HC.highlightCode === 'function') {
-      container.querySelectorAll('pre code').forEach(block => HC.highlightCode(block));
+    if (typeof GuiaDev !== 'undefined' && typeof GuiaDev.highlightCode === 'function') {
+      container.querySelectorAll('pre code').forEach(block => GuiaDev.highlightCode(block));
     }
   }
 
@@ -292,7 +292,7 @@ class CategoryPage {
             <span class="logo-text">GuiaDev</span>
           </a>
         </div>
-        ${HC.renderHeaderNav(this.category.id, '../')}
+        ${GuiaDev.renderHeaderNav(this.category.id, '../')}
         <div class="header-right">
           <button class="btn-icon" onclick="page.toggleSearch()" title="Buscar (Ctrl+K)">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -500,11 +500,11 @@ class CategoryPage {
   }
 
   renderTableOfContents(lesson) {
-    return HC.renderTableOfContents(lesson);
+    return GuiaDev.renderTableOfContents(lesson);
   }
 
   formatContent(content) {
-    return HC.formatContent(content);
+    return GuiaDev.formatContent(content);
   }
 
   async loadLessonContent(lesson) {
@@ -541,11 +541,11 @@ class CategoryPage {
   }
 
   escapeHtml(text) {
-    return HC.escapeHtml(text);
+    return GuiaDev.escapeHtml(text);
   }
 
   copyCode(btn) {
-    HC.copyCode(btn);
+    GuiaDev.copyCode(btn);
   }
 
   bindScrollEvents() {
@@ -556,6 +556,6 @@ class CategoryPage {
   }
 
   highlightToc() {
-    HC.highlightToc();
+    GuiaDev.highlightToc();
   }
 }

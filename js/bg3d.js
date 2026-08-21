@@ -1,5 +1,5 @@
 (function () {
-  if (typeof localStorage !== 'undefined' && localStorage.getItem('hc-bg3d') === 'off') return;
+  if (typeof localStorage !== 'undefined' && localStorage.getItem('gd-bg3d') === 'off') return;
 
   var mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   var effect = null;
@@ -9,7 +9,7 @@
     'index': 'globe',
     'lenguajes': 'dots',
     'frameworks': 'topology',
-    'db': 'cells',
+    'db': 'fog',
     'git': 'trunk',
     'uml': 'net',
     'is': 'halo',
@@ -29,9 +29,15 @@
   }
 
   function effectName() {
-    var override = typeof localStorage !== 'undefined' ? localStorage.getItem('hc-bg3d-effect') : null;
+    var override = typeof localStorage !== 'undefined' ? localStorage.getItem('gd-bg3d-effect') : null;
     if (override && VALID.indexOf(override) !== -1) return override;
     return sectionEffect();
+  }
+
+  function isMainView() {
+    var file = (location.pathname.split('/').pop() || 'index.html').replace(/\.html$/i, '').toLowerCase();
+    if (!file || file === 'index') return true;
+    return !location.hash;
   }
 
   function webglOK() {
@@ -78,6 +84,16 @@
         return Object.assign(base, { size: 1.1 });
       case 'birds':
         return Object.assign(base, { backgroundAlpha: 0 });
+      case 'fog':
+        return Object.assign(base, {
+          highlightColor: p.color,
+          midtoneColor: p.color2,
+          lowlightColor: p.dark ? 0x1e293b : 0xcbd5e1,
+          baseColor: p.backgroundColor,
+          blurFactor: p.dark ? 0.65 : 0.60,
+          speed: 1.4,
+          zoom: 0.9
+        });
       default:
         return base;
     }
@@ -117,6 +133,7 @@
 
   function start() {
     if (effect) return;
+    if (!isMainView()) return;
     if (mqReduce.matches || window.innerWidth < 900 || !webglOK()) return;
 
     var host = document.createElement('div');
@@ -126,6 +143,9 @@
     var name = effectName();
 
     loadEffectScript(name, function () {
+      if (!isMainView() || !document.getElementById('bg3d')) {
+        return;
+      }
       var fn = typeof VANTA !== 'undefined' && VANTA[name.toUpperCase()];
       if (typeof fn !== 'function') {
         host.remove();
@@ -157,6 +177,25 @@
       start();
     }
   }
+
+  function syncView() {
+    if (isMainView()) {
+      start();
+    } else {
+      stop();
+    }
+  }
+
+  window.addEventListener('hashchange', syncView);
+
+  ['replaceState', 'pushState'].forEach(function (m) {
+    var original = history[m];
+    history[m] = function () {
+      var result = original.apply(this, arguments);
+      syncView();
+      return result;
+    };
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);

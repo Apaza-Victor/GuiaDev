@@ -1,4 +1,4 @@
-const HC = {
+const GuiaDev = {
   formatContent(content) {
     if (!content) return '';
 
@@ -15,12 +15,12 @@ const HC = {
             <div class="code-block">
               <div class="code-header">
                 <span class="code-lang">${codeLang || 'code'}</span>
-                <button class="code-copy" onclick="HC.copyCode(this)">
+                <button class="code-copy" onclick="GuiaDev.copyCode(this)">
                   <i class="fa-regular fa-copy"></i>
                   Copiar
                 </button>
               </div>
-              <pre><code>${HC.escapeHtml(codeContent.trim())}</code></pre>
+              <pre><code class="${codeLang ? 'language-' + codeLang : ''}">${GuiaDev.escapeHtml(codeContent.trim())}</code></pre>
             </div>
           `;
           codeContent = '';
@@ -90,6 +90,43 @@ const HC = {
     return '<i class="fa-solid fa-moon"></i>';
   },
 
+  LANG_LABELS: {
+    js: 'JavaScript', javascript: 'JavaScript', ts: 'TypeScript', typescript: 'TypeScript',
+    py: 'Python', python: 'Python', java: 'Java', php: 'PHP', sql: 'SQL', mysql: 'MySQL',
+    plsql: 'PL/SQL', html: 'HTML', xml: 'HTML/XML', css: 'CSS', scss: 'SCSS',
+    bash: 'Bash', shell: 'Shell', sh: 'Shell', csharp: 'C#', cs: 'C#', cpp: 'C++', c: 'C',
+    go: 'Go', rust: 'Rust', kotlin: 'Kotlin', swift: 'Swift', json: 'JSON',
+    yaml: 'YAML', yml: 'YAML', toml: 'TOML', ini: 'INI', markdown: 'Markdown', md: 'Markdown',
+    dockerfile: 'Dockerfile', plaintext: 'Texto', text: 'Texto'
+  },
+
+  highlightCode(block) {
+    if (!block || !block.parentElement) return;
+    const pre = block.parentElement;
+    if (pre.tagName !== 'PRE') return;
+
+    if (!pre.closest('.code-block')) {
+      const lang = ((block.className || '').match(/language-([\w#+-]+)/) || [])[1] || '';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'code-block';
+      wrapper.dataset.lang = lang || 'code';
+      const header = document.createElement('div');
+      header.className = 'code-header';
+      header.innerHTML =
+        '<span class="code-lang"><i class="fa-solid fa-code"></i> ' +
+        (GuiaDev.LANG_LABELS[lang] || lang || 'código') +
+        '</span>' +
+        '<button type="button" class="code-copy" onclick="GuiaDev.copyCode(this)">' +
+        '<i class="fa-regular fa-copy"></i> Copiar</button>';
+      pre.before(wrapper);
+      wrapper.append(header, pre);
+    }
+
+    if (typeof hljs !== 'undefined' && !block.dataset.highlighted) {
+      try { hljs.highlightElement(block); } catch (e) { /* sin resaltado si falla */ }
+    }
+  },
+
   sunIcon() {
     return '<i class="fa-solid fa-sun"></i>';
   },
@@ -156,7 +193,7 @@ const HC = {
   },
 
   getPageUrl(categoryId) {
-    return HC.PAGE_MAP[categoryId] || '#';
+    return GuiaDev.PAGE_MAP[categoryId] || '#';
   },
 
   CATEGORY_ORDER: [
@@ -173,7 +210,7 @@ const HC = {
   ],
 
   orderedCategories() {
-    const order = HC.CATEGORY_ORDER;
+    const order = GuiaDev.CATEGORY_ORDER;
     return [...DOCS_DATA.categories].sort(
       (a, b) => order.indexOf(a.id) - order.indexOf(b.id)
     );
@@ -203,10 +240,10 @@ const HC = {
       link(`${prefix}index.html`, 'Inicio', !currentCategoryId)
     ];
 
-    HC.orderedCategories().forEach(cat => {
-      const label = HC.SHORT_TITLES[cat.id] || cat.title;
+    GuiaDev.orderedCategories().forEach(cat => {
+      const label = GuiaDev.SHORT_TITLES[cat.id] || cat.title;
       items.push(
-        link(prefix + HC.getPageUrl(cat.id), label, cat.id === currentCategoryId)
+        link(prefix + GuiaDev.getPageUrl(cat.id), label, cat.id === currentCategoryId)
       );
     });
 
@@ -225,18 +262,18 @@ const HC = {
   toggleThemeState: null,
 
   initTheme() {
-    const theme = localStorage.getItem('hc-theme') || 'light';
+    const theme = localStorage.getItem('gd-theme') || 'light';
     document.documentElement.setAttribute('data-theme', theme);
     return theme;
   },
 
   saveTheme(theme) {
-    localStorage.setItem('hc-theme', theme);
+    localStorage.setItem('gd-theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
   },
 
   getTheme() {
-    return localStorage.getItem('hc-theme') || 'light';
+    return localStorage.getItem('gd-theme') || 'light';
   },
 
   renderSearchModalOptions(searchCallback) {

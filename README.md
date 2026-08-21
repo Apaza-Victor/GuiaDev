@@ -36,7 +36,7 @@ GuiaDev/
 │   ├── data.js             ← Registro central: categorías, subcategorías y lecciones
 │   ├── app.js              ← SPA del home
 │   ├── page.js             ← Clase CategoryPage: carga lecciones desde content/ vía fetch
-│   ├── shared.js           ← Funciones compartidas HC.* (header nav, búsqueda, TOC)
+│   ├── shared.js           ← Funciones compartidas GuiaDev.* (header nav, búsqueda, TOC)
 │   ├── animations.js       ← Animaciones GuiaDevAnimations.*
 │   └── bg3d.js             ← Fondo 3D Vanta.js por sección
 ├── pages/                  ← Una página por categoría (usan CategoryPage)
