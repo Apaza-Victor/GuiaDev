@@ -1,0 +1,486 @@
+<!-- 16. Hooks Principales - React (Frameworks) -->
+  <section id="16-1-tabla-de-referencia-rapida">
+    <h2><i class="fa-solid fa-book-bookmark"></i> 16.1 Tabla de referencia rápida</h2>
+    <div class="doc-content">
+<table><thead><tr><th>Hook</th><th>Propósito</th><th>Uso común</th></tr></thead><tbody><tr><td><code>useState</code></td><td>Estado local</td><td>Formularios, toggles, contadores</td></tr><tr><td><code>useEffect</code></td><td>Efectos secundarios</td><td>Fetch, suscripciones, DOM</td></tr><tr><td><code>useContext</code></td><td>Consumir contexto</td><td>Tema, auth, idioma</td></tr><tr><td><code>useRef</code></td><td>Referencias mutables</td><td>DOM, valores sin re-render</td></tr><tr><td><code>useMemo</code></td><td>Memorizar valores</td><td>Cálculos costosos</td></tr><tr><td><code>useCallback</code></td><td>Memorizar funciones</td><td>Callbacks en props</td></tr><tr><td><code>useReducer</code></td><td>Estado complejo</td><td>Múltiples acciones</td></tr><tr><td><code>useLayoutEffect</code></td><td>Efecto síncrono</td><td>Mediciones DOM</td></tr><tr><td><code>useId</code></td><td>IDs únicos</td><td>Accesibilidad</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-2-usestate">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 16.2 useState</h2>
+    <div class="doc-content">
+<h3>Sintaxis</h3>
+<pre><code class="language-jsx">const [estado, setEstado] = useState(valorInicial);</code></pre>
+<h3>Ejemplos</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+// Valor primitivo
+const [count, setCount] = useState(0);
+setCount(count + 1);
+setCount(prev =&gt; prev + 1);  // Actualización funcional
+
+// Objeto
+const [user, setUser] = useState({ name: '', email: '' });
+setUser({ ...user, name: 'Juan' });  // Spread para actualizar
+
+// Array
+const [items, setItems] = useState([]);
+setItems([...items, nuevoItem]);  // Agregar
+setItems(items.filter(i =&gt; i.id !== id));  // Eliminar
+
+// Inicialización lazy (costosa)
+const [data, setData] = useState(() =&gt; {
+  return calcularValorInicial();
+});</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-3-useeffect">
+    <h2><i class="fa-solid fa-bolt"></i> 16.3 useEffect</h2>
+    <div class="doc-content">
+<h3>Sintaxis</h3>
+<pre><code class="language-jsx">useEffect(() =&gt; {
+  // Efecto
+  return () =&gt; {
+    // Cleanup (opcional)
+  };
+}, [dependencias]);</code></pre>
+<h3>Patrones comunes</h3>
+<pre><code class="language-jsx">import { useEffect } from 'react';
+
+// Ejecutar una vez al montar
+useEffect(() =&gt; {
+  console.log('Componente montado');
+}, []);
+
+// Ejecutar cuando cambia una dependencia
+useEffect(() =&gt; {
+  console.log('userId cambió:', userId);
+}, [userId]);
+
+// Con cleanup
+useEffect(() =&gt; {
+  const timer = setInterval(() =&gt; {}, 1000);
+  return () =&gt; clearInterval(timer);
+}, []);
+
+// Fetch de datos
+useEffect(() =&gt; {
+  const fetchData = async () =&gt; {
+    const res = await fetch('/api/data');
+    const data = await res.json();
+    setData(data);
+  };
+  fetchData();
+}, []);</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-4-usecontext">
+    <h2><i class="fa-solid fa-earth-americas"></i> 16.4 useContext</h2>
+    <div class="doc-content">
+<h3>Sintaxis</h3>
+<pre><code class="language-jsx">// Crear contexto
+const MiContexto = createContext(valorDefault);
+
+// Proveer
+&lt;MiContexto.Provider value={valor}&gt;
+  {children}
+&lt;/MiContexto.Provider&gt;
+
+// Consumir
+const valor = useContext(MiContexto);</code></pre>
+<h3>Ejemplo completo</h3>
+<pre><code class="language-jsx">import { createContext, useContext, useState } from 'react';
+
+// 1. Crear contexto
+const TemaContext = createContext();
+
+// 2. Provider
+function TemaProvider({ children }) {
+  const [tema, setTema] = useState('claro');
+  const toggle = () =&gt; setTema(t =&gt; t === 'claro' ? 'oscuro' : 'claro');
+  
+  return (
+    &lt;TemaContext.Provider value={{ tema, toggle }}&gt;
+      {children}
+    &lt;/TemaContext.Provider&gt;
+  );
+}
+
+// 3. Hook personalizado
+function useTema() {
+  return useContext(TemaContext);
+}
+
+// 4. Uso
+function Boton() {
+  const { tema, toggle } = useTema();
+  return &lt;button onClick={toggle}&gt;Tema: {tema}&lt;/button&gt;;
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-5-useref">
+    <h2><i class="fa-solid fa-thumbtack"></i> 16.5 useRef</h2>
+    <div class="doc-content">
+<h3>Sintaxis</h3>
+<pre><code class="language-jsx">const ref = useRef(valorInicial);
+// Acceder: ref.current
+// Modificar: ref.current = nuevoValor (no causa re-render)</code></pre>
+<h3>Usos comunes</h3>
+<pre><code class="language-jsx">import { useRef, useEffect } from 'react';
+
+// Referencia a elemento DOM
+function Input() {
+  const inputRef = useRef(null);
+  
+  const enfocar = () =&gt; {
+    inputRef.current.focus();
+  };
+  
+  return &lt;input ref={inputRef} /&gt;;
+}
+
+// Guardar valor anterior
+function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() =&gt; {
+    ref.current = value;
+  }, [value]);
+  return ref.current;
+}
+
+// Contador de renders (sin causar re-render)
+function Componente() {
+  const renderCount = useRef(0);
+  renderCount.current++;
+  console.log('Renders:', renderCount.current);
+}
+
+// Guardar timer
+function Timer() {
+  const timerRef = useRef(null);
+  
+  const iniciar = () =&gt; {
+    timerRef.current = setInterval(() =&gt; {}, 1000);
+  };
+  
+  const detener = () =&gt; {
+    clearInterval(timerRef.current);
+  };
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-6-usememo">
+    <h2><i class="fa-solid fa-calculator"></i> 16.6 useMemo</h2>
+    <div class="doc-content">
+<h3>Sintaxis</h3>
+<pre><code class="language-jsx">const valorMemorizado = useMemo(() =&gt; {
+  return calcularValor(dependencia);
+}, [dependencia]);</code></pre>
+<h3>Cuándo usar</h3>
+<pre><code class="language-jsx">import { useMemo } from 'react';
+
+// ✅ Cálculo costoso
+function Lista({ items, filtro }) {
+  const itemsFiltrados = useMemo(() =&gt; {
+    return items.filter(item =&gt; 
+      item.nombre.toLowerCase().includes(filtro.toLowerCase())
+    );
+  }, [items, filtro]);
+  
+  return &lt;ul&gt;{itemsFiltrados.map(i =&gt; &lt;li key={i.id}&gt;{i.nombre}&lt;/li&gt;)}&lt;/ul&gt;;
+}
+
+// ✅ Objeto/array como prop (evita re-renders)
+function Padre() {
+  const config = useMemo(() =&gt; ({
+    theme: 'dark',
+    size: 'large'
+  }), []);
+  
+  return &lt;Hijo config={config} /&gt;;
+}
+
+// ❌ NO usar para valores simples
+const doble = useMemo(() =&gt; count * 2, [count]);  // Innecesario</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-7-usecallback">
+    <h2><i class="fa-solid fa-link"></i> 16.7 useCallback</h2>
+    <div class="doc-content">
+<h3>Sintaxis</h3>
+<pre><code class="language-jsx">const funcionMemorizada = useCallback(() =&gt; {
+  // hacer algo
+}, [dependencias]);</code></pre>
+<h3>Cuándo usar</h3>
+<pre><code class="language-jsx">import { useCallback, memo } from 'react';
+
+// ✅ Callback pasado a componente memorizado
+const HijoMemorizado = memo(function Hijo({ onClick }) {
+  console.log('Hijo renderizado');
+  return &lt;button onClick={onClick}&gt;Click&lt;/button&gt;;
+});
+
+function Padre() {
+  const [count, setCount] = useState(0);
+  
+  // Sin useCallback: Hijo se re-renderiza siempre
+  // Con useCallback: Hijo solo se re-renderiza si cambian deps
+  const handleClick = useCallback(() =&gt; {
+    console.log('Click!');
+  }, []);
+  
+  return (
+    &lt;div&gt;
+      &lt;p&gt;{count}&lt;/p&gt;
+      &lt;button onClick={() =&gt; setCount(c =&gt; c + 1)}&gt;+&lt;/button&gt;
+      &lt;HijoMemorizado onClick={handleClick} /&gt;
+    &lt;/div&gt;
+  );
+}
+
+// ✅ Callback en dependencias de useEffect
+function Buscador({ query }) {
+  const buscar = useCallback(async () =&gt; {
+    const res = await fetch(\`/api/search?q=\${query}\`);
+    return res.json();
+  }, [query]);
+  
+  useEffect(() =&gt; {
+    buscar().then(setResultados);
+  }, [buscar]);
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-8-usereducer">
+    <h2><i class="fa-solid fa-sliders"></i> 16.8 useReducer</h2>
+    <div class="doc-content">
+<h3>Sintaxis</h3>
+<pre><code class="language-jsx">const [state, dispatch] = useReducer(reducer, initialState);
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'ACTION':
+      return { ...state, /* cambios */ };
+    default:
+      return state;
+  }
+}</code></pre>
+<h3>Ejemplo completo</h3>
+<pre><code class="language-jsx">import { useReducer } from 'react';
+
+const initialState = { count: 0 };
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'increment':
+      return { count: state.count + 1 };
+    case 'decrement':
+      return { count: state.count - 1 };
+    case 'reset':
+      return initialState;
+    case 'set':
+      return { count: action.payload };
+    default:
+      throw new Error('Acción desconocida');
+  }
+}
+
+function Contador() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Count: {state.count}&lt;/p&gt;
+      &lt;button onClick={() =&gt; dispatch({ type: 'increment' })}&gt;+&lt;/button&gt;
+      &lt;button onClick={() =&gt; dispatch({ type: 'decrement' })}&gt;-&lt;/button&gt;
+      &lt;button onClick={() =&gt; dispatch({ type: 'reset' })}&gt;Reset&lt;/button&gt;
+      &lt;button onClick={() =&gt; dispatch({ type: 'set', payload: 10 })}&gt;
+        Set 10
+      &lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>useState vs useReducer</h3>
+<table><thead><tr><th>useState</th><th>useReducer</th></tr></thead><tbody><tr><td>Estado simple</td><td>Estado complejo</td></tr><tr><td>Pocas actualizaciones</td><td>Múltiples acciones</td></tr><tr><td>Lógica simple</td><td>Lógica compartida</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-9-otros-hooks">
+    <h2><i class="fa-solid fa-palette"></i> 16.9 Otros Hooks</h2>
+    <div class="doc-content">
+<h3>useLayoutEffect</h3>
+<pre><code class="language-jsx">import { useLayoutEffect, useRef, useState } from 'react';
+
+// Se ejecuta ANTES de pintar en pantalla
+// Útil para mediciones DOM
+function Tooltip({ children }) {
+  const ref = useRef();
+  const [height, setHeight] = useState(0);
+  
+  useLayoutEffect(() =&gt; {
+    // Medir antes de que el usuario vea
+    setHeight(ref.current.getBoundingClientRect().height);
+  }, []);
+  
+  return &lt;div ref={ref}&gt;{children}&lt;/div&gt;;
+}</code></pre>
+<h3>useId</h3>
+<pre><code class="language-jsx">import { useId } from 'react';
+
+function Input({ label }) {
+  const id = useId();
+  
+  return (
+    &lt;div&gt;
+      &lt;label htmlFor={id}&gt;{label}&lt;/label&gt;
+      &lt;input id={id} /&gt;
+    &lt;/div&gt;
+  );
+}
+
+// Genera IDs únicos como ":r1:", ":r2:", etc.</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-10-hooks-personalizados">
+    <h2><i class="fa-solid fa-screwdriver-wrench"></i> 16.10 Hooks personalizados</h2>
+    <div class="doc-content">
+<h3>Patrón</h3>
+<pre><code class="language-jsx">// Nombre empieza con "use"
+function useCustomHook(params) {
+  // Puede usar otros hooks
+  const [state, setState] = useState();
+  
+  useEffect(() =&gt; {
+    // lógica
+  }, []);
+  
+  // Retorna valores/funciones
+  return { state, setState };
+}</code></pre>
+<h3>Ejemplos útiles</h3>
+<pre><code class="language-jsx">// useLocalStorage
+function useLocalStorage(key, initialValue) {
+  const [value, setValue] = useState(() =&gt; {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : initialValue;
+  });
+  
+  useEffect(() =&gt; {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+  
+  return [value, setValue];
+}
+
+// useToggle
+function useToggle(initial = false) {
+  const [value, setValue] = useState(initial);
+  const toggle = useCallback(() =&gt; setValue(v =&gt; !v), []);
+  return [value, toggle];
+}
+
+// useDebounce
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  
+  useEffect(() =&gt; {
+    const timer = setTimeout(() =&gt; setDebouncedValue(value), delay);
+    return () =&gt; clearTimeout(timer);
+  }, [value, delay]);
+  
+  return debouncedValue;
+}
+
+// useFetch
+function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() =&gt; {
+    fetch(url)
+      .then(res =&gt; res.json())
+      .then(setData)
+      .catch(setError)
+      .finally(() =&gt; setLoading(false));
+  }, [url]);
+  
+  return { data, loading, error };
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-11-reglas-de-los-hooks">
+    <h2><i class="fa-solid fa-clipboard-list"></i> 16.11 Reglas de los Hooks</h2>
+    <div class="doc-content">
+<h3>Las 2 reglas</h3>
+<pre><code class="language-jsx">// ✅ REGLA 1: Solo en el nivel superior
+function Componente() {
+  const [a, setA] = useState();  // ✅ OK
+  
+  if (condicion) {
+    const [b, setB] = useState();  // ❌ MAL
+  }
+  
+  for (let i = 0; i &lt; 10; i++) {
+    useEffect(() =&gt; {});  // ❌ MAL
+  }
+}
+
+// ✅ REGLA 2: Solo en componentes React o hooks personalizados
+function Componente() {
+  useState();  // ✅ OK - componente
+}
+
+function useCustom() {
+  useState();  // ✅ OK - hook personalizado
+}
+
+function funcionNormal() {
+  useState();  // ❌ MAL - función normal
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen-final">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen final</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Guía rápida de cuándo usar cada Hook:**
+
+- **useState**: Estado simple (strings, números, booleanos, objetos pequeños)
+- **useEffect**: Efectos secundarios (fetch, timers, suscripciones)
+- **useContext**: Compartir datos sin prop drilling
+- **useRef**: Referencias DOM o valores que no causan re-render
+- **useMemo**: Memorizar cálculos costosos
+- **useCallback**: Memorizar funciones para evitar re-renders
+- **useReducer**: Estado complejo con múltiples acciones
+- **Hooks personalizados**: Reutilizar lógica entre componentes
+</blockquote>
+<blockquote class="aside aside-tip">
+**Recuerda:**
+- Los hooks siempre empiezan con `use`
+- Solo se usan en componentes funcionales o hooks personalizados
+- Se llaman en el nivel superior (no en condicionales o loops)
+- El orden de llamada debe ser consistente entre renders
+</blockquote>
+    </div>
+  </section>

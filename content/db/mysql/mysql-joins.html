@@ -1,0 +1,56 @@
+<!-- 7. JOINS en MySQL - MySQL (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="inner-join">
+    <h2>INNER JOIN</h2>
+    <div class="doc-content">
+<p>Devuelve solo las filas que tienen coincidencia en ambas tablas.</p>
+<pre><code class="language-sql">SELECT p.nombre, c.nombre AS categoria, p.precio
+FROM productos p
+INNER JOIN categorias c ON p.categoria_id = c.id;</code></pre>
+    </div>
+  </section>
+
+  <section id="left-y-right-join">
+    <h2>LEFT y RIGHT JOIN</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- Todos los productos, con o sin venta asociada
+SELECT p.nombre, v.fecha, v.cantidad
+FROM productos p
+LEFT JOIN ventas v ON v.producto_id = p.id;
+
+-- Productos que NUNCA se han vendido
+SELECT p.nombre
+FROM productos p
+LEFT JOIN ventas v ON v.producto_id = p.id
+WHERE v.id IS NULL;</code></pre>
+<blockquote class="aside aside-tip">
+<p>El patrón <code>LEFT JOIN ... WHERE t2.id IS NULL</code> es la forma clásica de encontrar registros sin relación.</p>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="cross-join-y-auto-join">
+    <h2>CROSS JOIN y auto-join</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- Producto cartesiano: cada empleado con cada turno
+SELECT e.nombre, t.horario
+FROM empleados e CROSS JOIN turnos t;
+
+-- Auto-join: empleado y su jefe
+SELECT e.nombre AS empleado, j.nombre AS jefe
+FROM empleados e
+LEFT JOIN empleados j ON e.jefe_id = j.id;</code></pre>
+    </div>
+  </section>
+
+  <section id="mas-de-dos-tablas">
+    <h2>Más de dos tablas</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SELECT c.nombre AS cliente, p.id AS pedido, pr.nombre AS producto
+FROM pedidos p
+INNER JOIN clientes c ON p.cliente_id = c.id
+INNER JOIN detalles_pedido d ON d.pedido_id = p.id
+INNER JOIN productos pr ON d.producto_id = pr.id
+ORDER BY c.nombre;</code></pre>
+    </div>
+  </section>

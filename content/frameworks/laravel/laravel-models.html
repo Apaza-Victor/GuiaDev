@@ -1,0 +1,1219 @@
+<!-- 5. Modelos - Laravel (Frameworks) -->
+  <section id="que-es-un-modelo-en-laravel">
+    <h2>¿Qué es un Modelo en Laravel?</h2>
+    <div class="doc-content">
+<p>Un modelo en Laravel representa una tabla en la base de datos y actúa como una capa de abstracción que permite interactuar con los datos utilizando métodos y propiedades orientados a objetos. Laravel implementa el patrón Active Record a través de su ORM (Object-Relational Mapping) llamado Eloquent.</p>
+<p>Cada modelo corresponde a una tabla específica en la base de datos y simplifica las operaciones comunes como:</p>
+<ul>
+<li>Crear, leer, actualizar y eliminar registros (CRUD)</li>
+<li>Definir relaciones entre tablas (one-to-one, one-to-many, many-to-many)</li>
+<li>Aplicar reglas de negocio a nivel de datos</li>
+<li>Realizar validaciones y transformaciones de datos</li>
+</ul>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    // Un modelo básico en Laravel
+}
+</code></pre>
+    </div>
+  </section>
+
+  <section id="crear-un-modelo-con-artisan-make-model">
+    <h2>Crear un Modelo con Artisan (make:model)</h2>
+    <div class="doc-content">
+<p>Laravel proporciona el comando <code>make:model</code> en Artisan para generar rápidamente modelos:</p>
+<pre><code class="language-bash">php artisan make:model Product</code></pre>
+<p>Este comando creará un archivo <code>Product.php</code> en el directorio <code>app/Models/</code>.</p>
+<h3>Opciones comunes del comando make:model</h3>
+<pre><code class="language-bash"># Crear un modelo con migración
+php artisan make:model Product -m
+
+# Crear un modelo con controlador
+php artisan make:model Product -c
+
+# Crear un modelo con migración, factory, seeder y controlador
+php artisan make:model Product -mfsc
+
+# Crear un modelo con todo (migración, factory, seeder, controlador y policy)
+php artisan make:model Product --all
+
+# Crear un modelo en un subdirectorio (namespace)
+php artisan make:model Admin/Product</code></pre>
+<blockquote class="aside aside-tip">
+Usar la opción `-m` (o `--migration`) es muy común ya que normalmente necesitarás una tabla en la base de datos para el nuevo modelo.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="ubicacion-y-convencion-de-nombres-de-modelos">
+    <h2>Ubicación y Convención de Nombres de Modelos</h2>
+    <div class="doc-content">
+<h3>Ubicación de los modelos</h3>
+<p>Por convención, los modelos se almacenan en el directorio <code>app/Models/</code> (a partir de Laravel 8) o <code>app/</code> (en versiones anteriores).</p>
+<h3>Convención de nombres</h3>
+<ul>
+<li>Los nombres de los modelos deben estar en <strong>singular</strong> y en <strong>PascalCase</strong></li>
+<li>El nombre de la tabla correspondiente debe estar en <strong>plural</strong> y en <strong>snake_case</strong></li>
+</ul>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model // Nombre en singular y PascalCase
+{
+    // Laravel asumirá que la tabla se llama 'products' (plural y snake_case)
+}
+</code></pre>
+<blockquote class="aside aside-note">
+Laravel convierte automáticamente el nombre del modelo a plural en inglés para el nombre de la tabla. Por ejemplo, `Person` se convierte en `people`, no en `persons`.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="asignacion-masiva-fillable-y-guarded">
+    <h2>Asignación Masiva: $fillable y $guarded</h2>
+    <div class="doc-content">
+<p>La asignación masiva permite crear o actualizar un registro utilizando un array de datos. Para controlar qué atributos pueden ser asignados masivamente, Laravel ofrece dos propiedades: <code>$fillable</code> y <code>$guarded</code>.</p>
+<h3>Propiedad $fillable</h3>
+<p><code>$fillable</code> define una lista de atributos que están permitidos para asignación masiva (enfoque de lista blanca).</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    /**
+     * Los atributos que son asignables masivamente.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'name',
+        'description',
+        'price',
+        'category_id'
+    ];
+
+    // Ahora podemos usar:
+    // Product::create(['name' =&gt; 'Producto 1', 'price' =&gt; 99.99, ...]);
+}
+</code></pre>
+<h3>Propiedad $guarded</h3>
+<p><code>$guarded</code> define una lista de atributos que están protegidos contra la asignación masiva (enfoque de lista negra).</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    /**
+     * Los atributos que no son asignables masivamente.
+     *
+     * @var array
+     */
+    protected $guarded = [
+        'id',
+        'admin_flag'
+    ];
+
+    // Todos los atributos excepto 'id' y 'admin_flag' serán asignables masivamente
+}
+</code></pre>
+<blockquote class="aside aside-caution">
+Usar `protected $guarded = [];` permite la asignación masiva de todos los atributos. Esto puede ser peligroso si no controlas cuidadosamente los datos de entrada de los usuarios.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="configuracion-de-la-tabla-manual-table">
+    <h2>Configuración de la Tabla Manual ($table)</h2>
+    <div class="doc-content">
+<p>Si el nombre de tu tabla no sigue la convención de Laravel (plural del nombre del modelo), puedes especificarlo manualmente usando la propiedad <code>$table</code>:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    /**
+     * El nombre de la tabla asociada con el modelo.
+     *
+     * @var string
+     */
+    protected $table = 'inventory_products';
+    
+    // Laravel usará la tabla 'inventory_products' en lugar de 'products'
+}
+</code></pre>
+    </div>
+  </section>
+
+  <section id="uso-de-claves-primarias-personalizadas-primarykey">
+    <h2>Uso de Claves Primarias Personalizadas ($primaryKey)</h2>
+    <div class="doc-content">
+<p>Por defecto, Laravel asume que cada tabla tiene una clave primaria llamada <code>id</code>. Si tu tabla utiliza un nombre diferente para la clave primaria, puedes especificarlo usando la propiedad <code>$primaryKey</code>:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    /**
+     * La clave primaria asociada con la tabla.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'product_id';
+}
+</code></pre>
+<h3>Cambiar el tipo de clave primaria</h3>
+<p>Si tu clave primaria no es un entero autoincremental, puedes especificar su tipo:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class ApiKey extends Model
+{
+    /**
+     * La clave primaria asociada con la tabla.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'key';
+
+    /**
+     * Indica si la clave primaria es autoincremental.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
+
+    /**
+     * El tipo de dato de la clave primaria.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+}
+</code></pre>
+    </div>
+  </section>
+
+  <section id="activar-o-desactivar-timestamps-timestamps">
+    <h2>Activar o Desactivar Timestamps ($timestamps)</h2>
+    <div class="doc-content">
+<p>Por defecto, Laravel mantiene automáticamente las columnas <code>created_at</code> y <code>updated_at</code> en tus tablas. Si no deseas utilizar estas columnas, puedes desactivarlas:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    /**
+     * Indica si el modelo debe registrar timestamps.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+}
+</code></pre>
+<h3>Personalizar los nombres de las columnas de timestamps</h3>
+<p>Si utilizas nombres diferentes para las columnas de timestamps, puedes personalizarlos:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    /**
+     * El nombre de la columna "created at".
+     *
+     * @var string
+     */
+    const CREATED_AT = 'fecha_creacion';
+
+    /**
+     * El nombre de la columna "updated at".
+     *
+     * @var string
+     */
+    const UPDATED_AT = 'fecha_actualizacion';
+}
+</code></pre>
+<h3>Personalizar el formato de fecha</h3>
+<p>Puedes personalizar el formato de almacenamiento de los timestamps:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    /**
+     * Prepara una fecha para el almacenamiento en la base de datos.
+     *
+     * @param  \DateTimeInterface  $date
+     * @return string
+     */
+    protected function serializeDate(\DateTimeInterface $date)
+    {
+        return $date-&gt;format('Y-m-d');
+    }
+}
+</code></pre>
+    </div>
+  </section>
+
+  <section id="definir-casts-de-atributos-casts">
+    <h2>Definir Casts de Atributos ($casts)</h2>
+    <div class="doc-content">
+<p>Eloquent permite convertir automáticamente ciertos atributos a tipos de datos nativos de PHP cuando los recuperas del modelo, y viceversa cuando los almacenas en la base de datos.</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    /**
+     * Los atributos que deben ser convertidos a tipos nativos.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'price' =&gt; 'float',
+        'active' =&gt; 'boolean',
+        'options' =&gt; 'array',
+        'released_at' =&gt; 'datetime',
+        'metadata' =&gt; 'json',
+        'dimensions' =&gt; 'object',
+        'sale_dates' =&gt; 'collection',
+    ];
+}
+</code></pre>
+<h3>Tipos de casts disponibles</h3>
+<ul>
+<li><code>integer</code>/<code>int</code>: Convierte a entero</li>
+<li><code>real</code>/<code>float</code>/<code>double</code>: Convierte a número de punto flotante</li>
+<li><code>string</code>: Convierte a cadena de texto</li>
+<li><code>boolean</code>/<code>bool</code>: Convierte a booleano</li>
+<li><code>object</code>: Convierte JSON a objeto PHP stdClass</li>
+<li><code>array</code>: Convierte JSON a array PHP</li>
+<li><code>collection</code>: Convierte JSON a una colección de Laravel</li>
+<li><code>json</code>: Convierte a JSON al guardar y de JSON al cargar</li>
+<li><code>datetime</code>: Convierte a instancia Carbon/DateTime</li>
+<li><code>timestamp</code>: Convierte a timestamp Unix</li>
+<li><code>date</code>: Convierte a instancia Carbon con solo la fecha</li>
+<li><code>encrypted</code>: Encripta/desencripta automáticamente los valores</li>
+<li><code>decimal:<precision></code>: Convierte a decimal con precisión específica (ej. <code>decimal:2</code>)</li>
+</ul>
+<blockquote class="aside aside-tip">
+El casting a `collection` es particularmente útil, ya que te permite utilizar los métodos de colección de Laravel directamente en atributos JSON.
+</blockquote>
+<h3>Cast personalizado</h3>
+<p>Puedes crear tus propios casts personalizados:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Casts;
+
+use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
+
+class Money implements CastsAttributes
+{
+    /**
+     * Cast el valor dado.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @param  string  $key
+     * @param  mixed  $value
+     * @param  array  $attributes
+     * @return mixed
+     */
+    public function get($model, $key, $value, $attributes)
+    {
+        return new \App\ValueObjects\Money($value / 100);
+    }
+
+    /**
+     * Prepara el valor dado para el almacenamiento.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @param  string  $key
+     * @param  mixed  $value
+     * @param  array  $attributes
+     * @return mixed
+     */
+    public function set($model, $key, $value, $attributes)
+    {
+        return [
+            $key =&gt; $value instanceof \App\ValueObjects\Money
+                ? $value-&gt;getAmount() * 100
+                : $value * 100,
+        ];
+    }
+}
+</code></pre>
+    </div>
+  </section>
+
+  <section id="accesores-y-mutadores">
+    <h2>Accesores y Mutadores</h2>
+    <div class="doc-content">
+<p>Los accesores y mutadores te permiten modificar los atributos cuando accedes a ellos o cuando los estableces en un modelo.</p>
+<h3>Accesores (get...Attribute)</h3>
+<p>Los accesores transforman los datos cuando los recuperas del modelo. Definen un formato de visualización sin alterar los datos almacenados en la base de datos.</p>
+  <h4 class="tab-label">Laravel 8 y anteriores</h4>
+    <pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * Obtiene el nombre del usuario en formato capitalizado.
+     *
+     * @param  string  $value
+     * @return string
+     */
+    public function getNameAttribute($value)
+    {
+        return ucfirst($value);
+    }
+    
+    /**
+     * Obtiene el nombre completo del usuario.
+     *
+     * @return string
+     */
+    public function getFullNameAttribute()
+    {
+        return "{$this-&gt;name} {$this-&gt;lastname}";
+    }
+}
+
+// Uso:
+$user = User::find(1);
+echo $user-&gt;name; // Aplica el accesor automáticamente
+echo $user-&gt;full_name; // Atributo virtual (no existe en la base de datos)
+</code></pre>
+  <h4 class="tab-label">Laravel 9+</h4>
+    <pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
+class User extends Model
+{
+    /**
+     * Obtiene el nombre del usuario en formato capitalizado.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute
+     */
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) =&gt; ucfirst($value),
+        );
+    }
+    
+    /**
+     * Obtiene el nombre completo del usuario.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute
+     */
+    protected function fullName(): Attribute
+    {
+        return Attribute::make(
+            get: fn () =&gt; "{$this-&gt;name} {$this-&gt;lastname}",
+        );
+    }
+}
+
+// Uso:
+$user = User::find(1);
+echo $user-&gt;name; // Aplica el accesor automáticamente
+echo $user-&gt;full_name; // Atributo virtual (no existe en la base de datos)
+</code></pre>
+<h3>Mutadores (set...Attribute)</h3>
+<p>Los mutadores transforman los datos antes de guardarlos en la base de datos:</p>
+  <h4 class="tab-label">Laravel 8 y anteriores</h4>
+    <pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * Establece el atributo de contraseña.
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setPasswordAttribute($value)
+    {
+        $this-&gt;attributes['password'] = bcrypt($value);
+    }
+    
+    /**
+     * Establece el atributo de email en minúsculas.
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setEmailAttribute($value)
+    {
+        $this-&gt;attributes['email'] = strtolower($value);
+    }
+}
+
+// Uso:
+$user = new User;
+$user-&gt;password = 'password123'; // Se aplica el hash automáticamente
+$user-&gt;email = 'Usuario@EJEMPLO.com'; // Se convierte a minúsculas
+$user-&gt;save();
+</code></pre>
+  <h4 class="tab-label">Laravel 9+</h4>
+    <pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
+class User extends Model
+{
+    /**
+     * Interactuar con la contraseña del usuario.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute
+     */
+    protected function password(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) =&gt; bcrypt($value),
+        );
+    }
+    
+    /**
+     * Interactuar con el email del usuario.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute
+     */
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) =&gt; $value,
+            set: fn ($value) =&gt; strtolower($value),
+        );
+    }
+}
+
+// Uso:
+$user = new User;
+$user-&gt;password = 'password123'; // Se aplica el hash automáticamente
+$user-&gt;email = 'Usuario@EJEMPLO.com'; // Se convierte a minúsculas
+$user-&gt;save();
+</code></pre>
+    </div>
+  </section>
+
+  <section id="scopes-locales-y-globales">
+    <h2>Scopes Locales y Globales</h2>
+    <div class="doc-content">
+<p>Los scopes te permiten encapsular lógica de consulta reutilizable.</p>
+<h3>Scopes Locales</h3>
+<p>Los scopes locales permiten definir consultas reutilizables que pueden ser encadenadas con otras consultas:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
+
+class Product extends Model
+{
+    /**
+     * Scope para productos activos.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive(Builder $query)
+    {
+        return $query-&gt;where('active', true);
+    }
+    
+    /**
+     * Scope para productos en stock.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeInStock(Builder $query)
+    {
+        return $query-&gt;where('stock', '&gt;', 0);
+    }
+    
+    /**
+     * Scope para productos de una categoría específica.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $categoryId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByCategory(Builder $query, $categoryId)
+    {
+        return $query-&gt;where('category_id', $categoryId);
+    }
+}
+
+// Uso:
+$featuredProducts = Product::active()-&gt;inStock()-&gt;byCategory(1)-&gt;get();
+</code></pre>
+<h3>Scopes Globales</h3>
+<p>Los scopes globales se aplican automáticamente a todas las consultas de un modelo:</p>
+  <h4 class="tab-label">Clase scope global</h4>
+    <pre><code class="language-php">&lt;?php
+
+namespace App\Scopes;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Scope;
+
+class ActiveScope implements Scope
+{
+    /**
+     * Aplicar el scope a una consulta Eloquent.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $builder
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return void
+     */
+    public function apply(Builder $builder, Model $model)
+    {
+        $builder-&gt;where('active', true);
+    }
+}
+</code></pre>
+    <pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use App\Scopes\ActiveScope;
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    /**
+     * El método "booted" del modelo.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::addGlobalScope(new ActiveScope);
+    }
+}
+
+// Todas las consultas ahora incluirán automáticamente WHERE active = true
+$products = Product::all();
+
+// Para ignorar un scope global:
+$allProducts = Product::withoutGlobalScope(ActiveScope::class)-&gt;get();
+// O ignorar todos los scopes globales:
+$allProducts = Product::withoutGlobalScopes()-&gt;get();
+</code></pre>
+  <h4 class="tab-label">Closure scope global</h4>
+    <pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    /**
+     * El método "booted" del modelo.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::addGlobalScope('active', function (Builder $builder) {
+            $builder-&gt;where('active', true);
+        });
+    }
+}
+
+// Para ignorar un scope global específico:
+$allProducts = Product::withoutGlobalScope('active')-&gt;get();
+</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-del-modelo">
+    <h2>Eventos del Modelo</h2>
+    <div class="doc-content">
+<p>Los modelos Eloquent disparan eventos durante su ciclo de vida, lo que te permite ejecutar código cuando ocurren acciones específicas.</p>
+<h3>Eventos disponibles</h3>
+<ul>
+<li><code>retrieved</code>: Después de que un modelo es recuperado de la base de datos</li>
+<li><code>creating</code>: Antes de que un nuevo modelo sea guardado por primera vez</li>
+<li><code>created</code>: Después de que un nuevo modelo ha sido guardado por primera vez</li>
+<li><code>updating</code>: Antes de guardar un modelo existente</li>
+<li><code>updated</code>: Después de guardar un modelo existente</li>
+<li><code>saving</code>: Antes de guardar un modelo (nuevo o existente)</li>
+<li><code>saved</code>: Después de guardar un modelo (nuevo o existente)</li>
+<li><code>deleting</code>: Antes de eliminar un modelo</li>
+<li><code>deleted</code>: Después de eliminar un modelo</li>
+<li><code>trashed</code>: Después de que un modelo ha sido marcado como eliminado (soft delete)</li>
+<li><code>forceDeleting</code>: Antes de eliminar permanentemente un modelo</li>
+<li><code>forceDeleted</code>: Después de eliminar permanentemente un modelo</li>
+<li><code>restoring</code>: Antes de restaurar un modelo eliminado (soft delete)</li>
+<li><code>restored</code>: Después de restaurar un modelo eliminado (soft delete)</li>
+</ul>
+<h3>Registrar eventos utilizando observers</h3>
+  <h4 class="tab-label">Definición del observer</h4>
+    <pre><code class="language-php">&lt;?php
+
+namespace App\Observers;
+
+use App\Models\User;
+use Illuminate\Support\Facades\Log;
+
+class UserObserver
+{
+    /**
+     * Manejar el evento "created" del modelo.
+     *
+     * @param  \App\Models\User  $user
+     * @return void
+     */
+    public function created(User $user)
+    {
+        Log::info('Se ha creado un nuevo usuario: ' . $user-&gt;name);
+    }
+
+    /**
+     * Manejar el evento "updated" del modelo.
+     *
+     * @param  \App\Models\User  $user
+     * @return void
+     */
+    public function updated(User $user)
+    {
+        Log::info('El usuario ha sido actualizado: ' . $user-&gt;name);
+    }
+
+    /**
+     * Manejar el evento "deleted" del modelo.
+     *
+     * @param  \App\Models\User  $user
+     * @return void
+     */
+    public function deleted(User $user)
+    {
+        Log::info('El usuario ha sido eliminado: ' . $user-&gt;name);
+    }
+}
+</code></pre>
+  <h4 class="tab-label">Registro del observer</h4>
+    <pre><code class="language-php">&lt;?php
+
+namespace App\Providers;
+
+use App\Models\User;
+use App\Observers\UserObserver;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Inicializa los servicios de la aplicación.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        // Registrar el observer
+        User::observe(UserObserver::class);
+    }
+}
+</code></pre>
+<h3>Eventos directamente en el modelo</h3>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
+
+class User extends Model
+{
+    /**
+     * El método "booted" del modelo.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        // Usando closures para los eventos
+        static::created(function ($user) {
+            Log::info('Nuevo usuario creado: ' . $user-&gt;name);
+        });
+        
+        static::updated(function ($user) {
+            Log::info('Usuario actualizado: ' . $user-&gt;name);
+        });
+        
+        static::deleted(function ($user) {
+            Log::info('Usuario eliminado: ' . $user-&gt;name);
+        });
+    }
+}
+</code></pre>
+    </div>
+  </section>
+
+  <section id="metodos-utiles-de-modelo">
+    <h2>Métodos Útiles de Modelo</h2>
+    <div class="doc-content">
+<p>Los modelos Eloquent ofrecen una variedad de métodos útiles para operaciones comunes.</p>
+<h3>Operaciones con Registros</h3>
+<pre><code class="language-php">&lt;?php
+
+// Crear una instancia sin guardar
+$user = new User;
+$user-&gt;name = 'Nuevo Usuario';
+$user-&gt;email = 'usuario@ejemplo.com';
+
+// Guardar la instancia en la base de datos
+$user-&gt;save();
+
+// Crear una instancia y guardarla de inmediato
+$user = User::create([
+    'name' =&gt; 'Nuevo Usuario',
+    'email' =&gt; 'usuario@ejemplo.com',
+    'password' =&gt; bcrypt('password'),
+]);
+
+// Actualizar un modelo existente
+$user = User::find(1);
+$user-&gt;email = 'nuevo_email@ejemplo.com';
+$user-&gt;save();
+
+// Actualizar múltiples atributos a la vez
+$user-&gt;update([
+    'name' =&gt; 'Nombre Actualizado',
+    'email' =&gt; 'email_actualizado@ejemplo.com',
+]);
+
+// Actualizar o crear un registro
+$user = User::updateOrCreate(
+    ['email' =&gt; 'usuario@ejemplo.com'], // atributos de búsqueda
+    ['name' =&gt; 'Actualizado', 'active' =&gt; true] // atributos para actualizar o crear
+);
+
+// Borrar un modelo
+$user-&gt;delete();
+
+// Borrar por ID
+User::destroy(1);
+User::destroy([1, 2, 3]); // múltiples IDs
+
+// Usar soft deletes (requiere columna deleted_at y trait SoftDeletes)
+$user-&gt;delete(); // marca como eliminado
+$user-&gt;trashed(); // verifica si está eliminado
+$user-&gt;forceDelete(); // elimina permanentemente
+
+// Restaurar un modelo eliminado con soft delete
+$user-&gt;restore();
+
+// Actualizar un contador directamente en la base de datos
+Post::find(1)-&gt;increment('view_count');
+Post::find(1)-&gt;increment('view_count', 5); // incrementar por 5
+Product::find(1)-&gt;decrement('stock');
+
+// Refrescar datos del modelo desde la base de datos
+$user-&gt;refresh();
+
+// Replicar un modelo (clonar sin ID)
+$clonedUser = $user-&gt;replicate();
+$clonedUser-&gt;save();
+</code></pre>
+<h3>Métodos de Comparación</h3>
+<pre><code class="language-php">&lt;?php
+
+// Comprobar si dos modelos son el mismo registro en base de datos
+$user-&gt;is($anotherUser); // true si tienen el mismo ID y tabla
+
+// Comprobar si un modelo ha cambiado desde su carga
+$user-&gt;isDirty(); // true si hay cambios sin guardar
+$user-&gt;isDirty('email'); // true si el email ha cambiado
+
+// Comprobar si un modelo NO ha sido modificado
+$user-&gt;isClean();
+$user-&gt;isClean('name');
+
+// Comprobar si un atributo específico ha cambiado
+$user-&gt;wasChanged();
+$user-&gt;wasChanged('email');
+
+// Obtener atributos originales (antes de cambios)
+$originalEmail = $user-&gt;getOriginal('email');
+$allOriginal = $user-&gt;getOriginal(); // todos los valores originales
+</code></pre>
+    </div>
+  </section>
+
+  <section id="relaciones-entre-modelos">
+    <h2>Relaciones entre Modelos</h2>
+    <div class="doc-content">
+<p>Eloquent permite definir relaciones entre modelos de forma elegante y expresiva.</p>
+<h3>Tipos de Relaciones</h3>
+<p>Los principales tipos de relaciones en Laravel son:</p>
+<h4>1. Uno a Uno (One-to-One)</h4>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * Obtiene el perfil asociado con el usuario.
+     */
+    public function profile()
+    {
+        return $this-&gt;hasOne(Profile::class);
+        
+        // Con claves personalizadas:
+        // return $this-&gt;hasOne(Profile::class, 'user_id', 'id');
+    }
+}
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Profile extends Model
+{
+    /**
+     * Obtiene el usuario al que pertenece este perfil.
+     */
+    public function user()
+    {
+        return $this-&gt;belongsTo(User::class);
+        
+        // Con claves personalizadas:
+        // return $this-&gt;belongsTo(User::class, 'user_id', 'id');
+    }
+}
+
+// Uso:
+$profile = User::find(1)-&gt;profile;
+$user = Profile::find(1)-&gt;user;
+</code></pre>
+<h4>2. Uno a Muchos (One-to-Many)</h4>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Post extends Model
+{
+    /**
+     * Obtiene los comentarios asociados con el post.
+     */
+    public function comments()
+    {
+        return $this-&gt;hasMany(Comment::class);
+    }
+}
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Comment extends Model
+{
+    /**
+     * Obtiene el post al que pertenece el comentario.
+     */
+    public function post()
+    {
+        return $this-&gt;belongsTo(Post::class);
+    }
+}
+
+// Uso:
+$comments = Post::find(1)-&gt;comments; // Colección de comentarios
+$post = Comment::find(1)-&gt;post;
+
+// Contar relaciones
+$postWithCommentCount = Post::withCount('comments')-&gt;get();
+echo $postWithCommentCount[0]-&gt;comments_count;
+</code></pre>
+<h4>3. Muchos a Muchos (Many-to-Many)</h4>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * Los roles que pertenecen al usuario.
+     */
+    public function roles()
+    {
+        return $this-&gt;belongsToMany(Role::class);
+        
+        // Con tabla pivot personalizada:
+        // return $this-&gt;belongsToMany(Role::class, 'user_roles');
+        
+        // Con claves personalizadas:
+        // return $this-&gt;belongsToMany(Role::class, 'user_roles', 'user_id', 'role_id');
+        
+        // Con columnas adicionales en la tabla pivot:
+        // return $this-&gt;belongsToMany(Role::class)-&gt;withPivot('active', 'created_by');
+        
+        // Con timestamps en la tabla pivot:
+        // return $this-&gt;belongsToMany(Role::class)-&gt;withTimestamps();
+    }
+}
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Role extends Model
+{
+    /**
+     * Los usuarios que pertenecen al rol.
+     */
+    public function users()
+    {
+        return $this-&gt;belongsToMany(User::class);
+    }
+}
+
+// Uso:
+$roles = User::find(1)-&gt;roles;
+$users = Role::find(1)-&gt;users;
+
+// Adjuntar y separar relaciones
+$user = User::find(1);
+$user-&gt;roles()-&gt;attach(1); // Añadir un rol
+$user-&gt;roles()-&gt;attach([1, 2, 3]); // Añadir varios roles
+$user-&gt;roles()-&gt;attach(1, ['expires_at' =&gt; now()-&gt;addDays(30)]); // Con datos pivot
+
+$user-&gt;roles()-&gt;detach(1); // Quitar un rol
+$user-&gt;roles()-&gt;detach(); // Quitar todos los roles
+
+$user-&gt;roles()-&gt;sync([1, 2]); // Sincronizar (solo mantiene los roles 1 y 2)
+$user-&gt;roles()-&gt;syncWithoutDetaching([1, 2, 3]); // Añade solo los que faltan
+
+// Acceso a la tabla pivot
+$user = User::find(1);
+foreach ($user-&gt;roles as $role) {
+    echo $role-&gt;pivot-&gt;created_at;
+}
+</code></pre>
+<h4>4. Uno a Muchos a Través (Has Many Through)</h4>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Country extends Model
+{
+    /**
+     * Obtiene todos los post de los usuarios de este país.
+     */
+    public function posts()
+    {
+        return $this-&gt;hasManyThrough(
+            Post::class,   // Modelo final
+            User::class    // Modelo intermedio
+            // 'user_id',  // Clave externa en el modelo intermedio (opcional)
+            // 'country_id', // Clave externa en el modelo final (opcional)
+            // 'id',       // Clave local en este modelo (opcional)
+            // 'id'        // Clave local en el modelo intermedio (opcional)
+        );
+    }
+}
+
+// Uso:
+$posts = Country::find('ES')-&gt;posts;
+</code></pre>
+<h4>5. Polimórficas</h4>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Image extends Model
+{
+    /**
+     * Obtiene el modelo al que pertenece esta imagen.
+     */
+    public function imageable()
+    {
+        return $this-&gt;morphTo();
+    }
+}
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * Obtiene la imagen del usuario.
+     */
+    public function image()
+    {
+        return $this-&gt;morphOne(Image::class, 'imageable');
+    }
+}
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Post extends Model
+{
+    /**
+     * Obtiene la imagen del post.
+     */
+    public function image()
+    {
+        return $this-&gt;morphOne(Image::class, 'imageable');
+    }
+}
+
+// Uso:
+$imageOfUser = User::find(1)-&gt;image;
+$ownerModel = Image::find(1)-&gt;imageable; // Puede ser User o Post
+</code></pre>
+    </div>
+  </section>
+
+  <section id="clases-base-y-traits">
+    <h2>Clases Base y Traits</h2>
+    <div class="doc-content">
+<p>Los modelos de Laravel heredan una rica funcionalidad de clases base y traits.</p>
+<h3>Clase Base - Illuminate\Database\Eloquent\Model</h3>
+<p>Todos los modelos de Laravel extienden esta clase base, que proporciona:</p>
+<ul>
+<li>Operaciones CRUD básicas</li>
+<li>Construcción de consultas</li>
+<li>Sistema de eventos</li>
+<li>Conversión de atributos</li>
+<li>Serialización</li>
+</ul>
+<h3>Traits Comunes</h3>
+<h4>HasFactory</h4>
+<p>Proporciona el método factory() para crear instancias de prueba:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    use HasFactory;
+}
+
+// Uso en pruebas o en seeders:
+User::factory()-&gt;count(50)-&gt;create();
+</code></pre>
+<h4>SoftDeletes</h4>
+<p>Para implementar la eliminación suave (marcar como eliminados sin borrar):</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Post extends Model
+{
+    use SoftDeletes;
+    
+    // La tabla debe tener una columna deleted_at nullable
+}
+
+// Uso:
+$post-&gt;delete(); // Marca como eliminado (actualiza deleted_at)
+
+// Consulta sólo registros no eliminados (comportamiento por defecto)
+$activePosts = Post::all();
+
+// Incluir registros eliminados
+$allPosts = Post::withTrashed()-&gt;get();
+
+// Sólo registros eliminados
+$deletedPosts = Post::onlyTrashed()-&gt;get();
+
+// Restaurar registros eliminados
+$post-&gt;restore();
+Post::onlyTrashed()-&gt;restore(); // Restaurar todos
+
+// Eliminar permanentemente
+$post-&gt;forceDelete();
+</code></pre>
+<h4>Otros Traits Útiles</h4>
+<ul>
+<li><strong>HasAttributes</strong>: Maneja conversiones de atributos y accesores/mutadores</li>
+<li><strong>Notifiable</strong>: Para enviar notificaciones a un modelo</li>
+<li><strong>Cacheable</strong>: Para implementar caché en las consultas de modelos</li>
+<li><strong>Auditable</strong>: Para registrar cambios en los modelos</li>
+<li><strong>Searchable</strong>: Para búsqueda de texto completo en Laravel Scout</li>
+</ul>
+<blockquote class="aside aside-note">
+Laravel también permite crear tus propios traits para compartir funcionalidades entre modelos, siguiendo el principio de composición sobre herencia.
+</blockquote>
+    </div>
+  </section>

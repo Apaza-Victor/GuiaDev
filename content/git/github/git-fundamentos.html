@@ -1,0 +1,623 @@
+<!-- 3. Fundamentos de Git - GitHub (Control de Versiones) -->
+  <section id="crear-un-repositorio-local-git-init">
+    <h2>Crear un repositorio local (git init)</h2>
+    <div class="doc-content">
+<p>Un repositorio Git es un directorio que contiene tu proyecto y todo su historial de versiones. Puedes crear uno desde cero o clonar uno existente.</p>
+<h3>Inicializar un nuevo repositorio</h3>
+<pre><code class="language-bash"># Crear directorio para el proyecto
+mkdir mi-primer-proyecto
+cd mi-primer-proyecto
+
+# Inicializar repositorio Git
+git init
+
+# Verificar que se creó el repositorio
+ls -la
+# Verás una carpeta .git (contiene toda la información de Git)</code></pre>
+<blockquote class="aside aside-note">
+La carpeta `.git` contiene toda la base de datos de Git. ¡Nunca la elimines manualmente! Si la eliminas, perderás todo el historial del proyecto.
+</blockquote>
+<h3>Estructura de un repositorio Git</h3>
+  <h4 class="tab-label">Estructura .git</h4>
+    <pre><code class="language-text">    .git/
+    ├── HEAD                # Apunta a la rama actual
+    ├── config              # Configuración del repositorio
+    ├── description         # Descripción del repositorio
+    ├── hooks/              # Scripts de automatización
+    ├── info/               # Información adicional
+    ├── objects/            # Base de datos de objetos
+    ├── refs/               # Referencias (ramas, tags)
+    └── logs/               # Logs de referencias
+    </code></pre>
+  <h4 class="tab-label">Verificar repositorio</h4>
+    <pre><code class="language-bash"># Verificar estado del repositorio
+    git status
+    
+    # Ver configuración del repositorio
+    git config --list --local
+    
+    # Ver información de la rama actual
+    git branch
+    
+    # Ver si hay commits
+    git log</code></pre>
+<h3>Configurar repositorio específico</h3>
+<pre><code class="language-bash"># Configurar nombre y email solo para este repositorio
+git config user.name "Nombre Específico"
+git config user.email "email.especifico@ejemplo.com"
+
+# Ver configuración actual
+git config --list --local
+
+# Configurar rama por defecto
+git config init.defaultBranch main</code></pre>
+    </div>
+  </section>
+
+  <section id="estados-de-un-archivo-working-staging-committed">
+    <h2>Estados de un archivo: working, staging, committed</h2>
+    <div class="doc-content">
+<p>Entender los tres estados de los archivos en Git es fundamental para trabajar eficientemente.</p>
+<h3>Los tres estados explicados</h3>
+  <h4 class="tab-label">Diagrama visual</h4>
+    <pre><code class="language-text">    WORKING DIRECTORY    STAGING AREA         REPOSITORY
+    (Directorio de       (Índice)             (Commits)
+     trabajo)
+    
+    archivo.txt     →    git add archivo.txt    →    git commit
+    [Modified]           [Staged]                    [Committed]
+         ↑                                               ↓
+         └─────────── git checkout archivo.txt ←────────┘
+         
+    Estados posibles:
+    • Untracked: Archivo nuevo, Git no lo conoce
+    • Modified: Archivo conocido pero con cambios
+    • Staged: Archivo preparado para commit
+    • Committed: Archivo guardado en el historial
+    </code></pre>
+  <h4 class="tab-label">Comandos por estado</h4>
+    <pre><code class="language-bash"># Ver estado actual de todos los archivos
+    git status
+    
+    # Ver estado resumido
+    git status -s
+    
+    # Ver diferencias en working directory
+    git diff
+    
+    # Ver diferencias en staging area
+    git diff --staged
+    
+    # Ver diferencias entre commits
+    git diff HEAD~1 HEAD</code></pre>
+<h3>Ejemplo práctico de estados</h3>
+<ol class="steps">
+<ol>
+  <li>
+<p><strong>Crear archivo nuevo</strong> (Untracked)</p>
+    <pre><code class="language-bash">echo "Hola mundo" &gt; saludo.txt
+git status
+# Output: Untracked files: saludo.txt</code></pre>
+  </li>
+  <li>
+<p><strong>Agregar al staging area</strong> (Staged)</p>
+    <pre><code class="language-bash">git add saludo.txt
+git status
+# Output: Changes to be committed: new file: saludo.txt</code></pre>
+  </li>
+  <li>
+<p><strong>Modificar archivo ya staged</strong> (Modified + Staged)</p>
+    <pre><code class="language-bash">echo "Adiós mundo" &gt;&gt; saludo.txt
+git status
+# Output: 
+# Changes to be committed: new file: saludo.txt
+# Changes not staged: modified: saludo.txt</code></pre>
+  </li>
+  <li>
+<p><strong>Confirmar cambios</strong> (Committed)</p>
+    <pre><code class="language-bash">git add saludo.txt  # Agregar modificaciones
+git commit -m "Agregar archivo de saludo"
+git status
+# Output: nothing to commit, working tree clean</code></pre>
+  </li>
+</ol>
+</ol>
+    </div>
+  </section>
+
+  <section id="agregar-y-confirmar-cambios-git-add-git-commit">
+    <h2>Agregar y confirmar cambios (git add, git commit)</h2>
+    <div class="doc-content">
+<p>Los comandos <code>git add</code> y <code>git commit</code> son los más utilizados en Git. Aprende todas sus variaciones.</p>
+<h3>git add - Agregar archivos al staging area</h3>
+  <h4 class="tab-label">Comandos básicos</h4>
+    <pre><code class="language-bash"># Agregar archivo específico
+git add archivo.txt
+
+# Agregar múltiples archivos
+git add archivo1.txt archivo2.txt
+
+# Agregar todos los archivos modificados
+git add .
+
+# Agregar todos los archivos (incluso eliminados)
+git add -A
+
+# Agregar solo archivos ya rastreados
+git add -u</code></pre>
+  <h4 class="tab-label">Comandos avanzados</h4>
+    <pre><code class="language-bash"># Agregar interactivamente (elegir qué cambios)
+git add -p archivo.txt
+
+# Agregar por extensión
+git add *.js
+
+# Agregar por directorio
+git add src/
+
+# Ver qué se agregará sin agregarlo
+git add --dry-run .
+
+# Deshacer git add (quitar del staging)
+git reset HEAD archivo.txt</code></pre>
+<h3>git commit - Confirmar cambios</h3>
+<pre><code class="language-bash"># Commit básico con mensaje
+git commit -m "Mensaje descriptivo del cambio"
+
+# Commit con mensaje multilínea
+git commit -m "Título del commit" -m "Descripción detallada del cambio"
+
+# Commit abriendo editor para mensaje largo
+git commit
+
+# Commit agregando automáticamente archivos modificados
+git commit -am "Mensaje del commit"
+
+# Modificar el último commit (antes de push)
+git commit --amend -m "Nuevo mensaje"
+
+# Commit vacío (útil para triggers)
+git commit --allow-empty -m "Trigger deployment"</code></pre>
+<h3>Mejores prácticas para commits</h3>
+<span class="hc-badge hc-badge-tip">Convenciones de commits</span>
+<pre><code class="language-bash"># Formato recomendado:
+# tipo(alcance): descripción
+
+# Tipos comunes:
+feat: nueva funcionalidad
+fix: corrección de bug
+docs: cambios en documentación
+style: cambios de formato (espacios, comas, etc.)
+refactor: refactorización de código
+test: agregar o modificar tests
+chore: tareas de mantenimiento
+
+# Ejemplos:
+git commit -m "feat(auth): agregar sistema de login con JWT"
+git commit -m "fix(api): corregir error 500 en endpoint de usuarios"
+git commit -m "docs(readme): actualizar instrucciones de instalación"
+git commit -m "refactor(utils): simplificar función de validación"</code></pre>
+<blockquote class="aside aside-tip">
+Un buen mensaje de commit debe completar la frase: "Si se aplica, este commit..."
+</blockquote>
+    </div>
+  </section>
+
+  <section id="consultar-historial-de-commits-git-log">
+    <h2>Consultar historial de commits (git log)</h2>
+    <div class="doc-content">
+<p>El historial de commits es fundamental para entender la evolución de tu proyecto.</p>
+<h3>Comandos básicos de git log</h3>
+<pre><code class="language-bash"># Ver historial completo
+git log
+
+# Ver historial resumido (una línea por commit)
+git log --oneline
+
+# Ver últimos N commits
+git log -5
+
+# Ver commits con estadísticas de archivos
+git log --stat
+
+# Ver commits con diferencias
+git log -p
+
+# Ver historial gráfico
+git log --graph --oneline --all</code></pre>
+<h3>Filtrar historial</h3>
+  <h4 class="tab-label">Por autor y fecha</h4>
+    <pre><code class="language-bash"># Commits de un autor específico
+git log --author="Juan Pérez"
+
+# Commits desde una fecha
+git log --since="2024-01-01"
+
+# Commits hasta una fecha
+git log --until="2024-12-31"
+
+# Commits en un rango de fechas
+git log --since="2024-01-01" --until="2024-01-31"
+
+# Commits de la última semana
+git log --since="1 week ago"</code></pre>
+  <h4 class="tab-label">Por archivos y contenido</h4>
+    <pre><code class="language-bash"># Commits que modificaron un archivo específico
+git log -- archivo.txt
+
+# Commits que modificaron archivos en un directorio
+git log -- src/
+
+# Buscar en mensajes de commit
+git log --grep="fix"
+
+# Buscar cambios en el código
+git log -S "función_específica"
+
+# Commits que agregaron o eliminaron una línea
+git log -G "patrón_regex"</code></pre>
+<h3>Formatos personalizados</h3>
+<pre><code class="language-bash"># Formato personalizado
+git log --pretty=format:"%h - %an, %ar : %s"
+
+# Formato con colores
+git log --pretty=format:"%C(yellow)%h%C(reset) - %C(blue)%an%C(reset), %C(green)%ar%C(reset) : %s"
+
+# Crear alias para formato personalizado
+git config --global alias.lg "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)&lt;%an&gt;%Creset' --abbrev-commit"
+
+# Usar el alias
+git lg</code></pre>
+<h3>Navegar por el historial</h3>
+<pre><code class="language-bash"># Ver commit específico
+git show abc1234
+
+# Ver archivos en un commit específico
+git show abc1234 --name-only
+
+# Ver diferencias entre commits
+git diff abc1234 def5678
+
+# Ver diferencias entre commit y working directory
+git diff abc1234
+
+# Volver a un commit específico (temporal)
+git checkout abc1234
+
+# Volver a la rama principal
+git checkout main</code></pre>
+    </div>
+  </section>
+
+  <section id="ignorar-archivos-con-gitignore">
+    <h2>Ignorar archivos con .gitignore</h2>
+    <div class="doc-content">
+<p>No todos los archivos deben ser versionados. El archivo <code>.gitignore</code> te permite especificar qué ignorar.</p>
+<h3>Crear archivo .gitignore</h3>
+<pre><code class="language-bash"># Crear .gitignore en la raíz del proyecto
+touch .gitignore
+
+# Agregar patrones de archivos a ignorar
+echo "node_modules/" &gt;&gt; .gitignore
+echo "*.log" &gt;&gt; .gitignore
+echo ".env" &gt;&gt; .gitignore
+
+# Confirmar el .gitignore
+git add .gitignore
+git commit -m "Agregar .gitignore"</code></pre>
+<h3>Patrones comunes en .gitignore</h3>
+  <h4 class="tab-label">Desarrollo web</h4>
+    <pre><code class="language-txt"># Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de producción
+/build
+/dist
+
+# Variables de entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+
+# Cache
+.cache/
+.parcel-cache/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo</code></pre>
+  <h4 class="tab-label">Python</h4>
+    <pre><code class="language-txt"># Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db</code></pre>
+  <h4 class="tab-label">Java</h4>
+    <pre><code class="language-txt"># Compiled class files
+*.class
+
+# Log files
+*.log
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# Gradle
+.gradle
+build/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db</code></pre>
+<h3>Reglas de .gitignore</h3>
+<pre><code class="language-txt"># Ignorar archivo específico
+archivo.txt
+
+# Ignorar todos los archivos con extensión
+*.log
+*.tmp
+
+# Ignorar directorio completo
+directorio/
+
+# Ignorar archivos en directorio específico
+directorio/*.txt
+
+# Ignorar recursivamente
+directorio/**/*.log
+
+# Excepción (NO ignorar)
+!importante.log
+
+# Ignorar solo en raíz del proyecto
+/archivo-raiz.txt
+
+# Comentarios
+# Este es un comentario
+# Los archivos de configuración local no deben versionarse</code></pre>
+<h3>Comandos útiles para .gitignore</h3>
+<pre><code class="language-bash"># Ver qué archivos están siendo ignorados
+git status --ignored
+
+# Verificar por qué un archivo está siendo ignorado
+git check-ignore -v archivo.txt
+
+# Forzar agregar archivo ignorado
+git add -f archivo-ignorado.txt
+
+# Dejar de rastrear archivo ya versionado
+git rm --cached archivo.txt
+echo "archivo.txt" &gt;&gt; .gitignore
+git commit -m "Dejar de rastrear archivo.txt"
+
+# Limpiar archivos ignorados del working directory
+git clean -fdX</code></pre>
+<blockquote class="aside aside-caution">
+Si un archivo ya está siendo rastreado por Git, agregarlo a `.gitignore` no lo eliminará del repositorio. Debes usar `git rm --cached` primero.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="ejemplo-practico-completo">
+    <h2>Ejemplo práctico completo</h2>
+    <div class="doc-content">
+<p>Vamos a crear un proyecto completo aplicando todos los conceptos aprendidos:</p>
+<ol class="steps">
+<ol>
+  <li>
+<p><strong>Crear proyecto y repositorio</strong></p>
+    <pre><code class="language-bash">mkdir mi-aplicacion-web
+cd mi-aplicacion-web
+git init
+git config user.name "Tu Nombre"
+git config user.email "tu@email.com"</code></pre>
+  </li>
+  <li>
+<p><strong>Crear estructura inicial</strong></p>
+    <pre><code class="language-bash">mkdir src css js
+touch index.html src/app.js css/styles.css
+echo "# Mi Aplicación Web" &gt; README.md</code></pre>
+  </li>
+  <li>
+<p><strong>Crear .gitignore</strong></p>
+    <pre><code class="language-bash">cat &gt; .gitignore &lt;&lt; EOF
+# Logs
+*.log
+logs/
+
+# Dependencias
+node_modules/
+
+# Archivos temporales
+*.tmp
+*.swp
+
+# Variables de entorno
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+EOF</code></pre>
+  </li>
+  <li>
+<p><strong>Agregar contenido inicial</strong></p>
+    <pre><code class="language-bash">cat &gt; index.html &lt;&lt; EOF
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Mi Aplicación&lt;/title&gt;
+    &lt;link rel="stylesheet" href="css/styles.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Hola Mundo&lt;/h1&gt;
+    &lt;script src="src/app.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+EOF
+
+echo "console.log('Aplicación iniciada');" &gt; src/app.js
+echo "body { font-family: Arial, sans-serif; }" &gt; css/styles.css</code></pre>
+  </li>
+  <li>
+<p><strong>Primer commit</strong></p>
+    <pre><code class="language-bash">git add .
+git status
+git commit -m "feat: estructura inicial del proyecto
+
+- Agregar HTML básico
+- Agregar CSS y JavaScript
+- Configurar .gitignore
+- Agregar README"</code></pre>
+  </li>
+  <li>
+<p><strong>Hacer más cambios</strong></p>
+    <pre><code class="language-bash">echo "&lt;p&gt;Párrafo agregado&lt;/p&gt;" &gt;&gt; index.html
+echo "/* Nuevo estilo */" &gt;&gt; css/styles.css
+
+git status
+git add index.html
+git status
+git diff --staged
+git commit -m "feat: agregar párrafo en página principal"</code></pre>
+  </li>
+  <li>
+<p><strong>Ver historial</strong></p>
+    <pre><code class="language-bash">git log --oneline
+git log --stat
+git show HEAD</code></pre>
+  </li>
+</ol>
+</ol>
+    </div>
+  </section>
+
+  <section id="comandos-de-ayuda-y-solucion-de-problemas">
+    <h2>Comandos de ayuda y solución de problemas</h2>
+    <div class="doc-content">
+<span class="hc-badge hc-badge-note">Comandos útiles</span>
+<pre><code class="language-bash"># Ver ayuda de cualquier comando
+git help add
+git add --help
+
+# Ver estado detallado
+git status -v
+
+# Ver qué cambios se perderían
+git diff HEAD
+
+# Deshacer cambios en working directory
+git checkout -- archivo.txt
+git checkout .  # Todos los archivos
+
+# Deshacer git add (quitar del staging)
+git reset HEAD archivo.txt
+git reset HEAD .  # Todos los archivos
+
+# Ver configuración actual
+git config --list
+
+# Ver repositorios remotos
+git remote -v
+
+# Verificar integridad del repositorio
+git fsck</code></pre>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2>Resumen</h2>
+    <div class="doc-content">
+<p>En este módulo has aprendido:</p>
+<span class="hc-badge hc-badge-tip">Fundamentos de Git</span>
+<ul>
+<li><i class="fa-solid fa-circle-check"></i> <strong>git init</strong>: Crear repositorios locales</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Estados de archivos</strong>: Working, Staging, Committed</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>git add</strong>: Agregar cambios al staging area</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>git commit</strong>: Confirmar cambios en el historial</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>git log</strong>: Consultar historial de commits</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>.gitignore</strong>: Ignorar archivos innecesarios</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Flujo básico</strong>: Modificar <i class="fa-solid fa-arrow-right"></i> Agregar <i class="fa-solid fa-arrow-right"></i> Confirmar</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Buenas prácticas</strong>: Commits descriptivos, estructura organizada</li>
+</ul>
+<span class="hc-badge hc-badge-note">Flujo de Trabajo Práctico</span>
+<ul>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Primer setup</strong>: <code>git init</code> <i class="fa-solid fa-arrow-right"></i> <code>git add .</code> <i class="fa-solid fa-arrow-right"></i> <code>git commit</code> <i class="fa-solid fa-arrow-right"></i> <code>git remote add</code> <i class="fa-solid fa-arrow-right"></i> <code>git push -u</code></li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Flujo diario</strong>: <code>git status</code> <i class="fa-solid fa-arrow-right"></i> <code>git add</code> <i class="fa-solid fa-arrow-right"></i> <code>git commit</code> <i class="fa-solid fa-arrow-right"></i> <code>git push</code></li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Nueva máquina</strong>: <code>git clone</code> <i class="fa-solid fa-arrow-right"></i> trabajar <i class="fa-solid fa-arrow-right"></i> <code>git add</code> <i class="fa-solid fa-arrow-right"></i> <code>git commit</code> <i class="fa-solid fa-arrow-right"></i> <code>git push</code></li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Sincronización</strong>: <code>git pull</code> antes de trabajar, <code>git push</code> al terminar</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Comandos esenciales</strong>: Los que usarás todos los días</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Problemas comunes</strong>: Soluciones a errores típicos</li>
+</ul>
+<blockquote class="aside aside-tip">
+**<i class="fa-solid fa-lightbulb"></i> Recuerda la regla de oro:** `git pull` <i class="fa-solid fa-arrow-right"></i> trabajar <i class="fa-solid fa-arrow-right"></i> `git add` <i class="fa-solid fa-arrow-right"></i> `git commit` <i class="fa-solid fa-arrow-right"></i> `git push`
+</blockquote>
+<p>En el próximo módulo aprenderemos a trabajar con repositorios remotos en GitHub, incluyendo cómo clonar, conectar repositorios locales con remotos, y sincronizar cambios.</p>
+    </div>
+  </section>

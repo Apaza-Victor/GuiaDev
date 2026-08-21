@@ -1,0 +1,448 @@
+<!-- 16. Spring Cloud - Java Spring (Frameworks) -->
+  <section id="16-1-introduccion-a-spring-cloud">
+    <h2><i class="fa-solid fa-cloud"></i> 16.1 Introducción a Spring Cloud</h2>
+    <div class="doc-content">
+<h3>¿Qué es Spring Cloud?</h3>
+<p><strong>Spring Cloud</strong> es un conjunto de herramientas para construir aplicaciones distribuidas y microservicios en la nube.</p>
+<h3>Componentes principales</h3>
+<table><thead><tr><th>Componente</th><th>Función</th></tr></thead><tbody><tr><td><strong>Config Server</strong></td><td>Configuración centralizada</td></tr><tr><td><strong>Eureka</strong></td><td>Service Discovery</td></tr><tr><td><strong>Gateway</strong></td><td>API Gateway</td></tr><tr><td><strong>Resilience4j</strong></td><td>Circuit Breaker</td></tr><tr><td><strong>Sleuth/Micrometer</strong></td><td>Distributed Tracing</td></tr></tbody></table>
+<h3>BOM de Spring Cloud</h3>
+<pre><code class="language-xml">&lt;dependencyManagement&gt;
+    &lt;dependencies&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-cloud-dependencies&lt;/artifactId&gt;
+            &lt;version&gt;2023.0.0&lt;/version&gt;
+            &lt;type&gt;pom&lt;/type&gt;
+            &lt;scope&gt;import&lt;/scope&gt;
+        &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+&lt;/dependencyManagement&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-2-config-server">
+    <h2><i class="fa-solid fa-gear"></i> 16.2 Config Server</h2>
+    <div class="doc-content">
+<h3>Servidor de configuración</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-config-server&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+<pre><code class="language-java">@SpringBootApplication
+@EnableConfigServer
+public class ConfigServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServerApplication.class, args);
+    }
+}</code></pre>
+<pre><code class="language-properties"># application.properties (Config Server)
+server.port=8888
+spring.cloud.config.server.git.uri=https://github.com/miorg/config-repo
+spring.cloud.config.server.git.default-label=main
+spring.cloud.config.server.git.search-paths=config</code></pre>
+<h3>Estructura del repositorio de configuración</h3>
+<pre><code class="language-text">config-repo/
+├── application.yml           # Configuración común
+├── usuario-service.yml       # Configuración específica
+├── usuario-service-dev.yml   # Perfil dev
+├── usuario-service-prod.yml  # Perfil prod
+└── pedido-service.yml</code></pre>
+<h3>Cliente de configuración</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-starter-config&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+<pre><code class="language-properties"># application.properties (Microservicio)
+spring.application.name=usuario-service
+spring.config.import=optional:configserver:http://localhost:8888
+spring.profiles.active=dev</code></pre>
+<h3>Refrescar configuración</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-actuator&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+<pre><code class="language-java">@RestController
+@RefreshScope  // Permite refrescar beans
+public class ConfigController {
+    
+    @Value("\${app.mensaje}")
+    private String mensaje;
+    
+    @GetMapping("/mensaje")
+    public String getMensaje() {
+        return mensaje;
+    }
+}
+
+// POST /actuator/refresh para recargar configuración</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-3-eureka-server">
+    <h2><i class="fa-solid fa-magnifying-glass"></i> 16.3 Eureka Server</h2>
+    <div class="doc-content">
+<h3>Servidor de descubrimiento</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-starter-netflix-eureka-server&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+<pre><code class="language-java">@SpringBootApplication
+@EnableEurekaServer
+public class EurekaServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(EurekaServerApplication.class, args);
+    }
+}</code></pre>
+<pre><code class="language-properties"># application.properties
+server.port=8761
+spring.application.name=eureka-server
+
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+
+eureka.server.enable-self-preservation=false
+eureka.server.eviction-interval-timer-in-ms=5000</code></pre>
+<h3>Cliente Eureka</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-starter-netflix-eureka-client&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+<pre><code class="language-properties"># application.properties (Microservicio)
+spring.application.name=usuario-service
+server.port=8081
+
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
+eureka.instance.prefer-ip-address=true
+eureka.instance.instance-id=\${spring.application.name}:\${random.uuid}</code></pre>
+<h3>Dashboard de Eureka</h3>
+<pre><code class="language-text"># Acceder a http://localhost:8761
+# Verás todos los servicios registrados con su estado</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-4-api-gateway">
+    <h2><i class="fa-solid fa-door-open"></i> 16.4 API Gateway</h2>
+    <div class="doc-content">
+<h3>Spring Cloud Gateway</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-starter-gateway&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-starter-netflix-eureka-client&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+<h3>Configuración de rutas</h3>
+<pre><code class="language-yaml"># application.yml
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: usuario-service
+          uri: lb://usuario-service
+          predicates:
+            - Path=/api/usuarios/**
+          filters:
+            - StripPrefix=1
+            
+        - id: producto-service
+          uri: lb://producto-service
+          predicates:
+            - Path=/api/productos/**
+          filters:
+            - StripPrefix=1
+            
+        - id: pedido-service
+          uri: lb://pedido-service
+          predicates:
+            - Path=/api/pedidos/**
+          filters:
+            - StripPrefix=1</code></pre>
+<h3>Filtros personalizados</h3>
+<pre><code class="language-java">@Component
+public class AuthFilter implements GlobalFilter, Ordered {
+    
+    @Override
+    public Mono&lt;Void&gt; filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        ServerHttpRequest request = exchange.getRequest();
+        
+        // Verificar token
+        if (!request.getHeaders().containsKey("Authorization")) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
+        
+        String token = request.getHeaders().getFirst("Authorization");
+        
+        if (!validarToken(token)) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
+        
+        return chain.filter(exchange);
+    }
+    
+    @Override
+    public int getOrder() {
+        return -1;  // Ejecutar primero
+    }
+}</code></pre>
+<h3>Rate Limiting</h3>
+<pre><code class="language-yaml">spring:
+  cloud:
+    gateway:
+      routes:
+        - id: usuario-service
+          uri: lb://usuario-service
+          predicates:
+            - Path=/api/usuarios/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "\#{@userKeyResolver}"</code></pre>
+<pre><code class="language-java">@Configuration
+public class RateLimiterConfig {
+    
+    @Bean
+    public KeyResolver userKeyResolver() {
+        return exchange -&gt; Mono.just(
+            exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
+        );
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-5-resilience4j">
+    <h2><i class="fa-solid fa-shield-halved"></i> 16.5 Resilience4j</h2>
+    <div class="doc-content">
+<h3>Dependencia</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-starter-circuitbreaker-resilience4j&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+<h3>Configuración completa</h3>
+<pre><code class="language-yaml"># application.yml
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+    instances:
+      productoService:
+        base-config: default
+        
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 1s
+        retry-exceptions:
+          - java.io.IOException
+          - java.net.SocketTimeoutException
+    instances:
+      productoService:
+        base-config: default
+        
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 3s
+        cancel-running-future: true
+    instances:
+      productoService:
+        base-config: default
+        
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: 25
+        max-wait-duration: 0
+    instances:
+      productoService:
+        base-config: default</code></pre>
+<h3>Uso en código</h3>
+<pre><code class="language-java">@Service
+@Slf4j
+public class ProductoService {
+    
+    private final ProductoClient productoClient;
+    
+    @CircuitBreaker(name = "productoService", fallbackMethod = "fallback")
+    @Retry(name = "productoService")
+    @Bulkhead(name = "productoService")
+    @TimeLimiter(name = "productoService")
+    public CompletableFuture&lt;List&lt;Producto&gt;&gt; listarProductos() {
+        return CompletableFuture.supplyAsync(productoClient::listar);
+    }
+    
+    public CompletableFuture&lt;List&lt;Producto&gt;&gt; fallback(Throwable t) {
+        log.error("Fallback activado: {}", t.getMessage());
+        return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-6-observabilidad">
+    <h2><i class="fa-solid fa-chart-column"></i> 16.6 Observabilidad</h2>
+    <div class="doc-content">
+<h3>Micrometer + Zipkin</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;io.micrometer&lt;/groupId&gt;
+    &lt;artifactId&gt;micrometer-tracing-bridge-brave&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;io.zipkin.reporter2&lt;/groupId&gt;
+    &lt;artifactId&gt;zipkin-reporter-brave&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+<pre><code class="language-properties"># application.properties
+management.tracing.sampling.probability=1.0
+management.zipkin.tracing.endpoint=http://localhost:9411/api/v2/spans</code></pre>
+<h3>Métricas con Prometheus</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;io.micrometer&lt;/groupId&gt;
+    &lt;artifactId&gt;micrometer-registry-prometheus&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+<pre><code class="language-properties"># application.properties
+management.endpoints.web.exposure.include=health,info,prometheus,metrics
+management.metrics.export.prometheus.enabled=true</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-7-arquitectura-completa">
+    <h2><i class="fa-solid fa-landmark"></i> 16.7 Arquitectura Completa</h2>
+    <div class="doc-content">
+<h3>Diagrama de arquitectura</h3>
+<pre><code class="language-text">                    ┌─────────────────┐
+                    │   Config Server │
+                    │    :8888        │
+                    └────────┬────────┘
+                             │
+┌──────────────┐    ┌────────┴────────┐    ┌──────────────┐
+│    Zipkin    │    │  Eureka Server  │    │  Prometheus  │
+│    :9411     │    │     :8761       │    │    :9090     │
+└──────────────┘    └────────┬────────┘    └──────────────┘
+                             │
+                    ┌────────┴────────┐
+                    │   API Gateway   │
+                    │     :8080       │
+                    └────────┬────────┘
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+┌───────┴───────┐   ┌───────┴───────┐   ┌───────┴───────┐
+│ Usuario Svc   │   │ Producto Svc  │   │  Pedido Svc   │
+│    :8081      │   │    :8082      │   │    :8083      │
+└───────┬───────┘   └───────┬───────┘   └───────┬───────┘
+        │                   │                   │
+┌───────┴───────┐   ┌───────┴───────┐   ┌───────┴───────┐
+│   MySQL       │   │   MongoDB     │   │  PostgreSQL   │
+└───────────────┘   └───────────────┘   └───────────────┘</code></pre>
+<h3>Docker Compose</h3>
+<pre><code class="language-yaml">version: '3.8'
+
+services:
+  config-server:
+    build: ./config-server
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=https://github.com/miorg/config
+      
+  eureka-server:
+    build: ./eureka-server
+    ports:
+      - "8761:8761"
+    depends_on:
+      - config-server
+      
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka-server
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      
+  usuario-service:
+    build: ./usuario-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - eureka-server
+      - mysql
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/usuarios
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      
+  mysql:
+    image: mysql:8
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=usuarios
+    volumes:
+      - mysql_data:/var/lib/mysql
+      
+  zipkin:
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+      
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+volumes:
+  mysql_data:</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="16-8-buenas-practicas">
+    <h2><i class="fa-solid fa-circle-check"></i> 16.8 Buenas Prácticas</h2>
+    <div class="doc-content">
+<h3>Checklist de microservicios</h3>
+<pre><code class="language-text">✅ Cada servicio tiene su propia base de datos
+✅ Comunicación asíncrona cuando sea posible
+✅ Circuit breakers en todas las llamadas externas
+✅ Configuración centralizada
+✅ Service discovery habilitado
+✅ API Gateway como punto de entrada único
+✅ Trazabilidad distribuida configurada
+✅ Health checks en todos los servicios
+✅ Métricas expuestas para monitoreo
+✅ Logs estructurados con correlation IDs</code></pre>
+<blockquote class="aside aside-tip">
+Empieza con un monolito bien estructurado. Migra a microservicios solo cuando tengas necesidades reales de escalado independiente o equipos separados.
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,557 @@
+<!-- 09. Hooks en React - React (Frameworks) -->
+  <section id="9-1-introduccion-a-los-hooks">
+    <h2><i class="fa-solid fa-anchor"></i> 9.1 Introducción a los Hooks</h2>
+    <div class="doc-content">
+<h3>¿Qué son los Hooks?</h3>
+<p>Los <strong>Hooks</strong> son funciones especiales de React que permiten usar estado y otras características de React en componentes funcionales.</p>
+<table><thead><tr><th>Hook</th><th>Propósito</th></tr></thead><tbody><tr><td><code>useState</code></td><td>Manejar estado local</td></tr><tr><td><code>useEffect</code></td><td>Efectos secundarios</td></tr><tr><td><code>useRef</code></td><td>Referencias a elementos DOM</td></tr><tr><td><code>useContext</code></td><td>Acceder a contexto</td></tr><tr><td><code>useMemo</code></td><td>Memorizar valores</td></tr><tr><td><code>useCallback</code></td><td>Memorizar funciones</td></tr><tr><td><code>useReducer</code></td><td>Estado complejo</td></tr></tbody></table>
+<h3>Historia de los Hooks</h3>
+<pre><code class="language-jsx">// ANTES de Hooks (componentes de clase)
+class Contador extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { count: 0 };
+  }
+  
+  render() {
+    return (
+      &lt;button onClick={() =&gt; this.setState({ count: this.state.count + 1 })}&gt;
+        Count: {this.state.count}
+      &lt;/button&gt;
+    );
+  }
+}
+
+// DESPUÉS de Hooks (componentes funcionales)
+
+
+function Contador() {
+  const [count, setCount] = useState(0);
+  
+  return (
+    &lt;button onClick={() =&gt; setCount(count + 1)}&gt;
+      Count: {count}
+    &lt;/button&gt;
+  );
+}</code></pre>
+<h3>Ventajas de los Hooks</h3>
+<ul>
+<li><strong>Código más simple</strong>: Menos boilerplate que clases</li>
+<li><strong>Reutilización</strong>: Crear hooks personalizados</li>
+<li><strong>Composición</strong>: Combinar múltiples hooks</li>
+<li><strong>Testing</strong>: Más fácil de probar</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-2-useeffect-efectos-secundarios">
+    <h2><i class="fa-solid fa-bolt"></i> 9.2 useEffect - Efectos secundarios</h2>
+    <div class="doc-content">
+<h3>¿Qué es useEffect?</h3>
+<p><code>useEffect</code> permite ejecutar código después del renderizado. Se usa para:</p>
+<ul>
+<li>Llamadas a APIs</li>
+<li>Suscripciones</li>
+<li>Manipulación del DOM</li>
+<li>Timers</li>
+</ul>
+<h3>Sintaxis básica</h3>
+<pre><code class="language-jsx">import { useEffect } from 'react';
+
+function MiComponente() {
+  useEffect(() =&gt; {
+    // Este código se ejecuta después del render
+    console.log("Componente renderizado");
+  });
+  
+  return &lt;div&gt;Hola&lt;/div&gt;;
+}</code></pre>
+<h3>Array de dependencias</h3>
+<pre><code class="language-jsx">import { useState, useEffect } from 'react';
+
+function Ejemplo() {
+  const [count, setCount] = useState(0);
+  const [nombre, setNombre] = useState("");
+  
+  // Se ejecuta en CADA render
+  useEffect(() =&gt; {
+    console.log("Cada render");
+  });
+  
+  // Se ejecuta solo al MONTAR (una vez)
+  useEffect(() =&gt; {
+    console.log("Solo al montar");
+  }, []);  // Array vacío
+  
+  // Se ejecuta cuando COUNT cambia
+  useEffect(() =&gt; {
+    console.log("Count cambió:", count);
+  }, [count]);  // Dependencia: count
+  
+  // Se ejecuta cuando COUNT o NOMBRE cambian
+  useEffect(() =&gt; {
+    console.log("Count o nombre cambió");
+  }, [count, nombre]);  // Múltiples dependencias
+  
+  return &lt;div&gt;...&lt;/div&gt;;
+}</code></pre>
+<h3>Resumen de dependencias</h3>
+<table><thead><tr><th>Dependencias</th><th>Cuándo se ejecuta</th></tr></thead><tbody><tr><td>Sin array</td><td>Cada render</td></tr><tr><td><code>[]</code></td><td>Solo al montar</td></tr><tr><td><code>[valor]</code></td><td>Al montar + cuando valor cambia</td></tr><tr><td><code>[a, b]</code></td><td>Al montar + cuando a o b cambian</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-3-useeffect-fetch-de-datos">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 9.3 useEffect - Fetch de datos</h2>
+    <div class="doc-content">
+<h3>Cargar datos de una API</h3>
+<pre><code class="language-jsx">import { useState, useEffect } from 'react';
+
+function ListaUsuarios() {
+  const [usuarios, setUsuarios] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() =&gt; {
+    // Función async dentro del useEffect
+    const fetchUsuarios = async () =&gt; {
+      try {
+        const response = await fetch('https://api.example.com/usuarios');
+        const data = await response.json();
+        setUsuarios(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setCargando(false);
+      }
+    };
+    
+    fetchUsuarios();
+  }, []);  // Solo al montar
+  
+  if (cargando) return &lt;p&gt;Cargando...&lt;/p&gt;;
+  if (error) return &lt;p&gt;Error: {error}&lt;/p&gt;;
+  
+  return (
+    &lt;ul&gt;
+      {usuarios.map(u =&gt; &lt;li key={u.id}&gt;{u.nombre}&lt;/li&gt;)}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>Fetch con parámetros</h3>
+<pre><code class="language-jsx">import { useState, useEffect } from 'react';
+
+function DetalleUsuario({ userId }) {
+  const [usuario, setUsuario] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  
+  useEffect(() =&gt; {
+    setCargando(true);
+    
+    fetch(\`https://api.example.com/usuarios/\${userId}\`)
+      .then(res =&gt; res.json())
+      .then(data =&gt; {
+        setUsuario(data);
+        setCargando(false);
+      });
+  }, [userId]);  // Se ejecuta cuando userId cambia
+  
+  if (cargando) return &lt;p&gt;Cargando...&lt;/p&gt;;
+  
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;{usuario.nombre}&lt;/h1&gt;
+      &lt;p&gt;{usuario.email}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-4-useeffect-cleanup-limpieza">
+    <h2><i class="fa-solid fa-broom"></i> 9.4 useEffect - Cleanup (limpieza)</h2>
+    <div class="doc-content">
+<h3>¿Qué es el cleanup?</h3>
+<p>El <strong>cleanup</strong> es una función que se ejecuta antes de que el efecto se vuelva a ejecutar o cuando el componente se desmonta. Es útil para:</p>
+<ul>
+<li>Cancelar suscripciones</li>
+<li>Limpiar timers</li>
+<li>Cancelar peticiones</li>
+</ul>
+<pre><code class="language-jsx">useEffect(() =&gt; {
+  // Código del efecto
+  
+  return () =&gt; {
+    // Código de limpieza (cleanup)
+  };
+}, [dependencias]);</code></pre>
+<h3>Ejemplo: Timer</h3>
+<pre><code class="language-jsx">import { useState, useEffect } from 'react';
+
+function Cronometro() {
+  const [segundos, setSegundos] = useState(0);
+  
+  useEffect(() =&gt; {
+    // Crear el intervalo
+    const intervalo = setInterval(() =&gt; {
+      setSegundos(prev =&gt; prev + 1);
+    }, 1000);
+    
+    // Cleanup: limpiar el intervalo
+    return () =&gt; {
+      clearInterval(intervalo);
+    };
+  }, []);  // Solo al montar
+  
+  return &lt;p&gt;Segundos: {segundos}&lt;/p&gt;;
+}</code></pre>
+<h3>Ejemplo: Event listener</h3>
+<pre><code class="language-jsx">import { useState, useEffect } from 'react';
+
+function TamañoVentana() {
+  const [tamaño, setTamaño] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
+  
+  useEffect(() =&gt; {
+    const handleResize = () =&gt; {
+      setTamaño({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+    
+    // Agregar listener
+    window.addEventListener('resize', handleResize);
+    
+    // Cleanup: remover listener
+    return () =&gt; {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+  
+  return (
+    &lt;p&gt;
+      Ventana: {tamaño.width} x {tamaño.height}
+    &lt;/p&gt;
+  );
+}</code></pre>
+<h3>Ejemplo: Cancelar fetch</h3>
+<pre><code class="language-jsx">import { useState, useEffect } from 'react';
+
+function BuscadorUsuarios({ query }) {
+  const [resultados, setResultados] = useState([]);
+  
+  useEffect(() =&gt; {
+    // AbortController para cancelar fetch
+    const controller = new AbortController();
+    
+    fetch(\`/api/buscar?q=\${query}\`, {
+      signal: controller.signal
+    })
+      .then(res =&gt; res.json())
+      .then(data =&gt; setResultados(data))
+      .catch(err =&gt; {
+        if (err.name !== 'AbortError') {
+          console.error(err);
+        }
+      });
+    
+    // Cleanup: cancelar fetch si query cambia
+    return () =&gt; {
+      controller.abort();
+    };
+  }, [query]);
+  
+  return (
+    &lt;ul&gt;
+      {resultados.map(r =&gt; &lt;li key={r.id}&gt;{r.nombre}&lt;/li&gt;)}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-tip">
+Siempre limpia timers, listeners y suscripciones en el cleanup para evitar memory leaks.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-5-useref-referencias">
+    <h2><i class="fa-solid fa-thumbtack"></i> 9.5 useRef - Referencias</h2>
+    <div class="doc-content">
+<h3>¿Qué es useRef?</h3>
+<p><code>useRef</code> crea una referencia mutable que persiste durante toda la vida del componente. Se usa para:</p>
+<ul>
+<li>Acceder a elementos del DOM</li>
+<li>Guardar valores que no causan re-render</li>
+<li>Mantener referencias a timers</li>
+</ul>
+<pre><code class="language-jsx">import { useRef } from 'react';
+
+function Ejemplo() {
+  // Crear referencia
+  const miRef = useRef(valorInicial);
+  
+  // Acceder al valor
+  console.log(miRef.current);
+  
+  // Modificar el valor (no causa re-render)
+  miRef.current = nuevoValor;
+}</code></pre>
+<h3>Acceder a elementos DOM</h3>
+<pre><code class="language-jsx">import { useRef } from 'react';
+
+function FormularioConFoco() {
+  const inputRef = useRef(null);
+  
+  const enfocarInput = () =&gt; {
+    // Acceder al elemento DOM
+    inputRef.current.focus();
+  };
+  
+  return (
+    &lt;div&gt;
+      &lt;input ref={inputRef} type="text" /&gt;
+      &lt;button onClick={enfocarInput}&gt;Enfocar&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Guardar valores sin re-render</h3>
+<pre><code class="language-jsx">import { useState, useRef, useEffect } from 'react';
+
+function Contador() {
+  const [count, setCount] = useState(0);
+  const renderCount = useRef(0);
+  
+  useEffect(() =&gt; {
+    // Incrementar sin causar re-render
+    renderCount.current++;
+  });
+  
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Count: {count}&lt;/p&gt;
+      &lt;p&gt;Renders: {renderCount.current}&lt;/p&gt;
+      &lt;button onClick={() =&gt; setCount(count + 1)}&gt;+1&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Guardar valor anterior</h3>
+<pre><code class="language-jsx">import { useState, useRef, useEffect } from 'react';
+
+function usePrevious(value) {
+  const ref = useRef();
+  
+  useEffect(() =&gt; {
+    ref.current = value;
+  }, [value]);
+  
+  return ref.current;
+}
+
+function Contador() {
+  const [count, setCount] = useState(0);
+  const prevCount = usePrevious(count);
+  
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Actual: {count}&lt;/p&gt;
+      &lt;p&gt;Anterior: {prevCount}&lt;/p&gt;
+      &lt;button onClick={() =&gt; setCount(count + 1)}&gt;+1&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-6-reglas-de-los-hooks">
+    <h2><i class="fa-solid fa-ruler"></i> 9.6 Reglas de los Hooks</h2>
+    <div class="doc-content">
+<h3>Las 2 reglas principales</h3>
+<table><thead><tr><th>Regla</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Solo en el nivel superior</strong></td><td>No usar hooks dentro de loops, condiciones o funciones anidadas</td></tr><tr><td><strong>Solo en componentes React</strong></td><td>No usar hooks en funciones JavaScript normales</td></tr></tbody></table>
+<h3>Ejemplos de violaciones</h3>
+<pre><code class="language-jsx">// ❌ MAL: Hook dentro de condición
+function Componente({ mostrar }) {
+  if (mostrar) {
+    const [valor, setValor] = useState(0);  // Error
+  }
+}
+
+// ❌ MAL: Hook dentro de loop
+function Componente({ items }) {
+  items.forEach(item =&gt; {
+    useEffect(() =&gt; {});  // Error
+  });
+}
+
+// ❌ MAL: Hook en función normal
+function calcular() {
+  const [valor, setValor] = useState(0);  // Error
+  return valor * 2;
+}</code></pre>
+<h3>Forma correcta</h3>
+<pre><code class="language-jsx">// ✅ BIEN: Hooks al inicio del componente
+function Componente({ mostrar }) {
+  const [valor, setValor] = useState(0);
+  const [otro, setOtro] = useState("");
+  
+  useEffect(() =&gt; {
+    // Efecto
+  }, []);
+  
+  // La condición va DESPUÉS de los hooks
+  if (!mostrar) {
+    return null;
+  }
+  
+  return &lt;div&gt;{valor}&lt;/div&gt;;
+}
+
+// ✅ BIEN: Hook personalizado (empieza con "use")
+function useContador(inicial) {
+  const [count, setCount] = useState(inicial);
+  const incrementar = () =&gt; setCount(c =&gt; c + 1);
+  return { count, incrementar };
+}</code></pre>
+<h3>Plugin ESLint</h3>
+<pre><code class="language-bash">// Instalar plugin de ESLint para hooks
+npm install eslint-plugin-react-hooks --save-dev
+
+// .eslintrc.js
+{
+  "plugins": ["react-hooks"],
+  "rules": {
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  }
+}</code></pre>
+<blockquote class="aside aside-caution">
+El plugin `eslint-plugin-react-hooks` detecta automáticamente violaciones de las reglas de hooks. Es muy recomendable usarlo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-7-hooks-personalizados">
+    <h2><i class="fa-solid fa-wrench"></i> 9.7 Hooks personalizados</h2>
+    <div class="doc-content">
+<h3>¿Qué son los hooks personalizados?</h3>
+<p>Los <strong>hooks personalizados</strong> son funciones que empiezan con <code>use</code> y pueden usar otros hooks. Permiten reutilizar lógica entre componentes.</p>
+<h3>Ejemplo: useLocalStorage</h3>
+<pre><code class="language-jsx">import { useState, useEffect } from 'react';
+
+function useLocalStorage(key, initialValue) {
+  // Obtener valor inicial de localStorage
+  const [value, setValue] = useState(() =&gt; {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : initialValue;
+  });
+  
+  // Guardar en localStorage cuando cambie
+  useEffect(() =&gt; {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+  
+  return [value, setValue];
+}
+
+// Uso
+function App() {
+  const [nombre, setNombre] = useLocalStorage('nombre', '');
+  
+  return (
+    &lt;input
+      value={nombre}
+      onChange={e =&gt; setNombre(e.target.value)}
+      placeholder="Tu nombre se guardará"
+    /&gt;
+  );
+}</code></pre>
+<h3>Ejemplo: useFetch</h3>
+<pre><code class="language-jsx">import { useState, useEffect } from 'react';
+
+function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() =&gt; {
+    setLoading(true);
+    
+    fetch(url)
+      .then(res =&gt; res.json())
+      .then(data =&gt; {
+        setData(data);
+        setLoading(false);
+      })
+      .catch(err =&gt; {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [url]);
+  
+  return { data, loading, error };
+}
+
+// Uso
+function Usuarios() {
+  const { data, loading, error } = useFetch('/api/usuarios');
+  
+  if (loading) return &lt;p&gt;Cargando...&lt;/p&gt;;
+  if (error) return &lt;p&gt;Error: {error}&lt;/p&gt;;
+  
+  return (
+    &lt;ul&gt;
+      {data.map(u =&gt; &lt;li key={u.id}&gt;{u.nombre}&lt;/li&gt;)}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>Ejemplo: useToggle</h3>
+<pre><code class="language-jsx">import { useState, useCallback } from 'react';
+
+function useToggle(initialValue = false) {
+  const [value, setValue] = useState(initialValue);
+  
+  const toggle = useCallback(() =&gt; {
+    setValue(v =&gt; !v);
+  }, []);
+  
+  return [value, toggle];
+}
+
+// Uso
+function Modal() {
+  const [isOpen, toggleOpen] = useToggle(false);
+  
+  return (
+    &lt;div&gt;
+      &lt;button onClick={toggleOpen}&gt;
+        {isOpen ? 'Cerrar' : 'Abrir'}
+      &lt;/button&gt;
+      {isOpen &amp;&amp; &lt;div className="modal"&gt;Contenido&lt;/div&gt;}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los **Hooks** permiten usar estado en componentes funcionales
+- **useEffect** ejecuta código después del render
+- El **array de dependencias** controla cuándo se ejecuta el efecto
+- El **cleanup** limpia recursos al desmontar
+- **useRef** crea referencias que no causan re-render
+- **Reglas**: hooks al inicio, solo en componentes React
+- Los **hooks personalizados** reutilizan lógica
+</blockquote>
+    </div>
+  </section>

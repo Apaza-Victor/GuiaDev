@@ -1,0 +1,202 @@
+<!-- 02. Instalación y configuración básica - Ziggy (Utilidades) -->
+  <section id="instalacion-con-npm-o-yarn">
+    <h2>Instalación con NPM o Yarn</h2>
+    <div class="doc-content">
+<p>Ziggy se puede instalar fácilmente en tu proyecto Laravel utilizando NPM o Yarn. Primero, asegúrate de tener un proyecto Laravel con Node.js configurado.</p>
+  <h4 class="tab-label">NPM</h4>
+    <pre><code class="language-bash">    # Usando NPM
+    npm install ziggy-js
+    </code></pre>
+  <h4 class="tab-label">Yarn</h4>
+    <pre><code class="language-bash">    # Usando Yarn
+    yarn add ziggy-js
+    </code></pre>
+<blockquote class="aside aside-tip">
+Ziggy requiere Laravel 5.6 o superior y Node.js 12 o superior para funcionar correctamente.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="publicacion-del-archivo-ziggy-php">
+    <h2>Publicación del archivo ziggy.php</h2>
+    <div class="doc-content">
+<p>Después de instalar el paquete, necesitas publicar el archivo de configuración de Ziggy. Este archivo te permitirá personalizar qué rutas se exponen a JavaScript y otras opciones.</p>
+<pre><code class="language-bash">php artisan ziggy:generate
+</code></pre>
+<p>Este comando creará un archivo <code>ziggy.php</code> en el directorio <code>config</code> de tu proyecto Laravel. El archivo de configuración tiene esta estructura básica:</p>
+<pre><code class="language-php">&lt;?php
+// config/ziggy.php
+
+return [
+    // Rutas que se expondrán a JavaScript
+    'groups' =&gt; [
+        'web' =&gt; [
+            'fallback' =&gt; true,
+            'only' =&gt; [],
+            'except' =&gt; [],
+        ],
+    ],
+    
+    // Dominio base para las rutas
+    'url' =&gt; env('APP_URL'),
+    
+    // Prefijo para las rutas
+    'prefix' =&gt; null,
+    
+    // Dominio para las cookies
+    'domain' =&gt; null,
+];
+</code></pre>
+    </div>
+  </section>
+
+  <section id="agregar-ziggy-a-vite-config-js-o-webpack-mix-js">
+    <h2>Agregar Ziggy a vite.config.js o webpack.mix.js</h2>
+    <div class="doc-content">
+<p>Para integrar Ziggy en tu proceso de compilación de assets, necesitas configurar tu herramienta de compilación. A continuación se muestran ejemplos para Vite y Laravel Mix.</p>
+  <h4 class="tab-label">Vite (Laravel 9+)</h4>
+<p>Para proyectos Laravel modernos que utilizan Vite:</p>
+    <pre><code class="language-js">    // vite.config.js
+    import { defineConfig } from 'vite';
+    import laravel from 'laravel-vite-plugin';
+    
+    export default defineConfig({
+        plugins: [
+            laravel({
+                input: ['resources/css/app.css', 'resources/js/app.js'],
+                refresh: true,
+            }),
+        ],
+        resolve: {
+            alias: {
+                // Asegura que Ziggy esté disponible globalmente
+                'ziggy-js': '/vendor/tightenco/ziggy/dist/index.js',
+            },
+        },
+    });
+    </code></pre>
+<p>Luego, en tu archivo JavaScript principal:</p>
+    <pre><code class="language-js">    // resources/js/app.js
+    import { Ziggy } from './ziggy';
+    import route from 'ziggy-js';
+    
+    // Hacer que route esté disponible globalmente
+    window.route = route;
+    </code></pre>
+  <h4 class="tab-label">Laravel Mix (Laravel 8 y anteriores)</h4>
+<p>Para proyectos que utilizan Laravel Mix:</p>
+    <pre><code class="language-js">    // webpack.mix.js
+    const mix = require('laravel-mix');
+    
+    mix.js('resources/js/app.js', 'public/js')
+       .postCss('resources/css/app.css', 'public/css', [
+           //
+       ])
+       .webpackConfig({
+           resolve: {
+               alias: {
+                   'ziggy-js': path.resolve('vendor/tightenco/ziggy/dist/index.js'),
+               }
+           }
+       });
+    </code></pre>
+<p>Y en tu archivo JavaScript principal:</p>
+    <pre><code class="language-js">    // resources/js/app.js
+    import { Ziggy } from './ziggy';
+    import route from 'ziggy-js';
+    
+    window.route = route;
+    </code></pre>
+    </div>
+  </section>
+
+  <section id="incluir-ziggy-en-la-vista-blade-principal">
+    <h2>Incluir Ziggy en la vista Blade principal</h2>
+    <div class="doc-content">
+<p>Para que Ziggy funcione correctamente, necesitas incluir el archivo de rutas generado en tu vista Blade principal. Hay varias formas de hacerlo:</p>
+  <h4 class="tab-label">Usando la directiva @routes</h4>
+<p>La forma más sencilla es usar la directiva <code>@routes</code> en tu plantilla Blade principal:</p>
+    <pre><code class="language-html">    &lt;!-- resources/views/app.blade.php --&gt;
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;Mi aplicación Laravel&lt;/title&gt;
+        @routes &lt;!-- Esto inyecta las rutas de Ziggy --&gt;
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div id="app"&gt;&lt;!-- Contenido de la aplicación --&gt;&lt;/div&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;
+    </code></pre>
+  <h4 class="tab-label">Generando un archivo ziggy.js</h4>
+<p>También puedes generar un archivo JavaScript con las rutas:</p>
+    <pre><code class="language-bash">    php artisan ziggy:generate resources/js/ziggy.js
+    </code></pre>
+<p>Y luego importarlo en tu aplicación:</p>
+    <pre><code class="language-js">    // resources/js/app.js
+    import { Ziggy } from './ziggy';
+    import route from 'ziggy-js';
+    
+    window.route = route;
+    </code></pre>
+  <h4 class="tab-label">Con Inertia.js</h4>
+<p>Si estás usando Inertia.js, puedes incluir Ziggy como una prop compartida:</p>
+    <pre><code class="language-php">    // app/Http/Middleware/HandleInertiaRequests.php
+    public function share(Request $request)
+    {
+        return array_merge(parent::share($request), [
+            'ziggy' =&gt; function () use ($request) {
+                return array_merge((new Ziggy)-&gt;toArray(), [
+                    'location' =&gt; $request-&gt;url(),
+                ]);
+            },
+        ]);
+    }
+    </code></pre>
+<p>Y en tu aplicación JavaScript:</p>
+    <pre><code class="language-js">    // resources/js/app.js
+    import { createInertiaApp } from '@inertiajs/inertia-vue3';
+    import route from 'ziggy-js';
+    
+    createInertiaApp({
+        // ...
+        setup({ el, app, props, plugin }) {
+            // Hacer que route esté disponible globalmente
+            window.route = (name, params, absolute) =&gt; {
+                return route(name, params, absolute, props.initialPage.props.ziggy);
+            };
+            
+            // ...
+        },
+    });
+    </code></pre>
+    </div>
+  </section>
+
+  <section id="verificacion-de-la-instalacion">
+    <h2>Verificación de la instalación</h2>
+    <div class="doc-content">
+<p>Para verificar que Ziggy se ha instalado correctamente, puedes abrir la consola del navegador y probar la función <code>route()</code>:</p>
+<pre><code class="language-js">// Debería devolver la URL para la ruta 'home'
+console.log(route('home'));
+
+// Debería mostrar todas las rutas disponibles
+console.log(route().all());
+</code></pre>
+<blockquote class="aside aside-caution">
+Si recibes un error de que `route is not defined`, asegúrate de que la directiva <code>@routes</code> esté incluida en tu vista Blade antes de cargar tus scripts JavaScript, o que estás importando correctamente el archivo ziggy.js generado.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="resumen-de-instalacion">
+    <h2>Resumen de instalación</h2>
+    <div class="doc-content">
+<span class="hc-badge">1</span> Instalar el paquete con NPM o Yarn
+<span class="hc-badge">2</span> Publicar el archivo de configuración con `php artisan ziggy:generate`
+<span class="hc-badge">3</span> Configurar tu herramienta de compilación (Vite o Laravel Mix)
+<span class="hc-badge">4</span> Incluir Ziggy en tu vista Blade principal
+<span class="hc-badge">5</span> Verificar la instalación en la consola del navegador
+    </div>
+  </section>

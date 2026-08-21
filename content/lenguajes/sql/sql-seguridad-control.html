@@ -1,0 +1,381 @@
+<!-- 6. Seguridad y Control de Accesos (DCL) - SQL (Lenguajes de Programación) -->
+  <section id="6-1-crear-usuarios-create-user">
+    <h2>6.1. Crear usuarios (CREATE USER)</h2>
+    <div class="doc-content">
+<p>La creación de usuarios es el primer paso para establecer un sistema de control de acceso. Cada usuario tendrá sus propias credenciales y permisos específicos.</p>
+  <h4 class="tab-label">MySQL</h4>
+    <pre><code class="language-sql">    -- Sintaxis básica
+    CREATE USER 'nombre_usuario'@'host' IDENTIFIED BY 'contraseña';
+    
+    -- Ejemplos
+    -- Crear usuario que puede conectarse desde cualquier host
+    CREATE USER 'usuario1'@'%' IDENTIFIED BY 'password123';
+    
+    -- Crear usuario que solo puede conectarse desde localhost
+    CREATE USER 'usuario2'@'localhost' IDENTIFIED BY 'password456';
+    
+    -- Crear usuario con política de contraseña
+    CREATE USER 'usuario3'@'%' IDENTIFIED BY 'password789'
+    PASSWORD EXPIRE INTERVAL 90 DAY
+    FAILED_LOGIN_ATTEMPTS 3
+    PASSWORD HISTORY 5;
+    </code></pre>
+  <h4 class="tab-label">Oracle</h4>
+    <pre><code class="language-sql">    -- Sintaxis básica
+    CREATE USER nombre_usuario IDENTIFIED BY contraseña
+    [DEFAULT TABLESPACE tablespace]
+    [TEMPORARY TABLESPACE tablespace]
+    [QUOTA {size | UNLIMITED} ON tablespace]
+    [PROFILE perfil]
+    [CONTAINER = {CURRENT | ALL}];
+    
+    -- Ejemplos
+    -- Crear usuario básico
+    CREATE USER usuario1 IDENTIFIED BY password123;
+    
+    -- Crear usuario con tablespace y cuota
+    CREATE USER usuario2 IDENTIFIED BY password456
+    DEFAULT TABLESPACE users
+    TEMPORARY TABLESPACE temp
+    QUOTA 100M ON users;
+    
+    -- Crear usuario con perfil y cuenta bloqueada
+    CREATE USER usuario3 IDENTIFIED BY password789
+    PROFILE app_user
+    ACCOUNT LOCK;
+    </code></pre>
+<blockquote class="aside aside-tip">
+<strong>Buenas prácticas de seguridad:</strong>
+  <ul>
+    <li>Utiliza contraseñas fuertes y cámbialas regularmente.</li>
+    <li>Limita el acceso por host cuando sea posible.</li>
+    <li>Configura políticas de contraseñas (expiración, intentos fallidos, etc.).</li>
+    <li>Audita regularmente las cuentas de usuario.</li>
+  </ul>
+</blockquote>
+<h3>Modificar usuarios</h3>
+  <h4 class="tab-label">MySQL</h4>
+    <pre><code class="language-sql">    -- Cambiar contraseña
+    ALTER USER 'usuario1'@'%' IDENTIFIED BY 'nueva_contraseña';
+    
+    -- Expirar contraseña
+    ALTER USER 'usuario1'@'%' PASSWORD EXPIRE;
+    
+    -- Bloquear cuenta
+    ALTER USER 'usuario1'@'%' ACCOUNT LOCK;
+    
+    -- Desbloquear cuenta
+    ALTER USER 'usuario1'@'%' ACCOUNT UNLOCK;
+    </code></pre>
+  <h4 class="tab-label">Oracle</h4>
+    <pre><code class="language-sql">    -- Cambiar contraseña
+    ALTER USER usuario1 IDENTIFIED BY nueva_contraseña;
+    
+    -- Cambiar tablespace por defecto
+    ALTER USER usuario1 DEFAULT TABLESPACE users;
+    
+    -- Modificar cuota
+    ALTER USER usuario1 QUOTA UNLIMITED ON users;
+    
+    -- Bloquear cuenta
+    ALTER USER usuario1 ACCOUNT LOCK;
+    
+    -- Desbloquear cuenta
+    ALTER USER usuario1 ACCOUNT UNLOCK;
+    </code></pre>
+<h3>Eliminar usuarios</h3>
+  <h4 class="tab-label">MySQL</h4>
+    <pre><code class="language-sql">    DROP USER 'usuario1'@'%';
+    </code></pre>
+  <h4 class="tab-label">Oracle</h4>
+    <pre><code class="language-sql">    -- Eliminar usuario
+    DROP USER usuario1;
+    
+    -- Eliminar usuario y todos sus objetos
+    DROP USER usuario1 CASCADE;
+    </code></pre>
+    </div>
+  </section>
+
+  <section id="6-2-conceder-permisos-grant">
+    <h2>6.2. Conceder permisos (GRANT)</h2>
+    <div class="doc-content">
+<p>El comando GRANT permite asignar privilegios específicos a usuarios o roles sobre objetos de la base de datos.</p>
+  <h4 class="tab-label">MySQL</h4>
+    <pre><code class="language-sql">    -- Sintaxis básica
+    GRANT tipo_privilegio [(columnas)] ON [objeto] TO 'usuario'@'host' [WITH GRANT OPTION];
+    
+    -- Ejemplos
+    -- Conceder todos los privilegios en todas las tablas de una base de datos
+    GRANT ALL PRIVILEGES ON base_datos.* TO 'usuario1'@'%';
+    
+    -- Conceder privilegios específicos en una tabla
+    GRANT SELECT, INSERT, UPDATE ON base_datos.tabla1 TO 'usuario2'@'localhost';
+    
+    -- Conceder privilegios a nivel de columna
+    GRANT SELECT (id, nombre), UPDATE (nombre) ON base_datos.empleados TO 'usuario3'@'%';
+    
+    -- Conceder privilegios con opción de concesión (permite al usuario conceder estos privilegios a otros)
+    GRANT SELECT ON base_datos.productos TO 'usuario4'@'%' WITH GRANT OPTION;
+    
+    -- Conceder privilegios globales (a nivel de servidor)
+    GRANT CREATE USER ON *.* TO 'admin'@'localhost' WITH GRANT OPTION;
+    </code></pre>
+  <h4 class="tab-label">Oracle</h4>
+    <pre><code class="language-sql">    -- Sintaxis básica
+    GRANT privilegio [, privilegio...] 
+    ON objeto
+    TO {usuario | rol | PUBLIC} 
+    [WITH ADMIN OPTION];
+    
+    -- Ejemplos
+    -- Conceder privilegios en una tabla
+    GRANT SELECT, INSERT, UPDATE ON empleados TO usuario1;
+    
+    -- Conceder privilegios a nivel de columna
+    GRANT SELECT (id, nombre), UPDATE (nombre) ON empleados TO usuario2;
+    
+    -- Conceder privilegios con opción administrativa
+    GRANT SELECT ON productos TO usuario3 WITH ADMIN OPTION;
+    
+    -- Conceder privilegios de sistema
+    GRANT CREATE SESSION, CREATE TABLE TO usuario4;
+    
+    -- Conceder todos los privilegios
+    GRANT ALL PRIVILEGES ON ventas TO usuario5;
+    
+    -- Conceder privilegios a todos los usuarios
+    GRANT SELECT ON informes_publicos TO PUBLIC;
+    </code></pre>
+<h3>Tipos de privilegios comunes</h3>
+<h4>Privilegios a nivel de tabla</h4>
+<ul>
+<li><code>SELECT</code>: Permite leer datos</li>
+<li><code>INSERT</code>: Permite insertar datos</li>
+<li><code>UPDATE</code>: Permite modificar datos</li>
+<li><code>DELETE</code>: Permite eliminar datos</li>
+<li><code>REFERENCES</code>: Permite crear claves foráneas</li>
+<li><code>ALTER</code>: Permite modificar la estructura de la tabla</li>
+<li><code>INDEX</code>: Permite crear índices</li>
+<li><code>ALL PRIVILEGES</code>: Concede todos los privilegios</li>
+</ul>
+<h4>Privilegios a nivel de sistema (varían según el motor)</h4>
+<ul>
+<li><code>CREATE USER</code>: Permite crear usuarios</li>
+<li><code>CREATE TABLE</code>: Permite crear tablas</li>
+<li><code>CREATE VIEW</code>: Permite crear vistas</li>
+<li><code>CREATE PROCEDURE</code>: Permite crear procedimientos</li>
+<li><code>GRANT OPTION</code>: Permite conceder privilegios a otros usuarios</li>
+</ul>
+<blockquote class="aside aside-note">
+<strong>Nota:</strong> Los privilegios disponibles y su sintaxis exacta pueden variar entre diferentes motores de bases de datos. Consulta la documentación específica de tu motor para obtener la lista completa.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="6-3-revocar-permisos-revoke">
+    <h2>6.3. Revocar permisos (REVOKE)</h2>
+    <div class="doc-content">
+<p>El comando REVOKE permite quitar privilegios previamente concedidos a usuarios o roles.</p>
+  <h4 class="tab-label">MySQL</h4>
+    <pre><code class="language-sql">    -- Sintaxis básica
+    REVOKE tipo_privilegio [(columnas)] ON [objeto] FROM 'usuario'@'host';
+    
+    -- Ejemplos
+    -- Revocar todos los privilegios en todas las tablas de una base de datos
+    REVOKE ALL PRIVILEGES ON base_datos.* FROM 'usuario1'@'%';
+    
+    -- Revocar privilegios específicos en una tabla
+    REVOKE INSERT, UPDATE ON base_datos.tabla1 FROM 'usuario2'@'localhost';
+    
+    -- Revocar privilegios a nivel de columna
+    REVOKE UPDATE (nombre) ON base_datos.empleados FROM 'usuario3'@'%';
+    
+    -- Revocar privilegios globales
+    REVOKE CREATE USER ON *.* FROM 'admin'@'localhost';
+    </code></pre>
+  <h4 class="tab-label">Oracle</h4>
+    <pre><code class="language-sql">    -- Sintaxis básica
+    REVOKE privilegio [, privilegio...] 
+    ON objeto
+    FROM {usuario | rol | PUBLIC};
+    
+    -- Ejemplos
+    -- Revocar privilegios en una tabla
+    REVOKE INSERT, UPDATE ON empleados FROM usuario1;
+    
+    -- Revocar todos los privilegios en una tabla
+    REVOKE ALL PRIVILEGES ON ventas FROM usuario2;
+    
+    -- Revocar privilegios de sistema
+    REVOKE CREATE TABLE FROM usuario3;
+    
+    -- Revocar privilegios de todos los usuarios
+    REVOKE SELECT ON informes_publicos FROM PUBLIC;
+    </code></pre>
+    </div>
+  </section>
+
+  <section id="6-4-roles-y-gestion-de-privilegios">
+    <h2>6.4. Roles y gestión de privilegios</h2>
+    <div class="doc-content">
+<p>Los roles son colecciones de privilegios que pueden asignarse a usuarios, facilitando la administración de permisos.</p>
+  <h4 class="tab-label">MySQL</h4>
+    <pre><code class="language-sql">    -- Crear un rol (MySQL 8.0+)
+    CREATE ROLE 'rol_ventas';
+    
+    -- Asignar privilegios al rol
+    GRANT SELECT, INSERT, UPDATE ON ventas.* TO 'rol_ventas';
+    GRANT SELECT ON reportes.* TO 'rol_ventas';
+    
+    -- Asignar rol a usuarios
+    GRANT 'rol_ventas' TO 'usuario1'@'%', 'usuario2'@'%';
+    
+    -- Activar rol para la sesión actual
+    SET ROLE 'rol_ventas';
+    
+    -- Activar todos los roles asignados
+    SET ROLE ALL;
+    
+    -- Configurar rol por defecto
+    SET DEFAULT ROLE 'rol_ventas' TO 'usuario1'@'%';
+    
+    -- Revocar rol de un usuario
+    REVOKE 'rol_ventas' FROM 'usuario1'@'%';
+    
+    -- Eliminar un rol
+    DROP ROLE 'rol_ventas';
+    </code></pre>
+  <h4 class="tab-label">Oracle</h4>
+    <pre><code class="language-sql">    -- Crear un rol
+    CREATE ROLE rol_ventas;
+    
+    -- Asignar privilegios al rol
+    GRANT SELECT, INSERT, UPDATE ON ventas TO rol_ventas;
+    GRANT SELECT ON reportes TO rol_ventas;
+    
+    -- Asignar rol a usuarios
+    GRANT rol_ventas TO usuario1, usuario2;
+    
+    -- Crear rol con contraseña (rol protegido)
+    CREATE ROLE rol_admin IDENTIFIED BY password123;
+    
+    -- Habilitar un rol en la sesión actual
+    SET ROLE rol_ventas;
+    
+    -- Habilitar un rol protegido
+    SET ROLE rol_admin IDENTIFIED BY password123;
+    
+    -- Habilitar todos los roles
+    SET ROLE ALL;
+    
+    -- Revocar rol de un usuario
+    REVOKE rol_ventas FROM usuario1;
+    
+    -- Eliminar un rol
+    DROP ROLE rol_ventas;
+    </code></pre>
+<h3>Jerarquía de roles (Oracle)</h3>
+<p>Oracle permite crear jerarquías de roles, donde un rol puede contener otros roles.</p>
+<pre><code class="language-sql">-- Crear roles
+CREATE ROLE rol_lectura;
+CREATE ROLE rol_escritura;
+CREATE ROLE rol_administrador;
+
+-- Asignar privilegios a roles básicos
+GRANT SELECT ON schema.* TO rol_lectura;
+GRANT INSERT, UPDATE, DELETE ON schema.* TO rol_escritura;
+
+-- Crear jerarquía de roles
+GRANT rol_lectura TO rol_escritura;
+GRANT rol_escritura TO rol_administrador;
+GRANT CREATE TABLE, DROP ANY TABLE TO rol_administrador;
+
+-- Asignar rol superior a un usuario
+GRANT rol_administrador TO usuario_jefe;
+</code></pre>
+<blockquote class="aside aside-tip">
+<strong>Ventajas de usar roles:</strong>
+  <ul>
+    <li>Simplifica la administración de permisos.</li>
+    <li>Facilita la aplicación de políticas de seguridad consistentes.</li>
+    <li>Reduce el riesgo de errores al asignar permisos.</li>
+    <li>Mejora la auditoría y el seguimiento de permisos.</li>
+  </ul>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="6-5-diferencias-en-mysql-y-oracle">
+    <h2>6.5. Diferencias en MySQL y Oracle</h2>
+    <div class="doc-content">
+<h3>Principales diferencias en la gestión de usuarios y permisos</h3>
+<table><thead><tr><th>Característica</th><th>MySQL</th><th>Oracle</th></tr></thead><tbody><tr><td>Identificación de usuario</td><td>Combinación de nombre y host (<code>'usuario'@'host'</code>)</td><td>Solo nombre de usuario</td></tr><tr><td>Niveles de privilegios</td><td>Global, base de datos, tabla, columna</td><td>Sistema, objeto, rol</td></tr><tr><td>Roles</td><td>Disponible desde MySQL 8.0</td><td>Disponible desde hace muchas versiones</td></tr><tr><td>Perfiles de seguridad</td><td>Limitado</td><td>Extenso sistema de perfiles</td></tr><tr><td>Tablespaces</td><td>No se asignan directamente a usuarios</td><td>Se asignan directamente a usuarios</td></tr><tr><td>Cuotas</td><td>No tiene sistema de cuotas por usuario</td><td>Sistema completo de cuotas por tablespace</td></tr><tr><td>Privilegios administrativos</td><td>SUPER, PROCESS, RELOAD, etc.</td><td>SYSDBA, SYSOPER, SYSBACKUP, etc.</td></tr></tbody></table>
+<h3>Características específicas de Oracle</h3>
+<ol>
+<li><strong>Perfiles de seguridad</strong>: Oracle permite crear perfiles que definen límites de recursos y políticas de contraseñas.</li>
+</ol>
+<pre><code class="language-sql">-- Crear un perfil
+CREATE PROFILE app_user LIMIT
+  SESSIONS_PER_USER 3
+  CPU_PER_SESSION UNLIMITED
+  CPU_PER_CALL 3000
+  CONNECT_TIME 45
+  IDLE_TIME 30
+  FAILED_LOGIN_ATTEMPTS 5
+  PASSWORD_LIFE_TIME 60
+  PASSWORD_REUSE_TIME 365
+  PASSWORD_REUSE_MAX 10
+  PASSWORD_LOCK_TIME 1/24
+  PASSWORD_GRACE_TIME 10
+  PASSWORD_VERIFY_FUNCTION verify_function;
+
+-- Asignar perfil a un usuario
+ALTER USER usuario1 PROFILE app_user;
+</code></pre>
+<ol>
+<li><strong>Privilegios de sistema avanzados</strong>: Oracle tiene privilegios administrativos especiales.</li>
+</ol>
+<pre><code class="language-sql">-- Conceder privilegios administrativos
+GRANT SYSDBA TO admin_user;
+GRANT SYSOPER TO operator_user;
+
+-- Conectar con privilegios SYSDBA
+CONNECT usuario/contraseña AS SYSDBA;
+</code></pre>
+<h3>Características específicas de MySQL</h3>
+<ol>
+<li><strong>Especificación de host</strong>: MySQL requiere especificar el host desde el que un usuario puede conectarse.</li>
+</ol>
+<pre><code class="language-sql">-- Diferentes usuarios según el host de conexión
+CREATE USER 'usuario'@'localhost' IDENTIFIED BY 'password1';
+CREATE USER 'usuario'@'192.168.1.%' IDENTIFIED BY 'password2';
+CREATE USER 'usuario'@'%' IDENTIFIED BY 'password3';
+</code></pre>
+<ol>
+<li><strong>Privilegios dinámicos</strong>: MySQL 8.0+ incluye privilegios dinámicos para tareas administrativas.</li>
+</ol>
+<pre><code class="language-sql">-- Conceder privilegios dinámicos
+GRANT ROLE_ADMIN ON *.* TO 'admin'@'localhost';
+GRANT BACKUP_ADMIN ON *.* TO 'backup_user'@'%';
+GRANT SYSTEM_VARIABLES_ADMIN ON *.* TO 'sysadmin'@'localhost';
+</code></pre>
+<blockquote class="aside aside-caution">
+<strong>Consideraciones de seguridad:</strong>
+  <ul>
+    <li>Sigue el principio de privilegio mínimo: concede solo los permisos necesarios.</li>
+    <li>Revisa regularmente los permisos concedidos para detectar privilegios excesivos.</li>
+    <li>Utiliza roles para agrupar permisos relacionados.</li>
+    <li>Considera el uso de esquemas separados para diferentes aplicaciones.</li>
+    <li>Implementa auditoría para monitorear el acceso y los cambios en los permisos.</li>
+  </ul>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="conclusion">
+    <h2>Conclusión</h2>
+    <div class="doc-content">
+<p>La gestión adecuada de usuarios, permisos y roles es fundamental para garantizar la seguridad de las bases de datos. Tanto MySQL como Oracle ofrecen mecanismos robustos para controlar el acceso a los datos, aunque con diferencias significativas en su implementación. Comprender estas diferencias es esencial para administrar eficazmente la seguridad en cualquier entorno de base de datos.</p>
+    </div>
+  </section>

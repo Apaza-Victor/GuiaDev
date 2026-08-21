@@ -1,0 +1,175 @@
+<!-- 1. Introducción a Inertia.js - Inertia (Frameworks) -->
+  <section id="que-es-inertia-js-y-como-funciona">
+    <h2>¿Qué es Inertia.js y cómo funciona?</h2>
+    <div class="doc-content">
+<p>Inertia.js no es un framework en sí mismo, sino más bien un <strong>adaptador</strong> que conecta tu backend (como Laravel, Rails o Django) con tu frontend (como Vue, React o Svelte) sin necesidad de crear una API separada.</p>
+<blockquote class="aside aside-tip">
+Inertia.js se autodenomina como "el pegamento moderno para aplicaciones web monolíticas".
+</blockquote>
+<h3>Funcionamiento básico</h3>
+<p>Inertia.js funciona mediante estos principios fundamentales:</p>
+<ol>
+<li><strong>Renderizado en el cliente</strong>: Las páginas se renderizan completamente en el navegador usando un framework JavaScript como Vue o React.</li>
+</ol>
+<ol>
+<li><strong>Comunicación sin API</strong>: En lugar de crear endpoints API REST o GraphQL, Inertia utiliza solicitudes XHR/fetch estándar para comunicarse con el servidor.</li>
+</ol>
+<ol>
+<li><strong>Controladores tradicionales</strong>: En el backend, sigues usando controladores normales que devuelven "respuestas Inertia" en lugar de JSON o HTML.</li>
+</ol>
+<pre><code class="language-php">// Ejemplo de un controlador Laravel con Inertia
+public function index()
+{
+    return Inertia::render('Users/Index', [
+        'users' =&gt; User::all()
+    ]);
+}</code></pre>
+<ol>
+<li><strong>Navegación sin recarga</strong>: Inertia intercepta los clics en enlaces y envía solicitudes XHR en lugar de recargar la página completa.</li>
+</ol>
+<pre><code class="language-vue">// Componente Vue con enlace Inertia
+&lt;template&gt;
+  &lt;Link href="/users"&gt;Ver usuarios&lt;/Link&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+
+&lt;/script&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="arquitectura-tipo-spa-con-backend-tradicional">
+    <h2>Arquitectura tipo SPA con backend tradicional</h2>
+    <div class="doc-content">
+<p>Inertia.js implementa una arquitectura única que podríamos llamar "SPA monolítica" o "SPA con servidor".</p>
+<h3>Componentes clave de la arquitectura</h3>
+<h4 class="tab-label">Servidor</h4>
+<pre><code class="language-text">┌─────────────────────────────┐
+│ Servidor (Laravel, Rails...) │
+│                             │
+│ ┌─────────────┐            │
+│ │ Controlador │            │
+│ └─────────────┘            │
+│        │                    │
+│ ┌─────────────┐            │
+│ │   Modelo    │            │
+│ └─────────────┘            │
+│        │                    │
+│ ┌─────────────┐            │
+│ │   Inertia   │            │
+│ │  Respuesta  │            │
+│ └─────────────┘            │
+└─────────────────────────────┘
+          │
+          ▼
+    Datos + Metadata
+</code></pre>
+<h4 class="tab-label">Cliente</h4>
+<pre><code class="language-text">┌─────────────────────────────┐
+│ Cliente (Vue, React...)     │
+│                             │
+│ ┌─────────────┐            │
+│ │   Inertia   │            │
+│ │   Cliente   │            │
+│ └─────────────┘            │
+│        │                    │
+│ ┌─────────────┐            │
+│ │ Componente  │            │
+│ │  de Página  │            │
+│ └─────────────┘            │
+│        │                    │
+│ ┌─────────────┐            │
+│ │    DOM      │            │
+│ └─────────────┘            │
+└─────────────────────────────┘
+</code></pre>
+<h3>Flujo de datos</h3>
+<ol>
+<li><strong>Solicitud inicial</strong>: El navegador solicita una página y el servidor devuelve HTML con el JavaScript necesario.</li>
+</ol>
+<ol>
+<li><strong>Inicialización</strong>: Inertia.js inicializa la aplicación en el cliente y renderiza el primer componente de página.</li>
+</ol>
+<ol>
+<li><strong>Navegación</strong>: Cuando el usuario navega, Inertia:</li>
+</ol>
+<ul>
+<li>Intercepta la solicitud</li>
+<li>Realiza una petición XHR al servidor</li>
+<li>Recibe datos JSON con la información de la página</li>
+<li>Actualiza la URL usando History API</li>
+<li>Renderiza el nuevo componente con los datos recibidos</li>
+</ul>
+<blockquote class="aside aside-note">
+A diferencia de las SPA tradicionales, no necesitas crear y mantener una API separada. Tu backend sigue siendo el único punto de verdad para la lógica de negocio.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="ventajas-frente-a-otras-soluciones-spa">
+    <h2>Ventajas frente a otras soluciones SPA</h2>
+    <div class="doc-content">
+<p>Inertia.js ofrece numerosas ventajas sobre las arquitecturas SPA tradicionales y las aplicaciones renderizadas en servidor:</p>
+<h3>1. Desarrollo más rápido y sencillo</h3>
+<ul>
+<li><strong>Sin duplicación de código</strong>: No necesitas implementar la misma lógica en el backend (API) y en el frontend (consumo de API).</li>
+<li><strong>Sin gestión de estado compleja</strong>: Al no tener una API separada, reduces la necesidad de gestores de estado complejos.</li>
+<li><strong>Autenticación simplificada</strong>: Utilizas el sistema de autenticación de tu backend sin necesidad de tokens JWT o OAuth.</li>
+</ul>
+<h3>2. Mejor experiencia de desarrollo</h3>
+<ul>
+<li><strong>Rutas unificadas</strong>: Un solo sistema de rutas en el backend, sin duplicación en el frontend.</li>
+<li><strong>Validación centralizada</strong>: La validación se realiza en el servidor y los errores se devuelven automáticamente al cliente.</li>
+<li><strong>Autorización simplificada</strong>: Las políticas de autorización se mantienen en el backend.</li>
+</ul>
+<h3>3. Rendimiento optimizado</h3>
+<ul>
+<li><strong>Carga inicial más rápida</strong>: Inertia puede usar SSR (Server-Side Rendering) para la primera carga.</li>
+<li><strong>Transferencia de datos eficiente</strong>: Solo se envían los datos necesarios para cada página.</li>
+<li><strong>Navegación instantánea</strong>: Las transiciones entre páginas son rápidas como en una SPA.</li>
+</ul>
+<h3>4. Mejor SEO y accesibilidad</h3>
+<ul>
+<li><strong>URLs reales</strong>: Inertia usa URLs reales, no rutas hash (#) como algunas SPAs.</li>
+<li><strong>Compatibilidad con motores de búsqueda</strong>: Con SSR, el contenido es indexable por buscadores.</li>
+<li><strong>Comportamiento de navegador estándar</strong>: El botón atrás, los marcadores y la recarga funcionan como se espera.</li>
+</ul>
+<h3>5. Escalabilidad y mantenimiento</h3>
+<ul>
+<li><strong>Separación clara de responsabilidades</strong>: El backend maneja la lógica de negocio, el frontend la presentación.</li>
+<li><strong>Actualizaciones más sencillas</strong>: Puedes actualizar el frontend o el backend de forma independiente.</li>
+<li><strong>Equipo unificado</strong>: Los desarrolladores pueden trabajar en ambas partes sin necesidad de especialización extrema.</li>
+</ul>
+<blockquote class="aside aside-caution">
+Inertia.js no es la solución ideal para todos los casos. Si necesitas una API pública, una aplicación móvil nativa que consuma los mismos endpoints, o tienes requisitos específicos de SEO muy avanzados, podrías necesitar considerar otras alternativas.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="cuando-usar-inertia-js">
+    <h2>¿Cuándo usar Inertia.js?</h2>
+    <div class="doc-content">
+<p>Inertia.js es ideal para:</p>
+<ul>
+<li>Aplicaciones web tradicionales que quieren modernizarse con una interfaz tipo SPA</li>
+<li>Equipos que dominan frameworks de backend como Laravel y quieren añadir interfaces modernas</li>
+<li>Proyectos que necesitan una experiencia de usuario fluida sin la complejidad de una API separada</li>
+<li>Aplicaciones donde la lógica de negocio está principalmente en el servidor</li>
+</ul>
+<h4 class="tab-label">Ideal para</h4>
+<ul>
+<li>Aplicaciones administrativas internas</li>
+<li>Dashboards y paneles de control</li>
+<li>CRMs y sistemas de gestión</li>
+<li>Aplicaciones web con flujos de trabajo complejos</li>
+<li>Portales de clientes o empleados</li>
+</ul>
+<h4 class="tab-label">Menos adecuado para</h4>
+<ul>
+<li>APIs públicas que necesitan ser consumidas por múltiples clientes</li>
+<li>Aplicaciones con requisitos extremos de rendimiento en el cliente</li>
+<li>Aplicaciones que necesitan funcionar completamente offline</li>
+<li>Sitios estáticos que podrían beneficiarse más de un enfoque JAMstack</li>
+</ul>
+    </div>
+  </section>

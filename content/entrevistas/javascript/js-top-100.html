@@ -1,0 +1,711 @@
+<!-- Top 100 Preguntas Completas - JavaScript (Entrevistas Laborales) -->
+  <section id="las-100-preguntas-completas-de-javascript">
+    <h2>Las 100 Preguntas Completas de JavaScript</h2>
+    <div class="doc-content">
+<p>Esta guía cubre desde fundamentos hasta temas avanzados. Las preguntas 1-50 están en las guías anteriores.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="patrones-y-arquitectura-51-65">
+    <h2>Patrones y Arquitectura (51-65)</h2>
+    <div class="doc-content">
+<h3>51. ¿Qué es el patrón Singleton?</h3>
+<p><strong>¿Qué es?</strong> Patrón que garantiza una única instancia de una clase en toda la aplicación.</p>
+<p><strong>¿Para qué sirve?</strong> Configuración global, conexiones a BD, caché, loggers.</p>
+<pre><code class="language-javascript">const Singleton = (function() {
+  let instance;
+  
+  function createInstance() {
+    return { id: Math.random() };
+  }
+  
+  return {
+    getInstance: function() {
+      if (!instance) {
+        instance = createInstance();
+      }
+      return instance;
+    }
+  };
+})();
+
+const a = Singleton.getInstance();
+const b = Singleton.getInstance();
+console.log(a === b); // true</code></pre>
+<h3>52. ¿Qué es el patrón Factory?</h3>
+<p><strong>¿Qué es?</strong> Patrón que delega la creación de objetos a una función/clase especializada.</p>
+<p><strong>¿Para qué sirve?</strong> Desacoplar la creación de objetos de su uso. Crear objetos según condiciones.</p>
+<pre><code class="language-javascript">class CarFactory {
+  createCar(type) {
+    switch(type) {
+      case 'sedan':
+        return new Sedan();
+      case 'suv':
+        return new SUV();
+      default:
+        throw new Error('Tipo no soportado');
+    }
+  }
+}
+
+const factory = new CarFactory();
+const miCarro = factory.createCar('sedan');</code></pre>
+<h3>53. ¿Qué es el patrón Observer?</h3>
+<p><strong>¿Qué es?</strong> Patrón donde objetos (observers) se suscriben a eventos de otro objeto (subject).</p>
+<p><strong>¿Para qué sirve?</strong> Event emitters, pub/sub, actualizaciones reactivas.</p>
+<pre><code class="language-javascript">class EventEmitter {
+  constructor() {
+    this.events = {};
+  }
+  
+  on(event, callback) {
+    if (!this.events[event]) {
+      this.events[event] = [];
+    }
+    this.events[event].push(callback);
+  }
+  
+  emit(event, data) {
+    if (this.events[event]) {
+      this.events[event].forEach(cb =&gt; cb(data));
+    }
+  }
+  
+  off(event, callback) {
+    if (this.events[event]) {
+      this.events[event] = this.events[event]
+        .filter(cb =&gt; cb !== callback);
+    }
+  }
+}</code></pre>
+<h3>54. ¿Qué es el patrón Decorator?</h3>
+<p><strong>¿Qué es?</strong> Patrón que añade funcionalidad a una función/objeto sin modificar su código original.</p>
+<p><strong>¿Para qué sirve?</strong> Logging, caching, validación, permisos.</p>
+<pre><code class="language-javascript">function withLogging(fn) {
+  return function(...args) {
+    console.log(\`Llamando \${fn.name} con:\`, args);
+    const result = fn.apply(this, args);
+    console.log(\`Resultado:\`, result);
+    return result;
+  };
+}
+
+function sumar(a, b) {
+  return a + b;
+}
+
+const sumarConLog = withLogging(sumar);
+sumarConLog(2, 3);</code></pre>
+<h3>55. ¿Qué es currying?</h3>
+<p><strong>¿Qué es?</strong> Transformar una función de múltiples argumentos en una secuencia de funciones de un argumento.</p>
+<p><strong>¿Para qué sirve?</strong> Crear funciones parcialmente aplicadas, composición funcional.</p>
+<pre><code class="language-javascript">// Función normal
+function sumar(a, b, c) {
+  return a + b + c;
+}
+
+// Función currificada
+function sumarCurry(a) {
+  return function(b) {
+    return function(c) {
+      return a + b + c;
+    };
+  };
+}
+
+// Uso
+sumarCurry(1)(2)(3); // 6
+
+// Con arrow functions
+const curry = a =&gt; b =&gt; c =&gt; a + b + c;</code></pre>
+<h3>56. ¿Qué es composición de funciones?</h3>
+<p><strong>¿Qué es?</strong> Combinar funciones simples para crear funciones más complejas.</p>
+<p><strong>Tipos:</strong> <code>compose</code> (derecha a izquierda), <code>pipe</code> (izquierda a derecha).</p>
+<pre><code class="language-javascript">const compose = (...fns) =&gt; x =&gt; 
+  fns.reduceRight((acc, fn) =&gt; fn(acc), x);
+
+const pipe = (...fns) =&gt; x =&gt; 
+  fns.reduce((acc, fn) =&gt; fn(acc), x);
+
+const addOne = x =&gt; x + 1;
+const double = x =&gt; x * 2;
+const square = x =&gt; x * x;
+
+const composed = compose(square, double, addOne);
+console.log(composed(2)); // ((2+1)*2)^2 = 36</code></pre>
+<h3>57. ¿Qué es memoización?</h3>
+<p><strong>¿Qué es?</strong> Técnica de optimización que cachea resultados de funciones para evitar recálculos.</p>
+<p><strong>¿Para qué sirve?</strong> Funciones costosas con los mismos argumentos repetidos (ej: Fibonacci).</p>
+<pre><code class="language-javascript">function memoize(fn) {
+  const cache = new Map();
+  
+  return function(...args) {
+    const key = JSON.stringify(args);
+    
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+    
+    const result = fn.apply(this, args);
+    cache.set(key, result);
+    return result;
+  };
+}
+
+const fibonacci = memoize(function(n) {
+  if (n &lt;= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+});</code></pre>
+<h3>58. ¿Qué es programación funcional?</h3>
+<p><strong>¿Qué es?</strong> Paradigma basado en funciones puras, inmutabilidad y composición.</p>
+<p><strong>Principios:</strong> Funciones puras, sin efectos secundarios, datos inmutables, funciones como valores.</p>
+<pre><code class="language-javascript">// Principios:
+// 1. Funciones puras
+// 2. Inmutabilidad
+// 3. Composición
+// 4. Evitar efectos secundarios
+
+// Imperativo vs Funcional
+// Imperativo
+let total = 0;
+for (let i = 0; i &lt; nums.length; i++) {
+  total += nums[i];
+}
+
+// Funcional
+const total = nums.reduce((acc, n) =&gt; acc + n, 0);</code></pre>
+<h3>59. ¿Qué es recursión y tail recursion?</h3>
+<p><strong>Recursión:</strong> Función que se llama a sí misma.</p>
+<p><strong>Tail recursion:</strong> La llamada recursiva es la última operación. Puede optimizarse para evitar stack overflow.</p>
+<pre><code class="language-javascript">// Recursión normal
+function factorial(n) {
+  if (n &lt;= 1) return 1;
+  return n * factorial(n - 1);
+}
+
+// Tail recursion (optimizable)
+function factorialTail(n, acc = 1) {
+  if (n &lt;= 1) return acc;
+  return factorialTail(n - 1, n * acc);
+}</code></pre>
+<h3>60. ¿Qué es el patrón Strategy?</h3>
+<p><strong>¿Qué es?</strong> Patrón que define una familia de algoritmos intercambiables.</p>
+<p><strong>¿Para qué sirve?</strong> Cambiar comportamiento en runtime sin modificar el código cliente.</p>
+<pre><code class="language-javascript">const strategies = {
+  add: (a, b) =&gt; a + b,
+  subtract: (a, b) =&gt; a - b,
+  multiply: (a, b) =&gt; a * b
+};
+
+function calculate(strategy, a, b) {
+  return strategies[strategy](a, b);
+}
+
+calculate('add', 5, 3);      // 8
+calculate('multiply', 5, 3); // 15</code></pre>
+<h3>61. ¿Qué es el patrón Command?</h3>
+<p><strong>¿Qué es?</strong> Patrón que encapsula una acción como objeto.</p>
+<p><strong>¿Para qué sirve?</strong> Undo/redo, colas de comandos, logging de acciones.</p>
+<pre><code class="language-javascript">class Calculator {
+  constructor() {
+    this.value = 0;
+    this.history = [];
+  }
+  
+  execute(command) {
+    this.value = command.execute(this.value);
+    this.history.push(command);
+  }
+  
+  undo() {
+    const command = this.history.pop();
+    if (command) {
+      this.value = command.undo(this.value);
+    }
+  }
+}
+
+class AddCommand {
+  constructor(value) {
+    this.value = value;
+  }
+  execute(current) { return current + this.value; }
+  undo(current) { return current - this.value; }
+}</code></pre>
+<h3>62. ¿Qué es lazy evaluation?</h3>
+<p><strong>¿Qué es?</strong> Evaluar expresiones solo cuando se necesitan, no antes.</p>
+<p><strong>¿Para qué sirve?</strong> Trabajar con secuencias infinitas, mejorar performance.</p>
+<pre><code class="language-javascript">function* lazyRange(start, end) {
+  for (let i = start; i &lt;= end; i++) {
+    yield i;
+  }
+}
+
+// Solo calcula cuando se necesita
+const range = lazyRange(1, 1000000);
+console.log(range.next().value); // 1
+console.log(range.next().value); // 2</code></pre>
+<h3>63. ¿Qué es el patrón Middleware?</h3>
+<p><strong>¿Qué es?</strong> Cadena de funciones que procesan una request/context secuencialmente.</p>
+<p><strong>¿Para qué sirve?</strong> Express.js, Redux, pipelines de procesamiento.</p>
+<pre><code class="language-javascript">class Pipeline {
+  constructor() {
+    this.middlewares = [];
+  }
+  
+  use(fn) {
+    this.middlewares.push(fn);
+    return this;
+  }
+  
+  execute(context) {
+    const runner = (index) =&gt; {
+      if (index &lt; this.middlewares.length) {
+        this.middlewares[index](context, () =&gt; runner(index + 1));
+      }
+    };
+    runner(0);
+  }
+}
+
+const pipeline = new Pipeline();
+pipeline
+  .use((ctx, next) =&gt; { ctx.a = 1; next(); })
+  .use((ctx, next) =&gt; { ctx.b = 2; next(); });</code></pre>
+<h3>64. ¿Qué es el patrón Pub/Sub?</h3>
+<p><strong>¿Qué es?</strong> Patrón donde publishers envían mensajes sin saber quién los recibe.</p>
+<p><strong>Diferencia con Observer:</strong> Pub/Sub tiene un intermediario (broker), Observer es directo.</p>
+<pre><code class="language-javascript">const PubSub = {
+  subscribers: {},
+  
+  subscribe(event, callback) {
+    if (!this.subscribers[event]) {
+      this.subscribers[event] = [];
+    }
+    this.subscribers[event].push(callback);
+    
+    return () =&gt; this.unsubscribe(event, callback);
+  },
+  
+  publish(event, data) {
+    if (this.subscribers[event]) {
+      this.subscribers[event].forEach(cb =&gt; cb(data));
+    }
+  },
+  
+  unsubscribe(event, callback) {
+    if (this.subscribers[event]) {
+      this.subscribers[event] = this.subscribers[event]
+        .filter(cb =&gt; cb !== callback);
+    }
+  }
+};</code></pre>
+<h3>65. ¿Qué es inmutabilidad y cómo lograrla?</h3>
+<p><strong>¿Qué es?</strong> No modificar datos existentes, crear copias con los cambios.</p>
+<p><strong>¿Para qué sirve?</strong> Predecibilidad, debugging, React/Redux, evitar bugs.</p>
+<pre><code class="language-javascript">// Mutable (evitar)
+const arr = [1, 2, 3];
+arr.push(4); // Modifica el original
+
+// Inmutable
+const arr = [1, 2, 3];
+const newArr = [...arr, 4]; // Nuevo array
+
+// Object.freeze (shallow)
+const obj = Object.freeze({ a: 1 });
+
+// Deep freeze
+function deepFreeze(obj) {
+  Object.keys(obj).forEach(key =&gt; {
+    if (typeof obj[key] === 'object') {
+      deepFreeze(obj[key]);
+    }
+  });
+  return Object.freeze(obj);
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="performance-y-optimizacion-66-80">
+    <h2>Performance y Optimización (66-80)</h2>
+    <div class="doc-content">
+<h3>66. ¿Qué es el garbage collection?</h3>
+<p><strong>¿Qué es?</strong> Proceso automático que libera memoria de objetos no accesibles.</p>
+<p><strong>Algoritmo:</strong> Mark-and-sweep. Marca objetos alcanzables desde root, elimina el resto.</p>
+<h3>67. ¿Qué son memory leaks y cómo evitarlos?</h3>
+<p><strong>¿Qué es?</strong> Memoria que no se libera porque aún hay referencias a objetos no usados.</p>
+<p><strong>Causas comunes:</strong> Variables globales, closures, event listeners, timers.</p>
+<pre><code class="language-javascript">// Causas comunes:
+// 1. Variables globales accidentales
+function leak() {
+  leaked = "soy global"; // Sin var/let/const
+}
+
+// 2. Closures que retienen referencias
+function createClosure() {
+  const largeData = new Array(1000000);
+  return function() {
+    console.log(largeData.length);
+  };
+}
+
+// 3. Event listeners no removidos
+element.addEventListener('click', handler);
+// Olvidar: element.removeEventListener('click', handler);
+
+// 4. Timers no limpiados
+const id = setInterval(() =&gt; {}, 1000);
+// Olvidar: clearInterval(id);</code></pre>
+<h3>68. ¿Qué es requestAnimationFrame?</h3>
+<p><strong>¿Qué es?</strong> API para ejecutar código sincronizado con el refresh del monitor (60fps).</p>
+<p><strong>¿Para qué sirve?</strong> Animaciones suaves. Mejor que setInterval porque se pausa en tabs inactivos.</p>
+<pre><code class="language-javascript">function animate() {
+  // Actualizar animación
+  element.style.left = position + 'px';
+  position++;
+  
+  if (position &lt; 300) {
+    requestAnimationFrame(animate);
+  }
+}
+
+requestAnimationFrame(animate);
+// Mejor que setInterval para animaciones (60fps)</code></pre>
+<h3>69. ¿Qué es Web Workers?</h3>
+<p><strong>¿Qué es?</strong> Threads en segundo plano para ejecutar JavaScript sin bloquear la UI.</p>
+<p><strong>¿Para qué sirve?</strong> Cálculos pesados, procesamiento de datos, sin congelar la página.</p>
+<pre><code class="language-javascript">// main.js
+const worker = new Worker('worker.js');
+
+worker.postMessage({ data: [1, 2, 3, 4, 5] });
+
+worker.onmessage = function(e) {
+  console.log('Resultado:', e.data);
+};
+
+// worker.js
+self.onmessage = function(e) {
+  const result = e.data.data.map(n =&gt; n * 2);
+  self.postMessage(result);
+};</code></pre>
+<h3>70. ¿Qué es Service Worker?</h3>
+<p><strong>¿Qué es?</strong> Script que actúa como proxy entre la app y la red.</p>
+<p><strong>¿Para qué sirve?</strong> PWAs, offline support, caching, push notifications.</p>
+<pre><code class="language-javascript">// Registro
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+
+// sw.js
+self.addEventListener('install', (event) =&gt; {
+  event.waitUntil(
+    caches.open('v1').then((cache) =&gt; {
+      return cache.addAll(['/index.html', '/styles.css']);
+    })
+  );
+});
+
+self.addEventListener('fetch', (event) =&gt; {
+  event.respondWith(
+    caches.match(event.request).then((response) =&gt; {
+      return response || fetch(event.request);
+    })
+  );
+});</code></pre>
+<h3>71. ¿Qué es lazy loading?</h3>
+<p><strong>¿Qué es?</strong> Cargar recursos solo cuando se necesitan, no al inicio.</p>
+<p><strong>¿Para qué sirve?</strong> Mejorar tiempo de carga inicial, reducir ancho de banda.</p>
+<pre><code class="language-javascript">// Imágenes
+&lt;img loading="lazy" src="imagen.jpg" /&gt;
+
+// Módulos dinámicos
+const module = await import('./heavyModule.js');
+
+// React lazy
+const HeavyComponent = React.lazy(() =&gt; import('./HeavyComponent'));</code></pre>
+<h3>72. ¿Qué es code splitting?</h3>
+<p><strong>¿Qué es?</strong> Dividir el bundle en partes más pequeñas que se cargan bajo demanda.</p>
+<p><strong>¿Cómo?</strong> Dynamic imports (<code>import()</code>), React.lazy, configuración de bundler.</p>
+<pre><code class="language-javascript">// Webpack dynamic imports
+import('./module').then(module =&gt; {
+  module.default();
+});
+
+// React con Suspense
+const LazyComponent = React.lazy(() =&gt; import('./Component'));
+
+function App() {
+  return (
+    &lt;Suspense fallback={&lt;Loading /&gt;}&gt;
+      &lt;LazyComponent /&gt;
+    &lt;/Suspense&gt;
+  );
+}</code></pre>
+<h3>73. ¿Qué es tree shaking?</h3>
+<p><strong>¿Qué es?</strong> Técnica que elimina código no utilizado (dead code) del bundle final.</p>
+<p><strong>Requisito:</strong> Usar ES modules (import/export). CommonJS no es tree-shakeable.</p>
+<pre><code class="language-javascript">// utils.js
+export function usada() { }
+export function noUsada() { }
+
+// main.js
+
+// noUsada() será eliminada del bundle</code></pre>
+<h3>74. ¿Cómo optimizar loops?</h3>
+<p><strong>Consejos:</strong> Cachear length, evitar accesos repetidos al DOM, usar métodos de array cuando sea legible.</p>
+<pre><code class="language-javascript">// Malo - accede a length en cada iteración
+for (let i = 0; i &lt; array.length; i++) {}
+
+// Mejor - cachea length
+for (let i = 0, len = array.length; i &lt; len; i++) {}
+
+// Mejor aún - usa métodos de array
+array.forEach(item =&gt; {});
+array.map(item =&gt; item * 2);
+
+// Para performance crítica - for...of
+for (const item of array) {}</code></pre>
+<h3>75. ¿Qué es el Virtual DOM?</h3>
+<p><strong>¿Qué es?</strong> Representación en memoria del DOM real (objeto JavaScript).</p>
+<p><strong>¿Para qué sirve?</strong> Minimizar manipulaciones costosas del DOM. React compara VDOMs y aplica solo cambios necesarios (reconciliación).</p>
+<h3>76. ¿Qué es el Critical Rendering Path?</h3>
+<p><strong>¿Qué es?</strong> Secuencia de pasos del navegador para convertir HTML/CSS/JS en píxeles.</p>
+<p><strong>Optimización:</strong> Minimizar CSS crítico, diferir JS no esencial, reducir render-blocking resources.</p>
+<p><strong>Pasos:</strong></p>
+<ol>
+<li>DOM Construction</li>
+<li>CSSOM Construction</li>
+<li>Render Tree</li>
+<li>Layout</li>
+<li>Paint</li>
+</ol>
+<h3>77. ¿Qué es reflow y repaint?</h3>
+<p><strong>Reflow:</strong> Recalcular geometría (posición, tamaño). Costoso.</p>
+<p><strong>Repaint:</strong> Redibujar apariencia (color, sombra). Menos costoso.</p>
+<pre><code class="language-javascript">// Reflow (costoso) - cambia geometría
+element.style.width = '100px';
+element.style.height = '100px';
+
+// Repaint (menos costoso) - cambia apariencia
+element.style.color = 'red';
+element.style.backgroundColor = 'blue';
+
+// Optimización - batch changes
+element.style.cssText = 'width: 100px; height: 100px;';
+// O usar clases CSS</code></pre>
+<h3>78. ¿Qué es el patrón de Object Pool?</h3>
+<p><strong>¿Qué es?</strong> Reutilizar objetos en vez de crear/destruir constantemente.</p>
+<p><strong>¿Para qué sirve?</strong> Juegos, animaciones, objetos costosos de crear.</p>
+<pre><code class="language-javascript">class ObjectPool {
+  constructor(createFn, size = 10) {
+    this.createFn = createFn;
+    this.pool = Array(size).fill(null).map(() =&gt; createFn());
+  }
+  
+  acquire() {
+    return this.pool.pop() || this.createFn();
+  }
+  
+  release(obj) {
+    this.pool.push(obj);
+  }
+}</code></pre>
+<h3>79. ¿Cómo medir performance?</h3>
+<p><strong>APIs:</strong> <code>performance.mark/measure</code>, <code>console.time</code>, Chrome DevTools Performance tab.</p>
+<pre><code class="language-javascript">// Performance API
+performance.mark('start');
+// ... código a medir
+performance.mark('end');
+performance.measure('Mi medición', 'start', 'end');
+
+const measures = performance.getEntriesByName('Mi medición');
+console.log(measures[0].duration);
+
+// console.time
+console.time('operacion');
+// ... código
+console.timeEnd('operacion');</code></pre>
+<h3>80. ¿Qué es BigInt?</h3>
+<p><strong>¿Qué es?</strong> Tipo de dato para enteros arbitrariamente grandes (más allá de <code>Number.MAX_SAFE_INTEGER</code>).</p>
+<p><strong>Sintaxis:</strong> <code>123n</code> o <code>BigInt("123")</code>.</p>
+<pre><code class="language-javascript">// Number tiene límite
+const max = Number.MAX_SAFE_INTEGER; // 9007199254740991
+
+// BigInt para números grandes
+const big = 9007199254740991n;
+const big2 = BigInt("9007199254740991");
+
+// Operaciones
+const suma = big + 1n;
+// No se puede mezclar con Number sin conversión</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="seguridad-y-buenas-practicas-81-90">
+    <h2>Seguridad y Buenas Prácticas (81-90)</h2>
+    <div class="doc-content">
+<h3>81. ¿Qué es XSS y cómo prevenirlo?</h3>
+<p><strong>¿Qué es?</strong> Cross-Site Scripting: inyección de scripts maliciosos en páginas web.</p>
+<p><strong>Prevención:</strong> Escapar output, usar <code>textContent</code> en vez de <code>innerHTML</code>, CSP headers.</p>
+<pre><code class="language-javascript">// Cross-Site Scripting - inyección de scripts maliciosos
+
+// Vulnerable
+element.innerHTML = userInput;
+
+// Seguro
+element.textContent = userInput;
+
+// O sanitizar
+function sanitize(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}</code></pre>
+<h3>82. ¿Qué es CSRF?</h3>
+<p><strong>¿Qué es?</strong> Cross-Site Request Forgery: ataque que fuerza al usuario a ejecutar acciones no deseadas.</p>
+<p><strong>Prevención:</strong> Tokens CSRF, SameSite cookies, verificar Origin header.</p>
+<h3>83. ¿Qué es CORS?</h3>
+<p><strong>¿Qué es?</strong> Cross-Origin Resource Sharing: mecanismo que permite requests entre diferentes orígenes.</p>
+<p><strong>¿Cómo funciona?</strong> El servidor incluye headers <code>Access-Control-Allow-*</code>.</p>
+<pre><code class="language-javascript">// Cross-Origin Resource Sharing
+// Servidor debe incluir headers:
+// Access-Control-Allow-Origin: *
+// Access-Control-Allow-Methods: GET, POST
+
+// Fetch con CORS
+fetch('https://api.externa.com/data', {
+  mode: 'cors',
+  credentials: 'include'
+});</code></pre>
+<h3>84. ¿Qué es Content Security Policy?</h3>
+<p><strong>¿Qué es?</strong> Header HTTP que especifica qué recursos pueden cargarse.</p>
+<p><strong>¿Para qué sirve?</strong> Prevenir XSS, clickjacking, inyección de recursos maliciosos.</p>
+<pre><code class="language-http">// Header HTTP
+Content-Security-Policy: default-src 'self'; script-src 'self' https://trusted.com</code></pre>
+<h3>85. ¿Cómo manejar datos sensibles?</h3>
+<p><strong>Reglas:</strong> Nunca en código fuente, usar env vars, httpOnly cookies para tokens, nunca localStorage para auth.</p>
+<pre><code class="language-javascript">// Nunca en código
+const API_KEY = "abc123"; // MAL
+
+// Variables de entorno
+const API_KEY = process.env.API_KEY;
+
+// Nunca en localStorage para tokens sensibles
+// Usar httpOnly cookies para auth tokens</code></pre>
+<h3>86. ¿Qué es eval y por qué evitarlo?</h3>
+<p><strong>¿Qué es?</strong> Función que ejecuta strings como código JavaScript.</p>
+<p><strong>¿Por qué evitarlo?</strong> Riesgo de seguridad (inyección), lento, difícil de debuggear.</p>
+<pre><code class="language-javascript">// eval ejecuta código arbitrario - PELIGROSO
+eval("alert('hacked')");
+
+// Alternativas seguras
+// Para JSON
+JSON.parse(jsonString);
+
+// Para expresiones matemáticas
+new Function('return ' + expression)();</code></pre>
+<h3>87. ¿Qué es el principio de menor privilegio?</h3>
+<p><strong>¿Qué es?</strong> Dar solo los permisos mínimos necesarios para funcionar.</p>
+<p><strong>En JS:</strong> Limitar scope (const/let), encapsular código, módulos, closures.</p>
+<h3>88. ¿Cómo validar input del usuario?</h3>
+<p><strong>Regla:</strong> Validar en cliente (UX) Y en servidor (seguridad). Nunca confiar solo en validación del cliente.</p>
+<pre><code class="language-javascript">function validateEmail(email) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+}
+
+function sanitizeInput(input) {
+  return input
+    .trim()
+    .replace(/[&lt;&gt;]/g, '');
+}
+
+// Siempre validar en servidor también</code></pre>
+<h3>89. ¿Qué son los Source Maps?</h3>
+<p><strong>¿Qué es?</strong> Archivos que mapean código minificado/transpilado al fuente original.</p>
+<p><strong>¿Para qué sirve?</strong> Debugging en producción. <strong>Cuidado:</strong> No exponer si el código es sensible.</p>
+<h3>90. ¿Qué es Subresource Integrity (SRI)?</h3>
+<p><strong>¿Qué es?</strong> Verificar que recursos externos (CDN) no han sido modificados.</p>
+<p><strong>¿Cómo?</strong> Hash del contenido esperado en el atributo <code>integrity</code>.</p>
+<pre><code class="language-html">&lt;script 
+  src="https://cdn.example.com/lib.js"
+  integrity="sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/..."
+  crossorigin="anonymous"&gt;
+&lt;/script&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="es2020-features-91-100">
+    <h2>ES2020+ Features (91-100)</h2>
+    <div class="doc-content">
+<h3>91. ¿Qué es optional chaining (?.) ?</h3>
+<p><strong>¿Qué es?</strong> Operador que accede a propiedades anidadas sin error si alguna es null/undefined.</p>
+<pre><code class="language-javascript">const user = { profile: { name: 'Juan' } };
+const city = user?.address?.city; // undefined, no error</code></pre>
+<h3>92. ¿Qué es nullish coalescing (??) ?</h3>
+<p><strong>¿Qué es?</strong> Operador que retorna el lado derecho solo si el izquierdo es null/undefined (no 0 o '').</p>
+<pre><code class="language-javascript">const value = null ?? 'default'; // 'default'
+const zero = 0 ?? 'default';     // 0</code></pre>
+<h3>93. ¿Qué es Promise.allSettled?</h3>
+<p><strong>¿Qué es?</strong> Espera a que TODAS las promises terminen (resueltas o rechazadas). Nunca rechaza.</p>
+<pre><code class="language-javascript">const results = await Promise.allSettled([p1, p2, p3]);
+// Siempre resuelve, nunca rechaza</code></pre>
+<h3>94. ¿Qué es globalThis?</h3>
+<p><strong>¿Qué es?</strong> Referencia al objeto global que funciona en cualquier entorno (browser, Node, Worker).</p>
+<pre><code class="language-javascript">// Funciona en todos los entornos
+globalThis.myGlobal = 'value';
+// Browser: window, Node: global, Worker: self</code></pre>
+<h3>95. ¿Qué es import.meta?</h3>
+<p><strong>¿Qué es?</strong> Objeto con metadatos del módulo actual (URL, env vars en Vite, etc.).</p>
+<pre><code class="language-javascript">console.log(import.meta.url);
+// URL del módulo actual</code></pre>
+<h3>96. ¿Qué es String.prototype.replaceAll?</h3>
+<p><strong>¿Qué es?</strong> Método que reemplaza TODAS las ocurrencias de un string (no solo la primera).</p>
+<pre><code class="language-javascript">const str = 'foo-bar-baz';
+str.replaceAll('-', '_'); // 'foo_bar_baz'</code></pre>
+<h3>97. ¿Qué es Promise.any?</h3>
+<p><strong>¿Qué es?</strong> Resuelve con la PRIMERA promise que tenga éxito. Solo rechaza si TODAS fallan.</p>
+<pre><code class="language-javascript">const first = await Promise.any([p1, p2, p3]);
+// Primera que resuelva exitosamente</code></pre>
+<h3>98. ¿Qué son los Logical Assignment Operators?</h3>
+<p><strong>¿Qué es?</strong> Combinan operadores lógicos con asignación: <code>||=</code>, <code>&&=</code>, <code>??=</code>.</p>
+<pre><code class="language-javascript">// ||= (or assignment)
+x ||= y; // x = x || y
+
+// &amp;&amp;= (and assignment)
+x &amp;&amp;= y; // x = x &amp;&amp; y
+
+// ??= (nullish assignment)
+x ??= y; // x = x ?? y</code></pre>
+<h3>99. ¿Qué es WeakRef?</h3>
+<p><strong>¿Qué es?</strong> Referencia débil a un objeto que no previene garbage collection.</p>
+<p><strong>¿Para qué sirve?</strong> Caches, evitar memory leaks en referencias circulares.</p>
+<pre><code class="language-javascript">let obj = { data: 'importante' };
+const weakRef = new WeakRef(obj);
+
+// Puede ser garbage collected
+obj = null;
+
+// Acceder (puede ser undefined)
+const deref = weakRef.deref();</code></pre>
+<h3>100. ¿Qué es FinalizationRegistry?</h3>
+<p><strong>¿Qué es?</strong> API para ejecutar código cuando un objeto es garbage collected.</p>
+<p><strong>Uso:</strong> Limpieza de recursos, logging, debugging.</p>
+<pre><code class="language-javascript">const registry = new FinalizationRegistry((heldValue) =&gt; {
+  console.log(\`\${heldValue} fue recolectado\`);
+});
+
+let obj = { data: 'test' };
+registry.register(obj, 'mi objeto');
+
+obj = null; // Eventualmente: "mi objeto fue recolectado"</code></pre>
+<p>---</p>
+<blockquote class="aside aside-tip">
+Has completado las 100 preguntas de JavaScript. Practica explicando estos conceptos y resolviendo ejercicios prácticos para dominar las entrevistas.
+</blockquote>
+    </div>
+  </section>

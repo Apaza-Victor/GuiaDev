@@ -1,0 +1,676 @@
+<!-- 10. Procesamientos, Funciones y Vistas - Oracle (Base de Datos) -->
+  <section id="introduccion-a-los-objetos-de-programacion-en-oracle">
+    <h2>Introducción a los objetos de programación en Oracle</h2>
+    <div class="doc-content">
+<p>Oracle Database proporciona varios tipos de objetos de programación que permiten encapsular lógica de negocio dentro de la base de datos. Estos objetos son fundamentales para desarrollar aplicaciones robustas, modulares y seguras. Los tres tipos principales que veremos en este documento son:</p>
+<ul>
+<li><strong>Procedimientos almacenados</strong>: Bloques de código PL/SQL que realizan una tarea específica</li>
+<li><strong>Funciones almacenadas</strong>: Similares a los procedimientos, pero devuelven un valor</li>
+<li><strong>Vistas</strong>: Consultas almacenadas que se comportan como tablas virtuales</li>
+</ul>
+<p>Estos objetos ofrecen numerosas ventajas:</p>
+<ul>
+<li><strong>Modularidad</strong>: Permiten dividir la lógica de aplicación en componentes reutilizables</li>
+<li><strong>Seguridad</strong>: Controlan el acceso a los datos subyacentes</li>
+<li><strong>Rendimiento</strong>: Reducen el tráfico de red y mejoran la velocidad de ejecución</li>
+<li><strong>Mantenibilidad</strong>: Centralizan la lógica de negocio para facilitar su mantenimiento</li>
+</ul>
+<blockquote class="aside aside-tip">
+La combinación efectiva de procedimientos, funciones y vistas es fundamental para desarrollar aplicaciones Oracle escalables y mantenibles. Estos objetos forman la base de la programación en el lado del servidor en Oracle Database.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="procedimientos-almacenados">
+    <h2>Procedimientos almacenados</h2>
+    <div class="doc-content">
+<p>Los procedimientos almacenados son bloques de código PL/SQL que se almacenan en la base de datos y pueden ser invocados por nombre. Realizan una tarea específica y pueden recibir parámetros de entrada y salida.</p>
+<h3>Creación de procedimientos</h3>
+<p>La sintaxis básica para crear un procedimiento es:</p>
+<pre><code class="language-sql">CREATE [OR REPLACE] PROCEDURE nombre_procedimiento
+    [(parametro1 [IN | OUT | IN OUT] tipo1,
+      parametro2 [IN | OUT | IN OUT] tipo2,
+      ...)] 
+[AUTHID DEFINER | CURRENT_USER]
+IS | AS
+    -- Declaración de variables locales
+    variable1 tipo1;
+    variable2 tipo2;
+BEGIN
+    -- Cuerpo del procedimiento
+    -- Instrucciones PL/SQL
+EXCEPTION
+    -- Manejo de excepciones
+    WHEN excepcion1 THEN
+        -- Acciones para manejar excepcion1
+    WHEN OTHERS THEN
+        -- Acciones para manejar otras excepciones
+END nombre_procedimiento;
+/
+</code></pre>
+<h4>Tipos de parámetros</h4>
+<ul>
+<li><strong>IN</strong>: Parámetros de entrada (valor por defecto)</li>
+<li><strong>OUT</strong>: Parámetros de salida</li>
+<li><strong>IN OUT</strong>: Parámetros que sirven tanto de entrada como de salida</li>
+</ul>
+<h3>Ejemplos de procedimientos</h3>
+  <h4 class="tab-label">Procedimiento simple</h4>
+    <pre><code class="language-sql">    CREATE OR REPLACE PROCEDURE actualizar_salario(
+        p_empleado_id IN NUMBER,
+        p_porcentaje IN NUMBER
+    ) 
+    IS
+    BEGIN
+        UPDATE empleados
+        SET salario = salario * (1 + p_porcentaje/100)
+        WHERE empleado_id = p_empleado_id;
+        
+        COMMIT;
+        
+        DBMS_OUTPUT.PUT_LINE('Salario actualizado correctamente.');
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('Empleado no encontrado.');
+        WHEN OTHERS THEN
+            ROLLBACK;
+            DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+    END actualizar_salario;
+    /
+    </code></pre>
+  <h4 class="tab-label">Con parámetros OUT</h4>
+    <pre><code class="language-sql">    CREATE OR REPLACE PROCEDURE obtener_info_empleado(
+        p_empleado_id IN NUMBER,
+        p_nombre OUT VARCHAR2,
+        p_salario OUT NUMBER,
+        p_departamento OUT VARCHAR2
+    )
+    IS
+    BEGIN
+        SELECT e.nombre, e.salario, d.nombre_departamento
+        INTO p_nombre, p_salario, p_departamento
+        FROM empleados e
+        JOIN departamentos d ON e.departamento_id = d.departamento_id
+        WHERE e.empleado_id = p_empleado_id;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            p_nombre := NULL;
+            p_salario := NULL;
+            p_departamento := NULL;
+            DBMS_OUTPUT.PUT_LINE('Empleado no encontrado.');
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+    END obtener_info_empleado;
+    /
+    </code></pre>
+  <h4 class="tab-label">Con parámetros IN OUT</h4>
+    <pre><code class="language-sql">    CREATE OR REPLACE PROCEDURE calcular_impuesto(
+        p_salario IN NUMBER,
+        p_impuesto IN OUT NUMBER
+    )
+    IS
+    BEGIN
+        -- Calcula el impuesto basado en el salario
+        IF p_salario &lt; 10000 THEN
+            p_impuesto := p_salario * 0.10; -- 10%
+        ELSIF p_salario &lt; 20000 THEN
+            p_impuesto := p_salario * 0.15; -- 15%
+        ELSE
+            p_impuesto := p_salario * 0.20; -- 20%
+        END IF;
+        
+        -- Ajusta el impuesto si se proporcionó un valor inicial
+        IF p_impuesto &gt; 0 THEN
+            p_impuesto := p_impuesto + 100; -- Tarifa fija adicional
+        END IF;
+    END calcular_impuesto;
+    /
+    </code></pre>
+<h3>Ejecución de procedimientos</h3>
+<p>Hay varias formas de ejecutar un procedimiento almacenado:</p>
+<pre><code class="language-sql">-- Método 1: Usando EXECUTE o EXEC
+EXECUTE actualizar_salario(101, 10);
+EXEC actualizar_salario(101, 10);
+
+-- Método 2: En un bloque PL/SQL anónimo
+BEGIN
+    actualizar_salario(101, 10);
+END;
+/
+
+-- Método 3: Con parámetros OUT
+DECLARE
+    v_nombre VARCHAR2(100);
+    v_salario NUMBER;
+    v_departamento VARCHAR2(100);
+BEGIN
+    obtener_info_empleado(101, v_nombre, v_salario, v_departamento);
+    DBMS_OUTPUT.PUT_LINE('Nombre: ' || v_nombre);
+    DBMS_OUTPUT.PUT_LINE('Salario: ' || v_salario);
+    DBMS_OUTPUT.PUT_LINE('Departamento: ' || v_departamento);
+END;
+/
+</code></pre>
+<h3>Ventajas de los procedimientos almacenados</h3>
+<ul>
+<li><strong>Encapsulación</strong>: Ocultan la complejidad y los detalles de implementación</li>
+<li><strong>Reutilización</strong>: Pueden ser invocados desde múltiples aplicaciones</li>
+<li><strong>Seguridad</strong>: Permiten controlar quién puede ejecutar determinadas operaciones</li>
+<li><strong>Rendimiento</strong>: Se compilan y almacenan en la base de datos, mejorando la velocidad de ejecución</li>
+<li><strong>Reducción del tráfico de red</strong>: Envían solo los parámetros y resultados, no todo el código SQL</li>
+</ul>
+<blockquote class="aside aside-note">
+Los procedimientos almacenados son especialmente útiles para operaciones que modifican datos (INSERT, UPDATE, DELETE) o que realizan múltiples operaciones como parte de una transacción.
+</blockquote>
+<h3>Gestión de procedimientos</h3>
+<pre><code class="language-sql">-- Ver el código fuente de un procedimiento
+SELECT text FROM user_source WHERE name = 'ACTUALIZAR_SALARIO' ORDER BY line;
+
+-- Ver información sobre un procedimiento
+SELECT * FROM user_procedures WHERE object_name = 'ACTUALIZAR_SALARIO';
+
+-- Eliminar un procedimiento
+DROP PROCEDURE actualizar_salario;
+
+-- Otorgar permisos de ejecución
+GRANT EXECUTE ON actualizar_salario TO usuario;
+</code></pre>
+<blockquote class="aside aside-caution">
+Al modificar procedimientos existentes, asegúrese de probar exhaustivamente los cambios, ya que pueden afectar a múltiples aplicaciones que los utilizan.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="funciones-almacenadas">
+    <h2>Funciones almacenadas</h2>
+    <div class="doc-content">
+<p>Las funciones almacenadas son similares a los procedimientos, pero con una diferencia fundamental: siempre devuelven un valor. Son ideales para cálculos y operaciones que necesitan retornar resultados.</p>
+<h3>Creación de funciones</h3>
+<p>La sintaxis básica para crear una función es:</p>
+<pre><code class="language-sql">CREATE [OR REPLACE] FUNCTION nombre_funcion
+    [(parametro1 [IN | OUT | IN OUT] tipo1,
+      parametro2 [IN | OUT | IN OUT] tipo2,
+      ...)] 
+RETURN tipo_retorno
+[AUTHID DEFINER | CURRENT_USER]
+[DETERMINISTIC | PARALLEL_ENABLE | PIPELINED]
+IS | AS
+    -- Declaración de variables locales
+    variable1 tipo1;
+    variable2 tipo2;
+BEGIN
+    -- Cuerpo de la función
+    -- Instrucciones PL/SQL
+    
+    RETURN valor_retorno;
+EXCEPTION
+    -- Manejo de excepciones
+    WHEN excepcion1 THEN
+        -- Acciones para manejar excepcion1
+        RETURN valor_por_defecto;
+    WHEN OTHERS THEN
+        -- Acciones para manejar otras excepciones
+        RETURN valor_por_defecto;
+END nombre_funcion;
+/
+</code></pre>
+<h4>Opciones importantes</h4>
+<ul>
+<li><strong>DETERMINISTIC</strong>: Indica que la función siempre devuelve el mismo resultado para los mismos parámetros de entrada</li>
+<li><strong>PARALLEL_ENABLE</strong>: Permite que la función se ejecute en paralelo</li>
+<li><strong>PIPELINED</strong>: Permite devolver resultados incrementalmente en funciones que retornan colecciones</li>
+</ul>
+<h3>Ejemplos de funciones</h3>
+  <h4 class="tab-label">Función simple</h4>
+    <pre><code class="language-sql">    CREATE OR REPLACE FUNCTION calcular_salario_anual(
+        p_empleado_id IN NUMBER
+    ) RETURN NUMBER
+    IS
+        v_salario_mensual NUMBER;
+    BEGIN
+        -- Obtener el salario mensual del empleado
+        SELECT salario INTO v_salario_mensual
+        FROM empleados
+        WHERE empleado_id = p_empleado_id;
+        
+        -- Calcular y devolver el salario anual (12 meses + 2 pagas extra)
+        RETURN v_salario_mensual * 14;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('Empleado no encontrado.');
+            RETURN 0;
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+            RETURN 0;
+    END calcular_salario_anual;
+    /
+    </code></pre>
+  <h4 class="tab-label">Función determinista</h4>
+    <pre><code class="language-sql">    CREATE OR REPLACE FUNCTION calcular_edad(
+        p_fecha_nacimiento IN DATE
+    ) RETURN NUMBER
+    DETERMINISTIC
+    IS
+    BEGIN
+        RETURN TRUNC(MONTHS_BETWEEN(SYSDATE, p_fecha_nacimiento) / 12);
+    END calcular_edad;
+    /
+    </code></pre>
+  <h4 class="tab-label">Función que devuelve tabla</h4>
+    <pre><code class="language-sql">    -- Primero definimos un tipo de tabla
+    CREATE OR REPLACE TYPE empleado_info_type AS OBJECT (
+        id NUMBER,
+        nombre VARCHAR2(100),
+        departamento VARCHAR2(100)
+    );
+    /
+    
+    CREATE OR REPLACE TYPE empleado_info_table AS TABLE OF empleado_info_type;
+    /
+    
+    -- Luego creamos la función que devuelve este tipo
+    CREATE OR REPLACE FUNCTION obtener_empleados_departamento(
+        p_departamento_id IN NUMBER
+    ) RETURN empleado_info_table
+    PIPELINED
+    IS
+        v_info empleado_info_type;
+        CURSOR c_empleados IS
+            SELECT e.empleado_id, e.nombre, d.nombre_departamento
+            FROM empleados e
+            JOIN departamentos d ON e.departamento_id = d.departamento_id
+            WHERE e.departamento_id = p_departamento_id;
+    BEGIN
+        FOR emp IN c_empleados LOOP
+            v_info := empleado_info_type(emp.empleado_id, emp.nombre, emp.nombre_departamento);
+            PIPE ROW(v_info);
+        END LOOP;
+        
+        RETURN;
+    END obtener_empleados_departamento;
+    /
+    </code></pre>
+<h3>Uso de funciones</h3>
+<p>Las funciones pueden ser utilizadas en varios contextos:</p>
+<pre><code class="language-sql">-- En una consulta SELECT
+SELECT 
+    empleado_id,
+    nombre,
+    salario,
+    calcular_salario_anual(empleado_id) AS salario_anual
+FROM empleados;
+
+-- En una cláusula WHERE
+SELECT * FROM empleados
+WHERE calcular_edad(fecha_nacimiento) &gt; 30;
+
+-- En un bloque PL/SQL
+DECLARE
+    v_salario_anual NUMBER;
+BEGIN
+    v_salario_anual := calcular_salario_anual(101);
+    DBMS_OUTPUT.PUT_LINE('Salario anual: ' || v_salario_anual);
+END;
+/
+
+-- Usando una función que devuelve tabla
+SELECT * FROM TABLE(obtener_empleados_departamento(10));
+</code></pre>
+<h3>Diferencias entre procedimientos y funciones</h3>
+<table><thead><tr><th>Característica</th><th>Procedimiento</th><th>Función</th></tr></thead><tbody><tr><td>Valor de retorno</td><td>No devuelve valor</td><td>Siempre devuelve un valor</td></tr><tr><td>Uso en consultas SQL</td><td>No se puede usar en consultas</td><td>Se puede usar en SELECT, WHERE, etc.</td></tr><tr><td>Parámetros</td><td>IN, OUT, IN OUT</td><td>Principalmente IN (aunque puede tener OUT e IN OUT)</td></tr><tr><td>Propósito principal</td><td>Realizar operaciones</td><td>Calcular y devolver valores</td></tr><tr><td>Transacciones</td><td>Puede contener COMMIT/ROLLBACK</td><td>No debe contener COMMIT/ROLLBACK</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+Las funciones deben ser "puras" en el sentido de que no deberían modificar datos de la base de datos ni tener efectos secundarios. Si necesita modificar datos, es mejor usar un procedimiento.
+</blockquote>
+<h3>Gestión de funciones</h3>
+<pre><code class="language-sql">-- Ver el código fuente de una función
+SELECT text FROM user_source WHERE name = 'CALCULAR_SALARIO_ANUAL' ORDER BY line;
+
+-- Ver información sobre una función
+SELECT * FROM user_procedures WHERE object_name = 'CALCULAR_SALARIO_ANUAL' AND object_type = 'FUNCTION';
+
+-- Eliminar una función
+DROP FUNCTION calcular_salario_anual;
+
+-- Otorgar permisos de ejecución
+GRANT EXECUTE ON calcular_salario_anual TO usuario;
+</code></pre>
+<blockquote class="aside aside-tip">
+Las funciones son especialmente útiles para encapsular lógica de negocio compleja que necesita ser reutilizada en múltiples consultas SQL. Esto mejora la consistencia y reduce la duplicación de código.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="vistas">
+    <h2>Vistas</h2>
+    <div class="doc-content">
+<p>Las vistas son consultas almacenadas que se comportan como tablas virtuales. Proporcionan una capa de abstracción sobre las tablas base, permitiendo simplificar consultas complejas y controlar el acceso a los datos.</p>
+<h3>Concepto y aplicación de vistas</h3>
+<p>Una vista es esencialmente una consulta SELECT almacenada que se puede referenciar como si fuera una tabla. Sin embargo, a diferencia de las tablas, las vistas no almacenan datos físicamente, sino que obtienen los datos de las tablas base cuando se consultan.</p>
+<h4>Principales usos de las vistas</h4>
+<ul>
+<li><strong>Simplificar consultas complejas</strong>: Encapsulan joins y operaciones complejas</li>
+<li><strong>Restringir acceso a datos</strong>: Muestran solo columnas y filas específicas</li>
+<li><strong>Proporcionar independencia de datos</strong>: Ocultan la estructura subyacente de las tablas</li>
+<li><strong>Presentar datos calculados</strong>: Incluyen columnas derivadas o agregadas</li>
+<li><strong>Ofrecer compatibilidad con versiones anteriores</strong>: Mantienen interfaces estables cuando cambia la estructura subyacente</li>
+</ul>
+<h3>Creación de vistas</h3>
+<p>La sintaxis básica para crear una vista es:</p>
+<pre><code class="language-sql">CREATE [OR REPLACE] [FORCE | NOFORCE] VIEW nombre_vista
+    [(alias_columna1, alias_columna2, ...)] 
+AS
+    consulta_select
+[WITH CHECK OPTION [CONSTRAINT nombre_restriccion]]
+[WITH READ ONLY [CONSTRAINT nombre_restriccion]];
+</code></pre>
+<h4>Opciones importantes</h4>
+<ul>
+<li><strong>OR REPLACE</strong>: Reemplaza la vista si ya existe</li>
+<li><strong>FORCE</strong>: Crea la vista incluso si las tablas base no existen</li>
+<li><strong>NOFORCE</strong>: Solo crea la vista si las tablas base existen (valor por defecto)</li>
+<li><strong>WITH CHECK OPTION</strong>: Garantiza que las operaciones DML a través de la vista cumplan con la condición de la vista</li>
+<li><strong>WITH READ ONLY</strong>: Impide operaciones DML a través de la vista</li>
+</ul>
+<h3>Ejemplos de vistas</h3>
+  <h4 class="tab-label">Vista simple</h4>
+    <pre><code class="language-sql">    -- Vista que muestra empleados con sus departamentos
+    CREATE OR REPLACE VIEW vista_empleados_departamento AS
+    SELECT 
+        e.empleado_id,
+        e.nombre,
+        e.apellido,
+        e.salario,
+        d.nombre_departamento
+    FROM 
+        empleados e
+        JOIN departamentos d ON e.departamento_id = d.departamento_id;
+    </code></pre>
+  <h4 class="tab-label">Vista con columnas calculadas</h4>
+    <pre><code class="language-sql">    -- Vista con columnas calculadas
+    CREATE OR REPLACE VIEW vista_resumen_ventas AS
+    SELECT 
+        vendedor_id,
+        COUNT(*) AS total_ventas,
+        SUM(monto) AS monto_total,
+        AVG(monto) AS monto_promedio,
+        MIN(fecha) AS primera_venta,
+        MAX(fecha) AS ultima_venta
+    FROM 
+        ventas
+    GROUP BY 
+        vendedor_id;
+    </code></pre>
+  <h4 class="tab-label">Vista con restricciones</h4>
+    <pre><code class="language-sql">    -- Vista con CHECK OPTION
+    CREATE OR REPLACE VIEW empleados_it AS
+    SELECT 
+        empleado_id,
+        nombre,
+        apellido,
+        email,
+        telefono,
+        fecha_contratacion,
+        salario,
+        departamento_id
+    FROM 
+        empleados
+    WHERE 
+        departamento_id = 60 -- Departamento de IT
+    WITH CHECK OPTION CONSTRAINT chk_empleados_it;
+    
+    -- Vista de solo lectura
+    CREATE OR REPLACE VIEW informacion_confidencial AS
+    SELECT 
+        e.empleado_id,
+        e.nombre,
+        e.apellido,
+        e.salario,
+        e.comision_pct,
+        d.nombre_departamento
+    FROM 
+        empleados e
+        JOIN departamentos d ON e.departamento_id = d.departamento_id
+    WHERE 
+        e.salario &gt; 10000
+    WITH READ ONLY;
+    </code></pre>
+<h3>Ventajas de reutilización y seguridad con vistas</h3>
+<h4>Ventajas de reutilización</h4>
+<ul>
+<li><strong>Consistencia</strong>: Garantizan que todos los usuarios y aplicaciones accedan a los datos de la misma manera</li>
+<li><strong>Mantenibilidad</strong>: Centralizan la lógica de consulta, facilitando cambios futuros</li>
+<li><strong>Simplificación</strong>: Reducen la complejidad de las consultas para los usuarios finales</li>
+<li><strong>Rendimiento</strong>: Pueden mejorar el rendimiento cuando el optimizador de consultas las materializa</li>
+</ul>
+<h4>Ventajas de seguridad</h4>
+<ul>
+<li><strong>Control de acceso granular</strong>: Permiten mostrar solo columnas y filas específicas</li>
+<li><strong>Ocultamiento de datos sensibles</strong>: Pueden excluir columnas con información confidencial</li>
+<li><strong>Segregación de deberes</strong>: Facilitan la implementación de políticas de seguridad</li>
+<li><strong>Auditoría</strong>: Pueden incluir información de auditoría como quién y cuándo modificó los datos</li>
+</ul>
+<blockquote class="aside aside-note">
+Las vistas son una herramienta poderosa para implementar el principio de privilegio mínimo, permitiendo a los usuarios acceder solo a los datos que necesitan para realizar sus tareas.
+</blockquote>
+<h3>Tipos especiales de vistas</h3>
+<h4>Vistas materializadas</h4>
+<p>A diferencia de las vistas regulares, las vistas materializadas almacenan físicamente los resultados de la consulta, mejorando el rendimiento para consultas complejas o que acceden a grandes volúmenes de datos.</p>
+<pre><code class="language-sql">-- Crear una vista materializada
+CREATE MATERIALIZED VIEW resumen_ventas_mensual
+BUILD IMMEDIATE
+REFRESH COMPLETE ON DEMAND
+AS
+SELECT 
+    TO_CHAR(fecha, 'YYYY-MM') AS mes,
+    producto_id,
+    SUM(cantidad) AS total_unidades,
+    SUM(monto) AS total_ventas
+FROM 
+    ventas
+GROUP BY 
+    TO_CHAR(fecha, 'YYYY-MM'), producto_id;
+
+-- Actualizar una vista materializada
+EXECUTE DBMS_MVIEW.REFRESH('resumen_ventas_mensual');
+</code></pre>
+<h4>Vistas dinámicas</h4>
+<p>Las vistas dinámicas (prefijadas con V$) proporcionan información sobre el estado de la base de datos, como sesiones activas, estadísticas de rendimiento, etc.</p>
+<pre><code class="language-sql">-- Consultar sesiones activas
+SELECT * FROM v$session WHERE status = 'ACTIVE';
+
+-- Consultar estadísticas de rendimiento
+SELECT * FROM v$sysstat WHERE name LIKE '%physical read%';
+</code></pre>
+<h3>Gestión de vistas</h3>
+<pre><code class="language-sql">-- Ver la definición de una vista
+SELECT text FROM user_views WHERE view_name = 'VISTA_EMPLEADOS_DEPARTAMENTO';
+
+-- Ver información sobre una vista
+SELECT * FROM user_views WHERE view_name = 'VISTA_EMPLEADOS_DEPARTAMENTO';
+
+-- Eliminar una vista
+DROP VIEW vista_empleados_departamento;
+
+-- Otorgar permisos sobre una vista
+GRANT SELECT ON vista_empleados_departamento TO usuario;
+</code></pre>
+<blockquote class="aside aside-caution">
+Las operaciones DML (INSERT, UPDATE, DELETE) a través de vistas están sujetas a restricciones. Por ejemplo, no se pueden modificar datos a través de vistas que contengan funciones de grupo, cláusulas DISTINCT, o múltiples tablas.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="ejemplos-practicos-de-modularizacion">
+    <h2>Ejemplos prácticos de modularización</h2>
+    <div class="doc-content">
+<p>La combinación efectiva de procedimientos, funciones y vistas permite crear soluciones modulares y mantenibles. A continuación, se presentan algunos ejemplos prácticos.</p>
+<h3>Sistema de gestión de pedidos</h3>
+<p>Este ejemplo muestra cómo modularizar un sistema de gestión de pedidos utilizando procedimientos, funciones y vistas.</p>
+<h4>1. Crear vistas para simplificar consultas</h4>
+<pre><code class="language-sql">-- Vista para información completa de pedidos
+CREATE OR REPLACE VIEW vista_pedidos_completa AS
+SELECT 
+    p.pedido_id,
+    p.fecha_pedido,
+    p.estado,
+    c.cliente_id,
+    c.nombre AS nombre_cliente,
+    c.email AS email_cliente,
+    e.empleado_id,
+    e.nombre AS nombre_empleado,
+    SUM(d.cantidad * d.precio_unitario) AS total_pedido
+FROM 
+    pedidos p
+    JOIN clientes c ON p.cliente_id = c.cliente_id
+    JOIN empleados e ON p.empleado_id = e.empleado_id
+    JOIN detalles_pedido d ON p.pedido_id = d.pedido_id
+GROUP BY 
+    p.pedido_id, p.fecha_pedido, p.estado, c.cliente_id, c.nombre, c.email, e.empleado_id, e.nombre;
+</code></pre>
+<h4>2. Crear funciones para cálculos comunes</h4>
+<pre><code class="language-sql">-- Función para calcular el total de un pedido
+CREATE OR REPLACE FUNCTION calcular_total_pedido(
+    p_pedido_id IN NUMBER
+) RETURN NUMBER
+IS
+    v_total NUMBER;
+BEGIN
+    SELECT SUM(cantidad * precio_unitario)
+    INTO v_total
+    FROM detalles_pedido
+    WHERE pedido_id = p_pedido_id;
+    
+    RETURN NVL(v_total, 0);
+END calcular_total_pedido;
+/
+
+-- Función para verificar disponibilidad de inventario
+CREATE OR REPLACE FUNCTION verificar_disponibilidad(
+    p_producto_id IN NUMBER,
+    p_cantidad IN NUMBER
+) RETURN BOOLEAN
+IS
+    v_stock NUMBER;
+BEGIN
+    SELECT stock_disponible
+    INTO v_stock
+    FROM inventario
+    WHERE producto_id = p_producto_id;
+    
+    RETURN (v_stock &gt;= p_cantidad);
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RETURN FALSE;
+END verificar_disponibilidad;
+/
+</code></pre>
+<h4>3. Crear procedimientos para operaciones de negocio</h4>
+<pre><code class="language-sql">-- Procedimiento para crear un nuevo pedido
+CREATE OR REPLACE PROCEDURE crear_pedido(
+    p_cliente_id IN NUMBER,
+    p_empleado_id IN NUMBER,
+    p_pedido_id OUT NUMBER
+)
+IS
+BEGIN
+    -- Generar nuevo ID de pedido
+    SELECT seq_pedido.NEXTVAL INTO p_pedido_id FROM dual;
+    
+    -- Insertar el pedido
+    INSERT INTO pedidos (pedido_id, cliente_id, empleado_id, fecha_pedido, estado)
+    VALUES (p_pedido_id, p_cliente_id, p_empleado_id, SYSDATE, 'PENDIENTE');
+    
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END crear_pedido;
+/
+
+-- Procedimiento para añadir un artículo al pedido
+CREATE OR REPLACE PROCEDURE agregar_articulo_pedido(
+    p_pedido_id IN NUMBER,
+    p_producto_id IN NUMBER,
+    p_cantidad IN NUMBER,
+    p_precio_unitario IN NUMBER,
+    p_resultado OUT VARCHAR2
+)
+IS
+    v_disponible BOOLEAN;
+BEGIN
+    -- Verificar disponibilidad
+    v_disponible := verificar_disponibilidad(p_producto_id, p_cantidad);
+    
+    IF v_disponible THEN
+        -- Añadir el artículo al pedido
+        INSERT INTO detalles_pedido (pedido_id, producto_id, cantidad, precio_unitario)
+        VALUES (p_pedido_id, p_producto_id, p_cantidad, p_precio_unitario);
+        
+        -- Actualizar inventario
+        UPDATE inventario
+        SET stock_disponible = stock_disponible - p_cantidad
+        WHERE producto_id = p_producto_id;
+        
+        p_resultado := 'OK';
+        COMMIT;
+    ELSE
+        p_resultado := 'STOCK_INSUFICIENTE';
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        p_resultado := 'ERROR: ' || SQLERRM;
+END agregar_articulo_pedido;
+/
+</code></pre>
+<h4>4. Utilizar los objetos en conjunto</h4>
+<pre><code class="language-sql">-- Ejemplo de uso combinado
+DECLARE
+    v_pedido_id NUMBER;
+    v_resultado VARCHAR2(200);
+BEGIN
+    -- Crear un nuevo pedido
+    crear_pedido(101, 201, v_pedido_id);
+    
+    -- Añadir artículos al pedido
+    agregar_articulo_pedido(v_pedido_id, 301, 5, 10.99, v_resultado);
+    DBMS_OUTPUT.PUT_LINE('Resultado: ' || v_resultado);
+    
+    agregar_articulo_pedido(v_pedido_id, 302, 2, 25.50, v_resultado);
+    DBMS_OUTPUT.PUT_LINE('Resultado: ' || v_resultado);
+    
+    -- Mostrar el total del pedido
+    DBMS_OUTPUT.PUT_LINE('Total del pedido: ' || calcular_total_pedido(v_pedido_id));
+END;
+/
+</code></pre>
+<h3>Ventajas de la modularización</h3>
+<ul>
+<li><strong>Separación de responsabilidades</strong>: Cada objeto tiene una función específica y bien definida</li>
+<li><strong>Reutilización de código</strong>: Las funciones y procedimientos pueden ser utilizados en múltiples contextos</li>
+<li><strong>Mantenibilidad</strong>: Los cambios en la lógica de negocio solo necesitan hacerse en un lugar</li>
+<li><strong>Seguridad</strong>: El acceso a los datos puede controlarse a nivel de objeto</li>
+<li><strong>Rendimiento</strong>: La lógica se ejecuta en el servidor de base de datos, reduciendo el tráfico de red</li>
+</ul>
+<blockquote class="aside aside-tip">
+Al diseñar soluciones modulares, siga el principio de responsabilidad única: cada objeto debe tener una sola responsabilidad y un solo motivo para cambiar.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="conclusion">
+    <h2>Conclusión</h2>
+    <div class="doc-content">
+<p>Los procedimientos, funciones y vistas son componentes fundamentales para desarrollar aplicaciones Oracle robustas, mantenibles y seguras. Estos objetos permiten encapsular la lógica de negocio, reutilizar código y controlar el acceso a los datos.</p>
+<ul>
+<li><strong>Procedimientos almacenados</strong>: Ideales para operaciones que modifican datos y realizan múltiples acciones como parte de una transacción.</li>
+<li><strong>Funciones almacenadas</strong>: Perfectas para cálculos y operaciones que necesitan devolver un valor y pueden ser utilizadas en consultas SQL.</li>
+<li><strong>Vistas</strong>: Excelentes para simplificar consultas complejas, controlar el acceso a los datos y proporcionar una capa de abstracción sobre las tablas base.</li>
+</ul>
+<p>La combinación efectiva de estos objetos permite crear soluciones modulares que son fáciles de mantener, escalar y asegurar. Al centralizar la lógica de negocio en la base de datos, se garantiza la consistencia y se reduce la duplicación de código en las aplicaciones cliente.</p>
+<blockquote class="aside aside-note">
+Recuerde documentar adecuadamente todos los objetos creados, incluyendo su propósito, parámetros y comportamiento esperado. Esto facilitará enormemente el mantenimiento futuro y la incorporación de nuevos desarrolladores al proyecto.
+</blockquote>
+    </div>
+  </section>

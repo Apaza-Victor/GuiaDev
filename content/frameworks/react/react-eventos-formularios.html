@@ -1,0 +1,725 @@
+<!-- 06. Eventos y Formularios - React (Frameworks) -->
+  <section id="6-1-eventos-en-react-onclick-onchange-onsubmit">
+    <h2><i class="fa-solid fa-bullseye"></i> 6.1 Eventos en React (onClick, onChange, onSubmit)</h2>
+    <div class="doc-content">
+<h3>Sintaxis de eventos</h3>
+<p>En React, los eventos se escriben en <strong>camelCase</strong> y reciben una función como valor.</p>
+<table><thead><tr><th>HTML</th><th>React</th></tr></thead><tbody><tr><td><code>onclick</code></td><td><code>onClick</code></td></tr><tr><td><code>onchange</code></td><td><code>onChange</code></td></tr><tr><td><code>onsubmit</code></td><td><code>onSubmit</code></td></tr><tr><td><code>onmouseover</code></td><td><code>onMouseOver</code></td></tr><tr><td><code>onkeydown</code></td><td><code>onKeyDown</code></td></tr></tbody></table>
+<h3>Evento onClick</h3>
+<pre><code class="language-jsx">function Boton() {
+  // Función manejadora
+  const handleClick = () =&gt; {
+    alert("¡Botón clickeado!");
+  };
+  
+  return (
+    &lt;button onClick={handleClick}&gt;
+      Haz clic
+    &lt;/button&gt;
+  );
+}
+
+// También puedes usar función inline
+function Boton() {
+  return (
+    &lt;button onClick={() =&gt; alert("¡Clic!")}&gt;
+      Haz clic
+    &lt;/button&gt;
+  );
+}</code></pre>
+<h3>Evento onChange</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function InputTexto() {
+  const [texto, setTexto] = useState("");
+  
+  const handleChange = (event) =&gt; {
+    setTexto(event.target.value);
+  };
+  
+  return (
+    &lt;div&gt;
+      &lt;input 
+        type="text"
+        value={texto}
+        onChange={handleChange}
+      /&gt;
+      &lt;p&gt;Escribiste: {texto}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Evento onSubmit</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function Formulario() {
+  const [nombre, setNombre] = useState("");
+  
+  const handleSubmit = (event) =&gt; {
+    event.preventDefault();  // Evita recargar la página
+    console.log("Enviado:", nombre);
+  };
+  
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;input 
+        value={nombre}
+        onChange={(e) =&gt; setNombre(e.target.value)}
+      /&gt;
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-2-manejo-de-eventos-personalizados">
+    <h2><i class="fa-solid fa-wrench"></i> 6.2 Manejo de eventos personalizados</h2>
+    <div class="doc-content">
+<h3>El objeto event</h3>
+<pre><code class="language-jsx">function ManejoEvento() {
+  const handleClick = (event) =&gt; {
+    // Propiedades útiles del evento
+    console.log(event.target);        // Elemento que disparó el evento
+    console.log(event.target.value);  // Valor del elemento (inputs)
+    console.log(event.type);          // Tipo de evento ("click")
+    console.log(event.clientX);       // Posición X del mouse
+    console.log(event.clientY);       // Posición Y del mouse
+  };
+  
+  return &lt;button onClick={handleClick}&gt;Clic&lt;/button&gt;;
+}</code></pre>
+<h3>Pasar parámetros a eventos</h3>
+<pre><code class="language-jsx">function Lista() {
+  const items = ["Manzana", "Banana", "Naranja"];
+  
+  // ❌ MAL - Se ejecuta inmediatamente
+  const handleClick = (item) =&gt; {
+    console.log(item);
+  };
+  // &lt;button onClick={handleClick(item)}&gt;  // Error
+  
+  // ✅ BIEN - Usa arrow function
+  return (
+    &lt;ul&gt;
+      {items.map((item, index) =&gt; (
+        &lt;li key={index}&gt;
+          {item}
+          &lt;button onClick={() =&gt; handleClick(item)}&gt;
+            Seleccionar
+          &lt;/button&gt;
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>Múltiples eventos</h3>
+<pre><code class="language-jsx">function Tarjeta() {
+  const handleMouseEnter = () =&gt; console.log("Mouse entró");
+  const handleMouseLeave = () =&gt; console.log("Mouse salió");
+  const handleDoubleClick = () =&gt; console.log("Doble clic");
+  
+  return (
+    &lt;div
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onDoubleClick={handleDoubleClick}
+      style={{ padding: "20px", border: "1px solid #ccc" }}
+    &gt;
+      Pasa el mouse o haz doble clic
+    &lt;/div&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-3-inputs-controlados">
+    <h2><i class="fa-solid fa-pen-to-square"></i> 6.3 Inputs controlados</h2>
+    <div class="doc-content">
+<h3>¿Qué es un input controlado?</h3>
+<p>Un <strong>input controlado</strong> es aquel cuyo valor está controlado por el estado de React. El estado es la "fuente de verdad".</p>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+// Input CONTROLADO
+function InputControlado() {
+  const [valor, setValor] = useState("");
+  
+  return (
+    &lt;input
+      value={valor}                           // Valor del estado
+      onChange={(e) =&gt; setValor(e.target.value)}  // Actualiza estado
+    /&gt;
+  );
+}
+
+// Input NO controlado (evitar)
+function InputNoControlado() {
+  return &lt;input /&gt;;  // React no controla el valor
+}</code></pre>
+<h3>Tipos de inputs controlados</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function FormularioCompleto() {
+  const [texto, setTexto] = useState("");
+  const [numero, setNumero] = useState(0);
+  const [seleccion, setSeleccion] = useState("opcion1");
+  const [checkbox, setCheckbox] = useState(false);
+  const [textarea, setTextarea] = useState("");
+  
+  return (
+    &lt;form&gt;
+      {/* Input de texto */}
+      &lt;input
+        type="text"
+        value={texto}
+        onChange={(e) =&gt; setTexto(e.target.value)}
+      /&gt;
+      
+      {/* Input numérico */}
+      &lt;input
+        type="number"
+        value={numero}
+        onChange={(e) =&gt; setNumero(Number(e.target.value))}
+      /&gt;
+      
+      {/* Select */}
+      &lt;select
+        value={seleccion}
+        onChange={(e) =&gt; setSeleccion(e.target.value)}
+      &gt;
+        &lt;option value="opcion1"&gt;Opción 1&lt;/option&gt;
+        &lt;option value="opcion2"&gt;Opción 2&lt;/option&gt;
+        &lt;option value="opcion3"&gt;Opción 3&lt;/option&gt;
+      &lt;/select&gt;
+      
+      {/* Checkbox */}
+      &lt;input
+        type="checkbox"
+        checked={checkbox}
+        onChange={(e) =&gt; setCheckbox(e.target.checked)}
+      /&gt;
+      
+      {/* Textarea */}
+      &lt;textarea
+        value={textarea}
+        onChange={(e) =&gt; setTextarea(e.target.value)}
+      /&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-4-formularios-basicos">
+    <h2><i class="fa-solid fa-clipboard-list"></i> 6.4 Formularios básicos</h2>
+    <div class="doc-content">
+<h3>Formulario simple</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function FormularioContacto() {
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [mensaje, setMensaje] = useState("");
+  
+  const handleSubmit = (e) =&gt; {
+    e.preventDefault();
+    
+    const datos = { nombre, email, mensaje };
+    console.log("Datos enviados:", datos);
+    
+    // Limpiar formulario
+    setNombre("");
+    setEmail("");
+    setMensaje("");
+  };
+  
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;div&gt;
+        &lt;label&gt;Nombre:&lt;/label&gt;
+        &lt;input
+          type="text"
+          value={nombre}
+          onChange={(e) =&gt; setNombre(e.target.value)}
+        /&gt;
+      &lt;/div&gt;
+      
+      &lt;div&gt;
+        &lt;label&gt;Email:&lt;/label&gt;
+        &lt;input
+          type="email"
+          value={email}
+          onChange={(e) =&gt; setEmail(e.target.value)}
+        /&gt;
+      &lt;/div&gt;
+      
+      &lt;div&gt;
+        &lt;label&gt;Mensaje:&lt;/label&gt;
+        &lt;textarea
+          value={mensaje}
+          onChange={(e) =&gt; setMensaje(e.target.value)}
+        /&gt;
+      &lt;/div&gt;
+      
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>Formulario con objeto de estado</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function FormularioRegistro() {
+  const [formData, setFormData] = useState({
+    nombre: "",
+    email: "",
+    password: "",
+    edad: 18
+  });
+  
+  const handleChange = (e) =&gt; {
+    const { name, value, type } = e.target;
+    
+    setFormData(prev =&gt; ({
+      ...prev,
+      [name]: type === "number" ? Number(value) : value
+    }));
+  };
+  
+  const handleSubmit = (e) =&gt; {
+    e.preventDefault();
+    console.log("Registro:", formData);
+  };
+  
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;input
+        name="nombre"
+        placeholder="Nombre"
+        value={formData.nombre}
+        onChange={handleChange}
+      /&gt;
+      &lt;input
+        name="email"
+        type="email"
+        placeholder="Email"
+        value={formData.email}
+        onChange={handleChange}
+      /&gt;
+      &lt;input
+        name="password"
+        type="password"
+        placeholder="Contraseña"
+        value={formData.password}
+        onChange={handleChange}
+      /&gt;
+      &lt;input
+        name="edad"
+        type="number"
+        value={formData.edad}
+        onChange={handleChange}
+      /&gt;
+      &lt;button type="submit"&gt;Registrar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-5-validaciones-simples">
+    <h2><i class="fa-solid fa-circle-check"></i> 6.5 Validaciones simples</h2>
+    <div class="doc-content">
+<h3>Validación en tiempo real</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function FormularioValidado() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errores, setErrores] = useState({});
+  
+  const validarEmail = (valor) =&gt; {
+    if (!valor) return "El email es requerido";
+    if (!valor.includes("@")) return "Email inválido";
+    return "";
+  };
+  
+  const validarPassword = (valor) =&gt; {
+    if (!valor) return "La contraseña es requerida";
+    if (valor.length &lt; 6) return "Mínimo 6 caracteres";
+    return "";
+  };
+  
+  const handleEmailChange = (e) =&gt; {
+    const valor = e.target.value;
+    setEmail(valor);
+    setErrores(prev =&gt; ({
+      ...prev,
+      email: validarEmail(valor)
+    }));
+  };
+  
+  const handlePasswordChange = (e) =&gt; {
+    const valor = e.target.value;
+    setPassword(valor);
+    setErrores(prev =&gt; ({
+      ...prev,
+      password: validarPassword(valor)
+    }));
+  };
+  
+  return (
+    &lt;form&gt;
+      &lt;div&gt;
+        &lt;input
+          type="email"
+          value={email}
+          onChange={handleEmailChange}
+          placeholder="Email"
+        /&gt;
+        {errores.email &amp;&amp; (
+          &lt;span style={{ color: "red" }}&gt;{errores.email}&lt;/span&gt;
+        )}
+      &lt;/div&gt;
+      
+      &lt;div&gt;
+        &lt;input
+          type="password"
+          value={password}
+          onChange={handlePasswordChange}
+          placeholder="Contraseña"
+        /&gt;
+        {errores.password &amp;&amp; (
+          &lt;span style={{ color: "red" }}&gt;{errores.password}&lt;/span&gt;
+        )}
+      &lt;/div&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>Validación al enviar</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function FormularioConValidacion() {
+  const [datos, setDatos] = useState({
+    nombre: "",
+    email: "",
+    edad: ""
+  });
+  const [errores, setErrores] = useState({});
+  
+  const validar = () =&gt; {
+    const nuevosErrores = {};
+    
+    if (!datos.nombre.trim()) {
+      nuevosErrores.nombre = "El nombre es requerido";
+    }
+    
+    if (!datos.email.includes("@")) {
+      nuevosErrores.email = "Email inválido";
+    }
+    
+    if (datos.edad &lt; 18) {
+      nuevosErrores.edad = "Debes ser mayor de 18";
+    }
+    
+    setErrores(nuevosErrores);
+    return Object.keys(nuevosErrores).length === 0;
+  };
+  
+  const handleSubmit = (e) =&gt; {
+    e.preventDefault();
+    
+    if (validar()) {
+      console.log("Formulario válido:", datos);
+      // Enviar datos...
+    } else {
+      console.log("Hay errores");
+    }
+  };
+  
+  const handleChange = (e) =&gt; {
+    const { name, value } = e.target;
+    setDatos(prev =&gt; ({ ...prev, [name]: value }));
+  };
+  
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;div&gt;
+        &lt;input
+          name="nombre"
+          value={datos.nombre}
+          onChange={handleChange}
+          placeholder="Nombre"
+        /&gt;
+        {errores.nombre &amp;&amp; &lt;span className="error"&gt;{errores.nombre}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;div&gt;
+        &lt;input
+          name="email"
+          value={datos.email}
+          onChange={handleChange}
+          placeholder="Email"
+        /&gt;
+        {errores.email &amp;&amp; &lt;span className="error"&gt;{errores.email}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;div&gt;
+        &lt;input
+          name="edad"
+          type="number"
+          value={datos.edad}
+          onChange={handleChange}
+          placeholder="Edad"
+        /&gt;
+        {errores.edad &amp;&amp; &lt;span className="error"&gt;{errores.edad}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-6-prevencion-de-comportamiento-por-defecto">
+    <h2><i class="fa-solid fa-ban"></i> 6.6 Prevención de comportamiento por defecto</h2>
+    <div class="doc-content">
+<h3>preventDefault()</h3>
+<pre><code class="language-jsx">// Formulario - evita recargar la página
+const handleSubmit = (e) =&gt; {
+  e.preventDefault();
+  // Tu lógica aquí
+};
+
+// Link - evita navegar
+const handleLinkClick = (e) =&gt; {
+  e.preventDefault();
+  console.log("Link clickeado pero no navega");
+};
+
+// Ejemplo completo
+function Formulario() {
+  const handleSubmit = (e) =&gt; {
+    e.preventDefault();  // Sin esto, la página se recarga
+    console.log("Formulario enviado sin recargar");
+  };
+  
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;input type="text" /&gt;
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>stopPropagation()</h3>
+<pre><code class="language-jsx">function Contenedor() {
+  const handleContainerClick = () =&gt; {
+    console.log("Contenedor clickeado");
+  };
+  
+  const handleButtonClick = (e) =&gt; {
+    e.stopPropagation();  // Evita que el evento suba al contenedor
+    console.log("Solo botón clickeado");
+  };
+  
+  return (
+    &lt;div onClick={handleContainerClick} style={{ padding: "20px", background: "#eee" }}&gt;
+      &lt;p&gt;Haz clic aquí (contenedor)&lt;/p&gt;
+      &lt;button onClick={handleButtonClick}&gt;
+        Clic aquí (no propaga)
+      &lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-7-manejo-de-multiples-inputs">
+    <h2><i class="fa-solid fa-list-ol"></i> 6.7 Manejo de múltiples inputs</h2>
+    <div class="doc-content">
+<h3>Un handler para todos</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function FormularioMultiple() {
+  const [formData, setFormData] = useState({
+    nombre: "",
+    apellido: "",
+    email: "",
+    telefono: "",
+    ciudad: "",
+    pais: ""
+  });
+  
+  // Un solo handler para todos los inputs
+  const handleChange = (e) =&gt; {
+    const { name, value, type, checked } = e.target;
+    
+    setFormData(prev =&gt; ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  };
+  
+  const handleSubmit = (e) =&gt; {
+    e.preventDefault();
+    console.log(formData);
+  };
+  
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;input
+        name="nombre"
+        placeholder="Nombre"
+        value={formData.nombre}
+        onChange={handleChange}
+      /&gt;
+      &lt;input
+        name="apellido"
+        placeholder="Apellido"
+        value={formData.apellido}
+        onChange={handleChange}
+      /&gt;
+      &lt;input
+        name="email"
+        type="email"
+        placeholder="Email"
+        value={formData.email}
+        onChange={handleChange}
+      /&gt;
+      &lt;input
+        name="telefono"
+        placeholder="Teléfono"
+        value={formData.telefono}
+        onChange={handleChange}
+      /&gt;
+      &lt;input
+        name="ciudad"
+        placeholder="Ciudad"
+        value={formData.ciudad}
+        onChange={handleChange}
+      /&gt;
+      &lt;input
+        name="pais"
+        placeholder="País"
+        value={formData.pais}
+        onChange={handleChange}
+      /&gt;
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-tip">
+Usa el atributo `name` en cada input para identificarlo. Así puedes usar un solo `handleChange` para todos los campos con `[name]: value`.
+</blockquote>
+<h3>Formulario completo con validación</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function FormularioCompleto() {
+  const [formData, setFormData] = useState({
+    nombre: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    aceptaTerminos: false
+  });
+  
+  const [errores, setErrores] = useState({});
+  const [enviado, setEnviado] = useState(false);
+  
+  const handleChange = (e) =&gt; {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev =&gt; ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  };
+  
+  const validar = () =&gt; {
+    const nuevosErrores = {};
+    
+    if (!formData.nombre) nuevosErrores.nombre = "Requerido";
+    if (!formData.email.includes("@")) nuevosErrores.email = "Email inválido";
+    if (formData.password.length &lt; 6) nuevosErrores.password = "Mínimo 6 caracteres";
+    if (formData.password !== formData.confirmPassword) {
+      nuevosErrores.confirmPassword = "Las contraseñas no coinciden";
+    }
+    if (!formData.aceptaTerminos) nuevosErrores.aceptaTerminos = "Debes aceptar";
+    
+    setErrores(nuevosErrores);
+    return Object.keys(nuevosErrores).length === 0;
+  };
+  
+  const handleSubmit = (e) =&gt; {
+    e.preventDefault();
+    if (validar()) {
+      console.log("Enviando:", formData);
+      setEnviado(true);
+    }
+  };
+  
+  if (enviado) {
+    return &lt;p&gt;¡Registro exitoso!&lt;/p&gt;;
+  }
+  
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;div&gt;
+        &lt;input name="nombre" placeholder="Nombre" 
+          value={formData.nombre} onChange={handleChange} /&gt;
+        {errores.nombre &amp;&amp; &lt;span className="error"&gt;{errores.nombre}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;div&gt;
+        &lt;input name="email" type="email" placeholder="Email"
+          value={formData.email} onChange={handleChange} /&gt;
+        {errores.email &amp;&amp; &lt;span className="error"&gt;{errores.email}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;div&gt;
+        &lt;input name="password" type="password" placeholder="Contraseña"
+          value={formData.password} onChange={handleChange} /&gt;
+        {errores.password &amp;&amp; &lt;span className="error"&gt;{errores.password}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;div&gt;
+        &lt;input name="confirmPassword" type="password" placeholder="Confirmar"
+          value={formData.confirmPassword} onChange={handleChange} /&gt;
+        {errores.confirmPassword &amp;&amp; &lt;span className="error"&gt;{errores.confirmPassword}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;div&gt;
+        &lt;label&gt;
+          &lt;input name="aceptaTerminos" type="checkbox"
+            checked={formData.aceptaTerminos} onChange={handleChange} /&gt;
+          Acepto los términos
+        &lt;/label&gt;
+        {errores.aceptaTerminos &amp;&amp; &lt;span className="error"&gt;{errores.aceptaTerminos}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;button type="submit"&gt;Registrar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Eventos en React usan **camelCase** (onClick, onChange, onSubmit)
+- El objeto **event** contiene información del evento
+- Los **inputs controlados** tienen su valor en el estado
+- Usa **preventDefault()** para evitar comportamientos por defecto
+- Usa **stopPropagation()** para evitar propagación de eventos
+- Un solo **handleChange** puede manejar múltiples inputs con `[name]`
+- Valida formularios en **tiempo real** o **al enviar**
+</blockquote>
+    </div>
+  </section>

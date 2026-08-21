@@ -1,0 +1,702 @@
+<!-- 10. Migraciones y Base de Datos - Laravel (Frameworks) -->
+  <section id="crear-y-ejecutar-migraciones">
+    <h2>Crear y ejecutar migraciones</h2>
+    <div class="doc-content">
+<p>Las migraciones son como un sistema de control de versiones para tu base de datos, permitiéndote definir y modificar el esquema de la base de datos de forma programática y compartirlo con tu equipo.</p>
+<h3>Crear una migración</h3>
+<p>Para crear una nueva migración, utiliza el comando Artisan <code>make:migration</code>:</p>
+<pre><code class="language-bash">php artisan make:migration create_users_table</code></pre>
+<p>Este comando generará un archivo de migración en el directorio <code>database/migrations</code> con un prefijo de fecha y hora para mantener el orden correcto de ejecución.</p>
+<p>Para crear una migración para una tabla existente:</p>
+<pre><code class="language-bash">php artisan make:migration add_phone_to_users_table --table=users</code></pre>
+<p>Para crear una migración que cree una nueva tabla:</p>
+<pre><code class="language-bash">php artisan make:migration create_products_table --create=products</code></pre>
+<h3>Estructura de una migración</h3>
+<p>Una migración contiene dos métodos principales: <code>up()</code> para aplicar los cambios y <code>down()</code> para revertirlos.</p>
+<pre><code class="language-php">&lt;?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('products', function (Blueprint $table) {
+            $table-&gt;id();
+            $table-&gt;string('name');
+            $table-&gt;text('description')-&gt;nullable();
+            $table-&gt;decimal('price', 8, 2);
+            $table-&gt;integer('stock')-&gt;default(0);
+            $table-&gt;boolean('active')-&gt;default(true);
+            $table-&gt;foreignId('category_id')-&gt;constrained();
+            $table-&gt;timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('products');
+    }
+};</code></pre>
+<h3>Tipos de columnas comunes</h3>
+<p>Laravel proporciona una amplia variedad de tipos de columnas que puedes utilizar en tus migraciones:</p>
+<pre><code class="language-php">// Tipos de columnas básicos
+$table-&gt;id();                     // BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
+$table-&gt;bigInteger('votes');      // BIGINT
+$table-&gt;binary('data');           // BLOB
+$table-&gt;boolean('confirmed');     // BOOLEAN
+$table-&gt;char('code', 4);          // CHAR con longitud específica
+$table-&gt;date('created_date');     // DATE
+$table-&gt;dateTime('created_at');   // DATETIME
+$table-&gt;decimal('amount', 8, 2);  // DECIMAL con precisión y escala
+$table-&gt;double('amount', 8, 2);   // DOUBLE con precisión y escala
+$table-&gt;enum('level', ['easy', 'medium', 'hard']); // ENUM
+$table-&gt;float('amount', 8, 2);    // FLOAT con precisión y escala
+$table-&gt;integer('votes');         // INTEGER
+$table-&gt;json('options');          // JSON
+$table-&gt;jsonb('options');         // JSONB (solo PostgreSQL)
+$table-&gt;longText('description');  // LONGTEXT
+$table-&gt;mediumInteger('votes');   // MEDIUMINT
+$table-&gt;mediumText('description'); // MEDIUMTEXT
+$table-&gt;morphs('taggable');       // Crea columnas taggable_id y taggable_type
+$table-&gt;smallInteger('votes');    // SMALLINT
+$table-&gt;string('name', 100);      // VARCHAR con longitud opcional
+$table-&gt;text('description');      // TEXT
+$table-&gt;time('sunrise');          // TIME
+$table-&gt;timestamp('added_at');    // TIMESTAMP
+$table-&gt;timestamps();             // Crea columnas created_at y updated_at
+$table-&gt;tinyInteger('votes');     // TINYINT
+$table-&gt;tinyText('notes');        // TINYTEXT
+$table-&gt;unsignedBigInteger('votes'); // BIGINT UNSIGNED
+$table-&gt;unsignedInteger('votes'); // INTEGER UNSIGNED
+$table-&gt;uuid('id');               // UUID</code></pre>
+<h3>Modificadores de columnas</h3>
+<p>Puedes aplicar varios modificadores a las columnas:</p>
+<pre><code class="language-php">$table-&gt;string('email')-&gt;unique();       // Crea un índice único
+$table-&gt;integer('votes')-&gt;default(0);    // Establece un valor predeterminado
+$table-&gt;string('name')-&gt;nullable();      // Permite valores NULL
+$table-&gt;timestamp('created_at')-&gt;useCurrent(); // Usa CURRENT_TIMESTAMP
+$table-&gt;timestamp('updated_at')-&gt;useCurrentOnUpdate(); // Actualiza con CURRENT_TIMESTAMP
+$table-&gt;string('slug')-&gt;index();         // Crea un índice
+$table-&gt;text('description')-&gt;fulltext(); // Crea un índice de texto completo (MySQL/PostgreSQL)
+$table-&gt;integer('user_id')-&gt;unsigned();  // UNSIGNED (MySQL)
+$table-&gt;integer('votes')-&gt;comment('Número de votos'); // Agrega un comentario a la columna</code></pre>
+<h3>Ejecutar migraciones</h3>
+<p>Para ejecutar todas las migraciones pendientes:</p>
+<pre><code class="language-bash">php artisan migrate</code></pre>
+<p>Para ejecutar migraciones en un entorno de producción sin confirmación:</p>
+<pre><code class="language-bash">php artisan migrate --force</code></pre>
+<h3>Revertir migraciones</h3>
+<p>Para revertir la última operación de migración:</p>
+<pre><code class="language-bash">php artisan migrate:rollback</code></pre>
+<p>Para revertir un número específico de migraciones:</p>
+<pre><code class="language-bash">php artisan migrate:rollback --step=5</code></pre>
+<p>Para revertir todas las migraciones:</p>
+<pre><code class="language-bash">php artisan migrate:reset</code></pre>
+<h3>Refrescar migraciones</h3>
+<p>Para revertir todas las migraciones y luego ejecutarlas de nuevo (útil durante el desarrollo):</p>
+<pre><code class="language-bash">php artisan migrate:refresh</code></pre>
+<p>Para eliminar todas las tablas y ejecutar todas las migraciones:</p>
+<pre><code class="language-bash">php artisan migrate:fresh</code></pre>
+<blockquote class="aside aside-caution">
+¡Cuidado! Los comandos `migrate:refresh` y `migrate:fresh` eliminarán datos. Nunca los uses en un entorno de producción con datos reales.
+</blockquote>
+<h3>Estado de las migraciones</h3>
+<p>Para ver el estado de las migraciones:</p>
+<pre><code class="language-bash">php artisan migrate:status</code></pre>
+    </div>
+  </section>
+
+  <section id="seeders-y-factories">
+    <h2>Seeders y factories</h2>
+    <div class="doc-content">
+<p>Los seeders y factories te permiten poblar tu base de datos con datos de prueba, lo que es especialmente útil durante el desarrollo y las pruebas.</p>
+<h3>Seeders</h3>
+<p>Los seeders son clases que te permiten insertar datos en tus tablas de manera programática.</p>
+<h4>Crear un seeder</h4>
+<pre><code class="language-bash">php artisan make:seeder UserSeeder</code></pre>
+<p>Este comando generará una clase en el directorio <code>database/seeders</code>.</p>
+<h4>Estructura de un seeder</h4>
+<pre><code class="language-php">&lt;?php
+
+namespace Database\Seeders;
+
+use App\Models\User;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+
+class UserSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        User::create([
+            'name' =&gt; 'Admin User',
+            'email' =&gt; 'admin@example.com',
+            'password' =&gt; Hash::make('password'),
+            'role' =&gt; 'admin',
+        ]);
+        
+        User::create([
+            'name' =&gt; 'Regular User',
+            'email' =&gt; 'user@example.com',
+            'password' =&gt; Hash::make('password'),
+            'role' =&gt; 'user',
+        ]);
+    }
+}</code></pre>
+<h4>Ejecutar seeders</h4>
+<p>Para ejecutar todos los seeders:</p>
+<pre><code class="language-bash">php artisan db:seed</code></pre>
+<p>Para ejecutar un seeder específico:</p>
+<pre><code class="language-bash">php artisan db:seed --class=UserSeeder</code></pre>
+<p>Para ejecutar migraciones y seeders en un solo comando:</p>
+<pre><code class="language-bash">php artisan migrate --seed</code></pre>
+<p>Para refrescar la base de datos y ejecutar seeders:</p>
+<pre><code class="language-bash">php artisan migrate:refresh --seed</code></pre>
+<h3>Factories</h3>
+<p>Las factories utilizan la biblioteca Faker para generar grandes cantidades de datos de prueba realistas.</p>
+<h4>Crear una factory</h4>
+<pre><code class="language-bash">php artisan make:factory ProductFactory --model=Product</code></pre>
+<p>Este comando generará una clase en el directorio <code>database/factories</code>.</p>
+<h4>Estructura de una factory</h4>
+<pre><code class="language-php">&lt;?php
+
+namespace Database\Factories;
+
+use App\Models\Category;
+use App\Models\Product;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class ProductFactory extends Factory
+{
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var string
+     */
+    protected $model = Product::class;
+
+    /**
+     * Define the model's default state.
+     *
+     * @return array&lt;string, mixed&gt;
+     */
+    public function definition(): array
+    {
+        return [
+            'name' =&gt; $this-&gt;faker-&gt;words(3, true),
+            'description' =&gt; $this-&gt;faker-&gt;paragraph(),
+            'price' =&gt; $this-&gt;faker-&gt;randomFloat(2, 10, 1000),
+            'stock' =&gt; $this-&gt;faker-&gt;numberBetween(0, 100),
+            'active' =&gt; $this-&gt;faker-&gt;boolean(80), // 80% de probabilidad de ser true
+            'category_id' =&gt; Category::inRandomOrder()-&gt;first()-&gt;id,
+        ];
+    }
+    
+    /**
+     * Indicate that the product is featured.
+     *
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     */
+    public function featured(): Factory
+    {
+        return $this-&gt;state(function (array $attributes) {
+            return [
+                'featured' =&gt; true,
+                'price' =&gt; $this-&gt;faker-&gt;randomFloat(2, 100, 2000),
+            ];
+        });
+    }
+}</code></pre>
+<h4>Usar factories</h4>
+<p>Puedes usar factories en tus seeders o directamente en pruebas:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace Database\Seeders;
+
+use App\Models\Product;
+use App\Models\User;
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    /**
+     * Seed the application's database.
+     */
+    public function run(): void
+    {
+        // Crear 10 usuarios
+        User::factory(10)-&gt;create();
+        
+        // Crear 5 usuarios administradores
+        User::factory(5)
+            -&gt;state(['role' =&gt; 'admin'])
+            -&gt;create();
+        
+        // Crear 20 productos
+        Product::factory(20)-&gt;create();
+        
+        // Crear 5 productos destacados
+        Product::factory(5)
+            -&gt;featured()
+            -&gt;create();
+            
+        // Crear productos para una categoría específica
+        Product::factory(3)
+            -&gt;state(['category_id' =&gt; 1])
+            -&gt;create();
+            
+        // Crear un usuario con productos relacionados
+        User::factory()
+            -&gt;has(Product::factory()-&gt;count(3))
+            -&gt;create();
+    }
+}</code></pre>
+<h3>Faker</h3>
+<p>Laravel utiliza la biblioteca Faker para generar datos aleatorios. Algunos ejemplos de métodos útiles:</p>
+<pre><code class="language-php">// Datos personales
+$faker-&gt;name();              // 'Dr. Zane Stroman'
+$faker-&gt;firstName();         // 'Maynard'
+$faker-&gt;lastName();          // 'Zulauf'
+$faker-&gt;email();             // 'king.alford@example.org'
+$faker-&gt;phoneNumber();       // '201-886-0269 x3767'
+$faker-&gt;address();           // '309 Wisoky Throughway Suite 360\nRodriguezburgh, SC 04892'
+$faker-&gt;city();              // 'West Judge'
+$faker-&gt;country();           // 'Falkland Islands (Malvinas)'
+$faker-&gt;postcode();          // '17916'
+
+// Texto
+$faker-&gt;word();              // 'aut'
+$faker-&gt;words(3, true);      // 'labore molestiae distinctio'
+$faker-&gt;sentence();          // 'Sit vitae voluptas sint non voluptates.'
+$faker-&gt;paragraph();         // 'Voluptatem aliquam expedita...'
+
+// Fechas
+$faker-&gt;date();              // '1979-06-09'
+$faker-&gt;time();              // '20:49:42'
+$faker-&gt;dateTime();          // DateTime object
+$faker-&gt;dateTimeBetween('-2 years', '+1 month'); // DateTime entre dos fechas
+
+// Números
+$faker-&gt;randomDigit();       // 7
+$faker-&gt;numberBetween(10, 99); // 84
+$faker-&gt;randomFloat(2, 0, 100); // 79.32
+
+// Internet
+$faker-&gt;url();               // 'http://www.kemmer.com/'
+$faker-&gt;ipv4();              // '109.133.32.252'
+$faker-&gt;userAgent();         // 'Mozilla/5.0...'
+$faker-&gt;image();             // 'https://via.placeholder.com/640x480.png/00ff77?text=animals+omnis'
+
+// Otros
+$faker-&gt;boolean();           // true o false
+$faker-&gt;uuid();              // '7fab8389-...'
+$faker-&gt;randomElement(['a', 'b', 'c']); // 'b'
+$faker-&gt;shuffleArray(['a', 'b', 'c']);  // ['c', 'a', 'b']
+$faker-&gt;hexColor();          // '#fa3cc2'</code></pre>
+    </div>
+  </section>
+
+  <section id="query-builder-vs-eloquent">
+    <h2>Query Builder vs Eloquent</h2>
+    <div class="doc-content">
+<p>Laravel ofrece dos formas principales de interactuar con la base de datos: Query Builder y Eloquent ORM. Cada uno tiene sus ventajas y casos de uso ideales.</p>
+<h3>Query Builder</h3>
+<p>El Query Builder proporciona una interfaz fluida para crear y ejecutar consultas de base de datos sin necesidad de escribir SQL directamente.</p>
+<h4>Consultas básicas</h4>
+<pre><code class="language-php">// Seleccionar todos los registros
+$users = DB::table('users')-&gt;get();
+
+// Seleccionar columnas específicas
+$names = DB::table('users')-&gt;select('name', 'email')-&gt;get();
+
+// Seleccionar un solo registro
+$user = DB::table('users')-&gt;where('id', 1)-&gt;first();
+
+// Seleccionar un solo valor
+$email = DB::table('users')-&gt;where('id', 1)-&gt;value('email');
+
+// Contar registros
+$count = DB::table('users')-&gt;count();
+
+// Valores máximos, mínimos y promedio
+$max = DB::table('orders')-&gt;max('price');
+$min = DB::table('orders')-&gt;min('price');
+$avg = DB::table('orders')-&gt;avg('price');</code></pre>
+<h4>Cláusulas where</h4>
+<pre><code class="language-php">// Where básico
+$users = DB::table('users')-&gt;where('votes', '=', 100)-&gt;get();
+$users = DB::table('users')-&gt;where('votes', 100)-&gt;get(); // Igual que el anterior
+
+// Operadores de comparación
+$users = DB::table('users')-&gt;where('votes', '&gt;=', 100)-&gt;get();
+$users = DB::table('users')-&gt;where('name', 'like', 'T%')-&gt;get();
+
+// Where con múltiples condiciones
+$users = DB::table('users')
+            -&gt;where('status', 'active')
+            -&gt;where('subscribed', true)
+            -&gt;get();
+            
+// Where con OR
+$users = DB::table('users')
+            -&gt;where('votes', '&gt;', 100)
+            -&gt;orWhere('name', 'John')
+            -&gt;get();
+            
+// Where con agrupación
+$users = DB::table('users')
+            -&gt;where('name', 'John')
+            -&gt;orWhere(function($query) {
+                $query-&gt;where('votes', '&gt;', 100)
+                      -&gt;where('title', 'Admin');
+            })
+            -&gt;get();
+            
+// WhereIn, WhereNotIn
+$users = DB::table('users')
+            -&gt;whereIn('id', [1, 2, 3])
+            -&gt;get();
+            
+// WhereNull, WhereNotNull
+$users = DB::table('users')
+            -&gt;whereNull('updated_at')
+            -&gt;get();
+            
+// WhereBetween
+$users = DB::table('users')
+            -&gt;whereBetween('votes', [1, 100])
+            -&gt;get();</code></pre>
+<h4>Ordenar, agrupar y limitar</h4>
+<pre><code class="language-php">// Ordenar resultados
+$users = DB::table('users')
+            -&gt;orderBy('name', 'desc')
+            -&gt;get();
+            
+// Ordenar por múltiples columnas
+$users = DB::table('users')
+            -&gt;orderBy('name', 'desc')
+            -&gt;orderBy('email', 'asc')
+            -&gt;get();
+            
+// Ordenar aleatoriamente
+$randomUser = DB::table('users')
+                -&gt;inRandomOrder()
+                -&gt;first();
+                
+// Agrupar resultados
+$users = DB::table('users')
+            -&gt;groupBy('account_id')
+            -&gt;having('account_id', '&gt;', 100)
+            -&gt;get();
+            
+// Limitar resultados
+$users = DB::table('users')
+            -&gt;offset(10)
+            -&gt;limit(5)
+            -&gt;get();</code></pre>
+<h4>Joins</h4>
+<pre><code class="language-php">// Inner join
+$users = DB::table('users')
+            -&gt;join('contacts', 'users.id', '=', 'contacts.user_id')
+            -&gt;select('users.*', 'contacts.phone')
+            -&gt;get();
+            
+// Left join
+$users = DB::table('users')
+            -&gt;leftJoin('posts', 'users.id', '=', 'posts.user_id')
+            -&gt;get();
+            
+// Right join
+$users = DB::table('users')
+            -&gt;rightJoin('posts', 'users.id', '=', 'posts.user_id')
+            -&gt;get();
+            
+// Cross join
+$users = DB::table('sizes')
+            -&gt;crossJoin('colors')
+            -&gt;get();</code></pre>
+<h4>Insertar, actualizar y eliminar</h4>
+<pre><code class="language-php">// Insertar un registro
+DB::table('users')-&gt;insert([
+    'name' =&gt; 'John',
+    'email' =&gt; 'john@example.com',
+]);
+
+// Insertar múltiples registros
+DB::table('users')-&gt;insert([
+    ['name' =&gt; 'John', 'email' =&gt; 'john@example.com'],
+    ['name' =&gt; 'Jane', 'email' =&gt; 'jane@example.com']
+]);
+
+// Insertar y obtener ID
+$id = DB::table('users')-&gt;insertGetId(
+    ['name' =&gt; 'John', 'email' =&gt; 'john@example.com']
+);
+
+// Actualizar registros
+DB::table('users')
+    -&gt;where('id', 1)
+    -&gt;update(['votes' =&gt; 10]);
+    
+// Incrementar/decrementar valores
+DB::table('users')-&gt;increment('votes');
+DB::table('users')-&gt;increment('votes', 5);
+DB::table('users')-&gt;decrement('votes');
+DB::table('users')-&gt;decrement('votes', 5);
+
+// Eliminar registros
+DB::table('users')-&gt;delete();
+DB::table('users')-&gt;where('votes', '&gt;', 100)-&gt;delete();
+
+// Truncar tabla (eliminar todos los registros)
+DB::table('users')-&gt;truncate();</code></pre>
+<h4>Transacciones</h4>
+<pre><code class="language-php">DB::transaction(function () {
+    DB::table('users')-&gt;update(['votes' =&gt; 1]);
+    DB::table('posts')-&gt;delete();
+});
+
+// Manejo manual de transacciones
+try {
+    DB::beginTransaction();
+    
+    DB::table('users')-&gt;update(['votes' =&gt; 1]);
+    DB::table('posts')-&gt;delete();
+    
+    DB::commit();
+} catch (\Exception $e) {
+    DB::rollBack();
+    
+    throw $e;
+}</code></pre>
+<h3>Eloquent ORM</h3>
+<p>Eloquent es el ORM (Object-Relational Mapping) de Laravel que permite interactuar con la base de datos a través de modelos elegantes y expresivos.</p>
+<blockquote class="aside aside-note">
+Para una guía completa sobre Eloquent, consulta la sección específica de Eloquent en esta documentación.
+</blockquote>
+<h4>Consultas básicas con Eloquent</h4>
+<pre><code class="language-php">// Obtener todos los registros
+$users = User::all();
+
+// Filtrar registros
+$activeUsers = User::where('active', true)-&gt;get();
+
+// Ordenar registros
+$users = User::orderBy('name')-&gt;get();
+
+// Limitar resultados
+$users = User::take(10)-&gt;get();
+
+// Encontrar por ID
+$user = User::find(1);
+
+// Encontrar por ID o fallar
+$user = User::findOrFail(1); // Lanza una excepción si no se encuentra
+
+// Obtener el primer registro
+$user = User::where('active', true)-&gt;first();
+
+// Contar registros
+$count = User::where('active', true)-&gt;count();</code></pre>
+<h4>Crear, actualizar y eliminar con Eloquent</h4>
+<pre><code class="language-php">// Crear un nuevo registro
+$user = new User;
+$user-&gt;name = 'John';
+$user-&gt;email = 'john@example.com';
+$user-&gt;save();
+
+// Crear con asignación masiva
+$user = User::create([
+    'name' =&gt; 'John',
+    'email' =&gt; 'john@example.com',
+]);
+
+// Actualizar un registro existente
+$user = User::find(1);
+$user-&gt;name = 'Jane';
+$user-&gt;save();
+
+// Actualizar con asignación masiva
+$user-&gt;update([
+    'name' =&gt; 'Jane',
+    'email' =&gt; 'jane@example.com',
+]);
+
+// Eliminar un registro
+$user = User::find(1);
+$user-&gt;delete();
+
+// Eliminar por ID
+User::destroy(1);
+User::destroy([1, 2, 3]);
+
+// Eliminar por consulta
+User::where('active', false)-&gt;delete();</code></pre>
+<h4>Relaciones con Eloquent</h4>
+<pre><code class="language-php">// Obtener registros relacionados
+$posts = User::find(1)-&gt;posts;
+
+// Cargar relaciones
+$user = User::with('posts')-&gt;find(1);
+
+// Filtrar por relaciones
+$users = User::has('posts')-&gt;get();
+$users = User::has('posts', '&gt;=', 3)-&gt;get();
+$users = User::whereHas('posts', function ($query) {
+    $query-&gt;where('active', true);
+})-&gt;get();
+
+// Contar relaciones
+$users = User::withCount('posts')-&gt;get();
+foreach ($users as $user) {
+    echo $user-&gt;name . ' has ' . $user-&gt;posts_count . ' posts.';
+}</code></pre>
+<h3>Comparación: Query Builder vs Eloquent</h3>
+  <h4 class="tab-label">Query Builder</h4>
+<p><strong>Ventajas:</strong></p>
+<ul>
+<li>Mejor rendimiento en consultas complejas o con grandes conjuntos de datos</li>
+<li>Control más preciso sobre las consultas SQL generadas</li>
+<li>No requiere definir modelos</li>
+<li>Ideal para consultas simples o de una sola vez</li>
+</ul>
+<p><strong>Desventajas:</strong></p>
+<ul>
+<li>No proporciona características como relaciones, eventos o mutadores</li>
+<li>Código menos expresivo y más verboso para operaciones complejas</li>
+<li>No tiene sistema de caché integrado</li>
+</ul>
+  <h4 class="tab-label">Eloquent</h4>
+<p><strong>Ventajas:</strong></p>
+<ul>
+<li>API más expresiva y orientada a objetos</li>
+<li>Soporte para relaciones complejas entre modelos</li>
+<li>Eventos y observadores para hooks del ciclo de vida</li>
+<li>Mutadores y accesores para transformar datos</li>
+<li>Caché de consultas integrado</li>
+<li>Soporte para soft deletes, casting de atributos, etc.</li>
+</ul>
+<p><strong>Desventajas:</strong></p>
+<ul>
+<li>Ligera sobrecarga de rendimiento comparado con Query Builder</li>
+<li>Puede ser excesivo para consultas muy simples</li>
+<li>Curva de aprendizaje más pronunciada</li>
+</ul>
+<blockquote class="aside aside-tip">
+En la práctica, muchos desarrolladores utilizan ambos enfoques según el caso de uso. Eloquent para la mayoría de las operaciones CRUD y relaciones, y Query Builder para consultas complejas o de alto rendimiento.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="tinker-repl-de-laravel">
+    <h2>Tinker: REPL de Laravel</h2>
+    <div class="doc-content">
+<p>Tinker es una poderosa herramienta de consola REPL (Read-Eval-Print Loop) que te permite interactuar con tu aplicación Laravel directamente desde la línea de comandos. Es extremadamente útil para probar código, depurar, manipular datos y explorar tu aplicación sin necesidad de crear controladores o vistas.</p>
+<h3>Iniciar Tinker</h3>
+<p>Para iniciar Tinker, simplemente ejecuta:</p>
+<pre><code class="language-bash">php artisan tinker</code></pre>
+<p>Esto te dará acceso a un shell interactivo donde puedes ejecutar código PHP con acceso completo a tu aplicación Laravel.</p>
+<h3>Ejemplos de uso de Tinker</h3>
+<h4>Trabajar con modelos</h4>
+<pre><code class="language-php">// Crear un nuevo usuario
+$user = new App\Models\User;
+$user-&gt;name = 'John Doe';
+$user-&gt;email = 'john@example.com';
+$user-&gt;password = Hash::make('password');
+$user-&gt;save();
+
+// Consultar usuarios
+App\Models\User::all();
+App\Models\User::where('email', 'john@example.com')-&gt;first();
+
+// Actualizar un registro
+$user = App\Models\User::find(1);
+$user-&gt;name = 'Jane Doe';
+$user-&gt;save();
+
+// Eliminar un registro
+App\Models\User::find(2)-&gt;delete();</code></pre>
+<h4>Trabajar con relaciones</h4>
+<pre><code class="language-php">// Obtener posts de un usuario
+$user = App\Models\User::find(1);
+$user-&gt;posts;
+
+// Crear un post para un usuario
+$post = new App\Models\Post(['title' =&gt; 'Mi primer post', 'content' =&gt; 'Contenido del post']);
+$user-&gt;posts()-&gt;save($post);</code></pre>
+<h4>Usar Query Builder</h4>
+<pre><code class="language-php">// Consultas con Query Builder
+DB::table('users')-&gt;where('active', true)-&gt;get();
+DB::table('posts')-&gt;count();</code></pre>
+<h4>Probar helpers y funciones</h4>
+<pre><code class="language-php">// Helpers de Laravel
+str('Hello World')-&gt;upper();
+now()-&gt;addDays(5);
+collect([1, 2, 3])-&gt;sum();
+
+// Probar eventos
+event(new App\Events\UserRegistered($user));</code></pre>
+<h4>Importar clases</h4>
+<p>Tinker importa automáticamente muchas clases comunes, pero puedes importar clases adicionales con:</p>
+<pre><code class="language-php">use App\Models\Product;
+use Carbon\Carbon;
+
+// Ahora puedes usar estas clases directamente
+$product = Product::find(1);
+$date = Carbon::now();</code></pre>
+<h3>Comandos útiles en Tinker</h3>
+<pre><code class="language-bash">// Limpiar la pantalla
+clear
+
+// Salir de Tinker
+exit
+
+// Ver la documentación de una clase (requiere psysh)
+help(App\Models\User::class)
+
+// Ver el código fuente (requiere psysh)
+show(App\Models\User::class)</code></pre>
+<h3>Consejos para Tinker</h3>
+<blockquote class="aside aside-tip">
+- Usa la tecla de flecha hacia arriba para acceder al historial de comandos.
+  - Tinker tiene autocompletado: presiona Tab para ver las opciones disponibles.
+  - Puedes definir funciones y variables que persisten durante toda la sesión.
+  - Usa `dump()` en lugar de `dd()` para evitar salir de Tinker.
+</blockquote>
+<h3>Tinker en producción</h3>
+<blockquote class="aside aside-caution">
+Ten cuidado al usar Tinker en entornos de producción. Cualquier cambio que hagas afectará a tu base de datos real. Considera usar el flag `--read-only` para evitar modificaciones accidentales:
+  
+   B0 
+</blockquote>
+    </div>
+  </section>
+
+  <section id="conclusion">
+    <h2>Conclusión</h2>
+    <div class="doc-content">
+<p>Laravel ofrece un conjunto completo de herramientas para trabajar con bases de datos, desde migraciones para gestionar la estructura, seeders y factories para poblar con datos de prueba, hasta Query Builder y Eloquent para interactuar con los datos. Estas herramientas te permiten construir aplicaciones robustas con un código limpio y mantenible.</p>
+<p>Al dominar estos conceptos, podrás:</p>
+<ul>
+<li>Mantener un historial de cambios en la estructura de tu base de datos</li>
+<li>Sincronizar esquemas entre diferentes entornos de desarrollo</li>
+<li>Generar datos de prueba realistas y consistentes</li>
+<li>Interactuar con la base de datos de forma segura y eficiente</li>
+<li>Modelar relaciones complejas entre entidades</li>
+<li>Probar rápidamente ideas y consultas con Tinker</li>
+</ul>
+<p>Recuerda siempre seguir las mejores prácticas al trabajar con bases de datos, como usar migraciones para todos los cambios de esquema, mantener tus seeders actualizados, y elegir entre Query Builder y Eloquent según las necesidades específicas de cada caso.</p>
+    </div>
+  </section>

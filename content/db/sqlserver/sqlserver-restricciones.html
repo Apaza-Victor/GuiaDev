@@ -1,0 +1,53 @@
+<!-- 5. Restricciones (Constraints) - SQL Server (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="primary-key-identity">
+    <h2>PRIMARY KEY + IDENTITY</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE TABLE dbo.Clientes (
+  Id INT IDENTITY(1,1) CONSTRAINT PK_Clientes PRIMARY KEY,
+  Email NVARCHAR(120) NOT NULL
+);</code></pre>
+    </div>
+  </section>
+
+  <section id="foreign-key-y-acciones-referenciales">
+    <h2>FOREIGN KEY y acciones referenciales</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE TABLE dbo.Pedidos (
+  Id INT IDENTITY(1,1) PRIMARY KEY,
+  ClienteId INT NOT NULL,
+  Fecha DATE NOT NULL CONSTRAINT DF_Pedidos_Fecha DEFAULT(GETDATE()),
+  CONSTRAINT FK_Pedidos_Clientes FOREIGN KEY (ClienteId)
+    REFERENCES dbo.Clientes(Id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);</code></pre>
+<p>Acciones disponibles: <code>CASCADE</code>, <code>SET NULL</code>, <code>SET DEFAULT</code> y <code>NO ACTION</code> (bloquea).</p>
+    </div>
+  </section>
+
+  <section id="unique-check-y-not-null">
+    <h2>UNIQUE, CHECK y NOT NULL</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE TABLE dbo.Empleados (
+  Id INT IDENTITY PRIMARY KEY,
+  Curp CHAR(18) NOT NULL CONSTRAINT UQ_Empleados_Curp UNIQUE,
+  Nombre NVARCHAR(80) NOT NULL,
+  Salario DECIMAL(10,2) CONSTRAINT CK_Empleados_Salario CHECK (Salario &gt; 0),
+  Edad TINYINT CONSTRAINT CK_Empleados_Edad CHECK (Edad BETWEEN 18 AND 100)
+);</code></pre>
+    </div>
+  </section>
+
+  <section id="administrar-restricciones">
+    <h2>Administrar restricciones</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- Ver restricciones de una tabla
+SELECT name, type_desc FROM sys.objects
+WHERE parent_object_id = OBJECT_ID('dbo.Empleados');
+
+-- Eliminar y volver a crear
+ALTER TABLE dbo.Empleados DROP CONSTRAINT CK_Empleados_Edad;
+ALTER TABLE dbo.Empleados ADD CONSTRAINT CK_Empleados_Edad CHECK (Edad &gt;= 16);</code></pre>
+    </div>
+  </section>

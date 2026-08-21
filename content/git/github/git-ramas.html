@@ -1,0 +1,572 @@
+<!-- 5. Ramas en Git - GitHub (Control de Versiones) -->
+  <section id="que-es-una-rama">
+    <h2>¿Qué es una rama?</h2>
+    <div class="doc-content">
+<p>Una rama en Git es una <strong>línea independiente de desarrollo</strong>. Es como crear una copia del proyecto donde puedes hacer cambios sin afectar la rama principal.</p>
+<h3>Conceptos fundamentales</h3>
+  <h4 class="tab-label">Visualización de ramas</h4>
+    <pre><code class="language-text">    main:     A---B---C---F---G
+                   \         /
+    feature:        D---E---/
+    
+    A, B, C, D, E, F, G = commits
+    main = rama principal
+    feature = rama de funcionalidad
+    </code></pre>
+<p><strong>Ventajas de las ramas:</strong></p>
+<ul>
+<li>Desarrollo paralelo</li>
+<li>Experimentación segura</li>
+<li>Organización del trabajo</li>
+<li>Colaboración eficiente</li>
+</ul>
+  <h4 class="tab-label">Estados de las ramas</h4>
+<p><strong>Rama activa (HEAD):</strong></p>
+<ul>
+<li>La rama en la que estás trabajando actualmente</li>
+<li>Los nuevos commits se agregan a esta rama</li>
+</ul>
+<p><strong>Ramas locales:</strong></p>
+<ul>
+<li>Existen solo en tu repositorio local</li>
+<li>Puedes crear, modificar y eliminar libremente</li>
+</ul>
+<p><strong>Ramas remotas:</strong></p>
+<ul>
+<li>Existen en el repositorio remoto (GitHub)</li>
+<li>Se sincronizan con push/pull</li>
+</ul>
+<p><strong>Ramas de seguimiento:</strong></p>
+<ul>
+<li>Ramas locales que siguen ramas remotas</li>
+<li>Configuradas automáticamente con git clone</li>
+</ul>
+<blockquote class="aside aside-note">
+En Git, una rama es simplemente un puntero móvil a un commit específico. Crear ramas es extremadamente rápido y eficiente.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="crear-cambiar-y-eliminar-ramas">
+    <h2>Crear, cambiar y eliminar ramas</h2>
+    <div class="doc-content">
+<h3>Comandos básicos de ramas</h3>
+<pre><code class="language-bash"># Ver todas las ramas
+git branch
+
+# Ver ramas incluyendo remotas
+git branch -a
+
+# Ver ramas con último commit
+git branch -v
+
+# Crear nueva rama
+git branch nueva-funcionalidad
+
+# Crear y cambiar a nueva rama
+git checkout -b nueva-funcionalidad
+
+# Cambiar a rama existente
+git checkout main
+
+# Crear rama desde commit específico
+git checkout -b hotfix abc1234</code></pre>
+<h3>Gestión avanzada de ramas</h3>
+<pre><code class="language-bash"># Renombrar rama actual
+git branch -m nuevo-nombre
+
+# Renombrar rama específica
+git branch -m viejo-nombre nuevo-nombre
+
+# Eliminar rama (debe estar fusionada)
+git branch -d rama-terminada
+
+# Forzar eliminación de rama
+git branch -D rama-experimental
+
+# Eliminar rama remota
+git push origin --delete rama-remota
+
+# Ver ramas fusionadas
+git branch --merged
+
+# Ver ramas no fusionadas
+git branch --no-merged</code></pre>
+<h3>Trabajar con ramas remotas</h3>
+<pre><code class="language-bash"># Ver ramas remotas
+git branch -r
+
+# Crear rama local desde remota
+git checkout -b local-branch origin/remote-branch
+
+# Configurar rama local para seguir remota
+git branch --set-upstream-to=origin/main main
+
+# Push de nueva rama al remoto
+git push -u origin nueva-rama
+
+# Sincronizar ramas remotas
+git fetch --prune</code></pre>
+    </div>
+  </section>
+
+  <section id="fusionar-ramas-git-merge">
+    <h2>Fusionar ramas (git merge)</h2>
+    <div class="doc-content">
+<p>Fusionar es el proceso de integrar cambios de una rama en otra.</p>
+<h3>Tipos de merge</h3>
+  <h4 class="tab-label">Fast-forward merge</h4>
+    <pre><code class="language-text">    Antes del merge:
+    main:     A---B---C
+                   \
+    feature:        D---E
+    
+    Después del merge:
+    main:     A---B---C---D---E
+    </code></pre>
+    <pre><code class="language-bash"># Fast-forward automático
+git checkout main
+git merge feature
+
+# Forzar fast-forward (falla si no es posible)
+git merge --ff-only feature
+
+# Evitar fast-forward (crear commit de merge)
+git merge --no-ff feature</code></pre>
+  <h4 class="tab-label">Three-way merge</h4>
+    <pre><code class="language-text">    Antes del merge:
+    main:     A---B---C---F
+                   \     /
+    feature:        D---E
+    
+    Después del merge:
+    main:     A---B---C---F---M
+                   \         /
+    feature:        D---E---/
+    
+    M = commit de merge
+    </code></pre>
+    <pre><code class="language-bash"># Three-way merge (automático)
+git checkout main
+git merge feature
+
+# Merge con mensaje personalizado
+git merge feature -m "Merge feature: nueva funcionalidad"</code></pre>
+<h3>Estrategias de merge</h3>
+<pre><code class="language-bash"># Merge normal (estrategia por defecto)
+git merge feature
+
+# Merge recursivo (para casos complejos)
+git merge -s recursive feature
+
+# Merge octopus (múltiples ramas)
+git merge rama1 rama2 rama3
+
+# Merge sin commit automático
+git merge --no-commit feature
+
+# Merge solo si es fast-forward
+git merge --ff-only feature</code></pre>
+    </div>
+  </section>
+
+  <section id="resolver-conflictos-de-fusion">
+    <h2>Resolver conflictos de fusión</h2>
+    <div class="doc-content">
+<p>Los conflictos ocurren cuando Git no puede fusionar automáticamente los cambios.</p>
+<h3>Identificar conflictos</h3>
+<pre><code class="language-bash"># Intentar merge
+git merge feature
+
+# Si hay conflictos, Git mostrará:
+# Auto-merging archivo.txt
+# CONFLICT (content): Merge conflict in archivo.txt
+# Automatic merge failed; fix conflicts and then commit the result.
+
+# Ver archivos con conflictos
+git status
+
+# Ver diferencias de conflicto
+git diff</code></pre>
+<h3>Resolver conflictos manualmente</h3>
+<ol class="steps">
+<ol>
+  <li>
+<p><strong>Abrir archivos con conflictos</strong></p>
+    <pre><code class="language-text"># Los conflictos se marcan así:
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+Código de la rama actual (main)
+=======
+Código de la rama que se está fusionando (feature)
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature</code></pre>
+  </li>
+  <li>
+<p><strong>Editar el archivo</strong></p>
+<ul>
+<li>Eliminar marcadores de conflicto (<code><<<<<<<</code>, <code>=======</code>, <code>>>>>>>></code>)</li>
+<li>Decidir qué código mantener</li>
+<li>Combinar cambios si es necesario</li>
+</ul>
+  </li>
+  <li>
+<p><strong>Marcar como resuelto</strong></p>
+    <pre><code class="language-bash"># Después de editar el archivo
+git add archivo-resuelto.txt
+
+# Verificar estado
+git status</code></pre>
+  </li>
+  <li>
+<p><strong>Completar el merge</strong></p>
+    <pre><code class="language-bash"># Commit del merge
+git commit
+
+# O abortar el merge
+git merge --abort</code></pre>
+  </li>
+</ol>
+</ol>
+<h3>Herramientas para resolver conflictos</h3>
+<pre><code class="language-bash"># Configurar herramienta de merge
+git config --global merge.tool vimdiff
+git config --global merge.tool meld
+git config --global merge.tool vscode
+
+# Usar herramienta de merge
+git mergetool
+
+# Ver configuración actual
+git config --get merge.tool</code></pre>
+<blockquote class="aside aside-tip">
+Para VS Code, puedes configurar: `git config --global merge.tool vscode` y `git config --global mergetool.vscode.cmd 'code --wait $MERGED'`
+</blockquote>
+    </div>
+  </section>
+
+  <section id="flujo-tipico-con-ramas-main-dev-feature">
+    <h2>Flujo típico con ramas: main, dev, feature</h2>
+    <div class="doc-content">
+<p>Un flujo de trabajo bien estructurado mejora la organización y reduce conflictos.</p>
+<h3>Git Flow - Flujo tradicional</h3>
+  <h4 class="tab-label">Estructura de ramas</h4>
+    <pre><code class="language-text">    main:      A---B---C---F---H---J
+                    \     /     \   /
+    develop:         D---E---G---I
+                      \     /
+    feature:           X---Y
+    </code></pre>
+<p><strong>Ramas principales:</strong></p>
+<ul>
+<li><code>main</code>: Código en producción</li>
+<li><code>develop</code>: Integración de funcionalidades</li>
+</ul>
+<p><strong>Ramas de soporte:</strong></p>
+<ul>
+<li><code>feature/*</code>: Nuevas funcionalidades</li>
+<li><code>hotfix/*</code>: Correcciones urgentes</li>
+<li><code>release/*</code>: Preparación de versiones</li>
+</ul>
+  <h4 class="tab-label">Comandos Git Flow</h4>
+    <pre><code class="language-bash"># Inicializar Git Flow
+git flow init
+
+# Crear feature branch
+git flow feature start nueva-funcionalidad
+
+# Finalizar feature
+git flow feature finish nueva-funcionalidad
+
+# Crear release branch
+git flow release start v1.0.0
+
+# Finalizar release
+git flow release finish v1.0.0
+
+# Crear hotfix
+git flow hotfix start correccion-urgente
+
+# Finalizar hotfix
+git flow hotfix finish correccion-urgente</code></pre>
+<h3>GitHub Flow - Flujo simplificado</h3>
+<pre><code class="language-bash"># 1. Crear rama desde main
+git checkout main
+git pull origin main
+git checkout -b feature/nueva-funcionalidad
+
+# 2. Desarrollar funcionalidad
+git add .
+git commit -m "feat: implementar nueva funcionalidad"
+git push -u origin feature/nueva-funcionalidad
+
+# 3. Crear Pull Request en GitHub
+
+# 4. Después del merge, limpiar
+git checkout main
+git pull origin main
+git branch -d feature/nueva-funcionalidad
+git push origin --delete feature/nueva-funcionalidad</code></pre>
+<h3>Flujo personalizado recomendado</h3>
+<ol class="steps">
+<ol>
+  <li>
+<p><strong>Rama main</strong>: Código estable en producción</p>
+    <pre><code class="language-bash"># main siempre debe estar estable
+# Solo se actualiza mediante Pull Requests
+# Protegida contra push directo</code></pre>
+  </li>
+  <li>
+<p><strong>Ramas feature</strong>: Una por funcionalidad</p>
+    <pre><code class="language-bash"># Nomenclatura descriptiva
+git checkout -b feature/sistema-login
+git checkout -b feature/dashboard-usuario
+git checkout -b bugfix/corregir-validacion</code></pre>
+  </li>
+  <li>
+<p><strong>Ramas hotfix</strong>: Correcciones urgentes</p>
+    <pre><code class="language-bash"># Para correcciones críticas en producción
+git checkout -b hotfix/seguridad-critica
+# Se fusiona tanto en main como en develop</code></pre>
+  </li>
+</ol>
+</ol>
+    </div>
+  </section>
+
+  <section id="ejemplos-practicos-completos">
+    <h2>Ejemplos prácticos completos</h2>
+    <div class="doc-content">
+<h3>Ejemplo 1: Desarrollar nueva funcionalidad</h3>
+<ol class="steps">
+<ol>
+  <li>
+<p><strong>Preparar entorno</strong></p>
+    <pre><code class="language-bash"># Asegurar que main está actualizado
+git checkout main
+git pull origin main
+
+# Crear rama para funcionalidad
+git checkout -b feature/sistema-comentarios</code></pre>
+  </li>
+  <li>
+<p><strong>Desarrollar funcionalidad</strong></p>
+    <pre><code class="language-bash"># Crear archivos necesarios
+touch comentarios.js comentarios.css
+
+# Implementar funcionalidad
+echo "// Sistema de comentarios" &gt; comentarios.js
+echo "/* Estilos para comentarios */" &gt; comentarios.css
+
+# Hacer commits incrementales
+git add comentarios.js
+git commit -m "feat: agregar lógica de comentarios"
+
+git add comentarios.css
+git commit -m "style: agregar estilos para comentarios"</code></pre>
+  </li>
+  <li>
+<p><strong>Sincronizar con main</strong></p>
+    <pre><code class="language-bash"># Cambiar a main y actualizar
+git checkout main
+git pull origin main
+
+# Volver a feature y rebase
+git checkout feature/sistema-comentarios
+git rebase main</code></pre>
+  </li>
+  <li>
+<p><strong>Subir y crear PR</strong></p>
+    <pre><code class="language-bash"># Push de la rama
+git push -u origin feature/sistema-comentarios
+
+# Crear Pull Request en GitHub
+# Después del merge, limpiar
+git checkout main
+git pull origin main
+git branch -d feature/sistema-comentarios</code></pre>
+  </li>
+</ol>
+</ol>
+<h3>Ejemplo 2: Resolver conflictos</h3>
+<ol class="steps">
+<ol>
+  <li>
+<p><strong>Simular conflicto</strong></p>
+    <pre><code class="language-bash"># En main
+git checkout main
+echo "Versión main" &gt; archivo.txt
+git add archivo.txt
+git commit -m "Actualizar archivo en main"
+
+# En feature
+git checkout -b feature/conflicto
+echo "Versión feature" &gt; archivo.txt
+git add archivo.txt
+git commit -m "Actualizar archivo en feature"</code></pre>
+  </li>
+  <li>
+<p><strong>Intentar merge</strong></p>
+    <pre><code class="language-bash">git checkout main
+git merge feature/conflicto
+# CONFLICT (content): Merge conflict in archivo.txt</code></pre>
+  </li>
+  <li>
+<p><strong>Resolver conflicto</strong></p>
+    <pre><code class="language-bash"># Ver contenido del archivo
+cat archivo.txt
+# &lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+# Versión main
+# =======
+# Versión feature
+# &gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/conflicto
+
+# Editar archivo para resolver
+echo "Versión combinada main + feature" &gt; archivo.txt
+
+# Marcar como resuelto
+git add archivo.txt
+git commit -m "resolve: combinar cambios de main y feature"</code></pre>
+  </li>
+</ol>
+</ol>
+    </div>
+  </section>
+
+  <section id="comandos-avanzados-con-ramas">
+    <h2>Comandos avanzados con ramas</h2>
+    <div class="doc-content">
+<h3>Rebase interactivo</h3>
+<pre><code class="language-bash"># Rebase interactivo de últimos 3 commits
+git rebase -i HEAD~3
+
+# Opciones disponibles:
+# pick = usar commit
+# reword = cambiar mensaje
+# edit = editar commit
+# squash = combinar con anterior
+# drop = eliminar commit
+
+# Rebase rama completa sobre main
+git rebase main feature-branch</code></pre>
+<h3>Cherry-pick</h3>
+<pre><code class="language-bash"># Aplicar commit específico a rama actual
+git cherry-pick abc1234
+
+# Cherry-pick múltiples commits
+git cherry-pick abc1234 def5678
+
+# Cherry-pick rango de commits
+git cherry-pick abc1234..def5678
+
+# Cherry-pick sin commit automático
+git cherry-pick --no-commit abc1234</code></pre>
+<h3>Stash para cambiar ramas rápidamente</h3>
+<pre><code class="language-bash"># Guardar cambios temporalmente
+git stash
+
+# Cambiar de rama
+git checkout otra-rama
+
+# Volver y recuperar cambios
+git checkout rama-original
+git stash pop
+
+# Ver lista de stashes
+git stash list
+
+# Aplicar stash específico
+git stash apply stash@{1}</code></pre>
+    </div>
+  </section>
+
+  <section id="mejores-practicas-con-ramas">
+    <h2>Mejores prácticas con ramas</h2>
+    <div class="doc-content">
+<span class="hc-badge hc-badge-tip">Buenas prácticas</span>
+<h3>Nomenclatura de ramas</h3>
+<pre><code class="language-bash"># Prefijos recomendados
+feature/nombre-funcionalidad
+bugfix/descripcion-error
+hotfix/correccion-urgente
+release/version-numero
+experiment/prueba-concepto
+
+# Ejemplos específicos
+feature/login-social
+feature/dashboard-admin
+bugfix/validacion-email
+hotfix/seguridad-sql-injection
+release/v2.1.0</code></pre>
+<h3>Estrategias de integración</h3>
+  <h4 class="tab-label">Merge commits</h4>
+<p><strong>Cuándo usar:</strong></p>
+<ul>
+<li>Preservar contexto histórico</li>
+<li>Funcionalidades grandes</li>
+<li>Trabajo colaborativo</li>
+</ul>
+<p><strong>Ventajas:</strong></p>
+<ul>
+<li>Historial completo</li>
+<li>Fácil revertir funcionalidad completa</li>
+<li>Menos conflictos</li>
+</ul>
+<p><strong>Desventajas:</strong></p>
+<ul>
+<li>Historial más complejo</li>
+<li>Más commits de merge</li>
+</ul>
+  <h4 class="tab-label">Rebase</h4>
+<p><strong>Cuándo usar:</strong></p>
+<ul>
+<li>Historial lineal</li>
+<li>Funcionalidades pequeñas</li>
+<li>Trabajo individual</li>
+</ul>
+<p><strong>Ventajas:</strong></p>
+<ul>
+<li>Historial limpio y lineal</li>
+<li>Fácil seguimiento</li>
+<li>Sin commits de merge</li>
+</ul>
+<p><strong>Desventajas:</strong></p>
+<ul>
+<li>Pierde contexto temporal</li>
+<li>Más propenso a conflictos</li>
+<li>No recomendado para ramas compartidas</li>
+</ul>
+<h3>Protección de ramas</h3>
+<pre><code class="language-bash"># En GitHub, configurar branch protection rules:
+# - Require pull request reviews
+# - Require status checks to pass
+# - Require branches to be up to date
+# - Require conversation resolution
+# - Restrict pushes to matching branches
+
+# Localmente, crear hooks para validación
+# .git/hooks/pre-push
+#!/bin/bash
+if [ "$1" = "refs/heads/main" ]; then
+    echo "Push directo a main no permitido"
+    exit 1
+fi</code></pre>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2>Resumen</h2>
+    <div class="doc-content">
+<p>En este módulo has aprendido:</p>
+<span class="hc-badge hc-badge-tip">Ramas en Git</span>
+<ul>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Concepto de ramas</strong>: Líneas independientes de desarrollo</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>git branch</strong>: Crear, listar y eliminar ramas</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>git checkout</strong>: Cambiar entre ramas</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>git merge</strong>: Fusionar ramas y resolver conflictos</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Flujos de trabajo</strong>: Git Flow, GitHub Flow y flujos personalizados</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Comandos avanzados</strong>: Rebase, cherry-pick, stash</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Mejores prácticas</strong>: Nomenclatura, estrategias de integración</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Resolución de conflictos</strong>: Identificar, resolver y prevenir</li>
+</ul>
+<p>En el próximo módulo aprenderemos sobre trabajo colaborativo, incluyendo forks, pull requests y las mejores prácticas para trabajar en equipo con Git y GitHub.</p>
+    </div>
+  </section>

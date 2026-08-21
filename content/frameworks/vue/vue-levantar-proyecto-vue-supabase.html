@@ -1,0 +1,329 @@
+<!-- 18. levantar un proyecto astro tailwind vue supabase - Vue 3 (Frameworks) -->
+  <section id="1-crear-el-proyecto-astro">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> 1. Crear el Proyecto Astro</h2>
+    <div class="doc-content">
+<p>Primero, genera el proyecto base:</p>
+  <h4 class="tab-label">npm</h4>
+    <pre><code class="language-bash">    npm create astro@latest mi-proyecto-astro
+    cd mi-proyecto-astro
+    </code></pre>
+  <h4 class="tab-label">pnpm</h4>
+    <pre><code class="language-bash">    pnpm create astro@latest mi-proyecto-astro
+    cd mi-proyecto-astro
+    </code></pre>
+  <h4 class="tab-label">yarn</h4>
+    <pre><code class="language-bash">    yarn create astro mi-proyecto-astro
+    cd mi-proyecto-astro
+    </code></pre>
+<p><strong>Selecciona en el asistente:</strong></p>
+<ul>
+<li>Template: <code>Empty</code> o <code>Minimal</code></li>
+<li>TypeScript: <code>Yes</code> (recomendado)</li>
+<li>Install dependencies: <code>Yes</code></li>
+<li>Git repository: <code>Yes</code> (opcional)</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-instalar-tailwindcss">
+    <h2><i class="fa-solid fa-palette"></i> 2. Instalar TailwindCSS</h2>
+    <div class="doc-content">
+<p>Agrega TailwindCSS al proyecto:</p>
+<pre><code class="language-bash">npx astro add tailwind
+</code></pre>
+<blockquote class="aside aside-note">
+Este comando instala automáticamente TailwindCSS y configura `astro.config.mjs`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-instalar-vue">
+    <h2><i class="fa-solid fa-image"></i> 3. Instalar Vue</h2>
+    <div class="doc-content">
+<p>Agrega la integración de Vue:</p>
+<pre><code class="language-bash">npx astro add vue
+</code></pre>
+<p>Esto instalará:</p>
+<ul>
+<li><code>@astrojs/vue</code></li>
+<li><code>vue</code></li>
+</ul>
+<p>Y actualizará automáticamente tu <code>astro.config.mjs</code>.</p>
+<h3>Verificar configuración</h3>
+<p>Abre <code>astro.config.mjs</code> y verifica que tenga ambas integraciones:</p>
+<p>```js title="astro.config.mjs"</p>
+<p>export default defineConfig({</p>
+<p>integrations: [vue(), tailwind()],</p>
+<p>});</p>
+<pre><code class="language-text">
+---
+
+## 📦 4. Instalar Supabase
+
+Instala el cliente de Supabase:
+
+&lt;Tabs&gt;
+  &lt;TabItem label="npm"&gt;
+    </code></pre>bash
+<p>npm install @supabase/supabase-js</p>
+    <pre><code class="language-text">  &lt;/TabItem&gt;
+  &lt;TabItem label="pnpm"&gt;
+    </code></pre>bash
+<p>pnpm add @supabase/supabase-js</p>
+    <pre><code class="language-text">  &lt;/TabItem&gt;
+  &lt;TabItem label="yarn"&gt;
+    </code></pre>bash
+<p>yarn add @supabase/supabase-js</p>
+    <pre><code class="language-text">  &lt;/TabItem&gt;
+&lt;/Tabs&gt;
+
+---
+
+## ⚙️ 5. Configurar Supabase
+
+### 5.1 Crear proyecto en Supabase
+
+1. Ve a [https://supabase.com](https://supabase.com)
+2. Crea una cuenta o inicia sesión
+3. Crea un nuevo proyecto:
+   - Nombre del proyecto
+   - Contraseña de base de datos
+   - Región (elige la más cercana)
+
+### 5.2 Crear tabla de ejemplo
+
+En el **SQL Editor** de Supabase, ejecuta:
+
+</code></pre>sql
+<p>create table mensajes (</p>
+<p>id uuid primary key default uuid_generate_v4(),</p>
+<p>texto text not null,</p>
+<p>autor text not null,</p>
+<p>created_at timestamp with time zone default timezone('utc'::text, now()) not null</p>
+<p>);</p>
+<p>-- Insertar datos de ejemplo</p>
+<p>insert into mensajes (texto, autor) values</p>
+<p>('¡Hola Mundo desde Supabase!', 'Sistema'),</p>
+<p>('Vue + Astro funcionando perfectamente', 'Admin');</p>
+<pre><code class="language-text">
+### 5.3 Configurar variables de entorno
+
+Copia tus claves desde **Project Settings → API**:
+
+- `URL` del proyecto
+- `anon/public` key
+
+Crea un archivo `.env` en la raíz del proyecto:
+
+</code></pre>env title=".env"
+<p>PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co</p>
+<p>PUBLIC_SUPABASE_ANON_KEY=tu-clave-publica-aqui</p>
+<pre><code class="language-text">
+&lt;Aside type="caution"&gt;
+  Agrega `.env` a tu `.gitignore` para no subir las credenciales al repositorio.
+&lt;/Aside&gt;
+
+---
+
+## 🔌 6. Crear Cliente de Supabase
+
+Crea el archivo `src/lib/supabaseClient.ts`:
+
+</code></pre>ts title="src/lib/supabaseClient.ts"
+<p>const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;</p>
+<p>const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;</p>
+<p>export const supabase = createClient(supabaseUrl, supabaseAnonKey);</p>
+<pre><code class="language-text">
+---
+
+## 🧠 7. Crear Componente Vue
+
+Crea `src/components/HolaMundo.vue`:
+
+</code></pre>vue title="src/components/HolaMundo.vue"
+<script setup lang="ts">
+<p>interface Mensaje {</p>
+<p>id: string</p>
+<p>texto: string</p>
+<p>autor: string</p>
+<p>created_at: string</p>
+<p>}</p>
+<p>const mensajes = ref<Mensaje[]>([])</p>
+<p>const loading = ref(true)</p>
+<p>const error = ref('')</p>
+<p>const cargarMensajes = async () => {</p>
+<p>try {</p>
+<p>loading.value = true</p>
+<p>const { data, error: supabaseError } = await supabase</p>
+<p>.from('mensajes')</p>
+<p>.select('*')</p>
+<p>.order('created_at', { ascending: false })</p>
+<p>if (supabaseError) throw supabaseError</p>
+<p>mensajes.value = data || []</p>
+<p>} catch (err) {</p>
+<p>error.value = 'Error al cargar mensajes'</p>
+<p>console.error(err)</p>
+<p>} finally {</p>
+<p>loading.value = false</p>
+<p>}</p>
+<p>}</p>
+<p>onMounted(() => {</p>
+<p>cargarMensajes()</p>
+<p>})</p>
+</script>
+<template>
+  <div class="max-w-2xl mx-auto p-6">
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-xl p-8 text-white mb-6">
+      <h1 class="text-4xl font-bold mb-2"><i class="fa-solid fa-rocket"></i> Hola Mundo</h1>
+      <p class="text-lg opacity-90">Astro + TailwindCSS + Vue + Supabase</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h2 class="text-2xl font-semibold text-gray-800 mb-4"><i class="fa-solid fa-pen-to-square"></i> Mensajes desde Supabase</h2>
+      <div v-if="loading" class="text-center py-8">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+        <p class="mt-4 text-gray-600">Cargando mensajes...</p>
+      </div>
+      <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+<p><i class="fa-solid fa-xmark"></i> {{ error }}</p>
+      </div>
+      <div v-else-if="mensajes.length === 0" class="text-center py-8 text-gray-500">
+<p>No hay mensajes disponibles</p>
+      </div>
+      <ul v-else class="space-y-3">
+        <li 
+<p>v-for="mensaje in mensajes"</p>
+<p>:key="mensaje.id"</p>
+<p>class="border-l-4 border-blue-500 bg-gray-50 p-4 rounded-r-lg hover:bg-gray-100 transition"</p>
+<p>></p>
+          <p class="text-gray-800 font-medium">{{ mensaje.texto }}</p>
+          <p class="text-sm text-gray-500 mt-1">— {{ mensaje.autor }}</p>
+        </li>
+      </ul>
+      <button 
+<p>@click="cargarMensajes"</p>
+<p>class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition shadow-md hover:shadow-lg"</p>
+<p>></p>
+<p><i class="fa-solid fa-arrows-rotate"></i> Recargar Mensajes</p>
+      </button>
+    </div>
+  </div>
+</template>
+<pre><code class="language-text">
+---
+
+## 🧭 8. Integrar en Página Principal
+
+Edita `src/pages/index.astro`:
+
+</code></pre>astro title="src/pages/index.astro"
+<p>---</p>
+<p>---</p>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro + Vue + Supabase</title>
+  </head>
+  <body class="bg-gray-100 min-h-screen py-8">
+    <HolaMundo client:load />
+  </body>
+</html>
+<pre><code class="language-text">
+&lt;Aside type="tip"&gt;
+  **`client:load`** hace que Vue se hidrate inmediatamente en el navegador, permitiendo la interactividad.
+&lt;/Aside&gt;
+
+---
+
+## ⚡ 9. Ejecutar el Proyecto
+
+&lt;Tabs&gt;
+  &lt;TabItem label="npm"&gt;
+    </code></pre>bash
+<p>npm run dev</p>
+    <pre><code class="language-text">  &lt;/TabItem&gt;
+  &lt;TabItem label="pnpm"&gt;
+    </code></pre>bash
+<p>pnpm dev</p>
+    <pre><code class="language-text">  &lt;/TabItem&gt;
+  &lt;TabItem label="yarn"&gt;
+    </code></pre>bash
+<p>yarn dev</p>
+    <pre><code class="language-text">  &lt;/TabItem&gt;
+&lt;/Tabs&gt;
+
+Abre tu navegador en:
+
+👉 **http://localhost:4321**
+
+---
+
+## 🔧 Solución de Problemas
+
+### Error: "Module not found: vue"
+
+Limpia e reinstala dependencias:
+
+</code></pre>bash
+<p>rm -rf node_modules</p>
+<p>npm install</p>
+<pre><code class="language-text">
+En Windows:
+
+</code></pre>powershell
+<p>rmdir /s /q node_modules</p>
+<p>npm install</p>
+<pre><code class="language-text">
+### Error de conexión a Supabase
+
+Verifica que:
+1. Las variables en `.env` sean correctas
+2. La tabla `mensajes` exista en Supabase
+3. Las políticas RLS (Row Level Security) permitan lectura pública:
+
+</code></pre>sql
+<p>alter table mensajes enable row level security;</p>
+<p>create policy "Permitir lectura pública"</p>
+<p>on mensajes for select</p>
+<p>using (true);</p>
+<pre><code class="language-text">
+### Vue no se hidrata correctamente
+
+Asegúrate de usar `client:load` en el componente:
+
+</code></pre>astro
+<HolaMundo client:load />
+<p>```</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="recursos-adicionales">
+    <h2><i class="fa-solid fa-book-bookmark"></i> Recursos Adicionales</h2>
+    <div class="doc-content">
+<ul>
+<li><a href="https://docs.astro.build" target="_blank" rel="noopener">Documentación de Astro</a></li>
+<li><a href="https://docs.astro.build/en/guides/integrations-guide/vue/" target="_blank" rel="noopener">Vue en Astro</a></li>
+<li><a href="https://tailwindcss.com/docs" target="_blank" rel="noopener">TailwindCSS</a></li>
+<li><a href="https://supabase.com/docs" target="_blank" rel="noopener">Supabase Docs</a></li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="proximos-pasos">
+    <h2><i class="fa-solid fa-bullseye"></i> Próximos Pasos</h2>
+    <div class="doc-content">
+<span class="hc-badge hc-badge-tip">Avanzado</span>
+<ul>
+<li>Implementar autenticación con Supabase Auth</li>
+<li>Crear formularios para insertar datos</li>
+<li>Agregar suscripciones en tiempo real</li>
+<li>Configurar políticas de seguridad (RLS)</li>
+<li>Desplegar en Vercel o Netlify</li>
+</ul>
+    </div>
+  </section>

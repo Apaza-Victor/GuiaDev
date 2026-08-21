@@ -1,0 +1,483 @@
+<!-- 04. Uso de Ziggy en Vue 3 - Ziggy (Utilidades) -->
+  <section id="integracion-en-componentes-vue">
+    <h2>Integración en componentes Vue</h2>
+    <div class="doc-content">
+<p>Ziggy se integra perfectamente con Vue 3, permitiendo utilizar las rutas de Laravel de manera elegante en tus componentes. Hay varias formas de integrar Ziggy en una aplicación Vue, dependiendo de la estructura y necesidades de tu proyecto.</p>
+<h3>Configuración básica</h3>
+<p>Antes de utilizar Ziggy en tus componentes Vue, asegúrate de que está correctamente instalado y configurado en tu proyecto Laravel. Luego, puedes importar la función <code>route</code> en tus componentes Vue.</p>
+<pre><code class="language-js">// En tu archivo principal (main.js)
+
+
+
+
+const app = createApp(App);
+
+// Hacer que route esté disponible globalmente
+app.config.globalProperties.$route = route;
+
+app.mount('#app');
+</code></pre>
+<h3>Uso en componentes Options API</h3>
+<p>Si estás utilizando la Options API de Vue, puedes acceder a la función <code>route</code> a través de <code>this.$route</code> si la has configurado como una propiedad global:</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;div&gt;
+    &lt;a :href="profileUrl"&gt;Ver perfil&lt;/a&gt;
+    &lt;button @click="goToDashboard"&gt;Ir al Dashboard&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+export default {
+  data() {
+    return {
+      userId: 1
+    };
+  },
+  computed: {
+    profileUrl() {
+      return this.$route('users.profile', { id: this.userId });
+    }
+  },
+  methods: {
+    goToDashboard() {
+      window.location.href = this.$route('dashboard');
+    }
+  }
+};
+&lt;/script&gt;
+</code></pre>
+<p>Alternativamente, puedes importar la función <code>route</code> directamente en cada componente:</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;div&gt;
+    &lt;a :href="profileUrl"&gt;Ver perfil&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+
+
+export default {
+  data() {
+    return {
+      userId: 1
+    };
+  },
+  computed: {
+    profileUrl() {
+      return route('users.profile', { id: this.userId });
+    }
+  }
+};
+&lt;/script&gt;
+</code></pre>
+    </div>
+  </section>
+
+  <section id="uso-dentro-de-la-composition-api">
+    <h2>Uso dentro de la Composition API</h2>
+    <div class="doc-content">
+<p>Vue 3 introdujo la Composition API, que ofrece una forma más flexible de organizar la lógica de los componentes. Ziggy se integra perfectamente con esta API.</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;div&gt;
+    &lt;a :href="profileUrl"&gt;Ver perfil&lt;/a&gt;
+    &lt;button @click="goToDashboard"&gt;Ir al Dashboard&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+
+
+
+export default {
+  setup() {
+    const userId = ref(1);
+    
+    const profileUrl = computed(() =&gt; {
+      return route('users.profile', { id: userId.value });
+    });
+    
+    const goToDashboard = () =&gt; {
+      window.location.href = route('dashboard');
+    };
+    
+    return {
+      userId,
+      profileUrl,
+      goToDashboard
+    };
+  }
+};
+&lt;/script&gt;
+</code></pre>
+<h3>Creación de un composable para Ziggy</h3>
+<p>Una práctica recomendada en Vue 3 es crear composables reutilizables. Puedes crear un composable para Ziggy que encapsule la funcionalidad de generación de rutas:</p>
+<pre><code class="language-js">// composables/useRoute.js
+
+
+
+export function useRoute() {
+  const generateUrl = (name, params = {}) =&gt; {
+    return route(name, params);
+  };
+  
+  const checkIfRouteExists = (name) =&gt; {
+    return route().has(name);
+  };
+  
+  const getAllRoutes = () =&gt; {
+    return route().all();
+  };
+  
+  return {
+    route: generateUrl,
+    hasRoute: checkIfRouteExists,
+    allRoutes: getAllRoutes
+  };
+}
+</code></pre>
+<p>Luego puedes usar este composable en tus componentes:</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;div&gt;
+    &lt;a :href="userProfileUrl"&gt;Perfil&lt;/a&gt;
+    &lt;p v-if="routeExists"&gt;La ruta existe&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+
+
+
+export default {
+  setup() {
+    const { route, hasRoute } = useRoute();
+    const userId = ref(1);
+    
+    const userProfileUrl = computed(() =&gt; {
+      return route('users.profile', { id: userId.value });
+    });
+    
+    const routeExists = computed(() =&gt; {
+      return hasRoute('users.profile');
+    });
+    
+    return {
+      userProfileUrl,
+      routeExists
+    };
+  }
+};
+&lt;/script&gt;
+</code></pre>
+    </div>
+  </section>
+
+  <section id="acceso-a-ziggy-en-scripts">
+    <h2>Acceso a Ziggy en scripts ``</h2>
+    <div class="doc-content">
+<p>Vue 3 introdujo la sintaxis <code><script setup></code>, que simplifica aún más el uso de la Composition API. Puedes utilizar Ziggy directamente en esta sintaxis:</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;div&gt;
+    &lt;h1&gt;Perfil de Usuario&lt;/h1&gt;
+    &lt;a :href="profileUrl"&gt;Editar perfil&lt;/a&gt;
+    &lt;button @click="goToSettings"&gt;Configuración&lt;/button&gt;
+    
+    &lt;div v-if="isLoading"&gt;Cargando...&lt;/div&gt;
+    &lt;div v-else&gt;
+      &lt;p&gt;Nombre: {{ user.name }}&lt;/p&gt;
+      &lt;p&gt;Email: {{ user.email }}&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+
+
+
+
+// Props
+const props = defineProps({
+  userId: {
+    type: Number,
+    required: true
+  }
+});
+
+// Estado reactivo
+const user = ref({});
+const isLoading = ref(true);
+
+// URLs generadas con Ziggy
+const profileUrl = computed(() =&gt; {
+  return route('users.edit', { user: props.userId });
+});
+
+// Métodos
+const goToSettings = () =&gt; {
+  window.location.href = route('users.settings', { user: props.userId });
+};
+
+const fetchUserData = async () =&gt; {
+  try {
+    const response = await axios.get(route('api.users.show', { user: props.userId }));
+    user.value = response.data;
+  } catch (error) {
+    console.error('Error al cargar datos del usuario:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Ciclo de vida
+onMounted(() =&gt; {
+  fetchUserData();
+});
+&lt;/script&gt;
+</code></pre>
+<blockquote class="aside aside-tip">
+La sintaxis <code>&lt;script setup&gt;</code> es la forma más moderna y recomendada para trabajar con Vue 3, ya que reduce la cantidad de código repetitivo y mejora la inferencia de tipos con TypeScript.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="como-pasar-ziggy-con-provide-inject-si-se-necesita-globalmente">
+    <h2>Cómo pasar Ziggy con provide/inject si se necesita globalmente</h2>
+    <div class="doc-content">
+<p>Si necesitas que Ziggy esté disponible en toda tu aplicación Vue sin tener que importarlo en cada componente, puedes utilizar el sistema <code>provide/inject</code> de Vue 3.</p>
+<h3>Configuración con provide</h3>
+<pre><code class="language-javascript">// main.js
+
+
+
+
+
+const app = createApp(App);
+
+// Proporcionar Ziggy a toda la aplicación
+app.provide('ziggy', {
+  route,
+  config: Ziggy
+});
+
+app.mount('#app');
+</code></pre>
+<h3>Uso con inject en componentes</h3>
+  <h4 class="tab-label">Options API</h4>
+    <pre><code class="language-vue">    &lt;template&gt;
+      &lt;div&gt;
+        &lt;a :href="dashboardUrl"&gt;Dashboard&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    
+    &lt;script&gt;
+    export default {
+      inject: ['ziggy'],
+      computed: {
+        dashboardUrl() {
+          return this.ziggy.route('dashboard');
+        }
+      }
+    };
+    &lt;/script&gt;
+    </code></pre>
+  <h4 class="tab-label">Composition API</h4>
+    <pre><code class="language-vue">    &lt;template&gt;
+      &lt;div&gt;
+        &lt;a :href="dashboardUrl"&gt;Dashboard&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    
+    &lt;script&gt;
+    import { inject, computed } from 'vue';
+    
+    export default {
+      setup() {
+        const ziggy = inject('ziggy');
+        
+        const dashboardUrl = computed(() =&gt; {
+          return ziggy.route('dashboard');
+        });
+        
+        return {
+          dashboardUrl
+        };
+      }
+    };
+    &lt;/script&gt;
+    </code></pre>
+  <h4 class="tab-label">Script Setup</h4>
+    <pre><code class="language-vue">    &lt;template&gt;
+      &lt;div&gt;
+        &lt;a :href="dashboardUrl"&gt;Dashboard&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    
+    &lt;script setup&gt;
+    import { inject, computed } from 'vue';
+    
+    const ziggy = inject('ziggy');
+    
+    const dashboardUrl = computed(() =&gt; {
+      return ziggy.route('dashboard');
+    });
+    &lt;/script&gt;
+    </code></pre>
+    </div>
+  </section>
+
+  <section id="integracion-con-vue-router">
+    <h2>Integración con Vue Router</h2>
+    <div class="doc-content">
+<p>Si estás utilizando Vue Router junto con Ziggy, puedes combinarlos para aprovechar lo mejor de ambos mundos:</p>
+<pre><code class="language-js">// router/index.js
+
+
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: () =&gt; import('../views/Home.vue')
+    },
+    {
+      path: '/users/:id',
+      name: 'users.show',
+      component: () =&gt; import('../views/User.vue'),
+      props: true
+    }
+    // Más rutas...
+  ]
+});
+
+// Middleware para sincronizar Vue Router con Ziggy
+router.beforeEach((to, from, next) =&gt; {
+  // Si la ruta de Vue Router tiene un nombre que coincide con una ruta de Ziggy,
+  // podemos usar los parámetros de la ruta para generar la URL correcta
+  if (route().has(to.name)) {
+    const ziggyUrl = route(to.name, to.params);
+    console.log('Navegando a ' +to.name+ ' ('+ziggyUrl+')');
+  }
+  next();
+});
+
+export default router;
+</code></pre>
+    </div>
+  </section>
+
+  <section id="ejemplos-practicos-con-vue-3-y-ziggy">
+    <h2>Ejemplos prácticos con Vue 3 y Ziggy</h2>
+    <div class="doc-content">
+  <h4 class="tab-label">Formulario con Axios</h4>
+    <pre><code class="language-vue">    &lt;template&gt;
+      &lt;form @submit.prevent="submitForm"&gt;
+        &lt;div&gt;
+          &lt;label for="name"&gt;Nombre:&lt;/label&gt;
+          &lt;input id="name" v-model="form.name" type="text"&gt;
+        &lt;/div&gt;
+        &lt;div&gt;
+          &lt;label for="email"&gt;Email:&lt;/label&gt;
+          &lt;input id="email" v-model="form.email" type="email"&gt;
+        &lt;/div&gt;
+        &lt;button type="submit" :disabled="isSubmitting"&gt;{{ isSubmitting ? 'Enviando...' : 'Guardar' }}&lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/template&gt;
+    
+    &lt;script setup&gt;
+    import { ref } from 'vue';
+    import axios from 'axios';
+    import route from 'ziggy-js';
+    
+    const form = ref({
+      name: '',
+      email: ''
+    });
+    
+    const isSubmitting = ref(false);
+    
+    const submitForm = async () =&gt; {
+      isSubmitting.value = true;
+      try {
+        const response = await axios.post(route('api.users.store'), form.value);
+        alert('Usuario creado con éxito!');
+        form.value = { name: '', email: '' };
+      } catch (error) {
+        console.error('Error al crear usuario:', error);
+        alert('Error al crear usuario');
+      } finally {
+        isSubmitting.value = false;
+      }
+    };
+    &lt;/script&gt;
+    </code></pre>
+  <h4 class="tab-label">Navegación con Inertia.js</h4>
+    <pre><code class="language-vue">    &lt;template&gt;
+      &lt;div&gt;
+        &lt;h1&gt;Panel de control&lt;/h1&gt;
+        &lt;nav&gt;
+          &lt;Link :href="route('dashboard')" class="nav-link"&gt;Dashboard&lt;/Link&gt;
+          &lt;Link :href="route('users.index')" class="nav-link"&gt;Usuarios&lt;/Link&gt;
+          &lt;Link :href="route('settings')" class="nav-link"&gt;Configuración&lt;/Link&gt;
+        &lt;/nav&gt;
+        
+        &lt;button @click="logout"&gt;Cerrar sesión&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    
+    &lt;script setup&gt;
+    import { Link } from '@inertiajs/inertia-vue3';
+    import { Inertia } from '@inertiajs/inertia';
+    import { usePage } from '@inertiajs/inertia-vue3';
+    
+    // En Inertia.js, route está disponible globalmente
+    // No es necesario importarlo si está configurado correctamente
+    
+    const logout = () =&gt; {
+      Inertia.post(route('logout'));
+    };
+    &lt;/script&gt;
+    </code></pre>
+  <h4 class="tab-label">Componente de paginación</h4>
+    <pre><code class="language-vue">    &lt;template&gt;
+      &lt;div&gt;
+        &lt;div class="items-container"&gt;
+          &lt;div v-for="item in items" :key="item.id" class="item"&gt;
+            {{ item.name }}
+          &lt;/div&gt;
+        &lt;/div&gt;
+        
+        &lt;div class="pagination"&gt;
+          &lt;a 
+            v-for="page in totalPages" 
+            :key="page"
+            :href="generatePageUrl(page)"
+            :class="{ 'active': currentPage === page }"
+          &gt;
+            {{ page }}
+          &lt;/a&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    
+    &lt;script setup&gt;
+    import { defineProps, computed } from 'vue';
+    import route from 'ziggy-js';
+    
+    const props = defineProps({
+      items: Array,
+      currentPage: Number,
+      totalPages: Number,
+      routeName: String
+    });
+    
+    const generatePageUrl = (page) =&gt; {
+      return route(props.routeName, { page });
+    };
+    &lt;/script&gt;
+    </code></pre>
+<blockquote class="aside aside-note">
+<p>Ziggy es particularmente útil en aplicaciones Vue que utilizan Inertia.js, ya que proporciona una forma consistente de manejar las rutas entre el backend de Laravel y el frontend de Vue.</p>
+</blockquote>
+    </div>
+  </section>

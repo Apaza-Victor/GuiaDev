@@ -1,0 +1,548 @@
+<!-- 06. Interacción con rutas y API REST - Ziggy (Utilidades) -->
+  <section id="generando-rutas-para-peticiones-http">
+    <h2>Generando rutas para peticiones HTTP</h2>
+    <div class="doc-content">
+<p>Una de las principales ventajas de Ziggy es la capacidad de utilizar las rutas con nombre de Laravel directamente en tus peticiones HTTP con JavaScript. Esto elimina la necesidad de hardcodear URLs y mantiene la consistencia entre el backend y el frontend.</p>
+<h3>Uso con Axios</h3>
+<p>Axios es una de las bibliotecas más populares para realizar peticiones HTTP en JavaScript. Ziggy se integra perfectamente con Axios, permitiéndote generar URLs dinámicas para tus endpoints API.</p>
+<pre><code class="language-js">// Importar Axios y Ziggy
+
+
+
+// Petición GET básica
+axios.get(route('api.users.index'))
+  .then(response =&gt; {
+    console.log(response.data);
+  })
+  .catch(error =&gt; {
+    console.error('Error:', error);
+  });
+
+// Petición GET con parámetros
+axios.get(route('api.users.show', { user: 1 }))
+  .then(response =&gt; {
+    console.log(response.data);
+  });
+
+// Petición POST con datos
+axios.post(route('api.users.store'), {
+  name: 'Nuevo Usuario',
+  email: 'usuario@ejemplo.com'
+})
+  .then(response =&gt; {
+    console.log('Usuario creado:', response.data);
+  });
+
+// Petición PUT para actualizar
+axios.put(route('api.users.update', { user: 1 }), {
+  name: 'Usuario Actualizado'
+})
+  .then(response =&gt; {
+    console.log('Usuario actualizado:', response.data);
+  });
+
+// Petición DELETE
+axios.delete(route('api.users.destroy', { user: 1 }))
+  .then(response =&gt; {
+    console.log('Usuario eliminado');
+  });
+</code></pre>
+<blockquote class="aside aside-tip">
+Al utilizar Ziggy con Axios, te beneficias de la validación de parámetros de ruta. Si intentas generar una URL sin proporcionar todos los parámetros requeridos, Ziggy lanzará un error, ayudándote a detectar problemas antes de realizar la petición.
+</blockquote>
+<h3>Uso con Fetch API</h3>
+<p>Si prefieres utilizar la API Fetch nativa de JavaScript en lugar de Axios, también puedes integrarla fácilmente con Ziggy:</p>
+<pre><code class="language-js">// Importar Ziggy
+
+
+// Petición GET básica
+fetch(route('api.users.index'))
+  .then(response =&gt; response.json())
+  .then(data =&gt; {
+    console.log(data);
+  })
+  .catch(error =&gt; {
+    console.error('Error:', error);
+  });
+
+// Petición GET con parámetros
+fetch(route('api.users.show', { user: 1 }))
+  .then(response =&gt; response.json())
+  .then(data =&gt; {
+    console.log(data);
+  });
+
+// Petición POST con datos
+fetch(route('api.users.store'), {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+  },
+  body: JSON.stringify({
+    name: 'Nuevo Usuario',
+    email: 'usuario@ejemplo.com'
+  })
+})
+  .then(response =&gt; response.json())
+  .then(data =&gt; {
+    console.log('Usuario creado:', data);
+  });
+
+// Petición PUT para actualizar
+fetch(route('api.users.update', { user: 1 }), {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+  },
+  body: JSON.stringify({
+    name: 'Usuario Actualizado'
+  })
+})
+  .then(response =&gt; response.json())
+  .then(data =&gt; {
+    console.log('Usuario actualizado:', data);
+  });
+
+// Petición DELETE
+fetch(route('api.users.destroy', { user: 1 }), {
+  method: 'DELETE',
+  headers: {
+    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+  }
+})
+  .then(response =&gt; response.json())
+  .then(data =&gt; {
+    console.log('Usuario eliminado');
+  });
+</code></pre>
+<blockquote class="aside aside-note">
+A diferencia de Axios, la API Fetch no incluye automáticamente las cookies en las peticiones cross-origin, por lo que es posible que necesites agregar la opción <code>credentials: 'include'</code> si estás realizando peticiones a un dominio diferente.
+</blockquote>
+<h3>Configuración global para peticiones HTTP</h3>
+<p>Para simplificar el uso de Ziggy con bibliotecas HTTP, puedes crear una configuración global que incluya automáticamente los encabezados necesarios y maneje los errores comunes:</p>
+  <h4 class="tab-label">Axios</h4>
+    <pre><code class="language-js">// api.js - Configuración global para Axios con Ziggy
+    import axios from 'axios';
+    import route from 'ziggy-js';
+
+    // Crear una instancia de Axios con configuración personalizada
+    const api = axios.create({
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      withCredentials: true // Incluir cookies en peticiones cross-origin
+    });
+
+    // Interceptor para agregar el token CSRF a todas las peticiones
+    api.interceptors.request.use(config =&gt; {
+      const token = document.querySelector('meta[name="csrf-token"]');
+      if (token) {
+        config.headers['X-CSRF-TOKEN'] = token.getAttribute('content');
+      }
+      return config;
+    });
+
+    // Función helper para peticiones GET
+    export const get = (routeName, params = {}, config = {}) =&gt; {
+      return api.get(route(routeName, params), config);
+    };
+
+    // Función helper para peticiones POST
+    export const post = (routeName, data = {}, params = {}, config = {}) =&gt; {
+      return api.post(route(routeName, params), data, config);
+    };
+
+    // Función helper para peticiones PUT
+    export const put = (routeName, data = {}, params = {}, config = {}) =&gt; {
+      return api.put(route(routeName, params), data, config);
+    };
+
+    // Función helper para peticiones DELETE
+    export const destroy = (routeName, params = {}, config = {}) =&gt; {
+      return api.delete(route(routeName, params), config);
+    };
+
+    export default api;
+    </code></pre>
+  <h4 class="tab-label">Fetch</h4>
+    <pre><code class="language-js">// api.js - Configuración global para Fetch con Ziggy
+    import route from 'ziggy-js';
+
+    // Opciones por defecto para fetch
+    const defaultOptions = {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      credentials: 'include' // Incluir cookies en peticiones cross-origin
+    };
+
+    // Obtener el token CSRF
+    const getCsrfToken = () =&gt; {
+      const token = document.querySelector('meta[name="csrf-token"]');
+      return token ? token.getAttribute('content') : '';
+    };
+
+    // Función helper para peticiones GET
+    export const get = (routeName, params = {}, options = {}) =&gt; {
+      const url = route(routeName, params);
+      return fetch(url, {
+        ...defaultOptions,
+        ...options,
+        method: 'GET'
+      }).then(response =&gt; response.json());
+    };
+
+    // Función helper para peticiones POST
+    export const post = (routeName, data = {}, params = {}, options = {}) =&gt; {
+      const url = route(routeName, params);
+      return fetch(url, {
+        ...defaultOptions,
+        ...options,
+        method: 'POST',
+        headers: {
+          ...defaultOptions.headers,
+          'X-CSRF-TOKEN': getCsrfToken()
+        },
+        body: JSON.stringify(data)
+      }).then(response =&gt; response.json());
+    };
+
+    // Función helper para peticiones PUT
+    export const put = (routeName, data = {}, params = {}, options = {}) =&gt; {
+      const url = route(routeName, params);
+      return fetch(url, {
+        ...defaultOptions,
+        ...options,
+        method: 'PUT',
+        headers: {
+          ...defaultOptions.headers,
+          'X-CSRF-TOKEN': getCsrfToken()
+        },
+        body: JSON.stringify(data)
+      }).then(response =&gt; response.json());
+    };
+
+    // Función helper para peticiones DELETE
+    export const destroy = (routeName, params = {}, options = {}) =&gt; {
+      const url = route(routeName, params);
+      return fetch(url, {
+        ...defaultOptions,
+        ...options,
+        method: 'DELETE',
+        headers: {
+          ...defaultOptions.headers,
+          'X-CSRF-TOKEN': getCsrfToken()
+        }
+      }).then(response =&gt; response.json());
+    };
+</code></pre>
+<p>Utilizando estas configuraciones globales, puedes simplificar tus peticiones HTTP:</p>
+<pre><code class="language-js">// Importar las funciones helper
+
+
+// Realizar peticiones
+get('api.users.index').then(users =&gt; console.log(users));
+post('api.users.store', { name: 'Nuevo Usuario' }).then(user =&gt; console.log(user));
+put('api.users.update', { name: 'Usuario Actualizado' }, { user: 1 }).then(user =&gt; console.log(user));
+destroy('api.users.destroy', { user: 1 }).then(() =&gt; console.log('Usuario eliminado'));
+</code></pre>
+    </div>
+  </section>
+
+  <section id="uso-de-ziggy-en-formularios-y-acciones">
+    <h2>Uso de Ziggy en formularios y acciones</h2>
+    <div class="doc-content">
+<p>Ziggy no solo es útil para generar URLs para peticiones AJAX, sino también para formularios HTML tradicionales. Puedes utilizar la función <code>route()</code> para generar la URL de acción del formulario y asegurarte de que siempre apunte a la ruta correcta, incluso si cambia en el backend.</p>
+<h3>Formularios HTML básicos</h3>
+<pre><code class="language-html">&lt;form action="{{ route('users.store') }}" method="POST"&gt;
+    @csrf
+    &lt;input type="text" name="name" placeholder="Nombre"&gt;
+    &lt;input type="email" name="email" placeholder="Email"&gt;
+    &lt;button type="submit"&gt;Guardar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<p>En JavaScript, puedes generar dinámicamente formularios utilizando Ziggy:</p>
+<pre><code class="language-js">// Crear un formulario dinámicamente
+const form = document.createElement('form');
+form.action = route('users.store');
+form.method = 'POST';
+
+// Agregar token CSRF
+const csrfToken = document.createElement('input');
+csrfToken.type = 'hidden';
+csrfToken.name = '_token';
+csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+form.appendChild(csrfToken);
+
+// Agregar campos del formulario
+const nameInput = document.createElement('input');
+nameInput.type = 'text';
+nameInput.name = 'name';
+nameInput.placeholder = 'Nombre';
+form.appendChild(nameInput);
+
+const emailInput = document.createElement('input');
+emailInput.type = 'email';
+emailInput.name = 'email';
+emailInput.placeholder = 'Email';
+form.appendChild(emailInput);
+
+// Agregar botón de envío
+const submitButton = document.createElement('button');
+submitButton.type = 'submit';
+submitButton.textContent = 'Guardar';
+form.appendChild(submitButton);
+
+// Agregar el formulario al DOM
+document.body.appendChild(form);
+</code></pre>
+<h3>Métodos HTTP PUT y DELETE</h3>
+<p>Los navegadores solo soportan nativamente los métodos HTTP GET y POST para formularios. Sin embargo, Laravel proporciona una forma de simular otros métodos como PUT, PATCH y DELETE mediante un campo oculto <code>_method</code>. Ziggy se integra perfectamente con esta funcionalidad:</p>
+  <h4 class="tab-label">Formulario PUT</h4>
+    <pre><code class="language-html">&lt;form action="{{ route('users.update', { user: user.id }) }}" method="POST"&gt;
+        @csrf
+        @method('PUT')
+        &lt;input type="text" name="name" value="{{ user.name }}"&gt;
+        &lt;input type="email" name="email" value="{{ user.email }}"&gt;
+        &lt;button type="submit"&gt;Actualizar&lt;/button&gt;
+    &lt;/form&gt;</code></pre>
+  <h4 class="tab-label">Formulario DELETE</h4>
+    <pre><code class="language-html">&lt;form action="{{ route('users.destroy', { user: user.id }) }}" method="POST"&gt;
+        @csrf
+        @method('DELETE')
+        &lt;button type="submit"&gt;Eliminar&lt;/button&gt;
+    &lt;/form&gt;</code></pre>
+  <h4 class="tab-label">JavaScript (PUT)</h4>
+    <pre><code class="language-javascript">// Crear un formulario PUT dinámicamente
+    const form = document.createElement('form');
+    form.action = route('users.update', { user: 1 });
+    form.method = 'POST';
+    
+    // Agregar token CSRF
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = '_token';
+    csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    form.appendChild(csrfToken);
+    
+    // Agregar campo _method para simular PUT
+    const methodField = document.createElement('input');
+    methodField.type = 'hidden';
+    methodField.name = '_method';
+    methodField.value = 'PUT';
+    form.appendChild(methodField);
+    
+    // Agregar campos del formulario
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.name = 'name';
+    nameInput.value = 'Usuario Actualizado';
+    form.appendChild(nameInput);
+    
+    // Agregar botón de envío
+    const submitButton = document.createElement('button');
+    submitButton.type = 'submit';
+    submitButton.textContent = 'Actualizar';
+    form.appendChild(submitButton);
+    
+    // Agregar el formulario al DOM
+    document.body.appendChild(form);
+    </code></pre>
+    <pre><code class="language-javascript">// Crear un formulario DELETE dinámicamente
+    const form = document.createElement('form');
+    form.action = route('users.destroy', { user: 1 });
+    form.method = 'POST';
+    
+    // Agregar token CSRF
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = '_token';
+    csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    form.appendChild(csrfToken);
+    
+    // Agregar campo _method para simular DELETE
+    const methodField = document.createElement('input');
+    methodField.type = 'hidden';
+    methodField.name = '_method';
+    methodField.value = 'DELETE';
+    form.appendChild(methodField);
+    
+    // Agregar botón de envío
+    const submitButton = document.createElement('button');
+    submitButton.type = 'submit';
+    submitButton.textContent = 'Eliminar';
+    form.appendChild(submitButton);
+    
+    // Agregar el formulario al DOM
+    document.body.appendChild(form);
+    </code></pre>
+<h3>Envío de formularios con JavaScript</h3>
+<p>También puedes combinar Ziggy con JavaScript para enviar formularios de manera programática:</p>
+<pre><code class="language-javascript">// Seleccionar el formulario
+const form = document.querySelector('#userForm');
+
+// Agregar evento de envío
+form.addEventListener('submit', function(event) {
+  // Prevenir el envío normal del formulario
+  event.preventDefault();
+  
+  // Obtener los datos del formulario
+  const formData = new FormData(form);
+  
+  // Convertir FormData a objeto JSON
+  const data = {};
+  formData.forEach((value, key) =&gt; {
+    data[key] = value;
+  });
+  
+  // Determinar el método HTTP
+  const method = formData.get('_method') || form.method;
+  
+  // Realizar la petición con Axios
+  axios({
+    method: method.toLowerCase(),
+    url: form.action, // Ya contiene la URL generada por Ziggy
+    data: data,
+    headers: {
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    }
+  })
+  .then(response =&gt; {
+    console.log('Respuesta:', response.data);
+    // Manejar la respuesta exitosa
+  })
+  .catch(error =&gt; {
+    console.error('Error:', error);
+    // Manejar errores
+  });
+});
+</code></pre>
+<blockquote class="aside aside-tip">
+Al enviar formularios con JavaScript, puedes aprovechar las validaciones del lado del cliente antes de enviar los datos al servidor, mejorando la experiencia del usuario y reduciendo la carga en el servidor.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="compatibilidad-con-rutas-tipo-api-resource">
+    <h2>Compatibilidad con rutas tipo API Resource</h2>
+    <div class="doc-content">
+<p>Laravel proporciona una forma conveniente de definir rutas RESTful mediante el método <code>apiResource()</code> en el archivo de rutas. Estas rutas siguen una convención de nomenclatura estándar (index, store, show, update, destroy) que Ziggy respeta completamente.</p>
+<h3>Definición de rutas API Resource en Laravel</h3>
+<pre><code class="language-php">// En routes/api.php
+Route::apiResource('users', UserController::class);</code></pre>
+<p>Esta definición crea automáticamente las siguientes rutas:</p>
+<h3>Uso de rutas API Resource con Ziggy</h3>
+<p>Ziggy reconoce automáticamente estas rutas con nombre y te permite utilizarlas en tu código JavaScript:</p>
+<pre><code class="language-js">// Importar Ziggy y Axios
+
+
+
+// Obtener todos los usuarios (index)
+axios.get(route('users.index'))
+  .then(response =&gt; {
+    console.log('Lista de usuarios:', response.data);
+  });
+
+// Obtener un usuario específico (show)
+axios.get(route('users.show', { user: 1 }))
+  .then(response =&gt; {
+    console.log('Detalles del usuario:', response.data);
+  });
+
+// Crear un nuevo usuario (store)
+axios.post(route('users.store'), {
+  name: 'Nuevo Usuario',
+  email: 'usuario@ejemplo.com'
+})
+  .then(response =&gt; {
+    console.log('Usuario creado:', response.data);
+  });
+
+// Actualizar un usuario existente (update)
+axios.put(route('users.update', { user: 1 }), {
+  name: 'Usuario Actualizado'
+})
+  .then(response =&gt; {
+    console.log('Usuario actualizado:', response.data);
+  });
+
+// Eliminar un usuario (destroy)
+axios.delete(route('users.destroy', { user: 1 }))
+  .then(response =&gt; {
+    console.log('Usuario eliminado');
+  });
+</code></pre>
+<h3>Rutas anidadas y recursos anidados</h3>
+<p>Laravel permite definir recursos anidados, y Ziggy también los soporta perfectamente:</p>
+<pre><code class="language-php">// En routes/api.php
+Route::apiResource('users.posts', UserPostController::class);</code></pre>
+<p>Esto crea rutas como <code>users.posts.index</code>, <code>users.posts.store</code>, etc., que puedes utilizar con Ziggy:</p>
+<pre><code class="language-js">// Obtener todos los posts de un usuario
+axios.get(route('users.posts.index', { user: 1 }))
+  .then(response =&gt; {
+    console.log('Posts del usuario:', response.data);
+  });
+
+// Obtener un post específico de un usuario
+axios.get(route('users.posts.show', { user: 1, post: 2 }))
+  .then(response =&gt; {
+    console.log('Detalles del post:', response.data);
+  });
+
+// Crear un nuevo post para un usuario
+axios.post(route('users.posts.store', { user: 1 }), {
+  title: 'Nuevo Post',
+  content: 'Contenido del post'
+})
+  .then(response =&gt; {
+    console.log('Post creado:', response.data);
+  });
+</code></pre>
+<blockquote class="aside aside-note">
+Cuando trabajas con recursos anidados, es importante proporcionar todos los parámetros de ruta necesarios. Por ejemplo, para `users.posts.show`, necesitas proporcionar tanto el ID del usuario como el ID del post.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="manejo-de-rutas-en-formularios-inertia-js">
+    <h2>Manejo de rutas en formularios Inertia.js</h2>
+    <div class="doc-content">
+<p>Inertia.js es una biblioteca que permite crear aplicaciones de una sola página (SPA) utilizando controladores y vistas clásicos del lado del servidor. Ziggy se integra perfectamente con Inertia.js, permitiendo utilizar las rutas con nombre de Laravel en tus componentes de Vue o React.</p>
+<h3>Configuración básica con Inertia.js</h3>
+<p>Para utilizar Ziggy con Inertia.js, primero debes asegurarte de que Ziggy está correctamente configurado en tu aplicación Laravel. Luego, puedes acceder a la función <code>route()</code> en tus componentes de Inertia.</p>
+    <pre><code class="language-vue">&lt;template&gt;
+      &lt;form @submit.prevent="submit"&gt;
+        &lt;input type="text" v-model="form.name"&gt;
+        &lt;input type="email" v-model="form.email"&gt;
+        &lt;button type="submit" :disabled="form.processing"&gt;Guardar&lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/template&gt;
+    
+    &lt;script&gt;
+    import { useForm } from '@inertiajs/vue3';
+    import route from 'ziggy-js';
+    
+    export default {
+      setup() {
+        const form = useForm({
+          name: '',
+          email: ''
+        });
+        
+        const submit = () =&gt; {
+          form.post(route('users.store'));
+        };
+        
+        return {
+          form,
+          submit
+        };
+      }
+    };
+    &lt;/script&gt;
+    </code></pre>
+    </div>
+  </section>

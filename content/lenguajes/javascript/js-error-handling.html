@@ -1,0 +1,244 @@
+<!-- 19. Manejo de errores - JavaScript (Lenguajes de Programación) -->
+  <section id="try-catch-basico">
+    <h2>Try...Catch <span class="hc-badge hc-badge-note">Básico</span></h2>
+    <div class="doc-content">
+<h3>Sintaxis básica</h3>
+<pre><code class="language-javascript">try {
+    // Código que puede lanzar un error
+    const resultado = funcionPeligrosa();
+} catch (error) {
+    // Manejar el error
+    console.error('Ocurrió un error:', error);
+} finally {
+    // Se ejecuta siempre
+    limpiarRecursos();
+}</code></pre>
+<h3>Tipos de errores</h3>
+<pre><code class="language-javascript">// Error genérico
+throw new Error('Algo salió mal');
+
+// Tipos específicos de error
+throw new TypeError('Tipo incorrecto');
+throw new ReferenceError('Variable no definida');
+throw new RangeError('Valor fuera de rango');
+throw new SyntaxError('Sintaxis inválida');</code></pre>
+    </div>
+  </section>
+
+  <section id="errores-personalizados-importante">
+    <h2>Errores personalizados <span class="hc-badge hc-badge-danger">Importante</span></h2>
+    <div class="doc-content">
+<h3>Crear clases de error</h3>
+<pre><code class="language-javascript">class ValidationError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ValidationError';
+    }
+}
+
+class DatabaseError extends Error {
+    constructor(message, query) {
+        super(message);
+        this.name = 'DatabaseError';
+        this.query = query;
+    }
+}
+
+// Uso
+function validarEdad(edad) {
+    if (typeof edad !== 'number') {
+        throw new ValidationError('La edad debe ser un número');
+    }
+    if (edad &lt; 0 || edad &gt; 120) {
+        throw new ValidationError('Edad fuera de rango válido');
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <section id="manejo-asincrono-importante">
+    <h2>Manejo asíncrono <span class="hc-badge hc-badge-note">Importante</span></h2>
+    <div class="doc-content">
+<h3>Promesas</h3>
+<pre><code class="language-javascript">function obtenerDatos() {
+    return fetch('/api/datos')
+        .then(response =&gt; {
+            if (!response.ok) {
+                throw new Error(\`HTTP error! status: \${response.status}\`);
+            }
+            return response.json();
+        })
+        .catch(error =&gt; {
+            console.error('Error al obtener datos:', error);
+            throw error; // Re-lanzar para manejo superior
+        });
+}</code></pre>
+<h3>Async/Await</h3>
+<pre><code class="language-javascript">async function obtenerDatos() {
+    try {
+        const response = await fetch('/api/datos');
+        if (!response.ok) {
+            throw new Error(\`HTTP error! status: \${response.status}\`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error al obtener datos:', error);
+        throw error;
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <section id="patrones-de-manejo-de-errores-avanzado">
+    <h2>Patrones de manejo de errores <span class="hc-badge hc-badge-note">Avanzado</span></h2>
+    <div class="doc-content">
+<h3>Error boundary</h3>
+<pre><code class="language-javascript">class ErrorBoundary {
+    constructor() {
+        this.errors = [];
+    }
+
+    execute(fn) {
+        try {
+            return fn();
+        } catch (error) {
+            this.handleError(error);
+            return null;
+        }
+    }
+
+    async executeAsync(fn) {
+        try {
+            return await fn();
+        } catch (error) {
+            this.handleError(error);
+            return null;
+        }
+    }
+
+    handleError(error) {
+        this.errors.push({
+            timestamp: new Date(),
+            error: error
+        });
+        // Implementar lógica de manejo de errores
+        console.error('Error capturado:', error);
+    }
+}
+
+// Uso
+const errorBoundary = new ErrorBoundary();
+errorBoundary.execute(() =&gt; {
+    // Código que puede fallar
+});</code></pre>
+<h3>Manejo centralizado</h3>
+<pre><code class="language-javascript">const ErrorHandler = {
+    handlers: new Map(),
+
+    register(errorType, handler) {
+        this.handlers.set(errorType, handler);
+    },
+
+    handle(error) {
+        const handler = this.handlers.get(error.constructor) || 
+                       this.handlers.get('default');
+        
+        if (handler) {
+            return handler(error);
+        }
+        
+        throw error; // Si no hay handler
+    }
+};
+
+// Registrar handlers
+ErrorHandler.register(ValidationError, (error) =&gt; {
+    console.error('Error de validación:', error.message);
+    // Mostrar mensaje al usuario
+});
+
+ErrorHandler.register(DatabaseError, (error) =&gt; {
+    console.error('Error de base de datos:', error.message);
+    // Intentar reconectar
+});
+
+ErrorHandler.register('default', (error) =&gt; {
+    console.error('Error no manejado:', error);
+    // Notificar al sistema de monitoreo
+});</code></pre>
+    </div>
+  </section>
+
+  <section id="mejores-practicas-recomendado">
+    <h2>Mejores prácticas <span class="hc-badge hc-badge-tip">Recomendado</span></h2>
+    <div class="doc-content">
+<h3>Granularidad en el manejo</h3>
+<pre><code class="language-javascript">// ❌ Malo - Catch demasiado general
+try {
+    hacerAlgo();
+} catch (error) {
+    console.error(error);
+}
+
+// ✅ Bueno - Manejo específico
+try {
+    hacerAlgo();
+} catch (error) {
+    if (error instanceof ValidationError) {
+        mostrarErrorValidacion(error);
+    } else if (error instanceof DatabaseError) {
+        manejarErrorDB(error);
+    } else {
+        // Error no esperado
+        notificarError(error);
+        throw error;
+    }
+}</code></pre>
+<h3>Logging efectivo</h3>
+<pre><code class="language-javascript">function logError(error, context = {}) {
+    const errorInfo = {
+        timestamp: new Date().toISOString(),
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        ...context
+    };
+
+    // En desarrollo
+    if (process.env.NODE_ENV === 'development') {
+        console.error('Error:', errorInfo);
+    }
+
+    // En producción
+    if (process.env.NODE_ENV === 'production') {
+        // Enviar a servicio de logging
+        enviarAServicioLogging(errorInfo);
+    }
+}</code></pre>
+<h3>Recuperación elegante</h3>
+<pre><code class="language-javascript">class ServicioAPI {
+    async obtenerDatos(id, opciones = {}) {
+        const { reintentos = 3, esperaMS = 1000 } = opciones;
+        
+        for (let intento = 1; intento &lt;= reintentos; intento++) {
+            try {
+                return await this.llamadaAPI(id);
+            } catch (error) {
+                if (error.response?.status === 429) {
+                    // Rate limiting - esperar y reintentar
+                    await new Promise(r =&gt; setTimeout(r, esperaMS * intento));
+                    continue;
+                }
+                
+                if (intento === reintentos) {
+                    throw new APIError(
+                        'Máximo de reintentos alcanzado',
+                        { causa: error, intentos: intento }
+                    );
+                }
+            }
+        }
+    }
+}</code></pre>
+    </div>
+  </section>

@@ -1,0 +1,58 @@
+<!-- 4. Restricciones (Constraints) - MySQL (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="primary-key-y-auto-increment">
+    <h2>PRIMARY KEY y AUTO_INCREMENT</h2>
+    <div class="doc-content">
+<p>La llave primaria identifica cada fila de forma única. Con <code>AUTO_INCREMENT</code>, MySQL genera el valor por ti.</p>
+<pre><code class="language-sql">CREATE TABLE clientes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(120) NOT NULL UNIQUE
+);</code></pre>
+    </div>
+  </section>
+
+  <section id="foreign-key">
+    <h2>FOREIGN KEY</h2>
+    <div class="doc-content">
+<p>La llave foránea vincula una columna con la llave primaria de otra tabla, impidiendo valores huérfanos.</p>
+<pre><code class="language-sql">CREATE TABLE pedidos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  cliente_id INT NOT NULL,
+  FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+    ON DELETE CASCADE     -- al borrar el cliente, se borran sus pedidos
+    ON UPDATE CASCADE     -- al cambiar su id, se propaga
+);</code></pre>
+<p>Opciones de eliminación: <code>CASCADE</code> (propaga), <code>SET NULL</code> (deja huérfano permitido), <code>RESTRICT</code>/<code>NO ACTION</code> (bloquea el borrado).</p>
+    </div>
+  </section>
+
+  <section id="unique-not-null-default-y-check">
+    <h2>UNIQUE, NOT NULL, DEFAULT y CHECK</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE TABLE empleados (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  curp CHAR(18) NOT NULL UNIQUE,          -- no repetido
+  nombre VARCHAR(80) NOT NULL,            -- obligatorio
+  salario DECIMAL(10,2) DEFAULT 15000.00, -- valor por defecto
+  edad TINYINT CHECK (edad &gt;= 18),        -- regla de validación (MySQL 8.0.16+)
+  departamento VARCHAR(40) DEFAULT 'General'
+);</code></pre>
+    </div>
+  </section>
+
+  <section id="restricciones-con-nombre">
+    <h2>Restricciones con nombre</h2>
+    <div class="doc-content">
+<p>Nombrar las restricciones facilita eliminarlas o depurarlas después.</p>
+<pre><code class="language-sql">CREATE TABLE pagos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  empleado_id INT NOT NULL,
+  monto DECIMAL(10,2) NOT NULL,
+  CONSTRAINT fk_pagos_empleado FOREIGN KEY (empleado_id)
+    REFERENCES empleados(id),
+  CONSTRAINT ck_pagos_monto CHECK (monto &gt; 0)
+);
+
+ALTER TABLE pagos DROP FOREIGN KEY fk_pagos_empleado;</code></pre>
+    </div>
+  </section>

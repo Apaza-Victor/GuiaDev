@@ -1,0 +1,52 @@
+<!-- 8. Agregación y agrupamiento - SQL Server (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="funciones-de-agregacion">
+    <h2>Funciones de agregación</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SELECT COUNT(*) AS Total FROM dbo.Productos;
+SELECT AVG(Precio) AS Promedio, MIN(Precio) AS Minimo, MAX(Precio) AS Maximo
+FROM dbo.Productos;
+SELECT SUM(Cantidad) AS Unidades FROM dbo.Ventas;</code></pre>
+<blockquote class="aside aside-note">
+<p><code>COUNT(*)</code> cuenta filas; <code>COUNT(Columna)</code> omite nulos; <code>COUNT(DISTINCT Columna)</code> omite repetidos.</p>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="group-by-y-having">
+    <h2>GROUP BY y HAVING</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SELECT c.Nombre, COUNT(p.Id) AS Productos, ROUND(AVG(p.Precio),2) AS Promedio
+FROM dbo.Categorias c
+LEFT JOIN dbo.Productos p ON p.CategoriaId = c.Id
+GROUP BY c.Nombre
+HAVING COUNT(p.Id) &gt;= 3
+ORDER BY Productos DESC;</code></pre>
+    </div>
+  </section>
+
+  <section id="rollup-y-grouping-sets">
+    <h2>ROLLUP y GROUPING SETS</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- Subtotales por categoría + gran total
+SELECT CategoriaId, COUNT(*) AS Total
+FROM dbo.Productos
+GROUP BY ROLLUP (CategoriaId);
+
+-- Agregaciones personalizadas en una sola pasada
+SELECT CategoriaId, COUNT(*) AS Total
+FROM dbo.Productos
+GROUP BY GROUPING SETS ((CategoriaId), ());</code></pre>
+    </div>
+  </section>
+
+  <section id="agregaciones-con-case">
+    <h2>Agregaciones con CASE</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SELECT
+  COUNT(*) AS Total,
+  SUM(CASE WHEN Precio &gt; 1000 THEN 1 ELSE 0 END) AS Caros,
+  SUM(CASE WHEN Precio &lt;= 1000 THEN 1 ELSE 0 END) AS Baratos
+FROM dbo.Productos;</code></pre>
+    </div>
+  </section>

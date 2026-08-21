@@ -1,0 +1,912 @@
+<!-- 04. Componentes en Astro - Astro (Frameworks) -->
+  <section id="creacion-de-componentes-reutilizables">
+    <h2>Creación de componentes reutilizables</h2>
+    <div class="doc-content">
+  <h4 class="tab-label"><i class="fa-solid fa-user-tie"></i> Parte teórica</h4>
+<h3>Componentes Reutilizables en Astro</h3>
+<p>Los <strong>componentes</strong> son bloques de código independientes y reutilizables que encapsulan estructura, estilo y lógica.</p>
+<h4><i class="fa-solid fa-bullseye"></i> Propósito</h4>
+<ul>
+<li>Evitar duplicación de código (DRY)</li>
+<li>Facilitar mantenimiento y actualizaciones</li>
+<li>Mejorar organización del proyecto</li>
+<li>Permitir composición de interfaces</li>
+<li>Aumentar productividad del desarrollo</li>
+</ul>
+<h4><i class="fa-solid fa-folder"></i> Ubicación y Convenciones</h4>
+<p><strong>Carpeta <code>src/components/</code></strong></p>
+<ul>
+<li>Todos los componentes reutilizables</li>
+<li>Extensión <code>.astro</code> para componentes Astro</li>
+<li>También <code>.jsx</code>, <code>.vue</code>, <code>.svelte</code> para otros frameworks</li>
+<li>Nombres en PascalCase (ej: <code>Button.astro</code>)</li>
+</ul>
+<h4><i class="fa-solid fa-wrench"></i> Estructura de un Componente</h4>
+<p><strong>Tres secciones:</strong></p>
+<p><strong>1. Frontmatter (---)</strong></p>
+<ul>
+<li>Lógica del servidor</li>
+<li>Importaciones</li>
+<li>Props y variables</li>
+<li>Fetch de datos</li>
+</ul>
+<p><strong>2. Template</strong></p>
+<ul>
+<li>Marcado HTML</li>
+<li>Uso de props</li>
+<li>Expresiones JavaScript</li>
+</ul>
+<p><strong>3. Estilos (opcional)</strong></p>
+<ul>
+<li>CSS scoped por defecto</li>
+<li>Específico del componente</li>
+<li>No afecta otros componentes</li>
+</ul>
+<h4><i class="fa-solid fa-gear"></i> Características</h4>
+<p><strong>Scoped Styles</strong></p>
+<ul>
+<li>CSS aislado automáticamente</li>
+<li>No hay conflictos de nombres</li>
+<li>Mejor encapsulación</li>
+</ul>
+<p><strong>Zero JavaScript</strong></p>
+<ul>
+<li>Componentes estáticos por defecto</li>
+<li>HTML puro en el output</li>
+<li>JavaScript solo si se especifica</li>
+</ul>
+<p><strong>Type Safety</strong></p>
+<ul>
+<li>TypeScript integrado</li>
+<li>Interfaces para props</li>
+<li>Validación en desarrollo</li>
+</ul>
+<h4><i class="fa-solid fa-star"></i> Mejores Prácticas</h4>
+<ul>
+<li><strong>Un propósito</strong>: Cada componente hace una cosa bien</li>
+<li><strong>Nombres descriptivos</strong>: Claros y específicos</li>
+<li><strong>Props tipadas</strong>: Usar TypeScript</li>
+<li><strong>Documentación</strong>: Comentar props complejas</li>
+<li><strong>Composición</strong>: Componentes pequeños y combinables</li>
+</ul>
+<h4><i class="fa-solid fa-chart-column"></i> Tipos de Componentes</h4>
+<table><thead><tr><th>Tipo</th><th>Descripción</th><th>Ejemplo</th></tr></thead><tbody><tr><td><strong>UI</strong></td><td>Elementos visuales</td><td>Button, Card, Modal</td></tr><tr><td><strong>Layout</strong></td><td>Estructura de página</td><td>Header, Footer, Sidebar</td></tr><tr><td><strong>Contenedor</strong></td><td>Envuelven otros componentes</td><td>Container, Grid</td></tr><tr><td><strong>Funcional</strong></td><td>Lógica sin UI</td><td>DataFetcher</td></tr></tbody></table>
+  <h4 class="tab-label"><i class="fa-solid fa-lightbulb"></i> Ejemplos prácticos</h4>
+<h3><i class="fa-solid fa-palette"></i> Componente Básico</h3>
+<p><strong><code>src/components/Button.astro</code></strong></p>
+    <pre><code class="language-astro">    ---
+    // Sin props, componente simple
+    ---
+
+    &lt;button class="btn"&gt;
+      &lt;slot /&gt;
+    &lt;/button&gt;
+
+    &lt;style&gt;
+      .btn {
+        padding: 0.5rem 1rem;
+        background: #4f39fa;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .btn:hover {
+        background: #3d2bc7;
+      }
+    &lt;/style&gt;
+    </code></pre>
+<p><strong>Uso</strong></p>
+    <pre><code class="language-astro">    ---
+    import Button from '../components/Button.astro';
+    ---
+
+    &lt;Button&gt;Haz clic aquí&lt;/Button&gt;
+    </code></pre>
+<h3><i class="fa-solid fa-box"></i> Componente con Props</h3>
+<p><strong><code>src/components/Card.astro</code></strong></p>
+    <pre><code class="language-astro">    ---
+    interface Props {
+      title: string;
+      description: string;
+      image?: string;
+    }
+
+    const { title, description, image } = Astro.props;
+    ---
+
+    &lt;div class="card"&gt;
+      {image &amp;&amp; &lt;img src={image} alt={title} /&gt;}
+      &lt;div class="content"&gt;
+        &lt;h3&gt;{title}&lt;/h3&gt;
+        &lt;p&gt;{description}&lt;/p&gt;
+        &lt;slot /&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;style&gt;
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+      }
+
+      .content {
+        padding: 1.5rem;
+      }
+
+      .content h3 {
+        margin: 0 0 0.5rem 0;
+      }
+    &lt;/style&gt;
+    </code></pre>
+<p><strong>Uso</strong></p>
+    <pre><code class="language-astro">    ---
+    import Card from '../components/Card.astro';
+    ---
+
+    &lt;Card 
+      title="Mi Tarjeta"
+      description="Descripción de la tarjeta"
+      image="/image.jpg"
+    &gt;
+      &lt;a href="/more"&gt;Leer más&lt;/a&gt;
+    &lt;/Card&gt;
+    </code></pre>
+<h3><i class="fa-solid fa-arrows-rotate"></i> Componente con Lógica</h3>
+<p><strong><code>src/components/UserList.astro</code></strong></p>
+    <pre><code class="language-astro">    ---
+    // Fetch de datos en el servidor
+    const response = await fetch('https://jsonplaceholder.typicode.com/users');
+    const users = await response.json();
+    ---
+
+    &lt;div class="user-list"&gt;
+      &lt;h2&gt;Lista de Usuarios&lt;/h2&gt;
+      &lt;ul&gt;
+        {users.slice(0, 5).map(user =&gt; (
+          &lt;li&gt;
+            &lt;strong&gt;{user.name}&lt;/strong&gt;
+            &lt;span&gt;{user.email}&lt;/span&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+
+    &lt;style&gt;
+      .user-list {
+        padding: 1rem;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      li {
+        padding: 0.5rem;
+        border-bottom: 1px solid #eee;
+      }
+
+      li strong {
+        display: block;
+      }
+
+      li span {
+        color: #666;
+        font-size: 0.9rem;
+      }
+    &lt;/style&gt;
+    </code></pre>
+<h3><i class="fa-solid fa-bullseye"></i> Componente Reutilizable Complejo</h3>
+<p><strong><code>src/components/Alert.astro</code></strong></p>
+    <pre><code class="language-astro">    ---
+    interface Props {
+      type?: 'info' | 'success' | 'warning' | 'error';
+      title?: string;
+      dismissible?: boolean;
+    }
+
+    const { 
+      type = 'info', 
+      title, 
+      dismissible = false 
+    } = Astro.props;
+
+    const icons = {
+      info: 'ℹ️',
+      success: '✅',
+      warning: '⚠️',
+      error: '❌'
+    };
+    ---
+
+    &lt;div class={`alert alert-${type}`}&gt;
+      &lt;div class="alert-icon"&gt;{icons[type]}&lt;/div&gt;
+      &lt;div class="alert-content"&gt;
+        {title &amp;&amp; &lt;strong&gt;{title}&lt;/strong&gt;}
+        &lt;slot /&gt;
+      &lt;/div&gt;
+      {dismissible &amp;&amp; (
+        &lt;button class="alert-close" aria-label="Cerrar"&gt;×&lt;/button&gt;
+      )}
+    &lt;/div&gt;
+
+    &lt;style&gt;
+      .alert {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 4px;
+        margin: 1rem 0;
+      }
+
+      .alert-info { background: #e3f2fd; }
+      .alert-success { background: #e8f5e9; }
+      .alert-warning { background: #fff3e0; }
+      .alert-error { background: #ffebee; }
+
+      .alert-icon {
+        font-size: 1.5rem;
+      }
+
+      .alert-content {
+        flex: 1;
+      }
+
+      .alert-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+      }
+    &lt;/style&gt;
+    </code></pre>
+    <blockquote class="aside aside-tip">
+<i class="fa-solid fa-lightbulb"></i> **Tip**: Crea componentes pequeños y específicos. Es mejor tener muchos componentes simples que pocos componentes complejos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="comunicacion-con-props-y-slots">
+    <h2>Comunicación con props y slots</h2>
+    <div class="doc-content">
+  <h4 class="tab-label"><i class="fa-solid fa-user-tie"></i> Parte teórica</h4>
+<h3>Props y Slots</h3>
+<p><strong>Props</strong> y <strong>slots</strong> son los mecanismos principales para pasar datos y contenido a los componentes.</p>
+<h4><i class="fa-solid fa-bullseye"></i> Props (Propiedades)</h4>
+<p><strong>Propósito:</strong></p>
+<ul>
+<li>Pasar datos del padre al hijo</li>
+<li>Configurar comportamiento del componente</li>
+<li>Personalizar apariencia</li>
+<li>Comunicación unidireccional</li>
+</ul>
+<p><strong>Características:</strong></p>
+<ul>
+<li>Acceso via <code>Astro.props</code></li>
+<li>Inmutables (solo lectura)</li>
+<li>Type-safe con TypeScript</li>
+<li>Valores por defecto</li>
+</ul>
+<p><strong>Tipos de Props:</strong></p>
+<ul>
+<li><strong>Primitivos</strong>: string, number, boolean</li>
+<li><strong>Objetos</strong>: Datos estructurados</li>
+<li><strong>Arrays</strong>: Listas de elementos</li>
+<li><strong>Funciones</strong>: Callbacks (limitado)</li>
+</ul>
+<h4><i class="fa-solid fa-arrows-rotate"></i> Slots</h4>
+<p><strong>Propósito:</strong></p>
+<ul>
+<li>Pasar contenido HTML/componentes</li>
+<li>Crear componentes contenedores</li>
+<li>Permitir composición flexible</li>
+<li>Plantillas reutilizables</li>
+</ul>
+<p><strong>Tipos de Slots:</strong></p>
+<p><strong>1. Slot Default</strong></p>
+<ul>
+<li><code><slot /></code> sin nombre</li>
+<li>Recibe todo el contenido hijo</li>
+<li>Más común y simple</li>
+</ul>
+<p><strong>2. Slots Nombrados</strong></p>
+<ul>
+<li><code><slot name="nombre" /></code></li>
+<li>Múltiples áreas de contenido</li>
+<li>Mayor control de layout</li>
+</ul>
+<p><strong>3. Slot Fallback</strong></p>
+<ul>
+<li>Contenido por defecto</li>
+<li>Se muestra si no hay contenido</li>
+<li>Útil para opcionales</li>
+</ul>
+<h4><i class="fa-solid fa-chart-column"></i> Props vs Slots</h4>
+<table><thead><tr><th>Aspecto</th><th>Props</th><th>Slots</th></tr></thead><tbody><tr><td><strong>Tipo</strong></td><td>Datos</td><td>Contenido HTML</td></tr><tr><td><strong>Uso</strong></td><td>Configuración</td><td>Composición</td></tr><tr><td><strong>Cantidad</strong></td><td>Múltiples</td><td>Múltiples (nombrados)</td></tr><tr><td><strong>Tipado</strong></td><td>TypeScript</td><td>No tipado</td></tr></tbody></table>
+<h4><i class="fa-solid fa-star"></i> Mejores Prácticas</h4>
+<p><strong>Props:</strong></p>
+<ul>
+<li>Definir interfaces TypeScript</li>
+<li>Valores por defecto razonables</li>
+<li>Validación de tipos</li>
+<li>Nombres descriptivos</li>
+</ul>
+<p><strong>Slots:</strong></p>
+<ul>
+<li>Usar slots nombrados para claridad</li>
+<li>Proporcionar fallbacks</li>
+<li>Documentar slots disponibles</li>
+<li>Mantener simplicidad</li>
+</ul>
+  <h4 class="tab-label"><i class="fa-solid fa-lightbulb"></i> Ejemplos prácticos</h4>
+<h3><i class="fa-solid fa-pen-to-square"></i> Props Básicas</h3>
+<p><strong><code>src/components/Greeting.astro</code></strong></p>
+    <pre><code class="language-astro">    ---
+    interface Props {
+      name: string;
+      age?: number;
+    }
+
+    const { name, age } = Astro.props;
+    ---
+
+    &lt;div class="greeting"&gt;
+      &lt;h2&gt;Hola, {name}!&lt;/h2&gt;
+      {age &amp;&amp; &lt;p&gt;Tienes {age} años&lt;/p&gt;}
+    &lt;/div&gt;
+    </code></pre>
+<p><strong>Uso</strong></p>
+    <pre><code class="language-astro">    &lt;Greeting name="Juan" age={25} /&gt;
+    &lt;Greeting name="María" /&gt;
+    </code></pre>
+<h3><i class="fa-solid fa-palette"></i> Props con Valores por Defecto</h3>
+<p><strong><code>src/components/Badge.astro</code></strong></p>
+    <pre><code class="language-astro">    ---
+    interface Props {
+      text: string;
+      color?: 'blue' | 'green' | 'red' | 'gray';
+      size?: 'small' | 'medium' | 'large';
+    }
+
+    const { 
+      text, 
+      color = 'blue', 
+      size = 'medium' 
+    } = Astro.props;
+    ---
+
+    &lt;span class={`badge badge-${color} badge-${size}`}&gt;
+      {text}
+    &lt;/span&gt;
+
+    &lt;style&gt;
+      .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-weight: 500;
+      }
+
+      .badge-small { font-size: 0.75rem; }
+      .badge-medium { font-size: 0.875rem; }
+      .badge-large { font-size: 1rem; }
+
+      .badge-blue { background: #e3f2fd; color: #1976d2; }
+      .badge-green { background: #e8f5e9; color: #388e3c; }
+      .badge-red { background: #ffebee; color: #d32f2f; }
+      .badge-gray { background: #f5f5f5; color: #616161; }
+    &lt;/style&gt;
+    </code></pre>
+<h3><i class="fa-solid fa-arrows-rotate"></i> Slot Default</h3>
+<p><strong><code>src/components/Container.astro</code></strong></p>
+    <pre><code class="language-astro">    ---
+    interface Props {
+      maxWidth?: string;
+    }
+
+    const { maxWidth = '1200px' } = Astro.props;
+    ---
+
+    &lt;div class="container" style={`max-width: ${maxWidth}`}&gt;
+      &lt;slot /&gt;
+    &lt;/div&gt;
+
+    &lt;style&gt;
+      .container {
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+    &lt;/style&gt;
+    </code></pre>
+<p><strong>Uso</strong></p>
+    <pre><code class="language-astro">    &lt;Container&gt;
+      &lt;h1&gt;Título&lt;/h1&gt;
+      &lt;p&gt;Contenido dentro del container&lt;/p&gt;
+    &lt;/Container&gt;
+    </code></pre>
+<h3><i class="fa-solid fa-bullseye"></i> Slots Nombrados</h3>
+<p><strong><code>src/components/Modal.astro</code></strong></p>
+    <pre><code class="language-astro">    ---
+    interface Props {
+      title: string;
+      isOpen?: boolean;
+    }
+
+    const { title, isOpen = false } = Astro.props;
+    ---
+
+    {isOpen &amp;&amp; (
+      &lt;div class="modal-overlay"&gt;
+        &lt;div class="modal"&gt;
+          &lt;header class="modal-header"&gt;
+            &lt;h2&gt;{title}&lt;/h2&gt;
+            &lt;slot name="header-actions" /&gt;
+          &lt;/header&gt;
+
+          &lt;div class="modal-body"&gt;
+            &lt;slot /&gt;
+          &lt;/div&gt;
+
+          &lt;footer class="modal-footer"&gt;
+            &lt;slot name="footer"&gt;
+              &lt;button&gt;Cerrar&lt;/button&gt;
+            &lt;/slot&gt;
+          &lt;/footer&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    )}
+
+    &lt;style&gt;
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal {
+        background: white;
+        border-radius: 8px;
+        max-width: 500px;
+        width: 90%;
+      }
+
+      .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .modal-body {
+        padding: 1.5rem;
+      }
+
+      .modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #eee;
+        text-align: right;
+      }
+    &lt;/style&gt;
+    </code></pre>
+<p><strong>Uso con slots nombrados</strong></p>
+    <pre><code class="language-astro">    &lt;Modal title="Confirmar Acción" isOpen={true}&gt;
+      &lt;button slot="header-actions"&gt;×&lt;/button&gt;
+
+      &lt;p&gt;¿Estás seguro de que quieres continuar?&lt;/p&gt;
+
+      &lt;div slot="footer"&gt;
+        &lt;button&gt;Cancelar&lt;/button&gt;
+        &lt;button&gt;Confirmar&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/Modal&gt;
+    </code></pre>
+<h3><i class="fa-solid fa-chart-column"></i> Props Complejas</h3>
+<p><strong><code>src/components/DataTable.astro</code></strong></p>
+    <pre><code class="language-astro">    ---
+    interface Column {
+      key: string;
+      label: string;
+    }
+
+    interface Props {
+      columns: Column[];
+      data: Record&lt;string, any&gt;[];
+    }
+
+    const { columns, data } = Astro.props;
+    ---
+
+    &lt;table class="data-table"&gt;
+      &lt;thead&gt;
+        &lt;tr&gt;
+          {columns.map(col =&gt; (
+            &lt;th&gt;{col.label}&lt;/th&gt;
+          ))}
+        &lt;/tr&gt;
+      &lt;/thead&gt;
+      &lt;tbody&gt;
+        {data.map(row =&gt; (
+          &lt;tr&gt;
+            {columns.map(col =&gt; (
+              &lt;td&gt;{row[col.key]}&lt;/td&gt;
+            ))}
+          &lt;/tr&gt;
+        ))}
+      &lt;/tbody&gt;
+    &lt;/table&gt;
+
+    &lt;style&gt;
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th, td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      th {
+        background: #f5f5f5;
+        font-weight: 600;
+      }
+    &lt;/style&gt;
+    </code></pre>
+<p><strong>Uso</strong></p>
+    <pre><code class="language-astro">    &lt;DataTable 
+      columns={[
+        { key: 'name', label: 'Nombre' },
+        { key: 'email', label: 'Email' }
+      ]}
+      data={[
+        { name: 'Juan', email: 'juan@example.com' },
+        { name: 'María', email: 'maria@example.com' }
+      ]}
+    /&gt;
+    </code></pre>
+    <blockquote class="aside aside-note">
+<i class="fa-solid fa-pen-to-square"></i> **Nota**: Los slots permiten pasar contenido HTML completo, mientras que las props son para datos simples y configuración.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="interactividad-y-eventos-en-componentes">
+    <h2>Interactividad y eventos en componentes</h2>
+    <div class="doc-content">
+  <h4 class="tab-label"><i class="fa-solid fa-user-tie"></i> Parte teórica</h4>
+<h3>Interactividad en Componentes</h3>
+<p>Los componentes Astro son <strong>estáticos por defecto</strong>, pero pueden volverse interactivos usando frameworks o scripts del cliente.</p>
+<h4><i class="fa-solid fa-bullseye"></i> Enfoques de Interactividad</h4>
+<p><strong>1. Scripts del Cliente</strong></p>
+<ul>
+<li>Tag <code><script></code> en componentes</li>
+<li>JavaScript vanilla</li>
+<li>Se ejecuta en el navegador</li>
+<li>Ideal para interacciones simples</li>
+</ul>
+<p><strong>2. Frameworks UI</strong></p>
+<ul>
+<li>React, Vue, Svelte</li>
+<li>Directivas <code>client:*</code></li>
+<li>Componentes complejos</li>
+<li>Estado reactivo</li>
+</ul>
+<h4><i class="fa-solid fa-gear"></i> Scripts en Componentes</h4>
+<p><strong>Características:</strong></p>
+<ul>
+<li>Se ejecutan en el navegador</li>
+<li>Pueden acceder al DOM</li>
+<li>Event listeners</li>
+<li>Manipulación de elementos</li>
+</ul>
+<p><strong>Tipos de Scripts:</strong></p>
+<p><strong>1. Script Inline</strong></p>
+<ul>
+<li>Dentro del componente</li>
+<li>Scoped al componente</li>
+<li>Procesado por Astro</li>
+</ul>
+<p><strong>2. Script Hoisted</strong></p>
+<ul>
+<li><code><script is:inline></code></li>
+<li>No procesado</li>
+<li>JavaScript puro</li>
+</ul>
+<p><strong>3. Script Module</strong></p>
+<ul>
+<li><code><script type="module"></code></li>
+<li>Imports ES6</li>
+<li>Mejor para código complejo</li>
+</ul>
+<h4><i class="fa-solid fa-arrows-rotate"></i> Directivas Client</h4>
+<p>Para componentes de frameworks:</p>
+<table><thead><tr><th>Directiva</th><th>Cuándo</th><th>Uso</th></tr></thead><tbody><tr><td><code>client:load</code></td><td>Inmediato</td><td>Crítico</td></tr><tr><td><code>client:idle</code></td><td>Navegador inactivo</td><td>Secundario</td></tr><tr><td><code>client:visible</code></td><td>Visible en viewport</td><td>Below-fold</td></tr><tr><td><code>client:only</code></td><td>Solo cliente</td><td>APIs navegador</td></tr></tbody></table>
+<h4><i class="fa-solid fa-star"></i> Mejores Prácticas</h4>
+<ul>
+<li><strong>Progresive Enhancement</strong>: Funciona sin JS</li>
+<li><strong>Mínimo JavaScript</strong>: Solo lo necesario</li>
+<li><strong>Event Delegation</strong>: Eficiencia en eventos</li>
+<li><strong>Accesibilidad</strong>: Teclado y screen readers</li>
+<li><strong>Performance</strong>: Lazy loading cuando posible</li>
+</ul>
+<h4><i class="fa-solid fa-triangle-exclamation"></i> Limitaciones</h4>
+<ul>
+<li>Componentes Astro no tienen estado reactivo</li>
+<li>No hay lifecycle hooks</li>
+<li>Para reactividad compleja, usar frameworks</li>
+<li>Scripts se ejecutan después del render</li>
+</ul>
+  <h4 class="tab-label"><i class="fa-solid fa-lightbulb"></i> Ejemplos prácticos</h4>
+<h3><i class="fa-solid fa-bullseye"></i> Interactividad con Script</h3>
+<p><strong><code>src/components/Counter.astro</code></strong></p>
+    <pre><code class="language-astro">    ---
+    const initialCount = 0;
+    ---
+
+    &lt;div class="counter"&gt;
+      &lt;h3&gt;Contador&lt;/h3&gt;
+      &lt;p&gt;Cuenta: &lt;span id="count"&gt;{initialCount}&lt;/span&gt;&lt;/p&gt;
+      &lt;button id="increment"&gt;+&lt;/button&gt;
+      &lt;button id="decrement"&gt;-&lt;/button&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+      let count = 0;
+      const countEl = document.getElementById('count');
+      const incrementBtn = document.getElementById('increment');
+      const decrementBtn = document.getElementById('decrement');
+
+      incrementBtn?.addEventListener('click', () =&gt; {
+        count++;
+        if (countEl) countEl.textContent = count.toString();
+      });
+
+      decrementBtn?.addEventListener('click', () =&gt; {
+        count--;
+        if (countEl) countEl.textContent = count.toString();
+      });
+    &lt;/script&gt;
+
+    &lt;style&gt;
+      .counter {
+        padding: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+
+      button {
+        margin: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-size: 1.2rem;
+      }
+    &lt;/style&gt;
+    </code></pre>
+<h3><i class="fa-solid fa-arrows-rotate"></i> Toggle con Eventos</h3>
+<p><strong><code>src/components/Accordion.astro</code></strong></p>
+    <pre><code class="language-astro">    ---
+    interface Props {
+      title: string;
+    }
+
+    const { title } = Astro.props;
+    ---
+
+    &lt;div class="accordion"&gt;
+      &lt;button class="accordion-header"&gt;
+        {title}
+        &lt;span class="icon"&gt;▼&lt;/span&gt;
+      &lt;/button&gt;
+      &lt;div class="accordion-content"&gt;
+        &lt;slot /&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+      document.querySelectorAll('.accordion').forEach(accordion =&gt; {
+        const header = accordion.querySelector('.accordion-header');
+        const content = accordion.querySelector('.accordion-content');
+        const icon = accordion.querySelector('.icon');
+
+        header?.addEventListener('click', () =&gt; {
+          const isOpen = content?.classList.toggle('open');
+          if (icon) {
+            icon.textContent = isOpen ? '▲' : '▼';
+          }
+        });
+      });
+    &lt;/script&gt;
+
+    &lt;style&gt;
+      .accordion {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin: 0.5rem 0;
+      }
+
+      .accordion-header {
+        width: 100%;
+        padding: 1rem;
+        background: #f5f5f5;
+        border: none;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .accordion-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+
+      .accordion-content.open {
+        max-height: 500px;
+        padding: 1rem;
+      }
+    &lt;/style&gt;
+    </code></pre>
+<h3><i class="fa-solid fa-pen-to-square"></i> Formulario Interactivo</h3>
+<p><strong><code>src/components/ContactForm.astro</code></strong></p>
+    <pre><code class="language-astro">    &lt;form id="contact-form" class="contact-form"&gt;
+      &lt;div class="form-group"&gt;
+        &lt;label for="name"&gt;Nombre:&lt;/label&gt;
+        &lt;input type="text" id="name" required /&gt;
+      &lt;/div&gt;
+
+      &lt;div class="form-group"&gt;
+        &lt;label for="email"&gt;Email:&lt;/label&gt;
+        &lt;input type="email" id="email" required /&gt;
+      &lt;/div&gt;
+
+      &lt;div class="form-group"&gt;
+        &lt;label for="message"&gt;Mensaje:&lt;/label&gt;
+        &lt;textarea id="message" required&gt;&lt;/textarea&gt;
+      &lt;/div&gt;
+
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+      &lt;div id="status"&gt;&lt;/div&gt;
+    &lt;/form&gt;
+
+    &lt;script&gt;
+      const form = document.getElementById('contact-form') as HTMLFormElement;
+      const status = document.getElementById('status');
+
+      form?.addEventListener('submit', async (e) =&gt; {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+
+        if (status) {
+          status.textContent = 'Enviando...';
+        }
+
+        try {
+          const response = await fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+
+          if (response.ok) {
+            if (status) status.textContent = '✅ Mensaje enviado!';
+            form.reset();
+          } else {
+            if (status) status.textContent = '❌ Error al enviar';
+          }
+        } catch (error) {
+          if (status) status.textContent = '❌ Error de conexión';
+        }
+      });
+    &lt;/script&gt;
+
+    &lt;style&gt;
+      .contact-form {
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+      }
+
+      input, textarea {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      textarea {
+        min-height: 100px;
+      }
+
+      button {
+        padding: 0.75rem 1.5rem;
+        background: #4f39fa;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      #status {
+        margin-top: 1rem;
+        padding: 0.5rem;
+      }
+    &lt;/style&gt;
+    </code></pre>
+<h3><i class="fa-solid fa-atom"></i> Componente React Interactivo</h3>
+<p><strong><code>src/components/SearchBox.jsx</code></strong></p>
+    <pre><code class="language-jsx">    import { useState } from 'react';
+
+    export default function SearchBox() {
+      const [query, setQuery] = useState('');
+      const [results, setResults] = useState([]);
+
+      const handleSearch = async () =&gt; {
+        const res = await fetch(`/api/search?q=${query}`);
+        const data = await res.json();
+        setResults(data);
+      };
+
+      return (
+        &lt;div className="search-box"&gt;
+          &lt;input 
+            value={query}
+            onChange={(e) =&gt; setQuery(e.target.value)}
+            placeholder="Buscar..."
+          /&gt;
+          &lt;button onClick={handleSearch}&gt;Buscar&lt;/button&gt;
+          &lt;ul&gt;
+            {results.map(item =&gt; (
+              &lt;li key={item.id}&gt;{item.title}&lt;/li&gt;
+            ))}
+          &lt;/ul&gt;
+        &lt;/div&gt;
+      );
+    }
+    </code></pre>
+<p><strong>Uso en Astro</strong></p>
+    <pre><code class="language-astro">    ---
+    import SearchBox from '../components/SearchBox.jsx';
+    ---
+
+    &lt;html&gt;
+      &lt;body&gt;
+        &lt;h1&gt;Búsqueda&lt;/h1&gt;
+        &lt;SearchBox client:load /&gt;
+      &lt;/body&gt;
+    &lt;/html&gt;
+    </code></pre>
+    <blockquote class="aside aside-tip">
+<i class="fa-solid fa-lightbulb"></i> **Tip**: Para interactividad simple, usa scripts vanilla. Para estado complejo y reactividad, usa frameworks como React o Vue.
+</blockquote>
+    <blockquote class="aside aside-caution">
+<i class="fa-solid fa-triangle-exclamation"></i> **Advertencia**: Cada script añade JavaScript al bundle. Usa interactividad solo donde sea necesario para mantener el rendimiento óptimo.
+</blockquote>
+    </div>
+  </section>

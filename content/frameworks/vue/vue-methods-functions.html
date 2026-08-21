@@ -1,0 +1,373 @@
+<!-- 07. Métodos y Funciones - Vue 3 (Frameworks) -->
+  <section id="declaracion-de-funciones-dentro-de-setup">
+    <h2>Declaración de funciones dentro de `setup()`</h2>
+    <div class="doc-content">
+<p>En la Composition API de Vue, las funciones se declaran como variables normales dentro de <code>setup()</code> o directamente en <code><script setup></code>. Estas funciones pueden acceder a estado reactivo, props, y otras funciones definidas en el mismo ámbito.</p>
+<h3>Funciones en <code>setup()</code></h3>
+<pre><code class="language-vue">&lt;script&gt;
+
+
+export default {
+  setup() {
+    // Estado reactivo
+    const count = ref(0)
+    const user = reactive({
+      name: 'Juan',
+      age: 30
+    })
+    
+    // Declaración de función
+    function increment() {
+      count.value++
+    }
+    
+    // Función que utiliza múltiples estados reactivos
+    function updateUser(name, age) {
+      user.name = name
+      user.age = age
+    }
+    
+    // Función que retorna un valor
+    function calculateTotal(price, quantity) {
+      return price * quantity
+    }
+    
+    // Exponer estado y funciones al template
+    return {
+      count,
+      user,
+      increment,
+      updateUser,
+      calculateTotal
+    }
+  }
+}
+&lt;/script&gt;
+</code></pre>
+<h3>Funciones en <code><script setup></code></h3>
+<p>Con <code><script setup></code>, la declaración de funciones es aún más sencilla, ya que no es necesario retornar explícitamente las funciones para que estén disponibles en el template.</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+// Estado reactivo
+const count = ref(0)
+const user = reactive({
+  name: 'Juan',
+  age: 30
+})
+
+// Declaración de función
+function increment() {
+  count.value++
+}
+
+// Función con parámetros
+function updateUser(name, age) {
+  user.name = name
+  user.age = age
+}
+
+// Función que retorna un valor
+function calculateTotal(price, quantity) {
+  return price * quantity
+}
+
+// Todo está automáticamente disponible en el template
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;p&gt;Contador: {{ count }}&lt;/p&gt;
+    &lt;button @click="increment"&gt;Incrementar&lt;/button&gt;
+    
+    &lt;p&gt;Usuario: {{ user.name }}, {{ user.age }} años&lt;/p&gt;
+    &lt;button @click="updateUser('María', 25)"&gt;Cambiar usuario&lt;/button&gt;
+    
+    &lt;p&gt;Total: {{ calculateTotal(10, 5) }}&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<h3>Funciones flecha vs funciones normales</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const count = ref(0)
+const message = ref('')
+
+// Función normal
+function increment() {
+  count.value++
+}
+
+// Función flecha
+const decrement = () =&gt; {
+  count.value--
+}
+
+// Función flecha con retorno implícito
+const double = () =&gt; count.value * 2
+
+// Función con contexto this (útil en ciertos casos)
+function showThis() {
+  console.log(this) // 'this' depende del contexto de llamada
+}
+&lt;/script&gt;
+</code></pre>
+<blockquote class="aside aside-tip">
+En la Composition API, generalmente no hay diferencia funcional entre usar funciones normales o funciones flecha, excepto cuando se necesita acceder al contexto `this` o cuando se trabaja con librerías externas que dependen del contexto.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="buenas-practicas-con-funciones-internas">
+    <h2>Buenas prácticas con funciones internas</h2>
+    <div class="doc-content">
+<h3>1. Organización por responsabilidad</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const products = ref([])
+const cart = ref([])
+const isLoading = ref(false)
+
+// Agrupar funciones por responsabilidad
+// Funciones relacionadas con productos
+function fetchProducts() {
+  isLoading.value = true
+  // Lógica para obtener productos
+  setTimeout(() =&gt; {
+    products.value = [{ id: 1, name: 'Producto 1', price: 100 }]
+    isLoading.value = false
+  }, 1000)
+}
+
+function searchProducts(query) {
+  return products.value.filter(p =&gt; p.name.includes(query))
+}
+
+// Funciones relacionadas con el carrito
+function addToCart(product) {
+  cart.value.push(product)
+}
+
+function removeFromCart(productId) {
+  const index = cart.value.findIndex(item =&gt; item.id === productId)
+  if (index !== -1) {
+    cart.value.splice(index, 1)
+  }
+}
+
+function calculateTotal() {
+  return cart.value.reduce((total, item) =&gt; total + item.price, 0)
+}
+&lt;/script&gt;
+</code></pre>
+<h3>2. Composición con funciones auxiliares</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const user = ref(null)
+
+// Función principal que utiliza funciones auxiliares
+async function registerUser(userData) {
+  if (!validateUserData(userData)) {
+    return { success: false, message: 'Datos inválidos' }
+  }
+  
+  const formattedData = formatUserData(userData)
+  
+  try {
+    const response = await sendRegistrationRequest(formattedData)
+    handleSuccessfulRegistration(response)
+    return { success: true }
+  } catch (error) {
+    return { success: false, message: error.message }
+  }
+}
+
+// Funciones auxiliares internas
+function validateUserData(data) {
+  return data.name &amp;&amp; data.email &amp;&amp; data.password?.length &gt;= 8
+}
+
+function formatUserData(data) {
+  return {
+    ...data,
+    email: data.email.toLowerCase(),
+    createdAt: new Date()
+  }
+}
+
+async function sendRegistrationRequest(data) {
+  // Simulación de una petición API
+  return new Promise(resolve =&gt; {
+    setTimeout(() =&gt; resolve({ userId: 123, ...data }), 1000)
+  })
+}
+
+function handleSuccessfulRegistration(response) {
+  user.value = response
+  // Otras acciones post-registro
+}
+&lt;/script&gt;
+</code></pre>
+<h3>3. Extracción a composables para reutilización</h3>
+  <h4 class="tab-label">Componente</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { useUserAuth } from './composables/useUserAuth'
+    import { useNotification } from './composables/useNotification'
+    
+    // Extraer lógica compleja a composables
+    const { user, login, logout, isAuthenticated } = useUserAuth()
+    const { notify } = useNotification()
+    
+    async function handleLogin(credentials) {
+      try {
+        await login(credentials)
+        notify('¡Inicio de sesión exitoso!', 'success')
+      } catch (error) {
+        notify('Error al iniciar sesión: ' + error.message, 'error')
+      }
+    }
+    &lt;/script&gt;
+    </code></pre>
+  <h4 class="tab-label">Composable</h4>
+    <pre><code class="language-js">    // composables/useUserAuth.js
+    import { ref, computed } from 'vue'
+    
+    export function useUserAuth() {
+      const user = ref(null)
+      const isAuthenticated = computed(() =&gt; !!user.value)
+      
+      async function login(credentials) {
+        // Implementación de login
+        user.value = { id: 1, name: 'Usuario', email: credentials.email }
+      }
+      
+      function logout() {
+        user.value = null
+      }
+      
+      return {
+        user,
+        isAuthenticated,
+        login,
+        logout
+      }
+    }
+    </code></pre>
+<h3>4. Manejo de eventos y referencias al DOM</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const inputRef = ref(null)
+const messages = ref([])
+const newMessage = ref('')
+
+// Función que interactúa con el DOM
+function focusInput() {
+  inputRef.value?.focus()
+}
+
+// Manejo de eventos
+function handleSubmit() {
+  if (newMessage.value.trim()) {
+    addMessage(newMessage.value)
+    newMessage.value = ''
+    focusInput() // Llamada a otra función
+  }
+}
+
+function addMessage(text) {
+  messages.value.push({
+    id: Date.now(),
+    text,
+    timestamp: new Date()
+  })
+}
+
+onMounted(() =&gt; {
+  focusInput()
+})
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;div class="messages"&gt;
+      &lt;div v-for="msg in messages" :key="msg.id"&gt;{{ msg.text }}&lt;/div&gt;
+    &lt;/div&gt;
+    
+    &lt;form @submit.prevent="handleSubmit"&gt;
+      &lt;input ref="inputRef" v-model="newMessage" /&gt;
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<h3>5. Funciones asíncronas y manejo de errores</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const data = ref(null)
+const error = ref(null)
+const isLoading = ref(false)
+
+// Función asíncrona con manejo de errores
+async function fetchData() {
+  // Resetear estado
+  error.value = null
+  isLoading.value = true
+  
+  try {
+    // Simulación de petición API
+    const response = await new Promise((resolve, reject) =&gt; {
+      setTimeout(() =&gt; {
+        if (Math.random() &gt; 0.3) {
+          resolve({ result: 'Datos obtenidos correctamente' })
+        } else {
+          reject(new Error('Error al obtener datos'))
+        }
+      }, 1000)
+    })
+    
+    data.value = response.result
+  } catch (e) {
+    error.value = e.message
+    console.error('Error en fetchData:', e)
+  } finally {
+    isLoading.value = false
+  }
+}
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;button @click="fetchData" :disabled="isLoading"&gt;
+      {{ isLoading ? 'Cargando...' : 'Obtener datos' }}
+    &lt;/button&gt;
+    
+    &lt;div v-if="data"&gt;{{ data }}&lt;/div&gt;
+    &lt;div v-if="error" class="error"&gt;{{ error }}&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+    </div>
+  </section>
+
+  <section id="resumen-de-buenas-practicas">
+    <h2>Resumen de buenas prácticas</h2>
+    <div class="doc-content">
+<ol>
+<li><strong>Nombres descriptivos</strong>: Usa nombres que indiquen claramente lo que hace la función.</li>
+<li><strong>Responsabilidad única</strong>: Cada función debe tener un solo propósito bien definido.</li>
+<li><strong>Funciones pequeñas</strong>: Mantén las funciones cortas y enfocadas en una tarea específica.</li>
+<li><strong>Evita efectos secundarios inesperados</strong>: Las funciones deben ser predecibles.</li>
+<li><strong>Extrae lógica compleja a composables</strong>: Para mejorar la reutilización y organización.</li>
+<li><strong>Manejo adecuado de errores</strong>: Especialmente en funciones asíncronas.</li>
+<li><strong>Documenta funciones complejas</strong>: Añade comentarios cuando sea necesario.</li>
+<li><strong>Evita modificar props directamente</strong>: Emite eventos en su lugar.</li>
+<li><strong>Usa parámetros por defecto</strong>: Para hacer las funciones más robustas.</li>
+<li><strong>Considera la memoización</strong>: Para funciones costosas que se llaman frecuentemente.</li>
+</ol>
+    </div>
+  </section>

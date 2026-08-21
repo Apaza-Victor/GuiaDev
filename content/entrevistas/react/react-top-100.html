@@ -1,0 +1,939 @@
+<!-- Top 100 Preguntas Completas - React (Entrevistas Laborales) -->
+  <section id="las-100-preguntas-completas-de-react">
+    <h2>Las 100 Preguntas Completas de React</h2>
+    <div class="doc-content">
+<p>Esta guía cubre desde fundamentos hasta temas avanzados. Las preguntas 1-50 están en las guías anteriores.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="estado-global-y-gestion-de-estado-51-65">
+    <h2>Estado Global y Gestión de Estado (51-65)</h2>
+    <div class="doc-content">
+<h3>51. ¿Qué es Redux y cuándo usarlo?</h3>
+<p><strong>¿Qué es?</strong> Librería de gestión de estado global con flujo unidireccional: Action <i class="fa-solid fa-arrow-right"></i> Reducer <i class="fa-solid fa-arrow-right"></i> Store <i class="fa-solid fa-arrow-right"></i> View.</p>
+<p><strong>¿Cuándo usarlo?</strong></p>
+<ul>
+<li>Estado compartido entre muchos componentes</li>
+<li>Lógica de estado compleja</li>
+<li>Necesitas debugging avanzado (time-travel)</li>
+</ul>
+<pre><code class="language-javascript">// Store
+const store = createStore(rootReducer);
+
+// Reducer
+function counterReducer(state = { count: 0 }, action) {
+  switch (action.type) {
+    case 'INCREMENT':
+      return { count: state.count + 1 };
+    default:
+      return state;
+  }
+}
+
+// Dispatch
+store.dispatch({ type: 'INCREMENT' });</code></pre>
+<h3>52. ¿Qué es Redux Toolkit?</h3>
+<p><strong>¿Qué es?</strong> La forma oficial y moderna de usar Redux. Reduce el boilerplate significativamente.</p>
+<p><strong>Incluye:</strong> <code>createSlice</code> (reducer + actions), <code>configureStore</code> (setup automático), Immer (mutaciones inmutables).</p>
+<pre><code class="language-javascript">import { createSlice, configureStore } from '@reduxjs/toolkit';
+
+const counterSlice = createSlice({
+  name: 'counter',
+  initialState: { value: 0 },
+  reducers: {
+    increment: (state) =&gt; {
+      state.value += 1; // Immer permite mutación
+    },
+    incrementByAmount: (state, action) =&gt; {
+      state.value += action.payload;
+    }
+  }
+});
+
+export const { increment, incrementByAmount } = counterSlice.actions;
+
+const store = configureStore({
+  reducer: {
+    counter: counterSlice.reducer
+  }
+});</code></pre>
+<h3>53. ¿Qué es Zustand?</h3>
+<p><strong>¿Qué es?</strong> Librería de estado global minimalista. Solo 1KB, sin boilerplate, basada en hooks.</p>
+<p><strong>¿Para qué sirve?</strong> Alternativa simple a Redux cuando no necesitas toda su complejidad.</p>
+<pre><code class="language-jsx">import { create } from 'zustand';
+
+const useStore = create((set) =&gt; ({
+  count: 0,
+  increment: () =&gt; set((state) =&gt; ({ count: state.count + 1 })),
+  decrement: () =&gt; set((state) =&gt; ({ count: state.count - 1 })),
+  reset: () =&gt; set({ count: 0 })
+}));
+
+// Uso en componente
+function Counter() {
+  const { count, increment } = useStore();
+  return &lt;button onClick={increment}&gt;{count}&lt;/button&gt;;
+}</code></pre>
+<h3>54. ¿Qué es Jotai?</h3>
+<p><strong>¿Qué es?</strong> Librería de estado atómico. Cada pieza de estado es un "atom" independiente.</p>
+<p><strong>¿Para qué sirve?</strong> Estado granular sin re-renders innecesarios. Ideal para estado derivado.</p>
+<pre><code class="language-jsx">import { atom, useAtom } from 'jotai';
+
+// Atoms - unidades de estado
+const countAtom = atom(0);
+const doubleAtom = atom((get) =&gt; get(countAtom) * 2);
+
+function Counter() {
+  const [count, setCount] = useAtom(countAtom);
+  const [double] = useAtom(doubleAtom);
+  
+  return (
+    &lt;div&gt;
+      &lt;p&gt;{count} (double: {double})&lt;/p&gt;
+      &lt;button onClick={() =&gt; setCount(c =&gt; c + 1)}&gt;+&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>55. ¿Qué es Recoil?</h3>
+<p><strong>¿Qué es?</strong> Librería de estado atómico creada por Facebook. Similar a Jotai pero con más features.</p>
+<p><strong>Conceptos:</strong> <code>atom</code> (estado), <code>selector</code> (estado derivado), keys únicos obligatorios.</p>
+<pre><code class="language-jsx">import { atom, selector, useRecoilState, useRecoilValue } from 'recoil';
+
+const textState = atom({
+  key: 'textState',
+  default: ''
+});
+
+const charCountState = selector({
+  key: 'charCountState',
+  get: ({ get }) =&gt; get(textState).length
+});
+
+function CharacterCount() {
+  const count = useRecoilValue(charCountState);
+  return &lt;p&gt;Caracteres: {count}&lt;/p&gt;;
+}</code></pre>
+<h3>56. ¿Cuál es la diferencia entre Redux, Zustand, Jotai y Recoil?</h3>
+<p><strong>Resumen:</strong> Redux es robusto pero complejo. Zustand es simple. Jotai/Recoil son atómicos (estado granular).</p>
+<table><thead><tr><th>Característica</th><th>Redux</th><th>Zustand</th><th>Jotai</th><th>Recoil</th></tr></thead><tbody><tr><td>Boilerplate</td><td>Alto</td><td>Bajo</td><td>Bajo</td><td>Medio</td></tr><tr><td>DevTools</td><td>Excelente</td><td>Bueno</td><td>Bueno</td><td>Bueno</td></tr><tr><td>Bundle size</td><td>Grande</td><td>Pequeño</td><td>Pequeño</td><td>Medio</td></tr><tr><td>Curva aprendizaje</td><td>Alta</td><td>Baja</td><td>Baja</td><td>Media</td></tr><tr><td>Patrón</td><td>Flux</td><td>Flux-like</td><td>Atómico</td><td>Atómico</td></tr></tbody></table>
+<h3>57. ¿Qué es React Query / TanStack Query?</h3>
+<p><strong>¿Qué es?</strong> Librería para manejar "server state" (datos del servidor). NO es para estado local.</p>
+<p><strong>¿Para qué sirve?</strong> Caching, refetch automático, loading/error states, invalidación, paginación.</p>
+<pre><code class="language-jsx">import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+function Posts() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['posts'],
+    queryFn: () =&gt; fetch('/api/posts').then(res =&gt; res.json())
+  });
+  
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: (newPost) =&gt; fetch('/api/posts', {
+      method: 'POST',
+      body: JSON.stringify(newPost)
+    }),
+    onSuccess: () =&gt; {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    }
+  });
+  
+  if (isLoading) return &lt;Loading /&gt;;
+  if (error) return &lt;Error /&gt;;
+  
+  return &lt;PostList posts={data} /&gt;;
+}</code></pre>
+<h3>58. ¿Qué es SWR?</h3>
+<p><strong>¿Qué es?</strong> Librería de Vercel para data fetching. Nombre viene de "stale-while-revalidate".</p>
+<p><strong>¿Para qué sirve?</strong> Similar a React Query pero más simple. Ideal para proyectos Next.js.</p>
+<pre><code class="language-jsx">import useSWR from 'swr';
+
+const fetcher = (url) =&gt; fetch(url).then(res =&gt; res.json());
+
+function Profile() {
+  const { data, error, isLoading, mutate } = useSWR('/api/user', fetcher);
+  
+  // Revalidar manualmente
+  const refresh = () =&gt; mutate();
+  
+  // Actualización optimista
+  const updateName = async (newName) =&gt; {
+    mutate({ ...data, name: newName }, false);
+    await fetch('/api/user', { method: 'PUT', body: JSON.stringify({ name: newName }) });
+    mutate();
+  };
+  
+  if (isLoading) return &lt;Loading /&gt;;
+  return &lt;div&gt;{data.name}&lt;/div&gt;;
+}</code></pre>
+<h3>59. ¿Cuándo usar React Query vs Redux?</h3>
+<p><strong>Regla simple:</strong> React Query para datos del servidor, Redux para estado de la UI.</p>
+<table><thead><tr><th>React Query</th><th>Redux</th></tr></thead><tbody><tr><td>Server state</td><td>Client state</td></tr><tr><td>Caching automático</td><td>Cache manual</td></tr><tr><td>Refetch automático</td><td>Manual</td></tr><tr><td>Datos remotos</td><td>Datos locales</td></tr></tbody></table>
+<h3>60. ¿Qué es el patrón de estado derivado?</h3>
+<p><strong>¿Qué es?</strong> Calcular valores a partir de otro estado en vez de duplicar.</p>
+<p><strong>Regla:</strong> Si un valor puede calcularse de otro, NO lo guardes en estado separado.</p>
+<pre><code class="language-jsx">// MAL - duplicar estado
+const [items, setItems] = useState([]);
+const [filteredItems, setFilteredItems] = useState([]); // Duplicado
+
+// BIEN - derivar estado
+const [items, setItems] = useState([]);
+const [filter, setFilter] = useState('');
+
+const filteredItems = useMemo(() =&gt; 
+  items.filter(item =&gt; item.name.includes(filter)),
+  [items, filter]
+);</code></pre>
+<h3>61. ¿Qué es el patrón de estado normalizado?</h3>
+<p><strong>¿Qué es?</strong> Estructurar estado como base de datos: entidades separadas con IDs como referencias.</p>
+<p><strong>¿Para qué sirve?</strong> Evitar duplicación, facilitar actualizaciones, mejor performance.</p>
+<pre><code class="language-javascript">// Desnormalizado (evitar)
+const state = {
+  posts: [
+    { id: 1, author: { id: 1, name: 'Juan' }, comments: [...] }
+  ]
+};
+
+// Normalizado (preferido)
+const state = {
+  posts: {
+    byId: { 1: { id: 1, authorId: 1, commentIds: [1, 2] } },
+    allIds: [1]
+  },
+  users: {
+    byId: { 1: { id: 1, name: 'Juan' } },
+    allIds: [1]
+  },
+  comments: {
+    byId: { 1: {...}, 2: {...} },
+    allIds: [1, 2]
+  }
+};</code></pre>
+<h3>62. ¿Cómo persistir estado?</h3>
+<p><strong>¿Qué es?</strong> Guardar estado en localStorage/sessionStorage para que sobreviva recargas de página.</p>
+<p><strong>¿Cómo?</strong> Usar middleware de persistencia (Zustand, Redux Persist) o custom hooks.</p>
+<pre><code class="language-javascript">// Con Zustand
+
+
+const useStore = create(
+  persist(
+    (set) =&gt; ({
+      count: 0,
+      increment: () =&gt; set((state) =&gt; ({ count: state.count + 1 }))
+    }),
+    {
+      name: 'counter-storage',
+      storage: createJSONStorage(() =&gt; localStorage)
+    }
+  )
+);</code></pre>
+<h3>63. ¿Qué es el patrón de selectors?</h3>
+<p><strong>¿Qué es?</strong> Funciones que extraen y transforman datos del estado global.</p>
+<p><strong>¿Para qué sirve?</strong> Encapsular lógica de acceso, memoizar cálculos, desacoplar componentes del shape del estado.</p>
+<pre><code class="language-javascript">// Selector - función que extrae datos del estado
+const selectTodos = (state) =&gt; state.todos;
+const selectCompletedTodos = (state) =&gt; 
+  state.todos.filter(todo =&gt; todo.completed);
+
+// Con reselect (memoizado)
+
+
+const selectCompletedTodos = createSelector(
+  [selectTodos],
+  (todos) =&gt; todos.filter(todo =&gt; todo.completed)
+);</code></pre>
+<h3>64. ¿Qué es middleware en Redux?</h3>
+<p><strong>¿Qué es?</strong> Funciones que interceptan actions antes de llegar al reducer.</p>
+<p><strong>¿Para qué sirve?</strong> Logging, async operations, analytics, validaciones.</p>
+<pre><code class="language-javascript">// Middleware personalizado
+const loggerMiddleware = (store) =&gt; (next) =&gt; (action) =&gt; {
+  console.log('Dispatching:', action);
+  const result = next(action);
+  console.log('Next state:', store.getState());
+  return result;
+};
+
+// Configurar
+const store = configureStore({
+  reducer: rootReducer,
+  middleware: (getDefaultMiddleware) =&gt;
+    getDefaultMiddleware().concat(loggerMiddleware)
+});</code></pre>
+<h3>65. ¿Qué es Redux Thunk vs Redux Saga?</h3>
+<p><strong>Thunk:</strong> Middleware simple para async. Actions pueden ser funciones.</p>
+<p><strong>Saga:</strong> Middleware avanzado con generators. Para flujos complejos (cancelación, retry, race conditions).</p>
+<pre><code class="language-javascript">// Thunk - funciones async simples
+const fetchUser = (id) =&gt; async (dispatch) =&gt; {
+  dispatch({ type: 'FETCH_START' });
+  try {
+    const user = await api.getUser(id);
+    dispatch({ type: 'FETCH_SUCCESS', payload: user });
+  } catch (error) {
+    dispatch({ type: 'FETCH_ERROR', error });
+  }
+};
+
+// Saga - generators para flujos complejos
+function* fetchUserSaga(action) {
+  try {
+    const user = yield call(api.getUser, action.payload);
+    yield put({ type: 'FETCH_SUCCESS', payload: user });
+  } catch (error) {
+    yield put({ type: 'FETCH_ERROR', error });
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="react-18-features-66-80">
+    <h2>React 18+ Features (66-80)</h2>
+    <div class="doc-content">
+<h3>66. ¿Qué es Automatic Batching?</h3>
+<p><strong>¿Qué es?</strong> React 18 agrupa múltiples actualizaciones de estado en UN solo re-render.</p>
+<p><strong>Antes (React 17):</strong> Solo en event handlers. <strong>Ahora:</strong> En todas partes (setTimeout, promises, etc.).</p>
+<pre><code class="language-jsx">// React 17 - solo batching en event handlers
+// React 18 - batching automático en todas partes
+
+function handleClick() {
+  setCount(c =&gt; c + 1);
+  setFlag(f =&gt; !f);
+  // React 18: un solo re-render
+}
+
+// Incluso en async
+setTimeout(() =&gt; {
+  setCount(c =&gt; c + 1);
+  setFlag(f =&gt; !f);
+  // React 18: un solo re-render
+}, 1000);
+
+// Para forzar render inmediato
+
+flushSync(() =&gt; setCount(c =&gt; c + 1));</code></pre>
+<h3>67. ¿Qué son los Server Components?</h3>
+<p><strong>¿Qué es?</strong> Componentes que se ejecutan SOLO en el servidor. No se envían al cliente.</p>
+<p><strong>Beneficios:</strong> Acceso directo a BD, bundle más pequeño, mejor SEO, datos sensibles seguros.</p>
+<pre><code class="language-jsx">// Server Component (por defecto en Next.js 13+)
+// - Se ejecuta en el servidor
+// - No tiene estado ni efectos
+// - Puede acceder directamente a BD
+
+async function Posts() {
+  const posts = await db.posts.findMany();
+  return (
+    &lt;ul&gt;
+      {posts.map(post =&gt; &lt;li key={post.id}&gt;{post.title}&lt;/li&gt;)}
+    &lt;/ul&gt;
+  );
+}
+
+// Client Component
+'use client';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+  return &lt;button onClick={() =&gt; setCount(c =&gt; c + 1)}&gt;{count}&lt;/button&gt;;
+}</code></pre>
+<h3>68. ¿Cuál es la diferencia entre Server y Client Components?</h3>
+<p><strong>Regla simple:</strong> Server por defecto, Client solo cuando necesitas interactividad (estado, eventos, hooks de browser).</p>
+<table><thead><tr><th>Server Components</th><th>Client Components</th></tr></thead><tbody><tr><td>Se ejecutan en servidor</td><td>Se ejecutan en cliente</td></tr><tr><td>Sin estado/efectos</td><td>Con estado/efectos</td></tr><tr><td>Acceso directo a BD</td><td>Fetch API</td></tr><tr><td>No incluidos en bundle</td><td>Incluidos en bundle</td></tr><tr><td>Por defecto</td><td>Requieren 'use client'</td></tr></tbody></table>
+<h3>69. ¿Qué es Streaming SSR?</h3>
+<p><strong>¿Qué es?</strong> Enviar HTML progresivamente mientras se renderiza, en vez de esperar a que todo esté listo.</p>
+<p><strong>Beneficio:</strong> El usuario ve contenido más rápido. Suspense muestra fallbacks mientras carga.</p>
+<pre><code class="language-jsx">// Permite enviar HTML progresivamente
+
+
+function Page() {
+  return (
+    &lt;div&gt;
+      &lt;Header /&gt; {/* Se envía inmediatamente */}
+      
+      &lt;Suspense fallback={&lt;PostsSkeleton /&gt;}&gt;
+        &lt;Posts /&gt; {/* Se envía cuando esté listo */}
+      &lt;/Suspense&gt;
+      
+      &lt;Suspense fallback={&lt;CommentsSkeleton /&gt;}&gt;
+        &lt;Comments /&gt; {/* Se envía cuando esté listo */}
+      &lt;/Suspense&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>70. ¿Qué es el hook use?</h3>
+<p><strong>¿Qué es?</strong> Hook de React 19 que puede leer promises y context directamente.</p>
+<p><strong>¿Para qué sirve?</strong> Simplificar data fetching con Suspense. Puede usarse condicionalmente (a diferencia de otros hooks).</p>
+<pre><code class="language-jsx">// React 19 - hook use para promises y context
+
+
+function Comments({ commentsPromise }) {
+  // Suspende hasta que la promise resuelva
+  const comments = use(commentsPromise);
+  
+  return comments.map(c =&gt; &lt;Comment key={c.id} {...c} /&gt;);
+}
+
+// También para context
+function Theme() {
+  const theme = use(ThemeContext);
+  return &lt;div style={{ color: theme.color }}&gt;...&lt;/div&gt;;
+}</code></pre>
+<h3>71. ¿Qué son las Server Actions?</h3>
+<p><strong>¿Qué es?</strong> Funciones asíncronas que se ejecutan en el servidor, llamadas desde el cliente.</p>
+<p><strong>¿Para qué sirve?</strong> Mutaciones de datos sin crear API routes. Se marcan con <code>'use server'</code>.</p>
+<pre><code class="language-jsx">// Server Action - función que se ejecuta en servidor
+async function createPost(formData) {
+  'use server';
+  
+  const title = formData.get('title');
+  await db.posts.create({ data: { title } });
+  revalidatePath('/posts');
+}
+
+// Uso en componente
+function NewPostForm() {
+  return (
+    &lt;form action={createPost}&gt;
+      &lt;input name="title" /&gt;
+      &lt;button type="submit"&gt;Crear&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>72. ¿Qué es useFormStatus?</h3>
+<p><strong>¿Qué es?</strong> Hook que da información sobre el estado de un form padre (pending, data, method, action).</p>
+<p><strong>¿Para qué sirve?</strong> Mostrar loading en botones de submit mientras el form se procesa.</p>
+<pre><code class="language-jsx">'use client';
+
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  
+  return (
+    &lt;button type="submit" disabled={pending}&gt;
+      {pending ? 'Enviando...' : 'Enviar'}
+    &lt;/button&gt;
+  );
+}</code></pre>
+<h3>73. ¿Qué es useFormState?</h3>
+<p><strong>¿Qué es?</strong> Hook que maneja estado basado en el resultado de una Server Action.</p>
+<p><strong>¿Para qué sirve?</strong> Mostrar errores de validación o mensajes de éxito después de submit.</p>
+<pre><code class="language-jsx">'use client';
+
+
+async function createUser(prevState, formData) {
+  'use server';
+  const name = formData.get('name');
+  
+  if (!name) {
+    return { error: 'Nombre requerido' };
+  }
+  
+  await db.users.create({ data: { name } });
+  return { success: true };
+}
+
+function Form() {
+  const [state, formAction] = useFormState(createUser, {});
+  
+  return (
+    &lt;form action={formAction}&gt;
+      &lt;input name="name" /&gt;
+      {state.error &amp;&amp; &lt;p&gt;{state.error}&lt;/p&gt;}
+      &lt;button&gt;Crear&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>74. ¿Qué es useOptimistic?</h3>
+<p><strong>¿Qué es?</strong> Hook para actualizaciones optimistas: mostrar el resultado esperado ANTES de que el servidor confirme.</p>
+<p><strong>¿Para qué sirve?</strong> UI instantánea. Si falla, se revierte automáticamente.</p>
+<pre><code class="language-jsx">'use client';
+
+
+function Messages({ messages }) {
+  const [optimisticMessages, addOptimisticMessage] = useOptimistic(
+    messages,
+    (state, newMessage) =&gt; [...state, { ...newMessage, sending: true }]
+  );
+  
+  async function sendMessage(formData) {
+    const message = formData.get('message');
+    addOptimisticMessage({ text: message });
+    await deliverMessage(message);
+  }
+  
+  return (
+    &lt;&gt;
+      {optimisticMessages.map(m =&gt; (
+        &lt;div key={m.id} style={{ opacity: m.sending ? 0.5 : 1 }}&gt;
+          {m.text}
+        &lt;/div&gt;
+      ))}
+      &lt;form action={sendMessage}&gt;
+        &lt;input name="message" /&gt;
+      &lt;/form&gt;
+    &lt;/&gt;
+  );
+}</code></pre>
+<h3>75. ¿Qué es React Compiler (React Forget)?</h3>
+<p><strong>¿Qué es?</strong> Compilador que automáticamente memoriza componentes y valores.</p>
+<p><strong>¿Para qué sirve?</strong> Elimina la necesidad de <code>useMemo</code>, <code>useCallback</code> y <code>React.memo</code> manuales. Optimización automática.</p>
+<h3>76. ¿Qué son los Actions en React 19?</h3>
+<p><strong>¿Qué es?</strong> Funciones async que se pasan a <code>startTransition</code>. Manejan pending states automáticamente.</p>
+<p><strong>¿Para qué sirve?</strong> Simplificar manejo de loading/error en operaciones asíncronas.</p>
+<pre><code class="language-jsx">// Actions - funciones async que manejan transiciones
+function UpdateName() {
+  const [name, setName] = useState('');
+  const [error, setError] = useState(null);
+  const [isPending, startTransition] = useTransition();
+  
+  const handleSubmit = () =&gt; {
+    startTransition(async () =&gt; {
+      const error = await updateName(name);
+      if (error) {
+        setError(error);
+        return;
+      }
+      redirect('/profile');
+    });
+  };
+}</code></pre>
+<h3>77. ¿Qué es Document Metadata en React 19?</h3>
+<p><strong>¿Qué es?</strong> Capacidad de definir <code><title></code>, <code><meta></code>, <code><link></code> directamente en componentes.</p>
+<p><strong>¿Para qué sirve?</strong> SEO dinámico sin librerías externas. React los mueve automáticamente al <code><head></code>.</p>
+<pre><code class="language-jsx">// Metadata directamente en componentes
+function BlogPost({ post }) {
+  return (
+    &lt;article&gt;
+      &lt;title&gt;{post.title}&lt;/title&gt;
+      &lt;meta name="description" content={post.excerpt} /&gt;
+      &lt;link rel="canonical" href={post.url} /&gt;
+      
+      &lt;h1&gt;{post.title}&lt;/h1&gt;
+      &lt;p&gt;{post.content}&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+<h3>78. ¿Qué es Asset Loading en React 19?</h3>
+<p><strong>¿Qué es?</strong> APIs para precargar recursos (DNS, conexiones, fonts, scripts).</p>
+<p><strong>¿Para qué sirve?</strong> Mejorar performance cargando recursos antes de necesitarlos.</p>
+<pre><code class="language-jsx">// Precargar recursos
+
+
+function Component() {
+  prefetchDNS('https://api.example.com');
+  preconnect('https://api.example.com');
+  preload('/fonts/font.woff2', { as: 'font' });
+  preinit('/scripts/analytics.js', { as: 'script' });
+  
+  return &lt;div&gt;...&lt;/div&gt;;
+}</code></pre>
+<h3>79. ¿Qué es ref como prop en React 19?</h3>
+<p><strong>¿Qué es?</strong> En React 19, <code>ref</code> es una prop normal. Ya no necesitas <code>forwardRef</code>.</p>
+<p><strong>Beneficio:</strong> Código más simple y menos boilerplate.</p>
+<pre><code class="language-jsx">// React 19 - ref como prop normal (sin forwardRef)
+function Input({ ref, ...props }) {
+  return &lt;input ref={ref} {...props} /&gt;;
+}
+
+// Uso
+function Form() {
+  const inputRef = useRef(null);
+  return &lt;Input ref={inputRef} /&gt;;
+}</code></pre>
+<h3>80. ¿Qué es el Context como provider en React 19?</h3>
+<p><strong>¿Qué es?</strong> En React 19, el Context se usa directamente como provider sin <code>.Provider</code>.</p>
+<p><strong>Antes:</strong> <code><ThemeContext.Provider></code>. <strong>Ahora:</strong> <code><ThemeContext></code>.</p>
+<pre><code class="language-jsx">// React 19 - Context directamente como provider
+const ThemeContext = createContext('light');
+
+function App() {
+  return (
+    &lt;ThemeContext value="dark"&gt;
+      &lt;Page /&gt;
+    &lt;/ThemeContext&gt;
+  );
+}
+
+// Antes (React 18)
+&lt;ThemeContext.Provider value="dark"&gt;
+  &lt;Page /&gt;
+&lt;/ThemeContext.Provider&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="frameworks-y-herramientas-81-90">
+    <h2>Frameworks y Herramientas (81-90)</h2>
+    <div class="doc-content">
+<h3>81. ¿Qué es Next.js?</h3>
+<p><strong>¿Qué es?</strong> Framework full-stack de React creado por Vercel. El más popular para producción.</p>
+<p><strong>Incluye:</strong></p>
+<ul>
+<li>Server-Side Rendering (SSR)</li>
+<li>Static Site Generation (SSG)</li>
+<li>API Routes</li>
+<li>File-based routing</li>
+<li>Server Components</li>
+</ul>
+<h3>82. ¿Cuál es la diferencia entre SSR, SSG e ISR?</h3>
+<p><strong>SSR (Server-Side Rendering):</strong> HTML generado en cada request.</p>
+<p><strong>SSG (Static Site Generation):</strong> HTML generado en build time.</p>
+<p><strong>ISR (Incremental Static Regeneration):</strong> SSG + revalidación periódica.</p>
+<table><thead><tr><th>Método</th><th>Cuándo genera</th><th>Uso</th></tr></thead><tbody><tr><td>SSR</td><td>Cada request</td><td>Datos dinámicos</td></tr><tr><td>SSG</td><td>Build time</td><td>Contenido estático</td></tr><tr><td>ISR</td><td>Build + revalidación</td><td>Estático con actualizaciones</td></tr></tbody></table>
+<h3>83. ¿Qué es Remix?</h3>
+<p><strong>¿Qué es?</strong> Framework de React enfocado en web standards y progressive enhancement.</p>
+<p><strong>Características:</strong></p>
+<ul>
+<li>Web standards (forms, fetch)</li>
+<li>Progressive enhancement</li>
+<li>Nested routing</li>
+<li>Data loading/mutations</li>
+</ul>
+<h3>84. ¿Qué es Vite?</h3>
+<p><strong>¿Qué es?</strong> Build tool moderno que reemplaza a Create React App. Creado por Evan You (Vue).</p>
+<p><strong>Ventajas:</strong></p>
+<ul>
+<li>Dev server ultra rápido (ESM nativo)</li>
+<li>HMR instantáneo</li>
+<li>Build optimizado con Rollup</li>
+<li>Soporte TypeScript nativo</li>
+</ul>
+<h3>85. ¿Qué es Storybook?</h3>
+<p><strong>¿Qué es?</strong> Herramienta para desarrollar y documentar componentes UI en aislamiento.</p>
+<p><strong>¿Para qué sirve?</strong> Crear catálogo de componentes, testing visual, documentación interactiva.</p>
+<pre><code class="language-jsx">// Button.stories.jsx
+export default {
+  title: 'Components/Button',
+  component: Button
+};
+
+export const Primary = {
+  args: {
+    variant: 'primary',
+    children: 'Click me'
+  }
+};
+
+export const Secondary = {
+  args: {
+    variant: 'secondary',
+    children: 'Click me'
+  }
+};</code></pre>
+<h3>86. ¿Qué es Playwright/Cypress para testing E2E?</h3>
+<p><strong>¿Qué es?</strong> Herramientas para testing end-to-end (simular usuario real en browser).</p>
+<p><strong>Playwright:</strong> Más rápido, multi-browser. <strong>Cypress:</strong> Más fácil de usar, mejor DX.</p>
+<pre><code class="language-javascript">// Playwright
+
+
+test('login flow', async ({ page }) =&gt; {
+  await page.goto('/login');
+  await page.fill('[name="email"]', 'test@test.com');
+  await page.fill('[name="password"]', 'password');
+  await page.click('button[type="submit"]');
+  await expect(page).toHaveURL('/dashboard');
+});</code></pre>
+<h3>87. ¿Qué es MSW (Mock Service Worker)?</h3>
+<p><strong>¿Qué es?</strong> Librería para mockear APIs interceptando requests a nivel de red.</p>
+<p><strong>¿Para qué sirve?</strong> Testing sin backend real, desarrollo offline, simular errores.</p>
+<pre><code class="language-javascript">import { rest } from 'msw';
+
+
+const server = setupServer(
+  rest.get('/api/users', (req, res, ctx) =&gt; {
+    return res(ctx.json([{ id: 1, name: 'John' }]));
+  })
+);
+
+beforeAll(() =&gt; server.listen());
+afterEach(() =&gt; server.resetHandlers());
+afterAll(() =&gt; server.close());</code></pre>
+<h3>88. ¿Qué es React Native?</h3>
+<p><strong>¿Qué es?</strong> Framework para construir apps móviles nativas usando React.</p>
+<p><strong>¿Cómo funciona?</strong> Comparte lógica con web pero usa componentes nativos (View, Text, etc. en vez de div, p).</p>
+<h3>89. ¿Qué es Expo?</h3>
+<p><strong>¿Qué es?</strong> Plataforma que simplifica React Native. Recomendada para empezar.</p>
+<p><strong>Incluye:</strong></p>
+<ul>
+<li>Sin configuración nativa</li>
+<li>OTA updates</li>
+<li>SDK con APIs comunes</li>
+<li>Expo Go para testing</li>
+</ul>
+<h3>90. ¿Qué es Framer Motion?</h3>
+<p><strong>¿Qué es?</strong> Librería de animaciones declarativas para React.</p>
+<p><strong>¿Para qué sirve?</strong> Animaciones complejas con API simple: entrada, salida, gestos, layout animations.</p>
+<pre><code class="language-jsx">import { motion } from 'framer-motion';
+
+function Component() {
+  return (
+    &lt;motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    &gt;
+      Contenido animado
+    &lt;/motion.div&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="preguntas-de-arquitectura-91-100">
+    <h2>Preguntas de Arquitectura (91-100)</h2>
+    <div class="doc-content">
+<h3>91. ¿Cómo estructurar un proyecto React grande?</h3>
+<p><strong>Principio:</strong> Agrupar por feature/dominio, no por tipo de archivo.</p>
+<p><strong>Estructura recomendada:</strong></p>
+<pre><code class="language-text">src/
+├── components/        # Componentes reutilizables
+│   ├── ui/           # Componentes UI básicos
+│   └── forms/        # Componentes de formulario
+├── features/         # Features por dominio
+│   ├── auth/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── api/
+│   │   └── index.js
+│   └── posts/
+├── hooks/            # Hooks globales
+├── lib/              # Utilidades
+├── services/         # API clients
+├── stores/           # Estado global
+└── pages/            # Páginas/rutas</code></pre>
+<h3>92. ¿Qué es Feature-Sliced Design?</h3>
+<p><strong>¿Qué es?</strong> Arquitectura que organiza código por features y capas con reglas estrictas de dependencias.</p>
+<p><strong>Capas (de mayor a menor):</strong></p>
+<ul>
+<li><strong>app/</strong> - Configuración global</li>
+<li><strong>pages/</strong> - Composición de features</li>
+<li><strong>widgets/</strong> - Bloques de UI complejos</li>
+<li><strong>features/</strong> - Funcionalidades de negocio</li>
+<li><strong>entities/</strong> - Entidades de dominio</li>
+<li><strong>shared/</strong> - Código reutilizable</li>
+</ul>
+<h3>93. ¿Cómo manejar autenticación?</h3>
+<p><strong>Patrón común:</strong> Context + Provider que maneja estado de usuario, login, logout, y verificación de sesión.</p>
+<pre><code class="language-jsx">// Context de autenticación
+const AuthContext = createContext(null);
+
+function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() =&gt; {
+    // Verificar sesión al cargar
+    checkAuth().then(setUser).finally(() =&gt; setLoading(false));
+  }, []);
+  
+  const login = async (credentials) =&gt; {
+    const user = await api.login(credentials);
+    setUser(user);
+  };
+  
+  const logout = async () =&gt; {
+    await api.logout();
+    setUser(null);
+  };
+  
+  return (
+    &lt;AuthContext.Provider value={{ user, login, logout, loading }}&gt;
+      {children}
+    &lt;/AuthContext.Provider&gt;
+  );
+}</code></pre>
+<h3>94. ¿Cómo implementar internacionalización (i18n)?</h3>
+<p><strong>¿Qué es?</strong> Soporte para múltiples idiomas en la aplicación.</p>
+<p><strong>Librería popular:</strong> <code>react-i18next</code> - archivos JSON con traducciones + hook <code>useTranslation</code>.</p>
+<pre><code class="language-jsx">// Con react-i18next
+
+
+function Welcome() {
+  const { t, i18n } = useTranslation();
+  
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;{t('welcome.title')}&lt;/h1&gt;
+      &lt;button onClick={() =&gt; i18n.changeLanguage('es')}&gt;
+        Español
+      &lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+
+// translations/es.json
+{
+  "welcome": {
+    "title": "Bienvenido"
+  }
+}</code></pre>
+<h3>95. ¿Cómo implementar temas (dark/light mode)?</h3>
+<p><strong>Patrón:</strong> Context + CSS variables. Guardar preferencia en localStorage.</p>
+<pre><code class="language-jsx">const ThemeContext = createContext();
+
+function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState(() =&gt; 
+    localStorage.getItem('theme') || 'light'
+  );
+  
+  useEffect(() =&gt; {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+  
+  const toggle = () =&gt; setTheme(t =&gt; t === 'light' ? 'dark' : 'light');
+  
+  return (
+    &lt;ThemeContext.Provider value={{ theme, toggle }}&gt;
+      {children}
+    &lt;/ThemeContext.Provider&gt;
+  );
+}</code></pre>
+<h3>96. ¿Cómo manejar formularios complejos?</h3>
+<p><strong>Librerías recomendadas:</strong> React Hook Form (performance) + Zod (validación con TypeScript).</p>
+<pre><code class="language-jsx">// Con React Hook Form
+
+
+
+
+const schema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8)
+});
+
+function LoginForm() {
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(schema)
+  });
+  
+  const onSubmit = (data) =&gt; console.log(data);
+  
+  return (
+    &lt;form onSubmit={handleSubmit(onSubmit)}&gt;
+      &lt;input {...register('email')} /&gt;
+      {errors.email &amp;&amp; &lt;span&gt;{errors.email.message}&lt;/span&gt;}
+      
+      &lt;input type="password" {...register('password')} /&gt;
+      {errors.password &amp;&amp; &lt;span&gt;{errors.password.message}&lt;/span&gt;}
+      
+      &lt;button type="submit"&gt;Login&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>97. ¿Cómo implementar infinite scroll?</h3>
+<p><strong>¿Qué es?</strong> Cargar más contenido automáticamente cuando el usuario llega al final de la lista.</p>
+<p><strong>¿Cómo?</strong> Usar <code>IntersectionObserver</code> para detectar cuando el último elemento es visible.</p>
+<pre><code class="language-jsx">function InfiniteList() {
+  const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const observerRef = useRef();
+  const lastItemRef = useRef();
+  
+  useEffect(() =&gt; {
+    observerRef.current = new IntersectionObserver(entries =&gt; {
+      if (entries[0].isIntersecting &amp;&amp; hasMore) {
+        setPage(p =&gt; p + 1);
+      }
+    });
+    
+    if (lastItemRef.current) {
+      observerRef.current.observe(lastItemRef.current);
+    }
+    
+    return () =&gt; observerRef.current?.disconnect();
+  }, [hasMore, items]);
+  
+  useEffect(() =&gt; {
+    fetchItems(page).then(newItems =&gt; {
+      setItems(prev =&gt; [...prev, ...newItems]);
+      setHasMore(newItems.length &gt; 0);
+    });
+  }, [page]);
+  
+  return (
+    &lt;ul&gt;
+      {items.map((item, i) =&gt; (
+        &lt;li key={item.id} ref={i === items.length - 1 ? lastItemRef : null}&gt;
+          {item.name}
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>98. ¿Cómo implementar WebSockets en React?</h3>
+<p><strong>¿Qué es?</strong> Conexión bidireccional en tiempo real entre cliente y servidor.</p>
+<p><strong>¿Para qué sirve?</strong> Chat, notificaciones en vivo, actualizaciones en tiempo real.</p>
+<pre><code class="language-jsx">function useWebSocket(url) {
+  const [messages, setMessages] = useState([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const wsRef = useRef(null);
+  
+  useEffect(() =&gt; {
+    wsRef.current = new WebSocket(url);
+    
+    wsRef.current.onopen = () =&gt; setIsConnected(true);
+    wsRef.current.onclose = () =&gt; setIsConnected(false);
+    wsRef.current.onmessage = (e) =&gt; {
+      setMessages(prev =&gt; [...prev, JSON.parse(e.data)]);
+    };
+    
+    return () =&gt; wsRef.current?.close();
+  }, [url]);
+  
+  const send = useCallback((data) =&gt; {
+    wsRef.current?.send(JSON.stringify(data));
+  }, []);
+  
+  return { messages, isConnected, send };
+}</code></pre>
+<h3>99. ¿Cómo manejar errores globalmente?</h3>
+<p><strong>Estrategia:</strong> Error Boundary para errores de render + event listener para errores async.</p>
+<pre><code class="language-jsx">// Error Boundary global
+class GlobalErrorBoundary extends React.Component {
+  state = { hasError: false, error: null };
+  
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  
+  componentDidCatch(error, info) {
+    // Enviar a servicio de monitoreo
+    errorService.log(error, info);
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return &lt;ErrorPage error={this.state.error} /&gt;;
+    }
+    return this.props.children;
+  }
+}
+
+// Para errores async
+window.addEventListener('unhandledrejection', (event) =&gt; {
+  errorService.log(event.reason);
+});</code></pre>
+<h3>100. ¿Cuáles son las mejores prácticas de React?</h3>
+<p><strong>Resumen de buenas prácticas:</strong></p>
+<ol>
+<li><strong>Componentes pequeños y enfocados</strong></li>
+<li><strong>Composición sobre herencia</strong></li>
+<li><strong>Estado lo más local posible</strong></li>
+<li><strong>Evitar prop drilling con Context/estado global</strong></li>
+<li><strong>Usar TypeScript</strong></li>
+<li><strong>Testing desde el principio</strong></li>
+<li><strong>Memoización solo cuando sea necesario</strong></li>
+<li><strong>Separar lógica de UI (custom hooks)</strong></li>
+<li><strong>Nombrar componentes descriptivamente</strong></li>
+<li><strong>Documentar componentes complejos</strong></li>
+</ol>
+<p>---</p>
+<blockquote class="aside aside-tip">
+Has completado las 100 preguntas de React. Practica construyendo proyectos reales y explicando estos conceptos para dominar las entrevistas.
+</blockquote>
+    </div>
+  </section>

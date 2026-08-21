@@ -1,0 +1,381 @@
+<!-- 4. Controladores - Laravel (Frameworks) -->
+  <section id="crear-un-controlador-make-controller">
+    <h2>Crear un controlador (make:controller)</h2>
+    <div class="doc-content">
+<p>Laravel proporciona un comando Artisan para generar rápidamente controladores. Este comando crea un nuevo archivo de controlador con la estructura básica ya definida.</p>
+<h3>Controlador básico</h3>
+<p>Para crear un controlador básico, ejecuta el siguiente comando en la terminal:</p>
+<code>php artisan make:controller UsuarioController</code>
+<p>Este comando creará un nuevo archivo <code>UsuarioController.php</code> en el directorio <code>app/Http/Controllers</code> con la siguiente estructura:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class UsuarioController extends Controller
+{
+    //
+}</code></pre>
+<h3>Controlador en subdirectorio</h3>
+<p>Puedes organizar tus controladores en subdirectorios especificando la ruta relativa en el comando:</p>
+<code>php artisan make:controller Admin/ProductoController</code>
+<p>Este comando creará el controlador en <code>app/Http/Controllers/Admin/ProductoController.php</code>.</p>
+<h3>Controlador con opciones adicionales</h3>
+<p>El comando <code>make:controller</code> admite varias opciones para generar diferentes tipos de controladores:</p>
+<h4 class="tab-label">Controlador API</h4>
+<p>Para crear un controlador optimizado para APIs:</p>
+<pre><code class="language-bash">php artisan make:controller API/ProductoController --api
+</code></pre>
+<p>Esto generará un controlador con métodos para index, store, show, update y destroy, sin métodos para mostrar formularios.</p>
+<h4 class="tab-label">Controlador invocable</h4>
+<p>Para crear un controlador con un solo método <code>__invoke()</code>:</p>
+<pre><code class="language-bash">php artisan make:controller EnviarCorreoController --invokable
+</code></pre>
+<p>Esto es útil para controladores que realizan una sola acción.</p>
+<h4 class="tab-label">Controlador con modelo</h4>
+<p>Para crear un controlador vinculado a un modelo:</p>
+<pre><code class="language-bash">php artisan make:controller ProductoController --model=Producto
+</code></pre>
+<p>Esto importará automáticamente el modelo especificado y generará sugerencias de tipo en los métodos del controlador.</p>
+<blockquote class="aside aside-tip">
+Puedes combinar opciones, por ejemplo: <code>php artisan make:controller API/ProductoController --api --model=Producto</code> para crear un controlador API vinculado a un modelo.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="metodos-dentro-del-controlador">
+    <h2>Métodos dentro del controlador</h2>
+    <div class="doc-content">
+<p>Los controladores pueden contener cualquier número de métodos públicos que respondan a las solicitudes HTTP. Estos métodos reciben y procesan las solicitudes, interactúan con los modelos y devuelven respuestas.</p>
+<h3>Estructura básica de un método</h3>
+<p>Un método típico de controlador tiene la siguiente estructura:</p>
+<pre><code class="language-php">public function show($id)
+{
+    // Lógica para obtener datos
+    $usuario = Usuario::find($id);
+    
+    // Devolver una respuesta (vista, JSON, redirección, etc.)
+    return view('usuarios.show', ['usuario' =&gt; $usuario]);
+}</code></pre>
+<h3>Acceder a la solicitud HTTP</h3>
+<p>Puedes acceder a la solicitud HTTP actual mediante la inyección de dependencias de la clase <code>Request</code>:</p>
+<pre><code class="language-php">use Illuminate\Http\Request;
+
+public function store(Request $request)
+{
+    // Acceder a los datos del formulario
+    $nombre = $request-&gt;input('nombre');
+    
+    // O usando la sintaxis de array
+    $email = $request['email'];
+    
+    // Validar datos
+    $validated = $request-&gt;validate([
+        'nombre' =&gt; 'required|string|max:255',
+        'email' =&gt; 'required|email|unique:usuarios'
+    ]);
+    
+    // Crear un nuevo registro
+    $usuario = Usuario::create($validated);
+    
+    // Redireccionar
+    return redirect()-&gt;route('usuarios.show', ['id' =&gt; $usuario-&gt;id]);
+}</code></pre>
+<h3>Métodos comunes en controladores</h3>
+<p>Los controladores suelen seguir convenciones de nomenclatura para sus métodos, especialmente cuando se trabaja con recursos:</p>
+<h4 class="tab-label">Métodos web</h4>
+<table><thead><tr><th>Método</th><th>Descripción</th><th>Verbo HTTP</th><th>Ruta típica</th></tr></thead><tbody><tr><td><code>index()</code></td><td>Mostrar listado de recursos</td><td>GET</td><td><code>/usuarios</code></td></tr><tr><td><code>create()</code></td><td>Mostrar formulario de creación</td><td>GET</td><td><code>/usuarios/create</code></td></tr><tr><td><code>store()</code></td><td>Almacenar nuevo recurso</td><td>POST</td><td><code>/usuarios</code></td></tr><tr><td><code>show()</code></td><td>Mostrar un recurso específico</td><td>GET</td><td><code>/usuarios/{id}</code></td></tr><tr><td><code>edit()</code></td><td>Mostrar formulario de edición</td><td>GET</td><td><code>/usuarios/{id}/edit</code></td></tr><tr><td><code>update()</code></td><td>Actualizar un recurso</td><td>PUT/PATCH</td><td><code>/usuarios/{id}</code></td></tr><tr><td><code>destroy()</code></td><td>Eliminar un recurso</td><td>DELETE</td><td><code>/usuarios/{id}</code></td></tr></tbody></table>
+<h4 class="tab-label">Métodos API</h4>
+<table><thead><tr><th>Método</th><th>Descripción</th><th>Verbo HTTP</th><th>Ruta típica</th></tr></thead><tbody><tr><td><code>index()</code></td><td>Listar recursos</td><td>GET</td><td><code>/api/usuarios</code></td></tr><tr><td><code>store()</code></td><td>Crear recurso</td><td>POST</td><td><code>/api/usuarios</code></td></tr><tr><td><code>show()</code></td><td>Obtener un recurso</td><td>GET</td><td><code>/api/usuarios/{id}</code></td></tr><tr><td><code>update()</code></td><td>Actualizar recurso</td><td>PUT/PATCH</td><td><code>/api/usuarios/{id}</code></td></tr><tr><td><code>destroy()</code></td><td>Eliminar recurso</td><td>DELETE</td><td><code>/api/usuarios/{id}</code></td></tr></tbody></table>
+<h3>Ejemplo completo de un controlador</h3>
+<p>Aquí hay un ejemplo de un controlador completo para gestionar usuarios:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Usuario;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+
+class UsuarioController extends Controller
+{
+    /**
+     * Mostrar listado de usuarios.
+     */
+    public function index()
+    {
+        $usuarios = Usuario::paginate(15);
+        return view('usuarios.index', ['usuarios' =&gt; $usuarios]);
+    }
+
+    /**
+     * Mostrar formulario de creación.
+     */
+    public function create()
+    {
+        return view('usuarios.create');
+    }
+
+    /**
+     * Almacenar un nuevo usuario.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request-&gt;validate([
+            'nombre' =&gt; 'required|string|max:255',
+            'email' =&gt; 'required|email|unique:usuarios,email',
+            'password' =&gt; 'required|min:8|confirmed'
+        ]);
+        
+        $validated['password'] = Hash::make($validated['password']);
+        
+        $usuario = Usuario::create($validated);
+        
+        return redirect()
+            -&gt;route('usuarios.show', ['id' =&gt; $usuario-&gt;id])
+            -&gt;with('mensaje', 'Usuario creado correctamente');
+    }
+
+    /**
+     * Mostrar un usuario específico.
+     */
+    public function show($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        return view('usuarios.show', ['usuario' =&gt; $usuario]);
+    }
+
+    /**
+     * Mostrar formulario de edición.
+     */
+    public function edit($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        return view('usuarios.edit', ['usuario' =&gt; $usuario]);
+    }
+
+    /**
+     * Actualizar un usuario.
+     */
+    public function update(Request $request, $id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        
+        $validated = $request-&gt;validate([
+            'nombre' =&gt; 'required|string|max:255',
+            'email' =&gt; 'required|email|unique:usuarios,email,' . $id,
+            'password' =&gt; 'nullable|min:8|confirmed'
+        ]);
+        
+        if (isset($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+        
+        $usuario-&gt;update($validated);
+        
+        return redirect()
+            -&gt;route('usuarios.show', ['id' =&gt; $usuario-&gt;id])
+            -&gt;with('mensaje', 'Usuario actualizado correctamente');
+    }
+
+    /**
+     * Eliminar un usuario.
+     */
+    public function destroy($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        $usuario-&gt;delete();
+        
+        return redirect()
+            -&gt;route('usuarios.index')
+            -&gt;with('mensaje', 'Usuario eliminado correctamente');
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <section id="controladores-resource-resource">
+    <h2>Controladores resource (--resource)</h2>
+    <div class="doc-content">
+<p>Los controladores resource son una forma eficiente de crear un controlador que contiene todos los métodos CRUD (Crear, Leer, Actualizar, Eliminar) necesarios para gestionar un recurso. Laravel proporciona una forma sencilla de generar estos controladores y sus rutas correspondientes.</p>
+<h3>Crear un controlador resource</h3>
+<p>Para crear un controlador resource, utiliza la opción <code>--resource</code> con el comando <code>make:controller</code>:</p>
+<code>php artisan make:controller ProductoController --resource</code>
+<p>Este comando generará un controlador con los siguientes métodos predefinidos:</p>
+<ul>
+<li><code>index()</code>: Mostrar listado de recursos</li>
+<li><code>create()</code>: Mostrar formulario de creación</li>
+<li><code>store()</code>: Almacenar un nuevo recurso</li>
+<li><code>show()</code>: Mostrar un recurso específico</li>
+<li><code>edit()</code>: Mostrar formulario de edición</li>
+<li><code>update()</code>: Actualizar un recurso</li>
+<li><code>destroy()</code>: Eliminar un recurso</li>
+</ul>
+<h3>Registrar rutas para un controlador resource</h3>
+<p>Para registrar todas las rutas necesarias para un controlador resource, puedes utilizar el método <code>Route::resource()</code> en tu archivo de rutas:</p>
+<pre><code class="language-php">use App\Http\Controllers\ProductoController;
+
+Route::resource('productos', ProductoController::class);</code></pre>
+<p>Este único comando creará automáticamente las siguientes rutas:</p>
+<table><thead><tr><th>Verbo HTTP</th><th>URI</th><th>Acción</th><th>Nombre de ruta</th></tr></thead><tbody><tr><td>GET</td><td><code>/productos</code></td><td>index</td><td>productos.index</td></tr><tr><td>GET</td><td><code>/productos/create</code></td><td>create</td><td>productos.create</td></tr><tr><td>POST</td><td><code>/productos</code></td><td>store</td><td>productos.store</td></tr><tr><td>GET</td><td><code>/productos/{producto}</code></td><td>show</td><td>productos.show</td></tr><tr><td>GET</td><td><code>/productos/{producto}/edit</code></td><td>edit</td><td>productos.edit</td></tr><tr><td>PUT/PATCH</td><td><code>/productos/{producto}</code></td><td>update</td><td>productos.update</td></tr><tr><td>DELETE</td><td><code>/productos/{producto}</code></td><td>destroy</td><td>productos.destroy</td></tr></tbody></table>
+<h3>Personalizar rutas resource</h3>
+<p>Puedes personalizar las rutas resource de varias maneras:</p>
+<h4>Especificar solo ciertos métodos</h4>
+<pre><code class="language-php">// Solo incluir estas acciones
+Route::resource('productos', ProductoController::class)-&gt;only([
+    'index', 'show'
+]);
+
+// Excluir estas acciones
+Route::resource('productos', ProductoController::class)-&gt;except([
+    'create', 'store', 'update', 'destroy'
+]);</code></pre>
+<h4>Cambiar los parámetros de ruta</h4>
+<p>Por defecto, Laravel utiliza el nombre del recurso en singular como parámetro (por ejemplo, <code>{producto}</code>). Puedes cambiar esto con el método <code>parameters()</code>:</p>
+<pre><code class="language-php">Route::resource('productos', ProductoController::class)
+    -&gt;parameters(['productos' =&gt; 'producto_id']);</code></pre>
+<p>Esto cambiará las rutas a <code>/productos/{producto_id}</code>.</p>
+<h4>Rutas resource anidadas</h4>
+<p>Puedes crear rutas resource anidadas para representar relaciones entre recursos:</p>
+<pre><code class="language-php">Route::resource('categorias', CategoriaController::class);
+Route::resource('categorias.productos', CategoriaProductoController::class);</code></pre>
+<p>Esto creará rutas como <code>/categorias/{categoria}/productos/{producto}</code>.</p>
+<h3>Controladores API resource</h3>
+<p>Para APIs, a menudo no necesitas las rutas para mostrar formularios (<code>create</code> y <code>edit</code>). Laravel proporciona un atajo para crear controladores y rutas resource optimizados para APIs:</p>
+<code>php artisan make:controller API/ProductoController --api</code>
+<p>Y para registrar solo las rutas API:</p>
+<pre><code class="language-php">Route::apiResource('productos', API\ProductoController::class);</code></pre>
+<p>Esto registrará solo las rutas <code>index</code>, <code>store</code>, <code>show</code>, <code>update</code> y <code>destroy</code>.</p>
+<p>Para registrar múltiples recursos API a la vez:</p>
+<pre><code class="language-php">Route::apiResources([
+    'productos' =&gt; API\ProductoController::class,
+    'categorias' =&gt; API\CategoriaController::class,
+]);</code></pre>
+<blockquote class="aside aside-tip">
+Puedes ver todas las rutas registradas en tu aplicación ejecutando <code>php artisan route:list</code>.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="inyeccion-de-dependencias">
+    <h2>Inyección de dependencias</h2>
+    <div class="doc-content">
+<p>Laravel utiliza un contenedor de servicios que permite la inyección de dependencias en los controladores. Esto facilita el acceso a los servicios de la aplicación y mejora la testabilidad del código.</p>
+<h3>Inyección en el constructor</h3>
+<p>Puedes inyectar dependencias en el constructor de tu controlador, y Laravel las resolverá automáticamente:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Controllers;
+
+use App\Repositories\UserRepository;
+use App\Services\NotificationService;
+
+class UsuarioController extends Controller
+{
+    protected $users;
+    protected $notificationService;
+
+    public function __construct(UserRepository $users, NotificationService $notificationService)
+    {
+        $this-&gt;users = $users;
+        $this-&gt;notificationService = $notificationService;
+    }
+
+    public function show($id)
+    {
+        $usuario = $this-&gt;users-&gt;find($id);
+        return view('usuarios.show', ['usuario' =&gt; $usuario]);
+    }
+
+    public function notify($id)
+    {
+        $usuario = $this-&gt;users-&gt;find($id);
+        $this-&gt;notificationService-&gt;sendWelcomeNotification($usuario);
+        
+        return back()-&gt;with('mensaje', 'Notificación enviada');
+    }
+}</code></pre>
+<h3>Inyección en métodos</h3>
+<p>También puedes inyectar dependencias directamente en los métodos del controlador:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Services\ReporteService;
+
+class ReporteController extends Controller
+{
+    public function generar(Request $request, ReporteService $reporteService, $tipo)
+    {
+        $datos = $reporteService-&gt;generarReporte($tipo, $request-&gt;input('desde'), $request-&gt;input('hasta'));
+        
+        return view('reportes.mostrar', ['datos' =&gt; $datos, 'tipo' =&gt; $tipo]);
+    }
+}</code></pre>
+<p>En este ejemplo, Laravel inyectará automáticamente una instancia de <code>Request</code> y <code>ReporteService</code>.</p>
+<h3>Inyección de modelos implícitos</h3>
+<p>Laravel permite la inyección implícita de modelos en las rutas y controladores. Esto significa que Laravel buscará automáticamente un modelo por su ID y lo inyectará:</p>
+<pre><code class="language-php">use App\Models\Usuario;
+
+Route::get('/usuarios/{usuario}', function (Usuario $usuario) {
+    return $usuario;
+});
+
+// En un controlador
+public function show(Usuario $usuario)
+{
+    return view('usuarios.show', ['usuario' =&gt; $usuario]);
+}</code></pre>
+<p>En estos ejemplos, Laravel buscará automáticamente un <code>Usuario</code> con un ID que coincida con el valor del segmento de ruta <code>{usuario}</code>. Si no se encuentra, se devolverá automáticamente una respuesta 404.</p>
+<h3>Personalizar la clave de resolución</h3>
+<p>Por defecto, la inyección implícita de modelos utiliza el campo <code>id</code> para buscar el modelo. Puedes personalizar esto sobrescribiendo el método <code>getRouteKeyName()</code> en tu modelo:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Usuario extends Model
+{
+    /**
+     * Obtener la clave utilizada por la inyección implícita de modelos.
+     */
+    public function getRouteKeyName()
+    {
+        return 'nombre_usuario'; // En lugar de 'id'
+    }
+}</code></pre>
+<h3>Inyección de servicios personalizados</h3>
+<p>Para que Laravel pueda inyectar tus servicios personalizados, debes registrarlos en el contenedor de servicios. Esto se hace típicamente en un proveedor de servicios (Service Provider):</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Providers;
+
+use App\Services\ReporteService;
+use App\Services\ReporteServiceImpl;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    public function register()
+    {
+        $this-&gt;app-&gt;bind(ReporteService::class, ReporteServiceImpl::class);
+    }
+}</code></pre>
+<blockquote class="aside aside-tip">
+La inyección de dependencias promueve el principio de inversión de control, lo que hace que tu código sea más modular, mantenible y fácil de probar.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="conclusion">
+    <h2>Conclusión</h2>
+    <div class="doc-content">
+<p>Los controladores en Laravel proporcionan una forma organizada y estructurada de manejar la lógica de tu aplicación. Utilizando controladores resource y la inyección de dependencias, puedes crear código limpio, mantenible y fácil de probar.</p>
+<p>Recuerda que los controladores deben mantenerse "delgados" y enfocarse principalmente en recibir solicitudes HTTP y devolver respuestas. La lógica de negocio compleja debe delegarse a servicios o modelos para mantener una arquitectura limpia y escalable.</p>
+    </div>
+  </section>

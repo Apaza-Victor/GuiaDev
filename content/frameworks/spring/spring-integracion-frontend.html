@@ -1,0 +1,658 @@
+<!-- 23. Integración con Frontend - Java Spring (Frameworks) -->
+  <section id="23-1-arquitectura-frontend-backend">
+    <h2><i class="fa-solid fa-link"></i> 23.1 Arquitectura Frontend-Backend</h2>
+    <div class="doc-content">
+<h3>Flujo de comunicación</h3>
+<pre><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    Frontend (React/Angular)                  │
+│  - SPA (Single Page Application)                             │
+│  - Maneja estado local                                       │
+│  - Consume API REST                                          │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              │ HTTP/HTTPS
+                              │ JSON
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Backend (Spring Boot)                     │
+│  - API REST                                                  │
+│  - Autenticación JWT                                         │
+│  - Lógica de negocio                                         │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<h3>Configuración CORS para desarrollo</h3>
+<pre><code class="language-java">@Configuration
+public class CorsConfig {
+    
+    @Bean
+    @Profile("dev")
+    public CorsConfigurationSource devCorsConfig() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(
+            "http://localhost:3000",  // React
+            "http://localhost:4200",  // Angular
+            "http://localhost:5173"   // Vite
+        ));
+        config.setAllowedMethods(List.of("*"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", config);
+        return source;
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="23-2-consumo-desde-react">
+    <h2><i class="fa-solid fa-atom"></i> 23.2 Consumo desde React</h2>
+    <div class="doc-content">
+<h3>Configuración de Axios</h3>
+<pre><code class="language-javascript">// src/api/axios.js
+
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor para agregar token
+api.interceptors.request.use((config) =&gt; {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = \`Bearer \${token}\`;
+  }
+  return config;
+});
+
+// Interceptor para manejar errores
+api.interceptors.response.use(
+  (response) =&gt; response,
+  (error) =&gt; {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;</code></pre>
+<h3>Servicio de productos</h3>
+<pre><code class="language-javascript">// src/services/productoService.js
+
+
+export const productoService = {
+  listar: async (page = 0, size = 10) =&gt; {
+    const response = await api.get('/productos', {
+      params: { page, size }
+    });
+    return response.data;
+  },
+
+  obtener: async (id) =&gt; {
+    const response = await api.get(\`/productos/\${id}\`);
+    return response.data;
+  },
+
+  crear: async (producto) =&gt; {
+    const response = await api.post('/productos', producto);
+    return response.data;
+  },
+
+  actualizar: async (id, producto) =&gt; {
+    const response = await api.put(\`/productos/\${id}\`, producto);
+    return response.data;
+  },
+
+  eliminar: async (id) =&gt; {
+    await api.delete(\`/productos/\${id}\`);
+  }
+};</code></pre>
+<h3>Hook personalizado</h3>
+<pre><code class="language-jsx">// src/hooks/useProductos.js
+
+
+
+export function useProductos(page = 0) {
+  const [productos, setProductos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalPages, setTotalPages] = useState(0);
+
+  useEffect(() =&gt; {
+    const fetchProductos = async () =&gt; {
+      try {
+        setLoading(true);
+        const data = await productoService.listar(page);
+        setProductos(data.content);
+        setTotalPages(data.totalPages);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductos();
+  }, [page]);
+
+  return { productos, loading, error, totalPages };
+}
+
+// Uso en componente
+function ProductoList() {
+  const [page, setPage] = useState(0);
+  const { productos, loading, error, totalPages } = useProductos(page);
+
+  if (loading) return &lt;Spinner /&gt;;
+  if (error) return &lt;Error message={error} /&gt;;
+
+  return (
+    &lt;div&gt;
+      {productos.map(p =&gt; (
+        &lt;ProductoCard key={p.id} producto={p} /&gt;
+      ))}
+      &lt;Pagination 
+        currentPage={page} 
+        totalPages={totalPages} 
+        onPageChange={setPage} 
+      /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Autenticación</h3>
+<pre><code class="language-jsx">// src/context/AuthContext.jsx
+
+
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    const token = localStorage.getItem('token');
+    if (token) {
+      verificarToken();
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const verificarToken = async () =&gt; {
+    try {
+      const response = await api.get('/auth/me');
+      setUser(response.data);
+    } catch {
+      localStorage.removeItem('token');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (email, password) =&gt; {
+    const response = await api.post('/auth/login', { email, password });
+    const { token, user } = response.data;
+    localStorage.setItem('token', token);
+    setUser(user);
+    return user;
+  };
+
+  const logout = () =&gt; {
+    localStorage.removeItem('token');
+    setUser(null);
+  };
+
+  return (
+    &lt;AuthContext.Provider value={{ user, login, logout, loading }}&gt;
+      {children}
+    &lt;/AuthContext.Provider&gt;
+  );
+}
+
+export const useAuth = () =&gt; useContext(AuthContext);</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="23-3-consumo-desde-angular">
+    <h2><i class="fa-brands fa-angular"></i> 23.3 Consumo desde Angular</h2>
+    <div class="doc-content">
+<h3>Servicio HTTP</h3>
+<pre><code class="language-typescript">// src/app/services/producto.service.ts
+
+
+
+
+
+export interface Producto {
+  id: number;
+  nombre: string;
+  precio: number;
+  categoria: string;
+}
+
+export interface Page&lt;T&gt; {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ProductoService {
+  private apiUrl = \`\${environment.apiUrl}/productos\`;
+
+  constructor(private http: HttpClient) {}
+
+  listar(page: number = 0, size: number = 10): Observable&lt;Page&lt;Producto&gt;&gt; {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    
+    return this.http.get&lt;Page&lt;Producto&gt;&gt;(this.apiUrl, { params });
+  }
+
+  obtener(id: number): Observable&lt;Producto&gt; {
+    return this.http.get&lt;Producto&gt;(\`\${this.apiUrl}/\${id}\`);
+  }
+
+  crear(producto: Partial&lt;Producto&gt;): Observable&lt;Producto&gt; {
+    return this.http.post&lt;Producto&gt;(this.apiUrl, producto);
+  }
+
+  actualizar(id: number, producto: Partial&lt;Producto&gt;): Observable&lt;Producto&gt; {
+    return this.http.put&lt;Producto&gt;(\`\${this.apiUrl}/\${id}\`, producto);
+  }
+
+  eliminar(id: number): Observable&lt;void&gt; {
+    return this.http.delete&lt;void&gt;(\`\${this.apiUrl}/\${id}\`);
+  }
+}</code></pre>
+<h3>Interceptor de autenticación</h3>
+<pre><code class="language-typescript">// src/app/interceptors/auth.interceptor.ts
+
+
+
+
+
+
+
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  intercept(req: HttpRequest&lt;any&gt;, next: HttpHandler): Observable&lt;HttpEvent&lt;any&gt;&gt; {
+    const token = this.authService.getToken();
+
+    if (token) {
+      req = req.clone({
+        setHeaders: {
+          Authorization: \`Bearer \${token}\`
+        }
+      });
+    }
+
+    return next.handle(req).pipe(
+      catchError((error: HttpErrorResponse) =&gt; {
+        if (error.status === 401) {
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        }
+        return throwError(() =&gt; error);
+      })
+    );
+  }
+}
+
+// app.module.ts
+@NgModule({
+  providers: [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    }
+  ]
+})
+export class AppModule {}</code></pre>
+<h3>Componente con formulario</h3>
+<pre><code class="language-typescript">// src/app/components/producto-form/producto-form.component.ts
+
+
+
+
+
+@Component({
+  selector: 'app-producto-form',
+  templateUrl: './producto-form.component.html'
+})
+export class ProductoFormComponent implements OnInit {
+  form: FormGroup;
+  isEditing = false;
+  loading = false;
+  error: string | null = null;
+
+  constructor(
+    private fb: FormBuilder,
+    private productoService: ProductoService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {
+    this.form = this.fb.group({
+      nombre: ['', [Validators.required, Validators.minLength(3)]],
+      precio: ['', [Validators.required, Validators.min(0)]],
+      categoria: ['', Validators.required]
+    });
+  }
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.params['id'];
+    if (id) {
+      this.isEditing = true;
+      this.cargarProducto(id);
+    }
+  }
+
+  cargarProducto(id: number): void {
+    this.productoService.obtener(id).subscribe({
+      next: (producto) =&gt; this.form.patchValue(producto),
+      error: (err) =&gt; this.error = err.message
+    });
+  }
+
+  onSubmit(): void {
+    if (this.form.invalid) return;
+
+    this.loading = true;
+    const producto = this.form.value;
+    const id = this.route.snapshot.params['id'];
+
+    const request = this.isEditing
+      ? this.productoService.actualizar(id, producto)
+      : this.productoService.crear(producto);
+
+    request.subscribe({
+      next: () =&gt; this.router.navigate(['/productos']),
+      error: (err) =&gt; {
+        this.error = err.error?.message || 'Error al guardar';
+        this.loading = false;
+      }
+    });
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="23-4-flujo-de-autenticacion-jwt">
+    <h2><i class="fa-solid fa-user-lock"></i> 23.4 Flujo de Autenticación JWT</h2>
+    <div class="doc-content">
+<h3>Backend: Endpoint de login</h3>
+<pre><code class="language-java">@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+    
+    private final AuthService authService;
+    
+    @PostMapping("/login")
+    public ResponseEntity&lt;AuthResponse&gt; login(@Valid @RequestBody LoginRequest request) {
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/register")
+    public ResponseEntity&lt;AuthResponse&gt; register(@Valid @RequestBody RegisterRequest request) {
+        AuthResponse response = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+    
+    @GetMapping("/me")
+    public ResponseEntity&lt;UserDTO&gt; getCurrentUser(@AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.ok(authService.getUserInfo(user.getUsername()));
+    }
+    
+    @PostMapping("/refresh")
+    public ResponseEntity&lt;AuthResponse&gt; refresh(@RequestBody RefreshRequest request) {
+        AuthResponse response = authService.refreshToken(request.getRefreshToken());
+        return ResponseEntity.ok(response);
+    }
+}
+
+// DTOs
+public record LoginRequest(
+    @Email String email,
+    @NotBlank String password
+) {}
+
+public record AuthResponse(
+    String accessToken,
+    String refreshToken,
+    long expiresIn,
+    UserDTO user
+) {}</code></pre>
+<h3>Frontend: Flujo completo</h3>
+<pre><code class="language-javascript">// Flujo de autenticación
+// 1. Usuario envía credenciales
+const login = async (email, password) =&gt; {
+  const response = await api.post('/auth/login', { email, password });
+  
+  // 2. Backend valida y retorna tokens
+  const { accessToken, refreshToken, user } = response.data;
+  
+  // 3. Guardar tokens
+  localStorage.setItem('accessToken', accessToken);
+  localStorage.setItem('refreshToken', refreshToken);
+  
+  // 4. Actualizar estado
+  setUser(user);
+};
+
+// Refresh automático
+api.interceptors.response.use(
+  (response) =&gt; response,
+  async (error) =&gt; {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 &amp;&amp; !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        const refreshToken = localStorage.getItem('refreshToken');
+        const response = await api.post('/auth/refresh', { refreshToken });
+        
+        const { accessToken } = response.data;
+        localStorage.setItem('accessToken', accessToken);
+        
+        originalRequest.headers.Authorization = \`Bearer \${accessToken}\`;
+        return api(originalRequest);
+      } catch {
+        // Refresh falló, logout
+        localStorage.clear();
+        window.location.href = '/login';
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="23-5-subida-de-archivos">
+    <h2><i class="fa-solid fa-upload"></i> 23.5 Subida de Archivos</h2>
+    <div class="doc-content">
+<h3>Backend</h3>
+<pre><code class="language-java">@RestController
+@RequestMapping("/api/archivos")
+public class ArchivoController {
+    
+    @PostMapping("/upload")
+    public ResponseEntity&lt;ArchivoResponse&gt; upload(
+            @RequestParam("file") MultipartFile file) {
+        
+        ArchivoResponse response = archivoService.guardar(file);
+        return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/upload-multiple")
+    public ResponseEntity&lt;List&lt;ArchivoResponse&gt;&gt; uploadMultiple(
+            @RequestParam("files") MultipartFile[] files) {
+        
+        List&lt;ArchivoResponse&gt; responses = Arrays.stream(files)
+            .map(archivoService::guardar)
+            .toList();
+        
+        return ResponseEntity.ok(responses);
+    }
+}</code></pre>
+<h3>React: Subida con progreso</h3>
+<pre><code class="language-jsx">// src/components/FileUpload.jsx
+
+
+
+function FileUpload({ onUploadComplete }) {
+  const [progress, setProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (event) =&gt; {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setUploading(true);
+    setProgress(0);
+
+    try {
+      const response = await api.post('/archivos/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) =&gt; {
+          const percent = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setProgress(percent);
+        },
+      });
+
+      onUploadComplete(response.data);
+    } catch (error) {
+      console.error('Error uploading:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    &lt;div&gt;
+      &lt;input type="file" onChange={handleUpload} disabled={uploading} /&gt;
+      {uploading &amp;&amp; (
+        &lt;div className="progress-bar"&gt;
+          &lt;div style={{ width: \`\${progress}%\` }}&gt;{progress}%&lt;/div&gt;
+        &lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="23-6-manejo-de-errores">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 23.6 Manejo de Errores</h2>
+    <div class="doc-content">
+<h3>Backend: Respuestas de error consistentes</h3>
+<pre><code class="language-java">@RestControllerAdvice
+public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleValidation(MethodArgumentNotValidException ex) {
+        Map&lt;String, String&gt; errors = ex.getBindingResult()
+            .getFieldErrors()
+            .stream()
+            .collect(Collectors.toMap(
+                FieldError::getField,
+                FieldError::getDefaultMessage,
+                (a, b) -&gt; a
+            ));
+        
+        return ResponseEntity.badRequest().body(
+            new ErrorResponse("VALIDATION_ERROR", "Error de validación", errors)
+        );
+    }
+    
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleNotFound(ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            new ErrorResponse("NOT_FOUND", ex.getMessage(), null)
+        );
+    }
+}
+
+public record ErrorResponse(
+    String code,
+    String message,
+    Map&lt;String, String&gt; errors
+) {}</code></pre>
+<h3>Frontend: Mostrar errores</h3>
+<pre><code class="language-jsx">// src/components/ProductoForm.jsx
+function ProductoForm() {
+  const [errors, setErrors] = useState({});
+  const [globalError, setGlobalError] = useState(null);
+
+  const handleSubmit = async (data) =&gt; {
+    try {
+      setErrors({});
+      setGlobalError(null);
+      await productoService.crear(data);
+      navigate('/productos');
+    } catch (error) {
+      if (error.response?.data?.code === 'VALIDATION_ERROR') {
+        // Errores de campo
+        setErrors(error.response.data.errors);
+      } else {
+        // Error general
+        setGlobalError(error.response?.data?.message || 'Error desconocido');
+      }
+    }
+  };
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      {globalError &amp;&amp; &lt;Alert type="error"&gt;{globalError}&lt;/Alert&gt;}
+      
+      &lt;Input
+        name="nombre"
+        error={errors.nombre}
+      /&gt;
+      
+      &lt;Input
+        name="precio"
+        type="number"
+        error={errors.precio}
+      /&gt;
+      
+      &lt;Button type="submit"&gt;Guardar&lt;/Button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-tip">
+Usa **TypeScript** en el frontend para tener tipos compartidos con el backend. Puedes generar tipos automáticamente desde OpenAPI.
+</blockquote>
+    </div>
+  </section>

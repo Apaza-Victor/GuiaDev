@@ -1,0 +1,211 @@
+<!-- 2. Instalación y configuración inicial - Inertia (Frameworks) -->
+  <section id="requisitos-previos-laravel-y-vue-3">
+    <h2>Requisitos previos: Laravel y Vue 3</h2>
+    <div class="doc-content">
+<p>Antes de comenzar con la instalación de Inertia.js, necesitamos asegurarnos de tener los siguientes requisitos:</p>
+<h3>Laravel</h3>
+<p>Necesitas tener instalado Laravel 8.x o superior. Puedes crear un nuevo proyecto de Laravel con:</p>
+<pre><code class="language-bash">composer create-project laravel/laravel nombre-proyecto
+cd nombre-proyecto</code></pre>
+<blockquote class="aside aside-tip">
+Si prefieres usar Laravel Breeze o Jetstream, estos ya incluyen opciones para instalar Inertia.js directamente.
+</blockquote>
+<h3>Node.js y NPM</h3>
+<p>Asegúrate de tener Node.js (v14 o superior) y npm instalados en tu sistema:</p>
+<pre><code class="language-bash">node -v
+npm -v</code></pre>
+<h3>Vue 3</h3>
+<p>Inertia.js funciona con varios frameworks frontend, pero en esta guía nos centraremos en Vue 3. Para instalar Vue 3 en tu proyecto Laravel:</p>
+<pre><code class="language-bash">npm install vue@next</code></pre>
+    </div>
+  </section>
+
+  <section id="instalacion-de-paquetes-de-inertia-laravel-adapter-y-vue-adapter">
+    <h2>Instalación de paquetes de Inertia (Laravel Adapter y Vue Adapter)</h2>
+    <div class="doc-content">
+<p>Inertia.js requiere dos componentes principales: un adaptador para el servidor (Laravel) y otro para el cliente (Vue).</p>
+<h3>1. Instalación del adaptador para Laravel</h3>
+<p>Primero, instala el paquete de Inertia para Laravel usando Composer:</p>
+<pre><code class="language-bash">composer require inertiajs/inertia-laravel</code></pre>
+<h3>2. Instalación del adaptador para Vue 3</h3>
+<p>A continuación, instala el paquete de Inertia para Vue 3:</p>
+<pre><code class="language-bash">npm install @inertiajs/vue3</code></pre>
+<h3>3. Instalación de dependencias adicionales</h3>
+<p>También necesitamos algunas dependencias adicionales para el desarrollo:</p>
+<pre><code class="language-bash">npm install laravel-vite-plugin @vitejs/plugin-vue -D</code></pre>
+    </div>
+  </section>
+
+  <section id="configuracion-del-middleware-handleinertiarequests">
+    <h2>Configuración del middleware HandleInertiaRequests</h2>
+    <div class="doc-content">
+<p>Inertia.js requiere un middleware para gestionar las solicitudes y respuestas. Este middleware se encarga de determinar si una solicitud es una solicitud Inertia y de proporcionar datos compartidos a todas las vistas.</p>
+<h3>1. Crear el middleware</h3>
+<p>Puedes publicar el middleware predeterminado con:</p>
+<pre><code class="language-bash">php artisan inertia:middleware</code></pre>
+<p>Esto creará un nuevo archivo en <code>app/Http/Middleware/HandleInertiaRequests.php</code>.</p>
+<h3>2. Registrar el middleware</h3>
+<p>Ahora, registra el middleware en tu archivo <code>app/Http/Kernel.php</code> añadiéndolo al grupo <code>web</code>:</p>
+<pre><code class="language-php">// app/Http/Kernel.php
+protected $middlewareGroups = [
+    'web' =&gt; [
+        // ... otros middlewares
+        \App\Http\Middleware\HandleInertiaRequests::class,
+    ],
+];</code></pre>
+<h3>3. Configurar props compartidas</h3>
+<p>El middleware <code>HandleInertiaRequests</code> incluye un método <code>share()</code> que te permite definir datos que estarán disponibles en todas las páginas de tu aplicación:</p>
+<pre><code class="language-php">// app/Http/Middleware/HandleInertiaRequests.php
+public function share(Request $request): array
+{
+    return [
+        'auth' =&gt; [
+            'user' =&gt; $request-&gt;user() ? [
+                'id' =&gt; $request-&gt;user()-&gt;id,
+                'name' =&gt; $request-&gt;user()-&gt;name,
+                'email' =&gt; $request-&gt;user()-&gt;email,
+            ] : null,
+        ],
+        'flash' =&gt; [
+            'message' =&gt; fn () =&gt; $request-&gt;session()-&gt;get('message'),
+            'error' =&gt; fn () =&gt; $request-&gt;session()-&gt;get('error'),
+        ],
+        // Agrega aquí más datos compartidos
+    ];
+}</code></pre>
+    </div>
+  </section>
+
+  <section id="configuracion-de-app-js-en-vue-y-laravel">
+    <h2>Configuración de app.js en Vue y Laravel</h2>
+    <div class="doc-content">
+<p>Ahora necesitamos configurar el punto de entrada de nuestra aplicación JavaScript para inicializar Inertia.js con Vue 3.</p>
+<h3>1. Configurar Vite</h3>
+<p>Primero, actualiza tu archivo <code>vite.config.js</code> para incluir el plugin de Vue:</p>
+<pre><code class="language-javascript">// vite.config.js
+
+
+
+
+export default defineConfig({
+    plugins: [
+        laravel({
+            input: ['resources/css/app.css', 'resources/js/app.js'],
+            refresh: true,
+        }),
+        vue({
+            template: {
+                transformAssetUrls: {
+                    base: null,
+                    includeAbsolute: false,
+                },
+            },
+        }),
+    ],
+    resolve: {
+        alias: {
+            '@': '/resources/js',
+        },
+    },
+});</code></pre>
+<h3>2. Crear el archivo app.js</h3>
+<p>Crea o actualiza tu archivo <code>resources/js/app.js</code> para inicializar Inertia.js con Vue 3:</p>
+<pre><code class="language-javascript">// resources/js/app.js
+
+
+
+
+createInertiaApp({
+    // La función resolve indica cómo cargar los componentes de página
+    resolve: (name) =&gt; resolvePageComponent(\`./Pages/\${name}.vue\`, import.meta.glob('./Pages/**/*.vue')),
+    
+    // Configura el elemento raíz donde se montará la aplicación
+    setup({ el, App, props, plugin }) {
+        createApp({ render: () =&gt; h(App, props) })
+            .use(plugin)
+            .mount(el);
+    },
+});
+</code></pre>
+<h3>3. Crear una plantilla base</h3>
+<p>Crea un archivo de plantilla Blade que servirá como punto de entrada para tu aplicación Inertia:</p>
+<pre><code class="language-html">&lt;!-- resources/views/app.blade.php --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+    &lt;title&gt;{{ config('app.name', 'Laravel') }}&lt;/title&gt;
+    
+    &lt;!-- Estilos y scripts --&gt;
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @inertiaHead
+&lt;/head&gt;
+&lt;body&gt;
+    @inertia
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<h3>4. Configurar una ruta de prueba</h3>
+<p>Para verificar que todo funciona correctamente, configura una ruta de prueba en <code>routes/web.php</code>:</p>
+<pre><code class="language-php">// routes/web.php
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+
+Route::get('/', function () {
+    return Inertia::render('Welcome', [
+        'title' =&gt; 'Mi aplicación con Inertia',
+    ]);
+});</code></pre>
+<h3>5. Crear un componente de página</h3>
+<p>Crea un directorio <code>resources/js/Pages</code> y dentro un archivo <code>Welcome.vue</code>:</p>
+<pre><code class="language-vue">&lt;!-- resources/js/Pages/Welcome.vue --&gt;
+&lt;template&gt;
+    &lt;div class="container"&gt;
+        &lt;h1&gt;{{ title }}&lt;/h1&gt;
+        &lt;p&gt;Bienvenido a tu aplicación con Inertia.js y Vue 3&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+defineProps({
+    title: String,
+});
+&lt;/script&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="compilar-y-probar">
+    <h2>Compilar y probar</h2>
+    <div class="doc-content">
+<p>Finalmente, compila los assets y ejecuta el servidor de desarrollo:</p>
+<h4 class="tab-label">Desarrollo</h4>
+<pre><code class="language-bash">npm run dev
+php artisan serve
+</code></pre>
+<h4 class="tab-label">Producción</h4>
+<pre><code class="language-bash">npm run build
+php artisan serve
+</code></pre>
+<p>Visita <code>http://localhost:8000</code> en tu navegador y deberías ver tu primera página con Inertia.js funcionando.</p>
+<blockquote class="aside aside-note">
+Si encuentras algún problema durante la instalación, asegúrate de revisar la documentación oficial de Inertia.js o los requisitos específicos de versión para Laravel y Vue.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="estructura-de-directorios-recomendada">
+    <h2>Estructura de directorios recomendada</h2>
+    <div class="doc-content">
+<p>Para mantener tu proyecto organizado, te recomendamos seguir esta estructura de directorios para los componentes de Vue:</p>
+<pre><code class="language-text">resources/js/
+├── Components/       # Componentes reutilizables
+├── Layouts/          # Layouts de página
+├── Pages/            # Componentes de página (rutas)
+│   ├── Auth/         # Páginas de autenticación
+│   ├── Users/        # Páginas relacionadas con usuarios
+│   └── Welcome.vue   # Página de inicio
+└── app.js           # Punto de entrada
+</code></pre>
+<p>Esta estructura te ayudará a mantener tu código organizado a medida que tu aplicación crece.</p>
+    </div>
+  </section>

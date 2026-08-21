@@ -1,0 +1,654 @@
+<!-- 3. Ejemplos de Diagramas de Actividades - Diag. Actividades (UML) -->
+  <section id="3-1-proceso-de-compra-en-linea">
+    <h2>3.1. Proceso de Compra en Línea</h2>
+    <div class="doc-content">
+<p>Sistema de comercio electrónico con múltiples actores y procesos paralelos.</p>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a7c436c69656e74657c0a73746172740a3a4275736361722070726f647563746f733b0a6e6f74652072696768740a2020456c20636c69656e746520707565646520757361720a202066696c74726f7320792063617465676f72c3ad61730a656e64206e6f74650a3a53656c656363696f6e61722070726f647563746f3b0a3a4167726567617220616c206361727269746f3b0a0a69662028c2bf436f6e74696e75617220636f6d7072616e646f3f29207468656e202873c3ad290a20203a427573636172206dc3a1732070726f647563746f733b0a20206465746163680a656c736520286e6f290a20203a52657669736172206361727269746f3b0a656e6469660a0a7c53697374656d617c0a3a43616c63756c617220746f74616c3b0a3a41706c69636172206465736375656e746f733b0a0a666f726b0a20203a56657269666963617220696e76656e746172696f3b0a20206e6f7465206c6566743a2050726f6365736f20656e20706172616c656c6f0a666f726b20616761696e0a20203a43616c63756c617220696d70756573746f733b0a666f726b20616761696e0a20203a43616c63756c617220656e76c3ad6f3b0a656e6420666f726b0a0a7c436c69656e74657c0a3a496e677265736172206461746f7320646520656e76c3ad6f3b0a3a53656c656363696f6e6172206dc3a9746f646f206465207061676f3b0a0a7c53697374656d61206465205061676f7c0a3a50726f6365736172207061676f3b0a0a69662028c2bf5061676f20657869746f736f3f29207468656e202873c3ad290a20207c53697374656d617c0a20203a47656e65726172206f7264656e3b0a20200a2020666f726b0a202020203a41637475616c697a617220696e76656e746172696f3b0a2020666f726b20616761696e0a202020203a456e7669617220636f6e6669726d616369c3b36e20656d61696c3b0a202020206e6f74652072696768740a202020202020456d61696c20636f6e206ec3ba6d65726f0a2020202020206465206f7264656e207920646574616c6c65730a20202020656e64206e6f74650a2020666f726b20616761696e0a202020207c416c6d6163c3a96e7c0a202020203a50726570617261722070656469646f3b0a2020656e6420666f726b0a20200a20207c436c69656e74657c0a20203a5265636962697220636f6e6669726d616369c3b36e3b0a20200a656c736520286e6f290a20207c53697374656d617c0a20203a526567697374726172206572726f723b0a20203a4e6f7469666963617220636c69656e74653b0a20207c436c69656e74657c0a20203a5265696e74656e746172207061676f3b0a202073746f700a656e6469660a0a7c416c6d6163c3a96e7c0a3a456d70616361722070726f647563746f733b0a3a47656e65726172206775c3ad6120646520656e76c3ad6f3b0a0a7c53697374656d6120646520456e76c3ad6f7c0a3a5265636f67657220706171756574653b0a3a456e7669617220706171756574653b0a0a7c436c69656e74657c0a3a526563696269722070726f647563746f3b0a3a43616c69666963617220636f6d7072613b0a0a73746f700a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+|Cliente|
+start
+:Buscar productos;
+note right
+  El cliente puede usar
+  filtros y categorías
+end note
+:Seleccionar producto;
+:Agregar al carrito;
+
+if (¿Continuar comprando?) then (sí)
+  :Buscar más productos;
+  detach
+else (no)
+  :Revisar carrito;
+endif
+
+|Sistema|
+:Calcular total;
+:Aplicar descuentos;
+
+fork
+  :Verificar inventario;
+  note left: Proceso en paralelo
+fork again
+  :Calcular impuestos;
+fork again
+  :Calcular envío;
+end fork
+
+|Cliente|
+:Ingresar datos de envío;
+:Seleccionar método de pago;
+
+|Sistema de Pago|
+:Procesar pago;
+
+if (¿Pago exitoso?) then (sí)
+  |Sistema|
+  :Generar orden;
+  
+  fork
+    :Actualizar inventario;
+  fork again
+    :Enviar confirmación email;
+    note right
+      Email con número
+      de orden y detalles
+    end note
+  fork again
+    |Almacén|
+    :Preparar pedido;
+  end fork
+  
+  |Cliente|
+  :Recibir confirmación;
+  
+else (no)
+  |Sistema|
+  :Registrar error;
+  :Notificar cliente;
+  |Cliente|
+  :Reintentar pago;
+  stop
+endif
+
+|Almacén|
+:Empacar productos;
+:Generar guía de envío;
+
+|Sistema de Envío|
+:Recoger paquete;
+:Enviar paquete;
+
+|Cliente|
+:Recibir producto;
+:Calificar compra;
+
+stop
+@enduml</code></pre>
+  </details>
+</div>
+<blockquote class="aside aside-tip">
+Este diagrama muestra:
+  - **Particiones**: Cliente, Sistema, Sistema de Pago, Almacén, Sistema de Envío
+  - **Decisiones**: Continuar comprando, Pago exitoso
+  - **Bifurcaciones**: Verificación de inventario, cálculo de impuestos y envío en paralelo
+  - **Notas**: Explicaciones sobre filtros y confirmación por email
+  - **Detach**: Para flujo de continuar comprando
+</blockquote>
+    </div>
+  </section>
+
+  <section id="3-2-proceso-de-admision-universitaria">
+    <h2>3.2. Proceso de Admisión Universitaria</h2>
+    <div class="doc-content">
+<p>Sistema educativo con validaciones, aprobaciones y múltiples etapas.</p>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a7c4173706972616e74657c0a73746172740a3a52656769737472617220736f6c6963697475643b0a3a43617267617220646f63756d656e746f733b0a0a7c53697374656d617c0a3a56616c6964617220646f63756d656e746f733b0a0a69662028c2bf446f63756d656e746f7320636f6d706c65746f733f29207468656e20286e6f290a20207c53697374656d617c0a20203a456e7669617220736f6c69636974756420646520646f63756d656e746f733b203c3c73656e645369676e616c3e3e0a20207c4173706972616e74657c0a20203a52656369626972206e6f7469666963616369c3b36e3b203c3c6163636570744576656e743e3e0a20203a436f6d706c6574617220646f63756d656e746f733b0a20207c53697374656d617c0a20203a526576616c696461723b0a656c7365202873c3ad290a656e6469660a0a3a50726f6772616d6172206578616d656e3b0a0a7c53697374656d617c0a3a456e76696172206e6f7469666963616369c3b36e206465206578616d656e3b203c3c73656e645369676e616c3e3e0a7c4173706972616e74657c0a3a52656369626972206665636861206465206578616d656e3b203c3c6163636570744576656e743e3e0a3a45737065726120646520332064c3ad61733b203c3c74696d654576656e743e3e0a6e6f74652072696768743a205469656d706f20646520707265706172616369c3b36e0a3a50726573656e746172206578616d656e3b0a0a7c53697374656d61206465204576616c75616369c3b36e7c0a3a43616c696669636172206578616d656e3b0a3a43616c63756c61722070756e74616a653b0a0a666f726b0a20203a4576616c75617220636f6e6f63696d69656e746f733b0a666f726b20616761696e0a20203a4576616c756172206170746974756465733b0a666f726b20616761696e0a20203a4576616c75617220636f6d706574656e636961733b0a656e6420666f726b0a0a3a436f6e736f6c6964617220726573756c7461646f733b0a0a7c53697374656d617c0a69662028c2bf50756e74616a65203e3d206dc3ad6e696d6f3f29207468656e20286e6f290a20203a456e766961722072656368617a6f3b203c3c73656e645369676e616c3e3e0a20207c4173706972616e74657c0a20203a52656369626972206e6f7469666963616369c3b36e206465206e6f2061646d697369c3b36e3b203c3c6163636570744576656e743e3e0a20203a5265636962697220726573756c7461646f3b0a202073746f700a656c7365202873c3ad290a656e6469660a0a7c436f6d6974c3a92064652041646d6973696f6e65737c0a3a52657669736172206361736f3b0a0a69662028c2bf526571756965726520656e74726576697374613f29207468656e202873c3ad290a20207c4173706972616e74657c0a20203a41736973746972206120656e74726576697374613b0a20207c436f6d6974c3a92064652041646d6973696f6e65737c0a20203a4576616c75617220656e74726576697374613b0a656c736520286e6f290a656e6469660a0a3a546f6d617220646563697369c3b36e2066696e616c3b0a0a69662028c2bf41646d697469646f3f29207468656e202873c3ad290a20207c53697374656d617c0a2020666f726b0a202020203a47656e657261722063c3b36469676f20657374756469616e74653b0a2020666f726b20616761696e0a202020203a437265617220657870656469656e74653b0a2020666f726b20616761696e0a202020203a456e76696172206e6f7469666963616369c3b36e2064652061646d697369c3b36e3b203c3c73656e645369676e616c3e3e0a2020656e6420666f726b0a20200a20207c4173706972616e74657c0a20203a526563696269722063617274612064652061646d697369c3b36e3b203c3c6163636570744576656e743e3e0a20203a41636570746172206375706f3b0a20200a20207c4f666963696e6120646520526567697374726f7c0a20203a4d6174726963756c617220657374756469616e74653b0a20206e6f74652072696768740a20202020536520617369676e616e206d617465726961730a2020202064656c207072696d65722073656d65737472650a2020656e64206e6f74650a20200a656c736520286e6f290a20207c53697374656d617c0a20203a456e766961722072656368617a6f3b203c3c73656e645369676e616c3e3e0a20207c4173706972616e74657c0a20203a52656369626972206e6f7469666963616369c3b36e2064652072656368617a6f3b203c3c6163636570744576656e743e3e0a20203a5265636962697220726573756c7461646f3b0a656e6469660a0a73746f700a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+|Aspirante|
+start
+:Registrar solicitud;
+:Cargar documentos;
+
+|Sistema|
+:Validar documentos;
+
+if (¿Documentos completos?) then (no)
+  |Sistema|
+  :Enviar solicitud de documentos; &lt;&lt;sendSignal&gt;&gt;
+  |Aspirante|
+  :Recibir notificación; &lt;&lt;acceptEvent&gt;&gt;
+  :Completar documentos;
+  |Sistema|
+  :Revalidar;
+else (sí)
+endif
+
+:Programar examen;
+
+|Sistema|
+:Enviar notificación de examen; &lt;&lt;sendSignal&gt;&gt;
+|Aspirante|
+:Recibir fecha de examen; &lt;&lt;acceptEvent&gt;&gt;
+:Espera de 3 días; &lt;&lt;timeEvent&gt;&gt;
+note right: Tiempo de preparación
+:Presentar examen;
+
+|Sistema de Evaluación|
+:Calificar examen;
+:Calcular puntaje;
+
+fork
+  :Evaluar conocimientos;
+fork again
+  :Evaluar aptitudes;
+fork again
+  :Evaluar competencias;
+end fork
+
+:Consolidar resultados;
+
+|Sistema|
+if (¿Puntaje &gt;= mínimo?) then (no)
+  :Enviar rechazo; &lt;&lt;sendSignal&gt;&gt;
+  |Aspirante|
+  :Recibir notificación de no admisión; &lt;&lt;acceptEvent&gt;&gt;
+  :Recibir resultado;
+  stop
+else (sí)
+endif
+
+|Comité de Admisiones|
+:Revisar caso;
+
+if (¿Requiere entrevista?) then (sí)
+  |Aspirante|
+  :Asistir a entrevista;
+  |Comité de Admisiones|
+  :Evaluar entrevista;
+else (no)
+endif
+
+:Tomar decisión final;
+
+if (¿Admitido?) then (sí)
+  |Sistema|
+  fork
+    :Generar código estudiante;
+  fork again
+    :Crear expediente;
+  fork again
+    :Enviar notificación de admisión; &lt;&lt;sendSignal&gt;&gt;
+  end fork
+  
+  |Aspirante|
+  :Recibir carta de admisión; &lt;&lt;acceptEvent&gt;&gt;
+  :Aceptar cupo;
+  
+  |Oficina de Registro|
+  :Matricular estudiante;
+  note right
+    Se asignan materias
+    del primer semestre
+  end note
+  
+else (no)
+  |Sistema|
+  :Enviar rechazo; &lt;&lt;sendSignal&gt;&gt;
+  |Aspirante|
+  :Recibir notificación de rechazo; &lt;&lt;acceptEvent&gt;&gt;
+  :Recibir resultado;
+endif
+
+stop
+@enduml</code></pre>
+  </details>
+</div>
+<blockquote class="aside aside-note">
+Este diagrama incluye:
+  - **Particiones**: Aspirante, Sistema, Sistema de Evaluación, Comité, Oficina de Registro
+  - **Señales de envío** (sendSignal): Notificaciones de documentos, examen, admisión/rechazo
+  - **Señales de recepción** (acceptEvent): Recepción de notificaciones por el aspirante
+  - **Eventos temporales** (timeEvent): Espera de 3 días para preparación del examen
+  - **Bifurcaciones**: Evaluación paralela de conocimientos, aptitudes y competencias
+  - **Decisiones anidadas**: Documentos completos, puntaje mínimo, entrevista, admisión
+  - **Notas**: Explicación sobre asignación de materias
+</blockquote>
+    </div>
+  </section>
+
+  <section id="3-3-proceso-de-atencion-medica-en-hospital">
+    <h2>3.3. Proceso de Atención Médica en Hospital</h2>
+    <div class="doc-content">
+<p>Sistema hospitalario con urgencias, diagnóstico y tratamiento.</p>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a7c50616369656e74657c0a73746172740a3a4c6c6567617220616c20686f73706974616c3b0a0a7c52656365706369c3b36e7c0a3a52656769737472617220696e677265736f3b0a0a69662028c2bf457320757267656e6369613f29207468656e202873c3ad290a20207c547269616a657c0a20203a4576616c7561722067726176656461643b0a20203a4163746976617220616c657274613b203c3c73656e645369676e616c3e3e0a20206e6f74652072696768743a2043c3b36469676f20646520757267656e6369610a20200a20207c4dc3a96469636f7c0a20203a5265636962697220616c657274613b203c3c6163636570744576656e743e3e0a20203a4174656e6369c3b36e20696e6d6564696174613b0a656c736520286e6f290a20207c52656365706369c3b36e7c0a20203a417369676e617220636974613b0a20203a5469656d706f206465206573706572613b203c3c74696d654576656e743e3e0a20206e6f7465206c6566743a203330206d696e75746f73206170726f782e0a656e6469660a0a7c456e6665726d6572c3ad617c0a666f726b0a20203a4d65646972207072657369c3b36e3b0a666f726b20616761696e0a20203a546f6d61722074656d70657261747572613b0a666f726b20616761696e0a20203a5265676973747261722073c3ad6e746f6d61733b0a656e6420666f726b0a0a7c4dc3a96469636f7c0a3a4578616d696e61722070616369656e74653b0a3a45737461626c6563657220646961676ec3b3737469636f3b0a0a69662028c2bf5265717569657265206578c3a16d656e65733f29207468656e202873c3ad290a20207c4c61626f7261746f72696f7c0a20203a5265616c697a617220616ec3a16c697369733b0a20203a47656e6572617220726573756c7461646f733b0a20200a20207c4dc3a96469636f7c0a20203a5265766973617220726573756c7461646f733b0a656c736520286e6f290a656e6469660a0a3a507265736372696269722074726174616d69656e746f3b0a0a7c4661726d616369617c0a3a44697370656e736172206d65646963616d656e746f733b0a0a7c50616369656e74657c0a3a5265636962697220696e6469636163696f6e65733b0a0a7c43616a617c0a3a50726f6365736172207061676f3b0a0a7c53697374656d617c0a3a456e76696172207265636f726461746f72696f3b203c3c73656e645369676e616c3e3e0a0a7c50616369656e74657c0a3a52656369626972207265636f726461746f72696f3b203c3c6163636570744576656e743e3e0a0a73746f700a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+|Paciente|
+start
+:Llegar al hospital;
+
+|Recepción|
+:Registrar ingreso;
+
+if (¿Es urgencia?) then (sí)
+  |Triaje|
+  :Evaluar gravedad;
+  :Activar alerta; &lt;&lt;sendSignal&gt;&gt;
+  note right: Código de urgencia
+  
+  |Médico|
+  :Recibir alerta; &lt;&lt;acceptEvent&gt;&gt;
+  :Atención inmediata;
+else (no)
+  |Recepción|
+  :Asignar cita;
+  :Tiempo de espera; &lt;&lt;timeEvent&gt;&gt;
+  note left: 30 minutos aprox.
+endif
+
+|Enfermería|
+fork
+  :Medir presión;
+fork again
+  :Tomar temperatura;
+fork again
+  :Registrar síntomas;
+end fork
+
+|Médico|
+:Examinar paciente;
+:Establecer diagnóstico;
+
+if (¿Requiere exámenes?) then (sí)
+  |Laboratorio|
+  :Realizar análisis;
+  :Generar resultados;
+  
+  |Médico|
+  :Revisar resultados;
+else (no)
+endif
+
+:Prescribir tratamiento;
+
+|Farmacia|
+:Dispensar medicamentos;
+
+|Paciente|
+:Recibir indicaciones;
+
+|Caja|
+:Procesar pago;
+
+|Sistema|
+:Enviar recordatorio; &lt;&lt;sendSignal&gt;&gt;
+
+|Paciente|
+:Recibir recordatorio; &lt;&lt;acceptEvent&gt;&gt;
+
+stop
+@enduml</code></pre>
+  </details>
+</div>
+<blockquote class="aside aside-tip">
+Este diagrama demuestra:
+  - **Particiones**: Paciente, Recepción, Triaje, Médico, Enfermería, Laboratorio, Farmacia, Caja, Sistema
+  - **Señales de envío** (sendSignal): Alerta de urgencia, recordatorio de cita
+  - **Señales de recepción** (acceptEvent): Recepción de alertas y recordatorios
+  - **Eventos temporales** (timeEvent): Tiempo de espera de 30 minutos
+  - **Bifurcaciones**: Toma de signos vitales en paralelo
+  - **Decisiones**: Urgencia, exámenes requeridos
+  - **Notas**: Código de urgencia, tiempo de espera
+</blockquote>
+    </div>
+  </section>
+
+  <section id="3-4-proceso-de-desarrollo-de-software-metodologia-agil">
+    <h2>3.4. Proceso de Desarrollo de Software (Metodología Ágil)</h2>
+    <div class="doc-content">
+<p>Sistema de gestión de proyectos con sprints y revisiones.</p>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a7c50726f64756374204f776e65727c0a73746172740a3a43726561722050726f64756374204261636b6c6f673b0a0a7c536372756d204d61737465727c0a3a506c616e69666963617220537072696e743b0a0a7c45717569706f206465204465736172726f6c6c6f7c0a3a53656c656363696f6e617220686973746f726961733b0a6e6f74652072696768743a20506c616e6e696e6720506f6b65720a0a666f726b0a20203a44697365c3b1617220736f6c756369c3b36e3b0a666f726b20616761696e0a20203a446566696e697220707275656261733b0a656e6420666f726b0a0a706172746974696f6e2022537072696e742028322073656d616e61732922207b0a20207265706561740a202020203a4465736172726f6c6c61722066756e63696f6e616c696461643b0a202020200a202020207c53697374656d612043492f43447c0a202020203a456a656375746172206275696c643b0a202020200a2020202069662028c2bf4275696c6420657869746f736f3f29207468656e20286e6f290a2020202020203a456e7669617220616c657274613b203c3c73656e645369676e616c3e3e0a2020202020207c45717569706f206465204465736172726f6c6c6f7c0a2020202020203a5265636962697220616c657274613b203c3c6163636570744576656e743e3e0a2020202020203a436f727265676972206572726f7265733b0a20202020656c7365202873c3ad290a2020202020203a456a65637574617220707275656261733b0a20202020656e6469660a202020200a202020207c5141205465737465727c0a202020203a50726f6261722066756e63696f6e616c696461643b0a202020200a2020202069662028c2bf43616c69646164204f4b3f29207468656e20286e6f290a2020202020203a5265706f7274617220627567733b0a2020202020207c45717569706f206465204465736172726f6c6c6f7c0a2020202020203a436f72726567697220627567733b0a20202020656c7365202873c3ad290a2020202020203a4170726f6261723b0a20202020656e6469660a202020200a202020207c536372756d204d61737465727c0a202020203a4461696c79205374616e6475703b203c3c74696d654576656e743e3e0a202020206e6f74652072696768743a205265756e69c3b36e206469617269610a202020200a2020726570656174207768696c652028c2bf537072696e7420636f6d706c657461646f3f2920697320286e6f290a7d0a0a7c50726f64756374204f776e65727c0a3a537072696e74205265766965773b0a0a69662028c2bf496e6372656d656e746f20616365707461646f3f29207468656e20286e6f290a20203a4167726567617220666565646261636b3b0a20207c536372756d204d61737465727c0a20203a506c616e696669636172207369677569656e746520537072696e743b0a20206465746163680a656c7365202873c3ad290a20207c53697374656d612043492f43447c0a20203a446573706c6567617220612070726f6475636369c3b36e3b0a20203a456e76696172206e6f7469666963616369c3b36e3b203c3c73656e645369676e616c3e3e0a656e6469660a0a7c45717569706f20436f6d706c65746f7c0a3a537072696e7420526574726f73706563746976653b0a6e6f74652072696768740a20204d656a6f726120636f6e74696e75610a656e64206e6f74650a0a73746f700a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+|Product Owner|
+start
+:Crear Product Backlog;
+
+|Scrum Master|
+:Planificar Sprint;
+
+|Equipo de Desarrollo|
+:Seleccionar historias;
+note right: Planning Poker
+
+fork
+  :Diseñar solución;
+fork again
+  :Definir pruebas;
+end fork
+
+partition "Sprint (2 semanas)" {
+  repeat
+    :Desarrollar funcionalidad;
+    
+    |Sistema CI/CD|
+    :Ejecutar build;
+    
+    if (¿Build exitoso?) then (no)
+      :Enviar alerta; &lt;&lt;sendSignal&gt;&gt;
+      |Equipo de Desarrollo|
+      :Recibir alerta; &lt;&lt;acceptEvent&gt;&gt;
+      :Corregir errores;
+    else (sí)
+      :Ejecutar pruebas;
+    endif
+    
+    |QA Tester|
+    :Probar funcionalidad;
+    
+    if (¿Calidad OK?) then (no)
+      :Reportar bugs;
+      |Equipo de Desarrollo|
+      :Corregir bugs;
+    else (sí)
+      :Aprobar;
+    endif
+    
+    |Scrum Master|
+    :Daily Standup; &lt;&lt;timeEvent&gt;&gt;
+    note right: Reunión diaria
+    
+  repeat while (¿Sprint completado?) is (no)
+}
+
+|Product Owner|
+:Sprint Review;
+
+if (¿Incremento aceptado?) then (no)
+  :Agregar feedback;
+  |Scrum Master|
+  :Planificar siguiente Sprint;
+  detach
+else (sí)
+  |Sistema CI/CD|
+  :Desplegar a producción;
+  :Enviar notificación; &lt;&lt;sendSignal&gt;&gt;
+endif
+
+|Equipo Completo|
+:Sprint Retrospective;
+note right
+  Mejora continua
+end note
+
+stop
+@enduml</code></pre>
+  </details>
+</div>
+<blockquote class="aside aside-note">
+Este diagrama incluye:
+  - **Particiones**: Product Owner, Scrum Master, Equipo de Desarrollo, Sistema CI/CD, QA Tester, Equipo Completo
+  - **Partition especial**: Sprint de 2 semanas con repeat/while
+  - **Bifurcaciones**: Diseño y definición de pruebas en paralelo
+  - **Señales de envío** (sendSignal): Alertas de build, notificación de despliegue
+  - **Señales de recepción** (acceptEvent): Recepción de alertas por el equipo
+  - **Eventos temporales** (timeEvent): Daily Standup diario
+  - **Bucles**: Iteración dentro del Sprint con repeat/while
+  - **Notas**: Planning Poker, reunión diaria, mejora continua
+  - **Detach**: Para continuar con siguiente Sprint
+  - **Decisiones**: Build exitoso, calidad OK, incremento aceptado
+</blockquote>
+    </div>
+  </section>
+
+  <section id="3-5-proceso-de-solicitud-de-prestamo-bancario">
+    <h2>3.5. Proceso de Solicitud de Préstamo Bancario</h2>
+    <div class="doc-content">
+<p>Sistema financiero con validaciones y aprobaciones.</p>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a7c436c69656e74657c0a73746172740a3a536f6c696369746172207072c3a97374616d6f3b0a3a436f6d706c6574617220666f726d756c6172696f3b0a0a7c53697374656d617c0a3a56616c6964617220696e666f726d616369c3b36e3b0a0a69662028c2bf4461746f7320636f6d706c65746f733f29207468656e20286e6f290a20203a456e7669617220736f6c6963697475643b203c3c73656e645369676e616c3e3e0a20207c436c69656e74657c0a20203a5265636962697220736f6c6963697475643b203c3c6163636570744576656e743e3e0a20203a436f6d706c65746172206461746f733b0a20207c53697374656d617c0a20203a526576616c696461723b0a656c7365202873c3ad290a656e6469660a0a7c4f66696369616c206465204372c3a96469746f7c0a3a5265766973617220736f6c6963697475643b0a0a666f726b0a20203a436f6e73756c74617220627572c3b33b0a20206e6f74652072696768743a2053636f7265206372656469746963696f0a666f726b20616761696e0a20203a56657269666963617220696e677265736f733b0a666f726b20616761696e0a20203a43616c63756c617220636170616369646164206465207061676f3b0a656e6420666f726b0a0a3a47656e6572617220616ec3a16c697369733b0a0a69662028c2bf4170726f6261646f3f29207468656e20286e6f290a20203a456e766961722072656368617a6f3b203c3c73656e645369676e616c3e3e0a20207c436c69656e74657c0a20203a52656369626972206e6f7469666963616369c3b36e3b203c3c6163636570744576656e743e3e0a202073746f700a656c7365202873c3ad290a656e6469660a0a7c4f66696369616c206465204372c3a96469746f7c0a3a43616c63756c6172206d6f6e746f3b0a3a446566696e697220746173613b0a0a7c53697374656d617c0a3a47656e6572617220636f6e747261746f3b0a0a666f726b0a20203a43616c63756c617220616d6f7274697a616369c3b36e3b0a666f726b20616761696e0a20203a507265706172617220646f63756d656e746f733b0a656e6420666f726b0a0a3a456e76696172206170726f62616369c3b36e3b203c3c73656e645369676e616c3e3e0a0a7c436c69656e74657c0a3a52656369626972206e6f7469666963616369c3b36e3b203c3c6163636570744576656e743e3e0a3a526576697361722074c3a9726d696e6f733b0a0a69662028c2bf4163657074613f29207468656e20286e6f290a20203a52656368617a61723b0a202073746f700a656c7365202873c3ad290a20203a4669726d617220636f6e747261746f3b0a656e6469660a0a7c5465736f726572c3ad617c0a3a446573656d626f6c73617220666f6e646f733b0a0a7c436c69656e74657c0a3a5265636962697220666f6e646f733b0a0a7c53697374656d617c0a3a5265636f726461746f72696f206465207061676f3b203c3c74696d654576656e743e3e0a6e6f74652072696768743a2033302064c3ad61730a3a456e76696172207265636f726461746f72696f3b203c3c73656e645369676e616c3e3e0a0a7c436c69656e74657c0a3a52656369626972207265636f726461746f72696f3b203c3c6163636570744576656e743e3e0a0a706172746974696f6e20224369636c6f206465205061676f7322207b0a20207265706561740a202020203a5265616c697a6172207061676f3b0a202020200a202020207c53697374656d617c0a202020203a526567697374726172207061676f3b0a202020200a2020202069662028c2bf5061676f2061207469656d706f3f29207468656e20286e6f290a2020202020203a416c65727461206465206d6f72613b203c3c74696d654576656e743e3e0a2020202020203a456e7669617220616c657274613b203c3c73656e645369676e616c3e3e0a2020202020207c436f6272616e7a617c0a2020202020203a5265636962697220616c657274613b203c3c6163636570744576656e743e3e0a2020202020203a47657374696f6e6172206d6f72613b0a20202020656c7365202873c3ad290a2020202020203a41706c69636172207061676f3b0a20202020656e6469660a202020200a2020726570656174207768696c652028c2bf4c697175696461646f3f2920697320286e6f290a7d0a0a7c53697374656d617c0a3a436572726172207072c3a97374616d6f3b0a3a456e7669617220636f6e6669726d616369c3b36e3b203c3c73656e645369676e616c3e3e0a0a7c436c69656e74657c0a3a5265636962697220636572746966696361646f3b203c3c6163636570744576656e743e3e0a0a73746f700a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+|Cliente|
+start
+:Solicitar préstamo;
+:Completar formulario;
+
+|Sistema|
+:Validar información;
+
+if (¿Datos completos?) then (no)
+  :Enviar solicitud; &lt;&lt;sendSignal&gt;&gt;
+  |Cliente|
+  :Recibir solicitud; &lt;&lt;acceptEvent&gt;&gt;
+  :Completar datos;
+  |Sistema|
+  :Revalidar;
+else (sí)
+endif
+
+|Oficial de Crédito|
+:Revisar solicitud;
+
+fork
+  :Consultar buró;
+  note right: Score crediticio
+fork again
+  :Verificar ingresos;
+fork again
+  :Calcular capacidad de pago;
+end fork
+
+:Generar análisis;
+
+if (¿Aprobado?) then (no)
+  :Enviar rechazo; &lt;&lt;sendSignal&gt;&gt;
+  |Cliente|
+  :Recibir notificación; &lt;&lt;acceptEvent&gt;&gt;
+  stop
+else (sí)
+endif
+
+|Oficial de Crédito|
+:Calcular monto;
+:Definir tasa;
+
+|Sistema|
+:Generar contrato;
+
+fork
+  :Calcular amortización;
+fork again
+  :Preparar documentos;
+end fork
+
+:Enviar aprobación; &lt;&lt;sendSignal&gt;&gt;
+
+|Cliente|
+:Recibir notificación; &lt;&lt;acceptEvent&gt;&gt;
+:Revisar términos;
+
+if (¿Acepta?) then (no)
+  :Rechazar;
+  stop
+else (sí)
+  :Firmar contrato;
+endif
+
+|Tesorería|
+:Desembolsar fondos;
+
+|Cliente|
+:Recibir fondos;
+
+|Sistema|
+:Recordatorio de pago; &lt;&lt;timeEvent&gt;&gt;
+note right: 30 días
+:Enviar recordatorio; &lt;&lt;sendSignal&gt;&gt;
+
+|Cliente|
+:Recibir recordatorio; &lt;&lt;acceptEvent&gt;&gt;
+
+partition "Ciclo de Pagos" {
+  repeat
+    :Realizar pago;
+    
+    |Sistema|
+    :Registrar pago;
+    
+    if (¿Pago a tiempo?) then (no)
+      :Alerta de mora; &lt;&lt;timeEvent&gt;&gt;
+      :Enviar alerta; &lt;&lt;sendSignal&gt;&gt;
+      |Cobranza|
+      :Recibir alerta; &lt;&lt;acceptEvent&gt;&gt;
+      :Gestionar mora;
+    else (sí)
+      :Aplicar pago;
+    endif
+    
+  repeat while (¿Liquidado?) is (no)
+}
+
+|Sistema|
+:Cerrar préstamo;
+:Enviar confirmación; &lt;&lt;sendSignal&gt;&gt;
+
+|Cliente|
+:Recibir certificado; &lt;&lt;acceptEvent&gt;&gt;
+
+stop
+@enduml</code></pre>
+  </details>
+</div>
+<blockquote class="aside aside-tip">
+Este diagrama muestra:
+  - **Particiones**: Cliente, Sistema, Oficial de Crédito, Tesorería, Cobranza
+  - **Bifurcaciones**: Verificaciones paralelas (buró, ingresos, capacidad), generación de documentos
+  - **Decisiones**: Datos completos, aprobación, aceptación de términos, pago a tiempo
+  - **Señales de envío** (sendSignal): Solicitud de datos, rechazo, aprobación, recordatorios, alertas
+  - **Señales de recepción** (acceptEvent): Recepción de notificaciones por el cliente y cobranza
+  - **Eventos temporales** (timeEvent): Recordatorio de pago (30 días), alerta de mora
+  - **Partition especial**: Ciclo de pagos con repeat/while
+  - **Notas**: Score crediticio, tiempo de recordatorio
+</blockquote>
+    </div>
+  </section>
+
+  <section id="3-6-proceso-de-gestion-de-incidentes-it">
+    <h2>3.6. Proceso de Gestión de Incidentes IT</h2>
+    <div class="doc-content">
+<p>Sistema de soporte técnico con escalamiento y resolución.</p>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a7c5573756172696f7c0a73746172740a3a5265706f7274617220696e636964656e74653b0a0a7c53697374656d61206465205469636b6574737c0a3a4372656172207469636b65743b0a3a456e7669617220636f6e6669726d616369c3b36e3b203c3c73656e645369676e616c3e3e0a0a7c5573756172696f7c0a3a5265636962697220636f6e6669726d616369c3b36e3b203c3c6163636570744576656e743e3e0a0a7c53697374656d617c0a3a436c617369666963617220696e636964656e74653b0a0a666f726b0a20203a44657465726d696e6172207072696f72696461643b0a20206e6f74652072696768740a2020202050313a204372c3ad7469636f0a2020202050323a20416c746f0a2020202050333a204d6564696f0a2020656e64206e6f74650a666f726b20616761696e0a20203a43617465676f72697a6172207469706f3b0a656e6420666f726b0a0a69662028c2bf5072696f72696461643f29207468656e20285031202d204372c3ad7469636f290a20203a456e7669617220616c657274613b203c3c73656e645369676e616c3e3e0a20207c476572656e74652049547c0a20203a5265636962697220616c657274613b203c3c6163636570744576656e743e3e0a20203a416374697661722070726f746f636f6c6f3b0a656c7365202850322f5033290a20203a5469656d706f206465207265737075657374613b203c3c74696d654576656e743e3e0a20206e6f74652072696768743a20536567c3ba6e207072696f72696461640a656e6469660a0a7c536f706f7274657c0a3a52657669736172207469636b65743b0a3a446961676e6f7374696361722070726f626c656d613b0a0a69662028c2bf5075656465207265736f6c7665723f29207468656e20286e6f290a20203a457363616c61722061204e6976656c20323b0a20207c536f706f727465204e6976656c20327c0a20203a416ec3a16c69736973206176616e7a61646f3b0a20203a5265736f6c7665723b0a656c7365202873c3ad290a20203a41706c6963617220736f6c756369c3b36e3b0a656e6469660a0a3a446f63756d656e74617220736f6c756369c3b36e3b0a6e6f74652072696768743a205061736f732079206361757361207261c3ad7a0a0a7c53697374656d61206465205469636b6574737c0a3a43616d626961722061202252657375656c746f223b0a3a456e76696172206e6f7469666963616369c3b36e3b203c3c73656e645369676e616c3e3e0a0a7c5573756172696f7c0a3a52656369626972206e6f7469666963616369c3b36e3b203c3c6163636570744576656e743e3e0a3a56657269666963617220736f6c756369c3b36e3b0a0a69662028c2bf52657375656c746f3f29207468656e20286e6f290a20203a52656162726972207469636b65743b0a20206465746163680a656c7365202873c3ad290a20203a436f6e6669726d61723b0a656e6469660a0a7c53697374656d617c0a666f726b0a20203a47656e65726172206dc3a97472696361733b0a20206e6f7465206c6566743a205469656d706f73207920534c410a666f726b20616761696e0a20203a456e7669617220656e6375657374613b203c3c73656e645369676e616c3e3e0a656e6420666f726b0a0a7c5573756172696f7c0a3a5265636962697220656e6375657374613b203c3c6163636570744576656e743e3e0a3a43616c69666963617220736572766963696f3b0a0a73746f700a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+|Usuario|
+start
+:Reportar incidente;
+
+|Sistema de Tickets|
+:Crear ticket;
+:Enviar confirmación; &lt;&lt;sendSignal&gt;&gt;
+
+|Usuario|
+:Recibir confirmación; &lt;&lt;acceptEvent&gt;&gt;
+
+|Sistema|
+:Clasificar incidente;
+
+fork
+  :Determinar prioridad;
+  note right
+    P1: Crítico
+    P2: Alto
+    P3: Medio
+  end note
+fork again
+  :Categorizar tipo;
+end fork
+
+if (¿Prioridad?) then (P1 - Crítico)
+  :Enviar alerta; &lt;&lt;sendSignal&gt;&gt;
+  |Gerente IT|
+  :Recibir alerta; &lt;&lt;acceptEvent&gt;&gt;
+  :Activar protocolo;
+else (P2/P3)
+  :Tiempo de respuesta; &lt;&lt;timeEvent&gt;&gt;
+  note right: Según prioridad
+endif
+
+|Soporte|
+:Revisar ticket;
+:Diagnosticar problema;
+
+if (¿Puede resolver?) then (no)
+  :Escalar a Nivel 2;
+  |Soporte Nivel 2|
+  :Análisis avanzado;
+  :Resolver;
+else (sí)
+  :Aplicar solución;
+endif
+
+:Documentar solución;
+note right: Pasos y causa raíz
+
+|Sistema de Tickets|
+:Cambiar a "Resuelto";
+:Enviar notificación; &lt;&lt;sendSignal&gt;&gt;
+
+|Usuario|
+:Recibir notificación; &lt;&lt;acceptEvent&gt;&gt;
+:Verificar solución;
+
+if (¿Resuelto?) then (no)
+  :Reabrir ticket;
+  detach
+else (sí)
+  :Confirmar;
+endif
+
+|Sistema|
+fork
+  :Generar métricas;
+  note left: Tiempos y SLA
+fork again
+  :Enviar encuesta; &lt;&lt;sendSignal&gt;&gt;
+end fork
+
+|Usuario|
+:Recibir encuesta; &lt;&lt;acceptEvent&gt;&gt;
+:Calificar servicio;
+
+stop
+@enduml</code></pre>
+  </details>
+</div>
+<blockquote class="aside aside-note">
+Este diagrama incluye:
+  - **Particiones**: Usuario, Sistema de Tickets, Sistema, Gerente IT, Soporte, Soporte Nivel 2
+  - **Decisiones**: Prioridad, capacidad de resolución, verificación de solución
+  - **Bifurcaciones**: Clasificación paralela (prioridad y tipo)
+  - **Señales de envío** (sendSignal): Confirmación, alertas, notificaciones, encuestas
+  - **Señales de recepción** (acceptEvent): Recepción de alertas y notificaciones
+  - **Eventos temporales** (timeEvent): Tiempo de respuesta según prioridad
+  - **Escalamiento**: Soporte <i class="fa-solid fa-arrow-right"></i> Soporte Nivel 2
+  - **Notas**: Niveles de prioridad, documentación, métricas
+  - **Detach**: Para reapertura de ticket
+</blockquote>
+<blockquote class="aside aside-caution">
+Al crear diagramas de actividades, recuerde:
+  - Mantener un nivel de detalle apropiado para la audiencia
+  - Usar particiones para clarificar responsabilidades
+  - Incluir notas solo cuando agreguen valor significativo
+  - Evitar diagramas excesivamente complejos que dificulten la comprensión
+  - Validar que todos los flujos tengan un inicio y un final apropiados
+</blockquote>
+    </div>
+  </section>

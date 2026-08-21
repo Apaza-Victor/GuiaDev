@@ -1,0 +1,432 @@
+<!-- 09. Directivas y Bindings - Vue 3 (Frameworks) -->
+  <section id="directivas-condicionales-v-if-v-else-v-show">
+    <h2>Directivas condicionales: v-if, v-else, v-show</h2>
+    <div class="doc-content">
+<p>Las directivas condicionales te permiten mostrar u ocultar elementos en el DOM basándose en condiciones.</p>
+<h3>v-if, v-else</h3>
+<p>La directiva <code>v-if</code> renderiza un elemento solo si la expresión evaluada es verdadera. Se utiliza para mostrar o eliminar completamente elementos del DOM.</p>
+  <h4 class="tab-label">Composition API</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref } from 'vue'
+    
+    const isVisible = ref(true)
+    const toggleVisibility = () =&gt; {
+      isVisible.value = !isVisible.value
+    }
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;button @click="toggleVisibility"&gt;Toggle visibility&lt;/button&gt;
+      
+      &lt;div v-if="isVisible"&gt;Este elemento está visible&lt;/div&gt;
+      &lt;div v-else&gt;Este elemento aparece cuando isVisible es falso&lt;/div&gt;
+    &lt;/template&gt;
+    </code></pre>
+<blockquote class="aside aside-tip">
+`v-if` es una renderización "real" - el elemento y sus directivas/componentes se destruyen y reconstruyen cuando cambia la condición.
+</blockquote>
+<h3>v-show</h3>
+<p>A diferencia de <code>v-if</code>, la directiva <code>v-show</code> solo alterna la propiedad CSS <code>display</code> del elemento.</p>
+  <h4 class="tab-label">Composition API</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref } from 'vue'
+    
+    const isShown = ref(true)
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;button @click="isShown = !isShown"&gt;Toggle display&lt;/button&gt;
+      
+      &lt;div v-show="isShown"&gt;
+        Este elemento se oculta/muestra usando CSS display
+      &lt;/div&gt;
+    &lt;/template&gt;
+    </code></pre>
+<blockquote class="aside aside-note">
+Usa `v-show` para elementos que alternan visibilidad frecuentemente, y `v-if` cuando la condición es poco probable que cambie durante el tiempo de ejecución.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="v-for-y-claves-unicas">
+    <h2>v-for y claves únicas</h2>
+    <div class="doc-content">
+<p>La directiva <code>v-for</code> se utiliza para renderizar listas de elementos basadas en un array o un objeto.</p>
+  <h4 class="tab-label">Composition API</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref } from 'vue'
+    
+    const items = ref([
+      { id: 1, text: 'Elemento 1' },
+      { id: 2, text: 'Elemento 2' },
+      { id: 3, text: 'Elemento 3' }
+    ])
+    
+    const addItem = () =&gt; {
+      const newId = items.value.length + 1
+      items.value.push({ id: newId, text: `Elemento ${newId}` })
+    }
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;button @click="addItem"&gt;Añadir elemento&lt;/button&gt;
+      
+      &lt;ul&gt;
+        &lt;li v-for="item in items" :key="item.id"&gt;
+          {{ item.text }}
+        &lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/template&gt;
+    </code></pre>
+<h3>Claves únicas (key)</h3>
+<p>El atributo <code>:key</code> es <strong>obligatorio</strong> cuando se usa <code>v-for</code>. Proporciona a Vue una manera de identificar cada nodo de manera única para optimizar la renderización.</p>
+<blockquote class="aside aside-caution">
+Siempre usa valores únicos y estables para la prop `key`. Evita usar índices de array como claves cuando el orden de los elementos puede cambiar.
+</blockquote>
+<h3>Iteración de objetos</h3>
+<p>También puedes usar <code>v-for</code> para iterar sobre las propiedades de un objeto:</p>
+  <h4 class="tab-label">Composition API</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref } from 'vue'
+    
+    const user = ref({
+      name: 'Ana',
+      email: 'ana@example.com',
+      role: 'Developer'
+    })
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;ul&gt;
+        &lt;li v-for="(value, key) in user" :key="key"&gt;
+          &lt;strong&gt;{{ key }}:&lt;/strong&gt; {{ value }}
+        &lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/template&gt;
+    </code></pre>
+    </div>
+  </section>
+
+  <section id="v-bind-y-los-mas-usados">
+    <h2>v-bind y : - Los más usados $1 $1 </h2>
+    <div class="doc-content">
+<p>La directiva <code>v-bind</code> (abreviada como <code>:</code>) se utiliza para enlazar valores reactivos a los atributos HTML. Es una de las directivas más utilizadas en Vue.</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;!-- ATRIBUTOS BÁSICOS --&gt;
+  
+  &lt;!-- Enlazar un atributo simple --&gt;
+  &lt;img :src="imageUrl" alt="Imagen"&gt;
+  
+  &lt;!-- Enlazar múltiples atributos con un objeto --&gt;
+  &lt;div v-bind="objectOfAttrs"&gt;&lt;/div&gt;
+  
+  &lt;!-- Atributos dinámicos (nombre de atributo variable) --&gt;
+  &lt;div :[attributeName]="value"&gt;&lt;/div&gt;
+  
+  &lt;!-- CLASES Y ESTILOS --&gt;
+  
+  &lt;!-- Enlazar clases con objeto --&gt;
+  &lt;div :class="{ active: isActive, 'text-danger': hasError }"&gt;&lt;/div&gt;
+  
+  &lt;!-- Enlazar clases con array --&gt;
+  &lt;div :class="[activeClass, errorClass, { optional: isOptional }]"&gt;&lt;/div&gt;
+  
+  &lt;!-- Combinar con clases estáticas --&gt;
+  &lt;div class="static-class" :class="dynamicClass"&gt;&lt;/div&gt;
+  
+  &lt;!-- Enlazar estilos con objeto --&gt;
+  &lt;div :style="{ color: activeColor, fontSize: fontSize + 'px' }"&gt;&lt;/div&gt;
+  
+  &lt;!-- Enlazar estilos con array de objetos --&gt;
+  &lt;div :style="[baseStyles, overrideStyles]"&gt;&lt;/div&gt;
+  
+  &lt;!-- Auto-prefijado para propiedades CSS --&gt;
+  &lt;div :style="{ transform: 'scale(0.5)' }"&gt;&lt;/div&gt;
+  
+  &lt;!-- CASOS ESPECIALES --&gt;
+  
+  &lt;!-- Atributos booleanos (presentes si la condición es true) --&gt;
+  &lt;button :disabled="isButtonDisabled"&gt;Botón&lt;/button&gt;
+  
+  &lt;!-- Enlazar valores numéricos --&gt;
+  &lt;input :value="42"&gt;
+  
+  &lt;!-- Enlazar expresiones JavaScript --&gt;
+  &lt;div :id="'list-' + id"&gt;&lt;/div&gt;
+  
+  &lt;!-- Pasar propiedades a componentes --&gt;
+  &lt;UserProfile :user="currentUser" :is-admin="isAdmin" /&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+
+
+// Valores reactivos básicos
+const imageUrl = ref('/images/logo.png')
+const isActive = ref(true)
+const hasError = ref(false)
+const isButtonDisabled = ref(false)
+const id = ref(42)
+
+// Estilos y clases
+const activeColor = ref('red')
+const fontSize = ref(16)
+const activeClass = ref('active')
+const errorClass = ref('text-danger')
+const isOptional = ref(true)
+
+// Objetos para v-bind múltiple
+const objectOfAttrs = ref({
+  id: 'container',
+  class: 'wrapper',
+  'aria-label': 'Contenedor principal'
+})
+
+// Nombre de atributo dinámico
+const attributeName = ref('title')
+const value = ref('Este es un título dinámico')
+
+// Objetos para estilos
+const baseStyles = ref({
+  color: 'blue',
+  fontSize: '18px'
+})
+const overrideStyles = ref({
+  fontWeight: 'bold',
+  backgroundColor: '#f0f0f0'
+})
+
+// Datos para componentes
+const currentUser = ref({
+  name: 'Juan',
+  email: 'juan@ejemplo.com'
+})
+const isAdmin = ref(true)
+
+// Clase computada basada en estado
+const dynamicClass = computed(() =&gt; {
+  return {
+    active: isActive.value,
+    'text-danger': hasError.value,
+    'is-admin': isAdmin.value
+  }
+})
+&lt;/script&gt;</code></pre>
+<h3>Casos de uso comunes de v-bind</h3>
+<table><thead><tr><th>Caso de uso</th><th>Ejemplo</th><th>Descripción</th></tr></thead><tbody><tr><td>Atributos HTML</td><td><code>:href="url"</code></td><td>Enlaza atributos HTML a valores reactivos</td></tr><tr><td>Clases condicionales</td><td><code>:class="{ active: isActive }"</code></td><td>Aplica clases CSS basadas en condiciones</td></tr><tr><td>Estilos dinámicos</td><td><code>:style="{ color: textColor }"</code></td><td>Aplica estilos CSS dinámicamente</td></tr><tr><td>Props de componentes</td><td><code>:user="userData"</code></td><td>Pasa datos a componentes hijos</td></tr><tr><td>Atributos múltiples</td><td><code>v-bind="allProps"</code></td><td>Enlaza múltiples atributos a la vez</td></tr><tr><td>Atributos booleanos</td><td><code>:disabled="isDisabled"</code></td><td>Controla atributos booleanos (presentes/ausentes)</td></tr><tr><td>Nombres de atributos dinámicos</td><td><code>:[propName]="value"</code></td><td>Nombre de atributo determinado dinámicamente</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Puedes enlazar múltiples atributos de una vez con el objeto de atributos:
+  
+   B4 
+</blockquote>
+<h3>Sintaxis de enlace de clases</h3>
+<h4 class="tab-label">Objeto</h4>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;!-- Objeto inline --&gt;
+  &lt;div :class="{ active: isActive, 'text-danger': hasError }"&gt;&lt;/div&gt;
+  
+  &lt;!-- Objeto reactivo --&gt;
+  &lt;div :class="classObject"&gt;&lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+
+
+const isActive = ref(true)
+const hasError = ref(false)
+
+// Objeto reactivo
+const classObject = reactive({
+  active: true,
+  'text-danger': false
+})
+
+// O como computed property
+const classObjectComputed = computed(() =&gt; ({
+  active: isActive.value,
+  'text-danger': hasError.value
+}))
+&lt;/script&gt;</code></pre>
+<h4 class="tab-label">Array</h4>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;!-- Array simple --&gt;
+  &lt;div :class="[activeClass, errorClass]"&gt;&lt;/div&gt;
+  
+  &lt;!-- Array con condicionales --&gt;
+  &lt;div :class="[isActive ? activeClass : '', errorClass]"&gt;&lt;/div&gt;
+  
+  &lt;!-- Array con objetos --&gt;
+  &lt;div :class="[{ active: isActive }, errorClass]"&gt;&lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+
+
+const isActive = ref(true)
+const activeClass = ref('active')
+const errorClass = ref('text-danger')
+&lt;/script&gt;</code></pre>
+<h3>Sintaxis de enlace de estilos</h3>
+<h4 class="tab-label">Objeto</h4>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;!-- Objeto inline --&gt;
+  &lt;div :style="{ color: activeColor, fontSize: fontSize + 'px' }"&gt;&lt;/div&gt;
+  
+  &lt;!-- Objeto reactivo --&gt;
+  &lt;div :style="styleObject"&gt;&lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+
+
+const activeColor = ref('red')
+const fontSize = ref(16)
+
+// Objeto reactivo
+const styleObject = reactive({
+  color: 'red',
+  fontSize: '16px',
+  backgroundColor: '#f0f0f0'
+})
+&lt;/script&gt;</code></pre>
+<h4 class="tab-label">Array</h4>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;!-- Array de objetos de estilo --&gt;
+  &lt;div :style="[baseStyles, overrideStyles]"&gt;&lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+
+
+const baseStyles = reactive({
+  color: 'blue',
+  fontSize: '18px'
+})
+
+const overrideStyles = reactive({
+  fontWeight: 'bold',
+  color: 'red' // Sobrescribirá el color de baseStyles
+})
+&lt;/script&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="directivas-personalizadas">
+    <h2>Directivas personalizadas</h2>
+    <div class="doc-content">
+<p>Además de las directivas incorporadas, Vue permite crear directivas personalizadas para manipular el DOM de maneras específicas.</p>
+  <h4 class="tab-label">Composition API (Global)</h4>
+    <pre><code class="language-js">    // main.js
+    import { createApp } from 'vue'
+    import App from './App.vue'
+    
+    const app = createApp(App)
+    
+    // Registrar una directiva global
+    app.directive('focus', {
+      mounted: (el) =&gt; {
+        el.focus()
+      }
+    })
+    
+    app.mount('#app')
+    </code></pre>
+  <h4 class="tab-label">Composition API (Local)</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref, onMounted, directive } from 'vue'
+    
+    // Registrar directiva local solo para este componente
+    const vHighlight = {
+      mounted: (el, binding) =&gt; {
+        el.style.backgroundColor = binding.value || 'yellow'
+      },
+      updated: (el, binding) =&gt; {
+        el.style.backgroundColor = binding.value || 'yellow'
+      }
+    }
+    
+    const message = ref('')
+    const highlightColor = ref('lightblue')
+    
+    onMounted(() =&gt; {
+      message.value = 'Este texto tiene focus automáticamente'
+    })
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;input v-focus v-model="message"&gt;
+      
+      &lt;input v-model="highlightColor" placeholder="Color de resaltado"&gt;
+      &lt;p v-highlight="highlightColor"&gt;Texto resaltado con directiva personalizada&lt;/p&gt;
+    &lt;/template&gt;
+    </code></pre>
+<h3>Hooks de directivas personalizadas</h3>
+<p>Las directivas personalizadas tienen varios hooks que puedes implementar:</p>
+<ul>
+<li><code>created</code>: antes de que se asigne cualquier atributo o escucha de evento</li>
+<li><code>beforeMount</code>: cuando la directiva se vincula por primera vez</li>
+<li><code>mounted</code>: cuando el elemento está insertado en el DOM</li>
+<li><code>beforeUpdate</code>: antes de que se actualice el componente que contiene la directiva</li>
+<li><code>updated</code>: después de que se actualiza el componente que contiene la directiva</li>
+<li><code>beforeUnmount</code>: justo antes de que se elimine el elemento del DOM</li>
+<li><code>unmounted</code>: cuando el elemento ha sido eliminado del DOM</li>
+</ul>
+<blockquote class="aside aside-note">
+Cada hook recibe los siguientes argumentos:
+  
+  - `el`: El elemento al que está enlazada la directiva
+  - `binding`: Un objeto que contiene propiedades como `value`, `oldValue`, `arg`, `modifiers`, etc.
+  - `vnode`: El nodo virtual subyacente representado por Vue
+  - `prevVnode`: El nodo virtual anterior (disponible solo en `beforeUpdate` y `updated`)
+</blockquote>
+<h3>Ejemplo avanzado: Directiva v-resize</h3>
+  <h4 class="tab-label">Composition API</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref, onMounted, onBeforeUnmount } from 'vue'
+    
+    // Directiva para detectar cambios en el tamaño de un elemento
+    const vResize = {
+      mounted: (el, binding) =&gt; {
+        const callback = binding.value
+        const observer = new ResizeObserver(entries =&gt; {
+          if (typeof callback === 'function') {
+            const entry = entries[0]
+            callback({
+              width: entry.contentRect.width,
+              height: entry.contentRect.height
+            })
+          }
+        })
+        observer.observe(el)
+        // Almacenar el observer para limpiarlo después
+        el._resizeObserver = observer
+      },
+      unmounted: (el) =&gt; {
+        // Limpieza
+        if (el._resizeObserver) {
+          el._resizeObserver.disconnect()
+        }
+      }
+    }
+    
+    const size = ref({ width: 0, height: 0 })
+    const handleResize = (dimensions) =&gt; {
+      size.value = dimensions
+    }
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;div 
+        v-resize="handleResize"
+        class="resize-demo"
+        style="resize: both; overflow: auto; border: 1px solid #ccc; padding: 20px; min-height: 100px; min-width: 200px;"
+      &gt;
+        Redimensiona este elemento
+        &lt;p&gt;Ancho: {{ size.width.toFixed(0) }}px&lt;/p&gt;
+        &lt;p&gt;Alto: {{ size.height.toFixed(0) }}px&lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    </code></pre>
+<p>Las directivas personalizadas son excelentes para manipulaciones de bajo nivel del DOM y para reutilizar lógica que no está directamente relacionada con el renderizado de datos.</p>
+    </div>
+  </section>

@@ -1,0 +1,548 @@
+<!-- 22. Seguridad Avanzada - Java Spring (Frameworks) -->
+  <section id="22-1-proteccion-contra-ataques-comunes">
+    <h2><i class="fa-solid fa-shield-halved"></i> 22.1 Protección contra Ataques Comunes</h2>
+    <div class="doc-content">
+<h3>SQL Injection</h3>
+<pre><code class="language-java">// ❌ VULNERABLE: Concatenación de strings
+@Query("SELECT u FROM Usuario u WHERE u.email = '" + email + "'")
+Usuario findByEmailInseguro(String email);
+
+// ✅ SEGURO: Parámetros nombrados
+@Query("SELECT u FROM Usuario u WHERE u.email = :email")
+Usuario findByEmail(@Param("email") String email);
+
+// ✅ SEGURO: Query methods (Spring Data)
+Optional&lt;Usuario&gt; findByEmail(String email);
+
+// ✅ SEGURO: Criteria API
+public List&lt;Usuario&gt; buscar(String email) {
+    CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+    CriteriaQuery&lt;Usuario&gt; query = cb.createQuery(Usuario.class);
+    Root&lt;Usuario&gt; root = query.from(Usuario.class);
+    
+    query.where(cb.equal(root.get("email"), email));
+    
+    return entityManager.createQuery(query).getResultList();
+}</code></pre>
+<h3>XSS (Cross-Site Scripting)</h3>
+<pre><code class="language-xml">// Dependencia para sanitización
+&lt;dependency&gt;
+    &lt;groupId&gt;org.owasp.encoder&lt;/groupId&gt;
+    &lt;artifactId&gt;encoder&lt;/artifactId&gt;
+    &lt;version&gt;1.2.3&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+<pre><code class="language-java">@Service
+public class SanitizacionService {
+    
+    public String sanitizarHTML(String input) {
+        if (input == null) return null;
+        return Encode.forHtml(input);
+    }
+    
+    public String sanitizarJS(String input) {
+        if (input == null) return null;
+        return Encode.forJavaScript(input);
+    }
+}
+
+// Validación en DTO
+public record ComentarioDTO(
+    @NotBlank
+    @Pattern(regexp = "^[a-zA-Z0-9\\s.,!?áéíóúÁÉÍÓÚñÑ]+$", 
+             message = "Caracteres no permitidos")
+    String contenido
+) {}
+
+// Content Security Policy
+@Configuration
+public class SecurityConfig {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.headers(headers -&gt; headers
+            .contentSecurityPolicy(csp -&gt; csp
+                .policyDirectives("default-src 'self'; script-src 'self'; style-src 'self'"))
+            .xssProtection(xss -&gt; xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+        );
+        return http.build();
+    }
+}</code></pre>
+<h3>CSRF (Cross-Site Request Forgery)</h3>
+<pre><code class="language-java">@Configuration
+public class SecurityConfig {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            // Para APIs REST con JWT, CSRF puede deshabilitarse
+            .csrf(csrf -&gt; csrf.disable())
+            
+            // Para aplicaciones con sesión, habilitar CSRF
+            .csrf(csrf -&gt; csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+            );
+        
+        return http.build();
+    }
+}
+
+// En el frontend (con cookies)
+// El token CSRF se envía automáticamente en el header X-XSRF-TOKEN</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="22-2-cors-cross-origin-resource-sharing">
+    <h2><i class="fa-solid fa-earth-americas"></i> 22.2 CORS (Cross-Origin Resource Sharing)</h2>
+    <div class="doc-content">
+<h3>Configuración global</h3>
+<pre><code class="language-java">@Configuration
+public class CorsConfig {
+    
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Orígenes permitidos
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:3000",
+            "https://miapp.com"
+        ));
+        
+        // O con patrones
+        configuration.setAllowedOriginPatterns(List.of(
+            "https://*.miapp.com"
+        ));
+        
+        // Métodos permitidos
+        configuration.setAllowedMethods(List.of(
+            "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+        ));
+        
+        // Headers permitidos
+        configuration.setAllowedHeaders(List.of(
+            "Authorization",
+            "Content-Type",
+            "X-Requested-With"
+        ));
+        
+        // Headers expuestos al cliente
+        configuration.setExposedHeaders(List.of(
+            "X-Total-Count",
+            "X-Page-Number"
+        ));
+        
+        // Permitir credenciales (cookies, auth headers)
+        configuration.setAllowCredentials(true);
+        
+        // Tiempo de caché del preflight
+        configuration.setMaxAge(3600L);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+        
+        return source;
+    }
+}</code></pre>
+<h3>CORS por controller</h3>
+<pre><code class="language-java">@RestController
+@RequestMapping("/api/public")
+@CrossOrigin(origins = "*", maxAge = 3600)
+public class PublicController {
+    
+    @GetMapping("/info")
+    public InfoDTO getInfo() {
+        return new InfoDTO("v1.0");
+    }
+}
+
+// Por método
+@RestController
+@RequestMapping("/api/productos")
+public class ProductoController {
+    
+    @CrossOrigin(origins = "https://admin.miapp.com")
+    @DeleteMapping("/{id}")
+    public void eliminar(@PathVariable Long id) {
+        // Solo desde admin
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="22-3-rate-limiting">
+    <h2><i class="fa-solid fa-stopwatch"></i> 22.3 Rate Limiting</h2>
+    <div class="doc-content">
+<h3>Con Bucket4j</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;com.bucket4j&lt;/groupId&gt;
+    &lt;artifactId&gt;bucket4j-core&lt;/artifactId&gt;
+    &lt;version&gt;8.7.0&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+<pre><code class="language-java">@Component
+public class RateLimitFilter extends OncePerRequestFilter {
+    
+    private final Map&lt;String, Bucket&gt; buckets = new ConcurrentHashMap&lt;&gt;();
+    
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, 
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+        
+        String clientIP = getClientIP(request);
+        Bucket bucket = buckets.computeIfAbsent(clientIP, this::createBucket);
+        
+        if (bucket.tryConsume(1)) {
+            filterChain.doFilter(request, response);
+        } else {
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            response.setContentType("application/json");
+            response.getWriter().write("""
+                {"error": "Rate limit exceeded", "retryAfter": 60}
+                """);
+        }
+    }
+    
+    private Bucket createBucket(String key) {
+        // 100 requests por minuto
+        Bandwidth limit = Bandwidth.classic(100, Refill.greedy(100, Duration.ofMinutes(1)));
+        return Bucket.builder().addLimit(limit).build();
+    }
+    
+    private String getClientIP(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+}</code></pre>
+<h3>Rate limiting por usuario</h3>
+<pre><code class="language-java">@Service
+public class RateLimitService {
+    
+    private final Map&lt;String, Bucket&gt; userBuckets = new ConcurrentHashMap&lt;&gt;();
+    
+    // Diferentes límites por rol
+    public Bucket getBucketForUser(String userId, String role) {
+        return userBuckets.computeIfAbsent(userId, id -&gt; {
+            if ("ADMIN".equals(role)) {
+                return createBucket(1000, Duration.ofMinutes(1));  // 1000/min
+            } else if ("PREMIUM".equals(role)) {
+                return createBucket(500, Duration.ofMinutes(1));   // 500/min
+            } else {
+                return createBucket(100, Duration.ofMinutes(1));   // 100/min
+            }
+        });
+    }
+    
+    private Bucket createBucket(int capacity, Duration period) {
+        Bandwidth limit = Bandwidth.classic(capacity, Refill.greedy(capacity, period));
+        return Bucket.builder().addLimit(limit).build();
+    }
+    
+    public boolean tryConsume(String userId, String role) {
+        return getBucketForUser(userId, role).tryConsume(1);
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="22-4-auditoria">
+    <h2><i class="fa-solid fa-pen-to-square"></i> 22.4 Auditoría</h2>
+    <div class="doc-content">
+<h3>Entidad auditable</h3>
+<pre><code class="language-java">@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
+@Getter @Setter
+public abstract class AuditableEntity {
+    
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+    
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+    
+    @CreatedBy
+    @Column(updatable = false)
+    private String createdBy;
+    
+    @LastModifiedBy
+    private String updatedBy;
+}
+
+// Habilitar auditoría
+@Configuration
+@EnableJpaAuditing(auditorAwareRef = "auditorProvider")
+public class AuditConfig {
+    
+    @Bean
+    public AuditorAware&lt;String&gt; auditorProvider() {
+        return () -&gt; {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) {
+                return Optional.of("SYSTEM");
+            }
+            return Optional.of(auth.getName());
+        };
+    }
+}</code></pre>
+<h3>Log de auditoría</h3>
+<pre><code class="language-java">@Entity
+@Table(name = "audit_log")
+@Getter @Setter
+public class AuditLog {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    private String usuario;
+    private String accion;
+    private String entidad;
+    private String entidadId;
+    private String datosAnteriores;
+    private String datosNuevos;
+    private String ip;
+    private LocalDateTime timestamp;
+}
+
+@Aspect
+@Component
+@Slf4j
+public class AuditAspect {
+    
+    private final AuditLogRepository auditRepository;
+    private final ObjectMapper objectMapper;
+    
+    @AfterReturning(
+        pointcut = "@annotation(auditable)",
+        returning = "result"
+    )
+    public void audit(JoinPoint joinPoint, Auditable auditable, Object result) {
+        try {
+            AuditLog log = new AuditLog();
+            log.setUsuario(getCurrentUser());
+            log.setAccion(auditable.accion());
+            log.setEntidad(auditable.entidad());
+            log.setTimestamp(LocalDateTime.now());
+            log.setIp(getCurrentIP());
+            
+            if (result != null) {
+                log.setDatosNuevos(objectMapper.writeValueAsString(result));
+            }
+            
+            auditRepository.save(log);
+        } catch (Exception e) {
+            log.error("Error en auditoría", e);
+        }
+    }
+}
+
+// Anotación personalizada
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Auditable {
+    String accion();
+    String entidad();
+}
+
+// Uso
+@Auditable(accion = "CREAR", entidad = "Producto")
+public Producto crear(ProductoDTO dto) {
+    // ...
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="22-5-encriptacion-de-datos">
+    <h2><i class="fa-solid fa-user-lock"></i> 22.5 Encriptación de Datos</h2>
+    <div class="doc-content">
+<h3>Encriptar campos sensibles</h3>
+<pre><code class="language-java">@Converter
+public class EncryptionConverter implements AttributeConverter&lt;String, String&gt; {
+    
+    private static final String ALGORITHM = "AES/GCM/NoPadding";
+    private final SecretKey secretKey;
+    
+    public EncryptionConverter(@Value("\${encryption.key}") String key) {
+        byte[] decodedKey = Base64.getDecoder().decode(key);
+        this.secretKey = new SecretKeySpec(decodedKey, "AES");
+    }
+    
+    @Override
+    public String convertToDatabaseColumn(String attribute) {
+        if (attribute == null) return null;
+        
+        try {
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            byte[] iv = new byte[12];
+            SecureRandom.getInstanceStrong().nextBytes(iv);
+            
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(128, iv));
+            byte[] encrypted = cipher.doFinal(attribute.getBytes(StandardCharsets.UTF_8));
+            
+            byte[] combined = new byte[iv.length + encrypted.length];
+            System.arraycopy(iv, 0, combined, 0, iv.length);
+            System.arraycopy(encrypted, 0, combined, iv.length, encrypted.length);
+            
+            return Base64.getEncoder().encodeToString(combined);
+        } catch (Exception e) {
+            throw new RuntimeException("Error encriptando", e);
+        }
+    }
+    
+    @Override
+    public String convertToEntityAttribute(String dbData) {
+        if (dbData == null) return null;
+        
+        try {
+            byte[] combined = Base64.getDecoder().decode(dbData);
+            byte[] iv = Arrays.copyOfRange(combined, 0, 12);
+            byte[] encrypted = Arrays.copyOfRange(combined, 12, combined.length);
+            
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(128, iv));
+            
+            return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new RuntimeException("Error desencriptando", e);
+        }
+    }
+}
+
+// Uso en entidad
+@Entity
+public class Usuario {
+    
+    @Convert(converter = EncryptionConverter.class)
+    private String numeroTarjeta;
+    
+    @Convert(converter = EncryptionConverter.class)
+    private String ssn;
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="22-6-gestion-segura-de-contrasenas">
+    <h2><i class="fa-solid fa-key"></i> 22.6 Gestión Segura de Contraseñas</h2>
+    <div class="doc-content">
+<h3>Password Encoder</h3>
+<pre><code class="language-java">@Configuration
+public class PasswordConfig {
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        // BCrypt con strength 12 (recomendado)
+        return new BCryptPasswordEncoder(12);
+    }
+    
+    // O con Argon2 (más seguro, más lento)
+    @Bean
+    public PasswordEncoder argon2Encoder() {
+        return new Argon2PasswordEncoder(16, 32, 1, 65536, 3);
+    }
+}</code></pre>
+<h3>Validación de contraseñas</h3>
+<pre><code class="language-java">@Target({ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = PasswordValidator.class)
+public @interface ValidPassword {
+    String message() default "Contraseña no cumple requisitos";
+    Class&lt;?&gt;[] groups() default {};
+    Class&lt;? extends Payload&gt;[] payload() default {};
+}
+
+public class PasswordValidator implements ConstraintValidator&lt;ValidPassword, String&gt; {
+    
+    @Override
+    public boolean isValid(String password, ConstraintValidatorContext context) {
+        if (password == null) return false;
+        
+        // Mínimo 8 caracteres
+        if (password.length() &lt; 8) return false;
+        
+        // Al menos una mayúscula
+        if (!password.matches(".*[A-Z].*")) return false;
+        
+        // Al menos una minúscula
+        if (!password.matches(".*[a-z].*")) return false;
+        
+        // Al menos un número
+        if (!password.matches(".*\\d.*")) return false;
+        
+        // Al menos un carácter especial
+        if (!password.matches(".*[@#$%^&amp;+=!].*")) return false;
+        
+        // No contiene espacios
+        if (password.contains(" ")) return false;
+        
+        return true;
+    }
+}
+
+// Uso
+public record RegistroDTO(
+    @Email String email,
+    @ValidPassword String password
+) {}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="22-7-headers-de-seguridad">
+    <h2><i class="fa-solid fa-lock"></i> 22.7 Headers de Seguridad</h2>
+    <div class="doc-content">
+<pre><code class="language-java">@Configuration
+public class SecurityHeadersConfig {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.headers(headers -&gt; headers
+            // Prevenir clickjacking
+            .frameOptions(frame -&gt; frame.deny())
+            
+            // Content Security Policy
+            .contentSecurityPolicy(csp -&gt; csp
+                .policyDirectives("default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline'; " +
+                    "style-src 'self' 'unsafe-inline'; " +
+                    "img-src 'self' data: https:; " +
+                    "font-src 'self'; " +
+                    "connect-src 'self' https://api.miapp.com"))
+            
+            // Strict Transport Security (HTTPS)
+            .httpStrictTransportSecurity(hsts -&gt; hsts
+                .includeSubDomains(true)
+                .maxAgeInSeconds(31536000))
+            
+            // Prevenir MIME sniffing
+            .contentTypeOptions(Customizer.withDefaults())
+            
+            // XSS Protection
+            .xssProtection(xss -&gt; xss
+                .headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+            
+            // Referrer Policy
+            .referrerPolicy(referrer -&gt; referrer
+                .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+            
+            // Permissions Policy
+            .permissionsPolicy(permissions -&gt; permissions
+                .policy("geolocation=(), microphone=(), camera=()"))
+        );
+        
+        return http.build();
+    }
+}</code></pre>
+<blockquote class="aside aside-caution">
+Nunca confíes en datos del cliente. Valida **siempre** en el servidor, incluso si ya validaste en el frontend.
+</blockquote>
+    </div>
+  </section>

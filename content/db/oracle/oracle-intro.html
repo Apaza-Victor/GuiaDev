@@ -1,0 +1,174 @@
+<!-- 1. Introducción a Oracle - Oracle (Base de Datos) -->
+  <section id="que-es-oracle-database">
+    <h2>¿Qué es Oracle Database?</h2>
+    <div class="doc-content">
+<p>Oracle Database es un sistema de gestión de bases de datos relacional (RDBMS) desarrollado por Oracle Corporation. Es uno de los sistemas de bases de datos más completos, robustos y utilizados a nivel empresarial en todo el mundo.</p>
+<h3>Características principales</h3>
+<ul>
+<li><strong>Alta disponibilidad</strong>: Diseñado para funcionar 24/7 con mínimo tiempo de inactividad.</li>
+<li><strong>Escalabilidad</strong>: Puede manejar desde pequeñas aplicaciones hasta sistemas empresariales con petabytes de datos.</li>
+<li><strong>Seguridad avanzada</strong>: Incluye cifrado, auditoría y control de acceso granular.</li>
+<li><strong>Rendimiento optimizado</strong>: Incorpora tecnologías como el procesamiento en memoria y paralelismo.</li>
+<li><strong>Multiplataforma</strong>: Funciona en diversos sistemas operativos como Windows, Linux, Unix, etc.</li>
+</ul>
+<blockquote class="aside aside-tip">
+Oracle Database es conocido por su robustez y fiabilidad, lo que lo hace ideal para aplicaciones críticas empresariales donde la pérdida de datos no es una opción.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="ediciones-de-oracle-y-limitaciones-de-oracle-xe">
+    <h2>Ediciones de Oracle y limitaciones de Oracle XE</h2>
+    <div class="doc-content">
+<p>Oracle ofrece diferentes ediciones de su base de datos para adaptarse a distintas necesidades y presupuestos.</p>
+  <h4 class="tab-label">Enterprise Edition (EE)</h4>
+<p>La edición más completa con todas las características disponibles.</p>
+<p><strong>Características exclusivas</strong>:</p>
+<ul>
+<li>Real Application Clusters (RAC)</li>
+<li>Particionamiento avanzado</li>
+<li>Compresión avanzada</li>
+<li>Seguridad total</li>
+<li>Sin limitaciones de hardware</li>
+</ul>
+<p><strong>Uso recomendado</strong>: Grandes empresas con aplicaciones críticas y alta demanda.</p>
+  <h4 class="tab-label">Standard Edition 2 (SE2)</h4>
+<p>Versión intermedia con buen equilibrio entre funcionalidades y costo.</p>
+<p><strong>Limitaciones</strong>:</p>
+<ul>
+<li>Máximo 2 sockets</li>
+<li>Sin características avanzadas de Enterprise</li>
+<li>RAC limitado</li>
+</ul>
+<p><strong>Uso recomendado</strong>: Empresas medianas con necesidades moderadas de procesamiento.</p>
+  <h4 class="tab-label">Express Edition (XE)</h4>
+<p>Versión gratuita con importantes limitaciones.</p>
+<p><strong>Limitaciones</strong>:</p>
+<ul>
+<li>Máximo 12GB de datos de usuario</li>
+<li>Utiliza máximo 2GB de RAM</li>
+<li>Procesamiento en un solo CPU</li>
+<li>Máximo 2 hilos de ejecución</li>
+<li>Sin soporte oficial de Oracle</li>
+</ul>
+<p><strong>Uso recomendado</strong>: Desarrollo, aprendizaje, pequeñas aplicaciones.</p>
+<blockquote class="aside aside-caution">
+Oracle Database Express Edition (XE) es excelente para aprendizaje y desarrollo, pero sus limitaciones la hacen inadecuada para entornos de producción con alta carga o grandes volúmenes de datos.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="arquitectura-basica-instancia-y-base-de-datos">
+    <h2>Arquitectura básica: instancia y base de datos</h2>
+    <div class="doc-content">
+<p>La arquitectura de Oracle se divide en dos componentes principales: la instancia y la base de datos.</p>
+<h3>Instancia de Oracle</h3>
+<p>Una instancia de Oracle consiste en estructuras de memoria y procesos en segundo plano que gestionan los archivos de la base de datos.</p>
+<p><strong>Componentes principales de la instancia</strong>:</p>
+<ol>
+<li><strong>SGA (System Global Area)</strong>: Área de memoria compartida que contiene:</li>
+</ol>
+<ul>
+<li>Buffer Cache: Almacena bloques de datos recientemente utilizados</li>
+<li>Shared Pool: Contiene SQL parseado y planes de ejecución</li>
+<li>Redo Log Buffer: Almacena cambios antes de escribirlos a los redo logs</li>
+<li>Large Pool: Para operaciones de I/O grandes</li>
+<li>Java Pool: Para código Java en la base de datos</li>
+</ul>
+<ol>
+<li><strong>Procesos en segundo plano</strong>:</li>
+</ol>
+<ul>
+<li>SMON: Monitor del sistema (recuperación en inicio)</li>
+<li>PMON: Monitor de procesos (limpieza tras fallos)</li>
+<li>DBWR: Escritor de base de datos (escribe buffers modificados a disco)</li>
+<li>LGWR: Escritor de log (escribe el redo log buffer a archivos)</li>
+<li>CKPT: Checkpoint (actualiza cabeceras de archivos de datos)</li>
+</ul>
+<h3>Base de datos física</h3>
+<p>La base de datos física consiste en archivos almacenados en disco:</p>
+<ol>
+<li><strong>Archivos de datos</strong>: Contienen los datos reales de las tablas y otros objetos.</li>
+<li><strong>Archivos de control</strong>: Almacenan la estructura física de la base de datos.</li>
+<li><strong>Archivos de redo log</strong>: Registran todos los cambios realizados en la base de datos.</li>
+<li><strong>Archivos de parámetros</strong>: Configuración de la instancia.</li>
+<li><strong>Archivos de respaldo y recuperación</strong>: Para recuperación ante fallos.</li>
+</ol>
+<pre><code class="language-text">
+# Diagrama simplificado de la arquitectura Oracle
+
++------------------+       +------------------+
+|    APLICACIÓN    |       |     USUARIOS     |
++--------+---------+       +--------+---------+
+         |                          |
+         v                          v
++------------------------------------------+
+|              INSTANCIA ORACLE             |
+|  +----------------+  +----------------+   |
+|  |      SGA       |  | Procesos de BG |   |
+|  | (Memoria comp.)|  | (PMON,SMON...)  |   |
+|  +----------------+  +----------------+   |
++------------------+---------------------+  |
+                   |                        |
+                   v                        |
++------------------------------------------+
+|             BASE DE DATOS                 |
+|  +----------------+  +----------------+   |
+|  | Archivos de    |  | Archivos de    |   |
+|  | Datos (.dbf)   |  | Control (.ctl) |   |
+|  +----------------+  +----------------+   |
+|  +----------------+  +----------------+   |
+|  | Archivos de    |  | Archivos de    |   |
+|  | Redo Log (.rdo)|  | Parámetros     |   |
+|  +----------------+  +----------------+   |
++------------------------------------------+
+</code></pre>
+    </div>
+  </section>
+
+  <section id="herramientas-principales-sql-plus-sql-developer">
+    <h2>Herramientas principales: SQL*Plus, SQL Developer</h2>
+    <div class="doc-content">
+<p>Oracle proporciona varias herramientas para interactuar con la base de datos:</p>
+<h3>SQL*Plus</h3>
+<p>Es la herramienta de línea de comandos tradicional para interactuar con Oracle Database.</p>
+<p><strong>Características</strong>:</p>
+<ul>
+<li>Interfaz de texto basada en comandos</li>
+<li>Viene incluida con todas las instalaciones de Oracle</li>
+<li>Ideal para scripts y automatización</li>
+<li>Ligera y rápida</li>
+<li>Acceso completo a todas las funcionalidades de Oracle</li>
+</ul>
+<pre><code class="language-sql">
+-- Ejemplo de sesión SQL*Plus
+SQL&gt; CONNECT usuario/contraseña
+Conectado.
+SQL&gt; SELECT * FROM empleados WHERE departamento_id = 10;
+SQL&gt; EXIT
+Desconectado de Oracle Database.
+</code></pre>
+<h3>Oracle SQL Developer</h3>
+<p>Es una interfaz gráfica gratuita para trabajar con bases de datos Oracle.</p>
+<p><strong>Características</strong>:</p>
+<ul>
+<li>Entorno de desarrollo integrado (IDE) gráfico</li>
+<li>Editor de SQL con resaltado de sintaxis</li>
+<li>Navegador de objetos de base de datos</li>
+<li>Herramientas de modelado de datos</li>
+<li>Depurador de PL/SQL</li>
+<li>Herramientas de importación/exportación de datos</li>
+<li>Generación de informes</li>
+</ul>
+<blockquote class="aside aside-note">
+Para principiantes, SQL Developer es más amigable y visual, mientras que SQL*Plus es preferido por administradores y para scripts automatizados debido a su eficiencia y capacidad de ejecución por lotes.
+</blockquote>
+<h3>Otras herramientas importantes</h3>
+<ul>
+<li><strong>Oracle Enterprise Manager</strong>: Para administración y monitoreo de múltiples bases de datos.</li>
+<li><strong>Oracle Data Modeler</strong>: Para diseño y modelado de bases de datos.</li>
+<li><strong>TOAD for Oracle</strong>: Herramienta de terceros popular para desarrollo y administración (no es gratuita).</li>
+<li><strong>Oracle Application Express (APEX)</strong>: Plataforma de desarrollo de aplicaciones web basada en Oracle.</li>
+</ul>
+    </div>
+  </section>

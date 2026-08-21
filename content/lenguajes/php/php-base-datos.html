@@ -1,0 +1,753 @@
+<!-- 8. Base de datos (MySQL) - PHP (Lenguajes de Programación) -->
+  <section id="conexion-con-pdo">
+    <h2>Conexión con PDO</h2>
+    <div class="doc-content">
+<p>PDO es una capa de abstracción para acceder a bases de datos en PHP que proporciona una interfaz consistente para trabajar con diferentes sistemas de bases de datos. A continuación, veremos cómo establecer una conexión con MySQL usando PDO.</p>
+<h3>Establecer una Conexión Básica</h3>
+<pre><code class="language-php">&lt;?php
+try {
+    // Datos de conexión
+    $host = 'localhost';      // Servidor de la base de datos
+    $dbname = 'mi_basedatos'; // Nombre de la base de datos
+    $username = 'usuario';    // Usuario de la base de datos
+    $password = 'contraseña'; // Contraseña
+    $charset = 'utf8mb4';     // Conjunto de caracteres
+    
+    // Cadena de conexión (DSN: Data Source Name)
+    $dsn = "mysql:host=$host;dbname=$dbname;charset=$charset";
+    
+    // Opciones de PDO para mejorar la seguridad y el rendimiento
+    $opciones = [
+        PDO::ATTR_ERRMODE =&gt; PDO::ERRMODE_EXCEPTION,           // Lanzar excepciones en caso de error
+        PDO::ATTR_DEFAULT_FETCH_MODE =&gt; PDO::FETCH_ASSOC,      // Resultados como arrays asociativos por defecto
+        PDO::ATTR_EMULATE_PREPARES =&gt; false,                   // Usar preparación nativa de MySQL
+        PDO::MYSQL_ATTR_INIT_COMMAND =&gt; "SET NAMES $charset"  // Asegurar el conjunto de caracteres
+    ];
+    
+    // Crear la conexión PDO
+    $conexion = new PDO($dsn, $username, $password, $opciones);
+    
+    echo "Conexión establecida con éxito";
+    
+} catch (PDOException $e) {
+    // Manejo de errores
+    echo "Error de conexión: " . $e-&gt;getMessage();
+    exit;
+}
+?&gt;</code></pre>
+<h3>Clase de Conexión Reutilizable</h3>
+<p>Para proyectos más grandes, es recomendable crear una clase de conexión reutilizable:</p>
+<pre><code class="language-php">&lt;?php
+class Database {
+    private static $instancia = null;
+    private $conexion;
+    
+    private $host = 'localhost';
+    private $dbname = 'mi_basedatos';
+    private $username = 'usuario';
+    private $password = 'contraseña';
+    private $charset = 'utf8mb4';
+    private $opciones = [];
+    
+    // Constructor privado (patrón Singleton)
+    private function __construct() {
+        $dsn = "mysql:host={$this-&gt;host};dbname={$this-&gt;dbname};charset={$this-&gt;charset}";
+        
+        $this-&gt;opciones = [
+            PDO::ATTR_ERRMODE =&gt; PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE =&gt; PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES =&gt; false,
+            PDO::MYSQL_ATTR_INIT_COMMAND =&gt; "SET NAMES {$this-&gt;charset}"
+        ];
+        
+        try {
+            $this-&gt;conexion = new PDO($dsn, $this-&gt;username, $this-&gt;password, $this-&gt;opciones);
+        } catch (PDOException $e) {
+            throw new Exception("Error de conexión: " . $e-&gt;getMessage());
+        }
+    }
+    
+    // Método para obtener la instancia de la base de datos (Singleton)
+    public static function getInstance() {
+        if (self::$instancia === null) {
+            self::$instancia = new self();
+        }
+        return self::$instancia;
+    }
+    
+    // Obtener la conexión PDO
+    public function getConnection() {
+        return $this-&gt;conexion;
+    }
+    
+    // Evitar la clonación del objeto
+    private function __clone() {}
+    
+    // Evitar la deserialización del objeto
+    private function __wakeup() {}
+}
+
+// Uso de la clase
+try {
+    $db = Database::getInstance();
+    $conexion = $db-&gt;getConnection();
+    echo "Conexión establecida con éxito";
+} catch (Exception $e) {
+    echo $e-&gt;getMessage();
+    exit;
+}
+?&gt;</code></pre>
+<h3>Uso de un Archivo de Configuración</h3>
+<p>Para mayor seguridad y flexibilidad, es recomendable almacenar las credenciales de la base de datos en un archivo de configuración separado:</p>
+  <h4 class="tab-label">config.php</h4>
+    <pre><code class="language-php">&lt;?php
+// config.php - Archivo de configuración
+return [
+    'database' =&gt; [
+        'host' =&gt; 'localhost',
+        'dbname' =&gt; 'mi_basedatos',
+        'username' =&gt; 'usuario',
+        'password' =&gt; 'contraseña',
+        'charset' =&gt; 'utf8mb4',
+        'opciones' =&gt; [
+            PDO::ATTR_ERRMODE =&gt; PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE =&gt; PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES =&gt; false
+        ]
+    ]
+];
+?&gt;</code></pre>
+  <h4 class="tab-label">Database.php</h4>
+    <pre><code class="language-php">&lt;?php
+// Database.php - Clase de conexión
+class Database {
+    private static $instancia = null;
+    private $conexion;
+    private $config;
+    
+    private function __construct() {
+        // Cargar configuración
+        $this-&gt;config = require 'config.php';
+        $dbConfig = $this-&gt;config['database'];
+        
+        $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
+        
+        try {
+            $this-&gt;conexion = new PDO(
+                $dsn, 
+                $dbConfig['username'], 
+                $dbConfig['password'], 
+                $dbConfig['opciones']
+            );
+        } catch (PDOException $e) {
+            throw new Exception("Error de conexión: " . $e-&gt;getMessage());
+        }
+    }
+    
+    public static function getInstance() {
+        if (self::$instancia === null) {
+            self::$instancia = new self();
+        }
+        return self::$instancia;
+    }
+    
+    public function getConnection() {
+        return $this-&gt;conexion;
+    }
+    
+    private function __clone() {}
+    private function __wakeup() {}
+}
+?&gt;</code></pre>
+  <h4 class="tab-label">uso.php</h4>
+    <pre><code class="language-php">&lt;?php
+// uso.php - Ejemplo de uso
+require_once 'Database.php';
+
+try {
+    $db = Database::getInstance();
+    $conexion = $db-&gt;getConnection();
+    echo "Conexión establecida con éxito";
+    
+    // Ahora puedes usar $conexion para realizar consultas
+} catch (Exception $e) {
+    echo "Error: " . $e-&gt;getMessage();
+    exit;
+}
+?&gt;</code></pre>
+<blockquote class="aside aside-tip">
+<strong>Seguridad de credenciales:</strong> En un entorno de producción, es recomendable:
+  <ul>
+    <li>Colocar el archivo de configuración fuera del directorio público web</li>
+    <li>Usar variables de entorno para las credenciales sensibles</li>
+    <li>Restringir los permisos del archivo de configuración</li>
+    <li>Nunca incluir credenciales en repositorios de código</li>
+  </ul>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="consultas-basicas-select-insert-update-delete">
+    <h2>Consultas Básicas: SELECT, INSERT, UPDATE, DELETE</h2>
+    <div class="doc-content">
+<p>Una vez establecida la conexión con la base de datos, podemos realizar operaciones CRUD (Create, Read, Update, Delete) mediante consultas SQL. Veamos cómo realizar estas operaciones básicas con PDO.</p>
+<h3>Consulta SELECT (Leer datos)</h3>
+<pre><code class="language-php">&lt;?php
+try {
+    // Suponemos que ya tenemos una conexión PDO en la variable $conexion
+    
+    // Consulta simple para seleccionar todos los registros de una tabla
+    $consulta = "SELECT * FROM usuarios";
+    $stmt = $conexion-&gt;query($consulta);
+    
+    // Obtener todos los resultados como un array asociativo
+    $usuarios = $stmt-&gt;fetchAll();
+    
+    // Recorrer y mostrar los resultados
+    foreach ($usuarios as $usuario) {
+        echo "ID: {$usuario['id']}, Nombre: {$usuario['nombre']}, Email: {$usuario['email']}&lt;br&gt;";
+    }
+    
+    // Contar el número de filas devueltas
+    echo "Total de usuarios: " . count($usuarios);
+    
+} catch (PDOException $e) {
+    echo "Error en la consulta: " . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+<h4>Diferentes Métodos de Obtención de Resultados</h4>
+<pre><code class="language-php">&lt;?php
+// Consulta SELECT
+$stmt = $conexion-&gt;query("SELECT id, nombre, email FROM usuarios WHERE activo = 1");
+
+// 1. Obtener una fila a la vez (ideal para grandes conjuntos de datos)
+while ($fila = $stmt-&gt;fetch()) {
+    echo "ID: {$fila['id']}, Nombre: {$fila['nombre']}&lt;br&gt;";
+}
+
+// 2. Obtener una sola fila
+$stmt = $conexion-&gt;query("SELECT * FROM usuarios WHERE id = 1");
+$usuario = $stmt-&gt;fetch(); // Solo la primera fila
+
+// 3. Obtener un solo valor (primera columna de la primera fila)
+$stmt = $conexion-&gt;query("SELECT COUNT(*) FROM usuarios");
+$total = $stmt-&gt;fetchColumn();
+echo "Total de usuarios: $total";
+
+// 4. Obtener resultados como objetos en lugar de arrays
+$stmt = $conexion-&gt;query("SELECT * FROM usuarios LIMIT 5");
+$stmt-&gt;setFetchMode(PDO::FETCH_OBJ);
+while ($usuario = $stmt-&gt;fetch()) {
+    echo "Nombre: {$usuario-&gt;nombre}&lt;br&gt;";
+}
+
+// 5. Obtener resultados como instancias de una clase personalizada
+class Usuario {
+    public $id;
+    public $nombre;
+    public $email;
+    
+    public function nombreCompleto() {
+        return $this-&gt;nombre;
+    }
+}
+
+$stmt = $conexion-&gt;query("SELECT * FROM usuarios LIMIT 3");
+$stmt-&gt;setFetchMode(PDO::FETCH_CLASS, 'Usuario');
+$usuarios = $stmt-&gt;fetchAll();
+
+foreach ($usuarios as $usuario) {
+    echo "Nombre completo: " . $usuario-&gt;nombreCompleto() . "&lt;br&gt;";
+}
+?&gt;</code></pre>
+<h3>Consulta INSERT (Crear datos)</h3>
+<pre><code class="language-php">&lt;?php
+try {
+    // Datos a insertar
+    $nombre = "María García";
+    $email = "maria@ejemplo.com";
+    $password = password_hash("contraseña123", PASSWORD_DEFAULT); // Encriptar contraseña
+    $fecha_registro = date('Y-m-d H:i:s');
+    
+    // Consulta INSERT
+    $consulta = "INSERT INTO usuarios (nombre, email, password, fecha_registro) 
+                VALUES ('$nombre', '$email', '$password', '$fecha_registro')";
+    
+    // Ejecutar la consulta
+    $filas_afectadas = $conexion-&gt;exec($consulta);
+    
+    // Obtener el ID del último registro insertado
+    $ultimo_id = $conexion-&gt;lastInsertId();
+    
+    echo "Usuario insertado correctamente. ID: $ultimo_id, Filas afectadas: $filas_afectadas";
+    
+} catch (PDOException $e) {
+    echo "Error al insertar: " . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+<blockquote class="aside aside-caution">
+<strong>Advertencia de seguridad:</strong> El ejemplo anterior es vulnerable a inyección SQL. Nunca se deben insertar valores directamente en las consultas SQL. Siempre usa consultas preparadas como se muestra más adelante.
+</blockquote>
+<h3>Consulta UPDATE (Actualizar datos)</h3>
+<pre><code class="language-php">&lt;?php
+try {
+    // Datos a actualizar
+    $id = 5;
+    $nuevo_nombre = "María López";
+    $nuevo_email = "maria.lopez@ejemplo.com";
+    
+    // Consulta UPDATE
+    $consulta = "UPDATE usuarios 
+                SET nombre = '$nuevo_nombre', 
+                    email = '$nuevo_email', 
+                    actualizado_en = NOW() 
+                WHERE id = $id";
+    
+    // Ejecutar la consulta
+    $filas_afectadas = $conexion-&gt;exec($consulta);
+    
+    echo "Usuario actualizado. Filas afectadas: $filas_afectadas";
+    
+} catch (PDOException $e) {
+    echo "Error al actualizar: " . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+<h3>Consulta DELETE (Eliminar datos)</h3>
+<pre><code class="language-php">&lt;?php
+try {
+    // ID del registro a eliminar
+    $id = 10;
+    
+    // Consulta DELETE
+    $consulta = "DELETE FROM usuarios WHERE id = $id";
+    
+    // Ejecutar la consulta
+    $filas_afectadas = $conexion-&gt;exec($consulta);
+    
+    echo "Usuario eliminado. Filas afectadas: $filas_afectadas";
+    
+} catch (PDOException $e) {
+    echo "Error al eliminar: " . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+<h3>Transacciones</h3>
+<p>Las transacciones permiten ejecutar múltiples consultas como una unidad atómica, asegurando que todas se completen con éxito o ninguna se aplique:</p>
+<pre><code class="language-php">&lt;?php
+try {
+    // Iniciar transacción
+    $conexion-&gt;beginTransaction();
+    
+    // Realizar múltiples operaciones
+    $conexion-&gt;exec("INSERT INTO pedidos (cliente_id, total) VALUES (15, 1500)");
+    $pedido_id = $conexion-&gt;lastInsertId();
+    
+    $conexion-&gt;exec("INSERT INTO pedidos_detalles (pedido_id, producto_id, cantidad) VALUES ($pedido_id, 101, 2)");
+    $conexion-&gt;exec("INSERT INTO pedidos_detalles (pedido_id, producto_id, cantidad) VALUES ($pedido_id, 205, 1)");
+    
+    // Actualizar inventario
+    $conexion-&gt;exec("UPDATE productos SET stock = stock - 2 WHERE id = 101");
+    $conexion-&gt;exec("UPDATE productos SET stock = stock - 1 WHERE id = 205");
+    
+    // Si todo está bien, confirmar los cambios
+    $conexion-&gt;commit();
+    echo "Pedido procesado correctamente";
+    
+} catch (PDOException $e) {
+    // Si hay un error, revertir todos los cambios
+    $conexion-&gt;rollBack();
+    echo "Error en la transacción: " . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="consultas-preparadas">
+    <h2>Consultas Preparadas</h2>
+    <div class="doc-content">
+<p>Las consultas preparadas son una característica esencial para la seguridad de las aplicaciones web, ya que protegen contra ataques de inyección SQL al separar la consulta SQL de los datos.</p>
+<h3>¿Por qué usar consultas preparadas?</h3>
+<blockquote class="aside aside-note">
+Las consultas preparadas ofrecen dos ventajas principales:
+  <ol>
+    <li><strong>Seguridad:</strong> Previenen ataques de inyección SQL al separar la consulta de los datos.</li>
+    <li><strong>Rendimiento:</strong> Para consultas repetitivas, el servidor de base de datos puede compilar la consulta una vez y ejecutarla múltiples veces con diferentes parámetros.</li>
+  </ol>
+</blockquote>
+<h3>Consulta SELECT con Parámetros</h3>
+<pre><code class="language-php">&lt;?php
+try {
+    // Preparar la consulta
+    $stmt = $conexion-&gt;prepare("SELECT * FROM usuarios WHERE email = :email OR id = :id");
+    
+    // Vincular parámetros
+    $email = "usuario@ejemplo.com";
+    $id = 5;
+    $stmt-&gt;bindParam(':email', $email, PDO::PARAM_STR);
+    $stmt-&gt;bindParam(':id', $id, PDO::PARAM_INT);
+    
+    // Ejecutar la consulta
+    $stmt-&gt;execute();
+    
+    // Obtener resultados
+    $usuarios = $stmt-&gt;fetchAll();
+    
+    foreach ($usuarios as $usuario) {
+        echo "Nombre: {$usuario['nombre']}&lt;br&gt;";
+    }
+    
+} catch (PDOException $e) {
+    echo "Error: " . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+<h3>Métodos Alternativos de Vinculación de Parámetros</h3>
+<pre><code class="language-php">&lt;?php
+// Método 1: bindValue (vincula un valor directamente)
+$stmt = $conexion-&gt;prepare("SELECT * FROM productos WHERE categoria = :cat AND precio &lt; :precio");
+$stmt-&gt;bindValue(':cat', 'electrónica', PDO::PARAM_STR);
+$stmt-&gt;bindValue(':precio', 1000, PDO::PARAM_INT);
+$stmt-&gt;execute();
+
+// Método 2: Parámetros posicionales con signos de interrogación
+$stmt = $conexion-&gt;prepare("SELECT * FROM productos WHERE categoria = ? AND precio &lt; ?");
+$stmt-&gt;bindValue(1, 'electrónica', PDO::PARAM_STR);
+$stmt-&gt;bindValue(2, 1000, PDO::PARAM_INT);
+$stmt-&gt;execute();
+
+// Método 3: Pasar un array de parámetros a execute()
+$stmt = $conexion-&gt;prepare("SELECT * FROM productos WHERE categoria = :cat AND precio &lt; :precio");
+$stmt-&gt;execute([
+    ':cat' =&gt; 'electrónica',
+    ':precio' =&gt; 1000
+]);
+
+// Método 4: Pasar un array de parámetros posicionales a execute()
+$stmt = $conexion-&gt;prepare("SELECT * FROM productos WHERE categoria = ? AND precio &lt; ?");
+$stmt-&gt;execute(['electrónica', 1000]);
+?&gt;</code></pre>
+<h3>INSERT con Consultas Preparadas</h3>
+<pre><code class="language-php">&lt;?php
+try {
+    // Preparar la consulta
+    $stmt = $conexion-&gt;prepare("INSERT INTO usuarios (nombre, email, password, fecha_registro) 
+                              VALUES (:nombre, :email, :password, :fecha)");
+    
+    // Datos a insertar
+    $nombre = "Carlos Rodríguez";
+    $email = "carlos@ejemplo.com";
+    $password = password_hash("contraseña123", PASSWORD_DEFAULT);
+    $fecha = date('Y-m-d H:i:s');
+    
+    // Vincular parámetros
+    $stmt-&gt;bindParam(':nombre', $nombre);
+    $stmt-&gt;bindParam(':email', $email);
+    $stmt-&gt;bindParam(':password', $password);
+    $stmt-&gt;bindParam(':fecha', $fecha);
+    
+    // Ejecutar la consulta
+    $stmt-&gt;execute();
+    
+    echo "Usuario insertado con ID: " . $conexion-&gt;lastInsertId();
+    
+} catch (PDOException $e) {
+    echo "Error al insertar: " . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+<h3>UPDATE con Consultas Preparadas</h3>
+<pre><code class="language-php">&lt;?php
+try {
+    // Preparar la consulta
+    $stmt = $conexion-&gt;prepare("UPDATE usuarios 
+                              SET nombre = :nombre, 
+                                  email = :email, 
+                                  actualizado_en = :fecha 
+                              WHERE id = :id");
+    
+    // Datos a actualizar
+    $id = 5;
+    $nombre = "Carlos Méndez";
+    $email = "carlos.mendez@ejemplo.com";
+    $fecha = date('Y-m-d H:i:s');
+    
+    // Vincular parámetros y ejecutar
+    $stmt-&gt;execute([
+        ':id' =&gt; $id,
+        ':nombre' =&gt; $nombre,
+        ':email' =&gt; $email,
+        ':fecha' =&gt; $fecha
+    ]);
+    
+    echo "Usuario actualizado. Filas afectadas: " . $stmt-&gt;rowCount();
+    
+} catch (PDOException $e) {
+    echo "Error al actualizar: " . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+<h3>DELETE con Consultas Preparadas</h3>
+<pre><code class="language-php">&lt;?php
+try {
+    // Preparar la consulta
+    $stmt = $conexion-&gt;prepare("DELETE FROM usuarios WHERE id = :id");
+    
+    // Ejecutar con parámetro
+    $stmt-&gt;execute([':id' =&gt; 10]);
+    
+    echo "Usuario eliminado. Filas afectadas: " . $stmt-&gt;rowCount();
+    
+} catch (PDOException $e) {
+    echo "Error al eliminar: " . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+<h3>Consultas Preparadas Reutilizables</h3>
+<pre><code class="language-php">&lt;?php
+try {
+    // Preparar una consulta que se usará múltiples veces
+    $stmt = $conexion-&gt;prepare("INSERT INTO logs (usuario_id, accion, fecha) VALUES (:usuario_id, :accion, NOW())");
+    
+    // Ejecutar la misma consulta con diferentes parámetros
+    $stmt-&gt;execute([':usuario_id' =&gt; 1, ':accion' =&gt; 'login']);
+    $stmt-&gt;execute([':usuario_id' =&gt; 2, ':accion' =&gt; 'logout']);
+    $stmt-&gt;execute([':usuario_id' =&gt; 1, ':accion' =&gt; 'actualizar_perfil']);
+    
+    echo "Logs registrados correctamente";
+    
+} catch (PDOException $e) {
+    echo "Error: " . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+<h3>Consultas Preparadas con IN</h3>
+<p>Trabajar con la cláusula IN requiere un enfoque especial:</p>
+<pre><code class="language-php">&lt;?php
+try {
+    // Array de IDs
+    $ids = [1, 5, 9, 12];
+    
+    // Crear marcadores de posición dinámicos
+    $marcadores = implode(',', array_fill(0, count($ids), '?'));
+    
+    // Preparar la consulta con los marcadores
+    $stmt = $conexion-&gt;prepare("SELECT * FROM productos WHERE id IN ($marcadores)");
+    
+    // Ejecutar la consulta
+    $stmt-&gt;execute($ids);
+    
+    // Obtener resultados
+    $productos = $stmt-&gt;fetchAll();
+    
+    foreach ($productos as $producto) {
+        echo "Producto: {$producto['nombre']}&lt;br&gt;";
+    }
+    
+} catch (PDOException $e) {
+    echo "Error: " . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="ejemplo-completo-crud-con-pdo">
+    <h2>Ejemplo Completo: CRUD con PDO</h2>
+    <div class="doc-content">
+<p>A continuación, se presenta un ejemplo completo de una clase que implementa operaciones CRUD para una tabla de usuarios:</p>
+<pre><code class="language-php">&lt;?php
+class UsuarioModel {
+    private $conexion;
+    
+    public function __construct(PDO $conexion) {
+        $this-&gt;conexion = $conexion;
+    }
+    
+    /**
+     * Obtener todos los usuarios
+     */
+    public function obtenerTodos() {
+        $stmt = $this-&gt;conexion-&gt;query("SELECT * FROM usuarios ORDER BY nombre");
+        return $stmt-&gt;fetchAll();
+    }
+    
+    /**
+     * Obtener un usuario por su ID
+     */
+    public function obtenerPorId($id) {
+        $stmt = $this-&gt;conexion-&gt;prepare("SELECT * FROM usuarios WHERE id = :id");
+        $stmt-&gt;execute([':id' =&gt; $id]);
+        return $stmt-&gt;fetch();
+    }
+    
+    /**
+     * Buscar usuarios por nombre o email
+     */
+    public function buscar($termino) {
+        $termino = "%$termino%"; // Para búsqueda parcial
+        
+        $stmt = $this-&gt;conexion-&gt;prepare(
+            "SELECT * FROM usuarios 
+             WHERE nombre LIKE :termino 
+             OR email LIKE :termino 
+             ORDER BY nombre"
+        );
+        
+        $stmt-&gt;execute([':termino' =&gt; $termino]);
+        return $stmt-&gt;fetchAll();
+    }
+    
+    /**
+     * Crear un nuevo usuario
+     */
+    public function crear($datos) {
+        $stmt = $this-&gt;conexion-&gt;prepare(
+            "INSERT INTO usuarios (nombre, email, password, fecha_registro) 
+             VALUES (:nombre, :email, :password, :fecha_registro)"
+        );
+        
+        // Encriptar contraseña
+        $datos['password'] = password_hash($datos['password'], PASSWORD_DEFAULT);
+        $datos['fecha_registro'] = date('Y-m-d H:i:s');
+        
+        $stmt-&gt;execute($datos);
+        return $this-&gt;conexion-&gt;lastInsertId();
+    }
+    
+    /**
+     * Actualizar un usuario existente
+     */
+    public function actualizar($id, $datos) {
+        // Construir la consulta dinámicamente basada en los campos proporcionados
+        $campos = [];
+        $valores = [':id' =&gt; $id];
+        
+        foreach ($datos as $campo =&gt; $valor) {
+            if ($campo !== 'id') {
+                $campos[] = "$campo = :$campo";
+                $valores[":$campo"] = $valor;
+            }
+        }
+        
+        // Añadir campo de actualización
+        $campos[] = "actualizado_en = :actualizado_en";
+        $valores[':actualizado_en'] = date('Y-m-d H:i:s');
+        
+        $sql = "UPDATE usuarios SET " . implode(', ', $campos) . " WHERE id = :id";
+        
+        $stmt = $this-&gt;conexion-&gt;prepare($sql);
+        $stmt-&gt;execute($valores);
+        
+        return $stmt-&gt;rowCount();
+    }
+    
+    /**
+     * Eliminar un usuario
+     */
+    public function eliminar($id) {
+        $stmt = $this-&gt;conexion-&gt;prepare("DELETE FROM usuarios WHERE id = :id");
+        $stmt-&gt;execute([':id' =&gt; $id]);
+        return $stmt-&gt;rowCount();
+    }
+    
+    /**
+     * Verificar si un email ya está registrado
+     */
+    public function emailExiste($email, $excluir_id = null) {
+        $sql = "SELECT COUNT(*) FROM usuarios WHERE email = :email";
+        $params = [':email' =&gt; $email];
+        
+        if ($excluir_id !== null) {
+            $sql .= " AND id != :id";
+            $params[':id'] = $excluir_id;
+        }
+        
+        $stmt = $this-&gt;conexion-&gt;prepare($sql);
+        $stmt-&gt;execute($params);
+        
+        return $stmt-&gt;fetchColumn() &gt; 0;
+    }
+    
+    /**
+     * Verificar credenciales de usuario
+     */
+    public function verificarCredenciales($email, $password) {
+        $stmt = $this-&gt;conexion-&gt;prepare("SELECT id, nombre, password FROM usuarios WHERE email = :email");
+        $stmt-&gt;execute([':email' =&gt; $email]);
+        $usuario = $stmt-&gt;fetch();
+        
+        if ($usuario &amp;&amp; password_verify($password, $usuario['password'])) {
+            // Eliminar el hash de la contraseña antes de devolver los datos
+            unset($usuario['password']);
+            return $usuario;
+        }
+        
+        return false;
+    }
+}
+
+// Ejemplo de uso
+try {
+    // Crear conexión
+    $conexion = new PDO("mysql:host=localhost;dbname=mi_app;charset=utf8mb4", "usuario", "contraseña", [
+        PDO::ATTR_ERRMODE =&gt; PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE =&gt; PDO::FETCH_ASSOC
+    ]);
+    
+    // Instanciar el modelo
+    $usuarioModel = new UsuarioModel($conexion);
+    
+    // Ejemplos de operaciones
+    
+    // Crear un usuario
+    $id = $usuarioModel-&gt;crear([
+        'nombre' =&gt; 'Ana Martínez',
+        'email' =&gt; 'ana@ejemplo.com',
+        'password' =&gt; 'contraseña123'
+    ]);
+    echo "Usuario creado con ID: $id&lt;br&gt;";
+    
+    // Obtener todos los usuarios
+    $usuarios = $usuarioModel-&gt;obtenerTodos();
+    echo "Total de usuarios: " . count($usuarios) . "&lt;br&gt;";
+    
+    // Buscar usuarios
+    $resultados = $usuarioModel-&gt;buscar('ana');
+    echo "Resultados de búsqueda: " . count($resultados) . "&lt;br&gt;";
+    
+    // Actualizar un usuario
+    $filas = $usuarioModel-&gt;actualizar($id, ['nombre' =&gt; 'Ana López']);
+    echo "Usuario actualizado. Filas afectadas: $filas&lt;br&gt;";
+    
+    // Verificar credenciales
+    $usuario = $usuarioModel-&gt;verificarCredenciales('ana@ejemplo.com', 'contraseña123');
+    if ($usuario) {
+        echo "Inicio de sesión exitoso para: {$usuario['nombre']}&lt;br&gt;";
+    } else {
+        echo "Credenciales incorrectas&lt;br&gt;";
+    }
+    
+} catch (PDOException $e) {
+    echo "Error: " . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2>Resumen</h2>
+    <div class="doc-content">
+<ul>
+<li><strong>PDO</strong> ofrece una interfaz segura y consistente para conectarse a bases de datos MySQL y otras.</li>
+<li>Las <strong>consultas preparadas</strong> son esenciales para prevenir ataques de inyección SQL.</li>
+<li>PDO permite diferentes métodos para obtener resultados: arrays asociativos, objetos, o instancias de clases personalizadas.</li>
+<li>Las <strong>transacciones</strong> garantizan la integridad de los datos al realizar múltiples operaciones relacionadas.</li>
+<li>Implementar un modelo de datos estructurado facilita la organización y mantenimiento del código.</li>
+</ul>
+<blockquote class="aside aside-tip">
+<strong>Mejores prácticas para trabajar con bases de datos en PHP:</strong>
+  <ul>
+    <li>Siempre usa consultas preparadas para prevenir inyección SQL</li>
+    <li>Maneja adecuadamente los errores con bloques try-catch</li>
+    <li>Cierra las conexiones explícitamente cuando ya no sean necesarias</li>
+    <li>Usa transacciones para operaciones que involucren múltiples consultas relacionadas</li>
+    <li>Implementa una capa de abstracción (como modelos) para separar la lógica de acceso a datos</li>
+    <li>Valida y sanitiza los datos antes de enviarlos a la base de datos</li>
+    <li>Limita los privilegios de la cuenta de base de datos usada por la aplicación</li>
+  </ul>
+</blockquote>
+    </div>
+  </section>

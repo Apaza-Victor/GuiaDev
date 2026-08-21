@@ -1,0 +1,210 @@
+<!-- 05. Computadas y Observadores - Vue 3 (Frameworks) -->
+  <section id="propiedades-computadas-con-computed">
+    <h2>Propiedades computadas con `computed()`</h2>
+    <div class="doc-content">
+<p>Las propiedades computadas son valores reactivos derivados de otros estados reactivos. Se recalculan automáticamente cuando sus dependencias cambian.</p>
+<h3>Uso básico</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const count = ref(1)
+const doubleCount = computed(() =&gt; count.value * 2)
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;p&gt;Contador: {{ count }}&lt;/p&gt;
+  &lt;p&gt;Doble: {{ doubleCount }}&lt;/p&gt;
+  &lt;button @click="count++"&gt;Incrementar&lt;/button&gt;
+&lt;/template&gt;
+</code></pre>
+<h3>Propiedades computadas con getter y setter</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const firstName = ref('Juan')
+const lastName = ref('Pérez')
+
+const fullName = computed({
+  // getter
+  get() {
+    return `${firstName.value} ${lastName.value}`
+  },
+  // setter
+  set(newValue) {
+    [firstName.value, lastName.value] = newValue.split(' ')
+  }
+})
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;p&gt;Nombre completo: {{ fullName }}&lt;/p&gt;
+  &lt;button @click="fullName = 'María López'"&gt;Cambiar nombre&lt;/button&gt;
+&lt;/template&gt;
+</code></pre>
+<blockquote class="aside aside-caution">
+Las propiedades computadas son cacheadas basadas en sus dependencias reactivas. Una propiedad computada solo se recalculará cuando alguna de sus dependencias reactivas cambie.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="observadores-con-watch">
+    <h2>Observadores con `watch()`</h2>
+    <div class="doc-content">
+<p>El método <code>watch()</code> permite observar y reaccionar a cambios en datos reactivos específicos.</p>
+<h3>Observando una única fuente</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const count = ref(0)
+
+watch(count, (newValue, oldValue) =&gt; {
+  console.log(`El contador cambió de ${oldValue} a ${newValue}`)
+})
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;p&gt;Contador: {{ count }}&lt;/p&gt;
+  &lt;button @click="count++"&gt;Incrementar&lt;/button&gt;
+&lt;/template&gt;
+</code></pre>
+<h3>Observando múltiples fuentes</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const firstName = ref('Juan')
+const lastName = ref('Pérez')
+
+watch(
+  [firstName, lastName],
+  ([newFirstName, newLastName], [oldFirstName, oldLastName]) =&gt; {
+    console.log(`Nombre: ${oldFirstName} → ${newFirstName}`)
+    console.log(`Apellido: ${oldLastName} → ${newLastName}`)
+  }
+)
+&lt;/script&gt;
+</code></pre>
+<h3>Observando propiedades anidadas</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const user = ref({
+  name: 'Juan',
+  profile: {
+    age: 30
+  }
+})
+
+// Para observar propiedades anidadas, usa una función getter
+watch(
+  () =&gt; user.value.profile.age,
+  (newAge, oldAge) =&gt; {
+    console.log(`La edad cambió de ${oldAge} a ${newAge}`)
+  }
+)
+&lt;/script&gt;
+</code></pre>
+<h3>Opciones de <code>watch()</code></h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const count = ref(0)
+
+watch(
+  count,
+  (newValue, oldValue) =&gt; {
+    console.log(`El contador cambió a ${newValue}`)
+  },
+  {
+    immediate: true, // Ejecuta el callback inmediatamente al crear el observador
+    deep: true,      // Detecta cambios en propiedades anidadas (para objetos)
+    flush: 'post'    // Ejecuta el callback después de la actualización del DOM
+  }
+)
+&lt;/script&gt;
+</code></pre>
+    </div>
+  </section>
+
+  <section id="observadores-con-watcheffect">
+    <h2>Observadores con `watchEffect()`</h2>
+    <div class="doc-content">
+<p><code>watchEffect()</code> ejecuta y rastrea automáticamente las dependencias reactivas utilizadas dentro de su función callback.</p>
+<h3>Uso básico</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const count = ref(0)
+const name = ref('Juan')
+
+watchEffect(() =&gt; {
+  console.log(`Count: ${count.value}, Name: ${name.value}`)
+  // Se ejecuta automáticamente cuando count o name cambian
+})
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;p&gt;Contador: {{ count }}&lt;/p&gt;
+  &lt;button @click="count++"&gt;Incrementar contador&lt;/button&gt;
+  &lt;input v-model="name" /&gt;
+&lt;/template&gt;
+</code></pre>
+<h3>Opciones de <code>watchEffect()</code></h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const count = ref(0)
+
+watchEffect(
+  () =&gt; {
+    console.log(`El contador es: ${count.value}`)
+  },
+  {
+    flush: 'post', // Ejecuta el callback después de la actualización del DOM
+    onTrack(e) {   // Se llama cuando una dependencia es rastreada
+      console.log('Dependencia rastreada:', e)
+    },
+    onTrigger(e) {  // Se llama cuando el observador es disparado
+      console.log('Observador disparado:', e)
+    }
+  }
+)
+&lt;/script&gt;
+</code></pre>
+    </div>
+  </section>
+
+  <section id="diferencias-entre-watch-y-watcheffect">
+    <h2>Diferencias entre `watch` y `watchEffect`</h2>
+    <div class="doc-content">
+  <h4 class="tab-label">watch</h4>
+    <pre><code class="language-js">    // Requiere especificar explícitamente qué observar
+    watch(source, (newValue, oldValue) =&gt; {
+      // Solo se ejecuta cuando 'source' cambia
+      // Tiene acceso al valor anterior y al nuevo
+    })
+    </code></pre>
+<ul>
+<li><i class="fa-solid fa-circle-check"></i> Control preciso sobre qué datos observar</li>
+<li><i class="fa-solid fa-circle-check"></i> Acceso a valores anteriores y nuevos</li>
+<li><i class="fa-solid fa-circle-check"></i> Control sobre cuándo se dispara (puede ser perezoso)</li>
+<li><i class="fa-solid fa-xmark"></i> Más verboso para múltiples dependencias</li>
+</ul>
+  <h4 class="tab-label">watchEffect</h4>
+    <pre><code class="language-js">    // Rastrea automáticamente las dependencias usadas dentro
+    watchEffect(() =&gt; {
+      // Se ejecuta inmediatamente y cuando cualquier
+      // dependencia reactiva utilizada dentro cambia
+      // No tiene acceso a valores anteriores
+    })
+    </code></pre>
+<ul>
+<li><i class="fa-solid fa-circle-check"></i> Rastreo automático de dependencias</li>
+<li><i class="fa-solid fa-circle-check"></i> Menos código para múltiples dependencias</li>
+<li><i class="fa-solid fa-circle-check"></i> Se ejecuta inmediatamente por defecto</li>
+<li><i class="fa-solid fa-xmark"></i> No tiene acceso a valores anteriores</li>
+<li><i class="fa-solid fa-xmark"></i> Menos control sobre qué exactamente dispara la ejecución</li>
+</ul>
+<h3>Tabla comparativa</h3>
+<table><thead><tr><th>Característica</th><th><code>watch()</code></th><th><code>watchEffect()</code></th></tr></thead><tbody><tr><td>Rastreo de dependencias</td><td>Manual (explícito)</td><td>Automático</td></tr><tr><td>Ejecución inicial</td><td>No (a menos que <code>immediate: true</code>)</td><td>Sí</td></tr><tr><td>Acceso a valores anteriores</td><td>Sí</td><td>No</td></tr><tr><td>Múltiples fuentes</td><td>Requiere array o función getter</td><td>Automático al usar dentro</td></tr><tr><td>Caso de uso ideal</td><td>Cuando necesitas reaccionar a cambios específicos con acceso al valor anterior</td><td>Cuando necesitas ejecutar efectos secundarios basados en múltiples dependencias</td></tr></tbody></table>
+    </div>
+  </section>

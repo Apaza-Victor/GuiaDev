@@ -1,0 +1,771 @@
+<!-- 7. Formularios y useForm - Inertia (Frameworks) -->
+  <section id="useform-definicion-y-uso-basico">
+    <h2>useForm: definición y uso básico</h2>
+    <div class="doc-content">
+<p>El hook <code>useForm</code> es la piedra angular para el manejo de formularios en Inertia.js. Con Vue 3 Composition API, este hook se integra perfectamente para crear una experiencia fluida al trabajar con formularios.</p>
+<h3>Importación y configuración básica</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+// Inicializar formulario con valores por defecto
+const form = useForm({
+  name: '',
+  email: '',
+  password: '',
+  password_confirmation: '',
+  terms: false,
+});
+
+// Función para enviar el formulario
+const submit = () =&gt; {
+  form.post(route('register'));
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;form @submit.prevent="submit"&gt;
+    &lt;div&gt;
+      &lt;label for="name"&gt;Nombre:&lt;/label&gt;
+      &lt;input id="name" type="text" v-model="form.name" /&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+      &lt;label for="email"&gt;Email:&lt;/label&gt;
+      &lt;input id="email" type="email" v-model="form.email" /&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+      &lt;label for="password"&gt;Contraseña:&lt;/label&gt;
+      &lt;input id="password" type="password" v-model="form.password" /&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+      &lt;label for="password_confirmation"&gt;Confirmar contraseña:&lt;/label&gt;
+      &lt;input id="password_confirmation" type="password" v-model="form.password_confirmation" /&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+      &lt;input id="terms" type="checkbox" v-model="form.terms" /&gt;
+      &lt;label for="terms"&gt;Acepto los términos y condiciones&lt;/label&gt;
+    &lt;/div&gt;
+    
+    &lt;button type="submit" :disabled="form.processing"&gt;Registrarse&lt;/button&gt;
+  &lt;/form&gt;
+&lt;/template&gt;</code></pre>
+<h3>Métodos de envío</h3>
+<p>Inertia proporciona varios métodos para enviar formularios, cada uno corresponde a un verbo HTTP:</p>
+<pre><code class="language-js">// POST request
+form.post(route('users.store'))
+
+// PUT request
+form.put(route('users.update', user.id))
+
+// PATCH request
+form.patch(route('users.update', user.id))
+
+// DELETE request
+form.delete(route('users.destroy', user.id))
+</code></pre>
+<h3>Opciones de configuración</h3>
+<p>Puedes personalizar el comportamiento del envío del formulario con un segundo parámetro de opciones:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const form = useForm({ /* ... */ });
+
+const submit = () =&gt; {
+  form.post(route('users.store'), {
+    // Preserva la página actual (no desplaza al inicio)
+    preserveScroll: true,
+    
+    // No realiza una nueva visita a la misma página
+    // cuando la respuesta es una redirección a la URL actual
+    preserveState: true,
+    
+    // Establecer un callback para cuando el envío sea exitoso
+    onSuccess: () =&gt; {
+      console.log('Usuario creado con éxito');
+    },
+    
+    // Callback cuando haya un error
+    onError: (errors) =&gt; {
+      console.log('Errores en el formulario:', errors);
+    },
+    
+    // Callback cuando comienza el procesamiento
+    onStart: () =&gt; {
+      console.log('Iniciando envío del formulario');
+    },
+    
+    // Callback cuando finaliza (exitoso o con error)
+    onFinish: () =&gt; {
+      console.log('Proceso de envío finalizado');
+    },
+  });
+};
+&lt;/script&gt;</code></pre>
+<h3>Estado del formulario</h3>
+<p>El objeto de formulario tiene propiedades reactivas que permiten controlar el UI durante el proceso de envío:</p>
+<pre><code class="language-js">// Booleano que indica si el formulario está en proceso de envío
+form.processing
+
+// Booleano que indica si el formulario se ha enviado exitosamente
+form.wasSuccessful
+
+// Booleano que indica si hubo un error de procesamiento
+form.hasErrors
+
+// Progreso de la subida (0 a 100)
+form.progress
+</code></pre>
+<h3>Ejemplo con indicadores de estado</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const form = useForm({
+  title: '',
+  content: '',
+  image: null,
+});
+
+const submit = () =&gt; {
+  form.post(route('posts.store'));
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;form @submit.prevent="submit"&gt;
+    &lt;!-- Campos del formulario --&gt;
+    
+    &lt;div class="mt-4 flex items-center"&gt;
+      &lt;button 
+        type="submit" 
+        class="px-4 py-2 bg-blue-600 text-white rounded-md"
+        :class="{ 'opacity-75 cursor-not-allowed': form.processing }" 
+        :disabled="form.processing"
+      &gt;
+        &lt;span v-if="form.processing"&gt;Enviando...&lt;/span&gt;
+        &lt;span v-else&gt;Guardar&lt;/span&gt;
+      &lt;/button&gt;
+      
+      &lt;!-- Indicador de progreso para subida de archivos --&gt;
+      &lt;div v-if="form.progress" class="ml-4"&gt;
+        &lt;progress :value="form.progress.percentage" max="100"&gt;
+          {{ form.progress.percentage }}%
+        &lt;/progress&gt;
+      &lt;/div&gt;
+      
+      &lt;!-- Indicador de éxito --&gt;
+      &lt;span v-if="form.wasSuccessful &amp;&amp; !form.hasErrors" class="ml-4 text-green-600"&gt;
+        ¡Guardado con éxito!  
+      &lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/form&gt;
+&lt;/template&gt;</code></pre>
+<blockquote class="aside aside-tip">
+Cuando un formulario tiene archivos, Inertia.js automáticamente enviará los datos usando `FormData` y mostrará el progreso de la subida que puedes aprovechar con `form.progress`.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="validacion-y-errores-del-lado-del-servidor">
+    <h2>Validación y errores del lado del servidor</h2>
+    <div class="doc-content">
+<p>Inertia.js se integra perfectamente con el sistema de validación del backend de Laravel, permitiendo manejar los errores de forma elegante en el frontend.</p>
+<h3>Acceso a errores de validación</h3>
+<p>Cuando Laravel devuelve errores de validación, estos se pasan automáticamente al objeto <code>form.errors</code>:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const form = useForm({
+  title: '',
+  description: '',
+  category_id: null,
+  published_at: null,
+});
+
+const submit = () =&gt; {
+  form.post(route('posts.store'));
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;form @submit.prevent="submit"&gt;
+    &lt;div class="mb-4"&gt;
+      &lt;label for="title" class="block mb-1"&gt;Título&lt;/label&gt;
+      &lt;input 
+        id="title" 
+        type="text" 
+        v-model="form.title" 
+        class="w-full rounded-md border-gray-300"
+        :class="{'border-red-500': form.errors.title}"
+      /&gt;
+      &lt;!-- Mensaje de error --&gt;
+      &lt;div v-if="form.errors.title" class="text-red-500 text-sm mt-1"&gt;
+        {{ form.errors.title }}
+      &lt;/div&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="mb-4"&gt;
+      &lt;label for="description" class="block mb-1"&gt;Descripción&lt;/label&gt;
+      &lt;textarea 
+        id="description" 
+        v-model="form.description"
+        class="w-full rounded-md border-gray-300"
+        :class="{'border-red-500': form.errors.description}"
+      &gt;&lt;/textarea&gt;
+      &lt;div v-if="form.errors.description" class="text-red-500 text-sm mt-1"&gt;
+        {{ form.errors.description }}
+      &lt;/div&gt;
+    &lt;/div&gt;
+    
+    &lt;!-- Botón de envío --&gt;
+    &lt;button 
+      type="submit" 
+      class="px-4 py-2 bg-blue-600 text-white rounded-md"
+      :disabled="form.processing"
+    &gt;
+      Guardar
+    &lt;/button&gt;
+  &lt;/form&gt;
+&lt;/template&gt;</code></pre>
+<h3>Métodos de validación y utilidades</h3>
+<p>El objeto <code>form</code> proporciona métodos útiles para trabajar con errores:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const form = useForm({ /* ... */ });
+
+// Verificar si hay un error en un campo específico
+const hasTitleError = computed(() =&gt; form.errors.title !== undefined);
+
+// Verificar si hay cualquier error
+const hasAnyError = computed(() =&gt; Object.keys(form.errors).length &gt; 0);
+
+// Limpiar errores de campos específicos
+const clearTitleError = () =&gt; {
+  form.clearErrors('title');
+};
+
+// Limpiar todos los errores
+const clearAllErrors = () =&gt; {
+  form.clearErrors();
+};
+&lt;/script&gt;</code></pre>
+<h3>Validación en tiempo real</h3>
+<p>A veces queremos validar los datos en tiempo real mientras el usuario escribe. Para esto, podemos usar <code>transform</code> para transformar valores y <code>get</code> para solicitudes de validación:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+
+const form = useForm({
+  username: '',
+  email: '',
+  bio: '',
+});
+
+// Permitir solo caracteres alfanuméricos en el nombre de usuario
+watch(() =&gt; form.username, (value) =&gt; {
+  // Eliminar caracteres no alfanuméricos
+  form.transform((data) =&gt; ({
+    ...data,
+    username: value.replace(/[^a-zA-Z0-9]/g, ''),
+  }));
+});
+
+// Validación en tiempo real para el email
+const debouncedEmailCheck = useDebouncedCallback((value) =&gt; {
+  if (value &amp;&amp; value.includes('@')) {
+    form.get(route('validate.email'), {
+      preserveState: true,
+      preserveScroll: true,
+      only: ['errors.email'],
+    });
+  }
+}, 500);
+
+// Ejecutar la validación cuando cambie el email
+watch(() =&gt; form.email, debouncedEmailCheck);
+
+// Longitud máxima para la bio
+const bioLength = computed(() =&gt; form.bio?.length || 0);
+const maxBioLength = 200;
+const bioRemaining = computed(() =&gt; maxBioLength - bioLength.value);
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;form @submit.prevent="form.post(route('profile.update'))"&gt;
+    &lt;!-- Campo username --&gt;
+    &lt;div class="mb-4"&gt;
+      &lt;label for="username"&gt;Nombre de usuario&lt;/label&gt;
+      &lt;input 
+        id="username" 
+        type="text" 
+        v-model="form.username" 
+        class="w-full rounded-md border-gray-300"
+      /&gt;
+      &lt;div v-if="form.errors.username" class="text-red-500 text-sm mt-1"&gt;
+        {{ form.errors.username }}
+      &lt;/div&gt;
+      &lt;small class="text-gray-500"&gt;Solo caracteres alfanuméricos permitidos&lt;/small&gt;
+    &lt;/div&gt;
+    
+    &lt;!-- Campo email con validación en tiempo real --&gt;
+    &lt;div class="mb-4"&gt;
+      &lt;label for="email"&gt;Email&lt;/label&gt;
+      &lt;input 
+        id="email" 
+        type="email" 
+        v-model="form.email" 
+        class="w-full rounded-md border-gray-300"
+        :class="{'border-red-500': form.errors.email}"
+      /&gt;
+      &lt;div v-if="form.errors.email" class="text-red-500 text-sm mt-1"&gt;
+        {{ form.errors.email }}
+      &lt;/div&gt;
+    &lt;/div&gt;
+    
+    &lt;!-- Campo bio con contador --&gt;
+    &lt;div class="mb-4"&gt;
+      &lt;label for="bio"&gt;Bio&lt;/label&gt;
+      &lt;textarea 
+        id="bio" 
+        v-model="form.bio" 
+        class="w-full rounded-md border-gray-300"
+        :maxlength="maxBioLength"
+      &gt;&lt;/textarea&gt;
+      &lt;div class="flex justify-end"&gt;
+        &lt;small :class="{'text-red-500': bioRemaining &lt; 20, 'text-gray-500': bioRemaining &gt;= 20}"&gt;
+          {{ bioRemaining }} caracteres restantes
+        &lt;/small&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    
+    &lt;button 
+      type="submit" 
+      class="px-4 py-2 bg-blue-600 text-white rounded-md"
+      :disabled="form.processing || hasAnyError"
+    &gt;
+      Guardar perfil
+    &lt;/button&gt;
+  &lt;/form&gt;
+&lt;/template&gt;</code></pre>
+<h3>Errores de respuesta y manejo de excepciones</h3>
+<p>Cuando ocurren errores en el servidor (500, 419, etc.), podemos capturarlos y mostrarlos al usuario:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+
+const form = useForm({ /* ... */ });
+const serverError = ref(null);
+
+const submit = () =&gt; {
+  serverError.value = null;
+  
+  form.post(route('posts.store'), {
+    onError: (errors) =&gt; {
+      // Manejar errores de validación (422)
+      console.log('Validation errors:', errors);
+    },
+    onSuccess: () =&gt; {
+      // Éxito, redireccionar o mostrar mensaje
+    },
+    onFinish: () =&gt; {
+      // Siempre se ejecuta
+    },
+  }).catch(error =&gt; {
+    // Capturar errores no relacionados con la validación (500, 404, etc.)
+    serverError.value = 'Ha ocurrido un error en el servidor. Por favor, inténtalo de nuevo más tarde.';
+    console.error('Server error:', error);
+  });
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;form @submit.prevent="submit"&gt;
+    &lt;!-- Campos del formulario --&gt;
+    
+    &lt;!-- Alerta de error de servidor --&gt;
+    &lt;div v-if="serverError" class="bg-red-50 border border-red-200 text-red-800 p-4 rounded-md my-4"&gt;
+      {{ serverError }}
+    &lt;/div&gt;
+    
+    &lt;button type="submit" :disabled="form.processing"&gt;Enviar&lt;/button&gt;
+  &lt;/form&gt;
+&lt;/template&gt;</code></pre>
+<blockquote class="aside aside-note">
+Recuerda que en Laravel, los errores de validación son devueltos con un código 422 (Unprocessable Entity), mientras que otros errores como problemas de autorización o errores internos tienen diferentes códigos HTTP.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="reset-de-formularios-y-estados">
+    <h2>Reset de formularios y estados</h2>
+    <div class="doc-content">
+<p>Inertia.js proporciona métodos para reiniciar formularios a su estado original o a nuevos valores. Esto es particularmente útil después de envíos exitosos o cuando se necesita cancelar la operación actual.</p>
+<h3>Reset básico</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+
+const form = useForm({
+  name: '',
+  email: '',
+  message: '',
+});
+
+const success = ref(false);
+
+const submit = () =&gt; {
+  form.post(route('contact.submit'), {
+    onSuccess: () =&gt; {
+      // Resetear el formulario a sus valores iniciales
+      form.reset();
+      
+      // Mostrar mensaje de éxito
+      success.value = true;
+      
+      // Ocultar mensaje de éxito después de 3 segundos
+      setTimeout(() =&gt; {
+        success.value = false;
+      }, 3000);
+    },
+  });
+};
+
+const cancel = () =&gt; {
+  // Restaurar el formulario a sus valores iniciales
+  form.reset();
+  
+  // También limpiar los errores
+  form.clearErrors();
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;!-- Alerta de éxito --&gt;
+    &lt;div 
+      v-if="success" 
+      class="bg-green-50 border border-green-200 text-green-800 p-4 rounded-md mb-4"
+    &gt;
+      Tu mensaje ha sido enviado correctamente.
+    &lt;/div&gt;
+    
+    &lt;form @submit.prevent="submit"&gt;
+      &lt;!-- Campos del formulario --&gt;
+      &lt;div class="mb-4"&gt;
+        &lt;label for="name" class="block mb-1"&gt;Nombre&lt;/label&gt;
+        &lt;input 
+          id="name" 
+          type="text" 
+          v-model="form.name"
+          class="w-full rounded-md border-gray-300"
+          :class="{'border-red-500': form.errors.name}"
+        /&gt;
+        &lt;div v-if="form.errors.name" class="text-red-500 text-sm mt-1"&gt;
+          {{ form.errors.name }}
+        &lt;/div&gt;
+      &lt;/div&gt;
+      
+      &lt;!-- Más campos... --&gt;
+      
+      &lt;div class="flex space-x-2 mt-6"&gt;
+        &lt;button 
+          type="submit" 
+          class="px-4 py-2 bg-blue-600 text-white rounded-md"
+          :disabled="form.processing"
+        &gt;
+          Enviar
+        &lt;/button&gt;
+        
+        &lt;button 
+          type="button" 
+          class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
+          @click="cancel"
+        &gt;
+          Cancelar
+        &lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/form&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<h3>Reset selectivo y datos de respaldo</h3>
+<p>A veces necesitas resetear solo algunos campos o restaurar el formulario a un estado específico:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+
+// Estado inicial del formulario
+const initialData = {
+  title: '',
+  content: '',
+  status: 'draft',
+  tags: [],
+  featured: false,
+};
+
+// Crear formulario con valores iniciales
+const form = useForm(initialData);
+
+// Guardar respaldo del formulario para edición
+const backup = ref(null);
+
+// Resetear campos específicos
+const resetContent = () =&gt; {
+  form.setData('content', '');
+};
+
+// Resetear a valores específicos
+const resetToDefaults = () =&gt; {
+  form.setData({
+    ...initialData,
+    // Podemos sobrescribir algunos valores si lo necesitamos
+    status: 'draft',
+  });
+};
+
+// Guardar estado actual para recuperación posterior
+const saveBackup = () =&gt; {
+  // Clonamos los datos para evitar referencias
+  backup.value = JSON.parse(JSON.stringify(form.data()));
+};
+
+// Restaurar desde backup
+const restoreFromBackup = () =&gt; {
+  if (backup.value) {
+    form.setData(backup.value);
+    form.clearErrors();
+  }
+};
+
+const submit = () =&gt; {
+  form.post(route('posts.store'));
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;div class="flex justify-between mb-6"&gt;
+      &lt;h1 class="text-2xl font-bold"&gt;Nuevo artículo&lt;/h1&gt;
+      
+      &lt;div class="space-x-2"&gt;
+        &lt;button 
+          type="button" 
+          class="px-3 py-1 bg-gray-200 text-gray-800 rounded-md text-sm"
+          @click="saveBackup"
+        &gt;
+          Guardar borrador
+        &lt;/button&gt;
+        
+        &lt;button 
+          type="button" 
+          class="px-3 py-1 bg-gray-200 text-gray-800 rounded-md text-sm"
+          @click="restoreFromBackup"
+          :disabled="!backup"
+        &gt;
+          Restaurar borrador
+        &lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    
+    &lt;form @submit.prevent="submit"&gt;
+      &lt;!-- Campo título con opción de reset --&gt;
+      &lt;div class="mb-4"&gt;
+        &lt;div class="flex justify-between items-center mb-1"&gt;
+          &lt;label for="title"&gt;Título&lt;/label&gt;
+          &lt;button 
+            type="button" 
+            class="text-xs text-gray-500 hover:text-gray-700"
+            @click="form.setData('title', '')"
+          &gt;
+            Limpiar
+          &lt;/button&gt;
+        &lt;/div&gt;
+        
+        &lt;input 
+          id="title" 
+          type="text" 
+          v-model="form.title"
+          class="w-full rounded-md border-gray-300"
+        /&gt;
+      &lt;/div&gt;
+      
+      &lt;!-- Campo contenido con botón de reset --&gt;
+      &lt;div class="mb-4"&gt;
+        &lt;div class="flex justify-between items-center mb-1"&gt;
+          &lt;label for="content"&gt;Contenido&lt;/label&gt;
+          &lt;button 
+            type="button" 
+            class="text-xs text-gray-500 hover:text-gray-700"
+            @click="resetContent"
+          &gt;
+            Limpiar
+          &lt;/button&gt;
+        &lt;/div&gt;
+        
+        &lt;textarea 
+          id="content" 
+          v-model="form.content"
+          rows="8"
+          class="w-full rounded-md border-gray-300"
+        &gt;&lt;/textarea&gt;
+      &lt;/div&gt;
+      
+      &lt;!-- Acciones de formulario --&gt;
+      &lt;div class="flex justify-between mt-6"&gt;
+        &lt;button 
+          type="button" 
+          class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
+          @click="resetToDefaults"
+        &gt;
+          Reiniciar todo
+        &lt;/button&gt;
+        
+        &lt;button 
+          type="submit" 
+          class="px-4 py-2 bg-blue-600 text-white rounded-md"
+          :disabled="form.processing"
+        &gt;
+          Publicar artículo
+        &lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/form&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<h3>Reseteo basado en respuesta del servidor</h3>
+<p>En ocasiones, queremos resetear el formulario basado en la respuesta del servidor:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+
+const props = defineProps({
+  // Recibido desde el controlador Laravel
+  savedData: Object,
+});
+
+// Estado para seguir el historial de envíos
+const submissions = ref([]);
+
+// Formulario con datos predeterminados o valores de la prop
+const form = useForm({
+  customer_name: '',
+  email: '',
+  product_id: '',
+  quantity: 1,
+  notes: '',
+});
+
+// ID del pedido actual siendo editado
+const currentEditId = ref(null);
+
+// Determinar si estamos editando o creando
+const isEditing = computed(() =&gt; currentEditId.value !== null);
+
+// Método para enviar formulario
+const submit = () =&gt; {
+  // Si estamos editando, hacer una solicitud PUT, de lo contrario POST
+  const request = isEditing.value
+    ? form.put(route('orders.update', currentEditId.value))
+    : form.post(route('orders.store'));
+    
+  request.then((response) =&gt; {
+    if (response.successful) {
+      // Añadir la respuesta al historial si es una creación
+      if (!isEditing.value) {
+        submissions.value.push(response.props.savedOrder);
+      }
+      
+      // Resetear el formulario y el estado de edición
+      form.reset();
+      currentEditId.value = null;
+    }
+  });
+};
+
+// Cargar un pedido existente para editarlo
+const editOrder = (order) =&gt; {
+  // Establecer datos en el formulario
+  form.setData({
+    customer_name: order.customer_name,
+    email: order.email,
+    product_id: order.product_id,
+    quantity: order.quantity,
+    notes: order.notes || '',
+  });
+  
+  // Establecer ID para edición
+  currentEditId.value = order.id;
+};
+
+// Cancelar la edición actual
+const cancelEdit = () =&gt; {
+  form.reset();
+  form.clearErrors();
+  currentEditId.value = null;
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;h1 class="text-2xl font-bold mb-6"&gt;
+      {{ isEditing ? 'Editar pedido' : 'Nuevo pedido' }}
+    &lt;/h1&gt;
+    
+    &lt;form @submit.prevent="submit" class="mb-8"&gt;
+      &lt;!-- Campos del formulario --&gt;
+      
+      &lt;!-- Acciones del formulario --&gt;
+      &lt;div class="flex justify-between mt-6"&gt;
+        &lt;button 
+          v-if="isEditing" 
+          type="button" 
+          class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md"
+          @click="cancelEdit"
+        &gt;
+          Cancelar
+        &lt;/button&gt;
+        
+        &lt;button 
+          type="submit" 
+          class="px-4 py-2 bg-blue-600 text-white rounded-md"
+          :disabled="form.processing"
+        &gt;
+          {{ isEditing ? 'Actualizar' : 'Crear' }} pedido
+        &lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/form&gt;
+    
+    &lt;!-- Lista de pedidos enviados en esta sesión --&gt;
+    &lt;div v-if="submissions.length &gt; 0"&gt;
+      &lt;h2 class="text-lg font-medium mb-3"&gt;Pedidos recientes&lt;/h2&gt;
+      
+      &lt;div class="space-y-3"&gt;
+        &lt;div 
+          v-for="order in submissions" 
+          :key="order.id"
+          class="border p-4 rounded-md"
+        &gt;
+          &lt;div class="flex justify-between"&gt;
+            &lt;div&gt;
+              &lt;h3 class="font-medium"&gt;{{ order.customer_name }}&lt;/h3&gt;
+              &lt;p class="text-gray-500 text-sm"&gt;{{ order.email }}&lt;/p&gt;
+            &lt;/div&gt;
+            
+            &lt;button 
+              class="text-blue-600 hover:underline"
+              @click="editOrder(order)"
+            &gt;
+              Editar
+            &lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<blockquote class="aside aside-tip">
+Al trabajar con formularios, es recomendable crear métodos específicos para cada tipo de reseteo que necesites: reset completo, reset selectivo o reset con valores personalizados.
+</blockquote>
+    </div>
+  </section>

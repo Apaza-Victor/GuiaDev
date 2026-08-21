@@ -1,0 +1,406 @@
+<!-- 6. DCL (Data Control Language) - Oracle (Base de Datos) -->
+  <section id="introduccion-al-dcl">
+    <h2>Introducción al DCL</h2>
+    <div class="doc-content">
+<p>El Lenguaje de Control de Datos (Data Control Language o DCL) es un subconjunto de SQL utilizado para controlar el acceso a los datos almacenados en una base de datos Oracle. Los comandos DCL permiten a los administradores de bases de datos gestionar los permisos y privilegios de los usuarios, garantizando la seguridad y la integridad de los datos.</p>
+<h3>Características principales del DCL</h3>
+<ul>
+<li><strong>Control de acceso</strong>: Determina qué usuarios pueden acceder a qué objetos y qué operaciones pueden realizar</li>
+<li><strong>Seguridad de datos</strong>: Protege la información sensible de accesos no autorizados</li>
+<li><strong>Auditoría</strong>: Facilita el seguimiento de quién accede a los datos y qué operaciones realiza</li>
+<li><strong>Cumplimiento normativo</strong>: Ayuda a cumplir con regulaciones de protección de datos y privacidad</li>
+</ul>
+<blockquote class="aside aside-note">
+En Oracle, el modelo de seguridad se basa en usuarios, roles y privilegios. Los privilegios pueden ser otorgados directamente a los usuarios o a través de roles, que son colecciones de privilegios que pueden asignarse a múltiples usuarios.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="grant-asignacion-de-privilegios">
+    <h2>GRANT - Asignación de privilegios</h2>
+    <div class="doc-content">
+<p>El comando GRANT se utiliza para otorgar privilegios a usuarios, roles u otros objetos de la base de datos.</p>
+<h3>Tipos de privilegios en Oracle</h3>
+  <h4 class="tab-label">Privilegios de sistema</h4>
+<p>Los privilegios de sistema permiten a los usuarios realizar acciones específicas en la base de datos, como crear tablas, vistas o ejecutar determinados comandos.</p>
+    <pre><code class="language-sql">    -- Sintaxis básica
+    GRANT privilegio_sistema [, privilegio_sistema...] 
+    TO {usuario | rol | PUBLIC} 
+    [WITH ADMIN OPTION];
+    
+    -- Ejemplos
+    GRANT CREATE SESSION TO usuario1;
+    GRANT CREATE TABLE, CREATE VIEW TO desarrollador_rol;
+    GRANT CREATE ANY TABLE TO administrador_rol WITH ADMIN OPTION;
+    </code></pre>
+<p>La opción <code>WITH ADMIN OPTION</code> permite al receptor del privilegio conceder ese mismo privilegio a otros usuarios o roles.</p>
+  <h4 class="tab-label">Privilegios de objeto</h4>
+<p>Los privilegios de objeto permiten a los usuarios realizar operaciones específicas sobre objetos particulares de la base de datos, como tablas, vistas o procedimientos.</p>
+    <pre><code class="language-sql">    -- Sintaxis básica
+    GRANT {privilegio_objeto [, privilegio_objeto...] | ALL [PRIVILEGES]} 
+    ON [schema.]objeto 
+    TO {usuario | rol | PUBLIC} 
+    [WITH GRANT OPTION];
+    
+    -- Ejemplos
+    GRANT SELECT ON empleados TO usuario1;
+    GRANT INSERT, UPDATE, DELETE ON productos TO ventas_rol;
+    GRANT SELECT, INSERT ON schema1.clientes TO PUBLIC;
+    GRANT ALL ON pedidos TO administrador_rol WITH GRANT OPTION;
+    </code></pre>
+<p>La opción <code>WITH GRANT OPTION</code> permite al receptor del privilegio conceder ese mismo privilegio sobre ese objeto a otros usuarios o roles.</p>
+<h3>Privilegios de sistema comunes</h3>
+<table><thead><tr><th>Privilegio</th><th>Descripción</th></tr></thead><tbody><tr><td>CREATE SESSION</td><td>Permite conectarse a la base de datos</td></tr><tr><td>CREATE TABLE</td><td>Permite crear tablas en el esquema propio</td></tr><tr><td>CREATE ANY TABLE</td><td>Permite crear tablas en cualquier esquema</td></tr><tr><td>ALTER ANY TABLE</td><td>Permite modificar tablas en cualquier esquema</td></tr><tr><td>DROP ANY TABLE</td><td>Permite eliminar tablas en cualquier esquema</td></tr><tr><td>CREATE VIEW</td><td>Permite crear vistas en el esquema propio</td></tr><tr><td>CREATE PROCEDURE</td><td>Permite crear procedimientos en el esquema propio</td></tr><tr><td>CREATE SEQUENCE</td><td>Permite crear secuencias en el esquema propio</td></tr><tr><td>CREATE USER</td><td>Permite crear usuarios</td></tr><tr><td>ALTER USER</td><td>Permite modificar usuarios</td></tr><tr><td>DROP USER</td><td>Permite eliminar usuarios</td></tr><tr><td>CREATE ROLE</td><td>Permite crear roles</td></tr><tr><td>SYSDBA</td><td>Privilegio administrativo de alto nivel</td></tr><tr><td>SYSOPER</td><td>Privilegio operativo de alto nivel</td></tr></tbody></table>
+<h3>Privilegios de objeto comunes</h3>
+<table><thead><tr><th>Privilegio</th><th>Descripción</th></tr></thead><tbody><tr><td>SELECT</td><td>Permite consultar datos de una tabla o vista</td></tr><tr><td>INSERT</td><td>Permite insertar filas en una tabla o vista</td></tr><tr><td>UPDATE</td><td>Permite actualizar filas en una tabla o vista</td></tr><tr><td>DELETE</td><td>Permite eliminar filas de una tabla o vista</td></tr><tr><td>ALTER</td><td>Permite modificar la definición de un objeto</td></tr><tr><td>INDEX</td><td>Permite crear índices en una tabla</td></tr><tr><td>REFERENCES</td><td>Permite crear restricciones de clave foránea que referencian a una tabla</td></tr><tr><td>EXECUTE</td><td>Permite ejecutar un procedimiento, función o paquete</td></tr><tr><td>DEBUG</td><td>Permite depurar un procedimiento, función o paquete</td></tr><tr><td>READ</td><td>Permite leer un directorio de la base de datos</td></tr><tr><td>WRITE</td><td>Permite escribir en un directorio de la base de datos</td></tr></tbody></table>
+<h3>Ejemplos prácticos de GRANT</h3>
+<pre><code class="language-sql">-- Crear un usuario y otorgarle privilegios básicos
+CREATE USER usuario_app IDENTIFIED BY contraseña;
+GRANT CREATE SESSION TO usuario_app;
+GRANT RESOURCE TO usuario_app; -- Rol predefinido que incluye varios privilegios
+
+-- Otorgar privilegios de objeto específicos
+GRANT SELECT, INSERT, UPDATE ON empleados TO usuario_app;
+GRANT SELECT ON departamentos TO usuario_app;
+
+-- Otorgar privilegios con opción de concesión
+GRANT SELECT ON informes_ventas TO gerente_ventas WITH GRANT OPTION;
+
+-- Otorgar privilegios a todos los usuarios (PUBLIC)
+GRANT SELECT ON calendario_festivos TO PUBLIC;
+
+-- Otorgar privilegios sobre columnas específicas
+GRANT UPDATE (nombre, apellido, email) ON empleados TO recursos_humanos_rol;
+</code></pre>
+<blockquote class="aside aside-caution">
+Otorgar privilegios a PUBLIC significa que todos los usuarios de la base de datos tendrán ese privilegio. Esto debe usarse con precaución y solo para datos que realmente deban ser accesibles para todos.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="revoke-revocacion-de-privilegios">
+    <h2>REVOKE - Revocación de privilegios</h2>
+    <div class="doc-content">
+<p>El comando REVOKE se utiliza para retirar privilegios previamente otorgados a usuarios, roles u otros objetos de la base de datos.</p>
+<h3>Sintaxis básica</h3>
+<pre><code class="language-sql">-- Revocar privilegios de sistema
+REVOKE privilegio_sistema [, privilegio_sistema...] 
+FROM {usuario | rol | PUBLIC};
+
+-- Revocar privilegios de objeto
+REVOKE {privilegio_objeto [, privilegio_objeto...] | ALL [PRIVILEGES]} 
+ON [schema.]objeto 
+FROM {usuario | rol | PUBLIC} [CASCADE CONSTRAINTS];
+</code></pre>
+<h3>Ejemplos prácticos de REVOKE</h3>
+<pre><code class="language-sql">-- Revocar privilegios de sistema
+REVOKE CREATE TABLE FROM usuario1;
+
+-- Revocar privilegios de objeto
+REVOKE UPDATE, DELETE ON empleados FROM usuario_app;
+
+-- Revocar todos los privilegios sobre un objeto
+REVOKE ALL ON productos FROM ventas_rol;
+
+-- Revocar privilegios de PUBLIC
+REVOKE SELECT ON calendario_festivos FROM PUBLIC;
+
+-- Revocar con CASCADE CONSTRAINTS
+-- Elimina también las restricciones de clave foránea que dependen del privilegio REFERENCES
+REVOKE REFERENCES ON departamentos FROM usuario_app CASCADE CONSTRAINTS;
+</code></pre>
+<h3>Comportamiento de la revocación</h3>
+<ol class="steps">
+<ol>
+<li><strong>Revocación directa</strong></li>
+</ol>
+<ul>
+<li>Cuando se revoca un privilegio otorgado directamente a un usuario, solo ese usuario pierde el privilegio</li>
+</ul>
+<ol>
+<li><strong>Revocación en cascada</strong></li>
+</ol>
+<ul>
+<li>Si se revoca un privilegio otorgado con WITH GRANT OPTION o WITH ADMIN OPTION, todos los privilegios concedidos por el receptor también se revocan en cascada</li>
+</ul>
+<ol>
+<li><strong>Revocación de roles</strong></li>
+</ol>
+<ul>
+<li>Cuando se revoca un rol de un usuario, este pierde todos los privilegios asociados a ese rol</li>
+</ul>
+<ol>
+<li><strong>Restricciones CASCADE</strong></li>
+</ol>
+<ul>
+<li>La opción CASCADE CONSTRAINTS elimina las restricciones de clave foránea que dependen del privilegio REFERENCES revocado</li>
+</ul>
+</ol>
+<blockquote class="aside aside-note">
+La revocación de privilegios puede tener efectos en cascada no deseados. Es importante entender completamente las dependencias de privilegios antes de realizar revocaciones, especialmente en entornos de producción.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="creacion-y-uso-de-roles">
+    <h2>Creación y uso de roles</h2>
+    <div class="doc-content">
+<p>Los roles son colecciones de privilegios que pueden asignarse a usuarios. Facilitan la administración de permisos al agrupar privilegios relacionados y asignarlos como una unidad.</p>
+<h3>Ventajas de usar roles</h3>
+<ul>
+<li><strong>Simplificación administrativa</strong>: Facilita la gestión de privilegios para grupos de usuarios</li>
+<li><strong>Consistencia</strong>: Garantiza que usuarios con funciones similares tengan los mismos privilegios</li>
+<li><strong>Seguridad mejorada</strong>: Permite aplicar el principio de privilegio mínimo</li>
+<li><strong>Flexibilidad</strong>: Los roles pueden ser modificados y los cambios se aplican automáticamente a todos los usuarios asignados</li>
+</ul>
+<h3>Creación y gestión de roles</h3>
+<pre><code class="language-sql">-- Crear un rol
+CREATE ROLE analista_datos;
+
+-- Asignar privilegios al rol
+GRANT SELECT ANY TABLE TO analista_datos;
+GRANT CREATE SESSION TO analista_datos;
+GRANT CREATE VIEW TO analista_datos;
+
+-- Asignar el rol a usuarios
+GRANT analista_datos TO usuario1, usuario2;
+
+-- Crear un rol con contraseña (rol protegido)
+CREATE ROLE gerente_finanzas IDENTIFIED BY contraseña_segura;
+
+-- Modificar un rol
+ALTER ROLE gerente_finanzas NOT IDENTIFIED;
+
+-- Eliminar un rol
+DROP ROLE analista_temporal;
+</code></pre>
+<h3>Roles predefinidos en Oracle</h3>
+<table><thead><tr><th>Rol</th><th>Descripción</th></tr></thead><tbody><tr><td>CONNECT</td><td>Privilegios básicos para conectarse a la base de datos</td></tr><tr><td>RESOURCE</td><td>Privilegios para crear objetos como tablas, secuencias, etc.</td></tr><tr><td>DBA</td><td>Todos los privilegios administrativos (muy potente)</td></tr><tr><td>SELECT_CATALOG_ROLE</td><td>Privilegios para consultar vistas del diccionario de datos</td></tr><tr><td>EXECUTE_CATALOG_ROLE</td><td>Privilegios para ejecutar paquetes del sistema</td></tr><tr><td>DELETE_CATALOG_ROLE</td><td>Privilegios para eliminar registros en tablas del diccionario</td></tr><tr><td>EXP_FULL_DATABASE</td><td>Privilegios para realizar exportaciones completas</td></tr><tr><td>IMP_FULL_DATABASE</td><td>Privilegios para realizar importaciones completas</td></tr></tbody></table>
+<h3>Jerarquía de roles</h3>
+<p>Los roles pueden contener otros roles, creando una jerarquía de privilegios.</p>
+<pre><code class="language-sql">-- Crear roles básicos
+CREATE ROLE empleado_basico;
+GRANT CREATE SESSION TO empleado_basico;
+GRANT SELECT ON hr.informacion_publica TO empleado_basico;
+
+-- Crear rol que incluye otro rol
+CREATE ROLE empleado_rrhh;
+GRANT empleado_basico TO empleado_rrhh; -- Hereda todos los privilegios de empleado_basico
+GRANT SELECT, INSERT, UPDATE ON hr.empleados TO empleado_rrhh;
+
+-- Asignar el rol jerárquico a un usuario
+GRANT empleado_rrhh TO usuario_rrhh;
+</code></pre>
+<blockquote class="aside aside-tip">
+Diseñe una jerarquía de roles que refleje la estructura organizativa y las necesidades de acceso de su empresa. Comience con roles básicos y vaya construyendo roles más especializados encima de ellos.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="seguridad-y-buenas-practicas">
+    <h2>Seguridad y buenas prácticas</h2>
+    <div class="doc-content">
+<h3>Principio de privilegio mínimo</h3>
+<p>El principio de privilegio mínimo establece que los usuarios deben tener solo los privilegios necesarios para realizar sus tareas, ni más ni menos.</p>
+<ol class="steps">
+<ol>
+<li><strong>Identificar requisitos de acceso</strong></li>
+</ol>
+<ul>
+<li>Determine exactamente qué objetos necesita acceder cada usuario y qué operaciones necesita realizar</li>
+</ul>
+<ol>
+<li><strong>Crear roles específicos</strong></li>
+</ol>
+<ul>
+<li>Diseñe roles que contengan solo los privilegios necesarios para funciones específicas</li>
+</ul>
+<ol>
+<li><strong>Evitar privilegios amplios</strong></li>
+</ol>
+<ul>
+<li>Evite otorgar privilegios como <code>ANY</code> o <code>ALL</code> a menos que sea absolutamente necesario</li>
+</ul>
+<ol>
+<li><strong>Revisar regularmente</strong></li>
+</ol>
+<ul>
+<li>Audite y revise los privilegios periódicamente para identificar y revocar privilegios innecesarios</li>
+</ul>
+</ol>
+<h3>Uso de esquemas de aplicación</h3>
+<p>Un patrón común en Oracle es separar la propiedad de los objetos del acceso a los mismos mediante esquemas de aplicación.</p>
+<pre><code class="language-sql">-- Crear un esquema propietario de los objetos
+CREATE USER app_owner IDENTIFIED BY contraseña_segura;
+GRANT CREATE SESSION, RESOURCE TO app_owner;
+
+-- El propietario crea los objetos
+CONNECT app_owner/contraseña_segura
+CREATE TABLE clientes (...); 
+CREATE TABLE productos (...);
+
+-- Crear un esquema para acceso de aplicación
+CREATE USER app_user IDENTIFIED BY otra_contraseña;
+GRANT CREATE SESSION TO app_user;
+
+-- Otorgar privilegios específicos al usuario de la aplicación
+GRANT SELECT, INSERT, UPDATE, DELETE ON app_owner.clientes TO app_user;
+GRANT SELECT ON app_owner.productos TO app_user;
+</code></pre>
+<h3>Uso de sinónimos</h3>
+<p>Los sinónimos pueden mejorar la seguridad al ocultar los esquemas reales y simplificar el acceso a los objetos.</p>
+<pre><code class="language-sql">-- Crear sinónimos para el usuario de la aplicación
+CREATE SYNONYM app_user.clientes FOR app_owner.clientes;
+CREATE SYNONYM app_user.productos FOR app_owner.productos;
+
+-- Crear sinónimos públicos
+CREATE PUBLIC SYNONYM calendario FOR app_owner.calendario_festivos;
+</code></pre>
+<h3>Auditoría de base de datos</h3>
+<p>Oracle proporciona capacidades de auditoría para rastrear el acceso y las operaciones en la base de datos.</p>
+<pre><code class="language-sql">-- Habilitar auditoría para operaciones específicas
+AUDIT SELECT TABLE BY usuario1;
+AUDIT INSERT, UPDATE, DELETE ON app_owner.datos_financieros BY ACCESS;
+AUDIT EXECUTE PROCEDURE ON app_owner.calcular_salario;
+
+-- Deshabilitar auditoría
+NOAUDIT SELECT TABLE BY usuario1;
+</code></pre>
+<h3>Políticas de contraseñas</h3>
+<p>Implementar políticas de contraseñas fuertes es esencial para la seguridad de la base de datos.</p>
+<pre><code class="language-sql">-- Crear un perfil de contraseña
+CREATE PROFILE secure_profile LIMIT
+  PASSWORD_LIFE_TIME 60           -- Expiración en días
+  PASSWORD_GRACE_TIME 7           -- Período de gracia en días
+  PASSWORD_REUSE_TIME 365         -- Días antes de poder reutilizar
+  PASSWORD_REUSE_MAX 10           -- Número de cambios antes de reutilizar
+  FAILED_LOGIN_ATTEMPTS 5         -- Intentos fallidos antes de bloqueo
+  PASSWORD_LOCK_TIME 1/24         -- Tiempo de bloqueo (1 hora)
+  PASSWORD_VERIFY_FUNCTION verify_function_11g; -- Función de verificación
+
+-- Asignar el perfil a un usuario
+ALTER USER usuario1 PROFILE secure_profile;
+</code></pre>
+<h3>Mejores prácticas de seguridad</h3>
+  <h4 class="tab-label">Gestión de usuarios</h4>
+    <pre><code class="language-sql">    -- Bloquear cuentas no utilizadas
+    ALTER USER usuario_inactivo ACCOUNT LOCK;
+    
+    -- Establecer expiración de contraseña
+    ALTER USER usuario1 PASSWORD EXPIRE;
+    
+    -- Limitar recursos de usuario
+    ALTER USER usuario_app QUOTA 500M ON users;
+    ALTER USER usuario_app DEFAULT TABLESPACE users;
+    </code></pre>
+  <h4 class="tab-label">Control de acceso</h4>
+    <pre><code class="language-sql">    -- Usar vistas para control de acceso fino
+    CREATE VIEW empleados_departamento AS
+    SELECT * FROM empleados
+    WHERE departamento_id = SYS_CONTEXT('USERENV', 'DEPARTMENT_ID');
+    
+    GRANT SELECT ON empleados_departamento TO empleados_rol;
+    
+    -- Usar Virtual Private Database (VPD)
+    BEGIN
+      DBMS_RLS.ADD_POLICY(
+        object_schema =&gt; 'app_owner',
+        object_name =&gt; 'empleados',
+        policy_name =&gt; 'emp_dept_policy',
+        function_schema =&gt; 'sec_admin',
+        policy_function =&gt; 'get_dept_policy',
+        statement_types =&gt; 'SELECT, INSERT, UPDATE, DELETE'
+      );
+    END;
+    /
+    </code></pre>
+  <h4 class="tab-label">Cifrado</h4>
+    <pre><code class="language-sql">    -- Cifrar columnas sensibles
+    CREATE TABLE clientes (
+      cliente_id NUMBER PRIMARY KEY,
+      nombre VARCHAR2(100),
+      tarjeta_credito VARCHAR2(128) ENCRYPT USING 'AES256'
+    );
+    
+    -- Cifrar tablespace
+    CREATE TABLESPACE secure_data
+      DATAFILE '/path/to/datafile.dbf' SIZE 100M
+      ENCRYPTION USING 'AES256'
+      DEFAULT STORAGE(ENCRYPT);
+    </code></pre>
+<blockquote class="aside aside-caution">
+Nunca otorgue el rol DBA a usuarios regulares. Este rol tiene privilegios casi ilimitados y debe reservarse solo para administradores de bases de datos reales. En su lugar, cree roles personalizados con privilegios específicos.
+</blockquote>
+<h3>Lista de verificación de seguridad</h3>
+<ol class="steps">
+<ol>
+<li><strong>Auditar privilegios existentes</strong></li>
+</ol>
+<ul>
+<li>Revise regularmente qué privilegios tienen los usuarios y roles</li>
+<li>Consulte las vistas DBA_SYS_PRIVS, DBA_TAB_PRIVS y DBA_ROLE_PRIVS</li>
+</ul>
+<ol>
+<li><strong>Implementar el principio de privilegio mínimo</strong></li>
+</ol>
+<ul>
+<li>Otorgue solo los privilegios necesarios</li>
+<li>Use roles para agrupar privilegios relacionados</li>
+</ul>
+<ol>
+<li><strong>Proteger cuentas de usuario</strong></li>
+</ol>
+<ul>
+<li>Implemente políticas de contraseñas fuertes</li>
+<li>Bloquee o elimine cuentas no utilizadas</li>
+</ul>
+<ol>
+<li><strong>Configurar auditoría</strong></li>
+</ol>
+<ul>
+<li>Audite operaciones sensibles y accesos privilegiados</li>
+<li>Revise regularmente los registros de auditoría</li>
+</ul>
+<ol>
+<li><strong>Implementar controles adicionales</strong></li>
+</ol>
+<ul>
+<li>Considere el uso de Virtual Private Database (VPD)</li>
+<li>Implemente cifrado para datos sensibles</li>
+<li>Use vistas y procedimientos para control de acceso fino</li>
+</ul>
+</ol>
+    </div>
+  </section>
+
+  <section id="consulta-del-diccionario-de-datos-para-seguridad">
+    <h2>Consulta del diccionario de datos para seguridad</h2>
+    <div class="doc-content">
+<p>Oracle proporciona varias vistas del diccionario de datos para consultar información sobre privilegios y seguridad.</p>
+<pre><code class="language-sql">-- Consultar privilegios de sistema otorgados a un usuario
+SELECT * FROM DBA_SYS_PRIVS WHERE GRANTEE = 'USUARIO1';
+
+-- Consultar privilegios de objeto otorgados a un usuario
+SELECT * FROM DBA_TAB_PRIVS WHERE GRANTEE = 'USUARIO1';
+
+-- Consultar roles otorgados a un usuario
+SELECT * FROM DBA_ROLE_PRIVS WHERE GRANTEE = 'USUARIO1';
+
+-- Consultar privilegios otorgados a un rol
+SELECT * FROM ROLE_SYS_PRIVS WHERE ROLE = 'ANALISTA_DATOS';
+SELECT * FROM ROLE_TAB_PRIVS WHERE ROLE = 'ANALISTA_DATOS';
+
+-- Consultar jerarquía de roles
+SELECT * FROM ROLE_ROLE_PRIVS;
+
+-- Consultar usuarios y sus perfiles
+SELECT USERNAME, PROFILE, ACCOUNT_STATUS FROM DBA_USERS;
+
+-- Consultar configuración de perfiles
+SELECT * FROM DBA_PROFILES WHERE PROFILE = 'SECURE_PROFILE';
+
+-- Consultar información de auditoría
+SELECT * FROM DBA_AUDIT_TRAIL;
+</code></pre>
+    </div>
+  </section>

@@ -1,0 +1,69 @@
+<!-- 2. Tipos de datos en MySQL - MySQL (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="tipos-numericos">
+    <h2>Tipos numéricos</h2>
+    <div class="doc-content">
+<p>MySQL ofrece enteros de distintos tamaños y decimales exactos o aproximados. Elegir bien el tipo ahorra espacio y evita errores de redondeo.</p>
+<pre><code class="language-sql">-- Enteros: TINYINT, SMALLINT, MEDIUMINT, INT, BIGINT
+-- Decimales exactos (dinero): DECIMAL(M,D)
+-- Decimales aproximados (científicos): FLOAT, DOUBLE
+CREATE TABLE ejemplo_numerico (
+  edad TINYINT UNSIGNED,          -- 0 a 255
+  contador INT,                   -- ~-2.147M a 2.147M
+  poblacion BIGINT,               -- miles de millones
+  precio DECIMAL(10,2),           -- hasta 99.999.999,99 exacto
+  peso DOUBLE                     -- aproximado
+);</code></pre>
+<blockquote class="aside aside-tip">
+<p>Para dinero usa siempre <code>DECIMAL</code>. <code>FLOAT</code> y <code>DOUBLE</code> generan errores de redondeo acumulables.</p>
+</blockquote>
+<p><code>TINYINT(1)</code> se usa como booleano; <code>BOOLEAN</code> es un alias de <code>TINYINT(1)</code>.</p>
+    </div>
+  </section>
+
+  <section id="tipos-de-texto">
+    <h2>Tipos de texto</h2>
+    <div class="doc-content">
+<p><code>CHAR(n)</code> reserva siempre n caracteres (útil para códigos fijos) y <code>VARCHAR(n)</code> solo lo necesario. Los tipos <code>TEXT</code> almacenan textos largos fuera de la fila.</p>
+<pre><code class="language-sql">CREATE TABLE ejemplo_texto (
+  codigo CHAR(2),                 -- 'MX', 'ES': longitud fija
+  nombre VARCHAR(100),            -- longitud variable
+  descripcion TEXT,               -- hasta 65.535 caracteres
+  documento LONGTEXT,             -- hasta 4 GB
+  estado ENUM('activo','inactivo','suspendido')
+);</code></pre>
+<blockquote class="aside aside-note">
+<p><code>ENUM</code> limita la columna a una lista de valores. Es cómodo, pero si la lista puede crecer es mejor una tabla catálogo.</p>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="fecha-y-hora">
+    <h2>Fecha y hora</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE TABLE ejemplo_fechas (
+  fecha_nacimiento DATE,                          -- solo fecha
+  hora_entrada TIME,                              -- solo hora
+  registrado_en DATETIME,                         -- fecha y hora literal
+  ultimo_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP                   -- se actualiza solo
+);</code></pre>
+<p><code>DATETIME</code> guarda la fecha tal cual (rango 1000-9999); <code>TIMESTAMP</code> la convierte a UTC internamente (rango 1970-2038) y permite actualización automática.</p>
+    </div>
+  </section>
+
+  <section id="ejemplo-integral">
+    <h2>Ejemplo integral</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE TABLE empleados (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  rfc CHAR(13) NOT NULL UNIQUE,
+  nombre VARCHAR(80) NOT NULL,
+  salario DECIMAL(10,2) NOT NULL,
+  activo BOOLEAN DEFAULT TRUE,
+  contratado_el DATE NOT NULL,
+  creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);</code></pre>
+<p>Con esto ya puedes describir cualquier entidad real. En la siguiente lección veremos cómo crear y modificar estas tablas.</p>
+    </div>
+  </section>

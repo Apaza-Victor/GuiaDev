@@ -1,0 +1,1648 @@
+<!-- Top 50 Preguntas Frecuentes - Spring (Entrevistas Laborales) -->
+  <section id="las-50-preguntas-mas-frecuentes-de-spring">
+    <h2>Las 50 Preguntas Más Frecuentes de Spring</h2>
+    <div class="doc-content">
+<p>Guía completa con las preguntas que aparecen en la mayoría de entrevistas técnicas.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="spring-core-1-15">
+    <h2>Spring Core (1-15)</h2>
+    <div class="doc-content">
+<h3>1. ¿Qué es el ApplicationContext?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Contenedor IoC (Inversión de Control) central de Spring que gestiona el ciclo de vida de los beans.</p>
+<p><strong>¿Para qué sirve?</strong></p>
+<ul>
+<li>Crear e inyectar beans automáticamente</li>
+<li>Gestionar dependencias entre componentes</li>
+<li>Publicar y escuchar eventos</li>
+<li>Acceder a recursos y propiedades</li>
+</ul>
+<p><strong>Tipos principales:</strong></p>
+<ul>
+<li><code>AnnotationConfigApplicationContext</code>: Para configuración con anotaciones</li>
+<li><code>AnnotationConfigWebApplicationContext</code>: Para aplicaciones web</li>
+<li><code>ClassPathXmlApplicationContext</code>: Para configuración XML (legacy)</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Tipos de ApplicationContext
+// Para aplicaciones standalone
+ApplicationContext ctx = new AnnotationConfigApplicationContext(AppConfig.class);
+
+// Para aplicaciones web
+ApplicationContext ctx = new AnnotationConfigWebApplicationContext();
+
+// Obtener beans
+MiServicio servicio = ctx.getBean(MiServicio.class);
+MiServicio servicio2 = ctx.getBean("miServicio", MiServicio.class);</code></pre>
+<h3>2. ¿Cuál es la diferencia entre BeanFactory y ApplicationContext?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Dos interfaces para el contenedor IoC de Spring con diferentes capacidades.</p>
+<p><strong>Diferencias:</strong></p>
+<table><thead><tr><th>BeanFactory</th><th>ApplicationContext</th></tr></thead><tbody><tr><td>Lazy loading</td><td>Eager loading</td></tr><tr><td>Básico</td><td>Más funcionalidades</td></tr><tr><td>Menos memoria</td><td>Más memoria</td></tr><tr><td>Sin eventos</td><td>Soporte de eventos</td></tr><tr><td>Sin i18n</td><td>Soporte i18n</td></tr></tbody></table>
+<p><strong>Recomendación:</strong> Usar siempre <code>ApplicationContext</code> excepto en entornos con recursos muy limitados.</p>
+<h3>3. ¿Qué es @Autowired?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación que indica a Spring que debe inyectar una dependencia automáticamente.</p>
+<p><strong>Tipos de inyección:</strong></p>
+<ol>
+<li><strong>Constructor injection</strong> (recomendado): Dependencias inmutables, fácil testing</li>
+<li><strong>Setter injection</strong>: Para dependencias opcionales</li>
+<li><strong>Field injection</strong> (evitar): Difícil de testear, oculta dependencias</li>
+</ol>
+<p><strong>Nota:</strong> Desde Spring 4.3, <code>@Autowired</code> es opcional si hay un solo constructor.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@Service
+public class MiServicio {
+    
+    // Field injection (evitar)
+    @Autowired
+    private Repositorio repo;
+    
+    // Constructor injection (recomendado)
+    private final Repositorio repo;
+    
+    @Autowired // Opcional si hay un solo constructor
+    public MiServicio(Repositorio repo) {
+        this.repo = repo;
+    }
+    
+    // Setter injection
+    private Repositorio repo;
+    
+    @Autowired
+    public void setRepo(Repositorio repo) {
+        this.repo = repo;
+    }
+}</code></pre>
+<h3>4. ¿Qué es @Qualifier?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación que especifica cuál bean inyectar cuando hay múltiples candidatos del mismo tipo.</p>
+<p><strong>¿Cuándo usarlo?</strong></p>
+<p>Cuando tienes varias implementaciones de una interfaz y necesitas elegir una específica.</p>
+<p><strong>Alternativa:</strong> <code>@Primary</code> marca un bean como preferido por defecto.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Cuando hay múltiples beans del mismo tipo
+public interface NotificacionService {}
+
+@Service("emailService")
+public class EmailService implements NotificacionService {}
+
+@Service("smsService")
+public class SmsService implements NotificacionService {}
+
+// Usar @Qualifier para especificar cuál
+@Service
+public class AlertaService {
+    
+    private final NotificacionService notificacion;
+    
+    public AlertaService(@Qualifier("emailService") NotificacionService notificacion) {
+        this.notificacion = notificacion;
+    }
+}</code></pre>
+<h3>5. ¿Qué es @Primary?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación que marca un bean como preferido cuando hay múltiples candidatos del mismo tipo.</p>
+<p><strong>Diferencia con @Qualifier:</strong></p>
+<ul>
+<li><code>@Primary</code>: Define el bean por defecto (en la definición)</li>
+<li><code>@Qualifier</code>: Elige un bean específico (en el punto de inyección)</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// @Primary marca el bean por defecto cuando hay múltiples
+@Service
+@Primary
+public class EmailService implements NotificacionService {}
+
+@Service
+public class SmsService implements NotificacionService {}
+
+// Se inyecta EmailService por defecto
+@Service
+public class AlertaService {
+    private final NotificacionService notificacion; // EmailService
+}</code></pre>
+<h3>6. ¿Qué es @Value?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación para inyectar valores de configuración directamente en campos.</p>
+<p><strong>Fuentes de valores:</strong></p>
+<ul>
+<li>Properties (<code>${propiedad}</code>)</li>
+<li>Variables de entorno</li>
+<li>Expresiones SpEL (<code>#{expresion}</code>)</li>
+<li>Valores por defecto (<code>${prop:default}</code>)</li>
+</ul>
+<p><strong>Limitación:</strong> Para configuraciones complejas, preferir <code>@ConfigurationProperties</code>.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@Service
+public class MiServicio {
+    
+    // Inyectar valor de properties
+    @Value("\${app.nombre}")
+    private String appNombre;
+    
+    // Valor por defecto
+    @Value("\${app.timeout:30}")
+    private int timeout;
+    
+    // SpEL (Spring Expression Language)
+    @Value("#{systemProperties['user.name']}")
+    private String usuario;
+    
+    @Value("#{T(java.lang.Math).random()}")
+    private double random;
+}</code></pre>
+<h3>7. ¿Qué es @ConfigurationProperties?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación que mapea propiedades de configuración a un objeto Java tipado.</p>
+<p><strong>Ventajas sobre @Value:</strong></p>
+<ul>
+<li>Tipado fuerte (errores en tiempo de compilación)</li>
+<li>Agrupación lógica de propiedades</li>
+<li>Validación con Bean Validation</li>
+<li>Autocompletado en IDEs</li>
+</ul>
+<p><strong>Requisito:</strong> Habilitar con <code>@EnableConfigurationProperties</code> o <code>@ConfigurationPropertiesScan</code>.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// application.yml
+# app:
+#   nombre: MiApp
+#   config:
+#     timeout: 30
+#     maxRetries: 3
+
+@Configuration
+@ConfigurationProperties(prefix = "app")
+public class AppProperties {
+    private String nombre;
+    private Config config;
+    
+    public static class Config {
+        private int timeout;
+        private int maxRetries;
+        // getters y setters
+    }
+    // getters y setters
+}
+
+// Uso
+@Service
+public class MiServicio {
+    private final AppProperties props;
+    
+    public MiServicio(AppProperties props) {
+        this.props = props;
+    }
+}</code></pre>
+<h3>8. ¿Qué es el ciclo de vida de un Bean?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Secuencia de fases por las que pasa un bean desde su creación hasta su destrucción.</p>
+<p><strong>Fases:</strong></p>
+<ol>
+<li><strong>Instanciación</strong>: Se llama al constructor</li>
+<li><strong>Inyección</strong>: Se inyectan dependencias</li>
+<li><strong>@PostConstruct</strong>: Inicialización personalizada</li>
+<li><strong>Uso</strong>: Bean disponible para la aplicación</li>
+<li><strong>@PreDestroy</strong>: Limpieza antes de destrucción</li>
+<li><strong>Destrucción</strong>: Bean eliminado del contexto</li>
+</ol>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@Component
+public class MiBean {
+    
+    // 1. Constructor
+    public MiBean() {
+        System.out.println("1. Constructor");
+    }
+    
+    // 2. Inyección de dependencias
+    @Autowired
+    public void setDependencia(Dependencia dep) {
+        System.out.println("2. Setter injection");
+    }
+    
+    // 3. Post-construcción
+    @PostConstruct
+    public void init() {
+        System.out.println("3. PostConstruct");
+    }
+    
+    // 4. Bean listo para usar
+    
+    // 5. Pre-destrucción
+    @PreDestroy
+    public void cleanup() {
+        System.out.println("5. PreDestroy");
+    }
+}
+
+// Alternativa con @Bean
+@Bean(initMethod = "init", destroyMethod = "cleanup")
+public MiBean miBean() {
+    return new MiBean();
+}</code></pre>
+<h3>9. ¿Qué es @Lazy?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación que retrasa la creación del bean hasta que se use por primera vez.</p>
+<p><strong>¿Para qué sirve?</strong></p>
+<ul>
+<li>Mejorar tiempo de arranque de la aplicación</li>
+<li>Ahorrar recursos para beans que no siempre se usan</li>
+<li>Resolver dependencias circulares</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Bean se crea solo cuando se necesita
+@Component
+@Lazy
+public class BeanPesado {
+    public BeanPesado() {
+        // Inicialización costosa
+    }
+}
+
+// En inyección
+@Service
+public class MiServicio {
+    
+    @Autowired
+    @Lazy
+    private BeanPesado beanPesado; // Se crea al primer uso
+}</code></pre>
+<h3>10. ¿Qué es @Profile?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación que activa beans solo en ciertos perfiles de ejecución.</p>
+<p><strong>¿Para qué sirve?</strong></p>
+<ul>
+<li>Configuración diferente por entorno (dev, test, prod)</li>
+<li>Activar/desactivar features</li>
+<li>Usar diferentes implementaciones según el entorno</li>
+</ul>
+<p><strong>Activar perfil:</strong> <code>spring.profiles.active=desarrollo</code></p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Bean solo activo en ciertos perfiles
+@Configuration
+@Profile("desarrollo")
+public class DesarrolloConfig {
+    @Bean
+    public DataSource dataSource() {
+        return new H2DataSource();
+    }
+}
+
+@Configuration
+@Profile("produccion")
+public class ProduccionConfig {
+    @Bean
+    public DataSource dataSource() {
+        return new PostgresDataSource();
+    }
+}
+
+// Activar perfil
+// application.properties: spring.profiles.active=desarrollo
+// O: java -jar app.jar --spring.profiles.active=produccion</code></pre>
+<h3>11. ¿Qué es @Conditional?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación que crea beans condicionalmente según ciertas condiciones.</p>
+<p><strong>Condiciones comunes (Spring Boot):</strong></p>
+<ul>
+<li><code>@ConditionalOnProperty</code>: Según valor de propiedad</li>
+<li><code>@ConditionalOnClass</code>: Si una clase está presente</li>
+<li><code>@ConditionalOnMissingBean</code>: Si no existe otro bean del tipo</li>
+<li><code>@ConditionalOnBean</code>: Si existe otro bean</li>
+</ul>
+<p><strong>Base de la auto-configuración de Spring Boot.</strong></p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Bean condicional
+@Bean
+@ConditionalOnProperty(name = "feature.enabled", havingValue = "true")
+public FeatureService featureService() {
+    return new FeatureService();
+}
+
+@Bean
+@ConditionalOnMissingBean(DataSource.class)
+public DataSource defaultDataSource() {
+    return new H2DataSource();
+}
+
+@Bean
+@ConditionalOnClass(name = "com.mysql.cj.jdbc.Driver")
+public DataSource mysqlDataSource() {
+    return new MysqlDataSource();
+}</code></pre>
+<h3>12. ¿Qué es AOP (Aspect-Oriented Programming)?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Programación Orientada a Aspectos - paradigma que separa concerns transversales del código de negocio.</p>
+<p><strong>Conceptos clave:</strong></p>
+<ul>
+<li><strong>Aspect</strong>: Módulo que encapsula un concern transversal</li>
+<li><strong>Pointcut</strong>: Dónde aplicar el aspecto</li>
+<li><strong>Advice</strong>: Qué hacer (Before, After, Around)</li>
+<li><strong>JoinPoint</strong>: Punto de ejecución donde se aplica</li>
+</ul>
+<p><strong>Usos comunes:</strong> Logging, seguridad, transacciones, caché.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Aspecto para logging
+@Aspect
+@Component
+public class LoggingAspect {
+    
+    private static final Logger log = LoggerFactory.getLogger(LoggingAspect.class);
+    
+    // Pointcut - dónde aplicar
+    @Pointcut("execution(* com.ejemplo.service.*.*(..))")
+    public void serviceMethods() {}
+    
+    // Before advice
+    @Before("serviceMethods()")
+    public void logBefore(JoinPoint jp) {
+        log.info("Ejecutando: {}", jp.getSignature().getName());
+    }
+    
+    // After advice
+    @After("serviceMethods()")
+    public void logAfter(JoinPoint jp) {
+        log.info("Finalizado: {}", jp.getSignature().getName());
+    }
+    
+    // Around advice
+    @Around("serviceMethods()")
+    public Object logAround(ProceedingJoinPoint pjp) throws Throwable {
+        long inicio = System.currentTimeMillis();
+        Object resultado = pjp.proceed();
+        long duracion = System.currentTimeMillis() - inicio;
+        log.info("{} ejecutado en {} ms", pjp.getSignature().getName(), duracion);
+        return resultado;
+    }
+    
+    // AfterReturning
+    @AfterReturning(pointcut = "serviceMethods()", returning = "resultado")
+    public void logReturn(Object resultado) {
+        log.info("Retornó: {}", resultado);
+    }
+    
+    // AfterThrowing
+    @AfterThrowing(pointcut = "serviceMethods()", throwing = "ex")
+    public void logException(Exception ex) {
+        log.error("Excepción: {}", ex.getMessage());
+    }
+}</code></pre>
+<h3>13. ¿Qué es @EnableAspectJAutoProxy?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación que habilita el soporte de AOP con AspectJ en Spring.</p>
+<p><strong>Tipos de proxy:</strong></p>
+<ul>
+<li><strong>JDK Proxy</strong> (default): Para interfaces</li>
+<li><strong>CGLIB Proxy</strong> (<code>proxyTargetClass=true</code>): Para clases concretas</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@Configuration
+@EnableAspectJAutoProxy
+public class AopConfig {
+    // Habilita AOP con proxies
+}
+
+// proxyTargetClass = true para usar CGLIB en vez de JDK proxies
+@EnableAspectJAutoProxy(proxyTargetClass = true)</code></pre>
+<h3>14. ¿Qué son los eventos en Spring?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Sistema de publicación/suscripción para comunicación desacoplada entre componentes.</p>
+<p><strong>Componentes:</strong></p>
+<ul>
+<li><strong>ApplicationEvent</strong>: Clase base para eventos</li>
+<li><strong>ApplicationEventPublisher</strong>: Para publicar eventos</li>
+<li><strong>@EventListener</strong>: Para escuchar eventos</li>
+</ul>
+<p><strong>Ventaja:</strong> Desacoplamiento - el publicador no conoce a los suscriptores.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Evento personalizado
+public class UsuarioRegistradoEvent extends ApplicationEvent {
+    private final Usuario usuario;
+    
+    public UsuarioRegistradoEvent(Object source, Usuario usuario) {
+        super(source);
+        this.usuario = usuario;
+    }
+    
+    public Usuario getUsuario() {
+        return usuario;
+    }
+}
+
+// Publicar evento
+@Service
+public class UsuarioService {
+    
+    @Autowired
+    private ApplicationEventPublisher publisher;
+    
+    public void registrar(Usuario usuario) {
+        // Guardar usuario
+        publisher.publishEvent(new UsuarioRegistradoEvent(this, usuario));
+    }
+}
+
+// Escuchar evento
+@Component
+public class EmailListener {
+    
+    @EventListener
+    public void onUsuarioRegistrado(UsuarioRegistradoEvent event) {
+        enviarEmailBienvenida(event.getUsuario());
+    }
+    
+    @Async
+    @EventListener
+    public void onUsuarioRegistradoAsync(UsuarioRegistradoEvent event) {
+        // Procesamiento asíncrono
+    }
+}</code></pre>
+<h3>15. ¿Qué es @Scheduled?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación para ejecutar métodos periódicamente.</p>
+<p><strong>Opciones:</strong></p>
+<ul>
+<li><code>fixedRate</code>: Cada X ms (desde inicio de la anterior)</li>
+<li><code>fixedDelay</code>: X ms después de terminar la anterior</li>
+<li><code>cron</code>: Expresión cron para horarios específicos</li>
+</ul>
+<p><strong>Requisito:</strong> Habilitar con <code>@EnableScheduling</code>.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@Configuration
+@EnableScheduling
+public class SchedulingConfig {}
+
+@Component
+public class TareasProgramadas {
+    
+    // Cada 5 segundos
+    @Scheduled(fixedRate = 5000)
+    public void cadaCincoSegundos() {
+        System.out.println("Ejecutando...");
+    }
+    
+    // 5 segundos después de terminar la anterior
+    @Scheduled(fixedDelay = 5000)
+    public void conDelay() {
+        System.out.println("Con delay...");
+    }
+    
+    // Expresión cron (cada día a las 2am)
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void cadaDia() {
+        System.out.println("Tarea diaria");
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="spring-mvc-16-25">
+    <h2>Spring MVC (16-25)</h2>
+    <div class="doc-content">
+<h3>16. ¿Cuál es el flujo de una petición en Spring MVC?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Secuencia de pasos que sigue una petición HTTP en Spring MVC.</p>
+<p><strong>Flujo:</strong></p>
+<ol>
+<li><strong>DispatcherServlet</strong> recibe la petición (Front Controller)</li>
+<li><strong>HandlerMapping</strong> encuentra el controlador apropiado</li>
+<li><strong>HandlerAdapter</strong> ejecuta el método del controlador</li>
+<li>Controlador retorna <strong>ModelAndView</strong> o datos</li>
+<li><strong>ViewResolver</strong> resuelve la vista (si aplica)</li>
+<li>Vista renderiza la respuesta al cliente</li>
+</ol>
+<h3>17. ¿Qué es @RequestMapping?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación que mapea URLs a métodos del controlador.</p>
+<p><strong>Shortcuts (más usados):</strong></p>
+<ul>
+<li><code>@GetMapping</code>: Para GET</li>
+<li><code>@PostMapping</code>: Para POST</li>
+<li><code>@PutMapping</code>: Para PUT</li>
+<li><code>@DeleteMapping</code>: Para DELETE</li>
+<li><code>@PatchMapping</code>: Para PATCH</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@RestController
+@RequestMapping("/api/v1")
+public class MiController {
+    
+    @RequestMapping(value = "/usuarios", method = RequestMethod.GET)
+    public List&lt;Usuario&gt; listar() { }
+    
+    // Shortcuts
+    @GetMapping("/usuarios")
+    @PostMapping("/usuarios")
+    @PutMapping("/usuarios/{id}")
+    @DeleteMapping("/usuarios/{id}")
+    @PatchMapping("/usuarios/{id}")
+}</code></pre>
+<h3>18. ¿Qué es @PathVariable vs @RequestParam?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Dos formas de extraer datos de la URL.</p>
+<p><strong>Diferencias:</strong></p>
+<ul>
+<li><strong>@PathVariable</strong>: Extrae de la ruta (<code>/usuarios/{id}</code> <i class="fa-solid fa-arrow-right"></i> <code>id</code>)</li>
+<li><strong>@RequestParam</strong>: Extrae query params (<code>?nombre=Juan</code> <i class="fa-solid fa-arrow-right"></i> <code>nombre</code>)</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// @PathVariable - parte de la URL
+// GET /usuarios/123
+@GetMapping("/usuarios/{id}")
+public Usuario buscar(@PathVariable Long id) { }
+
+// @RequestParam - query parameters
+// GET /usuarios?nombre=Juan&amp;activo=true
+@GetMapping("/usuarios")
+public List&lt;Usuario&gt; buscar(
+    @RequestParam String nombre,
+    @RequestParam(required = false, defaultValue = "true") boolean activo
+) { }
+
+// Combinados
+// GET /usuarios/123/pedidos?estado=pendiente
+@GetMapping("/usuarios/{id}/pedidos")
+public List&lt;Pedido&gt; pedidos(
+    @PathVariable Long id,
+    @RequestParam String estado
+) { }</code></pre>
+<h3>19. ¿Qué es @RequestBody y @ResponseBody?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotaciones para conversión automática entre JSON y objetos Java.</p>
+<p><strong>Diferencias:</strong></p>
+<ul>
+<li><strong>@RequestBody</strong>: JSON del request <i class="fa-solid fa-arrow-right"></i> Objeto Java</li>
+<li><strong>@ResponseBody</strong>: Objeto Java <i class="fa-solid fa-arrow-right"></i> JSON en response</li>
+</ul>
+<p><strong>Nota:</strong> <code>@RestController</code> incluye <code>@ResponseBody</code> implícitamente.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@RestController // Incluye @ResponseBody en todos los métodos
+public class UsuarioController {
+    
+    // @RequestBody - deserializa JSON a objeto
+    @PostMapping("/usuarios")
+    public Usuario crear(@RequestBody UsuarioDTO dto) {
+        return service.crear(dto);
+    }
+    
+    // @ResponseBody - serializa objeto a JSON (implícito en @RestController)
+    @GetMapping("/usuarios/{id}")
+    public Usuario buscar(@PathVariable Long id) {
+        return service.buscar(id);
+    }
+}</code></pre>
+<h3>20. ¿Qué es ResponseEntity?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Wrapper que representa una respuesta HTTP completa (status, headers, body).</p>
+<p><strong>¿Para qué sirve?</strong></p>
+<ul>
+<li>Controlar el código de estado HTTP</li>
+<li>Añadir headers personalizados</li>
+<li>Retornar respuestas vacías con status específico</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@GetMapping("/usuarios/{id}")
+public ResponseEntity&lt;Usuario&gt; buscar(@PathVariable Long id) {
+    return service.findById(id)
+        .map(usuario -&gt; ResponseEntity.ok(usuario))
+        .orElse(ResponseEntity.notFound().build());
+}
+
+@PostMapping("/usuarios")
+public ResponseEntity&lt;Usuario&gt; crear(@RequestBody UsuarioDTO dto) {
+    Usuario usuario = service.crear(dto);
+    URI location = ServletUriComponentsBuilder
+        .fromCurrentRequest()
+        .path("/{id}")
+        .buildAndExpand(usuario.getId())
+        .toUri();
+    return ResponseEntity.created(location).body(usuario);
+}
+
+// Otros métodos
+ResponseEntity.ok(body);
+ResponseEntity.noContent().build();
+ResponseEntity.badRequest().body(error);
+ResponseEntity.status(HttpStatus.CONFLICT).body(error);</code></pre>
+<h3>21. ¿Qué es @Valid y validación?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Mecanismo para validar objetos usando Bean Validation (JSR 380).</p>
+<p><strong>Anotaciones comunes:</strong></p>
+<ul>
+<li><code>@NotNull</code>, <code>@NotBlank</code>, <code>@NotEmpty</code></li>
+<li><code>@Size(min, max)</code>, <code>@Min</code>, <code>@Max</code></li>
+<li><code>@Email</code>, <code>@Pattern</code></li>
+<li><code>@Past</code>, <code>@Future</code> (fechas)</li>
+</ul>
+<p><strong>Uso:</strong> Anotar parámetro con <code>@Valid</code> para activar validación.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// DTO con validaciones
+public class UsuarioDTO {
+    @NotBlank(message = "Nombre requerido")
+    @Size(min = 2, max = 50)
+    private String nombre;
+    
+    @Email(message = "Email inválido")
+    @NotBlank
+    private String email;
+    
+    @Min(18)
+    private int edad;
+    
+    @Pattern(regexp = "^[0-9]{9}$", message = "Teléfono inválido")
+    private String telefono;
+}
+
+// Controlador
+@PostMapping("/usuarios")
+public Usuario crear(@Valid @RequestBody UsuarioDTO dto) {
+    // Si falla validación, lanza MethodArgumentNotValidException
+    return service.crear(dto);
+}
+
+// Validación manual
+@Autowired
+private Validator validator;
+
+public void validar(Object objeto) {
+    Set&lt;ConstraintViolation&lt;Object&gt;&gt; violations = validator.validate(objeto);
+    if (!violations.isEmpty()) {
+        throw new ConstraintViolationException(violations);
+    }
+}</code></pre>
+<h3>22. ¿Qué es un Interceptor?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Componente que intercepta requests antes y después del controlador.</p>
+<p><strong>Métodos:</strong></p>
+<ul>
+<li><code>preHandle()</code>: Antes del controlador</li>
+<li><code>postHandle()</code>: Después del controlador</li>
+<li><code>afterCompletion()</code>: Después de renderizar</li>
+</ul>
+<p><strong>Usos comunes:</strong> Logging, autenticación, métricas, modificar request/response.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Interceptor personalizado
+@Component
+public class LoggingInterceptor implements HandlerInterceptor {
+    
+    @Override
+    public boolean preHandle(HttpServletRequest request, 
+                            HttpServletResponse response, 
+                            Object handler) {
+        System.out.println("Antes del controlador");
+        return true; // Continuar o detener
+    }
+    
+    @Override
+    public void postHandle(HttpServletRequest request, 
+                          HttpServletResponse response, 
+                          Object handler, 
+                          ModelAndView modelAndView) {
+        System.out.println("Después del controlador");
+    }
+    
+    @Override
+    public void afterCompletion(HttpServletRequest request, 
+                               HttpServletResponse response, 
+                               Object handler, 
+                               Exception ex) {
+        System.out.println("Después de renderizar vista");
+    }
+}
+
+// Registrar interceptor
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    
+    @Autowired
+    private LoggingInterceptor loggingInterceptor;
+    
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(loggingInterceptor)
+                .addPathPatterns("/api/**")
+                .excludePathPatterns("/api/public/**");
+    }
+}</code></pre>
+<h3>23. ¿Qué es un Filter vs Interceptor?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Dos mecanismos para interceptar requests con diferentes niveles de acceso.</p>
+<p><strong>Diferencias:</strong></p>
+<table><thead><tr><th>Filter</th><th>Interceptor</th></tr></thead><tbody><tr><td>Servlet API</td><td>Spring MVC</td></tr><tr><td>Antes de DispatcherServlet</td><td>Después de DispatcherServlet</td></tr><tr><td>Request/Response</td><td>Handler/ModelAndView</td></tr><tr><td>Más bajo nivel</td><td>Más alto nivel</td></tr></tbody></table>
+<p><strong>Recomendación:</strong> Usar Interceptor para lógica de Spring MVC, Filter para operaciones de bajo nivel.</p>
+<h3>24. ¿Cómo manejar CORS?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Cross-Origin Resource Sharing - mecanismo de seguridad del navegador para requests entre dominios.</p>
+<p><strong>Configuración:</strong></p>
+<ul>
+<li><strong>Por controlador</strong>: <code>@CrossOrigin</code></li>
+<li><strong>Global</strong>: <code>WebMvcConfigurer.addCorsMappings()</code></li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// En controlador
+@CrossOrigin(origins = "http://localhost:3000")
+@RestController
+public class MiController { }
+
+// Global
+@Configuration
+public class CorsConfig implements WebMvcConfigurer {
+    
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/api/**")
+                .allowedOrigins("http://localhost:3000")
+                .allowedMethods("GET", "POST", "PUT", "DELETE")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
+    }
+}</code></pre>
+<h3>25. ¿Qué es content negotiation?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Mecanismo para retornar diferentes formatos según lo que el cliente solicite.</p>
+<p><strong>¿Cómo funciona?</strong></p>
+<p>El cliente envía header <code>Accept</code> indicando el formato deseado (JSON, XML, etc.).</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Retornar JSON o XML según Accept header
+@GetMapping(
+    value = "/usuarios/{id}",
+    produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
+)
+public Usuario buscar(@PathVariable Long id) {
+    return service.buscar(id);
+}
+
+// Configuración global
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    
+    @Override
+    public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+        configurer
+            .defaultContentType(MediaType.APPLICATION_JSON)
+            .favorParameter(true)
+            .parameterName("format")
+            .mediaType("json", MediaType.APPLICATION_JSON)
+            .mediaType("xml", MediaType.APPLICATION_XML);
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="spring-data-26-35">
+    <h2>Spring Data (26-35)</h2>
+    <div class="doc-content">
+<h3>26. ¿Qué métodos proporciona JpaRepository?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Interface de Spring Data JPA que proporciona operaciones CRUD y más.</p>
+<p><strong>Métodos principales:</strong></p>
+<ul>
+<li><code>save()</code>, <code>saveAll()</code>: Guardar entidades</li>
+<li><code>findById()</code>, <code>findAll()</code>: Buscar</li>
+<li><code>deleteById()</code>, <code>delete()</code>: Eliminar</li>
+<li><code>count()</code>, <code>existsById()</code>: Utilidades</li>
+<li><code>flush()</code>, <code>saveAndFlush()</code>: Control de persistencia</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">public interface UsuarioRepository extends JpaRepository&lt;Usuario, Long&gt; {
+    // Heredados de JpaRepository:
+    // save(entity), saveAll(entities)
+    // findById(id), findAll(), findAllById(ids)
+    // count(), existsById(id)
+    // deleteById(id), delete(entity), deleteAll()
+    // flush(), saveAndFlush(entity)
+}</code></pre>
+<h3>27. ¿Cómo crear query methods?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Spring Data genera queries automáticamente a partir del nombre del método.</p>
+<p><strong>Palabras clave:</strong></p>
+<ul>
+<li><code>findBy</code>, <code>readBy</code>, <code>getBy</code>: Buscar</li>
+<li><code>And</code>, <code>Or</code>: Combinar condiciones</li>
+<li><code>GreaterThan</code>, <code>LessThan</code>, <code>Between</code>: Comparaciones</li>
+<li><code>Like</code>, <code>Containing</code>, <code>StartingWith</code>: Texto</li>
+<li><code>OrderBy</code>: Ordenamiento</li>
+<li><code>Top</code>, <code>First</code>: Limitar resultados</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">public interface UsuarioRepository extends JpaRepository&lt;Usuario, Long&gt; {
+    
+    // Por propiedad
+    List&lt;Usuario&gt; findByNombre(String nombre);
+    Optional&lt;Usuario&gt; findByEmail(String email);
+    
+    // Múltiples condiciones
+    List&lt;Usuario&gt; findByNombreAndEdad(String nombre, int edad);
+    List&lt;Usuario&gt; findByNombreOrEmail(String nombre, String email);
+    
+    // Comparaciones
+    List&lt;Usuario&gt; findByEdadGreaterThan(int edad);
+    List&lt;Usuario&gt; findByEdadBetween(int min, int max);
+    List&lt;Usuario&gt; findByNombreLike(String patron);
+    List&lt;Usuario&gt; findByNombreContaining(String texto);
+    List&lt;Usuario&gt; findByNombreStartingWith(String prefijo);
+    
+    // Ordenamiento
+    List&lt;Usuario&gt; findByActivoTrueOrderByNombreAsc();
+    
+    // Limitar resultados
+    List&lt;Usuario&gt; findTop5ByOrderByFechaCreacionDesc();
+    Usuario findFirstByOrderByEdadDesc();
+    
+    // Null checks
+    List&lt;Usuario&gt; findByEmailIsNull();
+    List&lt;Usuario&gt; findByEmailIsNotNull();
+}</code></pre>
+<h3>28. ¿Qué es @Query?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación para definir queries JPQL o SQL nativo personalizadas.</p>
+<p><strong>¿Cuándo usarlo?</strong></p>
+<ul>
+<li>Query methods no son suficientes</li>
+<li>Queries complejas con JOINs</li>
+<li>Operaciones de actualización/eliminación masiva</li>
+</ul>
+<p><strong>Tipos:</strong></p>
+<ul>
+<li>JPQL (default): Orientado a objetos</li>
+<li>Nativo (<code>nativeQuery=true</code>): SQL puro</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">public interface UsuarioRepository extends JpaRepository&lt;Usuario, Long&gt; {
+    
+    // JPQL
+    @Query("SELECT u FROM Usuario u WHERE u.activo = true")
+    List&lt;Usuario&gt; findActivos();
+    
+    // Con parámetros nombrados
+    @Query("SELECT u FROM Usuario u WHERE u.nombre LIKE %:nombre%")
+    List&lt;Usuario&gt; buscarPorNombre(@Param("nombre") String nombre);
+    
+    // Con parámetros posicionales
+    @Query("SELECT u FROM Usuario u WHERE u.edad &gt; ?1 AND u.activo = ?2")
+    List&lt;Usuario&gt; buscar(int edad, boolean activo);
+    
+    // SQL nativo
+    @Query(value = "SELECT * FROM usuarios WHERE activo = 1", nativeQuery = true)
+    List&lt;Usuario&gt; findActivosNativo();
+    
+    // Modificación
+    @Modifying
+    @Query("UPDATE Usuario u SET u.activo = false WHERE u.ultimoAcceso &lt; :fecha")
+    int desactivarInactivos(@Param("fecha") LocalDate fecha);
+}</code></pre>
+<h3>29. ¿Qué es Specification?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>API para construir queries dinámicas con criterios combinables.</p>
+<p><strong>¿Para qué sirve?</strong></p>
+<ul>
+<li>Filtros de búsqueda dinámicos</li>
+<li>Combinar condiciones en runtime</li>
+<li>Reutilizar criterios de búsqueda</li>
+</ul>
+<p><strong>Requisito:</strong> Extender <code>JpaSpecificationExecutor</code>.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Para queries dinámicas
+public interface UsuarioRepository extends 
+    JpaRepository&lt;Usuario, Long&gt;,
+    JpaSpecificationExecutor&lt;Usuario&gt; {
+}
+
+// Specifications
+public class UsuarioSpecifications {
+    
+    public static Specification&lt;Usuario&gt; nombreContiene(String nombre) {
+        return (root, query, cb) -&gt; 
+            cb.like(root.get("nombre"), "%" + nombre + "%");
+    }
+    
+    public static Specification&lt;Usuario&gt; edadMayorQue(int edad) {
+        return (root, query, cb) -&gt; 
+            cb.greaterThan(root.get("edad"), edad);
+    }
+    
+    public static Specification&lt;Usuario&gt; activo() {
+        return (root, query, cb) -&gt; 
+            cb.isTrue(root.get("activo"));
+    }
+}
+
+// Uso
+List&lt;Usuario&gt; usuarios = repository.findAll(
+    Specification.where(nombreContiene("Juan"))
+                 .and(edadMayorQue(18))
+                 .and(activo())
+);</code></pre>
+<h3>30. ¿Qué es Pagination y Sorting?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Mecanismos para dividir y ordenar resultados de queries.</p>
+<p><strong>Componentes:</strong></p>
+<ul>
+<li><strong>Pageable</strong>: Define página y tamaño</li>
+<li><strong>Page</strong>: Resultado con metadatos de paginación</li>
+<li><strong>Sort</strong>: Define ordenamiento</li>
+</ul>
+<p><strong>¿Para qué sirve?</strong></p>
+<p>Evitar cargar todos los registros en memoria.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">public interface UsuarioRepository extends JpaRepository&lt;Usuario, Long&gt; {
+    
+    Page&lt;Usuario&gt; findByActivo(boolean activo, Pageable pageable);
+    
+    List&lt;Usuario&gt; findByNombre(String nombre, Sort sort);
+}
+
+// Uso
+Pageable pageable = PageRequest.of(0, 10, Sort.by("nombre").ascending());
+Page&lt;Usuario&gt; pagina = repository.findByActivo(true, pageable);
+
+pagina.getContent();      // Lista de usuarios
+pagina.getTotalElements(); // Total de registros
+pagina.getTotalPages();    // Total de páginas
+pagina.getNumber();        // Página actual
+pagina.hasNext();          // ¿Hay siguiente?
+
+// Sorting
+Sort sort = Sort.by(Sort.Direction.DESC, "fechaCreacion");
+Sort multiSort = Sort.by("nombre").ascending()
+                     .and(Sort.by("edad").descending());</code></pre>
+<h3>31. ¿Qué es @EntityGraph?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación que define qué relaciones cargar junto con la entidad.</p>
+<p><strong>¿Para qué sirve?</strong></p>
+<ul>
+<li>Evitar el problema N+1 queries</li>
+<li>Cargar relaciones LAZY en queries específicas</li>
+<li>Sin cambiar FetchType global de la entidad</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Evitar N+1 queries
+@Entity
+public class Usuario {
+    @Id
+    private Long id;
+    
+    @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY)
+    private List&lt;Pedido&gt; pedidos;
+}
+
+public interface UsuarioRepository extends JpaRepository&lt;Usuario, Long&gt; {
+    
+    // Cargar pedidos junto con usuario
+    @EntityGraph(attributePaths = {"pedidos"})
+    List&lt;Usuario&gt; findByActivo(boolean activo);
+    
+    // Named EntityGraph
+    @EntityGraph(value = "Usuario.conPedidos")
+    Optional&lt;Usuario&gt; findById(Long id);
+}
+
+// En la entidad
+@NamedEntityGraph(
+    name = "Usuario.conPedidos",
+    attributeNodes = @NamedAttributeNode("pedidos")
+)</code></pre>
+<h3>32. ¿Qué es Auditing?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Funcionalidad que registra automáticamente quién y cuándo creó/modificó entidades.</p>
+<p><strong>Anotaciones:</strong></p>
+<ul>
+<li><code>@CreatedDate</code>: Fecha de creación</li>
+<li><code>@LastModifiedDate</code>: Fecha de modificación</li>
+<li><code>@CreatedBy</code>: Usuario que creó</li>
+<li><code>@LastModifiedBy</code>: Usuario que modificó</li>
+</ul>
+<p><strong>Requisito:</strong> Habilitar con <code>@EnableJpaAuditing</code>.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@Configuration
+@EnableJpaAuditing
+public class JpaConfig {}
+
+@Entity
+@EntityListeners(AuditingEntityListener.class)
+public class Usuario {
+    
+    @CreatedDate
+    private LocalDateTime fechaCreacion;
+    
+    @LastModifiedDate
+    private LocalDateTime fechaModificacion;
+    
+    @CreatedBy
+    private String creadoPor;
+    
+    @LastModifiedBy
+    private String modificadoPor;
+}
+
+// Configurar auditor
+@Component
+public class AuditorAwareImpl implements AuditorAware&lt;String&gt; {
+    
+    @Override
+    public Optional&lt;String&gt; getCurrentAuditor() {
+        return Optional.ofNullable(SecurityContextHolder.getContext())
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName);
+    }
+}</code></pre>
+<h3>33. ¿Qué es Projection?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Mecanismo para retornar solo campos específicos en vez de la entidad completa.</p>
+<p><strong>Tipos:</strong></p>
+<ul>
+<li><strong>Interface projection</strong>: Define getters para campos deseados</li>
+<li><strong>Class projection (DTO)</strong>: Clase con constructor</li>
+<li><strong>Dynamic projection</strong>: Tipo genérico</li>
+</ul>
+<p><strong>Ventajas:</strong> Mejor performance, seguridad (no exponer campos sensibles).</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Interface projection
+public interface UsuarioResumen {
+    String getNombre();
+    String getEmail();
+}
+
+public interface UsuarioRepository extends JpaRepository&lt;Usuario, Long&gt; {
+    List&lt;UsuarioResumen&gt; findByActivo(boolean activo);
+}
+
+// Class projection (DTO)
+public record UsuarioDTO(String nombre, String email) {}
+
+@Query("SELECT new com.ejemplo.UsuarioDTO(u.nombre, u.email) FROM Usuario u")
+List&lt;UsuarioDTO&gt; findAllDTO();
+
+// Dynamic projection
+&lt;T&gt; List&lt;T&gt; findByActivo(boolean activo, Class&lt;T&gt; type);
+
+// Uso
+List&lt;UsuarioResumen&gt; resumenes = repository.findByActivo(true, UsuarioResumen.class);</code></pre>
+<h3>34. ¿Qué es @Transactional propagation?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Atributo que define cómo se comporta una transacción cuando ya existe otra.</p>
+<p><strong>Tipos principales:</strong></p>
+<ul>
+<li><strong>REQUIRED</strong> (default): Usa existente o crea nueva</li>
+<li><strong>REQUIRES_NEW</strong>: Siempre crea nueva</li>
+<li><strong>MANDATORY</strong>: Debe existir, sino error</li>
+<li><strong>SUPPORTS</strong>: Usa si existe, sino sin transacción</li>
+<li><strong>NOT_SUPPORTED</strong>: Ejecuta sin transacción</li>
+<li><strong>NEVER</strong>: Error si existe transacción</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Propagation types
+@Transactional(propagation = Propagation.REQUIRED) // Default
+// Usa transacción existente o crea nueva
+
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+// Siempre crea nueva transacción
+
+@Transactional(propagation = Propagation.MANDATORY)
+// Debe existir transacción, sino error
+
+@Transactional(propagation = Propagation.SUPPORTS)
+// Usa transacción si existe, sino ejecuta sin transacción
+
+@Transactional(propagation = Propagation.NOT_SUPPORTED)
+// Ejecuta sin transacción
+
+@Transactional(propagation = Propagation.NEVER)
+// Error si existe transacción</code></pre>
+<h3>35. ¿Qué es @Transactional isolation?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Atributo que define el nivel de aislamiento entre transacciones concurrentes.</p>
+<p><strong>Niveles:</strong></p>
+<ul>
+<li><strong>READ_UNCOMMITTED</strong>: Puede leer datos no confirmados</li>
+<li><strong>READ_COMMITTED</strong>: Solo lee datos confirmados</li>
+<li><strong>REPEATABLE_READ</strong>: Lecturas repetibles consistentes</li>
+<li><strong>SERIALIZABLE</strong>: Máximo aislamiento (más lento)</li>
+</ul>
+<p><strong>Problemas que previene:</strong> Dirty reads, non-repeatable reads, phantom reads.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Isolation levels
+@Transactional(isolation = Isolation.READ_UNCOMMITTED)
+// Puede leer datos no confirmados (dirty reads)
+
+@Transactional(isolation = Isolation.READ_COMMITTED)
+// Solo lee datos confirmados
+
+@Transactional(isolation = Isolation.REPEATABLE_READ)
+// Lecturas repetibles dan mismo resultado
+
+@Transactional(isolation = Isolation.SERIALIZABLE)
+// Máximo aislamiento, más lento</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="spring-security-36-45">
+    <h2>Spring Security (36-45)</h2>
+    <div class="doc-content">
+<h3>36. ¿Cómo funciona la autenticación en Spring Security?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Proceso de verificación de identidad del usuario.</p>
+<p><strong>Flujo:</strong></p>
+<ol>
+<li>Usuario envía credenciales</li>
+<li><strong>AuthenticationFilter</strong> intercepta la petición</li>
+<li><strong>AuthenticationManager</strong> procesa la autenticación</li>
+<li><strong>AuthenticationProvider</strong> valida credenciales</li>
+<li><strong>UserDetailsService</strong> carga datos del usuario</li>
+<li>Si válido, crea <strong>Authentication</strong> en <strong>SecurityContext</strong></li>
+</ol>
+<h3>37. ¿Qué es UserDetailsService?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Interface para cargar datos del usuario desde la base de datos.</p>
+<p><strong>Método a implementar:</strong> <code>loadUserByUsername(String username)</code></p>
+<p><strong>¿Para qué sirve?</strong></p>
+<p>Conectar Spring Security con tu sistema de usuarios personalizado.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@Service
+public class CustomUserDetailsService implements UserDetailsService {
+    
+    @Autowired
+    private UsuarioRepository repository;
+    
+    @Override
+    public UserDetails loadUserByUsername(String username) 
+            throws UsernameNotFoundException {
+        Usuario usuario = repository.findByEmail(username)
+            .orElseThrow(() -&gt; new UsernameNotFoundException("Usuario no encontrado"));
+        
+        return User.builder()
+            .username(usuario.getEmail())
+            .password(usuario.getPassword())
+            .roles(usuario.getRoles().toArray(new String[0]))
+            .build();
+    }
+}</code></pre>
+<h3>38. ¿Cómo implementar JWT?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>JSON Web Token - estándar para autenticación stateless.</p>
+<p><strong>Flujo:</strong></p>
+<ol>
+<li>Usuario envía credenciales</li>
+<li>Servidor genera JWT con datos del usuario</li>
+<li>Cliente envía JWT en header <code>Authorization: Bearer <token></code></li>
+<li>Servidor valida JWT en cada request</li>
+</ol>
+<p><strong>Componentes:</strong> JwtUtil (generar/validar) + JwtFilter (interceptar requests).</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Generar token
+@Component
+public class JwtUtil {
+    
+    @Value("\${jwt.secret}")
+    private String secret;
+    
+    public String generateToken(UserDetails userDetails) {
+        return Jwts.builder()
+            .setSubject(userDetails.getUsername())
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + 86400000))
+            .signWith(SignatureAlgorithm.HS256, secret)
+            .compact();
+    }
+    
+    public String extractUsername(String token) {
+        return Jwts.parser()
+            .setSigningKey(secret)
+            .parseClaimsJws(token)
+            .getBody()
+            .getSubject();
+    }
+    
+    public boolean validateToken(String token, UserDetails userDetails) {
+        String username = extractUsername(token);
+        return username.equals(userDetails.getUsername()) &amp;&amp; !isTokenExpired(token);
+    }
+}
+
+// Filtro JWT
+@Component
+public class JwtFilter extends OncePerRequestFilter {
+    
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                   HttpServletResponse response,
+                                   FilterChain chain) {
+        String header = request.getHeader("Authorization");
+        
+        if (header != null &amp;&amp; header.startsWith("Bearer ")) {
+            String token = header.substring(7);
+            String username = jwtUtil.extractUsername(token);
+            
+            if (username != null &amp;&amp; SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                
+                if (jwtUtil.validateToken(token, userDetails)) {
+                    UsernamePasswordAuthenticationToken auth = 
+                        new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
+            }
+        }
+        
+        chain.doFilter(request, response);
+    }
+}</code></pre>
+<h3>39. ¿Qué es @PreAuthorize y @PostAuthorize?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotaciones para seguridad a nivel de método.</p>
+<p><strong>Diferencias:</strong></p>
+<ul>
+<li><strong>@PreAuthorize</strong>: Verifica ANTES de ejecutar el método</li>
+<li><strong>@PostAuthorize</strong>: Verifica DESPUÉS (puede usar <code>returnObject</code>)</li>
+<li><strong>@PreFilter/@PostFilter</strong>: Filtra colecciones</li>
+</ul>
+<p><strong>Requisito:</strong> Habilitar con <code>@EnableMethodSecurity</code>.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@Configuration
+@EnableMethodSecurity
+public class SecurityConfig {}
+
+@Service
+public class UsuarioService {
+    
+    @PreAuthorize("hasRole('ADMIN')")
+    public void eliminar(Long id) { }
+    
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public void actualizar(Usuario usuario) { }
+    
+    @PreAuthorize("#id == authentication.principal.id or hasRole('ADMIN')")
+    public Usuario buscar(Long id) { }
+    
+    @PostAuthorize("returnObject.creador == authentication.name")
+    public Documento obtenerDocumento(Long id) { }
+    
+    @PreFilter("filterObject.activo == true")
+    public void procesarUsuarios(List&lt;Usuario&gt; usuarios) { }
+    
+    @PostFilter("filterObject.publico == true or filterObject.creador == authentication.name")
+    public List&lt;Documento&gt; listarDocumentos() { }
+}</code></pre>
+<h3>40. ¿Qué es OAuth2?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Protocolo de autorización para login con proveedores externos.</p>
+<p><strong>Proveedores comunes:</strong> Google, GitHub, Facebook, Microsoft.</p>
+<p><strong>Ventajas:</strong></p>
+<ul>
+<li>No manejar passwords de usuarios</li>
+<li>Experiencia de login simplificada</li>
+<li>Acceso a datos del perfil del proveedor</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// Configuración OAuth2 Login
+@Configuration
+public class SecurityConfig {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+            .oauth2Login(oauth2 -&gt; oauth2
+                .loginPage("/login")
+                .defaultSuccessUrl("/dashboard")
+            )
+            .build();
+    }
+}
+
+// application.yml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: \${GOOGLE_CLIENT_ID}
+            client-secret: \${GOOGLE_CLIENT_SECRET}
+            scope: email, profile</code></pre>
+<h3>41. ¿Qué es CSRF y cómo manejarlo?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Cross-Site Request Forgery - ataque donde un sitio malicioso hace requests en nombre del usuario.</p>
+<p><strong>En Spring Security:</strong></p>
+<ul>
+<li>Habilitado por defecto para formularios</li>
+<li>Deshabilitar para APIs REST stateless (usan JWT)</li>
+<li>Para SPAs: usar <code>CookieCsrfTokenRepository</code></li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// CSRF habilitado por defecto para formularios
+// Deshabilitar para APIs REST stateless
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    return http
+        .csrf(csrf -&gt; csrf.disable()) // Para APIs REST
+        .build();
+}
+
+// O configurar para SPAs
+.csrf(csrf -&gt; csrf
+    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+)</code></pre>
+<h3>42. ¿Cómo obtener el usuario autenticado?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Formas de acceder a los datos del usuario actualmente autenticado.</p>
+<p><strong>Opciones:</strong></p>
+<ol>
+<li><strong>@AuthenticationPrincipal</strong>: En parámetro del controlador</li>
+<li><strong>Principal</strong>: Interface estándar de Java</li>
+<li><strong>SecurityContextHolder</strong>: Programáticamente desde cualquier lugar</li>
+</ol>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// En controlador
+@GetMapping("/perfil")
+public Usuario perfil(@AuthenticationPrincipal UserDetails userDetails) {
+    return service.buscarPorEmail(userDetails.getUsername());
+}
+
+// Con Principal
+@GetMapping("/perfil")
+public Usuario perfil(Principal principal) {
+    return service.buscarPorEmail(principal.getName());
+}
+
+// Programáticamente
+Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+String username = auth.getName();
+Collection&lt;? extends GrantedAuthority&gt; roles = auth.getAuthorities();</code></pre>
+<h3>43. ¿Qué es PasswordEncoder?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Interface para encriptar y verificar passwords de forma segura.</p>
+<p><strong>Implementaciones:</strong></p>
+<ul>
+<li><strong>BCryptPasswordEncoder</strong>: Estándar recomendado</li>
+<li><strong>Argon2PasswordEncoder</strong>: Más seguro, más lento</li>
+<li><strong>DelegatingPasswordEncoder</strong>: Soporta múltiples algoritmos</li>
+</ul>
+<p><strong>Nunca almacenar passwords en texto plano.</strong></p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@Bean
+public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+}
+
+// Uso
+String encoded = passwordEncoder.encode("password123");
+boolean matches = passwordEncoder.matches("password123", encoded);
+
+// DelegatingPasswordEncoder (recomendado)
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+}
+// Soporta múltiples algoritmos: {bcrypt}hash, {scrypt}hash, etc.</code></pre>
+<h3>44. ¿Cómo proteger endpoints por rol?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Configurar autorización basada en roles para diferentes endpoints.</p>
+<p><strong>Métodos comunes:</strong></p>
+<ul>
+<li><code>permitAll()</code>: Acceso público</li>
+<li><code>authenticated()</code>: Requiere autenticación</li>
+<li><code>hasRole("ADMIN")</code>: Requiere rol específico</li>
+<li><code>hasAnyRole("USER", "ADMIN")</code>: Cualquiera de los roles</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    return http
+        .authorizeHttpRequests(auth -&gt; auth
+            .requestMatchers("/api/public/**").permitAll()
+            .requestMatchers("/api/admin/**").hasRole("ADMIN")
+            .requestMatchers("/api/users/**").hasAnyRole("USER", "ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
+            .anyRequest().authenticated()
+        )
+        .build();
+}</code></pre>
+<h3>45. ¿Qué es SecurityContext?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Objeto que almacena el <code>Authentication</code> del usuario actual.</p>
+<p><strong>Acceso:</strong> Vía <code>SecurityContextHolder.getContext()</code>.</p>
+<p><strong>Estrategias de almacenamiento:</strong></p>
+<ul>
+<li><strong>MODE_THREADLOCAL</strong> (default): Por hilo</li>
+<li><strong>MODE_INHERITABLETHREADLOCAL</strong>: Heredado a hilos hijos</li>
+<li><strong>MODE_GLOBAL</strong>: Compartido globalmente</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">// SecurityContext almacena Authentication del usuario actual
+SecurityContext context = SecurityContextHolder.getContext();
+Authentication auth = context.getAuthentication();
+
+// Estrategias de almacenamiento
+SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_THREADLOCAL); // Default
+SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_GLOBAL);</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-46-50">
+    <h2>Testing (46-50)</h2>
+    <div class="doc-content">
+<h3>46. ¿Cómo testear controladores?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Tests de integración para la capa web.</p>
+<p><strong>Herramientas:</strong></p>
+<ul>
+<li><strong>@WebMvcTest</strong>: Carga solo la capa web (rápido)</li>
+<li><strong>MockMvc</strong>: Simula requests HTTP</li>
+<li><strong>@MockBean</strong>: Mockea dependencias (servicios)</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@WebMvcTest(UsuarioController.class)
+class UsuarioControllerTest {
+    
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @MockBean
+    private UsuarioService service;
+    
+    @Test
+    void listarUsuarios() throws Exception {
+        when(service.findAll()).thenReturn(List.of(
+            new Usuario(1L, "Juan"),
+            new Usuario(2L, "Ana")
+        ));
+        
+        mockMvc.perform(get("/api/usuarios"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(2)))
+            .andExpect(jsonPath("$[0].nombre").value("Juan"));
+    }
+    
+    @Test
+    void crearUsuario() throws Exception {
+        UsuarioDTO dto = new UsuarioDTO("Juan", "juan@test.com");
+        Usuario usuario = new Usuario(1L, "Juan");
+        
+        when(service.crear(any())).thenReturn(usuario);
+        
+        mockMvc.perform(post("/api/usuarios")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").value(1));
+    }
+}</code></pre>
+<h3>47. ¿Cómo testear repositorios?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Tests de integración para la capa de persistencia.</p>
+<p><strong>Herramientas:</strong></p>
+<ul>
+<li><strong>@DataJpaTest</strong>: Configura BD en memoria + repositorios</li>
+<li><strong>TestEntityManager</strong>: Preparar datos de prueba</li>
+<li>Rollback automático después de cada test</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@DataJpaTest
+class UsuarioRepositoryTest {
+    
+    @Autowired
+    private UsuarioRepository repository;
+    
+    @Autowired
+    private TestEntityManager entityManager;
+    
+    @Test
+    void findByEmail() {
+        Usuario usuario = new Usuario("Juan", "juan@test.com");
+        entityManager.persistAndFlush(usuario);
+        
+        Optional&lt;Usuario&gt; encontrado = repository.findByEmail("juan@test.com");
+        
+        assertThat(encontrado).isPresent();
+        assertThat(encontrado.get().getNombre()).isEqualTo("Juan");
+    }
+}</code></pre>
+<h3>48. ¿Cómo testear servicios?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Tests unitarios para la capa de lógica de negocio.</p>
+<p><strong>Herramientas:</strong></p>
+<ul>
+<li><strong>@ExtendWith(MockitoExtension.class)</strong>: Habilita Mockito</li>
+<li><strong>@Mock</strong>: Crea mocks de dependencias</li>
+<li><strong>@InjectMocks</strong>: Inyecta mocks en el servicio</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@ExtendWith(MockitoExtension.class)
+class UsuarioServiceTest {
+    
+    @Mock
+    private UsuarioRepository repository;
+    
+    @InjectMocks
+    private UsuarioService service;
+    
+    @Test
+    void buscarUsuario() {
+        Usuario usuario = new Usuario(1L, "Juan");
+        when(repository.findById(1L)).thenReturn(Optional.of(usuario));
+        
+        Usuario resultado = service.buscar(1L);
+        
+        assertThat(resultado.getNombre()).isEqualTo("Juan");
+        verify(repository).findById(1L);
+    }
+}</code></pre>
+<h3>49. ¿Qué es @SpringBootTest?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Anotación que carga el contexto completo de Spring para tests de integración.</p>
+<p><strong>Características:</strong></p>
+<ul>
+<li>Carga todos los beans de la aplicación</li>
+<li>Más lento que tests unitarios</li>
+<li>Prueba la integración real entre componentes</li>
+</ul>
+<p><strong>WebEnvironment:</strong></p>
+<ul>
+<li><code>MOCK</code> (default): Sin servidor</li>
+<li><code>RANDOM_PORT</code>: Servidor en puerto aleatorio</li>
+<li><code>DEFINED_PORT</code>: Servidor en puerto configurado</li>
+</ul>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@SpringBootTest
+class IntegrationTest {
+    
+    @Autowired
+    private UsuarioService service;
+    
+    @Test
+    void integrationTest() {
+        // Test con contexto completo de Spring
+    }
+}
+
+// Con servidor embebido
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class WebIntegrationTest {
+    
+    @Autowired
+    private TestRestTemplate restTemplate;
+    
+    @LocalServerPort
+    private int port;
+    
+    @Test
+    void testEndpoint() {
+        String url = "http://localhost:" + port + "/api/usuarios";
+        ResponseEntity&lt;List&gt; response = restTemplate.getForEntity(url, List.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+}</code></pre>
+<h3>50. ¿Qué es TestContainers?</h3>
+<p><strong>¿Qué es?</strong></p>
+<p>Librería para ejecutar contenedores Docker en tests.</p>
+<p><strong>¿Para qué sirve?</strong></p>
+<ul>
+<li>Probar con BD real (PostgreSQL, MySQL, MongoDB)</li>
+<li>Probar con servicios externos (Redis, Kafka, RabbitMQ)</li>
+<li>Tests más realistas que con BD en memoria</li>
+</ul>
+<p><strong>Requisito:</strong> Docker instalado y corriendo.</p>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-java">@SpringBootTest
+@Testcontainers
+class DatabaseIntegrationTest {
+    
+    @Container
+    static PostgreSQLContainer&lt;?&gt; postgres = new PostgreSQLContainer&lt;&gt;("postgres:15")
+        .withDatabaseName("testdb")
+        .withUsername("test")
+        .withPassword("test");
+    
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+    
+    @Autowired
+    private UsuarioRepository repository;
+    
+    @Test
+    void testWithRealDatabase() {
+        Usuario usuario = repository.save(new Usuario("Juan"));
+        assertThat(usuario.getId()).isNotNull();
+    }
+}</code></pre>
+<p>---</p>
+<blockquote class="aside aside-tip">
+Domina estas 50 preguntas y avanza al Top 100 para cubrir Spring Cloud, microservicios y arquitectura avanzada.
+</blockquote>
+    </div>
+  </section>

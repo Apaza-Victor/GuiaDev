@@ -1,0 +1,687 @@
+<!-- 2. Elementos Básicos de un Diagrama de Entidad-Relación - Diag. Entidad-Relación (UML) -->
+  <section id="2-1-entidades">
+    <h2>2.1. Entidades</h2>
+    <div class="doc-content">
+<p>Una entidad representa un objeto, concepto o cosa del mundo real que tiene existencia independiente y puede ser identificada de manera única dentro del sistema.</p>
+<h3>Características de las entidades</h3>
+<ul>
+<li><strong>Identificabilidad</strong>: Cada instancia debe ser única</li>
+<li><strong>Independencia</strong>: Puede existir por sí misma</li>
+<li><strong>Relevancia</strong>: Debe ser importante para el sistema</li>
+<li><strong>Instanciabilidad</strong>: Debe tener múltiples ocurrencias</li>
+</ul>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a217468656d65206177732d6f72616e67650a0a656e746974792022436c69656e746522207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e6f6d627265203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a20656d61696c203a20564152434841522832353529203c3c554e495155453e3e0a202074656c65666f6e6f203a2056415243484152283230290a2020646972656363696f6e203a20544558540a202066656368615f726567697374726f203a2054494d455354414d50203c3c44454641554c54204e4f5728293e3e0a202061637469766f203a20424f4f4c45414e203c3c44454641554c5420545255453e3e0a7d0a0a656e74697479202250726f647563746f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a20636f6469676f203a205641524348415228353029203c3c554e495155453e3e0a20202a206e6f6d627265203a20564152434841522832303029203c3c4e4f54204e554c4c3e3e0a20202a206465736372697063696f6e203a20544558540a20202a2070726563696f203a20444543494d414c2831302c3229203c3c4e4f54204e554c4c3e3e0a202073746f636b203a20494e5445474552203c3c44454641554c5420303e3e0a202063617465676f7269615f6964203a20424947494e54203c3c464b3e3e0a7d0a0a656e74697479202243617465676f72696122207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e6f6d627265203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a206465736372697063696f6e203a20544558540a2020616374697661203a20424f4f4c45414e203c3c44454641554c5420545255453e3e0a7d0a0a43617465676f726961207c7c2d2d6f7b2050726f647563746f203a2022636c61736966696361220a0a6e6f7465207269676874206f6620436c69656e7465203a20456e74696461642066756572746520636f6e20636c617665207072696d617269612070726f7069610a6e6f746520626f74746f6d206f662050726f647563746f203a20456e746964616420636f6e207265666572656e63696120612063617465676f72c3ad610a6e6f7465206c656674206f662043617465676f726961203a20456e746964616420646520636c617369666963616369c3b36e0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+!theme aws-orange
+
+entity "Cliente" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * nombre : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * email : VARCHAR(255) &lt;&lt;UNIQUE&gt;&gt;
+  telefono : VARCHAR(20)
+  direccion : TEXT
+  fecha_registro : TIMESTAMP &lt;&lt;DEFAULT NOW()&gt;&gt;
+  activo : BOOLEAN &lt;&lt;DEFAULT TRUE&gt;&gt;
+}
+
+entity "Producto" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * codigo : VARCHAR(50) &lt;&lt;UNIQUE&gt;&gt;
+  * nombre : VARCHAR(200) &lt;&lt;NOT NULL&gt;&gt;
+  * descripcion : TEXT
+  * precio : DECIMAL(10,2) &lt;&lt;NOT NULL&gt;&gt;
+  stock : INTEGER &lt;&lt;DEFAULT 0&gt;&gt;
+  categoria_id : BIGINT &lt;&lt;FK&gt;&gt;
+}
+
+entity "Categoria" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * nombre : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * descripcion : TEXT
+  activa : BOOLEAN &lt;&lt;DEFAULT TRUE&gt;&gt;
+}
+
+Categoria ||--o{ Producto : "clasifica"
+
+note right of Cliente : Entidad fuerte con clave primaria propia
+note bottom of Producto : Entidad con referencia a categoría
+note left of Categoria : Entidad de clasificación
+@enduml</code></pre>
+  </details>
+</div>
+<h3>Tipos de entidades</h3>
+  <h4 class="tab-label">Entidades Fuertes</h4>
+    <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e746974792022456d706c6561646f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e756d65726f5f656d706c6561646f203a205641524348415228323029203c3c554e495155453e3e0a20202a206e6f6d627265203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a206170656c6c69646f203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a20656d61696c203a20564152434841522832353529203c3c554e495155453e3e0a20202a2066656368615f636f6e747261746163696f6e203a2044415445203c3c4e4f54204e554c4c3e3e0a20202a2073616c6172696f203a20444543494d414c2831302c32290a20202a20646570617274616d656e746f5f6964203a20424947494e54203c3c464b3e3e0a7d0a0a656e746974792022446570617274616d656e746f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a20636f6469676f203a205641524348415228313029203c3c554e495155453e3e0a20202a206e6f6d627265203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a20707265737570756573746f203a20444543494d414c2831322c32290a20202a20756269636163696f6e203a205641524348415228313030290a7d0a0a446570617274616d656e746f207c7c2d2d6f7b20456d706c6561646f203a2022636f6e7469656e65220a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Empleado" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * numero_empleado : VARCHAR(20) &lt;&lt;UNIQUE&gt;&gt;
+  * nombre : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * apellido : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * email : VARCHAR(255) &lt;&lt;UNIQUE&gt;&gt;
+  * fecha_contratacion : DATE &lt;&lt;NOT NULL&gt;&gt;
+  * salario : DECIMAL(10,2)
+  * departamento_id : BIGINT &lt;&lt;FK&gt;&gt;
+}
+
+entity "Departamento" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * codigo : VARCHAR(10) &lt;&lt;UNIQUE&gt;&gt;
+  * nombre : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * presupuesto : DECIMAL(12,2)
+  * ubicacion : VARCHAR(100)
+}
+
+Departamento ||--o{ Empleado : "contiene"
+@enduml</code></pre>
+  </details>
+</div>
+    <p>Entidades que existen independientemente con clave primaria propia.</p>
+  <h4 class="tab-label">Entidades Débiles</h4>
+    <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e74697479202250656469646f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e756d65726f203a205641524348415228323029203c3c554e495155453e3e0a20202a206665636861203a2044415445203c3c4e4f54204e554c4c3e3e0a20202a20746f74616c203a20444543494d414c2831302c32290a20202a20636c69656e74655f6964203a20424947494e54203c3c464b3e3e0a7d0a0a656e746974792022446574616c6c6550656469646f22207b0a20202a2070656469646f5f6964203a20424947494e54203c3c504b2c20464b3e3e0a20202a2070726f647563746f5f6964203a20424947494e54203c3c504b2c20464b3e3e0a20202d2d0a20202a2063616e7469646164203a20494e5445474552203c3c4e4f54204e554c4c3e3e0a20202a2070726563696f5f756e69746172696f203a20444543494d414c28382c3229203c3c4e4f54204e554c4c3e3e0a20202a20737562746f74616c203a20444543494d414c2831302c3229203c3c4e4f54204e554c4c3e3e0a7d0a0a656e74697479202250726f647563746f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e6f6d627265203a20564152434841522832303029203c3c4e4f54204e554c4c3e3e0a20202a2070726563696f203a20444543494d414c28382c3229203c3c4e4f54204e554c4c3e3e0a7d0a0a50656469646f207c7c2d2d6f7b20446574616c6c6550656469646f203a2022636f6e7469656e65220a50726f647563746f207c7c2d2d6f7b20446574616c6c6550656469646f203a2022736520646574616c6c6120656e220a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Pedido" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * numero : VARCHAR(20) &lt;&lt;UNIQUE&gt;&gt;
+  * fecha : DATE &lt;&lt;NOT NULL&gt;&gt;
+  * total : DECIMAL(10,2)
+  * cliente_id : BIGINT &lt;&lt;FK&gt;&gt;
+}
+
+entity "DetallePedido" {
+  * pedido_id : BIGINT &lt;&lt;PK, FK&gt;&gt;
+  * producto_id : BIGINT &lt;&lt;PK, FK&gt;&gt;
+  --
+  * cantidad : INTEGER &lt;&lt;NOT NULL&gt;&gt;
+  * precio_unitario : DECIMAL(8,2) &lt;&lt;NOT NULL&gt;&gt;
+  * subtotal : DECIMAL(10,2) &lt;&lt;NOT NULL&gt;&gt;
+}
+
+entity "Producto" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * nombre : VARCHAR(200) &lt;&lt;NOT NULL&gt;&gt;
+  * precio : DECIMAL(8,2) &lt;&lt;NOT NULL&gt;&gt;
+}
+
+Pedido ||--o{ DetallePedido : "contiene"
+Producto ||--o{ DetallePedido : "se detalla en"
+@enduml</code></pre>
+  </details>
+</div>
+    <p>Entidades que dependen de otra entidad para su identificación.</p>
+  <h4 class="tab-label">Entidades Asociativas</h4>
+    <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e746974792022457374756469616e746522207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a20636f6469676f203a205641524348415228323029203c3c554e495155453e3e0a20202a206e6f6d627265203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a2063617272657261203a205641524348415228313030290a7d0a0a656e746974792022437572736f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a20636f6469676f203a205641524348415228313029203c3c554e495155453e3e0a20202a206e6f6d627265203a20564152434841522832303029203c3c4e4f54204e554c4c3e3e0a20202a206372656469746f73203a20494e54454745520a7d0a0a656e746974792022496e736372697063696f6e22207b0a20202a20657374756469616e74655f6964203a20424947494e54203c3c504b2c20464b3e3e0a20202a20637572736f5f6964203a20424947494e54203c3c504b2c20464b3e3e0a20202d2d0a20202a2066656368615f696e736372697063696f6e203a2044415445203c3c4e4f54204e554c4c3e3e0a20202a2063616c696669636163696f6e203a20444543494d414c28332c31290a20202a2065737461646f203a205641524348415228323029203c3c44454641554c54202741435449564f273e3e0a7d0a0a457374756469616e7465207c7c2d2d6f7b20496e736372697063696f6e0a437572736f207c7c2d2d6f7b20496e736372697063696f6e0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Estudiante" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * codigo : VARCHAR(20) &lt;&lt;UNIQUE&gt;&gt;
+  * nombre : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * carrera : VARCHAR(100)
+}
+
+entity "Curso" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * codigo : VARCHAR(10) &lt;&lt;UNIQUE&gt;&gt;
+  * nombre : VARCHAR(200) &lt;&lt;NOT NULL&gt;&gt;
+  * creditos : INTEGER
+}
+
+entity "Inscripcion" {
+  * estudiante_id : BIGINT &lt;&lt;PK, FK&gt;&gt;
+  * curso_id : BIGINT &lt;&lt;PK, FK&gt;&gt;
+  --
+  * fecha_inscripcion : DATE &lt;&lt;NOT NULL&gt;&gt;
+  * calificacion : DECIMAL(3,1)
+  * estado : VARCHAR(20) &lt;&lt;DEFAULT 'ACTIVO'&gt;&gt;
+}
+
+Estudiante ||--o{ Inscripcion
+Curso ||--o{ Inscripcion
+@enduml</code></pre>
+  </details>
+</div>
+    <p>Entidades que representan relaciones muchos-a-muchos con atributos.</p>
+    </div>
+  </section>
+
+  <section id="2-2-atributos">
+    <h2>2.2. Atributos</h2>
+    <div class="doc-content">
+<p>Los atributos son las propiedades o características que describen las entidades. Cada atributo tiene un nombre, un tipo de dato y puede tener restricciones adicionales.</p>
+<h3>Tipos de atributos</h3>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e746974792022506572736f6e6122207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e6f6d627265203a205641524348415228353029203c3c4e4f54204e554c4c3e3e0a20202a206170656c6c69646f203a205641524348415228353029203c3c4e4f54204e554c4c3e3e0a20206e6f6d6272655f636f6d706c65746f203a20564152434841522831303129203c3c434f4d50555445443e3e0a20202d2d0a20202a2066656368615f6e6163696d69656e746f203a2044415445203c3c4e4f54204e554c4c3e3e0a202065646164203a20494e5445474552203c3c444552495645443e3e0a20202d2d0a202074656c65666f6e6f5f7072696e636970616c203a2056415243484152283230290a202074656c65666f6e6f5f736563756e646172696f203a2056415243484152283230290a20202d2d0a2020646972656363696f6e5f63616c6c65203a205641524348415228313030290a2020646972656363696f6e5f636975646164203a2056415243484152283530290a2020646972656363696f6e5f636f6469676f5f706f7374616c203a2056415243484152283130290a20202d2d0a2020656d61696c5f706572736f6e616c203a205641524348415228323535290a2020656d61696c5f74726162616a6f203a205641524348415228323535290a7d0a0a6e6f7465207269676874206f6620506572736f6e61203a20456a656d706c6f20636f6d706c65746f206465207469706f7320646520617472696275746f730a6e6f746520626f74746f6d203a202d2053696d706c65733a206e6f6d6272652c206170656c6c69646f0a6e6f746520626f74746f6d203a202d20436f6d70756573746f733a2064697265636369c3b36e202863616c6c65202b20636975646164202b204350290a6e6f746520626f74746f6d203a202d20446572697661646f733a2065646164202863616c63756c6164612064657364652066656368615f6e6163696d69656e746f290a6e6f746520626f74746f6d203a202d204d756c746976616c7561646f733a206dc3ba6c7469706c65732074656cc3a9666f6e6f73207920656d61696c730a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Persona" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * nombre : VARCHAR(50) &lt;&lt;NOT NULL&gt;&gt;
+  * apellido : VARCHAR(50) &lt;&lt;NOT NULL&gt;&gt;
+  nombre_completo : VARCHAR(101) &lt;&lt;COMPUTED&gt;&gt;
+  --
+  * fecha_nacimiento : DATE &lt;&lt;NOT NULL&gt;&gt;
+  edad : INTEGER &lt;&lt;DERIVED&gt;&gt;
+  --
+  telefono_principal : VARCHAR(20)
+  telefono_secundario : VARCHAR(20)
+  --
+  direccion_calle : VARCHAR(100)
+  direccion_ciudad : VARCHAR(50)
+  direccion_codigo_postal : VARCHAR(10)
+  --
+  email_personal : VARCHAR(255)
+  email_trabajo : VARCHAR(255)
+}
+
+note right of Persona : Ejemplo completo de tipos de atributos
+note bottom : - Simples: nombre, apellido
+note bottom : - Compuestos: dirección (calle + ciudad + CP)
+note bottom : - Derivados: edad (calculada desde fecha_nacimiento)
+note bottom : - Multivaluados: múltiples teléfonos y emails
+@enduml</code></pre>
+  </details>
+</div>
+<h3>Clasificación de atributos</h3>
+<ol class="steps">
+<ol>
+<li><strong>Atributos Simples</strong>: No se pueden dividir en componentes más pequeños</li>
+<li><strong>Atributos Compuestos</strong>: Se pueden dividir en sub-atributos</li>
+<li><strong>Atributos Derivados</strong>: Su valor se calcula a partir de otros atributos</li>
+<li><strong>Atributos Multivaluados</strong>: Pueden tener múltiples valores para una entidad</li>
+<li><strong>Atributos Opcionales</strong>: Pueden tener valores nulos</li>
+<li><strong>Atributos Obligatorios</strong>: Deben tener siempre un valor</li>
+</ol>
+</ol>
+    </div>
+  </section>
+
+  <section id="2-3-claves">
+    <h2>2.3. Claves</h2>
+    <div class="doc-content">
+<p>Las claves son atributos o conjuntos de atributos que permiten identificar de manera única las instancias de una entidad.</p>
+<h3>Tipos de claves</h3>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e7469747920225573756172696f22207b0a20202a206964203a20424947494e54203c3c504b2c204155544f5f494e4352454d454e543e3e0a20202d2d0a20202a20757365726e616d65203a205641524348415228353029203c3c554e495155452c204e4f54204e554c4c3e3e0a20202a20656d61696c203a20564152434841522832353529203c3c554e495155452c204e4f54204e554c4c3e3e0a20202a20646f63756d656e746f5f6964656e7469646164203a205641524348415228323029203c3c554e495155453e3e0a20202a206e6f6d627265203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a206170656c6c69646f203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a202066656368615f726567697374726f203a2054494d455354414d50203c3c44454641554c54204e4f5728293e3e0a2020756c74696d6f5f61636365736f203a2054494d455354414d500a202061637469766f203a20424f4f4c45414e203c3c44454641554c5420545255453e3e0a20202d2d0a20203c3c494e4445583e3e206964785f757365726e616d652028757365726e616d65290a20203c3c494e4445583e3e206964785f656d61696c2028656d61696c290a20203c3c494e4445583e3e206964785f646f63756d656e746f2028646f63756d656e746f5f6964656e7469646164290a20203c3c494e4445583e3e206964785f6e6f6d6272655f6170656c6c69646f20286e6f6d6272652c206170656c6c69646f290a7d0a0a6e6f7465207269676874206f66205573756172696f203a20436c617665732063616e646964617461733a2069642c20757365726e616d652c20656d61696c2c20646f63756d656e746f0a6e6f746520626f74746f6d203a20436c617665207072696d617269613a2069642028656c656769646120706f722073696d706c696369646164290a6e6f7465206c656674203a20436c6176657320616c7465726e6174697661733a20757365726e616d652c20656d61696c2c20646f63756d656e746f0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Usuario" {
+  * id : BIGINT &lt;&lt;PK, AUTO_INCREMENT&gt;&gt;
+  --
+  * username : VARCHAR(50) &lt;&lt;UNIQUE, NOT NULL&gt;&gt;
+  * email : VARCHAR(255) &lt;&lt;UNIQUE, NOT NULL&gt;&gt;
+  * documento_identidad : VARCHAR(20) &lt;&lt;UNIQUE&gt;&gt;
+  * nombre : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * apellido : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  fecha_registro : TIMESTAMP &lt;&lt;DEFAULT NOW()&gt;&gt;
+  ultimo_acceso : TIMESTAMP
+  activo : BOOLEAN &lt;&lt;DEFAULT TRUE&gt;&gt;
+  --
+  &lt;&lt;INDEX&gt;&gt; idx_username (username)
+  &lt;&lt;INDEX&gt;&gt; idx_email (email)
+  &lt;&lt;INDEX&gt;&gt; idx_documento (documento_identidad)
+  &lt;&lt;INDEX&gt;&gt; idx_nombre_apellido (nombre, apellido)
+}
+
+note right of Usuario : Claves candidatas: id, username, email, documento
+note bottom : Clave primaria: id (elegida por simplicidad)
+note left : Claves alternativas: username, email, documento
+@enduml</code></pre>
+  </details>
+</div>
+  <h4 class="tab-label">Clave Primaria</h4>
+    <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e74697479202250726f647563746f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a20636f6469676f203a205641524348415228353029203c3c554e495155453e3e0a20202a206e6f6d627265203a20564152434841522832303029203c3c4e4f54204e554c4c3e3e0a202070726563696f203a20444543494d414c28382c32290a7d0a0a656e746974792022446574616c6c6556656e746122207b0a20202a2076656e74615f6964203a20424947494e54203c3c504b2c20464b3e3e0a20202a2070726f647563746f5f6964203a20424947494e54203c3c504b2c20464b3e3e0a20202d2d0a202063616e7469646164203a20494e5445474552203c3c4e4f54204e554c4c3e3e0a202070726563696f5f756e69746172696f203a20444543494d414c28382c32290a7d0a0a6e6f7465207269676874206f662050726f647563746f203a20436c617665207072696d617269612073696d706c650a6e6f746520626f74746f6d206f6620446574616c6c6556656e7461203a20436c617665207072696d6172696120636f6d7075657374610a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Producto" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * codigo : VARCHAR(50) &lt;&lt;UNIQUE&gt;&gt;
+  * nombre : VARCHAR(200) &lt;&lt;NOT NULL&gt;&gt;
+  precio : DECIMAL(8,2)
+}
+
+entity "DetalleVenta" {
+  * venta_id : BIGINT &lt;&lt;PK, FK&gt;&gt;
+  * producto_id : BIGINT &lt;&lt;PK, FK&gt;&gt;
+  --
+  cantidad : INTEGER &lt;&lt;NOT NULL&gt;&gt;
+  precio_unitario : DECIMAL(8,2)
+}
+
+note right of Producto : Clave primaria simple
+note bottom of DetalleVenta : Clave primaria compuesta
+@enduml</code></pre>
+  </details>
+</div>
+    <p>Identifica únicamente cada fila de la tabla.</p>
+  <h4 class="tab-label">Clave Foránea</h4>
+    <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e746974792022436c69656e746522207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e6f6d627265203a205641524348415228313030290a20202a20656d61696c203a205641524348415228323535290a7d0a0a656e74697479202250656469646f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a20636c69656e74655f6964203a20424947494e54203c3c464b3e3e0a20202a206665636861203a20444154450a20202a20746f74616c203a20444543494d414c2831302c32290a7d0a0a656e746974792022446972656363696f6e22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a20636c69656e74655f6964203a20424947494e54203c3c464b3e3e0a20202a207469706f203a2056415243484152283230290a20202a2063616c6c65203a205641524348415228313030290a20202a20636975646164203a2056415243484152283530290a7d0a0a436c69656e7465207c7c2d2d6f7b2050656469646f0a436c69656e7465207c7c2d2d6f7b20446972656363696f6e0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Cliente" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * nombre : VARCHAR(100)
+  * email : VARCHAR(255)
+}
+
+entity "Pedido" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * cliente_id : BIGINT &lt;&lt;FK&gt;&gt;
+  * fecha : DATE
+  * total : DECIMAL(10,2)
+}
+
+entity "Direccion" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * cliente_id : BIGINT &lt;&lt;FK&gt;&gt;
+  * tipo : VARCHAR(20)
+  * calle : VARCHAR(100)
+  * ciudad : VARCHAR(50)
+}
+
+Cliente ||--o{ Pedido
+Cliente ||--o{ Direccion
+@enduml</code></pre>
+  </details>
+</div>
+    <p>Referencia a la clave primaria de otra tabla.</p>
+  <h4 class="tab-label">Clave Única</h4>
+    <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e746974792022456d706c6561646f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e756d65726f5f656d706c6561646f203a205641524348415228323029203c3c554e495155453e3e0a20202a20656d61696c5f636f72706f72617469766f203a20564152434841522832353529203c3c554e495155453e3e0a20202a20646f63756d656e746f5f6964656e7469646164203a205641524348415228323029203c3c554e495155453e3e0a20202a206e6f6d627265203a205641524348415228313030290a20202a206170656c6c69646f203a205641524348415228313030290a7d0a0a6e6f7465207269676874203a204dc3ba6c7469706c6573207265737472696363696f6e657320554e495155450a6e6f746520626f74746f6d203a20476172616e74697a616e20756e6963696461642073696e2073657220636c617665207072696d617269610a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Empleado" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * numero_empleado : VARCHAR(20) &lt;&lt;UNIQUE&gt;&gt;
+  * email_corporativo : VARCHAR(255) &lt;&lt;UNIQUE&gt;&gt;
+  * documento_identidad : VARCHAR(20) &lt;&lt;UNIQUE&gt;&gt;
+  * nombre : VARCHAR(100)
+  * apellido : VARCHAR(100)
+}
+
+note right : Múltiples restricciones UNIQUE
+note bottom : Garantizan unicidad sin ser clave primaria
+@enduml</code></pre>
+  </details>
+</div>
+    <p>Garantiza unicidad sin ser clave primaria.</p>
+    </div>
+  </section>
+
+  <section id="2-4-tipos-de-datos">
+    <h2>2.4. Tipos de datos</h2>
+    <div class="doc-content">
+<p>Los tipos de datos definen qué clase de información puede almacenar cada atributo y cómo se almacena físicamente.</p>
+<h3>Tipos de datos numéricos</h3>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e74697479202250726f647563746f46696e616e636965726f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a20636f6469676f203a205641524348415228323029203c3c554e495155453e3e0a202063616e74696461645f7065717565c3b161203a2054494e59494e540a202063616e74696461645f6d656469616e61203a20534d414c4c494e540a202063616e74696461645f6e6f726d616c203a20494e54454745520a202063616e74696461645f6772616e6465203a20424947494e540a20202d2d0a202070726563696f5f65786163746f203a20444543494d414c2831302c32290a202070726563696f5f6170726f78696d61646f203a20464c4f41540a202070726563696f5f707265636973696f6e5f646f626c65203a20444f55424c450a20202d2d0a2020706f7263656e74616a65203a20444543494d414c28352c32290a2020746173615f696e7465726573203a20444543494d414c28382c34290a7d0a0a6e6f7465207269676874203a205469706f73206e756dc3a97269636f7320736567c3ba6e2070726563697369c3b36e207265717565726964610a6e6f746520626f74746f6d203a20444543494d414c20706172612076616c6f726573206d6f6e65746172696f732065786163746f730a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "ProductoFinanciero" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * codigo : VARCHAR(20) &lt;&lt;UNIQUE&gt;&gt;
+  cantidad_pequeña : TINYINT
+  cantidad_mediana : SMALLINT
+  cantidad_normal : INTEGER
+  cantidad_grande : BIGINT
+  --
+  precio_exacto : DECIMAL(10,2)
+  precio_aproximado : FLOAT
+  precio_precision_doble : DOUBLE
+  --
+  porcentaje : DECIMAL(5,2)
+  tasa_interes : DECIMAL(8,4)
+}
+
+note right : Tipos numéricos según precisión requerida
+note bottom : DECIMAL para valores monetarios exactos
+@enduml</code></pre>
+  </details>
+</div>
+<h3>Tipos de datos de texto</h3>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e746974792022446f63756d656e746f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a20636f6469676f203a2043484152283130290a20202a20746974756c6f203a20564152434841522832353529203c3c4e4f54204e554c4c3e3e0a20202a20726573756d656e203a20544558540a20202a20636f6e74656e69646f5f636f6d706c65746f203a204c4f4e47544558540a20202d2d0a20202a207469706f5f646f63756d656e746f203a20454e554d2827504446272c2027574f5244272c2027455843454c272c2027504f574552504f494e5427290a20202a2065737461646f203a205345542827424f525241444f52272c20275245564953494f4e272c20274150524f4241444f272c20275055424c494341444f27290a20202d2d0a20206d6574616461746f73203a204a534f4e0a7d0a0a6e6f7465207269676874203a204469666572656e746573207469706f7320736567c3ba6e206c6f6e676974756420792075736f0a6e6f746520626f74746f6d203a20454e554d20792053455420706172612076616c6f72657320707265646566696e69646f730a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Documento" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * codigo : CHAR(10)
+  * titulo : VARCHAR(255) &lt;&lt;NOT NULL&gt;&gt;
+  * resumen : TEXT
+  * contenido_completo : LONGTEXT
+  --
+  * tipo_documento : ENUM('PDF', 'WORD', 'EXCEL', 'POWERPOINT')
+  * estado : SET('BORRADOR', 'REVISION', 'APROBADO', 'PUBLICADO')
+  --
+  metadatos : JSON
+}
+
+note right : Diferentes tipos según longitud y uso
+note bottom : ENUM y SET para valores predefinidos
+@enduml</code></pre>
+  </details>
+</div>
+<h3>Tipos de datos temporales</h3>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e7469747920224576656e746f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e6f6d627265203a20564152434841522832303029203c3c4e4f54204e554c4c3e3e0a202066656368615f736f6c6f203a20444154450a2020686f72615f736f6c6f203a2054494d450a202066656368615f686f7261203a204441544554494d450a20206d617263615f7469656d706f203a2054494d455354414d50203c3c44454641554c542043555252454e545f54494d455354414d503e3e0a202061c3b16f203a20594541520a20202d2d0a20206475726163696f6e203a2054494d450a202066656368615f6372656163696f6e203a2054494d455354414d50203c3c44454641554c54204e4f5728293e3e0a202066656368615f61637475616c697a6163696f6e203a2054494d455354414d50203c3c4f4e20555044415445204e4f5728293e3e0a7d0a0a6e6f7465207269676874203a205469706f732074656d706f72616c657320736567c3ba6e2070726563697369c3b36e206e65636573617269610a6e6f746520626f74746f6d203a2054494d455354414d5020706172612061756469746f72c3ad61206175746f6dc3a1746963610a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Evento" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * nombre : VARCHAR(200) &lt;&lt;NOT NULL&gt;&gt;
+  fecha_solo : DATE
+  hora_solo : TIME
+  fecha_hora : DATETIME
+  marca_tiempo : TIMESTAMP &lt;&lt;DEFAULT CURRENT_TIMESTAMP&gt;&gt;
+  año : YEAR
+  --
+  duracion : TIME
+  fecha_creacion : TIMESTAMP &lt;&lt;DEFAULT NOW()&gt;&gt;
+  fecha_actualizacion : TIMESTAMP &lt;&lt;ON UPDATE NOW()&gt;&gt;
+}
+
+note right : Tipos temporales según precisión necesaria
+note bottom : TIMESTAMP para auditoría automática
+@enduml</code></pre>
+  </details>
+</div>
+    </div>
+  </section>
+
+  <section id="2-5-restricciones-y-validaciones">
+    <h2>2.5. Restricciones y validaciones</h2>
+    <div class="doc-content">
+<p>Las restricciones garantizan la integridad y consistencia de los datos almacenados.</p>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e7469747920224375656e746142616e636172696122207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e756d65726f5f6375656e7461203a205641524348415228323029203c3c554e495155452c204e4f54204e554c4c3e3e0a20202a207469706f5f6375656e7461203a20454e554d282741484f52524f53272c2027434f525249454e5445272c20274e4f4d494e412729203c3c4e4f54204e554c4c3e3e0a20202a2073616c646f203a20444543494d414c2831352c3229203c3c44454641554c5420302e30302c20434845434b203e3d20303e3e0a20202a206c696d6974655f6372656469746f203a20444543494d414c2831302c3229203c3c434845434b203e3d20303e3e0a20202d2d0a20202a20636c69656e74655f6964203a20424947494e54203c3c464b2c204e4f54204e554c4c3e3e0a20202a20737563757273616c5f6964203a20424947494e54203c3c464b2c204e4f54204e554c4c3e3e0a20202d2d0a202066656368615f6170657274757261203a2044415445203c3c4e4f54204e554c4c2c2044454641554c542043555252454e545f444154453e3e0a202066656368615f636965727265203a2044415445203c3c434845434b203e2066656368615f61706572747572613e3e0a2020616374697661203a20424f4f4c45414e203c3c44454641554c5420545255453e3e0a20202d2d0a20203c3c434845434b3e3e2073616c646f5f6c696d697465203a2073616c646f203e3d202d6c696d6974655f6372656469746f0a20203c3c494e4445583e3e206964785f6e756d65726f5f6375656e746120286e756d65726f5f6375656e7461290a20203c3c494e4445583e3e206964785f636c69656e74655f7469706f2028636c69656e74655f69642c207469706f5f6375656e7461290a7d0a0a6e6f7465207269676874203a205265737472696363696f6e657320646520696e746567726964616420636f6d706c657461730a6e6f746520626f74746f6d203a20434845434b20636f6e73747261696e74732070617261207265676c6173206465206e65676f63696f0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "CuentaBancaria" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * numero_cuenta : VARCHAR(20) &lt;&lt;UNIQUE, NOT NULL&gt;&gt;
+  * tipo_cuenta : ENUM('AHORROS', 'CORRIENTE', 'NOMINA') &lt;&lt;NOT NULL&gt;&gt;
+  * saldo : DECIMAL(15,2) &lt;&lt;DEFAULT 0.00, CHECK &gt;= 0&gt;&gt;
+  * limite_credito : DECIMAL(10,2) &lt;&lt;CHECK &gt;= 0&gt;&gt;
+  --
+  * cliente_id : BIGINT &lt;&lt;FK, NOT NULL&gt;&gt;
+  * sucursal_id : BIGINT &lt;&lt;FK, NOT NULL&gt;&gt;
+  --
+  fecha_apertura : DATE &lt;&lt;NOT NULL, DEFAULT CURRENT_DATE&gt;&gt;
+  fecha_cierre : DATE &lt;&lt;CHECK &gt; fecha_apertura&gt;&gt;
+  activa : BOOLEAN &lt;&lt;DEFAULT TRUE&gt;&gt;
+  --
+  &lt;&lt;CHECK&gt;&gt; saldo_limite : saldo &gt;= -limite_credito
+  &lt;&lt;INDEX&gt;&gt; idx_numero_cuenta (numero_cuenta)
+  &lt;&lt;INDEX&gt;&gt; idx_cliente_tipo (cliente_id, tipo_cuenta)
+}
+
+note right : Restricciones de integridad completas
+note bottom : CHECK constraints para reglas de negocio
+@enduml</code></pre>
+  </details>
+</div>
+<h3>Tipos de restricciones</h3>
+  <h4 class="tab-label">Restricciones de dominio</h4>
+    <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e746974792022456d706c6561646f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a2065646164203a20494e5445474552203c3c434845434b204245545745454e20313820414e442036353e3e0a20202a2073616c6172696f203a20444543494d414c2831302c3229203c3c434845434b203e20303e3e0a20202a20656d61696c203a20564152434841522832353529203c3c434845434b204c494b4520272540252e25273e3e0a20202a2074656c65666f6e6f203a205641524348415228313529203c3c434845434b2052454745585020275e5b302d392b28292d5d2b24273e3e0a20202a2067656e65726f203a20454e554d28274d272c202746272c20274f54524f27290a20202a2065737461646f5f636976696c203a205345542827534f4c5445524f272c202743415341444f272c20274449564f52434941444f272c2027564955444f27290a7d0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Empleado" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * edad : INTEGER &lt;&lt;CHECK BETWEEN 18 AND 65&gt;&gt;
+  * salario : DECIMAL(10,2) &lt;&lt;CHECK &gt; 0&gt;&gt;
+  * email : VARCHAR(255) &lt;&lt;CHECK LIKE '%@%.%'&gt;&gt;
+  * telefono : VARCHAR(15) &lt;&lt;CHECK REGEXP '^[0-9+()-]+$'&gt;&gt;
+  * genero : ENUM('M', 'F', 'OTRO')
+  * estado_civil : SET('SOLTERO', 'CASADO', 'DIVORCIADO', 'VIUDO')
+}
+@enduml</code></pre>
+  </details>
+</div>
+    <p>Validan que los valores estén dentro de rangos permitidos.</p>
+  <h4 class="tab-label">Restricciones de entidad</h4>
+    <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e74697479202250726f647563746f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a20636f6469676f203a205641524348415228353029203c3c554e495155452c204e4f54204e554c4c3e3e0a20202a206e6f6d627265203a20564152434841522832303029203c3c4e4f54204e554c4c3e3e0a20202a2070726563696f203a20444543494d414c28382c3229203c3c4e4f54204e554c4c2c20434845434b203e20303e3e0a20202a2073746f636b203a20494e5445474552203c3c44454641554c5420302c20434845434b203e3d20303e3e0a20202d2d0a20203c3c554e495155453e3e20756b5f636f6469676f5f6e6f6d6272652028636f6469676f2c206e6f6d627265290a7d0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Producto" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * codigo : VARCHAR(50) &lt;&lt;UNIQUE, NOT NULL&gt;&gt;
+  * nombre : VARCHAR(200) &lt;&lt;NOT NULL&gt;&gt;
+  * precio : DECIMAL(8,2) &lt;&lt;NOT NULL, CHECK &gt; 0&gt;&gt;
+  * stock : INTEGER &lt;&lt;DEFAULT 0, CHECK &gt;= 0&gt;&gt;
+  --
+  &lt;&lt;UNIQUE&gt;&gt; uk_codigo_nombre (codigo, nombre)
+}
+@enduml</code></pre>
+  </details>
+</div>
+    <p>Garantizan la unicidad e integridad de cada entidad.</p>
+  <h4 class="tab-label">Restricciones referenciales</h4>
+    <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e746974792022446570617274616d656e746f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e6f6d627265203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a7d0a0a656e746974792022456d706c6561646f22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e6f6d627265203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a20646570617274616d656e746f5f6964203a20424947494e54203c3c464b2c204e4f54204e554c4c3e3e0a20202d2d0a20203c3c464b3e3e20666b5f656d706c6561646f5f646570617274616d656e746f203a200a20202020646570617274616d656e746f5f6964205245464552454e43455320446570617274616d656e746f286964290a202020204f4e2044454c455445205245535452494354204f4e2055504441544520434153434144450a7d0a0a446570617274616d656e746f207c7c2d2d6f7b20456d706c6561646f0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Departamento" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * nombre : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+}
+
+entity "Empleado" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * nombre : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * departamento_id : BIGINT &lt;&lt;FK, NOT NULL&gt;&gt;
+  --
+  &lt;&lt;FK&gt;&gt; fk_empleado_departamento : 
+    departamento_id REFERENCES Departamento(id)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+}
+
+Departamento ||--o{ Empleado
+@enduml</code></pre>
+  </details>
+</div>
+    <p>Mantienen la consistencia entre entidades relacionadas.</p>
+    </div>
+  </section>
+
+  <section id="2-6-indices-y-optimizacion">
+    <h2>2.6. Índices y optimización</h2>
+    <div class="doc-content">
+<p>Los índices mejoran el rendimiento de las consultas y garantizan restricciones de unicidad.</p>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a656e7469747920225472616e73616363696f6e22207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e756d65726f5f7472616e73616363696f6e203a205641524348415228353029203c3c554e495155453e3e0a20202a206375656e74615f6f726967656e5f6964203a20424947494e54203c3c464b3e3e0a20202a206375656e74615f64657374696e6f5f6964203a20424947494e54203c3c464b3e3e0a20202a206d6f6e746f203a20444543494d414c2831352c3229203c3c4e4f54204e554c4c3e3e0a20202a207469706f5f7472616e73616363696f6e203a205641524348415228353029203c3c4e4f54204e554c4c3e3e0a20202a2066656368615f7472616e73616363696f6e203a2054494d455354414d50203c3c44454641554c54204e4f5728293e3e0a20202a2065737461646f203a205641524348415228323029203c3c44454641554c54202750454e4449454e5445273e3e0a20202a206465736372697063696f6e203a20544558540a20202d2d0a20203c3c494e4445583e3e206964785f6e756d65726f5f7472616e73616363696f6e20286e756d65726f5f7472616e73616363696f6e290a20203c3c494e4445583e3e206964785f6375656e74615f6f726967656e20286375656e74615f6f726967656e5f6964290a20203c3c494e4445583e3e206964785f6375656e74615f64657374696e6f20286375656e74615f64657374696e6f5f6964290a20203c3c494e4445583e3e206964785f66656368615f65737461646f202866656368615f7472616e73616363696f6e2c2065737461646f290a20203c3c494e4445583e3e206964785f7469706f5f666563686120287469706f5f7472616e73616363696f6e2c2066656368615f7472616e73616363696f6e290a20203c3c46554c4c544558543e3e2066745f6465736372697063696f6e20286465736372697063696f6e290a7d0a0a6e6f7465207269676874203a20c38d6e646963657320657374726174c3a96769636f73207061726120636f6e73756c746173206672656375656e7465730a6e6f746520626f74746f6d203a20c38d6e6469636520636f6d70756573746f207061726120636f6e73756c74617320706f722072616e676f206465206665636861730a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+entity "Transaccion" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * numero_transaccion : VARCHAR(50) &lt;&lt;UNIQUE&gt;&gt;
+  * cuenta_origen_id : BIGINT &lt;&lt;FK&gt;&gt;
+  * cuenta_destino_id : BIGINT &lt;&lt;FK&gt;&gt;
+  * monto : DECIMAL(15,2) &lt;&lt;NOT NULL&gt;&gt;
+  * tipo_transaccion : VARCHAR(50) &lt;&lt;NOT NULL&gt;&gt;
+  * fecha_transaccion : TIMESTAMP &lt;&lt;DEFAULT NOW()&gt;&gt;
+  * estado : VARCHAR(20) &lt;&lt;DEFAULT 'PENDIENTE'&gt;&gt;
+  * descripcion : TEXT
+  --
+  &lt;&lt;INDEX&gt;&gt; idx_numero_transaccion (numero_transaccion)
+  &lt;&lt;INDEX&gt;&gt; idx_cuenta_origen (cuenta_origen_id)
+  &lt;&lt;INDEX&gt;&gt; idx_cuenta_destino (cuenta_destino_id)
+  &lt;&lt;INDEX&gt;&gt; idx_fecha_estado (fecha_transaccion, estado)
+  &lt;&lt;INDEX&gt;&gt; idx_tipo_fecha (tipo_transaccion, fecha_transaccion)
+  &lt;&lt;FULLTEXT&gt;&gt; ft_descripcion (descripcion)
+}
+
+note right : Índices estratégicos para consultas frecuentes
+note bottom : Índice compuesto para consultas por rango de fechas
+@enduml</code></pre>
+  </details>
+</div>
+<h3>Tipos de índices</h3>
+<ul>
+<li><strong>Índice único</strong>: Garantiza unicidad y mejora búsquedas</li>
+<li><strong>Índice compuesto</strong>: Optimiza consultas con múltiples columnas</li>
+<li><strong>Índice parcial</strong>: Solo indexa filas que cumplen una condición</li>
+<li><strong>Índice de texto completo</strong>: Para búsquedas en campos de texto</li>
+</ul>
+    </div>
+  </section>
+
+  <section id="2-7-ejemplo-integrado-sistema-de-gestion-hospitalaria">
+    <h2>2.7. Ejemplo integrado: Sistema de gestión hospitalaria</h2>
+    <div class="doc-content">
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a217468656d6520626c75657072696e740a0a656e74697479202270616369656e74657322207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e756d65726f5f686973746f726961203a205641524348415228323029203c3c554e495155452c204e4f54204e554c4c3e3e0a20202a20646f63756d656e746f5f6964656e7469646164203a205641524348415228323029203c3c554e495155452c204e4f54204e554c4c3e3e0a20202a207469706f5f646f63756d656e746f203a20454e554d2827434544554c41272c202750415341504f525445272c20275441524a4554415f4944454e544944414427290a20202d2d0a20202a206e6f6d627265203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a206170656c6c69646f203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a2066656368615f6e6163696d69656e746f203a2044415445203c3c4e4f54204e554c4c3e3e0a202065646164203a20494e5445474552203c3c47454e4552415445442041532028594541522843555244415445282929202d20594541522866656368615f6e6163696d69656e746f29293e3e0a20202d2d0a20202a2067656e65726f203a20454e554d28274d272c202746272c20274f54524f2729203c3c4e4f54204e554c4c3e3e0a20202a207469706f5f73616e677265203a20454e554d2827412b272c2027412d272c2027422b272c2027422d272c202741422b272c202741422d272c20274f2b272c20274f2d27290a20202d2d0a202074656c65666f6e6f5f7072696e636970616c203a2056415243484152283230290a202074656c65666f6e6f5f656d657267656e636961203a2056415243484152283230290a2020656d61696c203a205641524348415228323535290a20202d2d0a2020646972656363696f6e5f63616c6c65203a205641524348415228323030290a2020646972656363696f6e5f636975646164203a205641524348415228313030290a2020646972656363696f6e5f636f6469676f5f706f7374616c203a2056415243484152283130290a20202d2d0a202066656368615f726567697374726f203a2054494d455354414d50203c3c44454641554c54204e4f5728293e3e0a202061637469766f203a20424f4f4c45414e203c3c44454641554c5420545255453e3e0a20202d2d0a20203c3c494e4445583e3e206964785f6e756d65726f5f686973746f72696120286e756d65726f5f686973746f726961290a20203c3c494e4445583e3e206964785f646f63756d656e746f2028646f63756d656e746f5f6964656e7469646164290a20203c3c494e4445583e3e206964785f6e6f6d6272655f6170656c6c69646f20286e6f6d6272652c206170656c6c69646f290a20203c3c494e4445583e3e206964785f66656368615f6e6163696d69656e746f202866656368615f6e6163696d69656e746f290a7d0a0a656e7469747920226d656469636f7322207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a206e756d65726f5f636f6c65676961646f203a205641524348415228323029203c3c554e495155452c204e4f54204e554c4c3e3e0a20202a20646f63756d656e746f5f6964656e7469646164203a205641524348415228323029203c3c554e495155452c204e4f54204e554c4c3e3e0a20202d2d0a20202a206e6f6d627265203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a206170656c6c69646f203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a20657370656369616c69646164203a20564152434841522831303029203c3c4e4f54204e554c4c3e3e0a20202a2074656c65666f6e6f203a2056415243484152283230290a20202a20656d61696c203a20564152434841522832353529203c3c554e495155453e3e0a20202d2d0a202066656368615f636f6e747261746163696f6e203a2044415445203c3c4e4f54204e554c4c3e3e0a202061637469766f203a20424f4f4c45414e203c3c44454641554c5420545255453e3e0a20202d2d0a20203c3c494e4445583e3e206964785f6e756d65726f5f636f6c65676961646f20286e756d65726f5f636f6c65676961646f290a20203c3c494e4445583e3e206964785f657370656369616c696461642028657370656369616c69646164290a7d0a0a656e746974792022636974617322207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a2070616369656e74655f6964203a20424947494e54203c3c464b2c204e4f54204e554c4c3e3e0a20202a206d656469636f5f6964203a20424947494e54203c3c464b2c204e4f54204e554c4c3e3e0a20202d2d0a20202a2066656368615f63697461203a204441544554494d45203c3c4e4f54204e554c4c3e3e0a20202a206475726163696f6e5f6d696e75746f73203a20494e5445474552203c3c44454641554c542033302c20434845434b203e20303e3e0a20202a206d6f7469766f203a205641524348415228353030290a20202a2065737461646f203a20454e554d282750524f4752414d414441272c2027434f4e4649524d414441272c2027454e5f435552534f272c2027434f4d504c4554414441272c202743414e43454c4144412729203c3c44454641554c54202750524f4752414d414441273e3e0a20202d2d0a20206f62736572766163696f6e6573203a20544558540a202066656368615f6372656163696f6e203a2054494d455354414d50203c3c44454641554c54204e4f5728293e3e0a20202d2d0a20203c3c494e4445583e3e206964785f70616369656e74655f6665636861202870616369656e74655f69642c2066656368615f63697461290a20203c3c494e4445583e3e206964785f6d656469636f5f666563686120286d656469636f5f69642c2066656368615f63697461290a20203c3c494e4445583e3e206964785f66656368615f65737461646f202866656368615f636974612c2065737461646f290a20203c3c554e495155453e3e20756b5f6d656469636f5f666563686120286d656469636f5f69642c2066656368615f63697461290a7d0a0a656e746974792022686973746f726961735f636c696e6963617322207b0a20202a206964203a20424947494e54203c3c504b3e3e0a20202d2d0a20202a20636974615f6964203a20424947494e54203c3c464b2c20554e495155453e3e0a20202a2070616369656e74655f6964203a20424947494e54203c3c464b2c204e4f54204e554c4c3e3e0a20202a206d656469636f5f6964203a20424947494e54203c3c464b2c204e4f54204e554c4c3e3e0a20202d2d0a20202a2066656368615f636f6e73756c7461203a204441544554494d45203c3c4e4f54204e554c4c3e3e0a20202a2073696e746f6d6173203a20544558540a20202a20646961676e6f737469636f203a2054455854203c3c4e4f54204e554c4c3e3e0a20202a2074726174616d69656e746f203a20544558540a20202a206d65646963616d656e746f73203a20544558540a20202d2d0a20207065736f203a20444543494d414c28352c3229203c3c434845434b203e20303e3e0a2020616c74757261203a20444543494d414c28332c3229203c3c434845434b203e20303e3e0a202070726573696f6e5f736973746f6c696361203a20494e5445474552203c3c434845434b204245545745454e20373020414e44203235303e3e0a202070726573696f6e5f64696173746f6c696361203a20494e5445474552203c3c434845434b204245545745454e20343020414e44203135303e3e0a202074656d7065726174757261203a20444543494d414c28332c3129203c3c434845434b204245545745454e2033352e3020414e442034322e303e3e0a20202d2d0a202070726f78696d615f63697461203a20444154450a20206f62736572766163696f6e6573203a20544558540a20202d2d0a20203c3c494e4445583e3e206964785f70616369656e74655f6665636861202870616369656e74655f69642c2066656368615f636f6e73756c7461290a20203c3c494e4445583e3e206964785f6d656469636f5f666563686120286d656469636f5f69642c2066656368615f636f6e73756c7461290a20203c3c46554c4c544558543e3e2066745f646961676e6f737469636f2028646961676e6f737469636f290a7d0a0a70616369656e746573207c7c2d2d6f7b206369746173203a202270726f6772616d61220a6d656469636f73207c7c2d2d6f7b206369746173203a2022617469656e6465220a6369746173207c7c2d2d7c7c20686973746f726961735f636c696e69636173203a202267656e657261220a70616369656e746573207c7c2d2d6f7b20686973746f726961735f636c696e69636173203a202270657274656e6563652061220a6d656469636f73207c7c2d2d6f7b20686973746f726961735f636c696e69636173203a2022656c61626f7261220a0a6e6f7465207269676874206f662070616369656e746573203a20456e7469646164207072696e636970616c20636f6e206461746f732064656d6f6772c3a16669636f7320636f6d706c65746f730a6e6f746520626f74746f6d206f66206369746173203a20436f6e74726f6c20646520646973706f6e6962696c69646164206dc3a96469636120636f6e20726573747269636369c3b36e20c3ba6e6963610a6e6f7465206c656674206f6620686973746f726961735f636c696e69636173203a20526567697374726f206dc3a96469636f20636f6e2076616c69646163696f6e6573206465207369676e6f7320766974616c65730a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+!theme blueprint
+
+entity "pacientes" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * numero_historia : VARCHAR(20) &lt;&lt;UNIQUE, NOT NULL&gt;&gt;
+  * documento_identidad : VARCHAR(20) &lt;&lt;UNIQUE, NOT NULL&gt;&gt;
+  * tipo_documento : ENUM('CEDULA', 'PASAPORTE', 'TARJETA_IDENTIDAD')
+  --
+  * nombre : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * apellido : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * fecha_nacimiento : DATE &lt;&lt;NOT NULL&gt;&gt;
+  edad : INTEGER &lt;&lt;GENERATED AS (YEAR(CURDATE()) - YEAR(fecha_nacimiento))&gt;&gt;
+  --
+  * genero : ENUM('M', 'F', 'OTRO') &lt;&lt;NOT NULL&gt;&gt;
+  * tipo_sangre : ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-')
+  --
+  telefono_principal : VARCHAR(20)
+  telefono_emergencia : VARCHAR(20)
+  email : VARCHAR(255)
+  --
+  direccion_calle : VARCHAR(200)
+  direccion_ciudad : VARCHAR(100)
+  direccion_codigo_postal : VARCHAR(10)
+  --
+  fecha_registro : TIMESTAMP &lt;&lt;DEFAULT NOW()&gt;&gt;
+  activo : BOOLEAN &lt;&lt;DEFAULT TRUE&gt;&gt;
+  --
+  &lt;&lt;INDEX&gt;&gt; idx_numero_historia (numero_historia)
+  &lt;&lt;INDEX&gt;&gt; idx_documento (documento_identidad)
+  &lt;&lt;INDEX&gt;&gt; idx_nombre_apellido (nombre, apellido)
+  &lt;&lt;INDEX&gt;&gt; idx_fecha_nacimiento (fecha_nacimiento)
+}
+
+entity "medicos" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * numero_colegiado : VARCHAR(20) &lt;&lt;UNIQUE, NOT NULL&gt;&gt;
+  * documento_identidad : VARCHAR(20) &lt;&lt;UNIQUE, NOT NULL&gt;&gt;
+  --
+  * nombre : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * apellido : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * especialidad : VARCHAR(100) &lt;&lt;NOT NULL&gt;&gt;
+  * telefono : VARCHAR(20)
+  * email : VARCHAR(255) &lt;&lt;UNIQUE&gt;&gt;
+  --
+  fecha_contratacion : DATE &lt;&lt;NOT NULL&gt;&gt;
+  activo : BOOLEAN &lt;&lt;DEFAULT TRUE&gt;&gt;
+  --
+  &lt;&lt;INDEX&gt;&gt; idx_numero_colegiado (numero_colegiado)
+  &lt;&lt;INDEX&gt;&gt; idx_especialidad (especialidad)
+}
+
+entity "citas" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * paciente_id : BIGINT &lt;&lt;FK, NOT NULL&gt;&gt;
+  * medico_id : BIGINT &lt;&lt;FK, NOT NULL&gt;&gt;
+  --
+  * fecha_cita : DATETIME &lt;&lt;NOT NULL&gt;&gt;
+  * duracion_minutos : INTEGER &lt;&lt;DEFAULT 30, CHECK &gt; 0&gt;&gt;
+  * motivo : VARCHAR(500)
+  * estado : ENUM('PROGRAMADA', 'CONFIRMADA', 'EN_CURSO', 'COMPLETADA', 'CANCELADA') &lt;&lt;DEFAULT 'PROGRAMADA'&gt;&gt;
+  --
+  observaciones : TEXT
+  fecha_creacion : TIMESTAMP &lt;&lt;DEFAULT NOW()&gt;&gt;
+  --
+  &lt;&lt;INDEX&gt;&gt; idx_paciente_fecha (paciente_id, fecha_cita)
+  &lt;&lt;INDEX&gt;&gt; idx_medico_fecha (medico_id, fecha_cita)
+  &lt;&lt;INDEX&gt;&gt; idx_fecha_estado (fecha_cita, estado)
+  &lt;&lt;UNIQUE&gt;&gt; uk_medico_fecha (medico_id, fecha_cita)
+}
+
+entity "historias_clinicas" {
+  * id : BIGINT &lt;&lt;PK&gt;&gt;
+  --
+  * cita_id : BIGINT &lt;&lt;FK, UNIQUE&gt;&gt;
+  * paciente_id : BIGINT &lt;&lt;FK, NOT NULL&gt;&gt;
+  * medico_id : BIGINT &lt;&lt;FK, NOT NULL&gt;&gt;
+  --
+  * fecha_consulta : DATETIME &lt;&lt;NOT NULL&gt;&gt;
+  * sintomas : TEXT
+  * diagnostico : TEXT &lt;&lt;NOT NULL&gt;&gt;
+  * tratamiento : TEXT
+  * medicamentos : TEXT
+  --
+  peso : DECIMAL(5,2) &lt;&lt;CHECK &gt; 0&gt;&gt;
+  altura : DECIMAL(3,2) &lt;&lt;CHECK &gt; 0&gt;&gt;
+  presion_sistolica : INTEGER &lt;&lt;CHECK BETWEEN 70 AND 250&gt;&gt;
+  presion_diastolica : INTEGER &lt;&lt;CHECK BETWEEN 40 AND 150&gt;&gt;
+  temperatura : DECIMAL(3,1) &lt;&lt;CHECK BETWEEN 35.0 AND 42.0&gt;&gt;
+  --
+  proxima_cita : DATE
+  observaciones : TEXT
+  --
+  &lt;&lt;INDEX&gt;&gt; idx_paciente_fecha (paciente_id, fecha_consulta)
+  &lt;&lt;INDEX&gt;&gt; idx_medico_fecha (medico_id, fecha_consulta)
+  &lt;&lt;FULLTEXT&gt;&gt; ft_diagnostico (diagnostico)
+}
+
+pacientes ||--o{ citas : "programa"
+medicos ||--o{ citas : "atiende"
+citas ||--|| historias_clinicas : "genera"
+pacientes ||--o{ historias_clinicas : "pertenece a"
+medicos ||--o{ historias_clinicas : "elabora"
+
+note right of pacientes : Entidad principal con datos demográficos completos
+note bottom of citas : Control de disponibilidad médica con restricción única
+note left of historias_clinicas : Registro médico con validaciones de signos vitales
+@enduml</code></pre>
+  </details>
+</div>
+<blockquote class="aside aside-tip">
+Este ejemplo muestra un modelo físico completo con tipos de datos específicos, restricciones de integridad, índices optimizados y reglas de negocio implementadas a nivel de base de datos.
+</blockquote>
+<p>Los elementos básicos de los diagramas entidad-relación proporcionan la base fundamental para crear modelos de datos robustos y eficientes. La correcta definición de entidades, atributos, claves y restricciones es esencial para garantizar la integridad y el rendimiento del sistema de base de datos.</p>
+    </div>
+  </section>

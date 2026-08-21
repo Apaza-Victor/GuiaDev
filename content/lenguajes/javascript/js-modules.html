@@ -1,0 +1,175 @@
+<!-- 17. Módulos - JavaScript (Lenguajes de Programación) -->
+  <section id="exportacion-basico">
+    <h2>Exportación <span class="hc-badge hc-badge-note">Básico</span></h2>
+    <div class="doc-content">
+<h3>Exportaciones nombradas</h3>
+<pre><code class="language-javascript">// matematica.js
+export const sumar = (a, b) =&gt; a + b;
+export const restar = (a, b) =&gt; a - b;
+
+export class Calculadora {
+    static multiplicar(a, b) {
+        return a * b;
+    }
+}
+
+// También puedes exportar al final
+const PI = 3.14159;
+export { PI };</code></pre>
+<h3>Exportación por defecto</h3>
+<pre><code class="language-javascript">// usuario.js
+export default class Usuario {
+    constructor(nombre) {
+        this.nombre = nombre;
+    }
+}
+
+// O también
+const config = {
+    api: 'https://api.ejemplo.com',
+    timeout: 5000
+};
+
+export default config;</code></pre>
+    </div>
+  </section>
+
+  <section id="importacion-importante">
+    <h2>Importación <span class="hc-badge hc-badge-danger">Importante</span></h2>
+    <div class="doc-content">
+<h3>Importaciones básicas</h3>
+<pre><code class="language-javascript">// Importar exportaciones nombradas
+
+
+// Importar con alias
+
+
+// Importar todo como un objeto
+
+
+// Importar exportación por defecto
+
+
+// Combinar importaciones
+
+
+### Importaciones dinámicas
+&lt;Code code={`// Importación dinámica
+async function cargarModulo() {
+    try {
+        const modulo = await import('./modulo.js');
+        modulo.inicializar();
+    } catch (error) {
+        console.error('Error al cargar el módulo:', error);
+    }
+}
+
+// O con then/catch
+import('./modulo.js')
+    .then(modulo =&gt; modulo.inicializar())
+    .catch(error =&gt; console.error(error));</code></pre>
+    </div>
+  </section>
+
+  <section id="agregacion-de-modulos-avanzado">
+    <h2>Agregación de módulos <span class="hc-badge hc-badge-note">Avanzado</span></h2>
+    <div class="doc-content">
+<h3>Re-exportación</h3>
+<pre><code class="language-javascript">// modulos/index.js
+export { default as Usuario } from './usuario.js';
+export { Roles } from './roles.js';
+export { Permisos } from './permisos.js';
+
+// uso
+
+
+### Barrel pattern
+&lt;Code code={`// servicios/index.js
+export * from './autenticacion.js';
+export * from './usuarios.js';
+export * from './productos.js';
+
+// uso
+
+
+
+
+## Mejores prácticas &lt;Badge text="Recomendado" variant="tip" /&gt;
+
+### Organización de archivos
+&lt;Code code={`// ✅ Bueno
+src/
+  components/
+    Button/
+      index.js      // Exporta el componente
+      styles.js     // Estilos
+      utils.js      // Utilidades
+      constants.js  // Constantes
+  services/
+    api.js
+    auth.js
+  utils/
+    index.js        // Re-exporta utilidades comunes
+    format.js
+    validate.js</code></pre>
+<h3>Importaciones limpias</h3>
+<pre><code class="language-javascript">// ❌ Malo
+
+
+// ✅ Bueno
+
+
+// ✅ Mejor (si se usan todas)
+
+
+### Exportaciones consistentes
+&lt;Code code={`// ❌ Malo - Mezclando estilos
+export const funcion1 = () =&gt; {};
+const funcion2 = () =&gt; {};
+export { funcion2 };
+export default class {};
+
+// ✅ Bueno - Exportaciones al final
+const funcion1 = () =&gt; {};
+const funcion2 = () =&gt; {};
+class Principal {}
+
+export {
+    funcion1,
+    funcion2,
+    Principal as default
+};</code></pre>
+<h3>Módulos puros</h3>
+<pre><code class="language-javascript">// ❌ Malo - Efectos secundarios en módulo
+console.log('Módulo cargado');
+inicializarBaseDatos();
+configurarAPI();
+
+export function utilidad() {}
+
+// ✅ Bueno - Sin efectos secundarios
+export function inicializar() {
+    console.log('Inicializando...');
+    inicializarBaseDatos();
+    configurarAPI();
+}
+
+export function utilidad() {}</code></pre>
+<h3>Lazy loading</h3>
+<pre><code class="language-javascript">// Componente que usa lazy loading
+async function cargarVisualizador() {
+    const { Visualizador } = await import(
+        /* webpackChunkName: "visualizador" */
+        './componentes/Visualizador'
+    );
+    
+    return new Visualizador();
+}
+
+// Uso
+boton.addEventListener('click', async () =&gt; {
+    const visualizador = await cargarVisualizador();
+    visualizador.mostrar(datos);
+});</code></pre>
+    </div>
+  </section>

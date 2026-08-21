@@ -1,0 +1,565 @@
+<!-- Top 10 Preguntas Esenciales - JavaScript (Entrevistas Laborales) -->
+  <section id="las-10-preguntas-mas-importantes-de-javascript">
+    <h2>Las 10 Preguntas Más Importantes de JavaScript</h2>
+    <div class="doc-content">
+<p>Estas son las preguntas que <strong>siempre</strong> aparecen en entrevistas técnicas de JavaScript.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-cual-es-la-diferencia-entre-var-let-y-const">
+    <h2>1. ¿Cuál es la diferencia entre `var`, `let` y `const`?</h2>
+    <div class="doc-content">
+<p><strong>Introducción:</strong></p>
+<p>Pregunta fundamental en cualquier entrevista de JavaScript. Demuestra comprensión del scope y buenas prácticas modernas.</p>
+<p><strong>Definición profesional:</strong></p>
+<p>Son las tres formas de declarar variables en JavaScript. <code>var</code> tiene scope de función, mientras que <code>let</code> y <code>const</code> (ES6+) tienen scope de bloque. <code>const</code> no permite reasignación.</p>
+<p><strong>Explicación sencilla:</strong></p>
+<ul>
+<li><strong>var</strong>: La forma antigua, puede causar bugs por su scope amplio</li>
+<li><strong>let</strong>: Para variables que cambiarán de valor</li>
+<li><strong>const</strong>: Para variables que no cambiarán (constantes)</li>
+</ul>
+<p><strong>Funcionamiento básico:</strong></p>
+<table><thead><tr><th>Característica</th><th><code>var</code></th><th><code>let</code></th><th><code>const</code></th></tr></thead><tbody><tr><td>Scope</td><td>Función</td><td>Bloque</td><td>Bloque</td></tr><tr><td>Hoisting</td><td>Sí (undefined)</td><td>Sí (TDZ)</td><td>Sí (TDZ)</td></tr><tr><td>Reasignación</td><td>$1 </td><td>$1 </td><td>$1 </td></tr><tr><td>Redeclaración</td><td>$1 </td><td>$1 </td><td>$1 </td></tr></tbody></table>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-javascript">// var - scope de función (EVITAR)
+function ejemplo() {
+  if (true) {
+    var x = 10;
+  }
+  console.log(x); // 10 - accesible fuera del if ⚠️
+}
+
+// let - scope de bloque
+function ejemplo2() {
+  if (true) {
+    let y = 20;
+  }
+  console.log(y); // ReferenceError ✅
+}
+
+// const - no se puede reasignar
+const PI = 3.14159;
+// PI = 3; // TypeError
+
+// PERO objetos/arrays const SÍ pueden modificarse internamente
+const usuario = { nombre: 'Juan' };
+usuario.nombre = 'Ana'; // ✅ Esto sí funciona</code></pre>
+<p><strong>Casos de uso reales:</strong></p>
+<ul>
+<li><strong>const</strong>: Por defecto para todo (objetos, funciones, imports)</li>
+<li><strong>let</strong>: Contadores, acumuladores, valores que cambian en loops</li>
+<li><strong>var</strong>: Nunca en código moderno</li>
+</ul>
+<p><strong>Cómo responder en entrevista:</strong></p>
+<p>> "La diferencia principal es el scope: <code>var</code> tiene scope de función mientras que <code>let</code> y <code>const</code> tienen scope de bloque. Además, <code>const</code> no permite reasignación. En código moderno, la mejor práctica es usar <code>const</code> por defecto y <code>let</code> solo cuando necesitamos reasignar. <code>var</code> debe evitarse porque puede causar bugs difíciles de detectar debido a su scope amplio y hoisting."</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-que-es-un-closure">
+    <h2>2. ¿Qué es un Closure?</h2>
+    <div class="doc-content">
+<p><strong>Introducción:</strong></p>
+<p>Concepto fundamental de JavaScript. Los closures están en todas partes: callbacks, event handlers, módulos.</p>
+<p><strong>Definición profesional:</strong></p>
+<p>Un closure es una función que mantiene acceso a las variables de su ámbito léxico (scope externo), incluso después de que la función externa haya terminado de ejecutarse.</p>
+<p><strong>Explicación sencilla:</strong></p>
+<p>Una función "recuerda" las variables del lugar donde fue creada, aunque se ejecute en otro lugar.</p>
+<p><strong>Funcionamiento básico:</strong></p>
+<ol>
+<li>Una función externa define variables</li>
+<li>Una función interna usa esas variables</li>
+<li>La función interna se retorna o pasa como callback</li>
+<li>Las variables "viven" mientras la función interna exista</li>
+</ol>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-javascript">// Closure básico - contador privado
+function crearContador() {
+  let contador = 0; // Variable "privada"
+  
+  return function() {
+    contador++;
+    return contador;
+  };
+}
+
+const contador1 = crearContador();
+console.log(contador1()); // 1
+console.log(contador1()); // 2
+console.log(contador1()); // 3
+
+const contador2 = crearContador(); // Nuevo closure, nuevo contador
+console.log(contador2()); // 1
+
+// Closure en la práctica - factory function
+function crearSaludo(saludo) {
+  return function(nombre) {
+    return saludo + ', ' + nombre;
+  };
+}
+
+const saludarES = crearSaludo('Hola');
+const saludarEN = crearSaludo('Hello');
+
+console.log(saludarES('Juan')); // "Hola, Juan"
+console.log(saludarEN('John')); // "Hello, John"</code></pre>
+<p><strong>Casos de uso reales:</strong></p>
+<ul>
+<li><strong>Encapsulación</strong>: Variables privadas (como el contador)</li>
+<li><strong>Factory functions</strong>: Crear funciones configuradas</li>
+<li><strong>Event handlers</strong>: Mantener estado entre eventos</li>
+<li><strong>Callbacks</strong>: Acceder a variables del contexto original</li>
+</ul>
+<p><strong>Cómo responder en entrevista:</strong></p>
+<p>> "Un closure es una función que recuerda las variables del scope donde fue creada, incluso cuando se ejecuta fuera de ese scope. Esto ocurre porque JavaScript mantiene una referencia al ámbito léxico de la función. Los closures son útiles para encapsulación, crear funciones factory, y mantener estado en callbacks y event handlers."</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-cual-es-la-diferencia-entre-y">
+    <h2>3. ¿Cuál es la diferencia entre `==` y `===`?</h2>
+    <div class="doc-content">
+<p><strong>Introducción:</strong></p>
+<p>Pregunta clásica que evalúa comprensión de coerción de tipos. Errores aquí causan bugs sutiles.</p>
+<p><strong>Definición profesional:</strong></p>
+<p><code>==</code> (igualdad abstracta) compara valores realizando coerción de tipos si es necesario. <code>===</code> (igualdad estricta) compara valor Y tipo sin ninguna conversión.</p>
+<p><strong>Explicación sencilla:</strong></p>
+<ul>
+<li><code>==</code> pregunta: "¿Son equivalentes?" (convierte tipos para comparar)</li>
+<li><code>===</code> pregunta: "¿Son exactamente iguales?" (mismo valor Y mismo tipo)</li>
+</ul>
+<p><strong>Funcionamiento básico:</strong></p>
+<table><thead><tr><th>Comparación</th><th><code>==</code></th><th><code>===</code></th></tr></thead><tbody><tr><td><code>5 == "5"</code></td><td>true</td><td>false</td></tr><tr><td><code>0 == false</code></td><td>true</td><td>false</td></tr><tr><td><code>null == undefined</code></td><td>true</td><td>false</td></tr><tr><td><code>1 == true</code></td><td>true</td><td>false</td></tr></tbody></table>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-javascript">// == (igualdad débil) - EVITAR
+console.log(5 == "5");           // true ⚠️
+console.log(0 == false);         // true ⚠️
+console.log("" == false);        // true ⚠️
+console.log(null == undefined);  // true ⚠️
+
+// === (igualdad estricta) - USAR SIEMPRE
+console.log(5 === "5");          // false ✅
+console.log(0 === false);        // false ✅
+console.log(null === undefined); // false ✅
+
+// Caso especial: NaN
+console.log(NaN === NaN); // false (usar Number.isNaN())
+
+// Objetos: compara referencias, no contenido
+const a = { x: 1 };
+const b = { x: 1 };
+console.log(a === b); // false (diferentes objetos)</code></pre>
+<p><strong>Casos de uso reales:</strong></p>
+<ul>
+<li><strong>Siempre usar <code>===</code></strong> para evitar bugs de coerción</li>
+<li><strong>Excepción</strong>: <code>valor == null</code> para verificar null O undefined</li>
+</ul>
+<p><strong>Cómo responder en entrevista:</strong></p>
+<p>> "El operador <code>==</code> hace coerción de tipos antes de comparar, lo que puede dar resultados inesperados como <code>0 == false</code> siendo true. El operador <code>===</code> compara valor y tipo sin conversión. La mejor práctica es siempre usar <code>===</code> para evitar bugs. La única excepción común es <code>x == null</code> que verifica tanto null como undefined en una sola comparación."</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-que-es-el-event-loop">
+    <h2>4. ¿Qué es el Event Loop?</h2>
+    <div class="doc-content">
+<p><strong>Introducción:</strong></p>
+<p>Concepto esencial para entender asincronía en JavaScript. Explica por qué setTimeout(0) no se ejecuta inmediatamente.</p>
+<p><strong>Definición profesional:</strong></p>
+<p>El Event Loop es el mecanismo que permite a JavaScript manejar operaciones asíncronas siendo single-threaded. Coordina la ejecución entre el Call Stack, las Web APIs, y las colas de tareas.</p>
+<p><strong>Explicación sencilla:</strong></p>
+<p>JavaScript ejecuta código línea por línea (Call Stack). Cuando hay algo asíncrono (setTimeout, fetch), lo envía a las Web APIs. Cuando termina, va a una cola. El Event Loop mueve tareas de la cola al Call Stack cuando está vacío.</p>
+<p><strong>Funcionamiento básico:</strong></p>
+<pre><code class="language-text">1. Call Stack ejecuta código síncrono
+2. Operaciones async van a Web APIs
+3. Cuando terminan, van a la cola:
+   - Microtasks: Promises, queueMicrotask
+   - Macrotasks: setTimeout, setInterval, I/O
+4. Event Loop: Stack vacío → Microtasks → 1 Macrotask → repetir
+</code></pre>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-javascript">console.log('1'); // Síncrono
+
+setTimeout(() =&gt; {
+  console.log('2'); // Macrotask
+}, 0);
+
+Promise.resolve().then(() =&gt; {
+  console.log('3'); // Microtask
+});
+
+console.log('4'); // Síncrono
+
+// Salida: 1, 4, 3, 2
+// ¿Por qué? 
+// 1. Síncronos primero: 1, 4
+// 2. Microtasks (Promises): 3
+// 3. Macrotasks (setTimeout): 2</code></pre>
+<p><strong>Casos de uso reales:</strong></p>
+<ul>
+<li>Entender por qué <code>setTimeout(fn, 0)</code> no es inmediato</li>
+<li>Debugging de código asíncrono</li>
+<li>Optimizar performance (evitar bloquear el main thread)</li>
+<li>Entender el orden de ejecución de Promises vs callbacks</li>
+</ul>
+<p><strong>Cómo responder en entrevista:</strong></p>
+<p>> "El Event Loop es el mecanismo que permite a JavaScript manejar asincronía siendo single-threaded. Funciona coordinando el Call Stack con las colas de tareas. Primero ejecuta todo el código síncrono, luego procesa todas las microtasks (Promises), y finalmente una macrotask (setTimeout). Por eso un Promise.then() siempre se ejecuta antes que un setTimeout(0)."</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-cual-es-la-diferencia-entre-null-y-undefined">
+    <h2>5. ¿Cuál es la diferencia entre `null` y `undefined`?</h2>
+    <div class="doc-content">
+<p><strong>Introducción:</strong></p>
+<p>Pregunta frecuente que evalúa comprensión de los valores "vacíos" en JavaScript y cuándo usar cada uno.</p>
+<p><strong>Definición profesional:</strong></p>
+<p><code>undefined</code> es el valor por defecto de variables no inicializadas y representa ausencia de valor no intencional. <code>null</code> es un valor asignado explícitamente que representa ausencia intencional de valor.</p>
+<p><strong>Explicación sencilla:</strong></p>
+<ul>
+<li><strong>undefined</strong>: "No sé qué valor tiene" (JavaScript lo asigna)</li>
+<li><strong>null</strong>: "Sé que no tiene valor" (tú lo asignas)</li>
+</ul>
+<p><strong>Funcionamiento básico:</strong></p>
+<table><thead><tr><th>Aspecto</th><th><code>undefined</code></th><th><code>null</code></th></tr></thead><tbody><tr><td>Significado</td><td>Sin valor asignado</td><td>Ausencia intencional</td></tr><tr><td>Quién lo asigna</td><td>JavaScript</td><td>El programador</td></tr><tr><td>typeof</td><td>"undefined"</td><td>"object" (bug)</td></tr><tr><td>En JSON</td><td>No válido</td><td>Válido</td></tr></tbody></table>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-javascript">// undefined - JavaScript lo asigna
+let x;
+console.log(x); // undefined
+
+function foo(param) {
+  console.log(param); // undefined si no se pasa
+}
+
+const obj = {};
+console.log(obj.propiedad); // undefined
+
+// null - tú lo asignas intencionalmente
+let usuario = null; // "No hay usuario todavía"
+
+function buscarUsuario(id) {
+  const usuario = db.find(id);
+  return usuario || null; // Explícito: no encontrado
+}
+
+// Comparación
+console.log(null == undefined);  // true (coerción)
+console.log(null === undefined); // false (tipos diferentes)
+
+// typeof (bug histórico)
+console.log(typeof undefined); // "undefined"
+console.log(typeof null);      // "object" ⚠️</code></pre>
+<p><strong>Casos de uso reales:</strong></p>
+<ul>
+<li><strong>undefined</strong>: Parámetros opcionales, propiedades no existentes</li>
+<li><strong>null</strong>: Limpiar referencias, indicar "sin valor" explícitamente, respuestas de API</li>
+</ul>
+<p><strong>Cómo responder en entrevista:</strong></p>
+<p>> "La diferencia principal es la intención: <code>undefined</code> significa que una variable no tiene valor asignado (JavaScript lo pone automáticamente), mientras que <code>null</code> es un valor que asignamos explícitamente para indicar 'sin valor'. Un dato curioso es que <code>typeof null</code> retorna 'object', que es un bug histórico de JavaScript. Para verificar ambos a la vez, podemos usar <code>x == null</code> que es true para null y undefined."</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-que-son-las-promises-y-async-await">
+    <h2>6. ¿Qué son las Promises y async/await?</h2>
+    <div class="doc-content">
+<p><strong>Introducción:</strong></p>
+<p>Tema esencial de JavaScript moderno. Las Promises y async/await son la base de toda operación asíncrona.</p>
+<p><strong>Definición profesional:</strong></p>
+<p>Una Promise es un objeto que representa el resultado eventual de una operación asíncrona (pendiente, cumplida o rechazada). async/await es sintaxis que permite escribir código asíncrono con apariencia síncrona.</p>
+<p><strong>Explicación sencilla:</strong></p>
+<ul>
+<li><strong>Promise</strong>: Una "promesa" de que tendrás un valor en el futuro</li>
+<li><strong>async/await</strong>: Forma más legible de trabajar con Promises</li>
+</ul>
+<p><strong>Funcionamiento básico:</strong></p>
+<p><strong>Estados de una Promise:</strong></p>
+<ul>
+<li><code>pending</code>: Esperando resultado</li>
+<li><code>fulfilled</code>: Operación exitosa (resolve)</li>
+<li><code>rejected</code>: Operación fallida (reject)</li>
+</ul>
+<p><strong>Sintaxis:</strong></p>
+<pre><code class="language-javascript">// Crear Promise
+new Promise((resolve, reject) =&gt; { ... })
+
+// Consumir Promise
+promise.then(resultado =&gt; ...).catch(error =&gt; ...)
+
+// async/await
+async function foo() {
+  const resultado = await promise;
+}</code></pre>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-javascript">// Crear una Promise
+function fetchUsuario(id) {
+  return new Promise((resolve, reject) =&gt; {
+    setTimeout(() =&gt; {
+      if (id &gt; 0) {
+        resolve({ id, nombre: 'Juan' });
+      } else {
+        reject(new Error('ID inválido'));
+      }
+    }, 1000);
+  });
+}
+
+// Consumir con .then()/.catch()
+fetchUsuario(1)
+  .then(usuario =&gt; console.log(usuario))
+  .catch(error =&gt; console.error(error));
+
+// Consumir con async/await (más legible)
+async function mostrarUsuario() {
+  try {
+    const usuario = await fetchUsuario(1);
+    console.log(usuario);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Múltiples Promises en paralelo
+const [user, posts] = await Promise.all([
+  fetchUsuario(1),
+  fetchPosts(1)
+]);</code></pre>
+<p><strong>Casos de uso reales:</strong></p>
+<ul>
+<li>Llamadas a APIs (fetch)</li>
+<li>Operaciones de base de datos</li>
+<li>Lectura de archivos</li>
+<li>Cualquier operación que tome tiempo</li>
+</ul>
+<p><strong>Cómo responder en entrevista:</strong></p>
+<p>> "Una Promise es un objeto que representa un valor futuro con tres estados: pending, fulfilled o rejected. async/await es sintaxis que hace el código asíncrono más legible. Una función async siempre retorna una Promise, y await pausa la ejecución hasta que la Promise se resuelve. Para manejar errores uso try/catch con async/await o .catch() con Promises. Para operaciones en paralelo uso Promise.all()."</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-que-es-el-hoisting">
+    <h2>7. ¿Qué es el Hoisting?</h2>
+    <div class="doc-content">
+<p><strong>Introducción:</strong></p>
+<p>Concepto que explica comportamientos "extraños" de JavaScript. Entenderlo evita bugs comunes.</p>
+<p><strong>Definición profesional:</strong></p>
+<p>Hoisting es el comportamiento de JavaScript donde las declaraciones de variables y funciones se "mueven" al inicio de su scope durante la fase de compilación, antes de la ejecución del código.</p>
+<p><strong>Explicación sencilla:</strong></p>
+<p>JavaScript "lee" tu código dos veces: primero registra todas las declaraciones, luego ejecuta. Por eso puedes usar una función antes de declararla.</p>
+<p><strong>Funcionamiento básico:</strong></p>
+<table><thead><tr><th>Tipo</th><th>Se eleva</th><th>Valor inicial</th></tr></thead><tbody><tr><td><code>var</code></td><td>$1 </td><td><code>undefined</code></td></tr><tr><td><code>let</code>/<code>const</code></td><td>$1 </td><td>TDZ (error si accedes)</td></tr><tr><td><code>function</code></td><td>$1 </td><td>La función completa</td></tr><tr><td><code>class</code></td><td>$1 </td><td>TDZ</td></tr></tbody></table>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-javascript">// VAR - se eleva con valor undefined
+console.log(nombre); // undefined (no error)
+var nombre = "Juan";
+
+// JavaScript lo interpreta así:
+// var nombre;
+// console.log(nombre); // undefined
+// nombre = "Juan";
+
+// LET/CONST - TDZ (Temporal Dead Zone)
+console.log(edad); // ReferenceError ❌
+let edad = 25;
+
+// FUNCIONES - se elevan completas
+saludar(); // "Hola" ✅
+function saludar() {
+  console.log("Hola");
+}
+
+// FUNCTION EXPRESSIONS - NO se elevan
+despedir(); // TypeError ❌
+var despedir = function() {
+  console.log("Adiós");
+};</code></pre>
+<p><strong>Casos de uso reales:</strong></p>
+<ul>
+<li>Entender por qué las funciones pueden llamarse antes de declararse</li>
+<li>Evitar bugs con <code>var</code> (usar <code>let</code>/<code>const</code>)</li>
+<li>Organizar código: declaraciones arriba, uso abajo</li>
+</ul>
+<p><strong>Cómo responder en entrevista:</strong></p>
+<p>> "Hoisting es el comportamiento donde JavaScript mueve las declaraciones al inicio del scope durante la compilación. Las variables <code>var</code> se elevan con valor <code>undefined</code>, las funciones declaradas se elevan completas, y <code>let</code>/<code>const</code> se elevan pero quedan en la Temporal Dead Zone hasta su declaración, causando error si se acceden antes. Por eso es mejor práctica usar <code>let</code>/<code>const</code> y declarar variables al inicio."</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-cual-es-la-diferencia-entre-arrow-functions-y-funciones-normales">
+    <h2>8. ¿Cuál es la diferencia entre Arrow Functions y funciones normales?</h2>
+    <div class="doc-content">
+<p><strong>Introducción:</strong></p>
+<p>Pregunta importante sobre ES6. La diferencia clave está en cómo manejan <code>this</code>.</p>
+<p><strong>Definición profesional:</strong></p>
+<p>Las arrow functions son una sintaxis concisa para funciones que no tienen su propio <code>this</code>, <code>arguments</code>, <code>super</code>, ni pueden usarse como constructores. Heredan <code>this</code> del scope donde fueron definidas (lexical this).</p>
+<p><strong>Explicación sencilla:</strong></p>
+<ul>
+<li><strong>Función normal</strong>: <code>this</code> depende de CÓMO se llama</li>
+<li><strong>Arrow function</strong>: <code>this</code> depende de DÓNDE se define</li>
+</ul>
+<p><strong>Funcionamiento básico:</strong></p>
+<table><thead><tr><th>Característica</th><th>Función Normal</th><th>Arrow Function</th></tr></thead><tbody><tr><td>Sintaxis</td><td><code>function() {}</code></td><td><code>() => {}</code></td></tr><tr><td><code>this</code> propio</td><td>$1 </td><td><i class="fa-solid fa-xmark"></i> (hereda)</td></tr><tr><td><code>arguments</code></td><td>$1 </td><td>$1 </td></tr><tr><td>Constructor (<code>new</code>)</td><td>$1 </td><td>$1 </td></tr><tr><td>Métodos de objeto</td><td>$1 </td><td>$1 </td></tr></tbody></table>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-javascript">// Sintaxis
+const sumar = (a, b) =&gt; a + b;
+const cuadrado = x =&gt; x * x; // Un parámetro: sin paréntesis
+const saludar = () =&gt; console.log('Hola');
+
+// DIFERENCIA CLAVE: this
+const objeto = {
+  nombre: 'Juan',
+  
+  // Función normal - this es el objeto
+  saludar: function() {
+    console.log(this.nombre); // "Juan" ✅
+  },
+  
+  // Arrow - this es el contexto externo (window/undefined)
+  saludarArrow: () =&gt; {
+    console.log(this.nombre); // undefined ❌
+  },
+  
+  // Caso útil de arrow: callbacks
+  saludarConDelay: function() {
+    setTimeout(() =&gt; {
+      console.log(this.nombre); // "Juan" ✅
+      // Arrow hereda this de saludarConDelay
+    }, 1000);
+  }
+};</code></pre>
+<p><strong>Casos de uso reales:</strong></p>
+<ul>
+<li><strong>Arrow</strong>: Callbacks, map/filter/reduce, funciones cortas</li>
+<li><strong>Normal</strong>: Métodos de objeto, constructores, cuando necesitas <code>this</code> dinámico</li>
+</ul>
+<p><strong>Cómo responder en entrevista:</strong></p>
+<p>> "La diferencia principal es el manejo de <code>this</code>: las funciones normales tienen su propio <code>this</code> que depende de cómo se llaman, mientras que las arrow functions heredan <code>this</code> del scope donde se definen (lexical this). Por eso las arrow functions son ideales para callbacks donde queremos mantener el <code>this</code> del contexto, pero no deben usarse como métodos de objeto ni constructores."</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-que-es-el-spread-operator-y-rest-parameters">
+    <h2>9. ¿Qué es el Spread Operator y Rest Parameters?</h2>
+    <div class="doc-content">
+<p><strong>Introducción:</strong></p>
+<p>Sintaxis ES6 muy usada. Mismo símbolo (<code>...</code>), pero propósitos opuestos según el contexto.</p>
+<p><strong>Definición profesional:</strong></p>
+<p>El operador Spread (<code>...</code>) expande un iterable en elementos individuales. Rest Parameters (<code>...</code>) agrupa múltiples argumentos en un array. El contexto determina cuál es cuál.</p>
+<p><strong>Explicación sencilla:</strong></p>
+<ul>
+<li><strong>Spread</strong>: "Desempacar" - convierte array/objeto en elementos sueltos</li>
+<li><strong>Rest</strong>: "Empacar" - convierte elementos sueltos en array</li>
+</ul>
+<p><strong>Funcionamiento básico:</strong></p>
+<table><thead><tr><th>Operador</th><th>Contexto</th><th>Acción</th></tr></thead><tbody><tr><td>Spread</td><td>En llamada/literal</td><td>Expande</td></tr><tr><td>Rest</td><td>En parámetros/destructuring</td><td>Agrupa</td></tr></tbody></table>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-javascript">// ========== SPREAD - Expandir ==========
+
+// Arrays
+const arr1 = [1, 2, 3];
+const arr2 = [...arr1, 4, 5]; // [1, 2, 3, 4, 5]
+const copia = [...arr1];      // Copia superficial
+
+// Objetos
+const obj1 = { a: 1, b: 2 };
+const obj2 = { ...obj1, c: 3 }; // { a: 1, b: 2, c: 3 }
+const merged = { ...obj1, ...obj2 }; // Combinar
+
+// En llamadas a función
+Math.max(...arr1); // 3
+
+// ========== REST - Agrupar ==========
+
+// En parámetros de función
+function sumar(...numeros) {
+  return numeros.reduce((a, b) =&gt; a + b, 0);
+}
+sumar(1, 2, 3, 4); // 10
+
+// En destructuring
+const [primero, ...resto] = [1, 2, 3, 4];
+// primero = 1, resto = [2, 3, 4]
+
+const { nombre, ...otros } = { nombre: 'Juan', edad: 25, ciudad: 'Lima' };
+// nombre = 'Juan', otros = { edad: 25, ciudad: 'Lima' }</code></pre>
+<p><strong>Casos de uso reales:</strong></p>
+<ul>
+<li><strong>Spread</strong>: Clonar arrays/objetos, combinar, pasar argumentos</li>
+<li><strong>Rest</strong>: Funciones con argumentos variables, destructuring parcial</li>
+</ul>
+<p><strong>Cómo responder en entrevista:</strong></p>
+<p>> "Spread y Rest usan la misma sintaxis (<code>...</code>) pero hacen lo opuesto. Spread expande un array u objeto en elementos individuales, útil para copiar, combinar o pasar argumentos. Rest agrupa múltiples elementos en un array, útil en parámetros de función o destructuring. La diferencia está en el contexto: si está en una expresión es Spread, si está en una declaración de parámetros o destructuring es Rest."</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-que-son-los-metodos-de-array-mas-usados">
+    <h2>10. ¿Qué son los métodos de Array más usados?</h2>
+    <div class="doc-content">
+<p><strong>Introducción:</strong></p>
+<p>Pregunta práctica muy común. Estos métodos son el pan de cada día en JavaScript moderno.</p>
+<p><strong>Definición profesional:</strong></p>
+<p>Son métodos de alto orden (reciben funciones como argumento) que permiten transformar, filtrar y procesar arrays de forma declarativa e inmutable.</p>
+<p><strong>Explicación sencilla:</strong></p>
+<ul>
+<li><strong>map</strong>: Transforma cada elemento <i class="fa-solid fa-arrow-right"></i> nuevo array</li>
+<li><strong>filter</strong>: Filtra elementos <i class="fa-solid fa-arrow-right"></i> nuevo array con los que cumplen</li>
+<li><strong>reduce</strong>: Acumula todo <i class="fa-solid fa-arrow-right"></i> un solo valor</li>
+<li><strong>find</strong>: Busca <i class="fa-solid fa-arrow-right"></i> primer elemento que cumple</li>
+<li><strong>some/every</strong>: Verifica <i class="fa-solid fa-arrow-right"></i> true/false</li>
+</ul>
+<p><strong>Funcionamiento básico:</strong></p>
+<table><thead><tr><th>Método</th><th>Retorna</th><th>Uso</th></tr></thead><tbody><tr><td><code>map()</code></td><td>Array transformado</td><td>Modificar cada elemento</td></tr><tr><td><code>filter()</code></td><td>Array filtrado</td><td>Seleccionar elementos</td></tr><tr><td><code>reduce()</code></td><td>Valor único</td><td>Acumular, sumar, agrupar</td></tr><tr><td><code>find()</code></td><td>Elemento o undefined</td><td>Buscar uno</td></tr><tr><td><code>some()</code></td><td>Boolean</td><td>¿Alguno cumple?</td></tr><tr><td><code>every()</code></td><td>Boolean</td><td>¿Todos cumplen?</td></tr></tbody></table>
+<p><strong>Ejemplo práctico:</strong></p>
+<pre><code class="language-javascript">const usuarios = [
+  { nombre: 'Ana', edad: 25, activo: true },
+  { nombre: 'Juan', edad: 17, activo: false },
+  { nombre: 'María', edad: 30, activo: true }
+];
+
+// MAP - obtener solo nombres
+const nombres = usuarios.map(u =&gt; u.nombre);
+// ['Ana', 'Juan', 'María']
+
+// FILTER - solo mayores de edad
+const mayores = usuarios.filter(u =&gt; u.edad &gt;= 18);
+// [{ nombre: 'Ana', ... }, { nombre: 'María', ... }]
+
+// REDUCE - suma de edades
+const sumaEdades = usuarios.reduce((acc, u) =&gt; acc + u.edad, 0);
+// 72
+
+// FIND - buscar por nombre
+const juan = usuarios.find(u =&gt; u.nombre === 'Juan');
+// { nombre: 'Juan', edad: 17, activo: false }
+
+// SOME - ¿hay menores?
+const hayMenores = usuarios.some(u =&gt; u.edad &lt; 18);
+// true
+
+// EVERY - ¿todos activos?
+const todosActivos = usuarios.every(u =&gt; u.activo);
+// false
+
+// ENCADENAMIENTO - nombres de usuarios activos mayores de edad
+const resultado = usuarios
+  .filter(u =&gt; u.activo &amp;&amp; u.edad &gt;= 18)
+  .map(u =&gt; u.nombre);
+// ['Ana', 'María']</code></pre>
+<p><strong>Casos de uso reales:</strong></p>
+<ul>
+<li><strong>map</strong>: Renderizar listas en React, transformar datos de API</li>
+<li><strong>filter</strong>: Búsqueda, filtros de UI</li>
+<li><strong>reduce</strong>: Totales, agrupaciones, transformaciones complejas</li>
+<li><strong>find</strong>: Buscar usuario por ID, elemento específico</li>
+</ul>
+<p><strong>Cómo responder en entrevista:</strong></p>
+<p>> "Los métodos más usados son map, filter y reduce. Map transforma cada elemento y retorna un nuevo array. Filter retorna un nuevo array solo con elementos que cumplen una condición. Reduce acumula todos los elementos en un solo valor. Todos son inmutables, no modifican el array original. También uso find para buscar un elemento, y some/every para verificar condiciones. Estos métodos se pueden encadenar para operaciones complejas."</p>
+<p>---</p>
+<blockquote class="aside aside-tip">
+Practica explicando estos conceptos en voz alta. Los entrevistadores valoran tanto el conocimiento técnico como la capacidad de comunicar ideas claramente.
+</blockquote>
+    </div>
+  </section>

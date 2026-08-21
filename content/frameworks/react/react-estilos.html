@@ -1,0 +1,328 @@
+<!-- 14. Estilos en React - React (Frameworks) -->
+  <section id="14-1-formas-de-aplicar-estilos-en-react">
+    <h2><i class="fa-solid fa-palette"></i> 14.1 Formas de aplicar estilos en React</h2>
+    <div class="doc-content">
+<h3>Opciones disponibles</h3>
+<table><thead><tr><th>Método</th><th>Descripción</th><th>Scope</th></tr></thead><tbody><tr><td>CSS tradicional</td><td>Archivos .css importados</td><td>Global</td></tr><tr><td>Inline styles</td><td>Objeto style en JSX</td><td>Componente</td></tr><tr><td>CSS Modules</td><td>Archivos .module.css</td><td>Componente</td></tr><tr><td>styled-components</td><td>CSS-in-JS</td><td>Componente</td></tr><tr><td>Tailwind CSS</td><td>Clases utilitarias</td><td>Componente</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="14-2-css-tradicional">
+    <h2><i class="fa-solid fa-file-lines"></i> 14.2 CSS tradicional</h2>
+    <div class="doc-content">
+<h3>Importar archivos CSS</h3>
+<pre><code class="language-css">/* styles.css */
+.boton {
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.boton:hover {
+  background-color: #2980b9;
+}
+
+.boton-peligro {
+  background-color: #e74c3c;
+}
+
+.boton-peligro:hover {
+  background-color: #c0392b;
+}</code></pre>
+<pre><code class="language-jsx">// Componente.jsx
+
+
+
+function Boton({ variante = 'primario', children }) {
+  return (
+    &lt;button className={\`\${styles.boton} \${styles[variante]}\`}&gt;
+      {children}
+    &lt;/button&gt;
+  );
+}
+
+// El className resultante será algo como:
+// "Boton_boton_x7d3f Boton_primario_a2b1c"</code></pre>
+<h3>Composición de estilos</h3>
+<pre><code class="language-css">/* Card.module.css */
+.card {
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.header {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.body {
+  color: #666;
+}
+
+/* Componer estilos */
+.cardDestacada {
+  composes: card;
+  border: 2px solid gold;
+  background-color: #fffdf0;
+}</code></pre>
+<pre><code class="language-jsx">import styles from './Card.module.css';
+
+function Card({ destacada, titulo, children }) {
+  return (
+    &lt;div className={destacada ? styles.cardDestacada : styles.card}&gt;
+      &lt;h2 className={styles.header}&gt;{titulo}&lt;/h2&gt;
+      &lt;div className={styles.body}&gt;{children}&lt;/div&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="14-5-styled-components">
+    <h2><i class="fa-solid fa-paintbrush"></i> 14.5 styled-components</h2>
+    <div class="doc-content">
+<h3>Instalación</h3>
+<pre><code class="language-bash">npm install styled-components</code></pre>
+<h3>Crear componentes estilizados</h3>
+<pre><code class="language-jsx">import styled from 'styled-components';
+
+// Crear componente estilizado
+const Boton = styled.button\`
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  
+  &amp;:hover {
+    background-color: #2980b9;
+  }
+  
+  &amp;:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+  }
+\`;
+
+const BotonPeligro = styled(Boton)\`
+  background-color: #e74c3c;
+  
+  &amp;:hover {
+    background-color: #c0392b;
+  }
+\`;
+
+// Uso
+function App() {
+  return (
+    &lt;div&gt;
+      &lt;Boton&gt;Normal&lt;/Boton&gt;
+      &lt;BotonPeligro&gt;Peligro&lt;/BotonPeligro&gt;
+      &lt;Boton disabled&gt;Deshabilitado&lt;/Boton&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Props dinámicas</h3>
+<pre><code class="language-jsx">import styled from 'styled-components';
+
+const Boton = styled.button\`
+  padding: \${props =&gt; props.size === 'large' ? '15px 30px' : '10px 20px'};
+  background-color: \${props =&gt; props.primary ? '#3498db' : '#95a5a6'};
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: \${props =&gt; props.size === 'large' ? '18px' : '14px'};
+  
+  &amp;:hover {
+    opacity: 0.9;
+  }
+\`;
+
+// Uso
+&lt;Boton primary&gt;Primario&lt;/Boton&gt;
+&lt;Boton&gt;Secundario&lt;/Boton&gt;
+&lt;Boton primary size="large"&gt;Grande&lt;/Boton&gt;</code></pre>
+<h3>Tema global</h3>
+<pre><code class="language-jsx">import styled, { ThemeProvider } from 'styled-components';
+
+// Definir tema
+const tema = {
+  colores: {
+    primario: '#3498db',
+    secundario: '#2ecc71',
+    peligro: '#e74c3c',
+    texto: '#333',
+    fondo: '#f5f5f5'
+  },
+  espaciado: {
+    sm: '8px',
+    md: '16px',
+    lg: '24px'
+  }
+};
+
+// Usar tema en componentes
+const Boton = styled.button\`
+  padding: \${props =&gt; props.theme.espaciado.md};
+  background-color: \${props =&gt; props.theme.colores.primario};
+  color: white;
+\`;
+
+const Contenedor = styled.div\`
+  background-color: \${props =&gt; props.theme.colores.fondo};
+  padding: \${props =&gt; props.theme.espaciado.lg};
+\`;
+
+// Proveer tema
+function App() {
+  return (
+    &lt;ThemeProvider theme={tema}&gt;
+      &lt;Contenedor&gt;
+        &lt;Boton&gt;Click&lt;/Boton&gt;
+      &lt;/Contenedor&gt;
+    &lt;/ThemeProvider&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="14-6-tailwind-css">
+    <h2><i class="fa-solid fa-water"></i> 14.6 Tailwind CSS</h2>
+    <div class="doc-content">
+<h3>Instalación con Vite</h3>
+<pre><code class="language-bash">npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p</code></pre>
+<pre><code class="language-js">// tailwind.config.js
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}</code></pre>
+<pre><code class="language-css">/* src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;</code></pre>
+<h3>Uso básico</h3>
+<pre><code class="language-jsx">function Tarjeta({ titulo, children }) {
+  return (
+    &lt;div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"&gt;
+      &lt;h2 className="text-xl font-bold text-gray-800 mb-4"&gt;
+        {titulo}
+      &lt;/h2&gt;
+      &lt;p className="text-gray-600"&gt;
+        {children}
+      &lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+
+function Boton({ variante = 'primario', children }) {
+  const estilos = {
+    primario: 'bg-blue-500 hover:bg-blue-600 text-white',
+    secundario: 'bg-gray-500 hover:bg-gray-600 text-white',
+    peligro: 'bg-red-500 hover:bg-red-600 text-white'
+  };
+  
+  return (
+    &lt;button className={\`px-4 py-2 rounded font-medium transition-colors \${estilos[variante]}\`}&gt;
+      {children}
+    &lt;/button&gt;
+  );
+}</code></pre>
+<h3>Clases responsivas</h3>
+<pre><code class="language-jsx">function Layout() {
+  return (
+    &lt;div className="container mx-auto px-4"&gt;
+      {/* Grid responsivo */}
+      &lt;div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"&gt;
+        &lt;div className="p-4 bg-white rounded shadow"&gt;Item 1&lt;/div&gt;
+        &lt;div className="p-4 bg-white rounded shadow"&gt;Item 2&lt;/div&gt;
+        &lt;div className="p-4 bg-white rounded shadow"&gt;Item 3&lt;/div&gt;
+      &lt;/div&gt;
+      
+      {/* Texto responsivo */}
+      &lt;h1 className="text-2xl md:text-4xl lg:text-6xl font-bold"&gt;
+        Título Responsivo
+      &lt;/h1&gt;
+      
+      {/* Ocultar/mostrar */}
+      &lt;div className="hidden md:block"&gt;
+        Solo visible en md y superior
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Estados y variantes</h3>
+<pre><code class="language-jsx">function Input({ error }) {
+  return (
+    &lt;input 
+      className={\`
+        w-full px-4 py-2 border rounded
+        focus:outline-none focus:ring-2 focus:ring-blue-500
+        disabled:bg-gray-100 disabled:cursor-not-allowed
+        \${error ? 'border-red-500' : 'border-gray-300'}
+      \`}
+    /&gt;
+  );
+}
+
+function Boton() {
+  return (
+    &lt;button className="
+      px-4 py-2 bg-blue-500 text-white rounded
+      hover:bg-blue-600
+      active:bg-blue-700
+      focus:outline-none focus:ring-2 focus:ring-blue-300
+      disabled:opacity-50 disabled:cursor-not-allowed
+      transition-colors duration-200
+    "&gt;
+      Click
+    &lt;/button&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="14-7-comparacion-de-metodos">
+    <h2><i class="fa-solid fa-chart-column"></i> 14.7 Comparación de métodos</h2>
+    <div class="doc-content">
+<table><thead><tr><th>Característica</th><th>CSS</th><th>Modules</th><th>styled</th><th>Tailwind</th></tr></thead><tbody><tr><td>Scope</td><td>Global</td><td>Local</td><td>Local</td><td>Utility</td></tr><tr><td>Pseudo-clases</td><td>$1 </td><td>$1 </td><td>$1 </td><td>$1 </td></tr><tr><td>Media queries</td><td>$1 </td><td>$1 </td><td>$1 </td><td>$1 </td></tr><tr><td>Props dinámicas</td><td>$1 </td><td>$1 </td><td>$1 </td><td>Parcial</td></tr><tr><td>Bundle size</td><td>Bajo</td><td>Bajo</td><td>Medio</td><td>Bajo*</td></tr><tr><td>Curva aprendizaje</td><td>Baja</td><td>Baja</td><td>Media</td><td>Media</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+**Recomendaciones:**
+- **Proyectos pequeños**: CSS tradicional o Tailwind
+- **Proyectos medianos**: CSS Modules
+- **Proyectos grandes**: styled-components o Tailwind
+- **Equipos**: Tailwind (consistencia) o CSS Modules (familiaridad)
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- **CSS tradicional**: importar archivos .css, usar classnames
+- **Inline styles**: objetos JS, camelCase, estilos dinámicos
+- **CSS Modules**: scope local automático, composición
+- **styled-components**: CSS-in-JS, props dinámicas, temas
+- **Tailwind CSS**: clases utilitarias, responsivo, estados
+- Cada método tiene sus **ventajas y casos de uso**
+</blockquote>
+    </div>
+  </section>

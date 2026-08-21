@@ -1,0 +1,420 @@
+<!-- 7. TCL (Transaction Control Language) - Oracle (Base de Datos) -->
+  <section id="introduccion-al-tcl">
+    <h2>Introducción al TCL</h2>
+    <div class="doc-content">
+<p>El Lenguaje de Control de Transacciones (Transaction Control Language o TCL) es un subconjunto de SQL utilizado para gestionar los cambios realizados por las sentencias DML (Data Manipulation Language). TCL permite a los usuarios agrupar un conjunto de operaciones en unidades lógicas de trabajo llamadas transacciones, que pueden ser confirmadas o revertidas como una unidad.</p>
+<h3>Características principales de las transacciones</h3>
+<ul>
+<li><strong>Atomicidad</strong>: Una transacción se ejecuta por completo o no se ejecuta en absoluto</li>
+<li><strong>Consistencia</strong>: Una transacción lleva la base de datos de un estado consistente a otro estado consistente</li>
+<li><strong>Aislamiento</strong>: Las transacciones se ejecutan de forma aislada unas de otras</li>
+<li><strong>Durabilidad</strong>: Una vez confirmada una transacción, sus cambios son permanentes</li>
+</ul>
+<blockquote class="aside aside-note">
+Las propiedades ACID (Atomicidad, Consistencia, Aislamiento y Durabilidad) son fundamentales en los sistemas de gestión de bases de datos relacionales como Oracle para garantizar la integridad de los datos.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="commit-confirmacion-de-transacciones">
+    <h2>COMMIT - Confirmación de transacciones</h2>
+    <div class="doc-content">
+<p>El comando COMMIT se utiliza para hacer permanentes los cambios realizados durante la transacción actual.</p>
+<h3>Sintaxis básica</h3>
+<pre><code class="language-sql">-- Sintaxis básica
+COMMIT [WORK] [COMMENT 'texto_comentario'];
+
+-- Ejemplo simple
+INSERT INTO empleados (empleado_id, nombre, apellido) VALUES (101, 'Juan', 'Pérez');
+UPDATE departamentos SET presupuesto = presupuesto + 10000 WHERE departamento_id = 20;
+COMMIT; -- Confirma ambas operaciones
+</code></pre>
+<h3>Comportamiento del COMMIT</h3>
+<ol class="steps">
+<ol>
+<li><strong>Hace permanentes los cambios</strong></li>
+</ol>
+<ul>
+<li>Los cambios realizados por las sentencias DML se guardan permanentemente en la base de datos</li>
+<li>Los cambios son visibles para otras sesiones</li>
+</ul>
+<ol>
+<li><strong>Libera bloqueos</strong></li>
+</ol>
+<ul>
+<li>Se liberan todos los bloqueos adquiridos durante la transacción</li>
+<li>Otros usuarios pueden acceder a los datos modificados</li>
+</ul>
+<ol>
+<li><strong>Establece un punto de guardado</strong></li>
+</ol>
+<ul>
+<li>Se establece un punto de guardado implícito</li>
+<li>Finaliza la transacción actual y comienza una nueva</li>
+</ul>
+<ol>
+<li><strong>Libera recursos</strong></li>
+</ol>
+<ul>
+<li>Se liberan los recursos del sistema utilizados para la transacción</li>
+<li>Se eliminan los datos de deshacer (undo) asociados a la transacción</li>
+</ul>
+</ol>
+<h3>Tipos de COMMIT</h3>
+  <h4 class="tab-label">COMMIT estándar</h4>
+    <pre><code class="language-sql">    -- COMMIT simple
+    INSERT INTO clientes (cliente_id, nombre) VALUES (1001, 'Empresa ABC');
+    COMMIT;
+    
+    -- COMMIT con comentario (para auditoría)
+    UPDATE productos SET precio = precio * 1.05 WHERE categoria = 'Electrónica';
+    COMMIT COMMENT 'Incremento de precios 5% en electrónica';
+    </code></pre>
+  <h4 class="tab-label">COMMIT con opciones avanzadas</h4>
+    <pre><code class="language-sql">    -- COMMIT FORCE: confirma una transacción en una base de datos distribuida
+    -- incluso si algunas bases de datos no están disponibles
+    COMMIT FORCE '25.32.87';
+    
+    -- COMMIT WRITE: controla cómo se escriben los cambios en el redo log
+    -- IMMEDIATE: escribe inmediatamente (más seguro)
+    -- BATCH: agrupa escrituras (mejor rendimiento)
+    COMMIT WRITE IMMEDIATE NOWAIT;
+    </code></pre>
+<h3>COMMIT implícito</h3>
+<p>Oracle realiza un COMMIT implícito en los siguientes casos:</p>
+<ul>
+<li>Cuando se ejecuta un comando DDL (CREATE, ALTER, DROP, etc.)</li>
+<li>Cuando se ejecuta un comando DCL (GRANT, REVOKE)</li>
+<li>Cuando se cierra normalmente una sesión (EXIT o QUIT)</li>
+<li>Cuando se ejecuta un comando SET AUTOCOMMIT ON</li>
+</ul>
+<blockquote class="aside aside-caution">
+Tenga cuidado al ejecutar comandos DDL durante una transacción, ya que provocarán un COMMIT implícito de todos los cambios pendientes. Esto puede llevar a resultados inesperados si no se planifica adecuadamente.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="rollback-reversion-de-cambios">
+    <h2>ROLLBACK - Reversión de cambios</h2>
+    <div class="doc-content">
+<p>El comando ROLLBACK se utiliza para deshacer los cambios realizados durante la transacción actual que aún no han sido confirmados.</p>
+<h3>Sintaxis básica</h3>
+<pre><code class="language-sql">-- Sintaxis básica
+ROLLBACK [WORK] [TO [SAVEPOINT] nombre_savepoint];
+
+-- Ejemplo simple
+INSERT INTO empleados (empleado_id, nombre, apellido) VALUES (102, 'María', 'Gómez');
+UPDATE departamentos SET presupuesto = presupuesto - 5000 WHERE departamento_id = 30;
+
+-- Si algo sale mal o se detecta un error
+ROLLBACK; -- Revierte ambas operaciones
+</code></pre>
+<h3>Comportamiento del ROLLBACK</h3>
+<ol class="steps">
+<ol>
+<li><strong>Deshace los cambios</strong></li>
+</ol>
+<ul>
+<li>Revierte todos los cambios realizados por las sentencias DML desde el último COMMIT o desde el inicio de la transacción</li>
+<li>Los datos vuelven a su estado anterior</li>
+</ul>
+<ol>
+<li><strong>Libera bloqueos</strong></li>
+</ol>
+<ul>
+<li>Se liberan todos los bloqueos adquiridos durante la transacción</li>
+<li>Otros usuarios pueden acceder a los datos</li>
+</ul>
+<ol>
+<li><strong>Elimina savepoints</strong></li>
+</ol>
+<ul>
+<li>Se eliminan todos los savepoints establecidos durante la transacción</li>
+</ul>
+<ol>
+<li><strong>Finaliza la transacción</strong></li>
+</ol>
+<ul>
+<li>Termina la transacción actual y comienza una nueva</li>
+</ul>
+</ol>
+<h3>ROLLBACK parcial</h3>
+<p>Utilizando savepoints, es posible realizar un ROLLBACK parcial, deshaciendo solo una parte de la transacción.</p>
+<pre><code class="language-sql">-- Iniciar transacción
+INSERT INTO clientes (cliente_id, nombre) VALUES (1002, 'Empresa XYZ');
+
+-- Establecer un savepoint
+SAVEPOINT despues_cliente;
+
+-- Continuar la transacción
+INSERT INTO pedidos (pedido_id, cliente_id, total) VALUES (5001, 1002, 1500);
+INSERT INTO pedidos (pedido_id, cliente_id, total) VALUES (5002, 1002, 2500);
+
+-- Si hay un problema con los pedidos
+ROLLBACK TO SAVEPOINT despues_cliente; -- Deshace solo las inserciones de pedidos
+
+-- Continuar con la transacción
+INSERT INTO pedidos (pedido_id, cliente_id, total) VALUES (5003, 1002, 3000);
+
+-- Confirmar toda la transacción
+COMMIT;
+</code></pre>
+<h3>ROLLBACK implícito</h3>
+<p>Oracle realiza un ROLLBACK implícito en los siguientes casos:</p>
+<ul>
+<li>Cuando se produce un fallo del sistema</li>
+<li>Cuando se cierra anormalmente una sesión (p. ej., por un error de red)</li>
+<li>Cuando se produce un error grave durante la ejecución de una sentencia</li>
+</ul>
+<blockquote class="aside aside-tip">
+Es una buena práctica utilizar bloques de control de excepciones en PL/SQL para gestionar los errores y realizar ROLLBACK explícitos cuando sea necesario, en lugar de depender de los ROLLBACK implícitos.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="savepoint-puntos-de-guardado-intermedios">
+    <h2>SAVEPOINT - Puntos de guardado intermedios</h2>
+    <div class="doc-content">
+<p>El comando SAVEPOINT establece un punto de guardado dentro de la transacción actual, permitiendo deshacer parte de una transacción sin tener que deshacer toda la transacción.</p>
+<h3>Sintaxis básica</h3>
+<pre><code class="language-sql">-- Sintaxis básica
+SAVEPOINT nombre_savepoint;
+
+-- Ejemplo simple
+INSERT INTO empleados (empleado_id, nombre) VALUES (103, 'Carlos');
+SAVEPOINT sp_despues_empleado;
+
+INSERT INTO departamentos (departamento_id, nombre) VALUES (50, 'Innovación');
+
+-- Si hay un problema con la inserción del departamento
+ROLLBACK TO SAVEPOINT sp_despues_empleado;
+
+-- Continuar con la transacción
+INSERT INTO departamentos (departamento_id, nombre) VALUES (51, 'Investigación');
+COMMIT;
+</code></pre>
+<h3>Características de los savepoints</h3>
+<ul>
+<li>Se pueden crear múltiples savepoints dentro de una transacción</li>
+<li>Los savepoints permiten un control más granular de las transacciones</li>
+<li>Si se crea un savepoint con el mismo nombre que uno existente, el nuevo savepoint reemplaza al anterior</li>
+<li>Los savepoints se eliminan automáticamente cuando se ejecuta un COMMIT o un ROLLBACK completo</li>
+</ul>
+<h3>Gestión de savepoints múltiples</h3>
+<pre><code class="language-sql">-- Iniciar transacción
+DELETE FROM empleados WHERE departamento_id = 10;
+SAVEPOINT sp_despues_eliminar_dept10;
+
+UPDATE empleados SET salario = salario * 1.1 WHERE departamento_id = 20;
+SAVEPOINT sp_despues_actualizar_dept20;
+
+INSERT INTO historial_cambios (descripcion) VALUES ('Actualización de salarios dept 20');
+SAVEPOINT sp_despues_historial;
+
+-- Si hay un problema con la inserción en el historial
+ROLLBACK TO SAVEPOINT sp_despues_actualizar_dept20;
+
+-- Si hay un problema con la actualización de salarios
+ROLLBACK TO SAVEPOINT sp_despues_eliminar_dept10;
+
+-- Si todo está bien
+COMMIT;
+</code></pre>
+<blockquote class="aside aside-note">
+Cuando se hace ROLLBACK a un savepoint, todos los savepoints creados después de ese savepoint se eliminan automáticamente, pero el savepoint al que se hace ROLLBACK se mantiene.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="manejo-de-transacciones-en-oracle-xe">
+    <h2>Manejo de transacciones en Oracle XE</h2>
+    <div class="doc-content">
+<p>Oracle Database Express Edition (XE) es una versión gratuita de Oracle Database con algunas limitaciones, pero el manejo de transacciones funciona igual que en las versiones estándar.</p>
+<h3>Configuración de transacciones</h3>
+  <h4 class="tab-label">Modo de transacción</h4>
+    <pre><code class="language-sql">    -- Verificar el modo de transacción actual
+    SHOW AUTOCOMMIT;
+    
+    -- Activar el modo autocommit (cada sentencia es una transacción)
+    SET AUTOCOMMIT ON;
+    
+    -- Desactivar el modo autocommit (modo manual, recomendado)
+    SET AUTOCOMMIT OFF;
+    </code></pre>
+  <h4 class="tab-label">Parámetros de transacción</h4>
+    <pre><code class="language-sql">    -- Consultar parámetros relacionados con transacciones
+    SELECT name, value FROM v$parameter 
+    WHERE name LIKE '%commit%' OR name LIKE '%undo%';
+    
+    -- Ver el tamaño máximo de undo
+    SELECT name, value FROM v$parameter WHERE name = 'undo_retention';
+    </code></pre>
+<h3>Monitoreo de transacciones</h3>
+<pre><code class="language-sql">-- Ver transacciones activas
+SELECT xid, status, start_time, log_io, phy_io
+FROM v$transaction;
+
+-- Ver sesiones con transacciones pendientes
+SELECT s.sid, s.serial#, s.username, s.status, t.used_ublk, t.start_time
+FROM v$session s, v$transaction t
+WHERE s.saddr = t.ses_addr;
+
+-- Ver bloqueos de transacciones
+SELECT l.session_id, s.username, l.lock_type, l.mode_held, l.mode_requested
+FROM v$lock l, v$session s
+WHERE l.session_id = s.sid
+AND l.lock_type = 'TX';
+</code></pre>
+<h3>Limitaciones en Oracle XE</h3>
+<p>Oracle XE tiene algunas limitaciones que pueden afectar a las transacciones:</p>
+<ul>
+<li>Límite de uso de memoria (2GB)</li>
+<li>Límite de almacenamiento (12GB en Oracle XE 18c)</li>
+<li>Límite de uso de CPU (hasta 2 cores)</li>
+</ul>
+<p>Estas limitaciones pueden afectar al rendimiento de las transacciones grandes, pero no a su funcionalidad básica.</p>
+<blockquote class="aside aside-tip">
+En Oracle XE, es especialmente importante gestionar bien las transacciones debido a las limitaciones de recursos. Evite transacciones muy largas que puedan consumir demasiados recursos de undo y bloquear tablas durante mucho tiempo.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="niveles-de-aislamiento-de-transacciones">
+    <h2>Niveles de aislamiento de transacciones</h2>
+    <div class="doc-content">
+<p>Oracle soporta diferentes niveles de aislamiento que determinan cómo interaccionan las transacciones concurrentes.</p>
+<h3>Configuración del nivel de aislamiento</h3>
+<pre><code class="language-sql">-- Establecer el nivel de aislamiento para la sesión actual
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+-- Establecer el nivel de aislamiento para una transacción específica
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+</code></pre>
+<h3>Niveles de aislamiento disponibles</h3>
+<table><thead><tr><th>Nivel</th><th>Descripción</th><th>Problemas que previene</th></tr></thead><tbody><tr><td>READ COMMITTED</td><td>Nivel predeterminado. Solo ve datos confirmados por otras transacciones</td><td>Lecturas sucias</td></tr><tr><td>SERIALIZABLE</td><td>Mayor nivel de aislamiento. Ve un snapshot de los datos al inicio de la transacción</td><td>Lecturas sucias, lecturas no repetibles, lecturas fantasma</td></tr><tr><td>READ ONLY</td><td>Similar a SERIALIZABLE, pero no permite modificaciones</td><td>Lecturas sucias, lecturas no repetibles, lecturas fantasma</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+Oracle no implementa el nivel READ UNCOMMITTED que existe en el estándar SQL. El nivel más bajo en Oracle es READ COMMITTED, que ya previene las lecturas sucias.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="transacciones-distribuidas">
+    <h2>Transacciones distribuidas</h2>
+    <div class="doc-content">
+<p>Las transacciones distribuidas involucran múltiples bases de datos y utilizan el protocolo de commit en dos fases (2PC) para garantizar la consistencia.</p>
+<h3>Configuración de transacciones distribuidas</h3>
+<pre><code class="language-sql">-- Crear un enlace de base de datos (database link)
+CREATE DATABASE LINK remote_db
+  CONNECT TO usuario IDENTIFIED BY contraseña
+  USING 'conexion_tns';
+
+-- Iniciar una transacción distribuida
+INSERT INTO empleados VALUES (104, 'Ana', 'Martínez');
+INSERT INTO empleados@remote_db VALUES (104, 'Ana', 'Martínez');
+
+-- Confirmar la transacción distribuida
+COMMIT;
+</code></pre>
+<h3>Gestión de errores en transacciones distribuidas</h3>
+<pre><code class="language-sql">-- Consultar transacciones distribuidas en duda
+SELECT * FROM dba_2pc_pending;
+
+-- Resolver manualmente una transacción en duda
+COMMIT FORCE 'transaction_id';
+-- o
+ROLLBACK FORCE 'transaction_id';
+</code></pre>
+    </div>
+  </section>
+
+  <section id="mejores-practicas-para-transacciones">
+    <h2>Mejores prácticas para transacciones</h2>
+    <div class="doc-content">
+<ol class="steps">
+<ol>
+<li><strong>Mantener transacciones cortas</strong></li>
+</ol>
+<ul>
+<li>Las transacciones largas consumen más recursos y pueden causar bloqueos prolongados</li>
+<li>Divida las operaciones grandes en transacciones más pequeñas cuando sea posible</li>
+</ul>
+<ol>
+<li><strong>Confirmar o revertir explícitamente</strong></li>
+</ol>
+<ul>
+<li>Siempre termine las transacciones con un COMMIT o ROLLBACK explícito</li>
+<li>Evite depender de los COMMIT o ROLLBACK implícitos</li>
+</ul>
+<ol>
+<li><strong>Usar savepoints estratégicamente</strong></li>
+</ol>
+<ul>
+<li>Establezca savepoints antes de operaciones complejas o potencialmente problemáticas</li>
+<li>Use nombres descriptivos para los savepoints</li>
+</ul>
+<ol>
+<li><strong>Gestionar bloqueos adecuadamente</strong></li>
+</ol>
+<ul>
+<li>Sea consciente de los bloqueos que generan sus transacciones</li>
+<li>Considere usar SELECT FOR UPDATE cuando sea necesario bloquear filas específicas</li>
+</ul>
+<ol>
+<li><strong>Manejar excepciones</strong></li>
+</ol>
+<ul>
+<li>Implemente manejo de excepciones adecuado en bloques PL/SQL</li>
+<li>Realice ROLLBACK en caso de errores inesperados</li>
+</ul>
+</ol>
+<h3>Ejemplo de transacción bien estructurada en PL/SQL</h3>
+<pre><code class="language-sql">DECLARE
+  v_error EXCEPTION;
+  v_count NUMBER;
+BEGIN
+  -- Iniciar transacción (implícito en PL/SQL)
+  
+  -- Verificar condiciones previas
+  SELECT COUNT(*) INTO v_count FROM clientes WHERE cliente_id = 1001;
+  IF v_count = 0 THEN
+    RAISE v_error;
+  END IF;
+  
+  -- Establecer savepoint
+  SAVEPOINT sp_inicio;
+  
+  -- Realizar operaciones
+  INSERT INTO pedidos (pedido_id, cliente_id, total) VALUES (6001, 1001, 5000);
+  
+  -- Establecer otro savepoint
+  SAVEPOINT sp_despues_pedido;
+  
+  -- Actualizar inventario
+  UPDATE inventario SET cantidad = cantidad - 10 WHERE producto_id = 101;
+  IF SQL%ROWCOUNT = 0 THEN
+    ROLLBACK TO SAVEPOINT sp_despues_pedido;
+    RAISE v_error;
+  END IF;
+  
+  -- Confirmar si todo está bien
+  COMMIT;
+  DBMS_OUTPUT.PUT_LINE('Transacción completada con éxito');
+  
+EXCEPTION
+  WHEN v_error THEN
+    ROLLBACK;
+    DBMS_OUTPUT.PUT_LINE('Error en la transacción. Cambios revertidos.');
+  WHEN OTHERS THEN
+    ROLLBACK;
+    DBMS_OUTPUT.PUT_LINE('Error inesperado: ' || SQLERRM);
+    RAISE;
+END;
+/
+</code></pre>
+<blockquote class="aside aside-caution">
+En entornos de producción, es importante monitorear y gestionar las transacciones largas o bloqueadas, ya que pueden afectar significativamente al rendimiento del sistema y a la experiencia de los usuarios.
+</blockquote>
+    </div>
+  </section>

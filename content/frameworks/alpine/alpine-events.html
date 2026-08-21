@@ -1,0 +1,181 @@
+<!-- 05. Eventos y manejo de acciones - Alpine.js (Frameworks) -->
+  <section id="escuchando-eventos-con-x-on-y">
+    <h2>Escuchando eventos con x-on y @</h2>
+    <div class="doc-content">
+<p>La directiva <code>x-on</code> permite escuchar cualquier evento del DOM, como <code>click</code>, <code>input</code>, <code>keydown</code>, etc. Puedes usar la sintaxis abreviada <code>@</code> para mayor comodidad.</p>
+<pre><code class="language-html">&lt;button x-on:click="alert('¡Haz clic!')"&gt;Haz clic aquí&lt;/button&gt;
+&lt;!-- Equivalente a: --&gt;
+&lt;button @click="alert('¡Haz clic!')"&gt;Haz clic aquí&lt;/button&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="modificadores-de-eventos">
+    <h2>Modificadores de eventos</h2>
+    <div class="doc-content">
+<p>Alpine.js soporta modificadores para controlar el comportamiento de los eventos:</p>
+<ul>
+<li><b>.prevent</b>: Llama <code>event.preventDefault()</code>.</li>
+<li><b>.stop</b>: Llama <code>event.stopPropagation()</code>.</li>
+<li><b>.once</b>: El evento solo se ejecuta una vez.</li>
+<li><b>.self</b>: Solo se ejecuta si el evento ocurre en el propio elemento.</li>
+</ul>
+<pre><code class="language-html">&lt;form @submit.prevent="enviar()"&gt;
+  &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+&lt;/form&gt;
+&lt;button @click.stop="accion()"&gt;No propagar&lt;/button&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-personalizados">
+    <h2>Eventos personalizados</h2>
+    <div class="doc-content">
+<p>Puedes emitir y escuchar eventos personalizados usando <code>$dispatch</code> y <code>x-on</code>:</p>
+<pre><code class="language-html">&lt;div x-data&gt;
+  &lt;button @click="$dispatch('saludo', { nombre: 'Ana' })"&gt;Saludar&lt;/button&gt;
+&lt;/div&gt;
+&lt;div @saludo.window="alert('¡Hola ' + $event.detail.nombre + '!')"&gt;&lt;/div&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="escuchar-eventos-globales">
+    <h2>Escuchar eventos globales</h2>
+    <div class="doc-content">
+<p>Agrega <code>.window</code> para escuchar eventos en <code>window</code>:</p>
+<pre><code class="language-html">&lt;div @resize.window="console.log('Ventana redimensionada')"&gt;&lt;/div&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="ejemplo-avanzado-teclas-y-combinacion-de-teclas">
+    <h2>Ejemplo avanzado: teclas y combinación de teclas</h2>
+    <div class="doc-content">
+<p>Puedes escuchar eventos de teclado y combinaciones:</p>
+<pre><code class="language-html">&lt;input @keydown.enter="enviar()" placeholder="Presiona Enter" /&gt;
+&lt;button @click.ctrl="accionCtrl()"&gt;Ctrl + Click&lt;/button&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="delegacion-de-eventos">
+    <h2>Delegación de eventos</h2>
+    <div class="doc-content">
+<p>La delegación de eventos permite manejar eventos de múltiples elementos hijos desde un solo listener en el elemento padre. Esto es útil para listas dinámicas:</p>
+<pre><code class="language-html">&lt;ul x-data @click="if($event.target.tagName === 'LI'){ alert($event.target.textContent) }"&gt;
+  &lt;li&gt;Elemento 1&lt;/li&gt;
+  &lt;li&gt;Elemento 2&lt;/li&gt;
+  &lt;li&gt;Elemento 3&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-en-componentes-anidados">
+    <h2>Eventos en componentes anidados</h2>
+    <div class="doc-content">
+<p>Puedes comunicarte entre componentes hijos y padres usando <code>$dispatch</code> y escuchando eventos personalizados:</p>
+<pre><code class="language-html">&lt;!-- Componente hijo --&gt;
+&lt;div x-data&gt;
+  &lt;button @click="$dispatch('notificar', { mensaje: '¡Hola desde el hijo!' })"&gt;Notificar&lt;/button&gt;
+&lt;/div&gt;
+&lt;!-- Componente padre --&gt;
+&lt;div @notificar.window="alert($event.detail.mensaje)"&gt;&lt;/div&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="acceso-al-objeto-event">
+    <h2>Acceso al objeto $event</h2>
+    <div class="doc-content">
+<p>El objeto <code>$event</code> contiene información sobre el evento disparado. Puedes acceder a propiedades como <code>$event.target</code>, <code>$event.key</code>, etc.:</p>
+<pre><code class="language-html">&lt;input @keydown="console.log($event.key)" placeholder="Presiona una tecla" /&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-con-parametros-dinamicos">
+    <h2>Eventos con parámetros dinámicos</h2>
+    <div class="doc-content">
+<p>Puedes pasar valores dinámicos a los handlers de eventos:</p>
+<pre><code class="language-html">&lt;button @click="seleccionar('A')"&gt;Seleccionar A&lt;/button&gt;
+&lt;button @click="seleccionar('B')"&gt;Seleccionar B&lt;/button&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-asincronos">
+    <h2>Eventos asíncronos</h2>
+    <div class="doc-content">
+<p>Puedes ejecutar funciones asíncronas en los handlers de eventos:</p>
+<pre><code class="language-html">&lt;button @click="await cargarDatos()"&gt;Cargar datos&lt;/button&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="ejemplo-completo-lista-interactiva">
+    <h2>Ejemplo completo: lista interactiva</h2>
+    <div class="doc-content">
+<pre><code class="language-html">&lt;ul x-data="{ items: ['Uno', 'Dos', 'Tres'], seleccionar(item) { alert(item) } }"&gt;
+  &lt;template x-for="item in items" :key="item"&gt;
+    &lt;li @click="seleccionar(item)"&gt;
+      &lt;span x-text="item"&gt;&lt;/span&gt;
+    &lt;/li&gt;
+  &lt;/template&gt;
+&lt;/ul&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-en-formularios-y-validacion">
+    <h2>Eventos en formularios y validación</h2>
+    <div class="doc-content">
+<p>Puedes usar eventos para validar formularios en tiempo real o al enviar:</p>
+<pre><code class="language-html">&lt;form x-data="{ nombre: '', error: '' }" @submit.prevent="if(!nombre) error = 'El nombre es obligatorio'"&gt;
+  &lt;input x-model="nombre" placeholder="Nombre" /&gt;
+  &lt;span x-text="error" style="color: red"&gt;&lt;/span&gt;
+  &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-de-foco-y-blur">
+    <h2>Eventos de foco y blur</h2>
+    <div class="doc-content">
+<p>Maneja el foco de los elementos para mejorar la experiencia de usuario:</p>
+<pre><code class="language-html">&lt;input @focus="console.log('Input enfocado')" @blur="console.log('Input perdió el foco')" placeholder="Prueba el foco" /&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-de-mouse-avanzados">
+    <h2>Eventos de mouse avanzados</h2>
+    <div class="doc-content">
+<p>Puedes escuchar eventos como <code>mouseenter</code>, <code>mouseleave</code>, <code>mousemove</code> y más:</p>
+<pre><code class="language-html">&lt;div @mouseenter="console.log('Mouse sobre el div')" @mouseleave="console.log('Mouse fuera del div')"&gt;
+  Pasa el mouse por aquí
+&lt;/div&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-de-scroll-y-resize">
+    <h2>Eventos de scroll y resize</h2>
+    <div class="doc-content">
+<p>Escucha eventos globales para reaccionar a cambios en la ventana:</p>
+<pre><code class="language-html">&lt;div @scroll.window="console.log('Scroll detectado')"&gt;&lt;/div&gt;
+&lt;div @resize.window="console.log('Ventana redimensionada')"&gt;&lt;/div&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-personalizados-con-detalles-complejos">
+    <h2>Eventos personalizados con detalles complejos</h2>
+    <div class="doc-content">
+<p>Puedes enviar objetos complejos como detalle en <code>$dispatch</code>:</p>
+<pre><code class="language-html">&lt;div x-data&gt;
+  &lt;button @click="$dispatch('usuario', { id: 1, nombre: 'Ana', roles: ['admin', 'editor'] })"&gt;Enviar usuario&lt;/button&gt;
+&lt;/div&gt;
+&lt;div @usuario.window="console.log($event.detail)"&gt;&lt;/div&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="control-de-propagacion-y-orden-de-eventos">
+    <h2>Control de propagación y orden de eventos</h2>
+    <div class="doc-content">
+<p>Puedes controlar el flujo de los eventos usando <code>.stop</code>, <code>.prevent</code> y <code>.once</code> para evitar comportamientos no deseados:</p>
+<pre><code class="language-html">&lt;div @click="console.log('Padre')"&gt;
+  &lt;button @click.stop="console.log('Hijo')"&gt;Hijo&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+<blockquote class="aside aside-tip">
+Consulta la <a href="https://alpinejs.dev" target="_blank">documentación oficial</a> para más ejemplos y patrones avanzados de eventos en Alpine.js.
+</blockquote>
+    </div>
+  </section>

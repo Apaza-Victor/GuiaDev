@@ -1,0 +1,54 @@
+<!-- 14. Índices y rendimiento - SQL Server (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="clustered-vs-nonclustered">
+    <h2>Clustered vs Nonclustered</h2>
+    <div class="doc-content">
+<p>La tabla solo puede tener UN índice clustered (define el orden físico de las filas; normalmente la PRIMARY KEY). Los nonclustered son estructuras aparte tipo "índice de libro".</p>
+<pre><code class="language-sql">CREATE NONCLUSTERED INDEX IX_Productos_Categoria
+ON dbo.Productos (CategoriaId);
+
+CREATE UNIQUE INDEX IX_Clientes_Email
+ON dbo.Clientes (Email);</code></pre>
+    </div>
+  </section>
+
+  <section id="indices-con-include-y-filtrados">
+    <h2>Índices con INCLUDE y filtrados</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- Covering index: la consulta se resuelve sin tocar la tabla
+CREATE NONCLUSTERED INDEX IX_Ventas_Fecha
+ON dbo.Ventas (Fecha) INCLUDE (Total);
+
+-- Índice filtrado: solo filas relevantes
+CREATE NONCLUSTERED INDEX IX_Pedidos_Pendientes
+ON dbo.Pedidos (Fecha)
+WHERE Estado = N'Pendiente';</code></pre>
+<blockquote class="aside aside-tip">
+<p>Regla práctica: indexa las columnas del <code>WHERE</code>, <code>JOIN</code> y <code>ORDER BY</code> más frecuentes. Cada índice adicional ralentiza INSERT/UPDATE/DELETE.</p>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="medir-antes-de-optimizar">
+    <h2>Medir antes de optimizar</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SET STATISTICS IO ON;    -- lecturas lógicas/físicas
+SET STATISTICS TIME ON;  -- tiempo CPU
+
+SELECT * FROM dbo.Productos WHERE CategoriaId = 2;
+
+-- Ver los índices existentes
+SELECT name, type_desc FROM sys.indexes
+WHERE object_id = OBJECT_ID('dbo.Productos');</code></pre>
+<p>En SSMS activa <em>Incluir plan de ejecución real</em> (Ctrl+M): busca <strong>Table Scan</strong> en tablas grandes (malo) versus <strong>Index Seek</strong> (bueno).</p>
+    </div>
+  </section>
+
+  <section id="mantenimiento">
+    <h2>Mantenimiento</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">UPDATE STATISTICS dbo.Productos;              -- refresca estadísticas
+ALTER INDEX ALL ON dbo.Productos REORGANIZE;  -- desfragmentación ligera
+ALTER INDEX ALL ON dbo.Productos REBUILD;     -- reconstrucción completa</code></pre>
+    </div>
+  </section>

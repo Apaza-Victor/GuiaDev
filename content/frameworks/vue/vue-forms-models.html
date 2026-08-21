@@ -1,0 +1,500 @@
+<!-- 08. Formularios y Modelos - Vue 3 (Frameworks) -->
+  <section id="v-model-con-composition-api">
+    <h2>v-model con Composition API</h2>
+    <div class="doc-content">
+<p>En Vue 3 con Composition API, <code>v-model</code> sigue siendo la directiva principal para crear enlaces bidireccionales entre formularios y datos reactivos. A diferencia de la Options API, los datos reactivos se definen usando <code>ref()</code> o <code>reactive()</code>.</p>
+<h3>Uso básico de v-model</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+// Valores individuales
+const username = ref('')
+const password = ref('')
+const rememberMe = ref(false)
+
+// Objeto reactivo para agrupar campos relacionados
+const form = reactive({
+  username: '',
+  password: '',
+  rememberMe: false
+})
+
+function handleSubmit() {
+  console.log('Formulario enviado:', {
+    username: username.value,
+    password: password.value,
+    rememberMe: rememberMe.value
+  })
+  
+  // O si usas el objeto reactivo
+  console.log('Formulario enviado:', form)
+}
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;form @submit.prevent="handleSubmit"&gt;
+    &lt;!-- Usando refs individuales --&gt;
+    &lt;div&gt;
+      &lt;label for="username"&gt;Usuario:&lt;/label&gt;
+      &lt;input id="username" v-model="username" type="text" /&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+      &lt;label for="password"&gt;Contraseña:&lt;/label&gt;
+      &lt;input id="password" v-model="password" type="password" /&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+      &lt;label&gt;
+        &lt;input type="checkbox" v-model="rememberMe" /&gt;
+        Recordarme
+      &lt;/label&gt;
+    &lt;/div&gt;
+    
+    &lt;!-- O usando un objeto reactivo --&gt;
+    &lt;!--
+    &lt;div&gt;
+      &lt;label for="username"&gt;Usuario:&lt;/label&gt;
+      &lt;input id="username" v-model="form.username" type="text" /&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+      &lt;label for="password"&gt;Contraseña:&lt;/label&gt;
+      &lt;input id="password" v-model="form.password" type="password" /&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+      &lt;label&gt;
+        &lt;input type="checkbox" v-model="form.rememberMe" /&gt;
+        Recordarme
+      &lt;/label&gt;
+    &lt;/div&gt;
+    --&gt;
+    
+    &lt;button type="submit"&gt;Iniciar sesión&lt;/button&gt;
+  &lt;/form&gt;
+&lt;/template&gt;
+</code></pre>
+<h3>Modificadores de v-model</h3>
+<p>Vue proporciona varios modificadores para <code>v-model</code> que facilitan la manipulación de la entrada del usuario:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const message = ref('')
+const age = ref(0)
+const trimmedInput = ref('')
+const lazyInput = ref('')
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;!-- .number: convierte la entrada a número --&gt;
+    &lt;input v-model.number="age" type="text" /&gt;
+    &lt;p&gt;Edad + 1 = {{ age + 1 }}&lt;/p&gt;
+    
+    &lt;!-- .trim: elimina espacios en blanco al inicio y final --&gt;
+    &lt;input v-model.trim="trimmedInput" placeholder="Se eliminarán espacios" /&gt;
+    
+    &lt;!-- .lazy: actualiza después de cambiar el foco (no en cada pulsación) --&gt;
+    &lt;input v-model.lazy="lazyInput" placeholder="Actualiza al perder foco" /&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+    </div>
+  </section>
+
+  <section id="v-model-personalizado-con-modelvalue">
+    <h2>v-model personalizado con modelValue</h2>
+    <div class="doc-content">
+<p>En Vue 3, puedes crear componentes con su propio <code>v-model</code> personalizado. Esto permite crear componentes de formulario reutilizables que mantienen la misma experiencia de enlace bidireccional que los elementos nativos.</p>
+<h3>Implementación básica de v-model personalizado</h3>
+  <h4 class="tab-label">Componente hijo</h4>
+    <pre><code class="language-vue">    &lt;!-- CustomInput.vue --&gt;
+    &lt;script setup&gt;
+    // Define las props y eventos
+    const props = defineProps({
+      modelValue: String // Nombre especial para v-model
+    })
+    
+    const emit = defineEmits(['update:modelValue'])
+    
+    // Función para emitir el evento de actualización
+    function updateValue(event) {
+      emit('update:modelValue', event.target.value)
+    }
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;input 
+        :value="modelValue" 
+        @input="updateValue"
+        class="custom-input" 
+      /&gt;
+    &lt;/template&gt;
+    </code></pre>
+  <h4 class="tab-label">Componente padre</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref } from 'vue'
+    import CustomInput from './CustomInput.vue'
+    
+    const username = ref('')
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;div&gt;
+        &lt;label&gt;Nombre de usuario:&lt;/label&gt;
+        &lt;CustomInput v-model="username" /&gt;
+        &lt;p&gt;Valor actual: {{ username }}&lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    </code></pre>
+<h3>Componente con v-model usando computed</h3>
+<p>Una forma más elegante de implementar un v-model personalizado es usando una propiedad computada con getter y setter:</p>
+<pre><code class="language-vue">&lt;!-- CustomInput.vue --&gt;
+&lt;script setup&gt;
+
+
+const props = defineProps({
+  modelValue: String
+})
+
+const emit = defineEmits(['update:modelValue'])
+
+// Propiedad computada con getter y setter
+const value = computed({
+  get() {
+    return props.modelValue
+  },
+  set(value) {
+    emit('update:modelValue', value)
+  }
+})
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;input v-model="value" class="custom-input" /&gt;
+&lt;/template&gt;
+</code></pre>
+<h3>Múltiples v-model en un componente</h3>
+<p>En Vue 3, puedes tener múltiples v-model en un mismo componente, especificando nombres personalizados:</p>
+  <h4 class="tab-label">Componente hijo</h4>
+    <pre><code class="language-vue">    &lt;!-- UserForm.vue --&gt;
+    &lt;script setup&gt;
+    const props = defineProps({
+      firstName: String,
+      lastName: String
+    })
+    
+    const emit = defineEmits(['update:firstName', 'update:lastName'])
+    
+    // Computadas para cada v-model
+    const firstNameModel = computed({
+      get: () =&gt; props.firstName,
+      set: (value) =&gt; emit('update:firstName', value)
+    })
+    
+    const lastNameModel = computed({
+      get: () =&gt; props.lastName,
+      set: (value) =&gt; emit('update:lastName', value)
+    })
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;div&gt;
+        &lt;input v-model="firstNameModel" placeholder="Nombre" /&gt;
+        &lt;input v-model="lastNameModel" placeholder="Apellido" /&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    </code></pre>
+  <h4 class="tab-label">Componente padre</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref } from 'vue'
+    import UserForm from './UserForm.vue'
+    
+    const firstName = ref('')
+    const lastName = ref('')
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;UserForm
+        v-model:firstName="firstName"
+        v-model:lastName="lastName"
+      /&gt;
+      
+      &lt;p&gt;Nombre completo: {{ firstName }} {{ lastName }}&lt;/p&gt;
+    &lt;/template&gt;
+    </code></pre>
+<blockquote class="aside aside-tip">
+Cuando creas un componente con v-model personalizado, asegúrate de seguir estas reglas:
+
+1. Para un v-model estándar, usa `modelValue` como nombre de prop y emite `update:modelValue`
+2. Para múltiples v-model, usa nombres descriptivos como props y emite `update:nombreProp`
+3. Considera usar computadas con getter/setter para simplificar la implementación
+</blockquote>
+    </div>
+  </section>
+
+  <section id="validacion-basica">
+    <h2>Validación básica</h2>
+    <div class="doc-content">
+<p>La validación de formularios es una parte esencial de cualquier aplicación. Con la Composition API, puedes implementar validaciones de forma limpia y reutilizable.</p>
+<h3>Validación simple con refs y computed</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const email = ref('')
+const password = ref('')
+const submitted = ref(false)
+
+// Validaciones computadas
+const emailError = computed(() =&gt; {
+  if (!email.value) return submitted.value ? 'El email es obligatorio' : ''
+  if (!/^\S+@\S+\.\S+$/.test(email.value)) return 'Email inválido'
+  return ''
+})
+
+const passwordError = computed(() =&gt; {
+  if (!password.value) return submitted.value ? 'La contraseña es obligatoria' : ''
+  if (password.value.length &lt; 6) return 'La contraseña debe tener al menos 6 caracteres'
+  return ''
+})
+
+const isFormValid = computed(() =&gt; {
+  return !emailError.value &amp;&amp; !passwordError.value &amp;&amp; email.value &amp;&amp; password.value
+})
+
+function handleSubmit() {
+  submitted.value = true
+  
+  if (isFormValid.value) {
+    console.log('Formulario válido, enviando datos...')
+    // Enviar datos al servidor
+  } else {
+    console.log('Formulario inválido')
+  }
+}
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;form @submit.prevent="handleSubmit"&gt;
+    &lt;div&gt;
+      &lt;label for="email"&gt;Email:&lt;/label&gt;
+      &lt;input 
+        id="email" 
+        v-model="email" 
+        type="email" 
+        :class="{ 'error': emailError &amp;&amp; submitted }" 
+      /&gt;
+      &lt;p v-if="emailError &amp;&amp; submitted" class="error-message"&gt;{{ emailError }}&lt;/p&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+      &lt;label for="password"&gt;Contraseña:&lt;/label&gt;
+      &lt;input 
+        id="password" 
+        v-model="password" 
+        type="password" 
+        :class="{ 'error': passwordError &amp;&amp; submitted }" 
+      /&gt;
+      &lt;p v-if="passwordError &amp;&amp; submitted" class="error-message"&gt;{{ passwordError }}&lt;/p&gt;
+    &lt;/div&gt;
+    
+    &lt;button type="submit"&gt;Registrarse&lt;/button&gt;
+  &lt;/form&gt;
+&lt;/template&gt;
+
+&lt;style scoped&gt;
+.error {
+  border-color: red;
+}
+.error-message {
+  color: red;
+  font-size: 0.8em;
+  margin-top: 0.2em;
+}
+&lt;/style&gt;
+</code></pre>
+<h3>Validación con composables reutilizables</h3>
+<p>Para formularios más complejos, es recomendable extraer la lógica de validación a composables reutilizables:</p>
+  <h4 class="tab-label">Composable de validación</h4>
+    <pre><code class="language-js">    // useValidation.js
+    import { ref, computed } from 'vue'
+    
+    export function useField(initialValue = '', validations) {
+      const value = ref(initialValue)
+      const errors = ref([])
+      const dirty = ref(false)
+      
+      const validate = () =&gt; {
+        errors.value = []
+        
+        for (const validation of validations) {
+          const error = validation(value.value)
+          if (error) {
+            errors.value.push(error)
+          }
+        }
+        
+        return errors.value.length === 0
+      }
+      
+      const onBlur = () =&gt; {
+        dirty.value = true
+        validate()
+      }
+      
+      const isValid = computed(() =&gt; errors.value.length === 0)
+      
+      return {
+        value,
+        errors,
+        dirty,
+        isValid,
+        validate,
+        onBlur
+      }
+    }
+    
+    // Validadores comunes
+    export const required = (message = 'Este campo es obligatorio') =&gt; {
+      return (value) =&gt; {
+        return (value === undefined || value === null || value === '') ? message : null
+      }
+    }
+    
+    export const minLength = (min, message) =&gt; {
+      return (value) =&gt; {
+        return value.length &lt; min ? (message || `Debe tener al menos ${min} caracteres`) : null
+      }
+    }
+    
+    export const email = (message = 'Email inválido') =&gt; {
+      return (value) =&gt; {
+        const re = /^\S+@\S+\.\S+$/
+        return !re.test(value) ? message : null
+      }
+    }
+    </code></pre>
+  <h4 class="tab-label">Uso en componente</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { computed } from 'vue'
+    import { useField, required, minLength, email } from './useValidation'
+    
+    const emailField = useField('', [
+      required('El email es obligatorio'),
+      email()
+    ])
+    
+    const passwordField = useField('', [
+      required('La contraseña es obligatoria'),
+      minLength(6, 'La contraseña debe tener al menos 6 caracteres')
+    ])
+    
+    const isFormValid = computed(() =&gt; {
+      return emailField.isValid.value &amp;&amp; passwordField.isValid.value
+    })
+    
+    function handleSubmit() {
+      // Validar todos los campos
+      const isEmailValid = emailField.validate()
+      const isPasswordValid = passwordField.validate()
+      
+      if (isFormValid.value) {
+        console.log('Enviando formulario...', {
+          email: emailField.value.value,
+          password: passwordField.value.value
+        })
+      }
+    }
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;form @submit.prevent="handleSubmit"&gt;
+        &lt;div&gt;
+          &lt;label for="email"&gt;Email:&lt;/label&gt;
+          &lt;input 
+            id="email" 
+            v-model="emailField.value" 
+            @blur="emailField.onBlur" 
+            type="email" 
+            :class="{ 'error': emailField.errors.length &amp;&amp; emailField.dirty }" 
+          /&gt;
+          &lt;p v-if="emailField.errors.length &amp;&amp; emailField.dirty" class="error-message"&gt;
+            {{ emailField.errors[0] }}
+          &lt;/p&gt;
+        &lt;/div&gt;
+        
+        &lt;div&gt;
+          &lt;label for="password"&gt;Contraseña:&lt;/label&gt;
+          &lt;input 
+            id="password" 
+            v-model="passwordField.value" 
+            @blur="passwordField.onBlur" 
+            type="password" 
+            :class="{ 'error': passwordField.errors.length &amp;&amp; passwordField.dirty }" 
+          /&gt;
+          &lt;p v-if="passwordField.errors.length &amp;&amp; passwordField.dirty" class="error-message"&gt;
+            {{ passwordField.errors[0] }}
+          &lt;/p&gt;
+        &lt;/div&gt;
+        
+        &lt;button type="submit" :disabled="!isFormValid"&gt;Registrarse&lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/template&gt;
+    </code></pre>
+<h3>Integración con bibliotecas de validación</h3>
+<p>Para aplicaciones más complejas, puedes utilizar bibliotecas de validación como VeeValidate, Vuelidate o Formkit, que se integran perfectamente con la Composition API:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+
+// Definir esquema de validación
+const schema = yup.object({
+  email: yup.string().required('El email es obligatorio').email('Email inválido'),
+  password: yup.string().required('La contraseña es obligatoria').min(6, 'Mínimo 6 caracteres')
+})
+
+// Usar el hook de formulario
+const { handleSubmit, errors, values } = useForm({
+  validationSchema: schema
+})
+
+// Registrar campos
+const { value: email } = useField('email')
+const { value: password } = useField('password')
+
+// Función de envío
+const onSubmit = handleSubmit((values) =&gt; {
+  console.log('Formulario enviado:', values)
+})
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;form @submit="onSubmit"&gt;
+    &lt;div&gt;
+      &lt;label for="email"&gt;Email&lt;/label&gt;
+      &lt;input id="email" v-model="email" type="email" /&gt;
+      &lt;p v-if="errors.email" class="error-message"&gt;{{ errors.email }}&lt;/p&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+      &lt;label for="password"&gt;Contraseña&lt;/label&gt;
+      &lt;input id="password" v-model="password" type="password" /&gt;
+      &lt;p v-if="errors.password" class="error-message"&gt;{{ errors.password }}&lt;/p&gt;
+    &lt;/div&gt;
+    
+    &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+  &lt;/form&gt;
+&lt;/template&gt;
+</code></pre>
+<blockquote class="aside">
+Cuando implementes validaciones de formularios, considera estas buenas prácticas:
+
+1. Validar tanto en el cliente como en el servidor
+2. Proporcionar retroalimentación inmediata al usuario
+3. Mostrar mensajes de error claros y específicos
+4. Considerar la accesibilidad (atributos ARIA, mensajes para lectores de pantalla)
+5. Implementar validación en tiempo real para campos críticos
+</blockquote>
+    </div>
+  </section>

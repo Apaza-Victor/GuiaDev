@@ -1,0 +1,236 @@
+<!-- 06. Ciclo de Vida - Vue 3 (Frameworks) -->
+  <section id="hooks-del-ciclo-de-vida-en-vue">
+    <h2>Hooks del Ciclo de Vida en Vue</h2>
+    <div class="doc-content">
+<p>Los hooks del ciclo de vida permiten ejecutar código en momentos específicos durante la vida de un componente. En la Composition API, estos hooks se importan desde Vue y se llaman directamente dentro de <code><script setup></code> o en la función <code>setup()</code>.</p>
+<blockquote class="aside">
+Todos los hooks de ciclo de vida deben ser registrados **sincrónicamente** durante la fase de `setup` del componente.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="diagrama-del-ciclo-de-vida">
+    <h2>Diagrama del Ciclo de Vida</h2>
+    <div class="doc-content">
+<pre><code class="language-text">Creación → onBeforeMount → onMounted → onBeforeUpdate → onUpdated → onBeforeUnmount → onUnmounted
+</code></pre>
+    </div>
+  </section>
+
+  <section id="onbeforemount">
+    <h2>`onBeforeMount()`</h2>
+    <div class="doc-content">
+<p>Se ejecuta justo antes de que el componente se monte en el DOM.</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const message = ref('Cargando...')
+
+onBeforeMount(() =&gt; {
+  console.log('El componente está a punto de montarse')
+  // El DOM aún no está disponible aquí
+  // Ideal para configuraciones finales antes del montaje
+})
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;{{ message }}&lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<blockquote class="aside aside-note">
+En este punto, el componente ha completado la configuración de su estado reactivo, pero aún no se ha creado ningún nodo del DOM.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="onmounted">
+    <h2>`onMounted()`</h2>
+    <div class="doc-content">
+<p>Se ejecuta después de que el componente ha sido montado en el DOM.</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const el = ref(null)
+const message = ref('Cargando...')
+
+onMounted(() =&gt; {
+  console.log('El componente ha sido montado')
+  console.log('Elemento referenciado:', el.value) // Ahora el DOM está disponible
+  message.value = 'Componente montado'
+  
+  // Ideal para:
+  // - Acceder al DOM renderizado
+  // - Inicializar bibliotecas externas
+  // - Realizar peticiones de datos
+})
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div ref="el"&gt;{{ message }}&lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<blockquote class="aside aside-tip">
+Este es el hook más utilizado y es ideal para inicializar bibliotecas externas, realizar peticiones de datos o acceder a elementos del DOM.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="onbeforeupdate">
+    <h2>`onBeforeUpdate()`</h2>
+    <div class="doc-content">
+<p>Se ejecuta justo antes de que Vue actualice el DOM debido a un cambio en el estado reactivo.</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const count = ref(0)
+
+onBeforeUpdate(() =&gt; {
+  console.log('El componente está a punto de actualizarse')
+  console.log('Valor actual en el DOM:', document.getElementById('counter').textContent)
+  console.log('Nuevo valor en el estado:', count.value)
+  // Útil para capturar el estado del DOM antes de una actualización
+})
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;p id="counter"&gt;{{ count }}&lt;/p&gt;
+    &lt;button @click="count++"&gt;Incrementar&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<blockquote class="aside">
+Este hook te permite acceder al estado del DOM justo antes de que Vue lo actualice, lo que puede ser útil para comparar valores.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="onupdated">
+    <h2>`onUpdated()`</h2>
+    <div class="doc-content">
+<p>Se ejecuta después de que Vue ha actualizado el DOM debido a un cambio en el estado reactivo.</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const count = ref(0)
+
+onUpdated(() =&gt; {
+  console.log('El componente ha sido actualizado')
+  console.log('DOM actualizado con nuevo valor:', document.getElementById('counter').textContent)
+  // El DOM ya refleja el nuevo estado
+})
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;p id="counter"&gt;{{ count }}&lt;/p&gt;
+    &lt;button @click="count++"&gt;Incrementar&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<blockquote class="aside aside-caution">
+Evita modificar el estado reactivo dentro de `onUpdated()` ya que podría causar un bucle infinito de actualizaciones.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="onbeforeunmount">
+    <h2>`onBeforeUnmount()`</h2>
+    <div class="doc-content">
+<p>Se ejecuta justo antes de que un componente sea desmontado y destruido.</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+let intervalId = null
+
+// Configurar un intervalo
+intervalId = setInterval(() =&gt; {
+  console.log('Intervalo ejecutándose')
+}, 1000)
+
+onBeforeUnmount(() =&gt; {
+  console.log('El componente está a punto de desmontarse')
+  // Ideal para limpiar recursos que no serán recogidos automáticamente
+  clearInterval(intervalId) // Limpiar el intervalo antes de desmontar
+})
+&lt;/script&gt;
+</code></pre>
+<blockquote class="aside">
+Este hook es útil para limpiar recursos como temporizadores, suscripciones a eventos o conexiones a WebSockets antes de que el componente sea destruido.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="onunmounted">
+    <h2>`onUnmounted()`</h2>
+    <div class="doc-content">
+<p>Se ejecuta después de que el componente ha sido desmontado y destruido.</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+onUnmounted(() =&gt; {
+  console.log('El componente ha sido desmontado')
+  // El componente ya no existe en el DOM
+  // Todas las directivas y listeners de eventos han sido desvinculados
+  // Todos los componentes hijos también han sido desmontados
+})
+&lt;/script&gt;
+</code></pre>
+<blockquote class="aside aside-note">
+En este punto, todas las directivas del componente han sido desvinculadas, todos los event listeners han sido removidos, y todos los componentes hijos también han sido desmontados.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="ejemplo-completo">
+    <h2>Ejemplo Completo</h2>
+    <div class="doc-content">
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const count = ref(0)
+const mounted = ref(false)
+
+onBeforeMount(() =&gt; {
+  console.log('1. onBeforeMount: Componente a punto de montarse')
+})
+
+onMounted(() =&gt; {
+  console.log('2. onMounted: Componente montado')
+  mounted.value = true
+})
+
+onBeforeUpdate(() =&gt; {
+  console.log('3. onBeforeUpdate: Componente a punto de actualizarse')
+})
+
+onUpdated(() =&gt; {
+  console.log('4. onUpdated: Componente actualizado')
+})
+
+onBeforeUnmount(() =&gt; {
+  console.log('5. onBeforeUnmount: Componente a punto de desmontarse')
+})
+
+onUnmounted(() =&gt; {
+  console.log('6. onUnmounted: Componente desmontado')
+})
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;p&gt;Contador: {{ count }}&lt;/p&gt;
+    &lt;button @click="count++"&gt;Incrementar&lt;/button&gt;
+    &lt;p v-if="mounted"&gt;¡Componente montado!&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+    </div>
+  </section>
+
+  <section id="tabla-comparativa">
+    <h2>Tabla Comparativa</h2>
+    <div class="doc-content">
+<table><thead><tr><th>Hook</th><th>Momento de ejecución</th><th>Caso de uso común</th></tr></thead><tbody><tr><td><code>onBeforeMount</code></td><td>Antes de insertar el componente en el DOM</td><td>Configuración final antes del montaje</td></tr><tr><td><code>onMounted</code></td><td>Después de insertar el componente en el DOM</td><td>Acceso al DOM, inicialización de bibliotecas, peticiones de datos</td></tr><tr><td><code>onBeforeUpdate</code></td><td>Antes de actualizar el DOM por cambios reactivos</td><td>Capturar el estado del DOM antes de una actualización</td></tr><tr><td><code>onUpdated</code></td><td>Después de actualizar el DOM por cambios reactivos</td><td>Acceder al DOM actualizado</td></tr><tr><td><code>onBeforeUnmount</code></td><td>Justo antes de desmontar el componente</td><td>Limpieza de recursos (timers, event listeners)</td></tr><tr><td><code>onUnmounted</code></td><td>Después de desmontar el componente</td><td>Confirmación de limpieza completa</td></tr></tbody></table>
+    </div>
+  </section>

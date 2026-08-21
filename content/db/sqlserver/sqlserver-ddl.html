@@ -1,0 +1,66 @@
+<!-- 4. DDL: bases de datos y tablas - SQL Server (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="crear-y-eliminar-bases-de-datos">
+    <h2>Crear y eliminar bases de datos</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE DATABASE Ventas;
+GO
+
+ALTER DATABASE Ventas MODIFY NAME = Ventas2026;
+GO
+
+DROP DATABASE IF EXISTS Ventas2026;</code></pre>
+    </div>
+  </section>
+
+  <section id="esquemas-schemas">
+    <h2>Esquemas (schemas)</h2>
+    <div class="doc-content">
+<p>Un esquema es un contenedor lógico dentro de la base. El predeterminado es <code>dbo</code>. Sirven para organizar y dar permisos por áreas.</p>
+<pre><code class="language-sql">CREATE SCHEMA ventas AUTHORIZATION dbo;
+GO
+
+CREATE TABLE ventas.Facturas (
+  Id INT IDENTITY PRIMARY KEY,
+  Total DECIMAL(12,2) NOT NULL
+);</code></pre>
+    </div>
+  </section>
+
+  <section id="create-y-alter-table">
+    <h2>CREATE y ALTER TABLE</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE TABLE dbo.Categorias (
+  Id INT IDENTITY(1,1) PRIMARY KEY,
+  Nombre NVARCHAR(50) NOT NULL
+);
+GO
+
+CREATE TABLE dbo.Productos (
+  Id INT IDENTITY(1,1) PRIMARY KEY,
+  Nombre NVARCHAR(150) NOT NULL,
+  Precio DECIMAL(10,2) NOT NULL CONSTRAINT DF_Productos_Precio DEFAULT(0),
+  CategoriaId INT NULL
+);
+GO
+
+ALTER TABLE dbo.Productos ADD Descripcion NVARCHAR(500) NULL;
+ALTER TABLE dbo.Productos ALTER COLUMN Nombre NVARCHAR(200) NOT NULL;
+ALTER TABLE dbo.Productos DROP COLUMN Descripcion;</code></pre>
+<blockquote class="aside aside-note">
+<p>Nombrar los constraints (ej. <code>DF_Productos_Precio</code>) facilita modificarlos después sin depender de nombres autogenerados.</p>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="truncate-vs-delete-vs-drop">
+    <h2>TRUNCATE vs DELETE vs DROP</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">TRUNCATE TABLE dbo.Productos;   -- vacía rápido, reinicia IDENTITY
+DELETE FROM dbo.Productos;      -- fila por fila, permite WHERE
+DROP TABLE dbo.Productos;       -- elimina estructura</code></pre>
+<blockquote class="aside aside-caution">
+<p><code>TRUNCATE</code> no funciona si la tabla tiene llaves foráneas que le apuntan; en ese caso usa <code>DELETE</code>.</p>
+</blockquote>
+    </div>
+  </section>

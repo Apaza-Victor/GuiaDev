@@ -1,0 +1,949 @@
+<!-- 3. Relaciones Entre Clases - Diag. Clases (UML) -->
+  <section id="3-1-asociacion">
+    <h2>3.1. Asociación</h2>
+    <div class="doc-content">
+<p>La asociación es la relación más básica y común entre clases. Representa una conexión estructural o conceptual entre dos o más clases.</p>
+<h3>Características principales</h3>
+<ul>
+<li>Se representa mediante una <strong>línea sólida</strong> que conecta las clases relacionadas</li>
+<li>Puede ser <strong>unidireccional</strong> (con una flecha en un extremo) o <strong>bidireccional</strong> (sin flechas)</li>
+<li>Puede incluir un <strong>nombre</strong> que describe la naturaleza de la relación</li>
+<li>Puede mostrar <strong>roles</strong> en cada extremo, indicando el papel que juega cada clase en la relación</li>
+</ul>
+<h3>Representación gráfica</h3>
+<pre><code class="language-text">[Estudiante] ────────&gt; [Curso]
+             se inscribe</code></pre>
+<pre><code class="language-text">[Profesor] &lt;────────&gt; [Curso]
+           imparte    contiene</code></pre>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d20636c61737341747472696275746549636f6e53697a6520300a0a636c61737320457374756469616e7465207b0a20202d69643a20537472696e670a20202d6e6f6d6272653a20537472696e670a20202b696e73637269626972736528637572736f3a20437572736f293a20766f69640a7d0a0a636c61737320437572736f207b0a20202d636f6469676f3a20537472696e670a20202d6e6f6d6272653a20537472696e670a20202b61677265676172457374756469616e746528657374756469616e74653a20457374756469616e7465293a20766f69640a7d0a0a272041736f6369616369c3b36e20756e69646972656363696f6e616c0a457374756469616e7465202d2d3e20437572736f203a20736520696e736372696265203e0a0a636c6173732050726f6665736f72207b0a20202d69643a20537472696e670a20202d6e6f6d6272653a20537472696e670a20202d657370656369616c696461643a20537472696e670a7d0a0a272041736f6369616369c3b36e206269646972656363696f6e616c20636f6e20726f6c65730a50726f6665736f722022312e2e2a22203c2d2d3e20222a2220437572736f203a20696d7061727465203e203c20636f6e7469656e650a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam classAttributeIconSize 0
+
+class Estudiante {
+  -id: String
+  -nombre: String
+  +inscribirse(curso: Curso): void
+}
+
+class Curso {
+  -codigo: String
+  -nombre: String
+  +agregarEstudiante(estudiante: Estudiante): void
+}
+
+' Asociación unidireccional
+Estudiante --&gt; Curso : se inscribe &gt;
+
+class Profesor {
+  -id: String
+  -nombre: String
+  -especialidad: String
+}
+
+' Asociación bidireccional con roles
+Profesor "1..*" &lt;--&gt; "*" Curso : imparte &gt; &lt; contiene
+@enduml</code></pre>
+  </details>
+</div>
+<h3>Ejemplo en contexto</h3>
+  <h4 class="tab-label">Diagrama</h4>
+    <pre><code class="language-text">[Estudiante]                      [Curso]
+-----------------          ---------------
+| -id: String    |          | -codigo: String |
+| -nombre: String |          | -nombre: String |
+-----------------          ---------------
+       |                          |
+       |  1..*                    | 0..*
+       |--------&gt; se inscribe ---&gt;|
+</code></pre>
+  <h4 class="tab-label">Código Java</h4>
+    <pre><code class="language-java">    import java.util.ArrayList;
+    import java.util.List;
+
+    public class Estudiante {
+        private String id;
+        private String nombre;
+        private List&lt;Curso&gt; cursos; // Asociación con Curso
+        
+        public Estudiante(String id, String nombre) {
+            this.id = id;
+            this.nombre = nombre;
+            this.cursos = new ArrayList&lt;&gt;();
+        }
+        
+        public void inscribirEnCurso(Curso curso) {
+            // Asociación bidireccional
+            this.cursos.add(curso);
+            curso.agregarEstudiante(this);
+        }
+        
+        public String getId() { return id; }
+        public String getNombre() { return nombre; }
+        public List&lt;Curso&gt; getCursos() { return cursos; }
+    }
+    
+    public class Curso {
+        private String codigo;
+        private String nombre;
+        private List&lt;Estudiante&gt; estudiantes; // Asociación con Estudiante
+        
+        public Curso(String codigo, String nombre) {
+            this.codigo = codigo;
+            this.nombre = nombre;
+            this.estudiantes = new ArrayList&lt;&gt;();
+        }
+        
+        public void agregarEstudiante(Estudiante estudiante) {
+            // Evitamos duplicados
+            if (!this.estudiantes.contains(estudiante)) {
+                this.estudiantes.add(estudiante);
+            }
+        }
+        
+        public String getCodigo() { return codigo; }
+        public String getNombre() { return nombre; }
+        public List&lt;Estudiante&gt; getEstudiantes() { return estudiantes; }
+    }
+    </code></pre>
+<blockquote class="aside aside-tip">
+La asociación es la relación más flexible y común. Cuando no estés seguro de qué tipo de relación usar, comienza con una asociación simple y refina según sea necesario.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="3-2-multiplicidad">
+    <h2>3.2. Multiplicidad</h2>
+    <div class="doc-content">
+<p>La multiplicidad define cuántos objetos de una clase pueden relacionarse con un objeto de otra clase. Es un aspecto crucial de las asociaciones que especifica las restricciones cuantitativas de la relación.</p>
+<h3>Notación de multiplicidad</h3>
+<table><thead><tr><th>Notación</th><th>Significado</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>1</code></td><td>Exactamente uno</td><td>Una persona tiene exactamente un número de identificación</td></tr><tr><td><code>0..1</code></td><td>Cero o uno (opcional)</td><td>Una persona puede tener o no un pasaporte</td></tr><tr><td><code>*</code> o <code>0..*</code></td><td>Cero o muchos</td><td>Un cliente puede realizar cualquier número de pedidos (o ninguno)</td></tr><tr><td><code>1..*</code></td><td>Uno o muchos</td><td>Un pedido debe contener al menos un producto</td></tr><tr><td><code>n..m</code></td><td>De n a m instancias</td><td>Un equipo tiene entre 2 y 11 jugadores (2..11)</td></tr></tbody></table>
+<h3>Representación gráfica</h3>
+<pre><code class="language-text">[Pedido] 1 ----------&gt; 1..* [LineaPedido]
+          tiene</code></pre>
+<pre><code class="language-text">[Estudiante] 0..* ----------&gt; 0..* [Curso]
+                  se inscribe</code></pre>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d20636c61737341747472696275746549636f6e53697a6520300a0a636c6173732050656469646f207b0a20202d69643a20496e74656765720a20202d66656368613a20446174650a20202d746f74616c3a20446f75626c650a20202b63616c63756c6172546f74616c28293a20446f75626c650a7d0a0a636c617373204c696e656150656469646f207b0a20202d63616e74696461643a20496e74656765720a20202d70726563696f556e69746172696f3a20446f75626c650a20202b676574537562746f74616c28293a20446f75626c650a7d0a0a27204d756c7469706c6963696461643a20756e2070656469646f207469656e6520756e61206f206dc3a173206cc3ad6e6561732064652070656469646f0a50656469646f20223122202d2d3e2022312e2e2a22204c696e656150656469646f203a207469656e65203e0a0a636c61737320457374756469616e7465207b0a20202d69643a20537472696e670a20202d6e6f6d6272653a20537472696e670a7d0a0a636c61737320437572736f207b0a20202d636f6469676f3a20537472696e670a20202d6e6f6d6272653a20537472696e670a7d0a0a27204d756c7469706c6963696461643a2072656c616369c3b36e206d7563686f732061206d7563686f730a457374756469616e746520222a22202d2d3e20222a2220437572736f203a20736520696e736372696265203e0a0a636c617373204269626c696f74656361207b0a20202d6e6f6d6272653a20537472696e670a20202d646972656363696f6e3a20537472696e670a7d0a0a636c617373204c6962726f207b0a20202d6973626e3a20537472696e670a20202d746974756c6f3a20537472696e670a20202d6175746f723a20537472696e670a7d0a0a27204d756c7469706c6963696461643a20756e61206269626c696f74656361207469656e65206d7563686f73206c6962726f732c20756e206c6962726f2070657274656e656365206120756e61206269626c696f746563610a4269626c696f7465636120223122202d2d3e20222a22204c6962726f203a20636f6e7469656e65203e0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam classAttributeIconSize 0
+
+class Pedido {
+  -id: Integer
+  -fecha: Date
+  -total: Double
+  +calcularTotal(): Double
+}
+
+class LineaPedido {
+  -cantidad: Integer
+  -precioUnitario: Double
+  +getSubtotal(): Double
+}
+
+' Multiplicidad: un pedido tiene una o más líneas de pedido
+Pedido "1" --&gt; "1..*" LineaPedido : tiene &gt;
+
+class Estudiante {
+  -id: String
+  -nombre: String
+}
+
+class Curso {
+  -codigo: String
+  -nombre: String
+}
+
+' Multiplicidad: relación muchos a muchos
+Estudiante "*" --&gt; "*" Curso : se inscribe &gt;
+
+class Biblioteca {
+  -nombre: String
+  -direccion: String
+}
+
+class Libro {
+  -isbn: String
+  -titulo: String
+  -autor: String
+}
+
+' Multiplicidad: una biblioteca tiene muchos libros, un libro pertenece a una biblioteca
+Biblioteca "1" --&gt; "*" Libro : contiene &gt;
+@enduml</code></pre>
+  </details>
+</div>
+<h3>Ejemplo en contexto</h3>
+  <h4 class="tab-label">Diagrama</h4>
+    <pre><code class="language-text">[Biblioteca]                    [Libro]
+-----------------          ---------------
+| -nombre       |          | -titulo     |
+| -direccion    | 1        | -autor      |
+-----------------          ---------------
+       |                          |
+       |                          | *
+       |--------&gt; contiene ------&gt;|
+</code></pre>
+  <h4 class="tab-label">Código Java</h4>
+    <pre><code class="language-java">    import java.util.ArrayList;
+    import java.util.List;
+    import java.util.Collections;
+
+    public class Biblioteca {
+        private String nombre;
+        private String direccion;
+        private List&lt;Libro&gt; libros;
+        
+        public Biblioteca(String nombre, String direccion) {
+            this.nombre = nombre;
+            this.direccion = direccion;
+            this.libros = new ArrayList&lt;&gt;();  // Multiplicidad: muchos (0..*) libros
+        }
+        
+        public void agregarLibro(Libro libro) {
+            libros.add(libro);
+            libro.setBiblioteca(this);
+        }
+        
+        public List&lt;Libro&gt; getLibros() {
+            return Collections.unmodifiableList(libros);  // Retorna una vista inmutable
+        }
+        
+        public String getNombre() { return nombre; }
+        public String getDireccion() { return direccion; }
+    }
+    
+    public class Libro {
+        private String titulo;
+        private String autor;
+        private Biblioteca biblioteca;  // Multiplicidad: exactamente una (1) biblioteca
+        
+        public Libro(String titulo, String autor) {
+            this.titulo = titulo;
+            this.autor = autor;
+        }
+        
+        // Método para establecer la biblioteca (relación 1 a muchos)
+        public void setBiblioteca(Biblioteca biblioteca) {
+            this.biblioteca = biblioteca;
+        }
+        
+        public String getTitulo() { return titulo; }
+        public String getAutor() { return autor; }
+        public Biblioteca getBiblioteca() { return biblioteca; }
+    }
+    </code></pre>
+  <h4 class="tab-label">Código Python</h4>
+    <pre><code class="language-python">    class Biblioteca:
+        def __init__(self, nombre, direccion):
+            self.nombre = nombre
+            self.direccion = direccion
+            self.libros = []  # Multiplicidad: muchos libros
+            
+        def agregar_libro(self, libro):
+            self.libros.append(libro)
+    
+    class Libro:
+        def __init__(self, titulo, autor, biblioteca=None):
+            self.titulo = titulo
+            self.autor = autor
+            self.biblioteca = biblioteca  # Multiplicidad: un libro pertenece a una biblioteca
+    </code></pre>
+<blockquote class="aside aside-note">
+La multiplicidad es fundamental para entender las restricciones cuantitativas entre clases y tiene un impacto directo en cómo se implementan las relaciones en el código.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="3-3-agregacion">
+    <h2>3.3. Agregación</h2>
+    <div class="doc-content">
+<p>La agregación es un tipo especial de asociación que representa una relación "todo-parte" o "tiene un" donde las partes pueden existir independientemente del todo.</p>
+<h3>Características principales</h3>
+<ul>
+<li>Se representa mediante una <strong>línea con un diamante vacío</strong> en el extremo de la clase "todo"</li>
+<li>Indica una <strong>relación débil</strong> entre el todo y sus partes</li>
+<li>Las partes <strong>pueden existir independientemente</strong> del todo</li>
+<li>Si el todo se destruye, las partes <strong>pueden seguir existiendo</strong></li>
+</ul>
+<h3>Representación gráfica</h3>
+<pre><code class="language-text">[Departamento] &lt;&gt;----------&gt; [Empleado]
+               tiene</code></pre>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d20636c61737341747472696275746549636f6e53697a6520300a0a636c61737320446570617274616d656e746f207b0a20202d6e6f6d6272653a20537472696e670a20202d756269636163696f6e3a20537472696e670a20202b61677265676172456d706c6561646f28656d706c6561646f3a20456d706c6561646f293a20766f69640a20202b656c696d696e6172456d706c6561646f28656d706c6561646f3a20456d706c6561646f293a20766f69640a20202b676574456d706c6561646f7328293a204c6973743c456d706c6561646f3e0a7d0a0a636c61737320456d706c6561646f207b0a20202d69643a20496e74656765720a20202d6e6f6d6272653a20537472696e670a20202d70756573746f3a20537472696e670a20202b736574446570617274616d656e746f28646570617274616d656e746f3a20446570617274616d656e746f293a20766f69640a7d0a0a27204167726567616369c3b36e3a20756e20646570617274616d656e746f207469656e6520656d706c6561646f732c207065726f206c6f7320656d706c6561646f730a272070756564656e206578697374697220696e646570656e6469656e74656d656e74652064656c20646570617274616d656e746f0a446570617274616d656e746f206f2d2d20222a2220456d706c6561646f203a207469656e65203e0a0a636c6173732045717569706f207b0a20202d6e6f6d6272653a20537472696e670a20202d63617465676f7269613a20537472696e670a20202b616772656761724a756761646f72286a756761646f723a204a756761646f72293a20766f69640a7d0a0a636c617373204a756761646f72207b0a20202d6e6f6d6272653a20537472696e670a20202d706f736963696f6e3a20537472696e670a20202d6e756d65726f3a20496e74656765720a7d0a0a27204f747261206167726567616369c3b36e3a20756e2065717569706f207469656e65206a756761646f7265730a45717569706f206f2d2d2022312e2e2a22204a756761646f72203a207469656e65203e0a0a6e6f746520224c6f73206a756761646f7265732070756564656e0a657869737469722073696e20756e2065717569706f206f0a63616d626961722064652065717569706f22206173204e310a4a756761646f72202e2e204e310a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam classAttributeIconSize 0
+
+class Departamento {
+  -nombre: String
+  -ubicacion: String
+  +agregarEmpleado(empleado: Empleado): void
+  +eliminarEmpleado(empleado: Empleado): void
+  +getEmpleados(): List&lt;Empleado&gt;
+}
+
+class Empleado {
+  -id: Integer
+  -nombre: String
+  -puesto: String
+  +setDepartamento(departamento: Departamento): void
+}
+
+' Agregación: un departamento tiene empleados, pero los empleados
+' pueden existir independientemente del departamento
+Departamento o-- "*" Empleado : tiene &gt;
+
+class Equipo {
+  -nombre: String
+  -categoria: String
+  +agregarJugador(jugador: Jugador): void
+}
+
+class Jugador {
+  -nombre: String
+  -posicion: String
+  -numero: Integer
+}
+
+' Otra agregación: un equipo tiene jugadores
+Equipo o-- "1..*" Jugador : tiene &gt;
+
+note "Los jugadores pueden
+existir sin un equipo o
+cambiar de equipo" as N1
+Jugador .. N1
+@enduml</code></pre>
+  </details>
+</div>
+<h3>Ejemplo en contexto</h3>
+  <h4 class="tab-label">Diagrama</h4>
+    <pre><code class="language-text">[Equipo]                      [Jugador]
+-----------------          ---------------
+| -nombre       |          | -nombre     |
+| -categoria    | 1        | -posicion   |
+-----------------          ---------------
+       |                          |
+       | &lt;&gt;                        | 1..*
+       |--------&gt; tiene ---------&gt;|
+</code></pre>
+  <h4 class="tab-label">Código Java</h4>
+    <pre><code class="language-java">    import java.util.ArrayList;
+    import java.util.List;
+
+    public class Equipo {
+        private String nombre;
+        private String categoria;
+        private List&lt;Jugador&gt; jugadores; // Agregación: el equipo tiene jugadores
+        
+        public Equipo(String nombre, String categoria) {
+            this.nombre = nombre;
+            this.categoria = categoria;
+            this.jugadores = new ArrayList&lt;&gt;();
+        }
+        
+        public void agregarJugador(Jugador jugador) {
+            // En la agregación, el jugador puede existir independientemente
+            jugadores.add(jugador);
+            jugador.setEquipoActual(this);
+        }
+        
+        public void eliminarJugador(Jugador jugador) {
+            // Al eliminar un jugador del equipo, el jugador sigue existiendo
+            jugadores.remove(jugador);
+            jugador.setEquipoActual(null);
+        }
+        
+        public String getNombre() { return nombre; }
+        public String getCategoria() { return categoria; }
+        public List&lt;Jugador&gt; getJugadores() { return new ArrayList&lt;&gt;(jugadores); }
+    }
+    
+    public class Jugador {
+        private String nombre;
+        private String posicion;
+        private Equipo equipoActual; // Un jugador puede existir sin equipo
+        
+        public Jugador(String nombre, String posicion) {
+            this.nombre = nombre;
+            this.posicion = posicion;
+            // No se inicializa equipoActual - puede ser null
+        }
+        
+        public void setEquipoActual(Equipo equipo) {
+            this.equipoActual = equipo;
+        }
+        
+        public String getNombre() { return nombre; }
+        public String getPosicion() { return posicion; }
+        public Equipo getEquipoActual() { return equipoActual; }
+    }
+    </code></pre>
+  <h4 class="tab-label">Código C#</h4>
+    <pre><code class="language-csharp">    public class Equipo {
+        public string Nombre { get; set; }
+        public string Categoria { get; set; }
+        public List&lt;Jugador&gt; Jugadores { get; set; } = new List&lt;Jugador&gt;();
+        
+        public void AgregarJugador(Jugador jugador) {
+            Jugadores.Add(jugador);
+        }
+    }
+    
+    public class Jugador {
+        public string Nombre { get; set; }
+        public string Posicion { get; set; }
+        // Un jugador puede existir sin pertenecer a un equipo
+        // o puede cambiar de equipo
+    }
+    </code></pre>
+<blockquote class="aside aside-tip">
+Piensa en la agregación como una relación donde las partes pueden "prestarse" a diferentes todos. Por ejemplo, un profesor puede pertenecer a varios departamentos, y si un departamento se elimina, el profesor sigue existiendo.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="3-4-composicion">
+    <h2>3.4. Composición</h2>
+    <div class="doc-content">
+<p>La composición es una forma más fuerte de agregación que representa una relación "todo-parte" donde las partes no pueden existir sin el todo.</p>
+<h3>Características principales</h3>
+<ul>
+<li>Se representa mediante una <strong>línea con un diamante sólido</strong> en el extremo de la clase "todo"</li>
+<li>Indica una <strong>relación fuerte</strong> entre el todo y sus partes</li>
+<li>Las partes <strong>no pueden existir independientemente</strong> del todo</li>
+<li>Si el todo se destruye, las partes <strong>también se destruyen</strong></li>
+<li>Una parte <strong>pertenece solo a un todo</strong> a la vez</li>
+</ul>
+<h3>Representación gráfica</h3>
+<pre><code class="language-text">[Casa] &lt;*&gt;----------&gt; [Habitacion]
+         contiene</code></pre>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d20636c61737341747472696275746549636f6e53697a6520300a0a636c6173732043617361207b0a20202d646972656363696f6e3a20537472696e670a20202d6d6574726f73437561647261646f733a20446f75626c650a20202b6167726567617248616269746163696f6e287469706f3a20537472696e672c20617265613a20446f75626c65293a2048616269746163696f6e0a20202b67657448616269746163696f6e657328293a204c6973743c48616269746163696f6e3e0a7d0a0a636c6173732048616269746163696f6e207b0a20202d7469706f3a20537472696e670a20202d617265613a20446f75626c650a20202d636173613a20436173610a7d0a0a2720436f6d706f73696369c3b36e3a20756e61206361736120636f6e7469656e652068616269746163696f6e65732c207369206c6120636173610a272073652064657374727579652c206c61732068616269746163696f6e65732074616d6269c3a96e2073652064657374727579656e0a43617361202a2d2d2022312e2e2a222048616269746163696f6e203a20636f6e7469656e65203e0a0a636c6173732050656469646f207b0a20202d69643a20496e74656765720a20202d66656368613a20446174650a20202d746f74616c3a20446f75626c650a20202b63616c63756c6172546f74616c28293a20446f75626c650a20202b616772656761724c696e65612870726f647563746f3a2050726f647563746f2c2063616e74696461643a20496e7465676572293a204c696e656150656469646f0a7d0a0a636c617373204c696e656150656469646f207b0a20202d63616e74696461643a20496e74656765720a20202d70726563696f556e69746172696f3a20446f75626c650a20202d70656469646f3a2050656469646f0a20202b676574537562746f74616c28293a20446f75626c650a7d0a0a27204f74726120636f6d706f73696369c3b36e3a20756e2070656469646f20636f6e7469656e65206cc3ad6e6561732064652070656469646f0a50656469646f202a2d2d2022312e2e2a22204c696e656150656469646f203a20636f6e7469656e65203e0a0a6e6f746520224c6173206cc3ad6e6561732064652070656469646f206e6f2070756564656e0a657869737469722073696e2073752070656469646f2061736f636961646f22206173204e310a4c696e656150656469646f202e2e204e310a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam classAttributeIconSize 0
+
+class Casa {
+  -direccion: String
+  -metrosCuadrados: Double
+  +agregarHabitacion(tipo: String, area: Double): Habitacion
+  +getHabitaciones(): List&lt;Habitacion&gt;
+}
+
+class Habitacion {
+  -tipo: String
+  -area: Double
+  -casa: Casa
+}
+
+' Composición: una casa contiene habitaciones, si la casa
+' se destruye, las habitaciones también se destruyen
+Casa *-- "1..*" Habitacion : contiene &gt;
+
+class Pedido {
+  -id: Integer
+  -fecha: Date
+  -total: Double
+  +calcularTotal(): Double
+  +agregarLinea(producto: Producto, cantidad: Integer): LineaPedido
+}
+
+class LineaPedido {
+  -cantidad: Integer
+  -precioUnitario: Double
+  -pedido: Pedido
+  +getSubtotal(): Double
+}
+
+' Otra composición: un pedido contiene líneas de pedido
+Pedido *-- "1..*" LineaPedido : contiene &gt;
+
+note "Las líneas de pedido no pueden
+existir sin su pedido asociado" as N1
+LineaPedido .. N1
+@enduml</code></pre>
+  </details>
+</div>
+<h3>Ejemplo en contexto</h3>
+  <h4 class="tab-label">Diagrama</h4>
+    <pre><code class="language-text">[Pedido]                      [LineaPedido]
+-----------------          ---------------
+| -fecha        |          | -cantidad   |
+| -total        | 1        | -precio     |
+-----------------          ---------------
+       |                          |
+       | &lt;*&gt;                       | 1..*
+       |--------&gt; contiene ------&gt;|
+</code></pre>
+  <h4 class="tab-label">Código Java</h4>
+    <pre><code class="language-java">    import java.util.ArrayList;
+    import java.util.Collections;
+    import java.util.Date;
+    import java.util.List;
+
+    public class Pedido {
+        private Date fecha;
+        private double total;
+        private final List&lt;LineaPedido&gt; lineas; // Composición: las líneas son parte del pedido
+        
+        public Pedido() {
+            this.fecha = new Date();
+            this.total = 0.0;
+            this.lineas = new ArrayList&lt;&gt;();
+        }
+        
+        // Al crear una línea de pedido, está vinculada a este pedido
+        // La línea solo puede ser creada por el pedido (composición)
+        public LineaPedido crearLineaPedido(int cantidad, double precio) {
+            LineaPedido linea = new LineaPedido(this, cantidad, precio);
+            lineas.add(linea);
+            this.total += cantidad * precio;
+            return linea;
+        }
+        
+        // Eliminar una línea del pedido
+        public void eliminarLineaPedido(LineaPedido linea) {
+            if (lineas.contains(linea)) {
+                lineas.remove(linea);
+                this.total -= linea.getSubtotal();
+                // La línea se vuelve inutilizable al eliminarla del pedido
+                linea.invalidar();
+            }
+        }
+        
+        // Si se elimina el pedido, todas sus líneas se eliminan (composición)
+        // Este método sería llamado por el recolector de basura o un método finalize()
+        public void destruir() {
+            for (LineaPedido linea : new ArrayList&lt;&gt;(lineas)) {
+                eliminarLineaPedido(linea);
+            }
+        }
+        
+        public Date getFecha() { return fecha; }
+        public double getTotal() { return total; }
+        public List&lt;LineaPedido&gt; getLineas() { 
+            return Collections.unmodifiableList(lineas); 
+        }
+    }
+    
+    public class LineaPedido {
+        private final Pedido pedido;  // Referencia al todo
+        private int cantidad;
+        private double precio;
+        private boolean valida;
+        
+        // Una línea de pedido solo puede existir como parte de un pedido
+        // Constructor con visibilidad de paquete para que solo Pedido pueda crear instancias
+        LineaPedido(Pedido pedido, int cantidad, double precio) {
+            if (pedido == null) {
+                throw new IllegalArgumentException("Una línea de pedido debe pertenecer a un pedido");
+            }
+            this.pedido = pedido;
+            this.cantidad = cantidad;
+            this.precio = precio;
+            this.valida = true;
+        }
+        
+        // Método para invalidar la línea cuando se elimina del pedido
+        void invalidar() {
+            this.valida = false;
+        }
+        
+        public double getSubtotal() {
+            return cantidad * precio;
+        }
+        
+        public Pedido getPedido() { return pedido; }
+        public int getCantidad() { return cantidad; }
+        public double getPrecio() { return precio; }
+        public boolean isValida() { return valida; }
+    }
+    </code></pre>
+<blockquote class="aside aside-caution">
+En la composición, el ciclo de vida de las partes está completamente controlado por el todo. Si implementas una relación de composición, asegúrate de que la clase "todo" gestione adecuadamente la creación y destrucción de sus partes.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="3-5-herencia-generalizacion">
+    <h2>3.5. Herencia (generalización)</h2>
+    <div class="doc-content">
+<p>La herencia o generalización representa una relación "es un" entre clases, donde una clase (subclase) hereda atributos y métodos de otra clase (superclase).</p>
+<h3>Características principales</h3>
+<ul>
+<li>Se representa mediante una <strong>línea con una flecha triangular hueca</strong> apuntando a la superclase</li>
+<li>Permite la <strong>reutilización de código</strong> y la implementación del principio de sustitución</li>
+<li>La subclase <strong>hereda todos los miembros</strong> (atributos y métodos) de la superclase</li>
+<li>La subclase puede <strong>añadir nuevos miembros</strong> o <strong>sobrescribir</strong> los heredados</li>
+</ul>
+<h3>Representación gráfica</h3>
+<pre><code class="language-text">         [Vehiculo]
+             ^
+             |
+             |
+    +--------+---------+
+    |                  |
+[Automovil]        [Motocicleta]</code></pre>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d20636c61737341747472696275746549636f6e53697a6520300a0a636c617373205665686963756c6f207b0a20202d6d617263613a20537472696e670a20202d6d6f64656c6f3a20537472696e670a20202d61c3b16f3a20496e74656765720a20202b617272616e63617228293a20766f69640a20202b646574656e657228293a20766f69640a20202b6765744d6172636128293a20537472696e670a20202b6765744d6f64656c6f28293a20537472696e670a7d0a0a636c617373204175746f6d6f76696c207b0a20202d6e756d65726f507565727461733a20496e74656765720a20202d7469706f5472616e736d6973696f6e3a20537472696e670a20202b61627269724d616c657465726f28293a20766f69640a7d0a0a636c617373204d6f746f6369636c657461207b0a20202d63696c696e64726164613a20496e74656765720a20202d7469706f4d616e696c6c61723a20537472696e670a20202b6861636572436162616c6c69746f28293a20766f69640a7d0a0a2720486572656e6369613a204175746f6d6f76696c2079204d6f746f6369636c657461206865726564616e206465205665686963756c6f0a5665686963756c6f203c7c2d2d204175746f6d6f76696c0a5665686963756c6f203c7c2d2d204d6f746f6369636c6574610a0a636c61737320506572736f6e61207b0a20202d6e6f6d6272653a20537472696e670a20202d656461643a20496e74656765720a20202b6765744e6f6d62726528293a20537472696e670a20202b6765744564616428293a20496e74656765720a20202b73616c7564617228293a20537472696e670a7d0a0a636c61737320456d706c6561646f207b0a20202d73616c6172696f3a20446f75626c650a20202d70756573746f3a20537472696e670a20202b67657453616c6172696f28293a20446f75626c650a20202b74726162616a617228293a20766f69640a7d0a0a636c61737320457374756469616e7465207b0a20202d6d6174726963756c613a20537472696e670a20202d636172726572613a20537472696e670a20202b657374756469617228293a20766f69640a7d0a0a27204f747261206a657261727175c3ad6120646520686572656e6369610a506572736f6e61203c7c2d2d20456d706c6561646f0a506572736f6e61203c7c2d2d20457374756469616e74650a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam classAttributeIconSize 0
+
+class Vehiculo {
+  -marca: String
+  -modelo: String
+  -año: Integer
+  +arrancar(): void
+  +detener(): void
+  +getMarca(): String
+  +getModelo(): String
+}
+
+class Automovil {
+  -numeroPuertas: Integer
+  -tipoTransmision: String
+  +abrirMaletero(): void
+}
+
+class Motocicleta {
+  -cilindrada: Integer
+  -tipoManillar: String
+  +hacerCaballito(): void
+}
+
+' Herencia: Automovil y Motocicleta heredan de Vehiculo
+Vehiculo &lt;|-- Automovil
+Vehiculo &lt;|-- Motocicleta
+
+class Persona {
+  -nombre: String
+  -edad: Integer
+  +getNombre(): String
+  +getEdad(): Integer
+  +saludar(): String
+}
+
+class Empleado {
+  -salario: Double
+  -puesto: String
+  +getSalario(): Double
+  +trabajar(): void
+}
+
+class Estudiante {
+  -matricula: String
+  -carrera: String
+  +estudiar(): void
+}
+
+' Otra jerarquía de herencia
+Persona &lt;|-- Empleado
+Persona &lt;|-- Estudiante
+@enduml</code></pre>
+  </details>
+</div>
+<h3>Ejemplo en contexto</h3>
+  <h4 class="tab-label">Diagrama</h4>
+    <pre><code class="language-text">[Persona]
+-----------------
+| -nombre       |
+| -edad         |
+| +saludar()    |
+-----------------
+        ^
+        |
+        |
+[Empleado]
+-----------------
+| -salario      |
+| -puesto       |
+| +trabajar()   |
+-----------------</code></pre>
+  <h4 class="tab-label">Código Java</h4>
+    <pre><code class="language-java">    public class Persona {
+        private String nombre;
+        private int edad;
+        
+        public Persona(String nombre, int edad) {
+            this.nombre = nombre;
+            this.edad = edad;
+        }
+        
+        public String saludar() {
+            return "Hola, soy " + nombre;
+        }
+        
+        // Getters y setters
+        public String getNombre() { return nombre; }
+        public void setNombre(String nombre) { this.nombre = nombre; }
+        public int getEdad() { return edad; }
+        public void setEdad(int edad) { this.edad = edad; }
+    }
+    
+    // Empleado hereda de Persona (relación "es un")
+    public class Empleado extends Persona {
+        private double salario;
+        private String puesto;
+        
+        public Empleado(String nombre, int edad, double salario, String puesto) {
+            // Llamada al constructor de la superclase
+            super(nombre, edad);
+            this.salario = salario;
+            this.puesto = puesto;
+        }
+        
+        // Método específico de Empleado
+        public String trabajar() {
+            return getNombre() + " está trabajando como " + puesto;
+        }
+        
+        // Sobrescritura de método (polimorfismo)
+        @Override
+        public String saludar() {
+            return "Hola, soy " + getNombre() + ", trabajo como " + puesto;
+        }
+        
+        // Getters y setters específicos
+        public double getSalario() { return salario; }
+        public void setSalario(double salario) { this.salario = salario; }
+        public String getPuesto() { return puesto; }
+        public void setPuesto(String puesto) { this.puesto = puesto; }
+    }
+    
+    // Ejemplo de uso
+    public class EjemploHerencia {
+        public static void main(String[] args) {
+            // Crear instancia de la superclase
+            Persona persona = new Persona("Ana", 30);
+            System.out.println(persona.saludar());  // Hola, soy Ana
+            
+            // Crear instancia de la subclase
+            Empleado empleado = new Empleado("Carlos", 35, 45000.0, "Desarrollador");
+            System.out.println(empleado.saludar());  // Hola, soy Carlos, trabajo como Desarrollador
+            System.out.println(empleado.trabajar()); // Carlos está trabajando como Desarrollador
+            
+            // Demostrar polimorfismo
+            Persona personaEmpleado = new Empleado("Elena", 28, 50000.0, "Diseñadora");
+            System.out.println(personaEmpleado.saludar()); // Llama al método sobrescrito
+        }
+    }
+    </code></pre>
+  <h4 class="tab-label">Código Python</h4>
+    <pre><code class="language-python">    class Persona:
+        def __init__(self, nombre, edad):
+            self.nombre = nombre
+            self.edad = edad
+            
+        def saludar(self):
+            return f"Hola, soy {self.nombre}"
+    
+    class Empleado(Persona):  # Herencia
+        def __init__(self, nombre, edad, salario, puesto):
+            super().__init__(nombre, edad)  # Llamada al constructor de la superclase
+            self.salario = salario
+            self.puesto = puesto
+            
+        def trabajar(self):
+            return f"{self.nombre} está trabajando como {self.puesto}"
+            
+        # Sobrescritura de método
+        def saludar(self):
+            return f"Hola, soy {self.nombre}, trabajo como {self.puesto}"
+    </code></pre>
+<blockquote class="aside aside-note">
+La herencia debe usarse cuando existe una verdadera relación "es un" entre las clases. Si la relación es más del tipo "tiene un" o "usa un", considera usar composición o asociación en su lugar.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="3-6-dependencia">
+    <h2>3.6. Dependencia</h2>
+    <div class="doc-content">
+<p>La dependencia es una relación más débil que indica que una clase usa o depende de otra clase, pero sin contener una referencia permanente a ella.</p>
+<h3>Características principales</h3>
+<ul>
+<li>Se representa mediante una <strong>línea discontinua con una flecha</strong> apuntando a la clase de la que se depende</li>
+<li>Indica que una clase <strong>usa temporalmente</strong> a otra clase</li>
+<li>Puede ser a través de <strong>parámetros de métodos</strong>, <strong>variables locales</strong> o <strong>llamadas a métodos estáticos</strong></li>
+<li>Es la relación más débil entre clases</li>
+</ul>
+<h3>Representación gráfica</h3>
+<pre><code class="language-text">[Controlador] - - - - -&gt; [Servicio]
+               usa</code></pre>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d20636c61737341747472696275746549636f6e53697a6520300a0a636c61737320496d707265736f7261207b0a20202d6d6f64656c6f3a20537472696e670a20202d656e63656e646964613a20426f6f6c65616e0a20202b656e63656e64657228293a20766f69640a20202b61706167617228293a20766f69640a20202b696d7072696d697228646f63756d656e746f3a20446f63756d656e746f293a20766f69640a7d0a0a636c61737320446f63756d656e746f207b0a20202d746974756c6f3a20537472696e670a20202d636f6e74656e69646f3a20537472696e670a20202b676574546974756c6f28293a20537472696e670a20202b676574436f6e74656e69646f28293a20537472696e670a7d0a0a2720446570656e64656e6369613a20496d707265736f72612075736120446f63756d656e746f2074656d706f72616c6d656e74650a496d707265736f7261202e2e3e20446f63756d656e746f203a20757361203e0a0a636c61737320436f6e66696775726163696f6e496d70726573696f6e207b0a20202d63616c696461643a20537472696e670a20202d646f626c65436172613a20426f6f6c65616e0a20202b67657443616c6964616428293a20537472696e670a20202b6973446f626c654361726128293a20426f6f6c65616e0a7d0a0a27204f74726120646570656e64656e6369610a496d707265736f7261202e2e3e20436f6e66696775726163696f6e496d70726573696f6e203a20636f6e66696775726120636f6e203e0a0a636c61737320436f6e74726f6c61646f725573756172696f73207b0a20202b7265676973747261725573756172696f286461746f733a204f626a656374293a205573756172696f0a20202b617574656e74696361725573756172696f28656d61696c3a20537472696e672c20636c6176653a20537472696e67293a20426f6f6c65616e0a7d0a0a636c61737320536572766963696f436f7272656f207b0a20202b656e76696172436f7272656f2864657374696e61746172696f3a20537472696e672c206173756e746f3a20537472696e672c2063756572706f3a20537472696e67293a20766f69640a7d0a0a2720446570656e64656e6369613a20656c20636f6e74726f6c61646f722075736120656c20736572766963696f20646520636f7272656f0a436f6e74726f6c61646f725573756172696f73202e2e3e20536572766963696f436f7272656f203a20757361203e0a0a6e6f74652022456c20636f6e74726f6c61646f722075736120656c20736572766963696f0a7065726f206e6f206c6f20616c6d6163656e6120636f6d6f20617472696275746f22206173204e310a436f6e74726f6c61646f725573756172696f73202e2e204e310a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam classAttributeIconSize 0
+
+class Impresora {
+  -modelo: String
+  -encendida: Boolean
+  +encender(): void
+  +apagar(): void
+  +imprimir(documento: Documento): void
+}
+
+class Documento {
+  -titulo: String
+  -contenido: String
+  +getTitulo(): String
+  +getContenido(): String
+}
+
+' Dependencia: Impresora usa Documento temporalmente
+Impresora ..&gt; Documento : usa &gt;
+
+class ConfiguracionImpresion {
+  -calidad: String
+  -dobleCara: Boolean
+  +getCalidad(): String
+  +isDobleCara(): Boolean
+}
+
+' Otra dependencia
+Impresora ..&gt; ConfiguracionImpresion : configura con &gt;
+
+class ControladorUsuarios {
+  +registrarUsuario(datos: Object): Usuario
+  +autenticarUsuario(email: String, clave: String): Boolean
+}
+
+class ServicioCorreo {
+  +enviarCorreo(destinatario: String, asunto: String, cuerpo: String): void
+}
+
+' Dependencia: el controlador usa el servicio de correo
+ControladorUsuarios ..&gt; ServicioCorreo : usa &gt;
+
+note "El controlador usa el servicio
+pero no lo almacena como atributo" as N1
+ControladorUsuarios .. N1
+@enduml</code></pre>
+  </details>
+</div>
+<h3>Ejemplo en contexto</h3>
+  <h4 class="tab-label">Diagrama</h4>
+    <pre><code class="language-text">[Impresora]                    [Documento]
+-----------------          ---------------
+| -modelo       |          | -titulo     |
+| +imprimir()   |          | -contenido  |
+-----------------          ---------------
+       |                          |
+       |                          |
+       |-- - - -&gt; usa - - - - - -&gt;|
+</code></pre>
+  <h4 class="tab-label">Código Java</h4>
+    <pre><code class="language-java">    public class Documento {
+        private String titulo;
+        private String contenido;
+        
+        public Documento(String titulo, String contenido) {
+            this.titulo = titulo;
+            this.contenido = contenido;
+        }
+        
+        public String getTitulo() { return titulo; }
+        public String getContenido() { return contenido; }
+    }
+    
+    public class Impresora {
+        private String modelo;
+        private boolean encendida;
+        
+        public Impresora(String modelo) {
+            this.modelo = modelo;
+            this.encendida = false;
+        }
+        
+        public void encender() {
+            this.encendida = true;
+            System.out.println("Impresora " + modelo + " encendida");
+        }
+        
+        public void apagar() {
+            this.encendida = false;
+            System.out.println("Impresora " + modelo + " apagada");
+        }
+        
+        // Dependencia: Impresora usa Documento temporalmente
+        // pero no lo almacena como atributo
+        public void imprimir(Documento documento) {
+            if (!encendida) {
+                System.out.println("Error: La impresora está apagada");
+                return;
+            }
+            
+            System.out.println("Imprimiendo: " + documento.getTitulo());
+            System.out.println("Contenido: " + documento.getContenido());
+            System.out.println("Impresión completada en " + modelo);
+        }
+        
+        // Otro ejemplo de dependencia: usa una clase como parámetro
+        public void configurarCalidad(ConfiguracionImpresion config) {
+            System.out.println("Configurando calidad: " + config.getCalidad());
+            // Usa la configuración pero no la almacena
+        }
+    }
+    
+    // Otra clase usada temporalmente
+    public class ConfiguracionImpresion {
+        private String calidad;
+        private boolean dobleCara;
+        
+        public ConfiguracionImpresion(String calidad, boolean dobleCara) {
+            this.calidad = calidad;
+            this.dobleCara = dobleCara;
+        }
+        
+        public String getCalidad() { return calidad; }
+        public boolean isDobleCara() { return dobleCara; }
+    }
+    
+    // Ejemplo de uso
+    public class EjemploDependencia {
+        public static void main(String[] args) {
+            // Crear objetos
+            Impresora impresora = new Impresora("HP LaserJet");
+            Documento documento = new Documento("Informe Anual", "Contenido del informe...");
+            ConfiguracionImpresion config = new ConfiguracionImpresion("Alta", true);
+            
+            // Demostrar dependencia
+            impresora.encender();
+            impresora.configurarCalidad(config);  // Usa ConfiguracionImpresion temporalmente
+            impresora.imprimir(documento);        // Usa Documento temporalmente
+            impresora.apagar();
+            
+            // Después de estas operaciones, no hay referencias permanentes
+            // entre Impresora y Documento o ConfiguracionImpresion
+        }
+    }
+    </code></pre>
+  <h4 class="tab-label">Código C#</h4>
+    <pre><code class="language-csharp">    public class Documento {
+        public string Titulo { get; set; }
+        public string Contenido { get; set; }
+    }
+    
+    public class Impresora {
+        public string Modelo { get; set; }
+        
+        // La impresora depende temporalmente del documento
+        // pero no lo almacena como atributo
+        public void Imprimir(Documento documento) {
+            Console.WriteLine($"Imprimiendo: {documento.Titulo}");
+            // Lógica de impresión
+        }
+    }
+    </code></pre>
+<blockquote class="aside aside-tip">
+La dependencia es útil para representar relaciones temporales o cuando una clase usa otra sin almacenarla como atributo. Esto ayuda a identificar posibles puntos de acoplamiento en el diseño.
+</blockquote>
+<h3>Comparación de relaciones</h3>
+<table><thead><tr><th>Relación</th><th>Notación</th><th>Fuerza</th><th>Descripción</th></tr></thead><tbody><tr><td>Dependencia</td><td>Línea discontinua con flecha</td><td>Muy débil</td><td>"Usa temporalmente"</td></tr><tr><td>Asociación</td><td>Línea sólida</td><td>Débil</td><td>"Conoce a"</td></tr><tr><td>Agregación</td><td>Línea con diamante vacío</td><td>Media</td><td>"Tiene un" (partes independientes)</td></tr><tr><td>Composición</td><td>Línea con diamante sólido</td><td>Fuerte</td><td>"Contiene" (partes dependientes)</td></tr><tr><td>Herencia</td><td>Línea con flecha triangular</td><td>Muy fuerte</td><td>"Es un"</td></tr></tbody></table>
+    </div>
+  </section>

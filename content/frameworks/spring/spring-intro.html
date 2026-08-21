@@ -1,0 +1,202 @@
+<!-- 01. Introducción al Ecosistema Spring - Java Spring (Frameworks) -->
+  <section id="1-1-que-es-spring-framework">
+    <h2><i class="fa-solid fa-seedling"></i> 1.1 ¿Qué es Spring Framework?</h2>
+    <div class="doc-content">
+<p><strong>Spring Framework</strong> es un framework de desarrollo de aplicaciones Java que proporciona una infraestructura completa para crear aplicaciones empresariales robustas y escalables.</p>
+<blockquote class="aside aside-tip">
+Spring no es solo un framework, es un **ecosistema completo** que abarca desde aplicaciones web hasta microservicios, seguridad, acceso a datos y mucho más.
+</blockquote>
+<h3>Características principales</h3>
+<ul>
+<li><strong>Inversión de Control (IoC)</strong>: El framework gestiona la creación y ciclo de vida de los objetos</li>
+<li><strong>Inyección de Dependencias (DI)</strong>: Facilita el desacoplamiento entre componentes</li>
+<li><strong>Programación Orientada a Aspectos (AOP)</strong>: Permite separar preocupaciones transversales</li>
+<li><strong>Modularidad</strong>: Usa solo los módulos que necesitas</li>
+<li><strong>Integración</strong>: Se conecta fácilmente con otras tecnologías</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-2-historia-y-evolucion-de-spring">
+    <h2><i class="fa-solid fa-scroll"></i> 1.2 Historia y Evolución de Spring</h2>
+    <div class="doc-content">
+<h3>Línea de tiempo</h3>
+<table><thead><tr><th>Año</th><th>Versión</th><th>Hito importante</th></tr></thead><tbody><tr><td>2002</td><td>-</td><td>Rod Johnson publica "Expert One-on-One J2EE Design"</td></tr><tr><td>2004</td><td>1.0</td><td>Primera versión oficial de Spring Framework</td></tr><tr><td>2006</td><td>2.0</td><td>Soporte para anotaciones y namespaces XML</td></tr><tr><td>2009</td><td>3.0</td><td>Configuración basada en Java, REST support</td></tr><tr><td>2013</td><td>4.0</td><td>Soporte para Java 8, WebSocket</td></tr><tr><td>2014</td><td>-</td><td><strong>Spring Boot 1.0</strong> revoluciona el desarrollo</td></tr><tr><td>2017</td><td>5.0</td><td>Programación reactiva, Kotlin support</td></tr><tr><td>2022</td><td>6.0</td><td>Java 17+, Jakarta EE 9+, AOT compilation</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+Spring nació como respuesta a la complejidad de **J2EE (Java 2 Enterprise Edition)**, ofreciendo una alternativa más ligera y flexible.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-3-problemas-que-resuelve-spring">
+    <h2><i class="fa-solid fa-wrench"></i> 1.3 Problemas que Resuelve Spring</h2>
+    <div class="doc-content">
+<h3>Sin Spring (código acoplado)</h3>
+<pre><code class="language-java">// ❌ Código altamente acoplado
+public class PedidoService {
+    // Dependencia creada directamente - difícil de testear
+    private UsuarioRepository usuarioRepo = new UsuarioRepositoryImpl();
+    private EmailService emailService = new EmailServiceImpl();
+    
+    public void procesarPedido(Pedido pedido) {
+        Usuario usuario = usuarioRepo.buscar(pedido.getUsuarioId());
+        // lógica...
+        emailService.enviarConfirmacion(usuario.getEmail());
+    }
+}</code></pre>
+<h3>Con Spring (código desacoplado)</h3>
+<pre><code class="language-java">// ✅ Código desacoplado con Spring
+@Service
+public class PedidoService {
+    
+    private final UsuarioRepository usuarioRepo;
+    private final EmailService emailService;
+    
+    // Spring inyecta las dependencias automáticamente
+    @Autowired
+    public PedidoService(UsuarioRepository usuarioRepo, EmailService emailService) {
+        this.usuarioRepo = usuarioRepo;
+        this.emailService = emailService;
+    }
+    
+    public void procesarPedido(Pedido pedido) {
+        Usuario usuario = usuarioRepo.buscar(pedido.getUsuarioId());
+        // lógica...
+        emailService.enviarConfirmacion(usuario.getEmail());
+    }
+}</code></pre>
+<h3>Problemas que resuelve</h3>
+<table><thead><tr><th>Problema</th><th>Solución Spring</th></tr></thead><tbody><tr><td>Acoplamiento fuerte</td><td>Inyección de dependencias</td></tr><tr><td>Código repetitivo (boilerplate)</td><td>Configuración automática</td></tr><tr><td>Gestión de transacciones manual</td><td>@Transactional</td></tr><tr><td>Configuración XML extensa</td><td>Anotaciones y auto-configuración</td></tr><tr><td>Testing difícil</td><td>Mocks e inyección de dependencias</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-4-arquitectura-general-del-framework">
+    <h2><i class="fa-solid fa-helmet-safety"></i> 1.4 Arquitectura General del Framework</h2>
+    <div class="doc-content">
+<h3>Módulos principales de Spring</h3>
+<pre><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                      SPRING FRAMEWORK                        │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │  Spring     │  │  Spring     │  │  Spring             │  │
+│  │  Web MVC    │  │  WebFlux    │  │  Security           │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │  Spring     │  │  Spring     │  │  Spring             │  │
+│  │  Data       │  │  AOP        │  │  Messaging          │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │                    SPRING CORE                          ││
+│  │         (IoC Container, Beans, Context, SpEL)           ││
+│  └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-5-diferencia-entre-spring-framework-y-spring-boot">
+    <h2><i class="fa-solid fa-bolt"></i> 1.5 Diferencia entre Spring Framework y Spring Boot</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-caution">
+**Spring Boot NO reemplaza a Spring Framework**, lo complementa facilitando su configuración y uso.
+</blockquote>
+<h3>Comparación</h3>
+<table><thead><tr><th>Aspecto</th><th>Spring Framework</th><th>Spring Boot</th></tr></thead><tbody><tr><td>Configuración</td><td>Manual (XML o Java)</td><td>Auto-configuración</td></tr><tr><td>Servidor</td><td>Externo (Tomcat, etc.)</td><td>Embebido</td></tr><tr><td>Dependencias</td><td>Gestión manual</td><td>Starters predefinidos</td></tr><tr><td>Tiempo de inicio</td><td>Más configuración</td><td>Rápido (convención)</td></tr><tr><td>Flexibilidad</td><td>Total control</td><td>Opinado pero flexible</td></tr></tbody></table>
+<h3>Ejemplo: Aplicación web mínima</h3>
+<pre><code class="language-java">// Spring Framework tradicional requiere:
+// - web.xml
+// - applicationContext.xml
+// - dispatcher-servlet.xml
+// - Configuración de Tomcat externo
+// - Múltiples dependencias manuales
+
+// Spring Boot solo necesita:
+@SpringBootApplication
+public class MiAplicacion {
+    public static void main(String[] args) {
+        SpringApplication.run(MiAplicacion.class, args);
+    }
+}
+
+@RestController
+class HolaController {
+    @GetMapping("/hola")
+    public String hola() {
+        return "¡Hola Mundo!";
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-6-ecosistema-completo-de-spring">
+    <h2><i class="fa-solid fa-earth-americas"></i> 1.6 Ecosistema Completo de Spring</h2>
+    <div class="doc-content">
+<h3>Proyectos principales</h3>
+<table><thead><tr><th>Proyecto</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Spring Boot</strong></td><td>Configuración automática y arranque rápido</td></tr><tr><td><strong>Spring Data</strong></td><td>Acceso simplificado a bases de datos</td></tr><tr><td><strong>Spring Security</strong></td><td>Autenticación y autorización</td></tr><tr><td><strong>Spring Cloud</strong></td><td>Herramientas para microservicios</td></tr><tr><td><strong>Spring Batch</strong></td><td>Procesamiento por lotes</td></tr><tr><td><strong>Spring Integration</strong></td><td>Integración empresarial</td></tr><tr><td><strong>Spring WebFlux</strong></td><td>Programación reactiva</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-7-casos-reales-de-uso-empresarial">
+    <h2><i class="fa-solid fa-building"></i> 1.7 Casos Reales de Uso Empresarial</h2>
+    <div class="doc-content">
+<h3>Empresas que usan Spring</h3>
+<ul>
+<li><strong>Netflix</strong>: Microservicios con Spring Cloud</li>
+<li><strong>Amazon</strong>: Servicios internos</li>
+<li><strong>Alibaba</strong>: Plataforma de e-commerce</li>
+<li><strong>LinkedIn</strong>: Backend de servicios</li>
+<li><strong>Ticketmaster</strong>: Sistema de ventas</li>
+</ul>
+<h3>Casos de uso típicos</h3>
+<pre><code class="language-java">// 1. API REST para aplicación móvil
+@RestController
+@RequestMapping("/api/productos")
+public class ProductoController {
+    @GetMapping
+    public List&lt;Producto&gt; listar() { ... }
+}
+
+// 2. Sistema de autenticación
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig { ... }
+
+// 3. Microservicio con mensajería
+@Service
+public class PedidoService {
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+    
+    public void procesarPedido(Pedido pedido) {
+        rabbitTemplate.convertAndSend("pedidos", pedido);
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-8-ventajas-frente-a-otros-frameworks">
+    <h2><i class="fa-solid fa-circle-check"></i> 1.8 Ventajas Frente a Otros Frameworks</h2>
+    <div class="doc-content">
+<h3>Comparación con alternativas</h3>
+<table><thead><tr><th>Característica</th><th>Spring</th><th>Jakarta EE</th><th>Micronaut</th><th>Quarkus</th></tr></thead><tbody><tr><td>Madurez</td><td>$1 $1 $1 $1 $1 </td><td>$1 $1 $1 $1 $1 </td><td>$1 $1 $1 </td><td>$1 $1 $1 </td></tr><tr><td>Comunidad</td><td>$1 $1 $1 $1 $1 </td><td>$1 $1 $1 $1 </td><td>$1 $1 $1 </td><td>$1 $1 $1 </td></tr><tr><td>Documentación</td><td>$1 $1 $1 $1 $1 </td><td>$1 $1 $1 $1 </td><td>$1 $1 $1 $1 </td><td>$1 $1 $1 $1 </td></tr><tr><td>Tiempo arranque</td><td>$1 $1 $1 </td><td>$1 $1 </td><td>$1 $1 $1 $1 $1 </td><td>$1 $1 $1 $1 $1 </td></tr><tr><td>Ecosistema</td><td>$1 $1 $1 $1 $1 </td><td>$1 $1 $1 $1 </td><td>$1 $1 $1 </td><td>$1 $1 $1 </td></tr></tbody></table>
+<h3>¿Por qué elegir Spring?</h3>
+<ol>
+<li><strong>Ecosistema maduro</strong>: +20 años de desarrollo</li>
+<li><strong>Gran comunidad</strong>: Millones de desarrolladores</li>
+<li><strong>Documentación excelente</strong>: Guías, tutoriales, ejemplos</li>
+<li><strong>Flexibilidad</strong>: Desde monolitos hasta microservicios</li>
+<li><strong>Empleabilidad</strong>: Alta demanda en el mercado laboral</li>
+</ol>
+<blockquote class="aside aside-tip">
+Spring es el framework Java más demandado en ofertas de trabajo a nivel mundial.
+</blockquote>
+    </div>
+  </section>

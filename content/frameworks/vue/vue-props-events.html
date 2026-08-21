@@ -1,0 +1,312 @@
+<!-- 04. Props y Eventos - Vue 3 (Frameworks) -->
+  <section id="comunicacion-entre-componentes-en-vue-3">
+    <h2>Comunicación entre Componentes en Vue 3</h2>
+    <div class="doc-content">
+<p>En Vue 3 con la Composition API, la comunicación entre componentes se realiza principalmente mediante props (de padre a hijo) y eventos (de hijo a padre). El script setup introduce macros de compilador como <code>defineProps</code> y <code>defineEmits</code> que simplifican esta comunicación.</p>
+    </div>
+  </section>
+
+  <section id="defineprops">
+    <h2>defineProps()</h2>
+    <div class="doc-content">
+<p>La macro <code>defineProps()</code> permite declarar las propiedades que un componente puede recibir de su componente padre. Esta macro está disponible automáticamente dentro de <code><script setup></code> sin necesidad de importarla.</p>
+<h4 class="tab-label">Sintaxis básica</h4>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Declaración simple de props
+const props = defineProps(['title', 'message'])
+
+// Acceso a las props
+console.log(props.title)
+console.log(props.message)
+&lt;/script&gt;</code></pre>
+<h4 class="tab-label">Sintaxis de objeto</h4>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Declaración con validación
+const props = defineProps({
+  title: String,
+  message: String,
+  count: Number,
+  isActive: Boolean
+})
+&lt;/script&gt;</code></pre>
+<h3>Características clave de defineProps()</h3>
+<ul>
+<li>Es una macro de compilador disponible solo en <code><script setup></code></li>
+<li>No necesita ser importada</li>
+<li>Devuelve un objeto reactivo con las propiedades recibidas</li>
+<li>Se puede usar con sintaxis de array o de objeto para validación</li>
+<li>Tiene soporte completo para TypeScript</li>
+</ul>
+<blockquote class="aside aside-tip">
+Las props son de solo lectura. Si necesitas modificar una prop localmente, debes crear una variable reactiva local basada en ella.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="tipado-de-props-con-typescript">
+    <h2>Tipado de props con TypeScript</h2>
+    <div class="doc-content">
+<p>Vue 3 ofrece excelente soporte para TypeScript, permitiendo tipar las props de manera precisa con la Composition API.</p>
+<h4 class="tab-label">Tipo genérico</h4>
+<pre><code class="language-vue">&lt;script setup lang="ts"&gt;
+// Usando type para definir la estructura
+type Props = {
+  title: string
+  message?: string
+  count: number
+  items: string[]
+  callback: (id: number) =&gt; void
+}
+
+// Pasando el tipo como genérico
+const props = defineProps&lt;Props&gt;()
+&lt;/script&gt;</code></pre>
+<h4 class="tab-label">withDefaults</h4>
+<pre><code class="language-vue">&lt;script setup lang="ts"&gt;
+type Props = {
+  title: string
+  message?: string
+  count: number
+  items: string[]
+}
+
+// Usando withDefaults para valores por defecto con TypeScript
+const props = withDefaults(defineProps&lt;Props&gt;(), {
+  message: 'Mensaje predeterminado',
+  count: 0,
+  items: () =&gt; ['item1', 'item2']
+})
+&lt;/script&gt;</code></pre>
+<blockquote class="aside aside-caution">
+Cuando usas la sintaxis de tipo genérico con TypeScript, no puedes usar la sintaxis de objeto o array simultáneamente.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="validacion-y-valores-por-defecto">
+    <h2>Validación y valores por defecto</h2>
+    <div class="doc-content">
+<p>Vue 3 permite validar las props y definir valores por defecto usando la sintaxis de objeto.</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+const props = defineProps({
+  // Tipo básico
+  title: String,
+  
+  // Múltiples tipos permitidos
+  id: [String, Number],
+  
+  // Prop requerida
+  message: {
+    type: String,
+    required: true
+  },
+  
+  // Con valor por defecto
+  count: {
+    type: Number,
+    default: 0
+  },
+  
+  // Objeto con valor por defecto (debe ser una función)
+  user: {
+    type: Object,
+    default: () =&gt; ({ name: 'Anónimo' })
+  },
+  
+  // Array con valor por defecto (debe ser una función)
+  items: {
+    type: Array,
+    default: () =&gt; []
+  },
+  
+  // Función validadora personalizada
+  price: {
+    type: Number,
+    validator: (value) =&gt; value &gt;= 0
+  }
+})
+&lt;/script&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="defineemits">
+    <h2>defineEmits()</h2>
+    <div class="doc-content">
+<p>La macro <code>defineEmits()</code> permite declarar los eventos que un componente puede emitir hacia su componente padre. Al igual que <code>defineProps()</code>, está disponible automáticamente dentro de <code><script setup></code>.</p>
+<h4 class="tab-label">Sintaxis básica</h4>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Declaración simple de eventos
+const emit = defineEmits(['update', 'delete'])
+
+// Emitir eventos
+function updateItem() {
+  emit('update', { id: 1, name: 'Updated Item' })
+}
+
+function deleteItem() {
+  emit('delete', 1) // Emitir con el ID como payload
+}
+&lt;/script&gt;</code></pre>
+<h4 class="tab-label">Con validación</h4>
+<pre><code class="language-vue">
+&lt;script setup&gt;
+// Declaración con validadores
+const emit = defineEmits({
+  // Sin validación
+  'close': null,
+  
+  // Con validación
+  'update': (payload) =&gt; {
+    // retorna true o false para indicar si la validación pasa
+    return payload &amp;&amp; payload.id !== undefined
+  }
+})
+&lt;/script&gt;</code></pre>
+<h3>Características clave de defineEmits()</h3>
+<ul>
+<li>Es una macro de compilador disponible solo en <code><script setup></code></li>
+<li>No necesita ser importada</li>
+<li>Devuelve una función para emitir eventos</li>
+<li>Se puede usar con sintaxis de array o de objeto para validación</li>
+<li>Tiene soporte completo para TypeScript</li>
+</ul>
+    </div>
+  </section>
+
+  <section id="tipado-de-eventos-con-typescript">
+    <h2>Tipado de eventos con TypeScript</h2>
+    <div class="doc-content">
+<p>Los eventos también pueden ser tipados con TypeScript para mejorar la seguridad de tipos.</p>
+<pre><code class="language-vue">&lt;script setup lang="ts"&gt;
+// Definición de tipos para eventos
+type Events = {
+  'update': [payload: { id: number, name: string }]
+  'delete': [id: number]
+  'select': [items: string[]]
+  'close': []
+}
+
+// Usando el tipo genérico
+const emit = defineEmits&lt;Events&gt;()
+
+// Uso con tipo seguro
+function updateItem() {
+  // TypeScript verificará que el payload sea correcto
+  emit('update', { id: 1, name: 'Updated Item' })
+}
+&lt;/script&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-personalizados">
+    <h2>Eventos personalizados</h2>
+    <div class="doc-content">
+<p>Los eventos personalizados son fundamentales para la comunicación de hijo a padre en Vue 3.</p>
+<h4 class="tab-label">Componente hijo</h4>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;div&gt;
+    &lt;h2&gt;{{ title }}&lt;/h2&gt;
+    &lt;button @click="sendUpdate"&gt;Actualizar&lt;/button&gt;
+    &lt;button @click="$emit('delete')"&gt;Eliminar&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+const props = defineProps(['title'])
+const emit = defineEmits(['update', 'delete'])
+
+function sendUpdate() {
+  emit('update', { time: new Date(), status: 'updated' })
+}
+&lt;/script&gt;</code></pre>
+<h4 class="tab-label">Componente padre</h4>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;div&gt;
+    &lt;ItemComponent
+      title="Mi Item"
+      @update="handleUpdate"
+      @delete="handleDelete"
+    /&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+
+
+function handleUpdate(payload) {
+  console.log('Item actualizado:', payload)
+}
+
+function handleDelete() {
+  console.log('Item eliminado')
+}
+&lt;/script&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="v-on-y-eventos-mas-usados">
+    <h2>v-on y @ - Eventos más usados$1 $1 </h2>
+    <div class="doc-content">
+<p>La directiva <code>v-on</code> (abreviada como <code>@</code>) se usa para escuchar eventos DOM y ejecutar código cuando se disparan.</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;!-- Eventos básicos del DOM --&gt;
+  &lt;button v-on:click="contador++"&gt;Incrementar&lt;/button&gt;
+  &lt;button @click="incrementar"&gt;Incrementar (abreviado)&lt;/button&gt;
+  
+  &lt;!-- Modificadores de eventos --&gt;
+  &lt;form @submit.prevent="enviarFormulario"&gt;...&lt;/form&gt;
+  &lt;input @keyup.enter="buscar"&gt;
+  &lt;div @click.stop="handleClick"&gt;No propaga el evento&lt;/div&gt;
+  &lt;button @click.once="oneTimeClick"&gt;Solo se ejecuta una vez&lt;/button&gt;
+  
+  &lt;!-- Eventos con argumentos --&gt;
+  &lt;button @click="eliminar(item.id)"&gt;Eliminar&lt;/button&gt;
+  
+  &lt;!-- Acceder al evento original --&gt;
+  &lt;input @input="updateValue($event)"&gt;
+  
+  &lt;!-- Eventos personalizados de componentes --&gt;
+  &lt;MiComponente
+    @update="handleUpdate"
+    @custom-event="handleCustomEvent"
+  /&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+
+
+
+const contador = ref(0)
+
+function incrementar() {
+  contador.value++
+}
+
+function enviarFormulario() {
+  // Lógica para enviar formulario
+}
+
+function buscar() {
+  // Lógica para buscar
+}
+
+function eliminar(id) {
+  console.log('Eliminando item:', id)
+}
+
+function updateValue(event) {
+  console.log('Valor:', event.target.value)
+}
+
+function handleUpdate(payload) {
+  console.log('Actualización:', payload)
+}
+
+function handleCustomEvent(data) {
+  console.log('Evento personalizado:', data)
+}
+&lt;/script&gt;</code></pre>
+<h3>Modificadores de eventos más comunes</h3>
+<table><thead><tr><th>Modificador</th><th>Descripción</th></tr></thead><tbody><tr><td><code>.stop</code></td><td>Equivalente a <code>event.stopPropagation()</code></td></tr><tr><td><code>.prevent</code></td><td>Equivalente a <code>event.preventDefault()</code></td></tr><tr><td><code>.capture</code></td><td>Usa el modo de captura para el evento</td></tr><tr><td><code>.self</code></td><td>Solo dispara si el evento ocurre en este elemento</td></tr><tr><td><code>.once</code></td><td>El evento se dispara solo una vez</td></tr><tr><td><code>.passive</code></td><td>Indica que el evento no llamará a <code>preventDefault()</code></td></tr></tbody></table>
+    </div>
+  </section>

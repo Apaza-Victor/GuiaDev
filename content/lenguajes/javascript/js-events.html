@@ -1,0 +1,203 @@
+<!-- 12. Eventos - JavaScript (Lenguajes de Programación) -->
+  <section id="eventos-basicos-basico">
+    <h2>Eventos básicos <span class="hc-badge hc-badge-note">Básico</span></h2>
+    <div class="doc-content">
+<h3>Eventos del mouse</h3>
+<pre><code class="language-javascript">const boton = document.querySelector('#miBoton');
+
+// Click
+boton.addEventListener('click', () =&gt; {
+    console.log('Botón clickeado');
+});
+
+// Doble click
+boton.addEventListener('dblclick', () =&gt; {
+    console.log('Doble click');
+});
+
+// Hover
+boton.addEventListener('mouseenter', () =&gt; {
+    console.log('Mouse entró');
+});
+
+boton.addEventListener('mouseleave', () =&gt; {
+    console.log('Mouse salió');
+});</code></pre>
+<h3>Eventos del teclado</h3>
+<pre><code class="language-javascript">const input = document.querySelector('#miInput');
+
+// Tecla presionada
+input.addEventListener('keydown', (evento) =&gt; {
+    console.log(\`Tecla presionada: \${evento.key}\`);
+});
+
+// Tecla liberada
+input.addEventListener('keyup', (evento) =&gt; {
+    console.log(\`Tecla liberada: \${evento.key}\`);
+});
+
+// Entrada de texto
+input.addEventListener('input', (evento) =&gt; {
+    console.log(\`Valor actual: \${evento.target.value}\`);
+});</code></pre>
+    </div>
+  </section>
+
+  <section id="el-objeto-event-importante">
+    <h2>El objeto Event <span class="hc-badge hc-badge-danger">Importante</span></h2>
+    <div class="doc-content">
+<h3>Propiedades principales</h3>
+<pre><code class="language-javascript">document.addEventListener('click', (evento) =&gt; {
+    // Tipo de evento
+    console.log(evento.type);  // 'click'
+    
+    // Elemento que disparó el evento
+    console.log(evento.target);
+    
+    // Coordenadas del mouse
+    console.log(evento.clientX, evento.clientY);
+    
+    // Teclas presionadas
+    console.log(evento.ctrlKey, evento.shiftKey);
+});</code></pre>
+<h3>Prevenir comportamiento por defecto</h3>
+<pre><code class="language-javascript">const form = document.querySelector('form');
+
+form.addEventListener('submit', (evento) =&gt; {
+    // Prevenir envío del formulario
+    evento.preventDefault();
+    
+    // Código de validación aquí
+});
+
+const enlace = document.querySelector('a');
+enlace.addEventListener('click', (evento) =&gt; {
+    // Prevenir navegación
+    evento.preventDefault();
+});</code></pre>
+    </div>
+  </section>
+
+  <section id="propagacion-de-eventos-avanzado">
+    <h2>Propagación de eventos <span class="hc-badge hc-badge-note">Avanzado</span></h2>
+    <div class="doc-content">
+<h3>Burbujeo y captura</h3>
+<pre><code class="language-javascript">// Burbujeo (por defecto)
+elemento.addEventListener('click', (evento) =&gt; {
+    console.log('Fase de burbujeo');
+});
+
+// Captura
+elemento.addEventListener('click', (evento) =&gt; {
+    console.log('Fase de captura');
+}, true);
+
+// Detener propagación
+elemento.addEventListener('click', (evento) =&gt; {
+    evento.stopPropagation();
+    console.log('Este evento no se propagará');
+});</code></pre>
+<h3>Delegación de eventos</h3>
+<pre><code class="language-javascript">const lista = document.querySelector('#lista');
+
+lista.addEventListener('click', (evento) =&gt; {
+    if (evento.target.matches('li')) {
+        console.log('Click en elemento li:', evento.target.textContent);
+    }
+});</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-personalizados-avanzado">
+    <h2>Eventos personalizados <span class="hc-badge hc-badge-note">Avanzado</span></h2>
+    <div class="doc-content">
+<h3>Crear y disparar eventos</h3>
+<pre><code class="language-javascript">// Crear evento personalizado
+const eventoPersonalizado = new CustomEvent('miEvento', {
+    detail: {
+        mensaje: 'Hola desde evento personalizado'
+    }
+});
+
+// Escuchar evento personalizado
+elemento.addEventListener('miEvento', (evento) =&gt; {
+    console.log(evento.detail.mensaje);
+});
+
+// Disparar evento
+elemento.dispatchEvent(eventoPersonalizado);</code></pre>
+    </div>
+  </section>
+
+  <section id="eventos-comunes-referencia">
+    <h2>Eventos comunes <span class="hc-badge hc-badge-tip">Referencia</span></h2>
+    <div class="doc-content">
+<h3>Eventos del documento</h3>
+<pre><code class="language-javascript">// DOM cargado
+document.addEventListener('DOMContentLoaded', () =&gt; {
+    console.log('DOM está listo');
+});
+
+// Página completamente cargada
+window.addEventListener('load', () =&gt; {
+    console.log('Página completamente cargada');
+});
+
+// Antes de cerrar la página
+window.addEventListener('beforeunload', (evento) =&gt; {
+    evento.preventDefault();
+    evento.returnValue = '';
+});</code></pre>
+<h3>Eventos de formulario</h3>
+<pre><code class="language-javascript">const form = document.querySelector('form');
+const input = document.querySelector('input');
+
+// Envío de formulario
+form.addEventListener('submit', (evento) =&gt; {
+    evento.preventDefault();
+    console.log('Formulario enviado');
+});
+
+// Cambio en input
+input.addEventListener('change', () =&gt; {
+    console.log('Valor cambiado');
+});
+
+// Durante la escritura
+input.addEventListener('input', () =&gt; {
+    console.log('Escribiendo...');
+});</code></pre>
+    </div>
+  </section>
+
+  <section id="mejores-practicas-recomendado">
+    <h2>Mejores prácticas <span class="hc-badge hc-badge-tip">Recomendado</span></h2>
+    <div class="doc-content">
+<h3>Usar delegación de eventos</h3>
+<pre><code class="language-javascript">// ❌ Malo
+document.querySelectorAll('button').forEach(button =&gt; {
+    button.addEventListener('click', handleClick);
+});
+
+// ✅ Bueno
+document.addEventListener('click', (evento) =&gt; {
+    if (evento.target.matches('button')) {
+        handleClick(evento);
+    }
+});</code></pre>
+<h3>Remover event listeners cuando no se necesiten</h3>
+<pre><code class="language-javascript">const handleClick = () =&gt; console.log('Click');
+
+// Agregar evento
+elemento.addEventListener('click', handleClick);
+
+// Remover cuando ya no se necesite
+elemento.removeEventListener('click', handleClick);</code></pre>
+<h3>Usar opciones de addEventListener</h3>
+<pre><code class="language-javascript">elemento.addEventListener('click', handleClick, {
+    once: true,      // Se ejecuta solo una vez
+    passive: true,   // Mejora el rendimiento del scroll
+    capture: false   // Fase de burbujeo (default)
+});</code></pre>
+    </div>
+  </section>

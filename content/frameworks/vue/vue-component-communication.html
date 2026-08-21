@@ -1,0 +1,346 @@
+<!-- 11. Comunicación entre Componentes - Vue 3 (Frameworks) -->
+  <section id="envio-de-datos-con-props">
+    <h2>Envío de datos con props</h2>
+    <div class="doc-content">
+<p>Las props son el mecanismo principal para pasar datos de componentes padres a componentes hijos. En Vue 3 con Composition API, las props se definen y utilizan de manera diferente que en la Options API.</p>
+<h3>Definición de props</h3>
+  <h4 class="tab-label">Composition API (script setup)</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    // Definición simple de props
+    const props = defineProps({
+      title: String,
+      count: Number,
+      isActive: Boolean,
+      items: Array,
+      user: Object,
+      onClick: Function
+    })
+
+    // Acceso directo a las props
+    console.log(props.title)
+    &lt;/script&gt;
+    </code></pre>
+<h3>Props con validaciones avanzadas</h3>
+  <h4 class="tab-label">Composition API (script setup)</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    // Definición de props con validaciones
+    const props = defineProps({
+      // Tipo básico
+      title: String,
+      
+      // Múltiples tipos permitidos
+      id: [String, Number],
+      
+      // Prop requerida
+      message: {
+        type: String,
+        required: true
+      },
+      
+      // Con valor predeterminado
+      count: {
+        type: Number,
+        default: 0
+      },
+      
+      // Valor predeterminado para objetos/arrays (debe ser una función)
+      settings: {
+        type: Object,
+        default: () =&gt; ({ theme: 'dark', notifications: true })
+      },
+      
+      // Función de validación personalizada
+      score: {
+        type: Number,
+        validator: (value) =&gt; value &gt;= 0 &amp;&amp; value &lt;= 100
+      }
+    })
+    &lt;/script&gt;
+    </code></pre>
+<h3>Uso de props en el componente hijo</h3>
+  <h4 class="tab-label">ChildComponent.vue</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { computed } from 'vue'
+    
+    const props = defineProps({
+      firstName: String,
+      lastName: String
+    })
+    
+    // Propiedad calculada basada en props
+    const fullName = computed(() =&gt; {
+      return `${props.firstName} ${props.lastName}`
+    })
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;div&gt;
+        &lt;h2&gt;{{ fullName }}&lt;/h2&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    </code></pre>
+<h3>Pasar props desde el componente padre</h3>
+  <h4 class="tab-label">ParentComponent.vue</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref } from 'vue'
+    import ChildComponent from './ChildComponent.vue'
+    
+    const userName = ref('Ana')
+    const userLastName = ref('García')
+    
+    const updateName = () =&gt; {
+      userName.value = 'María'
+    }
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;div&gt;
+        &lt;button @click="updateName"&gt;Cambiar nombre&lt;/button&gt;
+        
+        &lt;!-- Pasar props al componente hijo --&gt;
+        &lt;ChildComponent 
+          :firstName="userName"
+          :lastName="userLastName" 
+        /&gt;
+        
+        &lt;!-- Atajo para props con el mismo nombre que variables --&gt;
+        &lt;!-- &lt;ChildComponent v-bind="{ firstName: userName, lastName: userLastName }" /&gt; --&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    </code></pre>
+<blockquote class="aside aside-caution">
+Recuerda que las props son unidireccionales y de solo lectura. El componente hijo no debe modificar directamente una prop recibida del padre. Si necesitas modificar un valor recibido, puedes:
+  
+  1. Usar la prop como valor inicial para una variable local
+  2. Definir una propiedad calculada basada en la prop
+  3. Emitir un evento al padre para solicitar un cambio
+</blockquote>
+<h3>Sintaxis de TypeScript para props</h3>
+  <h4 class="tab-label">Composition API con TypeScript</h4>
+    <pre><code class="language-vue">    &lt;script setup lang="ts"&gt;
+    // Define el tipo de las props
+    interface Props {
+      title: string
+      count?: number // El ? indica que es opcional
+      items: string[]
+      user: { id: number; name: string }
+      onSubmit: (value: string) =&gt; void
+    }
+    
+    // Usa el tipo para defineProps
+    const props = defineProps&lt;Props&gt;()
+    
+    // Si usas un tipo para props y quieres valores predeterminados:
+    // (Disponible solo en Vue 3.3+)
+    withDefaults(defineProps&lt;Props&gt;(), {
+      count: 0,
+      items: () =&gt; [],
+      user: () =&gt; ({ id: 0, name: 'Invitado' })
+    })
+    &lt;/script&gt;
+    </code></pre>
+    </div>
+  </section>
+
+  <section id="comunicacion-hijo-padre-con-emits">
+    <h2>Comunicación hijo <i class="fa-solid fa-arrow-right"></i> padre con emits</h2>
+    <div class="doc-content">
+<p>En Vue, los componentes hijos pueden comunicarse con sus padres mediante la emisión de eventos personalizados. En la Composition API, esto se hace mediante la función <code>defineEmits</code>.</p>
+<h3>Definición de eventos emitidos</h3>
+  <h4 class="tab-label">ChildComponent.vue</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    // Definición simple de eventos
+    const emit = defineEmits([
+      'update',
+      'delete',
+      'statusChange'
+    ])
+    
+    // Ejemplo de uso
+    const sendUpdate = () =&gt; {
+      emit('update', { id: 1, status: 'completed' })
+    }
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;button @click="sendUpdate"&gt;Actualizar&lt;/button&gt;
+    &lt;/template&gt;
+    </code></pre>
+<h3>Validación de eventos</h3>
+<p>Puedes validar los argumentos de los eventos definiendo tus emisiones con un objeto en lugar de un array:</p>
+  <h4 class="tab-label">Composition API (script setup)</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    // Definición con validación
+    const emit = defineEmits({
+      // Sin validación
+      click: null,
+      
+      // Con validación
+      submit: (payload) =&gt; {
+        if (!payload.email) {
+          console.warn('La propiedad email es obligatoria')
+          return false
+        }
+        return true
+      }
+    })
+    
+    // Si la validación falla, la emisión se detiene
+    const submitForm = () =&gt; {
+      emit('submit', { name: 'Usuario' }) // Fallará la validación
+      emit('submit', { name: 'Usuario', email: 'user@example.com' }) // Pasará la validación
+    }
+    &lt;/script&gt;
+    </code></pre>
+<h3>Escuchar eventos en el componente padre</h3>
+  <h4 class="tab-label">ParentComponent.vue</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref } from 'vue'
+    import ChildComponent from './ChildComponent.vue'
+    
+    const lastUpdate = ref(null)
+    
+    const handleUpdate = (data) =&gt; {
+      console.log('Evento recibido desde el hijo:', data)
+      lastUpdate.value = data
+    }
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;div&gt;
+        &lt;p v-if="lastUpdate"&gt;Última actualización: {{ lastUpdate.status }}&lt;/p&gt;
+        
+        &lt;!-- Escuchar el evento del componente hijo --&gt;
+        &lt;ChildComponent @update="handleUpdate" /&gt;
+        
+        &lt;!-- También puedes usar una función inline --&gt;
+        &lt;ChildComponent @delete="(id) =&gt; console.log('Borrar elemento:', id)" /&gt;
+        
+        &lt;!-- O usar $event para acceder al parámetro en línea --&gt;
+        &lt;ChildComponent @status-change="status = $event" /&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    </code></pre>
+<h3>v-model en componentes personalizados</h3>
+<p>Una aplicación común de eventos es implementar componentes con <code>v-model</code>. Esto combina una prop (<code>modelValue</code>) con un evento (<code>update:modelValue</code>).</p>
+  <h4 class="tab-label">CustomInput.vue</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    const props = defineProps({
+      modelValue: String
+    })
+    
+    const emit = defineEmits(['update:modelValue'])
+    
+    // Handler para enviar el nuevo valor al padre
+    const updateValue = (event) =&gt; {
+      emit('update:modelValue', event.target.value)
+    }
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;input 
+        :value="modelValue"
+        @input="updateValue"
+        class="custom-input"
+      /&gt;
+    &lt;/template&gt;
+    </code></pre>
+  <h4 class="tab-label">Componente Padre</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref } from 'vue'
+    import CustomInput from './CustomInput.vue'
+    
+    const username = ref('')
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;div&gt;
+        &lt;CustomInput v-model="username" /&gt;
+        &lt;p&gt;Nombre de usuario: {{ username }}&lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    </code></pre>
+<h3>Múltiples v-model en un componente</h3>
+<p>A partir de Vue 3, puedes tener múltiples v-model en un componente:</p>
+  <h4 class="tab-label">UserForm.vue (Componente Hijo)</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    const props = defineProps({
+      firstName: String,
+      lastName: String
+    })
+    
+    const emit = defineEmits(['update:firstName', 'update:lastName'])
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;div&gt;
+        &lt;input 
+          :value="firstName"
+          @input="emit('update:firstName', $event.target.value)" 
+        /&gt;
+        &lt;input 
+          :value="lastName"
+          @input="emit('update:lastName', $event.target.value)" 
+        /&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+    </code></pre>
+  <h4 class="tab-label">Componente Padre</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref } from 'vue'
+    import UserForm from './UserForm.vue'
+    
+    const first = ref('María')
+    const last = ref('López')
+    &lt;/script&gt;
+    
+    &lt;template&gt;
+      &lt;UserForm
+        v-model:firstName="first"
+        v-model:lastName="last"
+      /&gt;
+      &lt;p&gt;Nombre completo: {{ first }} {{ last }}&lt;/p&gt;
+    &lt;/template&gt;
+    </code></pre>
+<h3>Uso con TypeScript</h3>
+  <h4 class="tab-label">Composition API con TypeScript</h4>
+    <pre><code class="language-vue">    &lt;script setup lang="ts"&gt;
+    // Definición de tipos para los eventos emitidos
+    interface UpdateEvent {
+      id: number
+      status: string
+      timestamp: number
+    }
+    
+    // Uso de tipos genéricos con defineEmits
+    const emit = defineEmits&lt;{
+      (e: 'update', payload: UpdateEvent): void
+      (e: 'delete', id: number): void
+      (e: 'change-status', status: string): void
+    }&gt;()
+    
+    const sendUpdate = () =&gt; {
+      emit('update', {
+        id: 1, 
+        status: 'completed', 
+        timestamp: Date.now()
+      })
+    }
+    &lt;/script&gt;
+    </code></pre>
+    </div>
+  </section>
+
+  <section id="comunicacion-entre-hermanos-a-traves-del-padre">
+    <h2>Comunicación entre hermanos (a través del padre)</h2>
+    <div class="doc-content">
+
+    </div>
+  </section>
+
+  <section id="provide-e-injec">
+    <h2>provide e injec</h2>
+    <div class="doc-content">
+<p>provide e inject</p>
+    </div>
+  </section>

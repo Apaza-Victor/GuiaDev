@@ -1,0 +1,854 @@
+<!-- 13. API REST y JSON - Laravel (Frameworks) -->
+  <section id="rutas-api-y-controladores-tipo-apiresource">
+    <h2>Rutas API y controladores tipo apiResource</h2>
+    <div class="doc-content">
+<p>Laravel facilita la creación de rutas API mediante el prefijo <code>api</code> y el método <code>apiResource</code> que genera automáticamente las rutas necesarias para un recurso RESTful.</p>
+<h3>Configuración básica</h3>
+<p>Las rutas API se definen en el archivo <code>routes/api.php</code> y automáticamente se les aplica el prefijo <code>/api</code> y el grupo de middleware <code>api</code>.</p>
+<pre><code class="language-php">&lt;?php
+
+use App\Http\Controllers\API\ProductController;
+use Illuminate\Support\Facades\Route;
+
+// Ruta API básica
+Route::get('/products', [ProductController::class, 'index']);
+
+// Grupo de rutas con prefijo y middleware adicional
+Route::prefix('v1')-&gt;middleware('auth:sanctum')-&gt;group(function () {
+    Route::get('/user', function () {
+        return auth()-&gt;user();
+    });
+});
+</code></pre>
+<h3>Recursos API</h3>
+<p>El método <code>apiResource</code> crea automáticamente las rutas necesarias para un controlador de recursos API, excluyendo las rutas <code>create</code> y <code>edit</code> que son específicas para aplicaciones web con formularios HTML.</p>
+<pre><code class="language-php">// Definir un recurso API completo
+Route::apiResource('products', ProductController::class);
+
+// Definir múltiples recursos API
+Route::apiResources([
+    'products' =&gt; ProductController::class,
+    'categories' =&gt; CategoryController::class,
+]);
+
+// Recurso API con rutas anidadas
+Route::apiResource('products.reviews', ProductReviewController::class);
+</code></pre>
+<p>Esto genera las siguientes rutas:</p>
+<pre><code class="language-bash">+--------+-----------+----------------------------+---------------+----------------------------------------------+
+| Method | URI       | Name                     | Action        | Controller                                   |
++--------+-----------+----------------------------+---------------+----------------------------------------------+
+| GET    | /products | products.index            | index         | App\Http\Controllers\API\ProductController   |
+| POST   | /products | products.store            | store         | App\Http\Controllers\API\ProductController   |
+| GET    | /products/{product} | products.show   | show          | App\Http\Controllers\API\ProductController   |
+| PUT    | /products/{product} | products.update | update        | App\Http\Controllers\API\ProductController   |
+| DELETE | /products/{product} | products.destroy| destroy       | App\Http\Controllers\API\ProductController   |
++--------+-----------+----------------------------+---------------+----------------------------------------------+
+</code></pre>
+<h3>Controladores API</h3>
+<p>Puedes generar un controlador específico para API con el comando Artisan:</p>
+<pre><code class="language-bash">php artisan make:controller API/ProductController --api</code></pre>
+<p>Esto creará un controlador con los métodos necesarios para un recurso API:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Controllers\Controller;
+use App\Models\Product;
+use Illuminate\Http\Request;
+
+class ProductController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $products = Product::all();
+        return response()-&gt;json($products);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request-&gt;validate([
+            'name' =&gt; 'required|string|max:255',
+            'price' =&gt; 'required|numeric',
+            'description' =&gt; 'nullable|string',
+        ]);
+
+        $product = Product::create($validated);
+
+        return response()-&gt;json($product, 201);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Product $product)
+    {
+        return response()-&gt;json($product);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Product $product)
+    {
+        $validated = $request-&gt;validate([
+            'name' =&gt; 'sometimes|string|max:255',
+            'price' =&gt; 'sometimes|numeric',
+            'description' =&gt; 'nullable|string',
+        ]);
+
+        $product-&gt;update($validated);
+
+        return response()-&gt;json($product);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Product $product)
+    {
+        $product-&gt;delete();
+
+        return response()-&gt;json(null, 204);
+    }
+}
+</code></pre>
+<h3>Personalización de rutas API</h3>
+<pre><code class="language-php">// Limitar acciones disponibles
+Route::apiResource('products', ProductController::class)-&gt;only([
+    'index', 'show'
+]);
+
+// Excluir acciones específicas
+Route::apiResource('products', ProductController::class)-&gt;except([
+    'destroy'
+]);
+
+// Registrar rutas adicionales para un recurso
+Route::apiResource('products', ProductController::class);
+Route::post('products/{product}/restore', [ProductController::class, 'restore'])-&gt;name('products.restore');
+</code></pre>
+    </div>
+  </section>
+
+  <section id="respuestas-json">
+    <h2>Respuestas JSON</h2>
+    <div class="doc-content">
+<p>Laravel proporciona varias formas de devolver respuestas JSON desde tus controladores API. Estas respuestas incluyen los encabezados HTTP adecuados (<code>Content-Type: application/json</code>) y convierten automáticamente los datos PHP en JSON.</p>
+<h3>Métodos básicos para respuestas JSON</h3>
+<pre><code class="language-php">// Convertir un array o modelo a JSON
+return response()-&gt;json(['name' =&gt; 'John', 'age' =&gt; 30]);
+
+// Especificar un código de estado HTTP
+return response()-&gt;json(['error' =&gt; 'No autorizado'], 401);
+
+// Incluir encabezados personalizados
+return response()-&gt;json($data, 200, [
+    'X-API-Version' =&gt; '1.0',
+    'X-Custom-Header' =&gt; 'Value'
+]);
+
+// Permitir JSONP
+return response()-&gt;json($data)-&gt;withCallback($request-&gt;input('callback'));
+</code></pre>
+<h3>Transformación de modelos Eloquent</h3>
+<p>Los modelos Eloquent y sus colecciones se convierten automáticamente a JSON cuando se devuelven desde rutas o controladores:</p>
+<pre><code class="language-php">// Devolver un modelo como JSON
+public function show(Product $product)
+{
+    return $product; // Automáticamente convertido a JSON
+}
+
+// Devolver una colección como JSON
+public function index()
+{
+    return Product::all(); // Automáticamente convertido a JSON
+}
+
+// Devolver una colección paginada
+public function index()
+{
+    return Product::paginate(15); // Incluye metadatos de paginación
+}
+</code></pre>
+<h3>Personalización de la serialización JSON</h3>
+<p>Puedes personalizar cómo se serializan tus modelos a JSON utilizando propiedades y métodos en tus modelos Eloquent:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    /**
+     * Los atributos que deben estar ocultos en la serialización.
+     *
+     * @var array
+     */
+    protected $hidden = ['created_at', 'updated_at', 'deleted_at'];
+
+    /**
+     * Los atributos que deben ser visibles en la serialización.
+     *
+     * @var array
+     */
+    protected $visible = ['id', 'name', 'price', 'description', 'category_id'];
+
+    /**
+     * Los atributos que deben ser convertidos a tipos nativos.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'price' =&gt; 'float',
+        'active' =&gt; 'boolean',
+        'options' =&gt; 'array',
+    ];
+
+    /**
+     * Los atributos que deben ser añadidos a la serialización.
+     *
+     * @var array
+     */
+    protected $appends = ['formatted_price', 'is_available'];
+
+    /**
+     * Obtener el precio formateado.
+     *
+     * @return string
+     */
+    public function getFormattedPriceAttribute()
+    {
+        return '$' . number_format($this-&gt;price, 2);
+    }
+
+    /**
+     * Determinar si el producto está disponible.
+     *
+     * @return bool
+     */
+    public function getIsAvailableAttribute()
+    {
+        return $this-&gt;stock &gt; 0 &amp;&amp; $this-&gt;active;
+    }
+}
+</code></pre>
+<h3>Resource Classes</h3>
+<p>Las clases Resource proporcionan una capa de transformación entre tus modelos Eloquent y las respuestas JSON. Son especialmente útiles para APIs complejas donde necesitas un control preciso sobre la estructura de tus respuestas.</p>
+<h4>Crear una Resource Class</h4>
+<pre><code class="language-bash">php artisan make:resource ProductResource</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class ProductResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array&lt;string, mixed&gt;
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' =&gt; $this-&gt;id,
+            'name' =&gt; $this-&gt;name,
+            'price' =&gt; $this-&gt;price,
+            'formatted_price' =&gt; '$' . number_format($this-&gt;price, 2),
+            'description' =&gt; $this-&gt;description,
+            'category' =&gt; [
+                'id' =&gt; $this-&gt;category-&gt;id,
+                'name' =&gt; $this-&gt;category-&gt;name,
+            ],
+            'created_at' =&gt; $this-&gt;created_at-&gt;format('Y-m-d H:i:s'),
+            'url' =&gt; route('api.products.show', $this-&gt;id),
+        ];
+    }
+
+    /**
+     * Get additional data that should be returned with the resource array.
+     *
+     * @return array&lt;string, mixed&gt;
+     */
+    public function with(Request $request): array
+    {
+        return [
+            'meta' =&gt; [
+                'version' =&gt; '1.0',
+                'api_status' =&gt; 'stable',
+            ],
+        ];
+    }
+}
+</code></pre>
+<h4>Usar Resource Classes en controladores</h4>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\ProductResource;
+use App\Http\Resources\ProductCollection;
+use App\Models\Product;
+
+class ProductController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        // Usar una colección de recursos
+        return ProductResource::collection(Product::paginate(15));
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Product $product)
+    {
+        // Usar un recurso individual
+        return new ProductResource($product);
+    }
+}
+</code></pre>
+<h4>Resource Collections</h4>
+<p>Para personalizar la estructura de las colecciones, puedes crear una clase ResourceCollection:</p>
+<pre><code class="language-bash">php artisan make:resource ProductCollection --collection</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\ResourceCollection;
+
+class ProductCollection extends ResourceCollection
+{
+    /**
+     * Transform the resource collection into an array.
+     *
+     * @return array&lt;int|string, mixed&gt;
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'data' =&gt; $this-&gt;collection,
+            'links' =&gt; [
+                'self' =&gt; route('api.products.index'),
+            ],
+        ];
+    }
+
+    /**
+     * Get additional data that should be returned with the resource array.
+     *
+     * @return array&lt;string, mixed&gt;
+     */
+    public function with(Request $request): array
+    {
+        return [
+            'meta' =&gt; [
+                'products_count' =&gt; $this-&gt;collection-&gt;count(),
+                'version' =&gt; '1.0',
+            ],
+        ];
+    }
+}
+</code></pre>
+<h3>Respuestas de error</h3>
+<p>Para APIs, es importante devolver respuestas de error consistentes y bien estructuradas:</p>
+<pre><code class="language-php">// Error 404 - No encontrado
+return response()-&gt;json([
+    'message' =&gt; 'Producto no encontrado',
+    'error' =&gt; 'not_found'
+], 404);
+
+// Error 422 - Validación fallida
+return response()-&gt;json([
+    'message' =&gt; 'Los datos proporcionados no son válidos',
+    'errors' =&gt; [
+        'name' =&gt; ['El nombre es obligatorio'],
+        'price' =&gt; ['El precio debe ser un número positivo']
+    ]
+], 422);
+
+// Error 403 - Prohibido
+return response()-&gt;json([
+    'message' =&gt; 'No tienes permiso para realizar esta acción',
+    'error' =&gt; 'forbidden'
+], 403);
+
+// Error 500 - Error del servidor
+return response()-&gt;json([
+    'message' =&gt; 'Ha ocurrido un error inesperado',
+    'error' =&gt; 'server_error'
+], 500);
+</code></pre>
+    </div>
+  </section>
+
+  <section id="middleware-api">
+    <h2>Middleware API</h2>
+    <div class="doc-content">
+<p>Los middleware en Laravel permiten filtrar las solicitudes HTTP que ingresan a tu aplicación. El grupo de middleware <code>api</code> se aplica automáticamente a todas las rutas definidas en <code>routes/api.php</code>.</p>
+<h3>Middleware API predeterminado</h3>
+<p>El grupo de middleware <code>api</code> está definido en <code>app/Http/Kernel.php</code> y generalmente incluye:</p>
+<pre><code class="language-php">protected $middlewareGroups = [
+    'web' =&gt; [
+        // Middleware web...
+    ],
+    
+    'api' =&gt; [
+        // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+        \Illuminate\Http\Middleware\HandleCors::class,
+        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+    ],
+];
+</code></pre>
+<p>Este grupo incluye middleware esencial para APIs:</p>
+<ul>
+<li><strong>ThrottleRequests</strong>: Limita la tasa de solicitudes para prevenir abusos</li>
+<li><strong>HandleCors</strong>: Maneja las solicitudes de origen cruzado (CORS)</li>
+<li><strong>SubstituteBindings</strong>: Resuelve las dependencias de inyección de ruta</li>
+</ul>
+<h3>Crear middleware personalizado para API</h3>
+<p>Puedes crear middleware personalizado para tus APIs:</p>
+<pre><code class="language-bash">php artisan make:middleware EnsureApiVersion</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+
+class EnsureApiVersion
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @param  string  $version
+     * @return mixed
+     */
+    public function handle(Request $request, Closure $next, $version = '1.0')
+    {
+        // Verificar la versión de la API en el encabezado
+        if ($request-&gt;header('X-API-Version') !== $version) {
+            return response()-&gt;json([
+                'message' =&gt; 'Esta versión de la API no es compatible',
+                'required_version' =&gt; $version
+            ], 400);
+        }
+
+        return $next($request);
+    }
+}
+</code></pre>
+<h3>Registrar middleware personalizado</h3>
+<p>Registra tu middleware en <code>app/Http/Kernel.php</code>:</p>
+<pre><code class="language-php">protected $middlewareAliases = [
+    // Otros middleware...
+    'api.version' =&gt; \App\Http\Middleware\EnsureApiVersion::class,
+    'api.key' =&gt; \App\Http\Middleware\VerifyApiKey::class,
+];
+</code></pre>
+<h3>Aplicar middleware a rutas API</h3>
+<pre><code class="language-php">// Aplicar a una ruta individual
+Route::get('/products', [ProductController::class, 'index'])
+    -&gt;middleware('api.version:2.0');
+
+// Aplicar a un grupo de rutas
+Route::middleware(['auth:sanctum', 'api.version:2.0'])
+    -&gt;prefix('v2')
+    -&gt;group(function () {
+        Route::apiResource('products', ProductControllerV2::class);
+    });
+
+// Aplicar a todos los endpoints de un controlador
+Route::apiResource('products', ProductController::class)
+    -&gt;middleware('api.key');
+</code></pre>
+<h3>Middleware comunes para APIs</h3>
+<h4>Throttling (limitación de tasa)</h4>
+<p>Limita el número de solicitudes que un cliente puede hacer en un período de tiempo:</p>
+<pre><code class="language-php">// Limitar a 60 solicitudes por minuto
+Route::middleware('throttle:60,1')
+    -&gt;group(function () {
+        Route::apiResource('products', ProductController::class);
+    });
+
+// Diferentes límites para rutas específicas
+Route::get('/status', [ApiController::class, 'status'])
+    -&gt;middleware('throttle:120,1'); // 120 solicitudes por minuto
+
+Route::post('/webhooks', [WebhookController::class, 'handle'])
+    -&gt;middleware('throttle:1000,1'); // 1000 solicitudes por minuto
+</code></pre>
+<h4>CORS (Cross-Origin Resource Sharing)</h4>
+<p>Configura CORS en <code>config/cors.php</code>:</p>
+<pre><code class="language-php">return [
+    'paths' =&gt; ['api/*'],
+    'allowed_methods' =&gt; ['*'],
+    'allowed_origins' =&gt; ['*'],
+    'allowed_origins_patterns' =&gt; [],
+    'allowed_headers' =&gt; ['*'],
+    'exposed_headers' =&gt; [],
+    'max_age' =&gt; 0,
+    'supports_credentials' =&gt; false,
+];
+</code></pre>
+<p>Para una configuración más restrictiva y segura:</p>
+<pre><code class="language-php">return [
+    'paths' =&gt; ['api/*'],
+    'allowed_methods' =&gt; ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    'allowed_origins' =&gt; ['https://myapp.com', 'https://admin.myapp.com'],
+    'allowed_origins_patterns' =&gt; ['/^https:\/\/.*\.myapp\.com$/'],
+    'allowed_headers' =&gt; ['X-API-KEY', 'Origin', 'Content-Type', 'X-Auth-Token', 'Authorization'],
+    'exposed_headers' =&gt; ['X-API-Version', 'X-Request-Id'],
+    'max_age' =&gt; 60 * 60 * 24, // 24 horas
+    'supports_credentials' =&gt; true,
+];
+</code></pre>
+<h4>Registro y monitoreo de API</h4>
+<p>Middleware para registrar todas las solicitudes API:</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+
+class LogApiRequests
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @return mixed
+     */
+    public function handle(Request $request, Closure $next)
+    {
+        // Registrar la solicitud entrante
+        $startTime = microtime(true);
+        
+        // Procesar la solicitud
+        $response = $next($request);
+        
+        // Calcular el tiempo de respuesta
+        $duration = microtime(true) - $startTime;
+        
+        // Registrar detalles de la solicitud y respuesta
+        Log::channel('api')-&gt;info('API Request', [
+            'method' =&gt; $request-&gt;method(),
+            'url' =&gt; $request-&gt;fullUrl(),
+            'user' =&gt; $request-&gt;user() ? $request-&gt;user()-&gt;id : 'guest',
+            'ip' =&gt; $request-&gt;ip(),
+            'duration' =&gt; round($duration * 1000, 2) . 'ms',
+            'status' =&gt; $response-&gt;getStatusCode(),
+            'content_length' =&gt; $response-&gt;headers-&gt;get('Content-Length') ?? 'unknown',
+        ]);
+        
+        return $response;
+    }
+}
+</code></pre>
+    </div>
+  </section>
+
+  <section id="autenticacion-con-sanctum-o-passport">
+    <h2>Autenticación con Sanctum o Passport</h2>
+    <div class="doc-content">
+<p>Laravel ofrece dos paquetes oficiales para la autenticación de APIs: Sanctum y Passport. Cada uno tiene sus propios casos de uso y ventajas.</p>
+  <h4 class="tab-label">Laravel Sanctum</h4>
+<p>Laravel Sanctum es una solución ligera para la autenticación de APIs y SPAs (Single Page Applications). Es ideal para aplicaciones que necesitan tokens API simples o autenticación basada en cookies para SPAs.</p>
+<h3>Instalación de Sanctum</h3>
+    <pre><code class="language-bash">composer require laravel/sanctum
+
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+
+php artisan migrate</code></pre>
+<h3>Configuración</h3>
+<p>Agrega el middleware de Sanctum en <code>app/Http/Kernel.php</code>:</p>
+    <pre><code class="language-php">'api' =&gt; [
+    \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+    \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+    \Illuminate\Http\Middleware\HandleCors::class,
+    \Illuminate\Routing\Middleware\SubstituteBindings::class,
+],</code></pre>
+<p>Asegúrate de que tu modelo User use el trait HasApiTokens:</p>
+    <pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
+
+class User extends Authenticatable
+{
+    use HasApiTokens;
+
+    // ...
+}</code></pre>
+  <h4 class="tab-label">Laravel Passport</h4>
+<p>Laravel Passport es una implementación completa de OAuth2 para Laravel. Es ideal para APIs más complejas que requieren diferentes tipos de tokens, autorización de terceros, etc.</p>
+<h3>Instalación de Passport</h3>
+    <pre><code class="language-bash">composer require laravel/passport
+
+php artisan migrate
+
+php artisan passport:install</code></pre>
+<h3>Configuración</h3>
+<p>Agrega el trait HasApiTokens a tu modelo User:</p>
+    <pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Passport\HasApiTokens;
+
+class User extends Authenticatable
+{
+    use HasApiTokens;
+
+    // ...
+}</code></pre>
+<p>Registra las rutas de Passport en <code>app/Providers/AuthServiceProvider.php</code>:</p>
+    <pre><code class="language-php">&lt;?php
+
+namespace App\Providers;
+
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Laravel\Passport\Passport;
+
+class AuthServiceProvider extends ServiceProvider
+{
+    protected $policies = [
+        // ...
+    ];
+
+    public function boot(): void
+    {
+        $this-&gt;registerPolicies();
+
+        Passport::routes();
+        
+        // Opcional: configurar tiempo de expiración de tokens
+        Passport::tokensExpireIn(now()-&gt;addDays(15));
+        Passport::refreshTokensExpireIn(now()-&gt;addDays(30));
+        Passport::personalAccessTokensExpireIn(now()-&gt;addMonths(6));
+    }
+}</code></pre>
+<p>Configura el driver de autenticación en <code>config/auth.php</code>:</p>
+    <pre><code class="language-php">'guards' =&gt; [
+    'web' =&gt; [
+        'driver' =&gt; 'session',
+        'provider' =&gt; 'users',
+    ],
+
+    'api' =&gt; [
+        'driver' =&gt; 'passport',
+        'provider' =&gt; 'users',
+    ],
+],</code></pre>
+<h3>¿Cuál elegir?</h3>
+  <h4 class="tab-label">Usa Sanctum si...</h4>
+<ul>
+<li>Necesitas una solución simple y ligera</li>
+<li>Estás construyendo una SPA que se comunica con una API de Laravel</li>
+<li>Necesitas tokens API para servicios de primera parte</li>
+<li>Quieres autenticación basada en tokens sin la complejidad de OAuth</li>
+<li>Necesitas autenticación para WebSockets con Laravel Echo</li>
+</ul>
+  <h4 class="tab-label">Usa Passport si...</h4>
+<ul>
+<li>Necesitas una implementación completa de OAuth2</li>
+<li>Tu API será consumida por aplicaciones de terceros</li>
+<li>Necesitas flujos de autorización como Authorization Code, Client Credentials, etc.</li>
+<li>Requieres una interfaz de administración de clientes OAuth</li>
+<li>Tienes requisitos complejos de tokens y permisos</li>
+</ul>
+<h3>Autenticación con Sanctum</h3>
+<h4>Crear tokens API</h4>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Controllers\API;
+
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+
+class AuthController extends Controller
+{
+    public function login(Request $request)
+    {
+        $request-&gt;validate([
+            'email' =&gt; 'required|email',
+            'password' =&gt; 'required',
+            'device_name' =&gt; 'required',
+        ]);
+
+        $user = User::where('email', $request-&gt;email)-&gt;first();
+
+        if (! $user || ! Hash::check($request-&gt;password, $user-&gt;password)) {
+            throw ValidationException::withMessages([
+                'email' =&gt; ['Las credenciales proporcionadas son incorrectas.'],
+            ]);
+        }
+
+        // Crear token con habilidades/permisos
+        $token = $user-&gt;createToken($request-&gt;device_name, ['products:read'])-&gt;plainTextToken;
+
+        return response()-&gt;json([
+            'token' =&gt; $token,
+            'user' =&gt; $user,
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        // Revocar el token actual
+        $request-&gt;user()-&gt;currentAccessToken()-&gt;delete();
+
+        return response()-&gt;json(['message' =&gt; 'Sesión cerrada correctamente']);
+    }
+
+    public function user(Request $request)
+    {
+        return response()-&gt;json($request-&gt;user());
+    }
+}
+</code></pre>
+<h4>Proteger rutas con Sanctum</h4>
+<pre><code class="language-php">// routes/api.php
+
+use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\ProductController;
+
+// Rutas públicas
+Route::post('/login', [AuthController::class, 'login']);
+
+// Rutas protegidas
+Route::middleware('auth:sanctum')-&gt;group(function () {
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    
+    // Verificar habilidades/permisos específicos
+    Route::get('/products', [ProductController::class, 'index'])
+        -&gt;middleware('ability:products:read');
+    
+    Route::post('/products', [ProductController::class, 'store'])
+        -&gt;middleware('ability:products:create');
+});
+</code></pre>
+<h3>Autenticación con Passport</h3>
+<h4>Configurar clientes OAuth</h4>
+<p>Puedes crear clientes OAuth mediante comandos Artisan:</p>
+<pre><code class="language-bash">// Cliente para Authorization Code Grant
+php artisan passport:client
+
+// Cliente para Client Credentials Grant
+php artisan passport:client --client
+
+// Cliente para Password Grant
+php artisan passport:client --password
+</code></pre>
+<h4>Ejemplo de autenticación con Password Grant</h4>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Controllers\API;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+
+class AuthController extends Controller
+{
+    public function login(Request $request)
+    {
+        $request-&gt;validate([
+            'email' =&gt; 'required|email',
+            'password' =&gt; 'required',
+        ]);
+
+        $response = Http::post(config('app.url') . '/oauth/token', [
+            'grant_type' =&gt; 'password',
+            'client_id' =&gt; config('passport.password_grant_client.id'),
+            'client_secret' =&gt; config('passport.password_grant_client.secret'),
+            'username' =&gt; $request-&gt;email,
+            'password' =&gt; $request-&gt;password,
+            'scope' =&gt; '',
+        ]);
+
+        return $response-&gt;json();
+    }
+
+    public function logout(Request $request)
+    {
+        $request-&gt;user()-&gt;token()-&gt;revoke();
+        
+        return response()-&gt;json(['message' =&gt; 'Sesión cerrada correctamente']);
+    }
+
+    public function user(Request $request)
+    {
+        return response()-&gt;json($request-&gt;user());
+    }
+}
+</code></pre>
+<h4>Proteger rutas con Passport</h4>
+<pre><code class="language-php">// routes/api.php
+
+use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\ProductController;
+
+// Rutas públicas
+Route::post('/login', [AuthController::class, 'login']);
+
+// Rutas protegidas
+Route::middleware('auth:api')-&gt;group(function () {
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    
+    // Verificar scopes específicos
+    Route::get('/products', [ProductController::class, 'index'])
+        -&gt;middleware('scope:read-products');
+    
+    Route::post('/products', [ProductController::class, 'store'])
+        -&gt;middleware('scope:create-products');
+});
+</code></pre>
+<h3>Buenas prácticas de seguridad para APIs</h3>
+<blockquote class="aside aside-tip">
+- Utiliza siempre HTTPS para todas las comunicaciones API
+  - Implementa limitación de tasa (rate limiting) para prevenir ataques de fuerza bruta
+  - Establece tiempos de expiración razonables para los tokens
+  - Utiliza tokens con el mínimo de privilegios necesarios (principio de menor privilegio)
+  - Valida y sanitiza todas las entradas del usuario
+  - Implementa registro y monitoreo de actividades sospechosas
+  - Configura adecuadamente CORS para prevenir ataques de sitios cruzados
+  - Considera usar JWT (JSON Web Tokens) para casos de uso específicos
+</blockquote>
+    </div>
+  </section>
+
+  <section id="conclusion">
+    <h2>Conclusión</h2>
+    <div class="doc-content">
+<p>Laravel proporciona un conjunto completo de herramientas para crear APIs RESTful robustas y seguras. Desde la definición de rutas y controladores hasta la serialización de respuestas JSON y la autenticación mediante tokens, el framework facilita el desarrollo de APIs modernas que siguen las mejores prácticas.</p>
+<p>Al combinar estas características con otras funcionalidades de Laravel como validación, middleware, y manejo de excepciones, puedes construir APIs escalables y mantenibles que satisfagan las necesidades de tus clientes y aplicaciones frontend.</p>
+    </div>
+  </section>

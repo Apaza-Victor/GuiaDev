@@ -1,0 +1,463 @@
+<!-- 07. Renderizado Condicional - React (Frameworks) -->
+  <section id="7-1-uso-de-if-en-react">
+    <h2><i class="fa-solid fa-shuffle"></i> 7.1 Uso de if en React</h2>
+    <div class="doc-content">
+<h3>Renderizado condicional básico</h3>
+<p>El <strong>renderizado condicional</strong> permite mostrar diferentes elementos según una condición. Es como usar <code>if</code> en JavaScript, pero aplicado a la UI.</p>
+<pre><code class="language-jsx">function Saludo({ estaLogueado }) {
+  // Usar if antes del return
+  if (estaLogueado) {
+    return &lt;h1&gt;¡Bienvenido de vuelta!&lt;/h1&gt;;
+  }
+  
+  return &lt;h1&gt;Por favor, inicia sesión&lt;/h1&gt;;
+}</code></pre>
+<h3>Return temprano (early return)</h3>
+<pre><code class="language-jsx">function Perfil({ usuario }) {
+  // Si no hay usuario, retorna temprano
+  if (!usuario) {
+    return &lt;p&gt;Cargando...&lt;/p&gt;;
+  }
+  
+  // Si hay usuario, muestra el perfil
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;{usuario.nombre}&lt;/h1&gt;
+      &lt;p&gt;{usuario.email}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Múltiples condiciones</h3>
+<pre><code class="language-jsx">function EstadoPedido({ estado }) {
+  if (estado === "pendiente") {
+    return &lt;span className="pendiente"&gt;⏳ Pendiente&lt;/span&gt;;
+  }
+  
+  if (estado === "enviado") {
+    return &lt;span className="enviado"&gt;📦 Enviado&lt;/span&gt;;
+  }
+  
+  if (estado === "entregado") {
+    return &lt;span className="entregado"&gt;✅ Entregado&lt;/span&gt;;
+  }
+  
+  return &lt;span className="desconocido"&gt;❓ Desconocido&lt;/span&gt;;
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-2-operador-ternario">
+    <h2><i class="fa-solid fa-circle-question"></i> 7.2 Operador ternario</h2>
+    <div class="doc-content">
+<h3>Sintaxis del ternario</h3>
+<p>El operador ternario <code>condición ? valorSiTrue : valorSiFalse</code> es perfecto para condiciones simples dentro del JSX.</p>
+<pre><code class="language-jsx">function Saludo({ estaLogueado }) {
+  return (
+    &lt;div&gt;
+      {estaLogueado ? (
+        &lt;h1&gt;¡Bienvenido!&lt;/h1&gt;
+      ) : (
+        &lt;h1&gt;Inicia sesión&lt;/h1&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Ternario para atributos</h3>
+<pre><code class="language-jsx">function Boton({ activo }) {
+  return (
+    &lt;button 
+      className={activo ? "btn-activo" : "btn-inactivo"}
+      disabled={activo ? false : true}
+    &gt;
+      {activo ? "Activo" : "Inactivo"}
+    &lt;/button&gt;
+  );
+}</code></pre>
+<h3>Ternario para estilos</h3>
+<pre><code class="language-jsx">function Tarjeta({ destacada }) {
+  return (
+    &lt;div 
+      style={{
+        backgroundColor: destacada ? "#ffd700" : "#ffffff",
+        border: destacada ? "2px solid gold" : "1px solid #ccc",
+        padding: "20px"
+      }}
+    &gt;
+      &lt;h3&gt;{destacada ? "⭐ Destacada" : "Normal"}&lt;/h3&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Ternarios anidados (evitar si es posible)</h3>
+<pre><code class="language-jsx">// ❌ Difícil de leer
+function Estado({ valor }) {
+  return (
+    &lt;span&gt;
+      {valor &gt; 100 ? "Alto" : valor &gt; 50 ? "Medio" : "Bajo"}
+    &lt;/span&gt;
+  );
+}
+
+// ✅ Mejor usar función separada
+function Estado({ valor }) {
+  const obtenerNivel = (v) =&gt; {
+    if (v &gt; 100) return "Alto";
+    if (v &gt; 50) return "Medio";
+    return "Bajo";
+  };
+  
+  return &lt;span&gt;{obtenerNivel(valor)}&lt;/span&gt;;
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-3-operador-logico">
+    <h2><i class="fa-solid fa-plus"></i> 7.3 Operador lógico &&</h2>
+    <div class="doc-content">
+<h3>Mostrar solo si es true</h3>
+<p>El operador <code>&&</code> renderiza el elemento solo si la condición es verdadera. Es útil cuando no necesitas un "else".</p>
+<pre><code class="language-jsx">function Notificaciones({ cantidad }) {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Panel&lt;/h1&gt;
+      
+      {/* Solo muestra si cantidad &gt; 0 */}
+      {cantidad &gt; 0 &amp;&amp; (
+        &lt;span className="badge"&gt;{cantidad} nuevas&lt;/span&gt;
+      )}
+    &lt;/div&gt;
+  );
+}
+
+// Si cantidad = 0: Solo muestra "Panel"
+// Si cantidad = 5: Muestra "Panel" y "5 nuevas"</code></pre>
+<h3>Múltiples condiciones con &&</h3>
+<pre><code class="language-jsx">function Perfil({ usuario, esPremium, tieneNotificaciones }) {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;{usuario.nombre}&lt;/h1&gt;
+      
+      {/* Mostrar badge premium */}
+      {esPremium &amp;&amp; &lt;span className="premium"&gt;⭐ Premium&lt;/span&gt;}
+      
+      {/* Mostrar notificaciones */}
+      {tieneNotificaciones &amp;&amp; &lt;span className="notif"&gt;🔔&lt;/span&gt;}
+      
+      {/* Mostrar admin si es admin */}
+      {usuario.rol === "admin" &amp;&amp; (
+        &lt;button&gt;Panel de Admin&lt;/button&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Cuidado con el 0</h3>
+<pre><code class="language-jsx">// ❌ PROBLEMA: Si cantidad es 0, muestra "0" en pantalla
+function Lista({ items }) {
+  return (
+    &lt;div&gt;
+      {items.length &amp;&amp; &lt;ul&gt;...&lt;/ul&gt;}
+      {/* Si items.length = 0, renderiza "0" */}
+    &lt;/div&gt;
+  );
+}
+
+// ✅ SOLUCIÓN: Convertir a booleano
+function Lista({ items }) {
+  return (
+    &lt;div&gt;
+      {items.length &gt; 0 &amp;&amp; &lt;ul&gt;...&lt;/ul&gt;}
+      {/* Ahora funciona correctamente */}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-caution">
+El operador `&&` puede mostrar `0` o `NaN` en pantalla si la condición evalúa a esos valores. Siempre usa comparaciones explícitas como `> 0` o `!== 0`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-4-renderizado-basado-en-estado">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 7.4 Renderizado basado en estado</h2>
+    <div class="doc-content">
+<h3>Toggle con useState</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function ToggleContenido() {
+  const [visible, setVisible] = useState(false);
+  
+  return (
+    &lt;div&gt;
+      &lt;button onClick={() =&gt; setVisible(!visible)}&gt;
+        {visible ? "Ocultar" : "Mostrar"}
+      &lt;/button&gt;
+      
+      {visible &amp;&amp; (
+        &lt;div className="contenido"&gt;
+          &lt;p&gt;Este contenido se puede mostrar/ocultar&lt;/p&gt;
+        &lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Estados de carga</h3>
+<pre><code class="language-jsx">import { useState, useEffect } from 'react';
+
+function ListaUsuarios() {
+  const [usuarios, setUsuarios] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() =&gt; {
+    fetch('/api/usuarios')
+      .then(res =&gt; res.json())
+      .then(data =&gt; {
+        setUsuarios(data);
+        setCargando(false);
+      })
+      .catch(err =&gt; {
+        setError(err.message);
+        setCargando(false);
+      });
+  }, []);
+  
+  // Renderizado condicional basado en estado
+  if (cargando) {
+    return &lt;p&gt;Cargando...&lt;/p&gt;;
+  }
+  
+  if (error) {
+    return &lt;p className="error"&gt;Error: {error}&lt;/p&gt;;
+  }
+  
+  if (usuarios.length === 0) {
+    return &lt;p&gt;No hay usuarios&lt;/p&gt;;
+  }
+  
+  return (
+    &lt;ul&gt;
+      {usuarios.map(u =&gt; &lt;li key={u.id}&gt;{u.nombre}&lt;/li&gt;)}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-5-mostrar-ocultar-componentes">
+    <h2><i class="fa-solid fa-eye"></i> 7.5 Mostrar/ocultar componentes</h2>
+    <div class="doc-content">
+<h3>Componente Modal</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function Modal({ children, titulo, onCerrar }) {
+  return (
+    &lt;div className="modal-overlay"&gt;
+      &lt;div className="modal"&gt;
+        &lt;div className="modal-header"&gt;
+          &lt;h2&gt;{titulo}&lt;/h2&gt;
+          &lt;button onClick={onCerrar}&gt;✕&lt;/button&gt;
+        &lt;/div&gt;
+        &lt;div className="modal-body"&gt;
+          {children}
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+
+function App() {
+  const [mostrarModal, setMostrarModal] = useState(false);
+  
+  return (
+    &lt;div&gt;
+      &lt;button onClick={() =&gt; setMostrarModal(true)}&gt;
+        Abrir Modal
+      &lt;/button&gt;
+      
+      {mostrarModal &amp;&amp; (
+        &lt;Modal 
+          titulo="Mi Modal"
+          onCerrar={() =&gt; setMostrarModal(false)}
+        &gt;
+          &lt;p&gt;Contenido del modal&lt;/p&gt;
+        &lt;/Modal&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Menú desplegable</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function MenuDesplegable() {
+  const [abierto, setAbierto] = useState(false);
+  
+  return (
+    &lt;div className="menu-container"&gt;
+      &lt;button onClick={() =&gt; setAbierto(!abierto)}&gt;
+        Menú {abierto ? "▲" : "▼"}
+      &lt;/button&gt;
+      
+      {abierto &amp;&amp; (
+        &lt;ul className="menu-items"&gt;
+          &lt;li&gt;Opción 1&lt;/li&gt;
+          &lt;li&gt;Opción 2&lt;/li&gt;
+          &lt;li&gt;Opción 3&lt;/li&gt;
+        &lt;/ul&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Acordeón</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function Acordeon({ items }) {
+  const [activo, setActivo] = useState(null);
+  
+  return (
+    &lt;div className="acordeon"&gt;
+      {items.map((item, index) =&gt; (
+        &lt;div key={index} className="acordeon-item"&gt;
+          &lt;button 
+            className="acordeon-header"
+            onClick={() =&gt; setActivo(activo === index ? null : index)}
+          &gt;
+            {item.titulo}
+            &lt;span&gt;{activo === index ? "−" : "+"}&lt;/span&gt;
+          &lt;/button&gt;
+          
+          {activo === index &amp;&amp; (
+            &lt;div className="acordeon-contenido"&gt;
+              {item.contenido}
+            &lt;/div&gt;
+          )}
+        &lt;/div&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}
+
+// Uso
+&lt;Acordeon items={[
+  { titulo: "Sección 1", contenido: "Contenido de la sección 1" },
+  { titulo: "Sección 2", contenido: "Contenido de la sección 2" },
+  { titulo: "Sección 3", contenido: "Contenido de la sección 3" }
+]} /&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-6-renderizado-dinamico-en-ui">
+    <h2><i class="fa-solid fa-palette"></i> 7.6 Renderizado dinámico en UI</h2>
+    <div class="doc-content">
+<h3>Tabs/Pestañas</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function Tabs() {
+  const [tabActiva, setTabActiva] = useState("inicio");
+  
+  const renderContenido = () =&gt; {
+    switch (tabActiva) {
+      case "inicio":
+        return &lt;div&gt;Contenido de Inicio&lt;/div&gt;;
+      case "perfil":
+        return &lt;div&gt;Contenido de Perfil&lt;/div&gt;;
+      case "config":
+        return &lt;div&gt;Contenido de Configuración&lt;/div&gt;;
+      default:
+        return null;
+    }
+  };
+  
+  return (
+    &lt;div&gt;
+      &lt;div className="tabs-header"&gt;
+        &lt;button 
+          className={tabActiva === "inicio" ? "activa" : ""}
+          onClick={() =&gt; setTabActiva("inicio")}
+        &gt;
+          Inicio
+        &lt;/button&gt;
+        &lt;button 
+          className={tabActiva === "perfil" ? "activa" : ""}
+          onClick={() =&gt; setTabActiva("perfil")}
+        &gt;
+          Perfil
+        &lt;/button&gt;
+        &lt;button 
+          className={tabActiva === "config" ? "activa" : ""}
+          onClick={() =&gt; setTabActiva("config")}
+        &gt;
+          Configuración
+        &lt;/button&gt;
+      &lt;/div&gt;
+      
+      &lt;div className="tabs-contenido"&gt;
+        {renderContenido()}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Componentes dinámicos</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+// Componentes
+function FormularioLogin() {
+  return &lt;form&gt;&lt;h2&gt;Iniciar Sesión&lt;/h2&gt;...&lt;/form&gt;;
+}
+
+function FormularioRegistro() {
+  return &lt;form&gt;&lt;h2&gt;Registrarse&lt;/h2&gt;...&lt;/form&gt;;
+}
+
+function FormularioRecuperar() {
+  return &lt;form&gt;&lt;h2&gt;Recuperar Contraseña&lt;/h2&gt;...&lt;/form&gt;;
+}
+
+// Mapa de componentes
+const FORMULARIOS = {
+  login: FormularioLogin,
+  registro: FormularioRegistro,
+  recuperar: FormularioRecuperar
+};
+
+function Auth() {
+  const [tipo, setTipo] = useState("login");
+  
+  // Obtener componente dinámicamente
+  const FormularioActual = FORMULARIOS[tipo];
+  
+  return (
+    &lt;div&gt;
+      &lt;nav&gt;
+        &lt;button onClick={() =&gt; setTipo("login")}&gt;Login&lt;/button&gt;
+        &lt;button onClick={() =&gt; setTipo("registro")}&gt;Registro&lt;/button&gt;
+        &lt;button onClick={() =&gt; setTipo("recuperar")}&gt;Recuperar&lt;/button&gt;
+      &lt;/nav&gt;
+      
+      &lt;FormularioActual /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Resumen de técnicas</h3>
+<table><thead><tr><th>Técnica</th><th>Uso</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>if/else</code></td><td>Antes del return</td><td>Múltiples condiciones</td></tr><tr><td>Ternario <code>? :</code></td><td>Dentro del JSX</td><td>Dos opciones</td></tr><tr><td><code>&&</code></td><td>Mostrar/ocultar</td><td>Solo si es true</td></tr><tr><td><code>switch</code></td><td>Múltiples casos</td><td>Tabs, estados</td></tr><tr><td>Mapa de componentes</td><td>Dinámico</td><td>Formularios, vistas</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Usar **if/else** antes del return para condiciones complejas
+- El **operador ternario** `? :` para condiciones simples en JSX
+- El **operador &&** para mostrar elementos condicionalmente
+- Cuidado con `&&` y valores como **0** o **NaN**
+- Crear **toggles** con useState para mostrar/ocultar
+- Implementar **modales**, **menús** y **acordeones**
+- Usar **switch** y mapas de componentes para UI dinámica
+</blockquote>
+    </div>
+  </section>

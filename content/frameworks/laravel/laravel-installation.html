@@ -1,0 +1,223 @@
+<!-- 2. Instalación y Configuración - Laravel (Frameworks) -->
+  <section id="instalar-laravel-via-composer">
+    <h2>Instalar Laravel vía Composer</h2>
+    <div class="doc-content">
+<p>Composer es el gestor de dependencias para PHP que Laravel utiliza para manejar sus paquetes y dependencias. Antes de instalar Laravel, asegúrate de tener instalado:</p>
+<ul>
+<li>PHP >= 8.1</li>
+<li>Composer</li>
+<li>Las extensiones de PHP requeridas (mencionadas en la sección de Introducción)</li>
+</ul>
+<h3>Instalación global de Laravel Installer</h3>
+<p>La forma más rápida de comenzar con Laravel es utilizando el instalador global de Laravel:</p>
+<code>composer global require laravel/installer</code>
+<p>Una vez instalado, puedes crear un nuevo proyecto Laravel con el comando <code>laravel new</code>:</p>
+<code>laravel new mi-proyecto</code>
+<blockquote class="aside aside-tip">
+Asegúrate de que el directorio `~/.composer/vendor/bin` (o el equivalente en tu sistema) esté en tu variable de entorno PATH para poder ejecutar el comando `laravel`.
+</blockquote>
+<h3>Instalación vía Composer create-project</h3>
+<p>Alternativamente, puedes crear un proyecto Laravel utilizando directamente Composer:</p>
+<code>composer create-project laravel/laravel mi-proyecto</code>
+<h3>Instalación de una versión específica</h3>
+<p>Si necesitas instalar una versión específica de Laravel, puedes especificarla así:</p>
+<code>composer create-project laravel/laravel mi-proyecto 10.*</code>
+<h4 class="tab-label">Windows</h4>
+<pre><code class="language-bash"># Navegar al directorio del proyecto
+cd mi-proyecto
+
+# Verificar la instalación
+php artisan --version
+</code></pre>
+<h4 class="tab-label">macOS/Linux</h4>
+<pre><code class="language-bash"># Navegar al directorio del proyecto
+cd mi-proyecto
+
+# Verificar la instalación
+php artisan --version
+</code></pre>
+    </div>
+  </section>
+
+  <section id="configurar-env">
+    <h2>Configurar .env</h2>
+    <div class="doc-content">
+<p>Laravel utiliza un archivo <code>.env</code> para gestionar la configuración del entorno. Cuando instalas Laravel, se crea automáticamente un archivo <code>.env.example</code> que debes copiar a <code>.env</code>:</p>
+<code>cp .env.example .env</code>
+<p>A continuación, genera una clave de aplicación:</p>
+<code>php artisan key:generate</code>
+<h3>Configuración básica del archivo .env</h3>
+<p>El archivo <code>.env</code> contiene variables de entorno cruciales para tu aplicación. Aquí están las más importantes que debes configurar:</p>
+<pre><code class="language-ini">
+# Entorno de la aplicación
+APP_NAME=Laravel
+APP_ENV=local # local, production, testing, staging
+APP_KEY=base64:tu-clave-generada
+APP_DEBUG=true # true para desarrollo, false para producción
+APP_URL=http://localhost
+
+# Configuración de la base de datos
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=root
+DB_PASSWORD=
+
+# Configuración de correo
+MAIL_MAILER=smtp
+MAIL_HOST=mailhog
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="APP_NAME"
+</code></pre>
+<blockquote class="aside aside-caution">
+Nunca incluyas el archivo `.env` en el control de versiones. Contiene información sensible como claves de API, contraseñas y credenciales.
+</blockquote>
+<h3>Acceder a variables de entorno en el código</h3>
+<p>Para acceder a las variables de entorno en tu código Laravel, puedes utilizar la función helper <code>env()</code>. Esta función acepta dos parámetros:</p>
+<ol>
+<li>El nombre de la variable de entorno que deseas obtener</li>
+<li>Un valor predeterminado (opcional) que se devolverá si la variable no existe</li>
+</ol>
+<p>Ejemplo de uso:</p>
+<code>$databaseName = env('DB_DATABASE', 'laravel');</code>
+<p>Sin embargo, es recomendable utilizar el helper <code>config()</code> para acceder a valores de configuración, ya que estos valores se almacenan en caché durante las solicitudes, mejorando el rendimiento:</p>
+<code>$appName = config('app.name');</code>
+<blockquote class="aside aside-tip">
+La función <code>env()</code> solo debe utilizarse en archivos de configuración. En el código de la aplicación, siempre usa <code>config()</code> para evitar problemas de rendimiento.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="estructura-basica-de-carpetas">
+    <h2>Estructura básica de carpetas</h2>
+    <div class="doc-content">
+<p>Laravel tiene una estructura de carpetas bien organizada. Aquí están los directorios principales y su propósito:</p>
+<h4 class="tab-label">Directorios principales</h4>
+<table><thead><tr><th>Directorio</th><th>Descripción</th></tr></thead><tbody><tr><td><code>app/</code></td><td>Contiene el código principal de la aplicación</td></tr><tr><td><code>bootstrap/</code></td><td>Contiene archivos de inicio y caché</td></tr><tr><td><code>config/</code></td><td>Contiene todos los archivos de configuración</td></tr><tr><td><code>database/</code></td><td>Contiene migraciones, factories y seeders</td></tr><tr><td><code>public/</code></td><td>El punto de entrada de la aplicación y assets públicos</td></tr><tr><td><code>resources/</code></td><td>Contiene vistas, assets sin compilar y traducciones</td></tr><tr><td><code>routes/</code></td><td>Contiene todas las definiciones de rutas</td></tr><tr><td><code>storage/</code></td><td>Contiene logs, caché compilado y archivos generados</td></tr><tr><td><code>tests/</code></td><td>Contiene pruebas automatizadas</td></tr><tr><td><code>vendor/</code></td><td>Contiene dependencias de Composer (no editar)</td></tr></tbody></table>
+<h4 class="tab-label">Directorio app/</h4>
+<table><thead><tr><th>Subdirectorio</th><th>Descripción</th></tr></thead><tbody><tr><td><code>app/Console/</code></td><td>Comandos Artisan personalizados</td></tr><tr><td><code>app/Exceptions/</code></td><td>Manejadores de excepciones</td></tr><tr><td><code>app/Http/</code></td><td>Controladores, middleware y requests</td></tr><tr><td><code>app/Models/</code></td><td>Modelos Eloquent</td></tr><tr><td><code>app/Providers/</code></td><td>Proveedores de servicios</td></tr></tbody></table>
+<h3>Archivos importantes</h3>
+<ul>
+<li><code>.env</code>: Configuración del entorno</li>
+<li><code>composer.json</code>: Dependencias y configuración de Composer</li>
+<li><code>package.json</code>: Dependencias de Node.js para frontend</li>
+<li><code>artisan</code>: CLI de Laravel</li>
+<li><code>webpack.mix.js</code> o <code>vite.config.js</code>: Configuración de compilación de assets</li>
+</ul>
+    </div>
+  </section>
+
+  <section id="servidor-local-con-artisan">
+    <h2>Servidor local con Artisan</h2>
+    <div class="doc-content">
+<p>Laravel incluye un servidor de desarrollo integrado a través de Artisan, que es perfecto para el desarrollo local.</p>
+<h3>Iniciar el servidor</h3>
+<p>Para iniciar el servidor de desarrollo:</p>
+<code>php artisan serve</code>
+<p>Por defecto, el servidor se ejecuta en <code>http://localhost:8000</code>.</p>
+<h3>Personalizar host y puerto</h3>
+<p>Puedes personalizar el host y el puerto:</p>
+<code>php artisan serve --host=0.0.0.0 --port=8080</code>
+<h3>Artisan Tinker</h3>
+<p>Laravel incluye Tinker, una REPL (Read-Eval-Print Loop) que te permite interactuar con tu aplicación desde la línea de comandos:</p>
+<code>php artisan tinker</code>
+<p>Ejemplo de uso:</p>
+<pre><code class="language-php">&gt;&gt;&gt; App\Models\User::count();
+=&gt; 5
+&gt;&gt;&gt; $user = App\Models\User::find(1);
+=&gt; App\Models\User {...}
+&gt;&gt;&gt; $user-&gt;email;
+=&gt; "admin@example.com"</code></pre>
+<h3>Comandos Artisan comunes</h3>
+<code># Listar todos los comandos disponibles
+<p>php artisan list</p>
+<p># Crear un controlador</p>
+<p>php artisan make:controller UserController</p>
+<p># Crear un modelo con migración</p>
+<p>php artisan make:model Product -m</p>
+<p># Ejecutar migraciones</p>
+<p>php artisan migrate</p>
+<p># Limpiar caché</p>
+<p>php artisan cache:clear</p>
+<p># Optimizar la aplicación para producción</p>
+<p>php artisan optimize</code></p>
+    </div>
+  </section>
+
+  <section id="configuracion-de-idiomas-y-zona-horaria">
+    <h2>Configuración de idiomas y zona horaria</h2>
+    <div class="doc-content">
+<p>Laravel proporciona herramientas para internacionalizar tu aplicación y manejar zonas horarias.</p>
+<h3>Configuración de idioma</h3>
+<p>El idioma predeterminado se configura en <code>config/app.php</code>:</p>
+<code>'locale' =&gt; 'es',
+<p>'fallback_locale' =&gt; 'en',</code></p>
+<h3>Archivos de traducción</h3>
+<p>Los archivos de traducción se almacenan en <code>resources/lang/{idioma}/</code>.</p>
+<p>Para crear un nuevo archivo de traducción:</p>
+<ol>
+<li>Crea la carpeta del idioma si no existe: <code>resources/lang/es/</code></li>
+<li>Crea un archivo PHP con las traducciones:</li>
+</ol>
+<code>&lt;?php
+<p>// resources/lang/es/messages.php</p>
+<p>return [</p>
+<p>'welcome' =&gt; 'Bienvenido a nuestra aplicación',</p>
+<p>'goodbye' =&gt; 'Hasta pronto',</p>
+<p>];</p>
+</code>
+<h3>Uso de traducciones</h3>
+<p>Puedes usar el helper <code>__()</code> para traducir textos:</p>
+<code>echo __('messages.welcome');
+<p>// Muestra: Bienvenido a nuestra aplicación</code></p>
+<p>O en Blade:</p>
+<code>{{ __('messages.welcome') }}</code>
+<h3>Cambiar el idioma en tiempo de ejecución</h3>
+<code>// Cambiar el idioma actual
+<p>App::setLocale('es');</p>
+<p>// Verificar el idioma actual</p>
+<p>if (App::isLocale('es')) {</p>
+<p>// Código específico para español</p>
+<p>}</code></p>
+<h3>Configuración de zona horaria</h3>
+<p>La zona horaria predeterminada se configura en <code>config/app.php</code>:</p>
+<code>'timezone' =&gt; 'America/Mexico_City',</code>
+<blockquote class="aside aside-tip">
+Puedes encontrar una lista de zonas horarias válidas en la [documentación de PHP](https://www.php.net/manual/es/timezones.php).
+</blockquote>
+<h3>Trabajar con fechas</h3>
+<p>Laravel utiliza Carbon para manejar fechas, que es una extensión de la clase DateTime de PHP:</p>
+<pre><code class="language-php">use Carbon\Carbon;
+
+// Fecha actual en la zona horaria de la aplicación
+$now = Carbon::now();
+
+// Formatear fecha
+echo $now-&gt;format('Y-m-d H:i:s');
+
+// Fecha localizada
+echo $now-&gt;locale('es')-&gt;isoFormat('LLLL');
+// Ejemplo: "domingo, 15 de junio de 2025 23:34"</code></pre>
+    </div>
+  </section>
+
+  <section id="proximos-pasos">
+    <h2>Próximos pasos</h2>
+    <div class="doc-content">
+<p>Ahora que tienes Laravel instalado y configurado, puedes comenzar a desarrollar tu aplicación. Los siguientes pasos podrían ser:</p>
+<ol>
+<li>Configurar la base de datos y crear migraciones</li>
+<li>Definir rutas y controladores</li>
+<li>Crear modelos Eloquent</li>
+<li>Diseñar vistas con Blade</li>
+</ol>
+<blockquote class="aside aside-note">
+Recuerda consultar la [documentación oficial de Laravel](https://laravel.com/docs) para obtener información más detallada sobre cada tema.
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,482 @@
+<!-- 3. Restricciones (Constraints) - Oracle (Base de Datos) -->
+  <section id="introduccion-a-las-restricciones">
+    <h2>Introducción a las restricciones</h2>
+    <div class="doc-content">
+<p>Las restricciones (constraints) en Oracle son reglas que se aplican a las columnas de una tabla para garantizar la integridad de los datos. Estas reglas se validan automáticamente cada vez que se realizan operaciones de inserción, actualización o eliminación de datos.</p>
+<h3>Beneficios de las restricciones</h3>
+<ul>
+<li><strong>Integridad de datos</strong>: Garantizan que los datos cumplan con reglas de negocio específicas</li>
+<li><strong>Consistencia</strong>: Mantienen la coherencia entre tablas relacionadas</li>
+<li><strong>Validación automática</strong>: Oracle verifica automáticamente las restricciones en cada operación DML</li>
+<li><strong>Documentación</strong>: Sirven como documentación de las reglas de negocio en el esquema</li>
+<li><strong>Optimización</strong>: El optimizador de Oracle utiliza las restricciones para mejorar los planes de ejecución</li>
+</ul>
+<blockquote class="aside aside-tip">
+Las restricciones son fundamentales para mantener la calidad de los datos. Siempre es mejor implementar las reglas de negocio a nivel de base de datos que confiar únicamente en la validación en la capa de aplicación.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="primary-key-clave-primaria">
+    <h2>PRIMARY KEY (Clave Primaria)</h2>
+    <div class="doc-content">
+<p>La restricción PRIMARY KEY identifica de manera única cada fila en una tabla. Combina las restricciones UNIQUE y NOT NULL.</p>
+<h3>Características principales</h3>
+<ul>
+<li>Garantiza valores únicos y no nulos</li>
+<li>Cada tabla puede tener solo una clave primaria</li>
+<li>Oracle crea automáticamente un índice único para la clave primaria</li>
+<li>Puede definirse sobre una o múltiples columnas (clave compuesta)</li>
+</ul>
+<h3>Sintaxis</h3>
+  <h4 class="tab-label">A nivel de columna</h4>
+    <pre><code class="language-sql">    CREATE TABLE empleados (
+        empleado_id NUMBER PRIMARY KEY,
+        nombre VARCHAR2(100),
+        email VARCHAR2(100)
+    );
+    </code></pre>
+  <h4 class="tab-label">A nivel de tabla</h4>
+    <pre><code class="language-sql">    CREATE TABLE empleados (
+        empleado_id NUMBER,
+        nombre VARCHAR2(100),
+        email VARCHAR2(100),
+        CONSTRAINT pk_empleados PRIMARY KEY (empleado_id)
+    );
+    </code></pre>
+  <h4 class="tab-label">Clave primaria compuesta</h4>
+    <pre><code class="language-sql">    CREATE TABLE detalle_pedido (
+        pedido_id NUMBER,
+        producto_id NUMBER,
+        cantidad NUMBER,
+        CONSTRAINT pk_detalle_pedido PRIMARY KEY (pedido_id, producto_id)
+    );
+    </code></pre>
+<h3>Consideraciones importantes</h3>
+<ul>
+<li>La clave primaria debe ser estable (no cambiar con el tiempo)</li>
+<li>Debe ser compacta para optimizar el rendimiento</li>
+<li>Evite usar claves primarias con significado de negocio que puedan cambiar</li>
+<li>Para tablas grandes, considere usar secuencias para generar valores de clave primaria</li>
+</ul>
+<pre><code class="language-sql">
+-- Creación de secuencia y uso para clave primaria
+CREATE SEQUENCE seq_empleados START WITH 1 INCREMENT BY 1;
+
+-- Uso en INSERT
+INSERT INTO empleados (empleado_id, nombre, email)
+VALUES (seq_empleados.NEXTVAL, 'Juan Pérez', 'juan.perez@ejemplo.com');
+</code></pre>
+    </div>
+  </section>
+
+  <section id="foreign-key-clave-foranea">
+    <h2>FOREIGN KEY (Clave Foránea)</h2>
+    <div class="doc-content">
+<p>La restricción FOREIGN KEY establece una relación entre dos tablas, garantizando que los valores en una columna (o conjunto de columnas) de la tabla hijo correspondan a valores en la tabla padre.</p>
+<h3>Características principales</h3>
+<ul>
+<li>Mantiene la integridad referencial entre tablas</li>
+<li>La columna referenciada en la tabla padre debe ser una clave primaria o tener una restricción UNIQUE</li>
+<li>Puede definirse con reglas de cascada para actualizaciones y eliminaciones</li>
+</ul>
+<h3>Sintaxis</h3>
+<pre><code class="language-sql">
+-- Tabla padre
+CREATE TABLE departamentos (
+    departamento_id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100)
+);
+
+-- Tabla hijo con clave foránea
+CREATE TABLE empleados (
+    empleado_id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100),
+    departamento_id NUMBER,
+    CONSTRAINT fk_empleados_departamento 
+        FOREIGN KEY (departamento_id) 
+        REFERENCES departamentos (departamento_id)
+);
+</code></pre>
+<h3>Opciones de acciones referenciales</h3>
+<p>Las claves foráneas pueden incluir reglas sobre qué hacer cuando se actualiza o elimina un registro referenciado:</p>
+  <h4 class="tab-label">ON DELETE CASCADE</h4>
+<p>Cuando se elimina una fila en la tabla padre, automáticamente se eliminan todas las filas relacionadas en la tabla hijo.</p>
+    <pre><code class="language-sql">    CREATE TABLE empleados (
+        empleado_id NUMBER PRIMARY KEY,
+        nombre VARCHAR2(100),
+        departamento_id NUMBER,
+        CONSTRAINT fk_empleados_departamento 
+            FOREIGN KEY (departamento_id) 
+            REFERENCES departamentos (departamento_id)
+            ON DELETE CASCADE
+    );
+    </code></pre>
+  <h4 class="tab-label">ON DELETE SET NULL</h4>
+<p>Cuando se elimina una fila en la tabla padre, se establece NULL en la columna de clave foránea de las filas relacionadas.</p>
+    <pre><code class="language-sql">    CREATE TABLE empleados (
+        empleado_id NUMBER PRIMARY KEY,
+        nombre VARCHAR2(100),
+        departamento_id NUMBER,
+        CONSTRAINT fk_empleados_departamento 
+            FOREIGN KEY (departamento_id) 
+            REFERENCES departamentos (departamento_id)
+            ON DELETE SET NULL
+    );
+    </code></pre>
+<blockquote class="aside aside-caution">
+Utilice ON DELETE CASCADE con precaución, ya que puede provocar eliminaciones en cascada no deseadas si no se comprende completamente la estructura de relaciones de la base de datos.
+</blockquote>
+<h3>Claves foráneas autorreferenciales</h3>
+<p>Una tabla puede tener una clave foránea que hace referencia a su propia clave primaria, lo que es útil para representar relaciones jerárquicas.</p>
+<pre><code class="language-sql">
+-- Tabla con clave foránea autorreferencial (estructura jerárquica)
+CREATE TABLE empleados (
+    empleado_id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100),
+    gerente_id NUMBER,
+    CONSTRAINT fk_empleados_gerente 
+        FOREIGN KEY (gerente_id) 
+        REFERENCES empleados (empleado_id)
+);
+</code></pre>
+    </div>
+  </section>
+
+  <section id="unique-restriccion-de-unicidad">
+    <h2>UNIQUE (Restricción de Unicidad)</h2>
+    <div class="doc-content">
+<p>La restricción UNIQUE garantiza que todos los valores en una columna o conjunto de columnas sean únicos.</p>
+<h3>Características principales</h3>
+<ul>
+<li>Asegura que no haya valores duplicados</li>
+<li>A diferencia de PRIMARY KEY, permite valores NULL (y múltiples NULLs)</li>
+<li>Oracle crea automáticamente un índice único para la columna</li>
+<li>Una tabla puede tener múltiples restricciones UNIQUE</li>
+</ul>
+<h3>Sintaxis</h3>
+  <h4 class="tab-label">A nivel de columna</h4>
+    <pre><code class="language-sql">    CREATE TABLE empleados (
+        empleado_id NUMBER PRIMARY KEY,
+        email VARCHAR2(100) UNIQUE,
+        telefono VARCHAR2(20) UNIQUE
+    );
+    </code></pre>
+  <h4 class="tab-label">A nivel de tabla</h4>
+    <pre><code class="language-sql">    CREATE TABLE empleados (
+        empleado_id NUMBER PRIMARY KEY,
+        email VARCHAR2(100),
+        telefono VARCHAR2(20),
+        CONSTRAINT uk_empleados_email UNIQUE (email),
+        CONSTRAINT uk_empleados_telefono UNIQUE (telefono)
+    );
+    </code></pre>
+  <h4 class="tab-label">Restricción UNIQUE compuesta</h4>
+    <pre><code class="language-sql">    CREATE TABLE inscripciones (
+        estudiante_id NUMBER,
+        curso_id NUMBER,
+        fecha_inscripcion DATE,
+        CONSTRAINT uk_inscripcion UNIQUE (estudiante_id, curso_id)
+    );
+    </code></pre>
+<h3>Diferencias entre PRIMARY KEY y UNIQUE</h3>
+<table><thead><tr><th>Característica</th><th>PRIMARY KEY</th><th>UNIQUE</th></tr></thead><tbody><tr><td>Valores NULL</td><td>No permitidos</td><td>Permitidos</td></tr><tr><td>Cantidad por tabla</td><td>Solo una</td><td>Múltiples</td></tr><tr><td>Crea índice</td><td>Sí</td><td>Sí</td></tr><tr><td>Identifica la fila</td><td>Sí</td><td>No necesariamente</td></tr></tbody></table>
+    </div>
+  </section>
+
+  <section id="check-restriccion-de-comprobacion">
+    <h2>CHECK (Restricción de Comprobación)</h2>
+    <div class="doc-content">
+<p>La restricción CHECK define una condición que debe cumplirse para cada fila de la tabla.</p>
+<h3>Características principales</h3>
+<ul>
+<li>Valida que los datos cumplan con reglas de negocio específicas</li>
+<li>La condición debe evaluarse a TRUE o NULL para ser aceptada</li>
+<li>Puede referenciar múltiples columnas de la misma tabla</li>
+<li>No puede contener subconsultas, secuencias, funciones SYSDATE/CURRENT_DATE, pseudocolumnas o funciones no determinísticas</li>
+</ul>
+<h3>Sintaxis</h3>
+<pre><code class="language-sql">
+-- Ejemplos de restricciones CHECK
+CREATE TABLE empleados (
+    empleado_id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100) NOT NULL,
+    salario NUMBER(10,2) CONSTRAINT chk_salario_positivo CHECK (salario &gt; 0),
+    fecha_nacimiento DATE,
+    fecha_contratacion DATE,
+    CONSTRAINT chk_fecha_contratacion 
+        CHECK (fecha_contratacion &gt; fecha_nacimiento),
+    genero CHAR(1) CONSTRAINT chk_genero 
+        CHECK (genero IN ('M', 'F', 'O'))
+);
+</code></pre>
+<h3>Casos de uso comunes</h3>
+<ul>
+<li>Validar rangos de valores (edad, salario, calificaciones)</li>
+<li>Asegurar que una fecha esté dentro de un rango válido</li>
+<li>Validar formatos o patrones específicos</li>
+<li>Implementar reglas de negocio complejas</li>
+</ul>
+<pre><code class="language-sql">
+-- Restricciones CHECK más elaboradas
+CREATE TABLE productos (
+    producto_id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100),
+    precio NUMBER(10,2),
+    precio_descuento NUMBER(10,2),
+    stock NUMBER,
+    categoria VARCHAR2(50),
+    
+    -- El precio debe ser positivo
+    CONSTRAINT chk_precio_positivo CHECK (precio &gt; 0),
+    
+    -- El precio con descuento debe ser menor que el precio regular
+    CONSTRAINT chk_precio_descuento CHECK (precio_descuento &lt; precio),
+    
+    -- El stock no puede ser negativo
+    CONSTRAINT chk_stock_valido CHECK (stock &gt;= 0),
+    
+    -- La categoría debe estar en una lista de valores permitidos
+    CONSTRAINT chk_categoria_valida 
+        CHECK (categoria IN ('Electrónica', 'Ropa', 'Hogar', 'Alimentos', 'Libros'))
+);
+</code></pre>
+    </div>
+  </section>
+
+  <section id="not-null-no-nulo">
+    <h2>NOT NULL (No Nulo)</h2>
+    <div class="doc-content">
+<p>La restricción NOT NULL garantiza que una columna no acepte valores NULL.</p>
+<h3>Características principales</h3>
+<ul>
+<li>Obliga a que la columna siempre tenga un valor</li>
+<li>Es la restricción más simple y común</li>
+<li>Mejora la calidad de los datos y simplifica las consultas</li>
+<li>Es parte implícita de PRIMARY KEY</li>
+</ul>
+<h3>Sintaxis</h3>
+<pre><code class="language-sql">
+-- Ejemplos de restricciones NOT NULL
+CREATE TABLE clientes (
+    cliente_id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100) NOT NULL,
+    apellido VARCHAR2(100) NOT NULL,
+    email VARCHAR2(100) NOT NULL,
+    telefono VARCHAR2(20),  -- Puede ser NULL
+    fecha_registro DATE DEFAULT SYSDATE NOT NULL
+);
+</code></pre>
+<h3>Consideraciones importantes</h3>
+<ul>
+<li>Use NOT NULL para columnas que siempre deben tener un valor</li>
+<li>Combine con valores DEFAULT cuando sea apropiado</li>
+<li>Tenga en cuenta que NOT NULL afecta las operaciones de JOIN</li>
+</ul>
+<blockquote class="aside aside-note">
+Aunque NOT NULL es técnicamente una restricción, en Oracle se implementa como un atributo de columna más que como una restricción independiente. No aparece en USER_CONSTRAINTS, sino en la columna NULLABLE de USER_TAB_COLUMNS.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="ejemplos-de-combinacion-de-restricciones">
+    <h2>Ejemplos de combinación de restricciones</h2>
+    <div class="doc-content">
+<p>En sistemas reales, las tablas suelen combinar múltiples tipos de restricciones para garantizar la integridad de los datos.</p>
+<h3>Ejemplo 1: Sistema de gestión de pedidos</h3>
+<pre><code class="language-sql">
+-- Tabla de clientes
+CREATE TABLE clientes (
+    cliente_id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100) NOT NULL,
+    email VARCHAR2(100) NOT NULL,
+    telefono VARCHAR2(20),
+    limite_credito NUMBER(10,2) DEFAULT 1000 CHECK (limite_credito &gt;= 0),
+    fecha_registro DATE DEFAULT SYSDATE NOT NULL,
+    CONSTRAINT uk_cliente_email UNIQUE (email)
+);
+
+-- Tabla de productos
+CREATE TABLE productos (
+    producto_id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100) NOT NULL,
+    precio NUMBER(10,2) NOT NULL CHECK (precio &gt; 0),
+    stock NUMBER DEFAULT 0 NOT NULL CHECK (stock &gt;= 0),
+    categoria VARCHAR2(50) NOT NULL
+);
+
+-- Tabla de pedidos
+CREATE TABLE pedidos (
+    pedido_id NUMBER PRIMARY KEY,
+    cliente_id NUMBER NOT NULL,
+    fecha_pedido DATE DEFAULT SYSDATE NOT NULL,
+    estado VARCHAR2(20) DEFAULT 'Pendiente' NOT NULL 
+        CHECK (estado IN ('Pendiente', 'Procesando', 'Enviado', 'Entregado', 'Cancelado')),
+    total NUMBER(12,2),
+    CONSTRAINT fk_pedidos_cliente FOREIGN KEY (cliente_id) 
+        REFERENCES clientes (cliente_id)
+);
+
+-- Tabla de detalles de pedido
+CREATE TABLE detalles_pedido (
+    pedido_id NUMBER,
+    producto_id NUMBER,
+    cantidad NUMBER NOT NULL CHECK (cantidad &gt; 0),
+    precio_unitario NUMBER(10,2) NOT NULL CHECK (precio_unitario &gt; 0),
+    CONSTRAINT pk_detalles_pedido PRIMARY KEY (pedido_id, producto_id),
+    CONSTRAINT fk_detalles_pedido FOREIGN KEY (pedido_id) 
+        REFERENCES pedidos (pedido_id) ON DELETE CASCADE,
+    CONSTRAINT fk_detalles_producto FOREIGN KEY (producto_id) 
+        REFERENCES productos (producto_id)
+);
+</code></pre>
+<h3>Ejemplo 2: Sistema de recursos humanos</h3>
+<pre><code class="language-sql">
+-- Tabla de departamentos
+CREATE TABLE departamentos (
+    departamento_id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100) NOT NULL,
+    ubicacion VARCHAR2(100),
+    presupuesto NUMBER(15,2) CHECK (presupuesto &gt; 0),
+    CONSTRAINT uk_departamento_nombre UNIQUE (nombre)
+);
+
+-- Tabla de puestos
+CREATE TABLE puestos (
+    puesto_id NUMBER PRIMARY KEY,
+    titulo VARCHAR2(100) NOT NULL,
+    salario_minimo NUMBER(10,2) NOT NULL,
+    salario_maximo NUMBER(10,2) NOT NULL,
+    CONSTRAINT uk_puesto_titulo UNIQUE (titulo),
+    CONSTRAINT chk_rango_salario CHECK (salario_maximo &gt; salario_minimo)
+);
+
+-- Tabla de empleados
+CREATE TABLE empleados (
+    empleado_id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(50) NOT NULL,
+    apellido VARCHAR2(50) NOT NULL,
+    email VARCHAR2(100) NOT NULL,
+    telefono VARCHAR2(20),
+    fecha_contratacion DATE NOT NULL,
+    puesto_id NUMBER NOT NULL,
+    departamento_id NUMBER NOT NULL,
+    salario NUMBER(10,2) NOT NULL,
+    gerente_id NUMBER,
+    
+    -- Restricciones de unicidad
+    CONSTRAINT uk_empleado_email UNIQUE (email),
+    
+    -- Claves foráneas
+    CONSTRAINT fk_empleado_puesto FOREIGN KEY (puesto_id) 
+        REFERENCES puestos (puesto_id),
+    CONSTRAINT fk_empleado_departamento FOREIGN KEY (departamento_id) 
+        REFERENCES departamentos (departamento_id),
+    CONSTRAINT fk_empleado_gerente FOREIGN KEY (gerente_id) 
+        REFERENCES empleados (empleado_id),
+        
+    -- Restricciones de validación
+    CONSTRAINT chk_salario_rango CHECK (
+        salario BETWEEN (SELECT salario_minimo FROM puestos WHERE puesto_id = empleados.puesto_id) 
+                    AND (SELECT salario_maximo FROM puestos WHERE puesto_id = empleados.puesto_id)
+    )
+);
+</code></pre>
+<blockquote class="aside aside-caution">
+La restricción CHECK en la tabla empleados que valida el rango de salario no funcionará directamente en Oracle porque las restricciones CHECK no pueden contener subconsultas. En un caso real, esto se implementaría usando triggers.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="gestion-de-restricciones">
+    <h2>Gestión de restricciones</h2>
+    <div class="doc-content">
+<h3>Habilitación y deshabilitación</h3>
+<p>En ocasiones, es necesario deshabilitar temporalmente las restricciones para operaciones masivas de carga de datos.</p>
+<pre><code class="language-sql">
+-- Deshabilitar una restricción
+ALTER TABLE empleados DISABLE CONSTRAINT fk_empleado_departamento;
+
+-- Habilitar una restricción
+ALTER TABLE empleados ENABLE CONSTRAINT fk_empleado_departamento;
+
+-- Deshabilitar todas las restricciones de una tabla
+ALTER TABLE empleados DISABLE ALL CONSTRAINTS;
+
+-- Habilitar todas las restricciones de una tabla
+ALTER TABLE empleados ENABLE ALL CONSTRAINTS;
+</code></pre>
+<h3>Adición y eliminación</h3>
+<p>Las restricciones pueden agregarse o eliminarse después de crear la tabla.</p>
+<pre><code class="language-sql">
+-- Agregar una restricción
+ALTER TABLE empleados ADD CONSTRAINT chk_salario_minimo 
+    CHECK (salario &gt;= 1000);
+
+-- Eliminar una restricción
+ALTER TABLE empleados DROP CONSTRAINT chk_salario_minimo;
+</code></pre>
+<h3>Consulta de restricciones</h3>
+<p>Oracle proporciona vistas del diccionario de datos para consultar las restricciones definidas.</p>
+<pre><code class="language-sql">
+-- Consultar todas las restricciones de una tabla
+SELECT constraint_name, constraint_type, search_condition, status
+FROM user_constraints
+WHERE table_name = 'EMPLEADOS';
+
+-- Consultar columnas involucradas en restricciones
+SELECT c.constraint_name, c.constraint_type, cc.column_name
+FROM user_constraints c
+JOIN user_cons_columns cc ON c.constraint_name = cc.constraint_name
+WHERE c.table_name = 'EMPLEADOS'
+ORDER BY c.constraint_name, cc.position;
+</code></pre>
+    </div>
+  </section>
+
+  <section id="mejores-practicas">
+    <h2>Mejores prácticas</h2>
+    <div class="doc-content">
+<ol class="steps">
+<ol>
+<li><strong>Nombre las restricciones explícitamente</strong></li>
+</ol>
+<ul>
+<li>Use prefijos como pk_, fk_, uk_, chk_ para identificar el tipo</li>
+<li>Incluya los nombres de tabla y columna en el nombre de la restricción</li>
+<li>Ejemplo: <code>fk_empleados_departamento</code></li>
+</ul>
+<ol>
+<li><strong>Implemente la integridad referencial completa</strong></li>
+</ol>
+<ul>
+<li>Asegúrese de que todas las relaciones entre tablas estén definidas con claves foráneas</li>
+<li>Considere cuidadosamente las opciones de cascada</li>
+</ul>
+<ol>
+<li><strong>Use restricciones en lugar de triggers cuando sea posible</strong></li>
+</ol>
+<ul>
+<li>Las restricciones son más eficientes y menos propensas a errores</li>
+<li>Reserve los triggers para lógica de negocio compleja</li>
+</ul>
+<ol>
+<li><strong>Documente las restricciones</strong></li>
+</ol>
+<ul>
+<li>Agregue comentarios explicando el propósito de restricciones complejas</li>
+<li>Mantenga un diccionario de datos actualizado</li>
+</ul>
+<ol>
+<li><strong>Planifique cuidadosamente las operaciones masivas</strong></li>
+</ol>
+<ul>
+<li>Deshabilite temporalmente las restricciones para cargas masivas de datos</li>
+<li>Valide los datos antes de volver a habilitar las restricciones</li>
+</ul>
+</ol>
+<blockquote class="aside aside-tip">
+Las restricciones son la primera línea de defensa para mantener la integridad de los datos. Invértales tiempo en su diseño e implementación adecuados, ya que corregir problemas de integridad de datos después puede ser extremadamente costoso y complejo.
+</blockquote>
+    </div>
+  </section>

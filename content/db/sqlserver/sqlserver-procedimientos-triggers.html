@@ -1,0 +1,58 @@
+<!-- 12. Procedimientos almacenados y triggers - SQL Server (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="procedimiento-basico">
+    <h2>Procedimiento básico</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE PROCEDURE dbo.sp_ObtenerCaros
+  @minPrecio DECIMAL(10,2)
+AS
+BEGIN
+  SET NOCOUNT ON;   -- evita mensajes extra al cliente
+  SELECT Nombre, Precio
+  FROM dbo.Productos
+  WHERE Precio &gt; @minPrecio;
+END;
+GO
+
+EXEC dbo.sp_ObtenerCaros @minPrecio = 5000;</code></pre>
+    </div>
+  </section>
+
+  <section id="parametros-output-y-logica">
+    <h2>Parámetros OUTPUT y lógica</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE PROCEDURE dbo.sp_ContarPorCategoria
+  @categoriaId INT,
+  @total INT OUTPUT
+AS
+BEGIN
+  SELECT @total = COUNT(*) FROM dbo.Productos WHERE CategoriaId = @categoriaId;
+END;
+GO
+
+DECLARE @n INT;
+EXEC dbo.sp_ContarPorCategoria @categoriaId = 1, @total = @n OUTPUT;
+PRINT CONCAT(N'Total: ', @n);</code></pre>
+<p>Dentro de T-SQL dispones de <code>IF/ELSE</code>, <code>WHILE</code>, <code>CASE</code> y variables con <code>DECLARE</code>/<code>SET</code>.</p>
+    </div>
+  </section>
+
+  <section id="triggers-dml">
+    <h2>Triggers DML</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE TRIGGER dbo.trg_DescuentaStock
+ON dbo.Ventas
+AFTER INSERT
+AS
+BEGIN
+  SET NOCOUNT ON;
+  UPDATE p SET p.Stock = p.Stock - i.Cantidad
+  FROM dbo.Productos p
+  INNER JOIN inserted i ON i.ProductoId = p.Id;
+END;</code></pre>
+<p>Las tablas virtuales <code>inserted</code> y <code>deleted</code> contienen las filas afectadas (en UPDATE, <code>deleted</code> trae los valores viejos y <code>inserted</code> los nuevos).</p>
+<blockquote class="aside aside-caution">
+<p>Un trigger dispara por LOTE, no por fila: escribe siempre pensando en múltiples filas, como en el ejemplo.</p>
+</blockquote>
+    </div>
+  </section>

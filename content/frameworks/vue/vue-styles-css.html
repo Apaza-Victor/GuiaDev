@@ -1,0 +1,215 @@
+<!-- 12. Estilos y CSS - Vue 3 (Frameworks) -->
+  <section id="estilos-en-vue-3-con-composition-api">
+    <h2>Estilos en Vue 3 con Composition API</h2>
+    <div class="doc-content">
+<p>Vue 3 ofrece varias formas de trabajar con estilos CSS, permitiendo tanto estilos encapsulados (scoped) como globales. La Composition API no cambia la forma en que se manejan los estilos en Vue, ya que estos se definen en la sección <code><style></code> del componente independientemente del API utilizado.</p>
+    </div>
+  </section>
+
+  <section id="scoped-styles">
+    <h2>Scoped Styles</h2>
+    <div class="doc-content">
+<p>Los estilos con alcance limitado (scoped) permiten que los estilos CSS definidos en un componente solo afecten a ese componente específico, evitando conflictos con otros componentes.</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;div class="container"&gt;
+    &lt;h1&gt;{{ title }}&lt;/h1&gt;
+    &lt;p class="description"&gt;{{ description }}&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+
+
+const title = ref('Componente con estilos scoped')
+const description = ref('Estos estilos solo afectan a este componente')
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+.container {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+h1 {
+  color: #42b883; /* Color verde de Vue */
+  font-size: 24px;
+}
+
+.description {
+  color: #666;
+  line-height: 1.5;
+}
+&lt;/style&gt;</code></pre>
+<h3>Cómo funcionan los estilos scoped</h3>
+<p>Cuando se utiliza el atributo <code>scoped</code> en la etiqueta <code><style></code>, Vue añade automáticamente un atributo de datos único (como <code>data-v-7ba5bd90</code>) a todos los elementos HTML del componente y modifica los selectores CSS para que solo se apliquen a elementos con ese atributo.</p>
+<pre><code class="language-css">/* Original */
+.description { color: #666; }
+
+/* Compilado */
+.description[data-v-7ba5bd90] { color: #666; }</code></pre>
+<h3>Acceso a elementos hijos</h3>
+<p>Por defecto, los estilos scoped no afectan a los componentes hijos. Para aplicar estilos a componentes hijos desde un componente padre, puedes usar el selector <code>>>></code> (o <code>:deep()</code> en Vue 3):</p>
+<pre><code class="language-css">&lt;style scoped&gt;
+/* Afecta a los elementos .title dentro de componentes hijos */
+:deep(.title) {
+  color: #ff0000;
+}
+
+/* Sintaxis alternativa (menos recomendada) */
+.parent &gt;&gt;&gt; .child {
+  color: #ff0000;
+}
+&lt;/style&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="estilos-globales">
+    <h2>Estilos Globales</h2>
+    <div class="doc-content">
+<p>Los estilos globales afectan a toda la aplicación y se definen sin el atributo <code>scoped</code>.</p>
+<pre><code class="language-vue">&lt;style&gt;
+/* Estos estilos afectarán a toda la aplicación */
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: #42b883;
+  color: white;
+  border: none;
+}
+&lt;/style&gt;</code></pre>
+<h3>Mejores prácticas para estilos globales</h3>
+<ol>
+<li><strong>Archivo dedicado</strong>: Para estilos globales, es recomendable crear un archivo CSS separado e importarlo en el componente principal de la aplicación (como <code>App.vue</code>).</li>
+</ol>
+<pre><code class="language-vue">// En main.js o main.ts
+
+
+
+
+
+
+const title = ref('Componente con Tailwind CSS')
+const description = ref('Este componente utiliza clases de utilidad de Tailwind CSS')
+&lt;/script&gt;</code></pre>
+<blockquote class="aside aside-tip">
+Tailwind CSS funciona perfectamente con la Composition API de Vue 3, ya que las clases se aplican directamente en el HTML y no requieren ninguna configuración especial en la sección `<script setup>`.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="directiva-apply-en-archivos-css">
+    <h2>Directiva @apply en archivos CSS</h2>
+    <div class="doc-content">
+<p>La directiva <code>@apply</code> de Tailwind CSS permite extraer patrones comunes de clases de utilidad en estilos personalizados, lo que es especialmente útil en componentes Vue.</p>
+<h3>Uso básico de @apply</h3>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;button class="btn-primary"&gt;Botón Primario&lt;/button&gt;
+  &lt;button class="btn-secondary"&gt;Botón Secundario&lt;/button&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+// No se requiere configuración especial para usar @apply
+&lt;/script&gt;
+
+&lt;style&gt;
+.btn-primary {
+  @apply px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition-colors;
+}
+&lt;/style&gt;</code></pre>
+<h3>@apply con estilos scoped $1 $1 </h3>
+<p>Puedes combinar <code>@apply</code> con estilos scoped para mantener el encapsulamiento:</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;div class="card"&gt;
+    &lt;h2 class="card-title"&gt;{{ title }}&lt;/h2&gt;
+    &lt;p class="card-content"&gt;{{ content }}&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+
+
+const title = ref('Tarjeta con @apply')
+const content = ref('Contenido de la tarjeta usando @apply con estilos scoped')
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+.card {
+  @apply bg-white rounded-lg shadow-md p-6 max-w-md mx-auto;
+}
+
+.card-title {
+  @apply text-xl font-bold text-gray-800 mb-2;
+}
+
+.card-content {
+  @apply text-gray-600;
+}
+&lt;/style&gt;</code></pre>
+<h3>Creación de componentes con @apply $1 $1 </h3>
+<p>Puedes crear componentes reutilizables usando <code>@apply</code> en un archivo CSS global:</p>
+<pre><code class="language-css">/* src/assets/components.css */
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded font-medium focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors;
+  }
+  
+  .btn-primary {
+    @apply btn bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500;
+  }
+  
+  .btn-danger {
+    @apply btn bg-red-500 text-white hover:bg-red-600 focus:ring-red-500;
+  }
+  
+  .input {
+    @apply px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+  }
+  
+  .card {
+    @apply bg-white rounded-lg shadow-md overflow-hidden;
+  }
+  
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200;
+  }
+  
+  .card-body {
+    @apply p-6;
+  }
+}
+</code></pre>
+<p>Luego importa este archivo en tu CSS principal:</p>
+<pre><code class="language-css">/* src/assets/main.css */
+@tailwind base;
+@tailwind components;
+@import "./components.css";
+@tailwind utilities;</code></pre>
+<blockquote class="aside aside-note">
+El uso de `@layer components` asegura que tus componentes personalizados se inserten en el orden correcto dentro del CSS generado por Tailwind.
+</blockquote>
+<h3>Ventajas de usar @apply en Vue 3</h3>
+<ol>
+<li><strong>Reduce el tamaño del HTML</strong>: Evita tener largas cadenas de clases en tus templates.</li>
+<li><strong>Mejora la legibilidad</strong>: Crea nombres de clases semánticos que describen su propósito.</li>
+<li><strong>Reutilización</strong>: Define estilos una vez y úsalos en múltiples componentes.</li>
+<li><strong>Mantenibilidad</strong>: Centraliza los cambios de estilo en un solo lugar.</li>
+<li><strong>Compatibilidad con scoped</strong>: Funciona perfectamente con el sistema de estilos encapsulados de Vue.</li>
+</ol>
+    </div>
+  </section>

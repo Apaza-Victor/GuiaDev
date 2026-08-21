@@ -1,0 +1,43 @@
+<!-- 7. Concurrencia - Go (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="goroutines-y-channels">
+    <h2>Goroutines y channels</h2>
+    <div class="doc-content">
+<pre><code class="language-go">func worker(id int, ch chan&lt;- string) {
+	time.Sleep(time.Second)
+	ch &lt;- fmt.Sprintf("worker %d listo", id)
+}
+
+ch := make(chan string)
+for i := 1; i &lt;= 3; i++ {
+	go worker(i, ch)      // ligero: miles son viables
+}
+
+for i := 0; i &lt; 3; i++ {
+	fmt.Println(&lt;-ch)     // recibe cada resultado
+}</code></pre>
+    </div>
+  </section>
+
+  <section id="select-y-waitgroup">
+    <h2>select y WaitGroup</h2>
+    <div class="doc-content">
+<pre><code class="language-go">select {
+case msg := &lt;-ch1:
+	fmt.Println(msg)
+case &lt;-time.After(time.Second):
+	fmt.Println("timeout")
+}
+
+var wg sync.WaitGroup
+for i := 0; i &lt; 5; i++ {
+	wg.Add(1)
+	go func(n int) {
+		defer wg.Done()
+		procesar(n)
+	}(i)
+}
+wg.Wait()</code></pre>
+    </div>
+  </section>

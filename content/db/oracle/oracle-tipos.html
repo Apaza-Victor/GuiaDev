@@ -1,0 +1,438 @@
+<!-- 2. Tipos de Datos en Oracle - Oracle (Base de Datos) -->
+  <section id="introduccion-a-los-tipos-de-datos">
+    <h2>Introducción a los tipos de datos</h2>
+    <div class="doc-content">
+<p>Los tipos de datos en Oracle definen la naturaleza de la información que se puede almacenar en una columna de tabla. La elección adecuada del tipo de datos es crucial para:</p>
+<ul>
+<li>Optimizar el rendimiento de la base de datos</li>
+<li>Garantizar la integridad de los datos</li>
+<li>Minimizar el espacio de almacenamiento</li>
+<li>Facilitar operaciones y consultas eficientes</li>
+</ul>
+<blockquote class="aside aside-tip">
+Seleccionar el tipo de dato correcto desde el principio evita problemas de rendimiento y conversiones complejas en el futuro.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="tipos-numericos-number-float-etc">
+    <h2>Tipos numéricos (NUMBER, FLOAT, etc.)</h2>
+    <div class="doc-content">
+<p>Los tipos numéricos en Oracle permiten almacenar valores numéricos con diferentes precisiones y escalas.</p>
+<h3>NUMBER</h3>
+<p>Es el tipo numérico principal en Oracle, extremadamente versátil.</p>
+<p><strong>Sintaxis</strong>: <code>NUMBER[(p [, s])]</code></p>
+<ul>
+<li><strong>p</strong> (precisión): Número total de dígitos (1-38, por defecto 38)</li>
+<li><strong>s</strong> (escala): Número de decimales (-84 a 127, por defecto 0)</li>
+</ul>
+<pre><code class="language-sql">
+-- Ejemplos de declaraciones NUMBER
+CREATE TABLE ejemplos_number (
+    id NUMBER,                  -- Entero con precisión por defecto
+    precio NUMBER(8,2),         -- 8 dígitos en total, 2 decimales (ej: 123456.78)
+    factor NUMBER(5,-2),        -- 5 dígitos con redondeo a centenas (ej: 12300)
+    porcentaje NUMBER(3,3)      -- Fracción decimal (ej: 0.123)
+);
+</code></pre>
+<h3>FLOAT</h3>
+<p>Almacena números de punto flotante con precisión binaria.</p>
+<p><strong>Sintaxis</strong>: <code>FLOAT[(p)]</code></p>
+<ul>
+<li><strong>p</strong>: Precisión binaria (1-126, por defecto 126)</li>
+</ul>
+<blockquote class="aside aside-caution">
+FLOAT puede tener problemas de precisión con cálculos financieros. Para operaciones monetarias, use NUMBER.
+</blockquote>
+<h3>BINARY_FLOAT y BINARY_DOUBLE</h3>
+<p>Tipos de punto flotante que siguen el estándar IEEE 754.</p>
+<ul>
+<li><strong>BINARY_FLOAT</strong>: Punto flotante de precisión simple (32 bits)</li>
+<li><strong>BINARY_DOUBLE</strong>: Punto flotante de precisión doble (64 bits)</li>
+</ul>
+<p><strong>Ventajas</strong>:</p>
+<ul>
+<li>Más rápidos en cálculos científicos</li>
+<li>Mejor rendimiento en operaciones matemáticas complejas</li>
+<li>Soportan valores especiales como NaN (Not a Number) e infinito</li>
+</ul>
+  <h4 class="tab-label">Comparativa de rendimiento</h4>
+    <pre><code class="language-sql">    -- Prueba de rendimiento con 1 millón de operaciones
+    -- BINARY_DOUBLE suele ser 2-3 veces más rápido que NUMBER
+    -- para operaciones matemáticas complejas
+    SELECT SUM(SQRT(POWER(column_value, 3)))
+    FROM TABLE(CAST(MULTISET(
+      SELECT LEVEL 
+      FROM DUAL 
+      CONNECT BY LEVEL &lt;= 1000000
+    ) AS SYS.ODCINUMBERLIST));
+    </code></pre>
+  <h4 class="tab-label">Valores especiales</h4>
+    <pre><code class="language-sql">    -- Ejemplos de valores especiales
+    SELECT 
+      BINARY_FLOAT('+inf') AS infinito_positivo,
+      BINARY_FLOAT('-inf') AS infinito_negativo,
+      BINARY_FLOAT('nan') AS no_es_numero
+    FROM DUAL;
+    </code></pre>
+<h3>INTEGER</h3>
+<p>Subtipo de NUMBER que almacena números enteros.</p>
+<p><strong>Sintaxis</strong>: <code>INTEGER</code> (equivalente a <code>NUMBER(38,0)</code>)</p>
+<pre><code class="language-sql">
+-- Ejemplo de uso de INTEGER
+CREATE TABLE empleados (
+    id INTEGER PRIMARY KEY,
+    departamento_id INTEGER,
+    salario NUMBER(10,2)
+);
+</code></pre>
+    </div>
+  </section>
+
+  <section id="tipos-de-caracteres-char-varchar2-clob">
+    <h2>Tipos de caracteres (CHAR, VARCHAR2, CLOB)</h2>
+    <div class="doc-content">
+<p>Los tipos de caracteres almacenan texto y cadenas alfanuméricas.</p>
+<h3>CHAR</h3>
+<p>Almacena cadenas de caracteres de longitud fija.</p>
+<p><strong>Sintaxis</strong>: <code>CHAR[(size [BYTE | CHAR])]</code></p>
+<ul>
+<li><strong>size</strong>: Longitud en bytes o caracteres (1-2000, por defecto 1)</li>
+<li>Si la cadena es más corta que el tamaño especificado, se rellena con espacios</li>
+</ul>
+<p><strong>Uso recomendado</strong>: Para columnas con longitud constante como códigos, ISO de países, etc.</p>
+<h3>VARCHAR2</h3>
+<p>Almacena cadenas de caracteres de longitud variable.</p>
+<p><strong>Sintaxis</strong>: <code>VARCHAR2(size [BYTE | CHAR])</code></p>
+<ul>
+<li><strong>size</strong>: Longitud máxima en bytes o caracteres (1-4000)</li>
+<li>Solo utiliza el espacio necesario para los datos almacenados</li>
+</ul>
+<blockquote class="aside aside-note">
+Oracle recomienda usar VARCHAR2 en lugar de VARCHAR, ya que este último podría cambiar su comportamiento en futuras versiones.
+</blockquote>
+<h3>NCHAR y NVARCHAR2</h3>
+<p>Versiones Unicode de CHAR y VARCHAR2 que almacenan datos en el juego de caracteres nacional.</p>
+<ul>
+<li><strong>NCHAR</strong>: Longitud fija, hasta 2000 caracteres</li>
+<li><strong>NVARCHAR2</strong>: Longitud variable, hasta 4000 caracteres</li>
+</ul>
+<p><strong>Uso recomendado</strong>: Para almacenar texto en múltiples idiomas, especialmente con caracteres no latinos.</p>
+<h3>CLOB y NCLOB</h3>
+<p>Almacenan grandes objetos de caracteres (Character Large Objects).</p>
+<ul>
+<li><strong>CLOB</strong>: Hasta 128 terabytes de datos de caracteres</li>
+<li><strong>NCLOB</strong>: Versión Unicode de CLOB</li>
+</ul>
+<pre><code class="language-sql">
+-- Ejemplo de uso de tipos de caracteres
+CREATE TABLE documentos (
+    id NUMBER PRIMARY KEY,
+    codigo CHAR(10),                -- Código de longitud fija
+    titulo VARCHAR2(200),           -- Título de longitud variable
+    descripcion_corta VARCHAR2(4000), -- Descripción limitada
+    contenido CLOB,                 -- Contenido extenso
+    traduccion NCLOB                -- Contenido en múltiples idiomas
+);
+
+-- Inserción de datos
+INSERT INTO documentos VALUES (
+    1, 
+    'DOC-00001', 
+    'Manual de usuario', 
+    'Descripción breve del manual de usuario',
+    'Contenido extenso del manual que puede ocupar varios megabytes...',
+    'Contenido traducido a múltiples idiomas con caracteres especiales: áéíóúñ中文日本語'
+);
+</code></pre>
+  <h4 class="tab-label">CHAR vs VARCHAR2</h4>
+<table><thead><tr><th>Característica</th><th>CHAR</th><th>VARCHAR2</th></tr></thead><tbody><tr><td>Longitud</td><td>Fija</td><td>Variable</td></tr><tr><td>Espacio</td><td>Siempre usa todo el espacio asignado</td><td>Solo usa el espacio necesario</td></tr><tr><td>Rendimiento</td><td>Más rápido para comparaciones</td><td>Más eficiente en almacenamiento</td></tr><tr><td>Relleno</td><td>Con espacios a la derecha</td><td>Sin relleno</td></tr><tr><td>Uso ideal</td><td>Códigos, valores fijos</td><td>Texto general, nombres</td></tr></tbody></table>
+  <h4 class="tab-label">VARCHAR2 vs CLOB</h4>
+<table><thead><tr><th>Característica</th><th>VARCHAR2</th><th>CLOB</th></tr></thead><tbody><tr><td>Tamaño máximo</td><td>4000 bytes/caracteres</td><td>128 TB</td></tr><tr><td>Índices</td><td>Totalmente indexable</td><td>Indexable con limitaciones</td></tr><tr><td>Rendimiento</td><td>Rápido para búsquedas</td><td>Más lento para operaciones</td></tr><tr><td>Uso en WHERE</td><td>Eficiente</td><td>Menos eficiente</td></tr><tr><td>Uso ideal</td><td>Texto corto-medio</td><td>Documentos, XML, JSON grandes</td></tr></tbody></table>
+    </div>
+  </section>
+
+  <section id="tipos-de-fecha-y-hora-date-timestamp">
+    <h2>Tipos de fecha y hora (DATE, TIMESTAMP)</h2>
+    <div class="doc-content">
+<p>Oracle ofrece varios tipos para manejar fechas, horas y duraciones.</p>
+<h3>DATE</h3>
+<p>Almacena fecha y hora con precisión de segundos.</p>
+<p><strong>Componentes almacenados</strong>: siglo, año, mes, día, hora, minuto y segundo</p>
+<p><strong>Rango</strong>: 01-ENE-4712 AC hasta 31-DIC-9999 DC</p>
+<pre><code class="language-sql">
+-- Ejemplos de uso de DATE
+CREATE TABLE eventos (
+    id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100),
+    fecha_inicio DATE,
+    fecha_fin DATE
+);
+
+-- Inserción con diferentes formatos
+INSERT INTO eventos VALUES (1, 'Conferencia', TO_DATE('2025-01-15 09:30:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-01-17', 'YYYY-MM-DD'));
+
+-- Operaciones con fechas
+SELECT 
+    nombre,
+    fecha_inicio,
+    fecha_fin,
+    fecha_fin - fecha_inicio AS duracion_dias
+FROM eventos;
+</code></pre>
+<h3>TIMESTAMP</h3>
+<p>Extiende DATE con fracciones de segundo y zona horaria opcional.</p>
+<p><strong>Sintaxis</strong>: <code>TIMESTAMP[(fractional_seconds_precision)] [WITH [LOCAL] TIME ZONE]</code></p>
+<ul>
+<li><strong>fractional_seconds_precision</strong>: Precisión de fracciones de segundo (0-9, por defecto 6)</li>
+</ul>
+<p><strong>Variantes</strong>:</p>
+<ul>
+<li><strong>TIMESTAMP</strong>: Sin información de zona horaria</li>
+<li><strong>TIMESTAMP WITH TIME ZONE</strong>: Incluye zona horaria explícita</li>
+<li><strong>TIMESTAMP WITH LOCAL TIME ZONE</strong>: Almacena en UTC y convierte a zona horaria de la sesión</li>
+</ul>
+<pre><code class="language-sql">
+-- Ejemplos de TIMESTAMP
+CREATE TABLE registros_detallados (
+    id NUMBER PRIMARY KEY,
+    evento VARCHAR2(100),
+    momento TIMESTAMP(9),                     -- Con nanosegundos
+    momento_tz TIMESTAMP WITH TIME ZONE,      -- Con zona horaria
+    momento_local TIMESTAMP WITH LOCAL TIME ZONE  -- Con zona horaria local
+);
+
+-- Inserción de datos
+INSERT INTO registros_detallados VALUES (
+    1,
+    'Login de usuario',
+    SYSTIMESTAMP,
+    SYSTIMESTAMP,
+    SYSTIMESTAMP
+);
+
+-- Consulta con diferentes formatos
+SELECT 
+    evento,
+    TO_CHAR(momento, 'YYYY-MM-DD HH24:MI:SS.FF6') AS momento_preciso,
+    momento_tz,
+    momento_local
+FROM registros_detallados;
+</code></pre>
+<h3>INTERVAL</h3>
+<p>Almacena períodos de tiempo o duraciones.</p>
+<p><strong>Tipos</strong>:</p>
+<ul>
+<li><strong>INTERVAL YEAR TO MONTH</strong>: Períodos en años y meses</li>
+<li><strong>INTERVAL DAY TO SECOND</strong>: Períodos en días, horas, minutos y segundos</li>
+</ul>
+<pre><code class="language-sql">
+-- Ejemplos de INTERVAL
+CREATE TABLE proyectos (
+    id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100),
+    duracion_estimada INTERVAL YEAR TO MONTH,
+    tiempo_desarrollo INTERVAL DAY TO SECOND
+);
+
+-- Inserción de datos
+INSERT INTO proyectos VALUES (
+    1,
+    'Desarrollo ERP',
+    INTERVAL '1-6' YEAR TO MONTH,             -- 1 año y 6 meses
+    INTERVAL '60 12:30:45.123' DAY TO SECOND  -- 60 días, 12 horas, 30 minutos, 45.123 segundos
+);
+
+-- Cálculos con intervalos
+SELECT 
+    nombre,
+    duracion_estimada,
+    tiempo_desarrollo,
+    SYSDATE + duracion_estimada AS fecha_estimada_fin
+FROM proyectos;
+</code></pre>
+<blockquote class="aside aside-tip">
+Para operaciones con fechas y horas, Oracle proporciona numerosas funciones como ADD_MONTHS, MONTHS_BETWEEN, NEXT_DAY, LAST_DAY, EXTRACT, etc.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="tipos-binarios-raw-blob-bfile">
+    <h2>Tipos binarios (RAW, BLOB, BFILE)</h2>
+    <div class="doc-content">
+<p>Los tipos binarios almacenan datos que no deben ser interpretados como texto.</p>
+<h3>RAW</h3>
+<p>Almacena datos binarios de longitud variable hasta 2000 bytes.</p>
+<p><strong>Sintaxis</strong>: <code>RAW(size)</code></p>
+<ul>
+<li><strong>size</strong>: Tamaño máximo en bytes (1-2000)</li>
+</ul>
+<p><strong>Uso recomendado</strong>: Imágenes pequeñas, huellas digitales, hashes, datos encriptados.</p>
+<h3>LONG RAW</h3>
+<span class="hc-badge hc-badge-caution">Obsoleto</span>
+<p>Almacena datos binarios de hasta 2GB. Oracle recomienda usar BLOB en su lugar.</p>
+<h3>BLOB</h3>
+<p>Binary Large Object. Almacena datos binarios no estructurados de gran tamaño.</p>
+<p><strong>Capacidad</strong>: Hasta 128 terabytes</p>
+<p><strong>Uso recomendado</strong>: Imágenes, audio, video, archivos PDF, documentos escaneados.</p>
+<h3>BFILE</h3>
+<p>Almacena un localizador a un archivo binario externo ubicado fuera de la base de datos.</p>
+<p><strong>Capacidad</strong>: Hasta 4GB</p>
+<p><strong>Características</strong>:</p>
+<ul>
+<li>Solo lectura</li>
+<li>El archivo debe estar en el servidor de la base de datos</li>
+<li>Oracle gestiona el puntero, no el archivo en sí</li>
+</ul>
+<pre><code class="language-sql">
+-- Ejemplos de tipos binarios
+CREATE TABLE archivos_multimedia (
+    id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100),
+    miniatura RAW(2000),                -- Imagen en miniatura
+    contenido BLOB,                     -- Archivo completo
+    archivo_externo BFILE               -- Referencia a archivo en disco
+);
+
+-- Inserción de datos binarios
+DECLARE
+    v_blob BLOB;
+    v_bfile BFILE;
+    v_raw RAW(2000);
+BEGIN
+    -- Inicializar BLOB vacío
+    INSERT INTO archivos_multimedia (id, nombre) VALUES (1, 'video.mp4')
+    RETURNING contenido INTO v_blob;
+    
+    -- Actualizar con datos binarios
+    v_raw := HEXTORAW('504B0304140000000800'); -- Algunos bytes de ejemplo
+    
+    -- Actualizar la fila
+    UPDATE archivos_multimedia 
+    SET miniatura = v_raw,
+        archivo_externo = BFILENAME('MEDIA_DIR', 'video.mp4')
+    WHERE id = 1;
+    
+    COMMIT;
+END;
+/
+</code></pre>
+<blockquote class="aside aside-caution">
+Los tipos binarios no deben usarse para almacenar texto. No se aplican conversiones de juego de caracteres y pueden producirse problemas de codificación.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="tipos-especiales-rowid-urowid">
+    <h2>Tipos especiales (ROWID, UROWID)</h2>
+    <div class="doc-content">
+<p>Oracle proporciona tipos especiales para identificación única de filas y otros propósitos específicos.</p>
+<h3>ROWID</h3>
+<p>Identificador físico único para cada fila en la base de datos.</p>
+<p><strong>Características</strong>:</p>
+<ul>
+<li>Representa la dirección física de una fila</li>
+<li>Es el acceso más rápido posible a una fila</li>
+<li>Contiene: objeto, archivo, bloque y fila</li>
+<li>Formato: Base64 (18 caracteres)</li>
+</ul>
+<pre><code class="language-sql">
+-- Ejemplo de uso de ROWID
+SELECT 
+    empno, 
+    ename, 
+    ROWID
+FROM emp
+WHERE deptno = 10;
+
+-- Acceso directo usando ROWID
+SELECT * 
+FROM emp 
+WHERE ROWID = 'AAAE5fAAEAAAAP1AAA';
+</code></pre>
+<h3>UROWID</h3>
+<p>Identificador lógico universal para filas en tablas organizadas por índice y tablas externas.</p>
+<p><strong>Sintaxis</strong>: <code>UROWID[(size)]</code></p>
+<ul>
+<li><strong>size</strong>: Tamaño máximo en bytes (1-4000)</li>
+</ul>
+<h3>XMLType</h3>
+<p>Tipo especializado para almacenar y procesar datos XML.</p>
+<p><strong>Características</strong>:</p>
+<ul>
+<li>Almacenamiento optimizado para XML</li>
+<li>Funciones integradas para procesamiento XML</li>
+<li>Validación contra esquemas XML</li>
+</ul>
+<pre><code class="language-sql">
+-- Ejemplo de XMLType
+CREATE TABLE documentos_xml (
+    id NUMBER PRIMARY KEY,
+    documento XMLType
+);
+
+-- Inserción de datos XML
+INSERT INTO documentos_xml VALUES (
+    1,
+    XMLType('&lt;?xml version="1.0"?&gt;
+             &lt;empleado&gt;
+               &lt;id&gt;101&lt;/id&gt;
+               &lt;nombre&gt;Juan Pérez&lt;/nombre&gt;
+               &lt;departamento&gt;Ventas&lt;/departamento&gt;
+               &lt;salario&gt;45000&lt;/salario&gt;
+             &lt;/empleado&gt;')
+);
+
+-- Consulta con funciones XML
+SELECT 
+    d.id,
+    d.documento.extract('/empleado/nombre/text()').getStringVal() AS nombre,
+    d.documento.extract('/empleado/salario/text()').getNumberVal() AS salario
+FROM documentos_xml d;
+</code></pre>
+    </div>
+  </section>
+
+  <section id="resumen-y-mejores-practicas">
+    <h2>Resumen y mejores prácticas</h2>
+    <div class="doc-content">
+<ol class="steps">
+<ol>
+<li><strong>Selecciona el tipo adecuado</strong>:</li>
+</ol>
+<ul>
+<li>Para números exactos (monetarios): NUMBER</li>
+<li>Para cálculos científicos: BINARY_FLOAT/BINARY_DOUBLE</li>
+<li>Para texto variable: VARCHAR2</li>
+<li>Para fechas con precisión de segundos: DATE</li>
+<li>Para fechas con fracciones de segundo: TIMESTAMP</li>
+</ul>
+<ol>
+<li><strong>Optimiza el almacenamiento</strong>:</li>
+</ol>
+<ul>
+<li>Define la precisión y escala exactas para NUMBER</li>
+<li>Limita el tamaño de VARCHAR2 al máximo real esperado</li>
+<li>Usa CHAR solo para longitudes realmente fijas</li>
+</ul>
+<ol>
+<li><strong>Considera el rendimiento</strong>:</li>
+</ol>
+<ul>
+<li>CHAR es más rápido para comparaciones que VARCHAR2</li>
+<li>ROWID proporciona el acceso más rápido a filas</li>
+<li>Los tipos LOB tienen overhead de procesamiento</li>
+</ul>
+<ol>
+<li><strong>Piensa en la internacionalización</strong>:</li>
+</ol>
+<ul>
+<li>Usa NVARCHAR2/NCLOB para soporte multilenguaje</li>
+<li>Define el juego de caracteres de la base de datos adecuadamente</li>
+</ul>
+</ol>
+<blockquote class="aside aside-note">
+La elección del tipo de datos adecuado es una de las decisiones más importantes en el diseño de bases de datos y puede tener un impacto significativo en el rendimiento, la integridad y la escalabilidad de tus aplicaciones.
+</blockquote>
+    </div>
+  </section>

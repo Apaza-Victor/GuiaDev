@@ -1,0 +1,52 @@
+<!-- 11. Vistas y funciones - SQL Server (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="vistas">
+    <h2>Vistas</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE VIEW dbo.vw_ProductosCaros
+AS
+SELECT Id, Nombre, Precio FROM dbo.Productos WHERE Precio &gt; 10000;
+GO
+
+SELECT * FROM dbo.vw_ProductosCaros;
+
+ALTER VIEW dbo.vw_ProductosCaros AS ...;
+DROP VIEW dbo.vw_ProductosCaros;</code></pre>
+<blockquote class="aside aside-tip">
+<p>Con <code>CREATE VIEW ... WITH SCHEMABINDING</code> la vista queda amarrada al esquema y puede indexarse (vista indexada/materializada).</p>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="funcion-escalar">
+    <h2>Función escalar</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE FUNCTION dbo.fn_Iva(@precio DECIMAL(10,2))
+RETURNS DECIMAL(10,2)
+AS
+BEGIN
+  RETURN @precio * 1.16;
+END;
+GO
+
+SELECT Nombre, dbo.fn_Iva(Precio) AS ConIva FROM dbo.Productos;</code></pre>
+    </div>
+  </section>
+
+  <section id="funcion-de-tabla-inline-tvf">
+    <h2>Función de tabla inline (TVF)</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">CREATE FUNCTION dbo.fn_ProductosPorCategoria(@categoriaId INT)
+RETURNS TABLE
+AS
+RETURN (
+  SELECT Id, Nombre, Precio
+  FROM dbo.Productos
+  WHERE CategoriaId = @categoriaId
+);
+GO
+
+SELECT * FROM dbo.fn_ProductosPorCategoria(2);</code></pre>
+<p>Las TVF inline se comportan como vistas parametrizadas y el optimizador las trata mejor que las multientencia.</p>
+    </div>
+  </section>

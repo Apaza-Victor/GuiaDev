@@ -1,0 +1,61 @@
+<!-- 5. Insertar, actualizar y eliminar (DML) - MySQL (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="insert">
+    <h2>INSERT</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- Una fila
+INSERT INTO clientes (email) VALUES ('ana@mail.com');
+
+-- Varias filas de una vez (más eficiente)
+INSERT INTO clientes (email) VALUES
+  ('luis@mail.com'),
+  ('maria@mail.com');
+
+-- Especificando id manualmente
+INSERT INTO clientes (id, email) VALUES (10, 'leo@mail.com');</code></pre>
+<blockquote class="aside aside-note">
+<p>Si omites una columna con <code>DEFAULT</code> o nullable, tomará su valor por defecto.</p>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="update">
+    <h2>UPDATE</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">UPDATE clientes SET email = 'ana-nueva@mail.com' WHERE id = 1;
+
+-- Actualización masiva con cálculo
+UPDATE productos SET precio = precio * 1.10 WHERE categoria_id = 2;
+
+-- UPDATE con JOIN
+UPDATE productos p
+INNER JOIN categorias c ON p.categoria_id = c.id
+SET p.stock = 0
+WHERE c.nombre = 'Ofertas';</code></pre>
+<blockquote class="aside aside-caution">
+<p>Un <code>UPDATE</code> sin <code>WHERE</code> modifica TODAS las filas. Ejecuta antes el SELECT equivalente para revisar qué filas afectará.</p>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="delete">
+    <h2>DELETE</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">DELETE FROM clientes WHERE id = 10;
+
+-- Eliminar con condición relacional
+DELETE p FROM productos p
+LEFT JOIN categorias c ON p.categoria_id = c.id
+WHERE c.id IS NULL;   -- productos sin categoría válida</code></pre>
+<p><code>DELETE</code> registra en el log cada fila borrada (es recuperable dentro de una transacción); <code>TRUNCATE</code> vacía la tabla completa sin ese registro detallado.</p>
+    </div>
+  </section>
+
+  <section id="insert-select">
+    <h2>INSERT ... SELECT</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">INSERT INTO clientes_archivo (id, email)
+SELECT id, email FROM clientes WHERE activo = FALSE;</code></pre>
+<p>Ideal para respaldos parciales o migraciones entre tablas con la misma estructura.</p>
+    </div>
+  </section>

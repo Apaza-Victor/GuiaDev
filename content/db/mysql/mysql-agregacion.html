@@ -1,0 +1,52 @@
+<!-- 8. Agregación y agrupamiento - MySQL (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="funciones-de-agregacion">
+    <h2>Funciones de agregación</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SELECT COUNT(*) AS total_productos FROM productos;
+SELECT AVG(precio) AS precio_promedio FROM productos;
+SELECT MIN(precio) AS mas_barato, MAX(precio) AS mas_caro FROM productos;
+SELECT SUM(stock) AS unidades_totales FROM productos;</code></pre>
+<blockquote class="aside aside-note">
+<p><code>COUNT(*)</code> cuenta filas (incluye nulos); <code>COUNT(columna)</code> ignora los <code>NULL</code> de esa columna.</p>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="group-by">
+    <h2>GROUP BY</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SELECT categoria_id, COUNT(*) AS cantidad, ROUND(AVG(precio),2) AS promedio
+FROM productos
+GROUP BY categoria_id;</code></pre>
+    </div>
+  </section>
+
+  <section id="having-vs-where">
+    <h2>HAVING vs WHERE</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SELECT categoria_id, COUNT(*) AS total
+FROM productos
+WHERE precio &gt; 100          -- filtra FILAS antes de agrupar
+GROUP BY categoria_id
+HAVING COUNT(*) &gt;= 3        -- filtra GRUPOS después de agrupar
+ORDER BY total DESC;</code></pre>
+<blockquote class="aside aside-tip">
+<p><code>WHERE</code> no puede usar funciones de agregación; para eso existe <code>HAVING</code>.</p>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="group-concat-y-with-rollup">
+    <h2>GROUP_CONCAT y WITH ROLLUP</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- Unir valores de un grupo en una sola cadena
+SELECT categoria_id, GROUP_CONCAT(nombre SEPARATOR ', ') AS productos
+FROM productos GROUP BY categoria_id;
+
+-- Subtotales automáticos por grupo
+SELECT categoria_id, COUNT(*) AS total
+FROM productos
+GROUP BY categoria_id WITH ROLLUP;</code></pre>
+    </div>
+  </section>

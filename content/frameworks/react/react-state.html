@@ -1,0 +1,474 @@
+<!-- 05. Estado en React (useState) - React (Frameworks) -->
+  <section id="5-1-concepto-de-estado-state">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 5.1 Concepto de estado (state)</h2>
+    <div class="doc-content">
+<h3>¿Qué es el estado?</h3>
+<p>El <strong>estado</strong> (state) es un objeto que contiene datos que pueden cambiar durante la vida de un componente. Cuando el estado cambia, React re-renderiza el componente automáticamente.</p>
+<table><thead><tr><th>Característica</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Reactivo</strong></td><td>Cambios en el estado actualizan la UI</td></tr><tr><td><strong>Local</strong></td><td>Cada componente tiene su propio estado</td></tr><tr><td><strong>Mutable</strong></td><td>Se puede modificar (a diferencia de props)</td></tr><tr><td><strong>Persistente</strong></td><td>Se mantiene entre renders</td></tr></tbody></table>
+<h3>Estado vs Variables normales</h3>
+<pre><code class="language-jsx">// ❌ Variable normal - NO funciona
+function Contador() {
+  let contador = 0;
+  
+  const incrementar = () =&gt; {
+    contador++;  // Cambia, pero React no lo sabe
+    console.log(contador);  // Muestra el valor correcto
+  };
+  
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Valor: {contador}&lt;/p&gt;  {/* Siempre muestra 0 */}
+      &lt;button onClick={incrementar}&gt;+1&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+
+// ✅ Estado con useState - FUNCIONA
+
+
+function Contador() {
+  const [contador, setContador] = useState(0);
+  
+  const incrementar = () =&gt; {
+    setContador(contador + 1);  // React detecta el cambio
+  };
+  
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Valor: {contador}&lt;/p&gt;  {/* Se actualiza automáticamente */}
+      &lt;button onClick={incrementar}&gt;+1&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>¿Cuándo usar estado?</h3>
+<table><thead><tr><th>Usar estado</th><th>No usar estado</th></tr></thead><tbody><tr><td>Datos que cambian</td><td>Datos constantes</td></tr><tr><td>Inputs de formulario</td><td>Props recibidas</td></tr><tr><td>Contadores</td><td>Cálculos derivados</td></tr><tr><td>Datos de API</td><td>Valores estáticos</td></tr><tr><td>Toggle (mostrar/ocultar)</td><td>Configuración fija</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-2-hook-usestate">
+    <h2><i class="fa-solid fa-anchor"></i> 5.2 Hook useState</h2>
+    <div class="doc-content">
+<h3>Sintaxis de useState</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function MiComponente() {
+  // Sintaxis: const [valor, setValor] = useState(valorInicial);
+  const [contador, setContador] = useState(0);
+  
+  //    ↑            ↑                    ↑
+  //  valor      función para         valor
+  //  actual     actualizar           inicial
+  
+  return &lt;p&gt;{contador}&lt;/p&gt;;
+}</code></pre>
+<h3>Anatomía de useState</h3>
+<pre><code class="language-jsx">// useState retorna un array con 2 elementos:
+const resultado = useState(0);
+const valor = resultado[0];      // El valor actual
+const setValor = resultado[1];   // La función para actualizarlo
+
+// Usando desestructuración (forma común):
+const [valor, setValor] = useState(0);
+
+// Ejemplos de nombres:
+const [nombre, setNombre] = useState("");
+const [edad, setEdad] = useState(18);
+const [activo, setActivo] = useState(true);
+const [items, setItems] = useState([]);
+const [usuario, setUsuario] = useState(null);</code></pre>
+<h3>Múltiples estados</h3>
+<pre><code class="language-jsx">function Formulario() {
+  // Puedes tener múltiples estados
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [edad, setEdad] = useState(0);
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  
+  return (
+    &lt;form&gt;
+      &lt;input 
+        value={nombre} 
+        onChange={(e) =&gt; setNombre(e.target.value)} 
+      /&gt;
+      &lt;input 
+        value={email} 
+        onChange={(e) =&gt; setEmail(e.target.value)} 
+      /&gt;
+      &lt;input 
+        type="number"
+        value={edad} 
+        onChange={(e) =&gt; setEdad(Number(e.target.value))} 
+      /&gt;
+      &lt;input 
+        type="checkbox"
+        checked={aceptaTerminos}
+        onChange={(e) =&gt; setAceptaTerminos(e.target.checked)}
+      /&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-3-inicializacion-del-estado">
+    <h2><i class="fa-solid fa-bullseye"></i> 5.3 Inicialización del estado</h2>
+    <div class="doc-content">
+<h3>Valores iniciales</h3>
+<pre><code class="language-jsx">// String vacío
+const [texto, setTexto] = useState("");
+
+// Número
+const [contador, setContador] = useState(0);
+
+// Booleano
+const [visible, setVisible] = useState(true);
+
+// Array vacío
+const [lista, setLista] = useState([]);
+
+// Array con datos
+const [frutas, setFrutas] = useState(["Manzana", "Banana"]);
+
+// Objeto
+const [usuario, setUsuario] = useState({
+  nombre: "",
+  email: "",
+  edad: 0
+});
+
+// null (para datos que vendrán después)
+const [datos, setDatos] = useState(null);</code></pre>
+<h3>Inicialización perezosa (lazy)</h3>
+<pre><code class="language-jsx">// ❌ Se ejecuta en CADA render (ineficiente)
+const [datos, setDatos] = useState(calcularDatosComplejos());
+
+// ✅ Se ejecuta solo en el PRIMER render (eficiente)
+const [datos, setDatos] = useState(() =&gt; calcularDatosComplejos());
+
+// Ejemplo práctico
+function App() {
+  // Leer de localStorage solo una vez
+  const [tema, setTema] = useState(() =&gt; {
+    const guardado = localStorage.getItem('tema');
+    return guardado || 'claro';
+  });
+  
+  return &lt;div className={tema}&gt;...&lt;/div&gt;;
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-4-actualizacion-del-estado-correctamente">
+    <h2><i class="fa-solid fa-pencil"></i> 5.4 Actualización del estado correctamente</h2>
+    <div class="doc-content">
+<h3>Actualización básica</h3>
+<pre><code class="language-jsx">function Contador() {
+  const [count, setCount] = useState(0);
+  
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Contador: {count}&lt;/p&gt;
+      
+      {/* Actualización directa */}
+      &lt;button onClick={() =&gt; setCount(count + 1)}&gt;+1&lt;/button&gt;
+      &lt;button onClick={() =&gt; setCount(count - 1)}&gt;-1&lt;/button&gt;
+      &lt;button onClick={() =&gt; setCount(0)}&gt;Reset&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Actualización funcional (recomendada)</h3>
+<pre><code class="language-jsx">// ❌ Puede causar problemas con actualizaciones rápidas
+const incrementar = () =&gt; {
+  setCount(count + 1);
+  setCount(count + 1);  // Ambos usan el mismo valor de count
+  // Resultado: solo incrementa 1
+};
+
+// ✅ Actualización funcional - siempre usa el valor más reciente
+const incrementar = () =&gt; {
+  setCount(prev =&gt; prev + 1);
+  setCount(prev =&gt; prev + 1);  // Usa el valor actualizado
+  // Resultado: incrementa 2
+};
+
+// Ejemplo completo
+function Contador() {
+  const [count, setCount] = useState(0);
+  
+  const incrementar = () =&gt; setCount(prev =&gt; prev + 1);
+  const decrementar = () =&gt; setCount(prev =&gt; prev - 1);
+  const duplicar = () =&gt; setCount(prev =&gt; prev * 2);
+  
+  return (
+    &lt;div&gt;
+      &lt;p&gt;{count}&lt;/p&gt;
+      &lt;button onClick={incrementar}&gt;+1&lt;/button&gt;
+      &lt;button onClick={decrementar}&gt;-1&lt;/button&gt;
+      &lt;button onClick={duplicar}&gt;x2&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-tip">
+Usa la forma funcional `setEstado(prev => ...)` cuando el nuevo valor depende del anterior. Es más seguro y evita bugs.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-5-estado-con-objetos">
+    <h2><i class="fa-solid fa-box"></i> 5.5 Estado con objetos</h2>
+    <div class="doc-content">
+<h3>Actualizar objetos correctamente</h3>
+<pre><code class="language-jsx">function Perfil() {
+  const [usuario, setUsuario] = useState({
+    nombre: "Ana",
+    email: "ana@mail.com",
+    edad: 25
+  });
+  
+  // ❌ MAL - Muta el objeto directamente
+  const cambiarNombre = (nuevoNombre) =&gt; {
+    usuario.nombre = nuevoNombre;  // No funciona
+    setUsuario(usuario);
+  };
+  
+  // ✅ BIEN - Crea un nuevo objeto con spread
+  const cambiarNombre = (nuevoNombre) =&gt; {
+    setUsuario({
+      ...usuario,           // Copia todas las propiedades
+      nombre: nuevoNombre   // Sobrescribe solo nombre
+    });
+  };
+  
+  // ✅ BIEN - Forma funcional
+  const cambiarEmail = (nuevoEmail) =&gt; {
+    setUsuario(prev =&gt; ({
+      ...prev,
+      email: nuevoEmail
+    }));
+  };
+  
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Nombre: {usuario.nombre}&lt;/p&gt;
+      &lt;p&gt;Email: {usuario.email}&lt;/p&gt;
+      &lt;input 
+        value={usuario.nombre}
+        onChange={(e) =&gt; cambiarNombre(e.target.value)}
+      /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Objetos anidados</h3>
+<pre><code class="language-jsx">function Formulario() {
+  const [datos, setDatos] = useState({
+    personal: {
+      nombre: "",
+      edad: 0
+    },
+    direccion: {
+      calle: "",
+      ciudad: ""
+    }
+  });
+  
+  // Actualizar propiedad anidada
+  const cambiarNombre = (nombre) =&gt; {
+    setDatos(prev =&gt; ({
+      ...prev,
+      personal: {
+        ...prev.personal,
+        nombre: nombre
+      }
+    }));
+  };
+  
+  const cambiarCiudad = (ciudad) =&gt; {
+    setDatos(prev =&gt; ({
+      ...prev,
+      direccion: {
+        ...prev.direccion,
+        ciudad: ciudad
+      }
+    }));
+  };
+  
+  return (
+    &lt;form&gt;
+      &lt;input 
+        placeholder="Nombre"
+        value={datos.personal.nombre}
+        onChange={(e) =&gt; cambiarNombre(e.target.value)}
+      /&gt;
+      &lt;input 
+        placeholder="Ciudad"
+        value={datos.direccion.ciudad}
+        onChange={(e) =&gt; cambiarCiudad(e.target.value)}
+      /&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-6-estado-con-arrays">
+    <h2><i class="fa-solid fa-clipboard-list"></i> 5.6 Estado con arrays</h2>
+    <div class="doc-content">
+<h3>Operaciones comunes con arrays</h3>
+<pre><code class="language-jsx">function ListaTareas() {
+  const [tareas, setTareas] = useState([
+    { id: 1, texto: "Aprender React", completada: false },
+    { id: 2, texto: "Hacer ejercicio", completada: true }
+  ]);
+  
+  // AGREGAR elemento
+  const agregarTarea = (texto) =&gt; {
+    const nuevaTarea = {
+      id: Date.now(),
+      texto: texto,
+      completada: false
+    };
+    setTareas(prev =&gt; [...prev, nuevaTarea]);
+  };
+  
+  // ELIMINAR elemento
+  const eliminarTarea = (id) =&gt; {
+    setTareas(prev =&gt; prev.filter(tarea =&gt; tarea.id !== id));
+  };
+  
+  // ACTUALIZAR elemento
+  const toggleCompletada = (id) =&gt; {
+    setTareas(prev =&gt; prev.map(tarea =&gt; 
+      tarea.id === id 
+        ? { ...tarea, completada: !tarea.completada }
+        : tarea
+    ));
+  };
+  
+  // EDITAR texto de elemento
+  const editarTarea = (id, nuevoTexto) =&gt; {
+    setTareas(prev =&gt; prev.map(tarea =&gt;
+      tarea.id === id
+        ? { ...tarea, texto: nuevoTexto }
+        : tarea
+    ));
+  };
+  
+  return (
+    &lt;ul&gt;
+      {tareas.map(tarea =&gt; (
+        &lt;li key={tarea.id}&gt;
+          &lt;span style={{ 
+            textDecoration: tarea.completada ? 'line-through' : 'none' 
+          }}&gt;
+            {tarea.texto}
+          &lt;/span&gt;
+          &lt;button onClick={() =&gt; toggleCompletada(tarea.id)}&gt;
+            {tarea.completada ? '↩️' : '✅'}
+          &lt;/button&gt;
+          &lt;button onClick={() =&gt; eliminarTarea(tarea.id)}&gt;🗑️&lt;/button&gt;
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>Resumen de operaciones</h3>
+<table><thead><tr><th>Operación</th><th>Método</th><th>Ejemplo</th></tr></thead><tbody><tr><td>Agregar al final</td><td>spread + nuevo</td><td><code>[...arr, nuevo]</code></td></tr><tr><td>Agregar al inicio</td><td>nuevo + spread</td><td><code>[nuevo, ...arr]</code></td></tr><tr><td>Eliminar</td><td>filter</td><td><code>arr.filter(x => x.id !== id)</code></td></tr><tr><td>Actualizar</td><td>map</td><td><code>arr.map(x => x.id === id ? {...x, prop: val} : x)</code></td></tr><tr><td>Reemplazar todo</td><td>asignar nuevo</td><td><code>setArr(nuevoArray)</code></td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-7-buenas-practicas-con-estado">
+    <h2><i class="fa-solid fa-circle-check"></i> 5.7 Buenas prácticas con estado</h2>
+    <div class="doc-content">
+<h3>Mantener el estado mínimo</h3>
+<pre><code class="language-jsx">// ❌ MAL - Estado redundante
+function Carrito() {
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);      // Redundante
+  const [cantidad, setCantidad] = useState(0); // Redundante
+  
+  // Hay que mantener sincronizados manualmente
+}
+
+// ✅ BIEN - Calcular valores derivados
+function Carrito() {
+  const [items, setItems] = useState([]);
+  
+  // Valores derivados (se calculan automáticamente)
+  const total = items.reduce((sum, item) =&gt; sum + item.precio, 0);
+  const cantidad = items.length;
+  
+  return (
+    &lt;div&gt;
+      &lt;p&gt;Items: {cantidad}&lt;/p&gt;
+      &lt;p&gt;Total: \${total}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Agrupar estado relacionado</h3>
+<pre><code class="language-jsx">// ❌ Muchos estados separados para datos relacionados
+const [x, setX] = useState(0);
+const [y, setY] = useState(0);
+
+// ✅ Un objeto para datos relacionados
+const [posicion, setPosicion] = useState({ x: 0, y: 0 });
+
+// Actualizar
+setPosicion({ x: 100, y: 200 });</code></pre>
+<h3>Evitar estado duplicado</h3>
+<pre><code class="language-jsx">// ❌ MAL - Duplicar datos de props en estado
+function Perfil({ usuario }) {
+  const [nombre, setNombre] = useState(usuario.nombre);
+  // Si usuario cambia, nombre no se actualiza
+}
+
+// ✅ BIEN - Usar props directamente
+function Perfil({ usuario }) {
+  return &lt;h1&gt;{usuario.nombre}&lt;/h1&gt;;
+}
+
+// ✅ Si necesitas editar, usa un estado temporal
+function PerfilEditable({ usuario, onGuardar }) {
+  const [nombreEditado, setNombreEditado] = useState(usuario.nombre);
+  
+  const guardar = () =&gt; {
+    onGuardar(nombreEditado);
+  };
+  
+  return (
+    &lt;div&gt;
+      &lt;input 
+        value={nombreEditado}
+        onChange={(e) =&gt; setNombreEditado(e.target.value)}
+      /&gt;
+      &lt;button onClick={guardar}&gt;Guardar&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-caution">
+El estado es **asíncrono**. Si necesitas el valor actualizado inmediatamente después de `setState`, usa la forma funcional o `useEffect`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El **estado** son datos que cambian y actualizan la UI
+- **useState** retorna `[valor, setValor]`
+- Usa **inicialización lazy** para cálculos costosos
+- Prefiere la **actualización funcional** `prev => ...`
+- Con **objetos**: usa spread `{...obj, prop: valor}`
+- Con **arrays**: usa `map`, `filter`, spread
+- Mantén el estado **mínimo** y evita duplicaciones
+</blockquote>
+    </div>
+  </section>

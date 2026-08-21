@@ -1,0 +1,530 @@
+<!-- 08. Listas y Keys - React (Frameworks) -->
+  <section id="8-1-uso-de-map-para-renderizar-listas">
+    <h2><i class="fa-solid fa-clipboard-list"></i> 8.1 Uso de map() para renderizar listas</h2>
+    <div class="doc-content">
+<h3>Renderizar arrays en React</h3>
+<p>El método <code>map()</code> es la forma estándar de convertir un array de datos en elementos JSX.</p>
+<pre><code class="language-jsx">function ListaFrutas() {
+  const frutas = ["Manzana", "Banana", "Naranja", "Uva"];
+  
+  return (
+    &lt;ul&gt;
+      {frutas.map((fruta, index) =&gt; (
+        &lt;li key={index}&gt;{fruta}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}
+
+// Resultado:
+// • Manzana
+// • Banana
+// • Naranja
+// • Uva</code></pre>
+<h3>Renderizar objetos</h3>
+<pre><code class="language-jsx">function ListaUsuarios() {
+  const usuarios = [
+    { id: 1, nombre: "Ana", email: "ana@mail.com" },
+    { id: 2, nombre: "Carlos", email: "carlos@mail.com" },
+    { id: 3, nombre: "María", email: "maria@mail.com" }
+  ];
+  
+  return (
+    &lt;ul&gt;
+      {usuarios.map(usuario =&gt; (
+        &lt;li key={usuario.id}&gt;
+          &lt;strong&gt;{usuario.nombre}&lt;/strong&gt; - {usuario.email}
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>Renderizar componentes</h3>
+<pre><code class="language-jsx">// Componente para cada tarjeta
+function TarjetaProducto({ producto }) {
+  return (
+    &lt;div className="tarjeta"&gt;
+      &lt;img src={producto.imagen} alt={producto.nombre} /&gt;
+      &lt;h3&gt;{producto.nombre}&lt;/h3&gt;
+      &lt;p&gt;\${producto.precio}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+
+// Componente que renderiza la lista
+function ListaProductos() {
+  const productos = [
+    { id: 1, nombre: "Laptop", precio: 999, imagen: "/laptop.jpg" },
+    { id: 2, nombre: "Mouse", precio: 29, imagen: "/mouse.jpg" },
+    { id: 3, nombre: "Teclado", precio: 79, imagen: "/teclado.jpg" }
+  ];
+  
+  return (
+    &lt;div className="grid"&gt;
+      {productos.map(producto =&gt; (
+        &lt;TarjetaProducto key={producto.id} producto={producto} /&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-2-importancia-de-las-keys">
+    <h2><i class="fa-solid fa-key"></i> 8.2 Importancia de las keys</h2>
+    <div class="doc-content">
+<h3>¿Qué son las keys?</h3>
+<p>Las <strong>keys</strong> son atributos especiales que ayudan a React a identificar qué elementos han cambiado, se han agregado o eliminado.</p>
+<pre><code class="language-jsx">// ❌ Sin key - React muestra advertencia
+{items.map(item =&gt; &lt;li&gt;{item}&lt;/li&gt;)}
+
+// ✅ Con key - React puede optimizar
+{items.map(item =&gt; &lt;li key={item.id}&gt;{item.nombre}&lt;/li&gt;)}</code></pre>
+<h3>¿Por qué son importantes?</h3>
+<table><thead><tr><th>Sin keys</th><th>Con keys</th></tr></thead><tbody><tr><td>React re-renderiza toda la lista</td><td>React solo actualiza lo necesario</td></tr><tr><td>Problemas con inputs y estado</td><td>Estado se mantiene correctamente</td></tr><tr><td>Rendimiento pobre</td><td>Rendimiento optimizado</td></tr><tr><td>Advertencias en consola</td><td>Sin advertencias</td></tr></tbody></table>
+<h3>Ejemplo del problema sin keys</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function ListaConProblema() {
+  const [items, setItems] = useState(["A", "B", "C"]);
+  
+  const agregarAlInicio = () =&gt; {
+    setItems(["Nuevo", ...items]);
+  };
+  
+  return (
+    &lt;div&gt;
+      &lt;button onClick={agregarAlInicio}&gt;Agregar al inicio&lt;/button&gt;
+      &lt;ul&gt;
+        {/* ❌ Usando índice como key */}
+        {items.map((item, index) =&gt; (
+          &lt;li key={index}&gt;
+            {item} &lt;input type="text" /&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+}
+
+// Problema: Al agregar "Nuevo" al inicio, los inputs
+// mantienen sus valores en las posiciones incorrectas</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-3-keys-unicas-y-errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> 8.3 Keys únicas y errores comunes</h2>
+    <div class="doc-content">
+<h3>Qué usar como key</h3>
+<table><thead><tr><th>Buena opción</th><th>Mala opción</th></tr></thead><tbody><tr><td>ID de base de datos</td><td>Índice del array</td></tr><tr><td>UUID generado</td><td>Valor aleatorio en render</td></tr><tr><td>Combinación única</td><td>Valores duplicados</td></tr></tbody></table>
+<h3>Ejemplos de keys correctas</h3>
+<pre><code class="language-jsx">// ✅ ID de la base de datos
+{usuarios.map(user =&gt; (
+  &lt;UserCard key={user.id} user={user} /&gt;
+))}
+
+// ✅ Slug o identificador único
+{articulos.map(art =&gt; (
+  &lt;Article key={art.slug} article={art} /&gt;
+))}
+
+// ✅ Combinación de valores únicos
+{pedidos.map(pedido =&gt; (
+  &lt;Pedido key={\`\${pedido.usuarioId}-\${pedido.fecha}\`} data={pedido} /&gt;
+))}</code></pre>
+<h3>Errores comunes</h3>
+<pre><code class="language-jsx">// ❌ MAL: Índice como key (problemas al reordenar)
+{items.map((item, index) =&gt; (
+  &lt;Item key={index} data={item} /&gt;
+))}
+
+// ❌ MAL: Math.random() genera nueva key en cada render
+{items.map(item =&gt; (
+  &lt;Item key={Math.random()} data={item} /&gt;
+))}
+
+// ❌ MAL: Keys duplicadas causan errores
+const items = [
+  { id: 1, nombre: "A" },
+  { id: 1, nombre: "B" }  // ID duplicado
+];
+{items.map(item =&gt; (
+  &lt;Item key={item.id} data={item} /&gt;  // Error: keys duplicadas
+))}</code></pre>
+<h3>Cuándo usar índice como key</h3>
+<pre><code class="language-jsx">// ✅ OK usar índice cuando:
+// 1. La lista es estática (no cambia)
+// 2. Los items no se reordenan
+// 3. Los items no se filtran
+// 4. No hay estado en los items
+
+const diasSemana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+function Calendario() {
+  return (
+    &lt;div className="dias"&gt;
+      {diasSemana.map((dia, index) =&gt; (
+        &lt;span key={index}&gt;{dia}&lt;/span&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-caution">
+Usa el índice como key **solo** si la lista es completamente estática. Para listas dinámicas, siempre usa IDs únicos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-4-renderizado-dinamico-de-datos">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 8.4 Renderizado dinámico de datos</h2>
+    <div class="doc-content">
+<h3>Datos desde estado</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function ListaTareas() {
+  const [tareas, setTareas] = useState([
+    { id: 1, texto: "Aprender React", completada: false },
+    { id: 2, texto: "Hacer ejercicio", completada: true },
+    { id: 3, texto: "Leer un libro", completada: false }
+  ]);
+  
+  return (
+    &lt;ul&gt;
+      {tareas.map(tarea =&gt; (
+        &lt;li 
+          key={tarea.id}
+          style={{ 
+            textDecoration: tarea.completada ? 'line-through' : 'none' 
+          }}
+        &gt;
+          {tarea.texto}
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>Filtrar datos</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function ListaFiltrable() {
+  const [filtro, setFiltro] = useState("todos");
+  const [tareas] = useState([
+    { id: 1, texto: "Tarea 1", completada: true },
+    { id: 2, texto: "Tarea 2", completada: false },
+    { id: 3, texto: "Tarea 3", completada: true }
+  ]);
+  
+  // Filtrar según selección
+  const tareasFiltradas = tareas.filter(tarea =&gt; {
+    if (filtro === "completadas") return tarea.completada;
+    if (filtro === "pendientes") return !tarea.completada;
+    return true;  // "todos"
+  });
+  
+  return (
+    &lt;div&gt;
+      &lt;select value={filtro} onChange={e =&gt; setFiltro(e.target.value)}&gt;
+        &lt;option value="todos"&gt;Todos&lt;/option&gt;
+        &lt;option value="completadas"&gt;Completadas&lt;/option&gt;
+        &lt;option value="pendientes"&gt;Pendientes&lt;/option&gt;
+      &lt;/select&gt;
+      
+      &lt;ul&gt;
+        {tareasFiltradas.map(tarea =&gt; (
+          &lt;li key={tarea.id}&gt;{tarea.texto}&lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Buscar en lista</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function BuscadorProductos() {
+  const [busqueda, setBusqueda] = useState("");
+  const productos = [
+    { id: 1, nombre: "Laptop HP" },
+    { id: 2, nombre: "Mouse Logitech" },
+    { id: 3, nombre: "Teclado Mecánico" },
+    { id: 4, nombre: "Monitor Samsung" }
+  ];
+  
+  // Filtrar por búsqueda
+  const productosFiltrados = productos.filter(p =&gt;
+    p.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  );
+  
+  return (
+    &lt;div&gt;
+      &lt;input
+        type="text"
+        placeholder="Buscar..."
+        value={busqueda}
+        onChange={e =&gt; setBusqueda(e.target.value)}
+      /&gt;
+      
+      &lt;ul&gt;
+        {productosFiltrados.map(p =&gt; (
+          &lt;li key={p.id}&gt;{p.nombre}&lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+      
+      {productosFiltrados.length === 0 &amp;&amp; (
+        &lt;p&gt;No se encontraron productos&lt;/p&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-5-eliminacion-de-elementos-en-listas">
+    <h2><i class="fa-solid fa-trash-can"></i> 8.5 Eliminación de elementos en listas</h2>
+    <div class="doc-content">
+<h3>Eliminar por ID</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function ListaEliminable() {
+  const [items, setItems] = useState([
+    { id: 1, nombre: "Item 1" },
+    { id: 2, nombre: "Item 2" },
+    { id: 3, nombre: "Item 3" }
+  ]);
+  
+  const eliminar = (id) =&gt; {
+    setItems(items.filter(item =&gt; item.id !== id));
+  };
+  
+  return (
+    &lt;ul&gt;
+      {items.map(item =&gt; (
+        &lt;li key={item.id}&gt;
+          {item.nombre}
+          &lt;button onClick={() =&gt; eliminar(item.id)}&gt;
+            🗑️ Eliminar
+          &lt;/button&gt;
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>Confirmar antes de eliminar</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function ListaConConfirmacion() {
+  const [items, setItems] = useState([
+    { id: 1, nombre: "Documento importante" },
+    { id: 2, nombre: "Foto de vacaciones" },
+    { id: 3, nombre: "Archivo temporal" }
+  ]);
+  
+  const eliminar = (id, nombre) =&gt; {
+    if (window.confirm(\`¿Eliminar "\${nombre}"?\`)) {
+      setItems(items.filter(item =&gt; item.id !== id));
+    }
+  };
+  
+  return (
+    &lt;ul&gt;
+      {items.map(item =&gt; (
+        &lt;li key={item.id}&gt;
+          {item.nombre}
+          &lt;button onClick={() =&gt; eliminar(item.id, item.nombre)}&gt;
+            Eliminar
+          &lt;/button&gt;
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-6-actualizacion-de-listas">
+    <h2><i class="fa-solid fa-pencil"></i> 8.6 Actualización de listas</h2>
+    <div class="doc-content">
+<h3>Agregar elementos</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function ListaConAgregar() {
+  const [items, setItems] = useState([]);
+  const [nuevoItem, setNuevoItem] = useState("");
+  
+  const agregar = (e) =&gt; {
+    e.preventDefault();
+    if (!nuevoItem.trim()) return;
+    
+    const nuevo = {
+      id: Date.now(),
+      texto: nuevoItem
+    };
+    
+    setItems([...items, nuevo]);
+    setNuevoItem("");
+  };
+  
+  return (
+    &lt;div&gt;
+      &lt;form onSubmit={agregar}&gt;
+        &lt;input
+          value={nuevoItem}
+          onChange={e =&gt; setNuevoItem(e.target.value)}
+          placeholder="Nuevo item..."
+        /&gt;
+        &lt;button type="submit"&gt;Agregar&lt;/button&gt;
+      &lt;/form&gt;
+      
+      &lt;ul&gt;
+        {items.map(item =&gt; (
+          &lt;li key={item.id}&gt;{item.texto}&lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Editar elementos</h3>
+<pre><code class="language-jsx">import { useState } from 'react';
+
+function ListaEditable() {
+  const [items, setItems] = useState([
+    { id: 1, texto: "Item 1", editando: false },
+    { id: 2, texto: "Item 2", editando: false }
+  ]);
+  
+  const toggleEditar = (id) =&gt; {
+    setItems(items.map(item =&gt;
+      item.id === id ? { ...item, editando: !item.editando } : item
+    ));
+  };
+  
+  const guardarCambio = (id, nuevoTexto) =&gt; {
+    setItems(items.map(item =&gt;
+      item.id === id ? { ...item, texto: nuevoTexto, editando: false } : item
+    ));
+  };
+  
+  return (
+    &lt;ul&gt;
+      {items.map(item =&gt; (
+        &lt;li key={item.id}&gt;
+          {item.editando ? (
+            &lt;input
+              defaultValue={item.texto}
+              onBlur={e =&gt; guardarCambio(item.id, e.target.value)}
+              onKeyDown={e =&gt; {
+                if (e.key === 'Enter') {
+                  guardarCambio(item.id, e.target.value);
+                }
+              }}
+              autoFocus
+            /&gt;
+          ) : (
+            &lt;&gt;
+              &lt;span&gt;{item.texto}&lt;/span&gt;
+              &lt;button onClick={() =&gt; toggleEditar(item.id)}&gt;✏️&lt;/button&gt;
+            &lt;/&gt;
+          )}
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-7-buenas-practicas-en-listas">
+    <h2><i class="fa-solid fa-circle-check"></i> 8.7 Buenas prácticas en listas</h2>
+    <div class="doc-content">
+<h3>Extraer componentes</h3>
+<pre><code class="language-jsx">// ❌ Todo en un solo componente
+function ListaTareas({ tareas }) {
+  return (
+    &lt;ul&gt;
+      {tareas.map(tarea =&gt; (
+        &lt;li key={tarea.id}&gt;
+          &lt;input type="checkbox" checked={tarea.completada} /&gt;
+          &lt;span&gt;{tarea.texto}&lt;/span&gt;
+          &lt;button&gt;Eliminar&lt;/button&gt;
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}
+
+// ✅ Componente separado para cada item
+function TareaItem({ tarea, onToggle, onEliminar }) {
+  return (
+    &lt;li&gt;
+      &lt;input 
+        type="checkbox" 
+        checked={tarea.completada}
+        onChange={() =&gt; onToggle(tarea.id)}
+      /&gt;
+      &lt;span&gt;{tarea.texto}&lt;/span&gt;
+      &lt;button onClick={() =&gt; onEliminar(tarea.id)}&gt;Eliminar&lt;/button&gt;
+    &lt;/li&gt;
+  );
+}
+
+function ListaTareas({ tareas, onToggle, onEliminar }) {
+  return (
+    &lt;ul&gt;
+      {tareas.map(tarea =&gt; (
+        &lt;TareaItem
+          key={tarea.id}
+          tarea={tarea}
+          onToggle={onToggle}
+          onEliminar={onEliminar}
+        /&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>Lista vacía</h3>
+<pre><code class="language-jsx">function ListaProductos({ productos }) {
+  // Manejar lista vacía
+  if (productos.length === 0) {
+    return (
+      &lt;div className="empty-state"&gt;
+        &lt;p&gt;No hay productos disponibles&lt;/p&gt;
+        &lt;button&gt;Agregar producto&lt;/button&gt;
+      &lt;/div&gt;
+    );
+  }
+  
+  return (
+    &lt;ul&gt;
+      {productos.map(p =&gt; (
+        &lt;li key={p.id}&gt;{p.nombre}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>Resumen de operaciones</h3>
+<table><thead><tr><th>Operación</th><th>Método</th><th>Ejemplo</th></tr></thead><tbody><tr><td>Renderizar</td><td><code>map()</code></td><td><code>items.map(i => <Item key={i.id} />)</code></td></tr><tr><td>Filtrar</td><td><code>filter()</code></td><td><code>items.filter(i => i.activo)</code></td></tr><tr><td>Buscar</td><td><code>filter()</code> + <code>includes()</code></td><td><code>items.filter(i => i.nombre.includes(q))</code></td></tr><tr><td>Agregar</td><td>spread</td><td><code>[...items, nuevo]</code></td></tr><tr><td>Eliminar</td><td><code>filter()</code></td><td><code>items.filter(i => i.id !== id)</code></td></tr><tr><td>Actualizar</td><td><code>map()</code></td><td><code>items.map(i => i.id === id ? {...i, ...cambios} : i)</code></td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Usar **map()** para convertir arrays en elementos JSX
+- Las **keys** ayudan a React a identificar cambios
+- Usar **IDs únicos** como keys, no índices
+- **Filtrar** y **buscar** en listas con `filter()`
+- **Agregar** elementos con spread `[...items, nuevo]`
+- **Eliminar** con `filter(i => i.id !== id)`
+- **Actualizar** con `map()` y spread
+- **Extraer componentes** para items complejos
+</blockquote>
+    </div>
+  </section>

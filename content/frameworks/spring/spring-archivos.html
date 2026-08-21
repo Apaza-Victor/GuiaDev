@@ -1,0 +1,551 @@
+<!-- 14. Manejo de Archivos - Java Spring (Frameworks) -->
+  <section id="14-1-configuracion-de-multipart">
+    <h2><i class="fa-solid fa-folder"></i> 14.1 Configuración de Multipart</h2>
+    <div class="doc-content">
+<h3>Propiedades de configuración</h3>
+<pre><code class="language-properties"># application.properties
+spring.servlet.multipart.enabled=true
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=50MB
+spring.servlet.multipart.file-size-threshold=2KB
+
+# Directorio de almacenamiento
+app.upload.dir=uploads</code></pre>
+<h3>Crear directorio de uploads</h3>
+<pre><code class="language-java">@Configuration
+public class StorageConfig {
+    
+    @Value("\${app.upload.dir}")
+    private String uploadDir;
+    
+    @PostConstruct
+    public void init() {
+        try {
+            Path path = Paths.get(uploadDir);
+            if (!Files.exists(path)) {
+                Files.createDirectories(path);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("No se pudo crear directorio de uploads", e);
+        }
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="14-2-subida-de-archivos">
+    <h2><i class="fa-solid fa-arrow-up"></i> 14.2 Subida de Archivos</h2>
+    <div class="doc-content">
+<h3>Controller básico</h3>
+<pre><code class="language-java">@RestController
+@RequestMapping("/api/archivos")
+public class ArchivoController {
+    
+    private final ArchivoService archivoService;
+    
+    @PostMapping("/upload")
+    public ResponseEntity&lt;ArchivoResponse&gt; subir(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new BadRequestException("El archivo está vacío");
+        }
+        
+        ArchivoResponse response = archivoService.guardar(file);
+        return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/upload-multiple")
+    public ResponseEntity&lt;List&lt;ArchivoResponse&gt;&gt; subirMultiples(
+            @RequestParam("files") MultipartFile[] files) {
+        
+        List&lt;ArchivoResponse&gt; responses = Arrays.stream(files)
+            .map(archivoService::guardar)
+            .toList();
+        
+        return ResponseEntity.ok(responses);
+    }
+}</code></pre>
+<h3>Servicio de almacenamiento</h3>
+<pre><code class="language-java">@Service
+public class ArchivoService {
+    
+    @Value("\${app.upload.dir}")
+    private String uploadDir;
+    
+    public ArchivoResponse guardar(MultipartFile file) {
+        try {
+            // Generar nombre único
+            String nombreOriginal = file.getOriginalFilename();
+            String extension = getExtension(nombreOriginal);
+            String nuevoNombre = UUID.randomUUID() + "." + extension;
+            
+            // Guardar archivo
+            Path destino = Paths.get(uploadDir).resolve(nuevoNombre);
+            Files.copy(file.getInputStream(), destino, StandardCopyOption.REPLACE_EXISTING);
+            
+            return ArchivoResponse.builder()
+                .nombre(nuevoNombre)
+                .nombreOriginal(nombreOriginal)
+                .tipo(file.getContentType())
+                .tamaño(file.getSize())
+                .url("/api/archivos/" + nuevoNombre)
+                .build();
+                
+        } catch (IOException e) {
+            throw new StorageException("Error al guardar archivo", e);
+        }
+    }
+    
+    private String getExtension(String filename) {
+        return filename.substring(filename.lastIndexOf(".") + 1);
+    }
+}</code></pre>
+<h3>DTO de respuesta</h3>
+<pre><code class="language-java">@Data
+@Builder
+public class ArchivoResponse {
+    private String nombre;
+    private String nombreOriginal;
+    private String tipo;
+    private long tamaño;
+    private String url;
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="14-3-descarga-de-archivos">
+    <h2><i class="fa-solid fa-arrow-down"></i> 14.3 Descarga de Archivos</h2>
+    <div class="doc-content">
+<h3>Descarga simple</h3>
+<pre><code class="language-java">@GetMapping("/{nombre}")
+public ResponseEntity&lt;Resource&gt; descargar(@PathVariable String nombre) {
+    try {
+        Path archivo = Paths.get(uploadDir).resolve(nombre);
+        Resource resource = new UrlResource(archivo.toUri());
+        
+        if (!resource.exists()) {
+            throw new ResourceNotFoundException("Archivo no encontrado: " + nombre);
+        }
+        
+        String contentType = Files.probeContentType(archivo);
+        if (contentType == null) {
+            contentType = "application/octet-stream";
+        }
+        
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(contentType))
+            .header(HttpHeaders.CONTENT_DISPOSITION, 
+                "attachment; filename=\"" + resource.getFilename() + "\"")
+            .body(resource);
+            
+    } catch (IOException e) {
+        throw new StorageException("Error al leer archivo", e);
+    }
+}</code></pre>
+<h3>Visualización en navegador</h3>
+<pre><code class="language-java">@GetMapping("/ver/{nombre}")
+public ResponseEntity&lt;Resource&gt; ver(@PathVariable String nombre) {
+    Path archivo = Paths.get(uploadDir).resolve(nombre);
+    Resource resource = new UrlResource(archivo.toUri());
+    
+    String contentType = Files.probeContentType(archivo);
+    
+    return ResponseEntity.ok()
+        .contentType(MediaType.parseMediaType(contentType))
+        .header(HttpHeaders.CONTENT_DISPOSITION, 
+            "inline; filename=\"" + resource.getFilename() + "\"")  // inline = ver en navegador
+        .body(resource);
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="14-4-validacion-de-archivos">
+    <h2><i class="fa-solid fa-circle-check"></i> 14.4 Validación de Archivos</h2>
+    <div class="doc-content">
+<h3>Validar tipo y tamaño</h3>
+<pre><code class="language-java">@Service
+public class ArchivoService {
+    
+    private static final List&lt;String&gt; TIPOS_PERMITIDOS = List.of(
+        "image/jpeg", "image/png", "image/gif", "application/pdf"
+    );
+    
+    private static final long TAMAÑO_MAXIMO = 10 * 1024 * 1024; // 10MB
+    
+    public void validar(MultipartFile file) {
+        // Validar que no esté vacío
+        if (file.isEmpty()) {
+            throw new BadRequestException("El archivo está vacío");
+        }
+        
+        // Validar tamaño
+        if (file.getSize() &gt; TAMAÑO_MAXIMO) {
+            throw new BadRequestException("El archivo excede el tamaño máximo de 10MB");
+        }
+        
+        // Validar tipo MIME
+        String contentType = file.getContentType();
+        if (!TIPOS_PERMITIDOS.contains(contentType)) {
+            throw new BadRequestException("Tipo de archivo no permitido: " + contentType);
+        }
+        
+        // Validar extensión
+        String extension = getExtension(file.getOriginalFilename()).toLowerCase();
+        List&lt;String&gt; extensionesPermitidas = List.of("jpg", "jpeg", "png", "gif", "pdf");
+        if (!extensionesPermitidas.contains(extension)) {
+            throw new BadRequestException("Extensión no permitida: " + extension);
+        }
+    }
+    
+    public ArchivoResponse guardar(MultipartFile file) {
+        validar(file);
+        // ... resto del código
+    }
+}</code></pre>
+<h3>Validación con anotaciones</h3>
+<pre><code class="language-java">// Anotación personalizada
+@Target({ElementType.PARAMETER, ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = ValidFileValidator.class)
+public @interface ValidFile {
+    String message() default "Archivo inválido";
+    Class&lt;?&gt;[] groups() default {};
+    Class&lt;? extends Payload&gt;[] payload() default {};
+    
+    String[] allowedTypes() default {};
+    long maxSize() default 10485760; // 10MB
+}
+
+// Validador
+public class ValidFileValidator implements ConstraintValidator&lt;ValidFile, MultipartFile&gt; {
+    
+    private String[] allowedTypes;
+    private long maxSize;
+    
+    @Override
+    public void initialize(ValidFile annotation) {
+        this.allowedTypes = annotation.allowedTypes();
+        this.maxSize = annotation.maxSize();
+    }
+    
+    @Override
+    public boolean isValid(MultipartFile file, ConstraintValidatorContext context) {
+        if (file == null || file.isEmpty()) {
+            return false;
+        }
+        
+        if (file.getSize() &gt; maxSize) {
+            return false;
+        }
+        
+        if (allowedTypes.length &gt; 0) {
+            return Arrays.asList(allowedTypes).contains(file.getContentType());
+        }
+        
+        return true;
+    }
+}
+
+// Uso en controller
+@PostMapping("/upload")
+public ResponseEntity&lt;ArchivoResponse&gt; subir(
+        @ValidFile(allowedTypes = {"image/jpeg", "image/png"}, maxSize = 5242880)
+        @RequestParam("file") MultipartFile file) {
+    // ...
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="14-5-almacenamiento-local">
+    <h2><i class="fa-solid fa-folder-open"></i> 14.5 Almacenamiento Local</h2>
+    <div class="doc-content">
+<h3>Servicio completo</h3>
+<pre><code class="language-java">@Service
+@Slf4j
+public class LocalStorageService implements StorageService {
+    
+    private final Path rootLocation;
+    
+    public LocalStorageService(@Value("\${app.upload.dir}") String uploadDir) {
+        this.rootLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
+        init();
+    }
+    
+    @Override
+    public void init() {
+        try {
+            Files.createDirectories(rootLocation);
+        } catch (IOException e) {
+            throw new StorageException("No se pudo inicializar almacenamiento", e);
+        }
+    }
+    
+    @Override
+    public String store(MultipartFile file) {
+        String filename = generateFilename(file);
+        Path destinationFile = rootLocation.resolve(filename).normalize();
+        
+        // Prevenir path traversal
+        if (!destinationFile.getParent().equals(rootLocation)) {
+            throw new StorageException("No se puede almacenar fuera del directorio");
+        }
+        
+        try (InputStream inputStream = file.getInputStream()) {
+            Files.copy(inputStream, destinationFile, StandardCopyOption.REPLACE_EXISTING);
+            return filename;
+        } catch (IOException e) {
+            throw new StorageException("Error al almacenar archivo", e);
+        }
+    }
+    
+    @Override
+    public Resource loadAsResource(String filename) {
+        try {
+            Path file = rootLocation.resolve(filename);
+            Resource resource = new UrlResource(file.toUri());
+            
+            if (resource.exists() &amp;&amp; resource.isReadable()) {
+                return resource;
+            }
+            throw new ResourceNotFoundException("Archivo no encontrado: " + filename);
+        } catch (MalformedURLException e) {
+            throw new ResourceNotFoundException("Archivo no encontrado: " + filename);
+        }
+    }
+    
+    @Override
+    public void delete(String filename) {
+        try {
+            Path file = rootLocation.resolve(filename);
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            throw new StorageException("Error al eliminar archivo", e);
+        }
+    }
+    
+    @Override
+    public Stream&lt;Path&gt; loadAll() {
+        try {
+            return Files.walk(rootLocation, 1)
+                .filter(path -&gt; !path.equals(rootLocation))
+                .map(rootLocation::relativize);
+        } catch (IOException e) {
+            throw new StorageException("Error al listar archivos", e);
+        }
+    }
+    
+    private String generateFilename(MultipartFile file) {
+        String original = file.getOriginalFilename();
+        String extension = original.substring(original.lastIndexOf("."));
+        return UUID.randomUUID() + extension;
+    }
+}</code></pre>
+<h3>Interfaz del servicio</h3>
+<pre><code class="language-java">public interface StorageService {
+    void init();
+    String store(MultipartFile file);
+    Resource loadAsResource(String filename);
+    void delete(String filename);
+    Stream&lt;Path&gt; loadAll();
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="14-6-streaming-de-archivos">
+    <h2><i class="fa-solid fa-water"></i> 14.6 Streaming de Archivos</h2>
+    <div class="doc-content">
+<h3>Streaming para archivos grandes</h3>
+<pre><code class="language-java">@GetMapping("/stream/{nombre}")
+public ResponseEntity&lt;StreamingResponseBody&gt; streamArchivo(@PathVariable String nombre) {
+    Path archivo = Paths.get(uploadDir).resolve(nombre);
+    
+    if (!Files.exists(archivo)) {
+        throw new ResourceNotFoundException("Archivo no encontrado");
+    }
+    
+    StreamingResponseBody stream = outputStream -&gt; {
+        try (InputStream inputStream = Files.newInputStream(archivo)) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+                outputStream.flush();
+            }
+        }
+    };
+    
+    return ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nombre + "\"")
+        .body(stream);
+}</code></pre>
+<h3>Descarga con rango (video/audio)</h3>
+<pre><code class="language-java">@GetMapping("/video/{nombre}")
+public ResponseEntity&lt;ResourceRegion&gt; streamVideo(
+        @PathVariable String nombre,
+        @RequestHeader HttpHeaders headers) throws IOException {
+    
+    Path archivo = Paths.get(uploadDir).resolve(nombre);
+    UrlResource video = new UrlResource(archivo.toUri());
+    
+    long contentLength = video.contentLength();
+    
+    HttpRange range = headers.getRange().isEmpty() 
+        ? null 
+        : headers.getRange().get(0);
+    
+    ResourceRegion region;
+    if (range != null) {
+        long start = range.getRangeStart(contentLength);
+        long end = range.getRangeEnd(contentLength);
+        long rangeLength = Math.min(1024 * 1024, end - start + 1); // 1MB chunks
+        
+        region = new ResourceRegion(video, start, rangeLength);
+    } else {
+        region = new ResourceRegion(video, 0, Math.min(1024 * 1024, contentLength));
+    }
+    
+    return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+        .contentType(MediaTypeFactory.getMediaType(video).orElse(MediaType.APPLICATION_OCTET_STREAM))
+        .body(region);
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="14-7-procesamiento-de-imagenes">
+    <h2><i class="fa-solid fa-image"></i> 14.7 Procesamiento de Imágenes</h2>
+    <div class="doc-content">
+<h3>Redimensionar imágenes</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;net.coobird&lt;/groupId&gt;
+    &lt;artifactId&gt;thumbnailator&lt;/artifactId&gt;
+    &lt;version&gt;0.4.20&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+<pre><code class="language-java">@Service
+public class ImagenService {
+    
+    public byte[] redimensionar(MultipartFile file, int width, int height) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        
+        Thumbnails.of(file.getInputStream())
+            .size(width, height)
+            .keepAspectRatio(true)
+            .outputFormat("jpg")
+            .outputQuality(0.8)
+            .toOutputStream(outputStream);
+        
+        return outputStream.toByteArray();
+    }
+    
+    public ArchivoResponse guardarConThumbnail(MultipartFile file) throws IOException {
+        // Guardar original
+        String nombreOriginal = guardar(file);
+        
+        // Crear thumbnail
+        byte[] thumbnail = redimensionar(file, 200, 200);
+        String nombreThumbnail = "thumb_" + nombreOriginal;
+        
+        Path destino = Paths.get(uploadDir).resolve(nombreThumbnail);
+        Files.write(destino, thumbnail);
+        
+        return ArchivoResponse.builder()
+            .nombre(nombreOriginal)
+            .thumbnail(nombreThumbnail)
+            .build();
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="14-8-almacenamiento-en-la-nube-s3">
+    <h2><i class="fa-solid fa-cloud"></i> 14.8 Almacenamiento en la Nube (S3)</h2>
+    <div class="doc-content">
+<h3>Dependencia AWS</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;software.amazon.awssdk&lt;/groupId&gt;
+    &lt;artifactId&gt;s3&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+<h3>Servicio S3</h3>
+<pre><code class="language-java">@Service
+public class S3StorageService implements StorageService {
+    
+    private final S3Client s3Client;
+    private final String bucketName;
+    
+    public S3StorageService(
+            @Value("\${aws.s3.bucket}") String bucketName,
+            @Value("\${aws.region}") String region) {
+        this.bucketName = bucketName;
+        this.s3Client = S3Client.builder()
+            .region(Region.of(region))
+            .build();
+    }
+    
+    @Override
+    public String store(MultipartFile file) {
+        String key = UUID.randomUUID() + "_" + file.getOriginalFilename();
+        
+        try {
+            PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .contentType(file.getContentType())
+                .build();
+            
+            s3Client.putObject(request, 
+                RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+            
+            return key;
+        } catch (IOException e) {
+            throw new StorageException("Error al subir a S3", e);
+        }
+    }
+    
+    @Override
+    public Resource loadAsResource(String key) {
+        GetObjectRequest request = GetObjectRequest.builder()
+            .bucket(bucketName)
+            .key(key)
+            .build();
+        
+        ResponseInputStream&lt;GetObjectResponse&gt; response = s3Client.getObject(request);
+        return new InputStreamResource(response);
+    }
+    
+    @Override
+    public void delete(String key) {
+        DeleteObjectRequest request = DeleteObjectRequest.builder()
+            .bucket(bucketName)
+            .key(key)
+            .build();
+        
+        s3Client.deleteObject(request);
+    }
+    
+    public String getPresignedUrl(String key, Duration duration) {
+        S3Presigner presigner = S3Presigner.create();
+        
+        GetObjectRequest getRequest = GetObjectRequest.builder()
+            .bucket(bucketName)
+            .key(key)
+            .build();
+        
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+            .signatureDuration(duration)
+            .getObjectRequest(getRequest)
+            .build();
+        
+        return presigner.presignGetObject(presignRequest).url().toString();
+    }
+}</code></pre>
+<blockquote class="aside aside-tip">
+Para archivos grandes, usa **Multipart Upload** de S3 que divide el archivo en partes y las sube en paralelo.
+</blockquote>
+    </div>
+  </section>

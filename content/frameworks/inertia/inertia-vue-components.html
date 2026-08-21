@@ -1,0 +1,686 @@
+<!-- 4. Componentes en Vue 3 - Inertia (Frameworks) -->
+  <section id="creacion-de-componentes-de-paginas-pages">
+    <h2>Creación de componentes de páginas (Pages)</h2>
+    <div class="doc-content">
+<p>En Inertia.js, los componentes de página son especiales porque representan rutas completas de tu aplicación y se cargan directamente desde el servidor a través de controladores Laravel.</p>
+<h3>Estructura básica de un componente de página</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Imports
+
+
+
+
+
+// Props - Automáticamente disponibles desde el controlador Laravel
+const props = defineProps({
+  users: Array,
+  filters: Object,
+});
+
+// Estado reactivo local
+const isLoading = ref(false);
+const selectedUser = ref(null);
+
+// Métodos
+const selectUser = (user) =&gt; {
+  selectedUser.value = user;
+};
+
+// Hooks de ciclo de vida
+onMounted(() =&gt; {
+  console.log('Componente de página montado');
+});
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;!-- Título de la página en el navegador --&gt;
+  &lt;Head title="Usuarios" /&gt;
+  
+  &lt;!-- Layout de la aplicación --&gt;
+  &lt;AppLayout&gt;
+    &lt;template #header&gt;
+      &lt;h2 class="text-xl font-semibold"&gt;Gestión de Usuarios&lt;/h2&gt;
+    &lt;/template&gt;
+    
+    &lt;!-- Contenido principal --&gt;
+    &lt;div class="py-6"&gt;
+      &lt;div class="max-w-7xl mx-auto sm:px-6 lg:px-8"&gt;
+        &lt;!-- Tabla de usuarios --&gt;
+        &lt;div v-if="users.length &gt; 0" class="bg-white overflow-hidden shadow-sm sm:rounded-lg"&gt;
+          &lt;div class="p-6 bg-white border-b border-gray-200"&gt;
+            &lt;table class="min-w-full divide-y divide-gray-200"&gt;
+              &lt;thead&gt;
+                &lt;tr&gt;
+                  &lt;th&gt;Nombre&lt;/th&gt;
+                  &lt;th&gt;Email&lt;/th&gt;
+                  &lt;th&gt;Acciones&lt;/th&gt;
+                &lt;/tr&gt;
+              &lt;/thead&gt;
+              &lt;tbody&gt;
+                &lt;tr v-for="user in users" :key="user.id"&gt;
+                  &lt;td&gt;{{ user.name }}&lt;/td&gt;
+                  &lt;td&gt;{{ user.email }}&lt;/td&gt;
+                  &lt;td&gt;
+                    &lt;Button @click="selectUser(user)"&gt;Ver detalles&lt;/Button&gt;
+                  &lt;/td&gt;
+                &lt;/tr&gt;
+              &lt;/tbody&gt;
+            &lt;/table&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        
+        &lt;div v-else class="bg-white p-6 rounded-lg shadow-sm"&gt;
+          No hay usuarios disponibles.
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/AppLayout&gt;
+&lt;/template&gt;</code></pre>
+<h3>Organización de componentes de página</h3>
+<p>En Inertia.js, los componentes de página deben organizarse siguiendo una estructura específica:</p>
+<pre><code class="language-text">resources/js/Pages/
+  ├── Dashboard.vue
+  ├── Users/
+  │   ├── Index.vue
+  │   ├── Create.vue
+  │   ├── Edit.vue
+  │   └── Show.vue
+  ├── Posts/
+  │   ├── Index.vue
+  │   └── ...
+  └── Settings.vue
+</code></pre>
+<blockquote class="aside aside-tip">
+La ruta al componente en el directorio `Pages` debe coincidir exactamente con la ruta que especificas en `Inertia::render()` en tu controlador Laravel.
+</blockquote>
+<h3>Acceso a datos del servidor</h3>
+<p>Con Composition API, accedes a los datos (props) enviados desde el controlador Laravel usando <code>defineProps</code>:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Las props se definen y están disponibles inmediatamente
+const props = defineProps({
+  user: Object,
+  permissions: Array,
+});
+
+// Puedes acceder a las props directamente
+console.log(props.user.name);
+
+// O desestructurarlas para un acceso más conveniente
+const { user, permissions } = props;
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;h1&gt;{{ user.name }}&lt;/h1&gt;
+    &lt;p&gt;{{ user.email }}&lt;/p&gt;
+    
+    &lt;div v-if="permissions.includes('edit-users')"&gt;
+      &lt;!-- Contenido solo para usuarios con permiso de edición --&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="reutilizacion-de-componentes-base-botones-inputs-etc">
+    <h2>Reutilización de componentes base (Botones, Inputs, etc.)</h2>
+    <div class="doc-content">
+<p>Una de las grandes ventajas de Vue es la capacidad de crear componentes reutilizables. Con Inertia.js y Vue 3, puedes crear una biblioteca de componentes base para mantener la consistencia en toda tu aplicación.</p>
+<h3>Estructura de carpetas recomendada</h3>
+<pre><code class="language-text">resources/js/
+  ├── Components/
+  │   ├── Button.vue
+  │   ├── Input.vue
+  │   ├── Checkbox.vue
+  │   ├── Select.vue
+  │   ├── Modal.vue
+  │   └── ...
+  ├── Layouts/
+  └── Pages/
+</code></pre>
+<h3>Creando un componente Button reutilizable</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+// Definir props con valores por defecto y validaciones
+const props = defineProps({
+  type: {
+    type: String,
+    default: 'primary',
+    validator: (value) =&gt; ['primary', 'secondary', 'danger', 'warning', 'success'].includes(value)
+  },
+  size: {
+    type: String,
+    default: 'md',
+    validator: (value) =&gt; ['sm', 'md', 'lg'].includes(value)
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  }
+});
+
+// Definir eventos que este componente puede emitir
+const emit = defineEmits(['click']);
+
+// Clases CSS computadas basadas en props
+const buttonClasses = computed(() =&gt; {
+  const classes = ['rounded', 'font-semibold', 'focus:outline-none', 'transition'];
+  
+  // Clases según el tipo
+  if (props.type === 'primary') {
+    classes.push('bg-blue-500', 'text-white', 'hover:bg-blue-600');
+  } else if (props.type === 'secondary') {
+    classes.push('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+  } else if (props.type === 'danger') {
+    classes.push('bg-red-500', 'text-white', 'hover:bg-red-600');
+  } else if (props.type === 'success') {
+    classes.push('bg-green-500', 'text-white', 'hover:bg-green-600');
+  } else if (props.type === 'warning') {
+    classes.push('bg-yellow-500', 'text-white', 'hover:bg-yellow-600');
+  }
+  
+  // Clases según el tamaño
+  if (props.size === 'sm') {
+    classes.push('py-1', 'px-3', 'text-sm');
+  } else if (props.size === 'md') {
+    classes.push('py-2', 'px-4', 'text-base');
+  } else if (props.size === 'lg') {
+    classes.push('py-3', 'px-6', 'text-lg');
+  }
+  
+  // Clases para estado deshabilitado
+  if (props.disabled) {
+    classes.push('opacity-50', 'cursor-not-allowed');
+  }
+  
+  return classes.join(' ');
+});
+
+// Método para manejar el clic
+const handleClick = (event) =&gt; {
+  if (!props.disabled) {
+    emit('click', event);
+  }
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;button
+    :class="buttonClasses"
+    :disabled="disabled"
+    @click="handleClick"
+  &gt;
+    &lt;slot&gt;&lt;/slot&gt;
+  &lt;/button&gt;
+&lt;/template&gt;</code></pre>
+<h3>Creando un componente Input reutilizable</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const props = defineProps({
+  modelValue: {
+    type: [String, Number],
+    default: ''
+  },
+  type: {
+    type: String,
+    default: 'text'
+  },
+  label: {
+    type: String,
+    default: ''
+  },
+  error: {
+    type: String,
+    default: ''
+  },
+  placeholder: {
+    type: String,
+    default: ''
+  },
+  required: {
+    type: Boolean,
+    default: false
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  }
+});
+
+// Definir eventos que este componente puede emitir
+const emit = defineEmits(['update:modelValue']);
+
+// Estado interno para el valor del input
+const inputValue = ref(props.modelValue);
+
+// Observar cambios en la prop modelValue
+watch(() =&gt; props.modelValue, (newValue) =&gt; {
+  inputValue.value = newValue;
+});
+
+// Actualizar el valor y emitir el evento cuando cambia el input
+const updateValue = (event) =&gt; {
+  const value = event.target.value;
+  inputValue.value = value;
+  emit('update:modelValue', value);
+};
+
+// Generar un ID único para el input
+const inputId = 'input-${Math.random().toString(36).substring(2, 9)}';
+
+// Determinar si mostrar el estado de error
+const hasError = computed(() =&gt; props.error &amp;&amp; props.error.length &gt; 0);
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div class="mb-4"&gt;
+    &lt;label v-if="label" :for="inputId" class="block text-sm font-medium text-gray-700 mb-1"&gt;
+      {{ label }}
+      &lt;span v-if="required" class="text-red-500"&gt;*&lt;/span&gt;
+    &lt;/label&gt;
+    
+    &lt;input
+      :id="inputId"
+      :type="type"
+      :value="inputValue"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :required="required"
+      :class="['w-full px-3 py-2 border rounded-md shadow-sm', 'focus:outline-none focus:ring-2 focus:ring-blue-500', hasError ? 'border-red-500' : 'border-gray-300']"
+      @input="updateValue"
+    /&gt;
+    
+    &lt;p v-if="hasError" class="mt-1 text-sm text-red-600"&gt;{{ error }}&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<h3>Uso de componentes base en componentes de página</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+
+
+
+
+// Formulario con Inertia
+const form = useForm({
+  name: '',
+  email: '',
+  password: '',
+  password_confirmation: ''
+});
+
+// Método para enviar el formulario
+const submit = () =&gt; {
+  form.post(route('users.store'));
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;Head title="Crear Usuario" /&gt;
+  
+  &lt;AppLayout&gt;
+    &lt;template #header&gt;
+      &lt;h2 class="text-xl font-semibold"&gt;Crear Nuevo Usuario&lt;/h2&gt;
+    &lt;/template&gt;
+    
+    &lt;div class="py-6"&gt;
+      &lt;div class="max-w-7xl mx-auto sm:px-6 lg:px-8"&gt;
+        &lt;div class="bg-white overflow-hidden shadow-sm sm:rounded-lg"&gt;
+          &lt;div class="p-6 bg-white border-b border-gray-200"&gt;
+            &lt;form @submit.prevent="submit"&gt;
+              &lt;Input
+                v-model="form.name"
+                label="Nombre"
+                required
+                :error="form.errors.name"
+              /&gt;
+              
+              &lt;Input
+                v-model="form.email"
+                type="email"
+                label="Email"
+                required
+                :error="form.errors.email"
+              /&gt;
+              
+              &lt;Input
+                v-model="form.password"
+                type="password"
+                label="Contraseña"
+                required
+                :error="form.errors.password"
+              /&gt;
+              
+              &lt;Input
+                v-model="form.password_confirmation"
+                type="password"
+                label="Confirmar Contraseña"
+                required
+              /&gt;
+              
+              &lt;div class="flex items-center justify-end mt-4"&gt;
+                &lt;Button type="secondary" class="mr-2" @click="$inertia.visit(route('users.index'))"&gt;
+                  Cancelar
+                &lt;/Button&gt;
+                
+                &lt;Button type="primary" :disabled="form.processing"&gt;
+                  Guardar Usuario
+                &lt;/Button&gt;
+              &lt;/div&gt;
+            &lt;/form&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/AppLayout&gt;
+&lt;/template&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="manejo-de-props-en-vue">
+    <h2>Manejo de Props en Vue</h2>
+    <div class="doc-content">
+<p>Las props son la forma principal de pasar datos de un componente padre a un componente hijo. Con la Composition API, el manejo de props se realiza mediante la función <code>defineProps</code>.</p>
+<h3>Definición básica de props</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Definición simple de props
+const props = defineProps(['title', 'message']);
+
+// Acceso a las props
+console.log(props.title);
+console.log(props.message);
+&lt;/script&gt;</code></pre>
+<h3>Definición con validación de tipos</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Definición con validación de tipos
+const props = defineProps({
+  title: String,
+  likes: Number,
+  isPublished: Boolean,
+  commentIds: Array,
+  author: Object,
+  callback: Function,
+  contactsPromise: Promise
+});
+&lt;/script&gt;</code></pre>
+<h3>Definición con opciones avanzadas</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Definición con opciones avanzadas
+const props = defineProps({
+  // Validación básica de tipo
+  propA: Number,
+  
+  // Múltiples tipos posibles
+  propB: [String, Number],
+  
+  // Prop requerida
+  propC: {
+    type: String,
+    required: true
+  },
+  
+  // Prop con valor por defecto
+  propD: {
+    type: Number,
+    default: 100
+  },
+  
+  // Objeto con valor por defecto (debe ser una función)
+  propE: {
+    type: Object,
+    default: () =&gt; ({ message: 'hello' })
+  },
+  
+  // Función validadora personalizada
+  propF: {
+    validator(value) {
+      return ['success', 'warning', 'danger'].includes(value);
+    }
+  },
+  
+  // Prop con función como valor por defecto
+  propG: {
+    type: Function,
+    default() {
+      return 'Default function';
+    }
+  }
+});
+&lt;/script&gt;</code></pre>
+<h3>Acceso y desestructuración de props</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const props = defineProps({
+  title: String,
+  author: Object
+});
+
+// Acceso directo a las props
+console.log(props.title);
+
+// Desestructuración con toRefs para mantener la reactividad
+const { title, author } = toRefs(props);
+console.log(title.value);
+
+// Uso en propiedades computadas
+const authorName = computed(() =&gt; author.value?.name || 'Anónimo');
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;h1&gt;{{ title }}&lt;/h1&gt;
+    &lt;p&gt;Autor: {{ authorName }}&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<blockquote class="aside aside-caution">
+Recuerda que las props son unidireccionales (de padre a hijo) y no deben ser mutadas directamente en el componente hijo. Si necesitas modificar una prop, debes emitir un evento para que el padre la actualice.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="eventos-personalizados-con-emit">
+    <h2>Eventos personalizados con emit</h2>
+    <div class="doc-content">
+<p>Los eventos personalizados permiten la comunicación de hijo a padre. Con la Composition API, se utiliza la función <code>defineEmits</code> para declarar los eventos que un componente puede emitir.</p>
+<h3>Definición básica de eventos</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Definición simple de eventos
+const emit = defineEmits(['change', 'update', 'delete']);
+
+// Emitir un evento sin datos
+const triggerChange = () =&gt; {
+  emit('change');
+};
+
+// Emitir un evento con datos
+const triggerUpdate = (newValue) =&gt; {
+  emit('update', newValue);
+};
+
+// Emitir un evento con múltiples argumentos
+const triggerDelete = (id, name) =&gt; {
+  emit('delete', id, name);
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;button @click="triggerChange"&gt;Cambiar&lt;/button&gt;
+    &lt;button @click="triggerUpdate('nuevo valor')"&gt;Actualizar&lt;/button&gt;
+    &lt;button @click="triggerDelete(1, 'Item 1')"&gt;Eliminar&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<h3>Validación de eventos</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Definición con validación de eventos
+const emit = defineEmits({
+  // Sin validación
+  click: null,
+  
+  // Con validación
+  submit: null
+});
+
+const submitForm = () =&gt; {
+  emit('submit', { email: 'user@example.com', password: '123456' });
+};
+&lt;/script&gt;</code></pre>
+<blockquote class="aside aside-note">
+La validación de eventos permite verificar que los datos emitidos cumplen con ciertos criterios. Por ejemplo, podrías validar que un evento de envío de formulario incluya campos requeridos como email y contraseña.
+</blockquote>
+<h3>Implementación de v-model con emit</h3>
+<p>Uno de los usos más comunes de <code>emit</code> es implementar la directiva <code>v-model</code> en componentes personalizados:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Definición de props y eventos para v-model
+const props = defineProps({
+  modelValue: {
+    type: String,
+    default: ''
+  }
+});
+
+const emit = defineEmits(['update:modelValue']);
+
+const updateValue = (event) =&gt; {
+  emit('update:modelValue', event.target.value);
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;input
+    :value="modelValue"
+    @input="updateValue"
+    class="form-input"
+  /&gt;
+&lt;/template&gt;</code></pre>
+<h3>Uso del componente con v-model</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+
+const username = ref('');
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;CustomInput v-model="username" /&gt;
+    &lt;p&gt;Nombre de usuario: {{ username }}&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<h3>Ejemplo completo: Componente con props y eventos</h3>
+<p>Aquí hay un ejemplo completo de un componente de tarjeta de producto que utiliza tanto props como eventos:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+// Props
+const props = defineProps({
+  product: Object,
+  showAddToCart: {
+    type: Boolean,
+    default: true
+  }
+});
+
+// Eventos
+const emit = defineEmits(['add-to-cart', 'view-details']);
+
+// Propiedades computadas
+const isInStock = computed(() =&gt; props.product.stock &gt; 0);
+
+// Métodos
+const addToCart = () =&gt; {
+  emit('add-to-cart', props.product);
+};
+
+const viewDetails = () =&gt; {
+  emit('view-details', props.product.id);
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div class="product-card p-4 border rounded-lg shadow-sm"&gt;
+    &lt;img :src="product.image" :alt="product.name" class="w-full h-48 object-cover mb-4 rounded" /&gt;
+    
+    &lt;h3 class="text-lg font-semibold"&gt;{{ product.name }}&lt;/h3&gt;
+    &lt;p class="text-gray-600 mb-2"&gt;{{ product.description }}&lt;/p&gt;
+    
+    &lt;div class="flex justify-between items-center mt-4"&gt;
+      &lt;span class="text-lg font-bold"&gt;{{ product.price }}&lt;/span&gt;
+      &lt;span class="text-green-500" v-if="isInStock"&gt;En stock&lt;/span&gt;
+      &lt;span class="text-red-500" v-else&gt;Agotado&lt;/span&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="mt-4 flex space-x-2"&gt;
+      &lt;button 
+        v-if="showAddToCart"
+        @click="addToCart" 
+        :disabled="!isInStock"
+        class="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
+      &gt;
+        Agregar al carrito
+      &lt;/button&gt;
+      
+      &lt;button 
+        @click="viewDetails"
+        class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+      &gt;
+        Ver detalles
+      &lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<h3>Uso del componente ProductCard</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+
+
+
+// Props de la página
+const props = defineProps({
+  products: Array
+});
+
+// Estado local
+const cart = ref([]);
+
+// Métodos
+const addProductToCart = (product) =&gt; {
+  cart.value.push(product);
+  alert(product.name + ' agregado al carrito');
+};  
+
+const viewProductDetails = (productId) =&gt; {
+  // Navegar a la página de detalles usando Inertia
+  window.location.href = '/products/'+productId;
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;Head title="Catálogo de Productos" /&gt;
+  
+  &lt;AppLayout&gt;
+    &lt;template #header&gt;
+      &lt;h2 class="text-xl font-semibold"&gt;Catálogo de Productos&lt;/h2&gt;
+    &lt;/template&gt;
+    
+    &lt;div class="py-6"&gt;
+      &lt;div class="max-w-7xl mx-auto sm:px-6 lg:px-8"&gt;
+        &lt;div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"&gt;
+          &lt;ProductCard 
+            v-for="product in products" 
+            :key="product.id"
+            :product="product"
+            @add-to-cart="addProductToCart"
+            @view-details="viewProductDetails"
+          /&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/AppLayout&gt;
+&lt;/template&gt;</code></pre>
+    </div>
+  </section>

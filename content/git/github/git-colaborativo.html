@@ -1,0 +1,595 @@
+<!-- 6. Trabajo colaborativo - GitHub (Control de Versiones) -->
+  <section id="que-es-un-fork">
+    <h2>¿Qué es un fork?</h2>
+    <div class="doc-content">
+<p>Un <strong>fork</strong> es una copia completa de un repositorio en tu cuenta de GitHub. Te permite experimentar y hacer cambios sin afectar el proyecto original.</p>
+<h3>Diferencias entre Clone, Fork y Branch</h3>
+  <h4 class="tab-label">Clone</h4>
+<p><strong>Clone</strong>: Copia local de un repositorio</p>
+    <pre><code class="language-text">    GitHub Repo → Local Machine
+    </code></pre>
+<ul>
+<li>Copia completa en tu computadora</li>
+<li>Puedes hacer cambios localmente</li>
+<li>Necesitas permisos para push al original</li>
+<li>Ideal para repositorios propios o con acceso</li>
+</ul>
+  <h4 class="tab-label">Fork</h4>
+<p><strong>Fork</strong>: Copia del repositorio en tu cuenta GitHub</p>
+    <pre><code class="language-text">    Original Repo → Your GitHub Account
+    </code></pre>
+<ul>
+<li>Copia independiente en GitHub</li>
+<li>Puedes hacer cambios libremente</li>
+<li>Contribuir mediante Pull Requests</li>
+<li>Ideal para proyectos open source</li>
+</ul>
+  <h4 class="tab-label">Branch</h4>
+<p><strong>Branch</strong>: Línea de desarrollo dentro del mismo repositorio</p>
+    <pre><code class="language-text">    Same Repo: main ← → feature-branch
+    </code></pre>
+<ul>
+<li>Desarrollo paralelo en mismo repo</li>
+<li>Fusión directa con merge</li>
+<li>Ideal para equipos con acceso directo</li>
+</ul>
+<h3>Cuándo usar Fork vs Branch</h3>
+<span class="hc-badge hc-badge-tip">Fork</span>
+<ul>
+<li>Contribuir a proyectos open source</li>
+<li>No tienes permisos de escritura</li>
+<li>Experimentar con cambios grandes</li>
+<li>Mantener tu propia versión del proyecto</li>
+</ul>
+<span class="hc-badge hc-badge-note">Branch</span>
+<ul>
+<li>Trabajar en equipo con acceso directo</li>
+<li>Desarrollo de funcionalidades planificadas</li>
+<li>Proyectos privados de la empresa</li>
+<li>Control directo sobre el repositorio</li>
+</ul>
+    </div>
+  </section>
+
+  <section id="crear-un-fork-y-trabajar-en-el">
+    <h2>Crear un fork y trabajar en él</h2>
+    <div class="doc-content">
+<h3>Proceso completo de fork</h3>
+<ol class="steps">
+<ol>
+  <li>
+<p><strong>Crear fork en GitHub</strong></p>
+<ul>
+<li>Ve al repositorio original</li>
+<li>Haz clic en "Fork" (esquina superior derecha)</li>
+<li>Selecciona tu cuenta como destino</li>
+<li>Opcionalmente cambia el nombre</li>
+</ul>
+  </li>
+  <li>
+<p><strong>Clonar tu fork localmente</strong></p>
+    <pre><code class="language-bash"># Clonar tu fork (no el original)
+git clone https://github.com/tu-usuario/proyecto-fork.git
+cd proyecto-fork
+
+# Verificar remoto
+git remote -v
+# origin  https://github.com/tu-usuario/proyecto-fork.git (fetch)
+# origin  https://github.com/tu-usuario/proyecto-fork.git (push)</code></pre>
+  </li>
+  <li>
+<p><strong>Configurar upstream (repositorio original)</strong></p>
+    <pre><code class="language-bash"># Agregar repositorio original como upstream
+git remote add upstream https://github.com/usuario-original/proyecto-original.git
+
+# Verificar configuración
+git remote -v
+# origin    https://github.com/tu-usuario/proyecto-fork.git (fetch)
+# origin    https://github.com/tu-usuario/proyecto-fork.git (push)
+# upstream  https://github.com/usuario-original/proyecto-original.git (fetch)
+# upstream  https://github.com/usuario-original/proyecto-original.git (push)</code></pre>
+  </li>
+  <li>
+<p><strong>Mantener fork actualizado</strong></p>
+    <pre><code class="language-bash"># Sincronizar con upstream regularmente
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main</code></pre>
+  </li>
+</ol>
+</ol>
+<h3>Flujo de trabajo con fork</h3>
+<pre><code class="language-bash"># 1. Sincronizar con upstream
+git fetch upstream
+git checkout main
+git merge upstream/main
+
+# 2. Crear rama para nueva funcionalidad
+git checkout -b feature/mi-contribucion
+
+# 3. Hacer cambios y commits
+echo "Mi contribución" &gt; nuevo-archivo.txt
+git add nuevo-archivo.txt
+git commit -m "feat: agregar nueva funcionalidad"
+
+# 4. Push a tu fork
+git push origin feature/mi-contribucion
+
+# 5. Crear Pull Request desde GitHub
+# 6. Después del merge, limpiar
+git checkout main
+git branch -d feature/mi-contribucion
+git push origin --delete feature/mi-contribucion</code></pre>
+    </div>
+  </section>
+
+  <section id="pull-requests-y-revision-de-codigo">
+    <h2>Pull requests y revisión de código</h2>
+    <div class="doc-content">
+<p>Los <strong>Pull Requests (PR)</strong> son solicitudes para fusionar cambios de una rama a otra, con revisión de código incluida.</p>
+<h3>Crear un Pull Request efectivo</h3>
+<ol class="steps">
+<ol>
+  <li>
+<p><strong>Preparar la rama</strong></p>
+    <pre><code class="language-bash"># Asegurar que la rama está actualizada
+git checkout main
+git pull upstream main
+git checkout feature/mi-funcionalidad
+git rebase main
+
+# Push final
+git push origin feature/mi-funcionalidad</code></pre>
+  </li>
+  <li>
+<p><strong>Crear PR en GitHub</strong></p>
+<ul>
+<li>Ve a tu fork en GitHub</li>
+<li>Haz clic en "Compare & pull request"</li>
+<li>Selecciona las ramas correctas:</li>
+<li>Base: <code>usuario-original/proyecto-original</code> <i class="fa-solid fa-arrow-right"></i> <code>main</code></li>
+<li>Compare: <code>tu-usuario/proyecto-fork</code> <i class="fa-solid fa-arrow-right"></i> <code>feature/mi-funcionalidad</code></li>
+</ul>
+  </li>
+  <li>
+<p><strong>Escribir descripción completa</strong></p>
+    <pre><code class="language-markdown">    ## Descripción
+    Breve descripción de los cambios realizados.
+    
+    ## Tipo de cambio
+    - [ ] Bug fix (corrección que soluciona un problema)
+    - [x] Nueva funcionalidad (cambio que agrega funcionalidad)
+    - [ ] Breaking change (cambio que rompe compatibilidad)
+    - [ ] Documentación
+    
+    ## ¿Cómo se ha probado?
+    Describe las pruebas realizadas para verificar los cambios.
+    
+    ## Checklist
+    - [x] Mi código sigue las convenciones del proyecto
+    - [x] He realizado una auto-revisión de mi código
+    - [x] He comentado mi código en áreas difíciles de entender
+    - [x] He actualizado la documentación correspondiente
+    - [x] Mis cambios no generan nuevas advertencias
+    - [x] He agregado pruebas que demuestran que mi corrección es efectiva
+    </code></pre>
+  </li>
+</ol>
+</ol>
+<h3>Elementos de un buen Pull Request</h3>
+<span class="hc-badge hc-badge-tip">Título descriptivo</span>
+<pre><code class="language-text"># Buenos títulos
+feat: agregar sistema de autenticación con JWT
+fix: corregir error de validación en formulario de registro
+docs: actualizar guía de contribución
+refactor: simplificar lógica de cálculo de precios
+
+# Títulos a evitar
+Cambios
+Fix
+Update
+Trabajo del día</code></pre>
+<span class="hc-badge hc-badge-note">Descripción completa</span>
+<ul>
+<li><strong>¿Qué?</strong> - Qué cambios se realizaron</li>
+<li><strong>¿Por qué?</strong> - Razón de los cambios</li>
+<li><strong>¿Cómo?</strong> - Cómo se implementó la solución</li>
+<li><strong>Pruebas</strong> - Cómo se verificó que funciona</li>
+<li><strong>Screenshots</strong> - Capturas si hay cambios visuales</li>
+</ul>
+<h3>Proceso de revisión de código</h3>
+  <h4 class="tab-label">Como autor del PR</h4>
+    <pre><code class="language-bash"># Responder a comentarios de revisión
+# 1. Hacer cambios solicitados
+git checkout feature/mi-funcionalidad
+# ... hacer cambios ...
+git add .
+git commit -m "fix: aplicar sugerencias de revisión"
+git push origin feature/mi-funcionalidad
+
+# 2. Responder a comentarios en GitHub
+# 3. Solicitar nueva revisión si es necesario
+# 4. Agradecer a los revisores</code></pre>
+  <h4 class="tab-label">Como revisor</h4>
+<p><strong>Qué revisar:</strong></p>
+<ul>
+<li>Funcionalidad correcta</li>
+<li>Calidad del código</li>
+<li>Convenciones del proyecto</li>
+<li>Documentación actualizada</li>
+<li>Pruebas incluidas</li>
+<li>Rendimiento</li>
+<li>Seguridad</li>
+</ul>
+<p><strong>Cómo dar feedback:</strong></p>
+<ul>
+<li>Ser constructivo y específico</li>
+<li>Explicar el "por qué"</li>
+<li>Sugerir alternativas</li>
+<li>Reconocer buen código</li>
+<li>Usar tono profesional</li>
+</ul>
+<h3>Tipos de revisión en GitHub</h3>
+<pre><code class="language-text"># Tipos de review en GitHub:
+
+# 1. Comment (Comentario)
+# - Feedback general
+# - Preguntas
+# - Sugerencias opcionales
+
+# 2. Approve (Aprobar)
+# - Cambios se ven bien
+# - Listo para merge
+# - Puede incluir comentarios menores
+
+# 3. Request changes (Solicitar cambios)
+# - Problemas que deben corregirse
+# - Bloquea el merge
+# - Requiere nueva revisión</code></pre>
+    </div>
+  </section>
+
+  <section id="buenas-practicas-de-colaboracion">
+    <h2>Buenas prácticas de colaboración</h2>
+    <div class="doc-content">
+<h3>Comunicación efectiva</h3>
+<span class="hc-badge hc-badge-tip">Issues y Discussions</span>
+<pre><code class="language-text"># Crear issue antes de grandes cambios
+# 1. Describir el problema o funcionalidad
+# 2. Discutir posibles soluciones
+# 3. Obtener aprobación del mantenedor
+# 4. Referenciar issue en PR: "Closes #123"
+
+# Usar discussions para:
+# - Preguntas generales
+# - Propuestas de funcionalidades
+# - Ayuda con implementación</code></pre>
+<h3>Convenciones de commit</h3>
+<pre><code class="language-bash"># Conventional Commits
+# Formato: tipo(alcance): descripción
+
+# Tipos principales:
+feat: nueva funcionalidad
+fix: corrección de bug
+docs: cambios en documentación
+style: formato, espacios, etc.
+refactor: refactorización sin cambio funcional
+test: agregar o corregir pruebas
+chore: tareas de mantenimiento
+
+# Ejemplos:
+feat(auth): agregar login con Google OAuth
+fix(api): corregir error 500 en endpoint usuarios
+docs(readme): actualizar instrucciones de instalación
+style(css): corregir indentación en estilos
+refactor(utils): simplificar función de validación
+test(auth): agregar pruebas para login
+chore(deps): actualizar dependencias</code></pre>
+<h3>Etiqueta en la comunidad</h3>
+  <h4 class="tab-label">Como contribuidor</h4>
+<p><strong>Antes de contribuir:</strong></p>
+<ul>
+<li>Lee CONTRIBUTING.md</li>
+<li>Revisa issues existentes</li>
+<li>Sigue las convenciones del proyecto</li>
+<li>Prueba tus cambios localmente</li>
+</ul>
+<p><strong>Al crear PR:</strong></p>
+<ul>
+<li>Describe claramente los cambios</li>
+<li>Incluye pruebas si es necesario</li>
+<li>Actualiza documentación</li>
+<li>Sé paciente con las revisiones</li>
+</ul>
+<p><strong>Durante revisión:</strong></p>
+<ul>
+<li>Responde constructivamente</li>
+<li>Haz cambios solicitados</li>
+<li>Agradece el feedback</li>
+<li>Aprende de las sugerencias</li>
+</ul>
+  <h4 class="tab-label">Como mantenedor</h4>
+<p><strong>Al revisar PRs:</strong></p>
+<ul>
+<li>Sé constructivo y específico</li>
+<li>Explica el razonamiento</li>
+<li>Reconoce el esfuerzo</li>
+<li>Proporciona ejemplos</li>
+</ul>
+<p><strong>Al gestionar issues:</strong></p>
+<ul>
+<li>Responde oportunamente</li>
+<li>Etiqueta apropiadamente</li>
+<li>Proporciona contexto</li>
+<li>Guía a nuevos contribuidores</li>
+</ul>
+<p><strong>Documentación:</strong></p>
+<ul>
+<li>Mantén README actualizado</li>
+<li>Crea guías de contribución</li>
+<li>Documenta convenciones</li>
+<li>Proporciona ejemplos</li>
+</ul>
+    </div>
+  </section>
+
+  <section id="flujos-de-trabajo-colaborativos">
+    <h2>Flujos de trabajo colaborativos</h2>
+    <div class="doc-content">
+<h3>Flujo Fork + PR (Open Source)</h3>
+<ol class="steps">
+<ol>
+  <li>
+<p><strong>Contribuidor hace fork</strong></p>
+    <pre><code class="language-bash"># 1. Fork en GitHub
+# 2. Clone local
+git clone https://github.com/contribuidor/proyecto.git
+cd proyecto
+
+# 3. Configurar upstream
+git remote add upstream https://github.com/original/proyecto.git</code></pre>
+  </li>
+  <li>
+<p><strong>Desarrollar funcionalidad</strong></p>
+    <pre><code class="language-bash"># Sincronizar con upstream
+git fetch upstream
+git checkout main
+git merge upstream/main
+
+# Crear rama feature
+git checkout -b feature/nueva-funcionalidad
+
+# Desarrollar y commit
+git add .
+git commit -m "feat: implementar nueva funcionalidad"</code></pre>
+  </li>
+  <li>
+<p><strong>Crear Pull Request</strong></p>
+    <pre><code class="language-bash"># Push a fork
+git push origin feature/nueva-funcionalidad
+
+# Crear PR en GitHub desde fork a upstream
+# Base: original/proyecto:main
+# Compare: contribuidor/proyecto:feature/nueva-funcionalidad</code></pre>
+  </li>
+  <li>
+<p><strong>Revisión y merge</strong></p>
+<ul>
+<li>Mantenedor revisa el PR</li>
+<li>Contribuidor hace cambios si es necesario</li>
+<li>Mantenedor hace merge</li>
+<li>Contribuidor sincroniza y limpia</li>
+</ul>
+  </li>
+</ol>
+</ol>
+<h3>Flujo Branch + PR (Equipos)</h3>
+<pre><code class="language-bash"># Para equipos con acceso directo al repositorio
+
+# 1. Crear rama desde main
+git checkout main
+git pull origin main
+git checkout -b feature/nueva-funcionalidad
+
+# 2. Desarrollar funcionalidad
+git add .
+git commit -m "feat: implementar funcionalidad"
+git push -u origin feature/nueva-funcionalidad
+
+# 3. Crear PR en mismo repositorio
+# Base: main
+# Compare: feature/nueva-funcionalidad
+
+# 4. Revisión por equipo y merge
+# 5. Limpiar rama después del merge</code></pre>
+    </div>
+  </section>
+
+  <section id="herramientas-y-automatizacion">
+    <h2>Herramientas y automatización</h2>
+    <div class="doc-content">
+<h3>GitHub Actions para colaboración</h3>
+<pre><code class="language-yaml"># .github/workflows/pr-checks.yml
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    - name: Install dependencies
+      run: npm ci
+    - name: Run tests
+      run: npm test
+    - name: Run linter
+      run: npm run lint
+    - name: Check formatting
+      run: npm run format:check</code></pre>
+<h3>Plantillas para Issues y PRs</h3>
+  <h4 class="tab-label">Issue Template</h4>
+    <pre><code class="language-markdown">&lt;!-- .github/ISSUE_TEMPLATE/bug_report.md --&gt;
+---
+name: Bug Report
+about: Reportar un error
+title: '[BUG] '
+labels: bug
+assignees: ''
+---
+
+## Descripción del bug
+Descripción clara y concisa del error.
+
+## Pasos para reproducir
+1. Ve a '...'
+2. Haz clic en '....'
+3. Desplázate hacia abajo hasta '....'
+4. Ver error
+
+## Comportamiento esperado
+Descripción clara de lo que esperabas que pasara.
+
+## Capturas de pantalla
+Si aplica, agrega capturas para explicar el problema.
+
+## Información adicional
+- OS: [ej. iOS]
+- Navegador: [ej. chrome, safari]
+- Versión: [ej. 22]</code></pre>
+  <h4 class="tab-label">PR Template</h4>
+    <pre><code class="language-markdown">&lt;!-- .github/pull_request_template.md --&gt;
+## Descripción
+Breve descripción de los cambios.
+
+## Tipo de cambio
+- [ ] Bug fix
+- [ ] Nueva funcionalidad
+- [ ] Breaking change
+- [ ] Documentación
+
+## ¿Cómo se ha probado?
+Describe las pruebas realizadas.
+
+## Checklist
+- [ ] Mi código sigue las convenciones del proyecto
+- [ ] He realizado auto-revisión
+- [ ] He comentado código complejo
+- [ ] He actualizado la documentación
+- [ ] Mis cambios no generan advertencias
+- [ ] He agregado pruebas</code></pre>
+<h3>Protección de ramas</h3>
+<pre><code class="language-text"># Configurar branch protection en GitHub:
+# Settings → Branches → Add rule
+
+# Reglas recomendadas:
+# ✅ Require pull request reviews before merging
+# ✅ Require status checks to pass before merging
+# ✅ Require branches to be up to date before merging
+# ✅ Require conversation resolution before merging
+# ✅ Restrict pushes that create files larger than 100MB
+# ✅ Require signed commits</code></pre>
+    </div>
+  </section>
+
+  <section id="ejemplo-practico-contribuir-a-proyecto-open-source">
+    <h2>Ejemplo práctico: Contribuir a proyecto open source</h2>
+    <div class="doc-content">
+<ol class="steps">
+<ol>
+  <li>
+<p><strong>Encontrar proyecto y issue</strong></p>
+    <pre><code class="language-bash"># 1. Buscar proyectos con label "good first issue"
+# 2. Leer CONTRIBUTING.md
+# 3. Comentar en issue para indicar interés
+# 4. Esperar confirmación del mantenedor</code></pre>
+  </li>
+  <li>
+<p><strong>Fork y configuración</strong></p>
+    <pre><code class="language-bash"># Fork en GitHub
+# Clone local
+git clone https://github.com/tu-usuario/proyecto-opensource.git
+cd proyecto-opensource
+
+# Configurar upstream
+git remote add upstream https://github.com/original/proyecto-opensource.git
+
+# Instalar dependencias
+npm install  # o el comando apropiado</code></pre>
+  </li>
+  <li>
+<p><strong>Desarrollar solución</strong></p>
+    <pre><code class="language-bash"># Sincronizar con upstream
+git fetch upstream
+git checkout main
+git merge upstream/main
+
+# Crear rama
+git checkout -b fix/issue-123-corregir-validacion
+
+# Hacer cambios
+# ... editar archivos ...
+
+# Probar cambios
+npm test
+npm run lint
+
+# Commit
+git add .
+git commit -m "fix: corregir validación de email en formulario
+
+Closes #123
+
+- Agregar regex para validación de email
+- Actualizar mensajes de error
+- Agregar pruebas unitarias"</code></pre>
+  </li>
+  <li>
+<p><strong>Crear Pull Request</strong></p>
+    <pre><code class="language-bash"># Push a fork
+git push origin fix/issue-123-corregir-validacion
+
+# Crear PR en GitHub con:
+# - Título descriptivo
+# - Descripción completa
+# - Referencia al issue
+# - Screenshots si aplica</code></pre>
+  </li>
+  <li>
+<p><strong>Seguimiento y merge</strong></p>
+<ul>
+<li>Responder a comentarios de revisión</li>
+<li>Hacer cambios solicitados</li>
+<li>Agradecer a revisores</li>
+<li>Celebrar cuando se haga merge $1 </li>
+</ul>
+  </li>
+</ol>
+</ol>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2>Resumen</h2>
+    <div class="doc-content">
+<p>En este módulo has aprendido:</p>
+<span class="hc-badge hc-badge-tip">Trabajo colaborativo</span>
+<ul>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Forks</strong>: Crear copias independientes para contribuir</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Pull Requests</strong>: Solicitar fusión de cambios con revisión</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Revisión de código</strong>: Dar y recibir feedback constructivo</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Buenas prácticas</strong>: Comunicación, convenciones y etiqueta</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Flujos colaborativos</strong>: Fork+PR y Branch+PR</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Herramientas</strong>: GitHub Actions, plantillas, protección</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Contribución open source</strong>: Proceso completo de contribución</li>
+</ul>
+<p>¡Felicidades! Has completado el curso de Git y GitHub. Ahora tienes todas las herramientas necesarias para trabajar eficientemente con control de versiones y colaborar en proyectos de cualquier tamaño.</p>
+    </div>
+  </section>

@@ -1,0 +1,53 @@
+<!-- 13. Transacciones y manejo de errores - SQL Server (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="transaccion-basica">
+    <h2>Transacción básica</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">BEGIN TRANSACTION;
+
+UPDATE dbo.Cuentas SET Saldo = Saldo - 500 WHERE Id = 1;
+UPDATE dbo.Cuentas SET Saldo = Saldo + 500 WHERE Id = 2;
+
+COMMIT TRANSACTION;     -- confirma
+-- ROLLBACK TRANSACTION; -- deshace todo si algo falló</code></pre>
+<p>Las cuatro propiedades ACID garantizan que ambas actualizaciones ocurran o ninguna: el dinero nunca desaparece.</p>
+    </div>
+  </section>
+
+  <section id="try-catch">
+    <h2>TRY...CATCH</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">BEGIN TRY
+  BEGIN TRANSACTION;
+
+  UPDATE dbo.Cuentas SET Saldo = Saldo - 500 WHERE Id = 1;
+  UPDATE dbo.Cuentas SET Saldo = Saldo + 500 WHERE Id = 2;
+
+  COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+  IF @@TRANCOUNT &gt; 0 ROLLBACK TRANSACTION;
+  SELECT
+    ERROR_NUMBER()  AS Numero,
+    ERROR_SEVERITY() AS Severidad,
+    ERROR_STATE()   AS Estado,
+    ERROR_LINE()    AS Linea,
+    ERROR_MESSAGE() AS Mensaje;
+END CATCH;</code></pre>
+    </div>
+  </section>
+
+  <section id="xact-abort-y-verificacion">
+    <h2>XACT_ABORT y verificación</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SET XACT_ABORT ON;  -- cualquier error deshace TODO automáticamente
+BEGIN TRANSACTION;
+  -- sentencias...
+COMMIT TRANSACTION;
+
+SELECT @@TRANCOUNT AS TransaccionesAbiertas;</code></pre>
+<blockquote class="aside aside-tip">
+<p><code>SET XACT_ABORT ON</code> al inicio de procedimientos con transacciones evita transacciones zombis ante errores abortantes.</p>
+</blockquote>
+    </div>
+  </section>

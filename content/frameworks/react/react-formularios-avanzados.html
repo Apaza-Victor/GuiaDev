@@ -1,0 +1,598 @@
+<!-- 12. Formularios Avanzados - React (Frameworks) -->
+  <section id="12-1-limitaciones-de-formularios-basicos">
+    <h2><i class="fa-solid fa-pen-to-square"></i> 12.1 Limitaciones de formularios básicos</h2>
+    <div class="doc-content">
+<h3>Problemas comunes</h3>
+<table><thead><tr><th>Problema</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Re-renders</strong></td><td>Cada cambio en input re-renderiza todo</td></tr><tr><td><strong>Validación</strong></td><td>Código repetitivo para validar</td></tr><tr><td><strong>Estado</strong></td><td>Muchos useState para cada campo</td></tr><tr><td><strong>Errores</strong></td><td>Manejo manual de mensajes de error</td></tr></tbody></table>
+<h3>Formulario básico vs avanzado</h3>
+<pre><code class="language-jsx">// ❌ Formulario básico - muchos estados
+function FormularioBasico() {
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errores, setErrores] = useState({});
+  const [enviando, setEnviando] = useState(false);
+  
+  // Validación manual...
+  // Manejo de submit...
+  // Muchos onChange...
+}
+
+// ✅ Con React Hook Form - más limpio
+function FormularioAvanzado() {
+  const { register, handleSubmit, formState: { errors } } = useForm();
+  
+  const onSubmit = (data) =&gt; console.log(data);
+  
+  return (
+    &lt;form onSubmit={handleSubmit(onSubmit)}&gt;
+      &lt;input {...register("nombre", { required: true })} /&gt;
+      {errors.nombre &amp;&amp; &lt;span&gt;Campo requerido&lt;/span&gt;}
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="12-2-react-hook-form">
+    <h2><i class="fa-solid fa-box"></i> 12.2 React Hook Form</h2>
+    <div class="doc-content">
+<h3>Instalación</h3>
+<pre><code class="language-bash">npm install react-hook-form</code></pre>
+<h3>Uso básico</h3>
+<pre><code class="language-jsx">import { useForm } from 'react-hook-form';
+
+function Formulario() {
+  const { 
+    register,      // Registrar inputs
+    handleSubmit,  // Manejar envío
+    formState: { errors }  // Errores de validación
+  } = useForm();
+  
+  const onSubmit = (data) =&gt; {
+    console.log(data);
+    // { nombre: "Juan", email: "juan@mail.com" }
+  };
+  
+  return (
+    &lt;form onSubmit={handleSubmit(onSubmit)}&gt;
+      &lt;input 
+        {...register("nombre")} 
+        placeholder="Nombre"
+      /&gt;
+      
+      &lt;input 
+        {...register("email")} 
+        placeholder="Email"
+      /&gt;
+      
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>Validaciones con register</h3>
+<pre><code class="language-jsx">import { useForm } from 'react-hook-form';
+
+function FormularioValidado() {
+  const { register, handleSubmit, formState: { errors } } = useForm();
+  
+  const onSubmit = (data) =&gt; console.log(data);
+  
+  return (
+    &lt;form onSubmit={handleSubmit(onSubmit)}&gt;
+      {/* Campo requerido */}
+      &lt;input 
+        {...register("nombre", { 
+          required: "El nombre es obligatorio" 
+        })} 
+      /&gt;
+      {errors.nombre &amp;&amp; &lt;span&gt;{errors.nombre.message}&lt;/span&gt;}
+      
+      {/* Email con patrón */}
+      &lt;input 
+        {...register("email", { 
+          required: "El email es obligatorio",
+          pattern: {
+            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+            message: "Email inválido"
+          }
+        })} 
+      /&gt;
+      {errors.email &amp;&amp; &lt;span&gt;{errors.email.message}&lt;/span&gt;}
+      
+      {/* Longitud mínima y máxima */}
+      &lt;input 
+        type="password"
+        {...register("password", { 
+          required: "La contraseña es obligatoria",
+          minLength: {
+            value: 6,
+            message: "Mínimo 6 caracteres"
+          },
+          maxLength: {
+            value: 20,
+            message: "Máximo 20 caracteres"
+          }
+        })} 
+      /&gt;
+      {errors.password &amp;&amp; &lt;span&gt;{errors.password.message}&lt;/span&gt;}
+      
+      {/* Número con rango */}
+      &lt;input 
+        type="number"
+        {...register("edad", { 
+          required: "La edad es obligatoria",
+          min: {
+            value: 18,
+            message: "Debes ser mayor de 18"
+          },
+          max: {
+            value: 100,
+            message: "Edad máxima 100"
+          }
+        })} 
+      /&gt;
+      {errors.edad &amp;&amp; &lt;span&gt;{errors.edad.message}&lt;/span&gt;}
+      
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="12-3-validacion-personalizada">
+    <h2><i class="fa-solid fa-circle-check"></i> 12.3 Validación personalizada</h2>
+    <div class="doc-content">
+<h3>Función validate</h3>
+<pre><code class="language-jsx">import { useForm } from 'react-hook-form';
+
+function FormularioCustom() {
+  const { register, handleSubmit, formState: { errors }, watch } = useForm();
+  
+  const password = watch("password");
+  
+  return (
+    &lt;form onSubmit={handleSubmit(console.log)}&gt;
+      {/* Validación personalizada simple */}
+      &lt;input 
+        {...register("username", { 
+          validate: (value) =&gt; {
+            if (value.includes(" ")) {
+              return "No se permiten espacios";
+            }
+            if (value.length &lt; 3) {
+              return "Mínimo 3 caracteres";
+            }
+            return true;
+          }
+        })} 
+      /&gt;
+      {errors.username &amp;&amp; &lt;span&gt;{errors.username.message}&lt;/span&gt;}
+      
+      {/* Múltiples validaciones */}
+      &lt;input 
+        {...register("codigo", { 
+          validate: {
+            noEspacios: (v) =&gt; !v.includes(" ") || "Sin espacios",
+            soloNumeros: (v) =&gt; /^\d+$/.test(v) || "Solo números",
+            longitud: (v) =&gt; v.length === 6 || "Debe tener 6 dígitos"
+          }
+        })} 
+      /&gt;
+      {errors.codigo &amp;&amp; &lt;span&gt;{errors.codigo.message}&lt;/span&gt;}
+      
+      {/* Confirmar contraseña */}
+      &lt;input 
+        type="password"
+        {...register("password")} 
+        placeholder="Contraseña"
+      /&gt;
+      
+      &lt;input 
+        type="password"
+        {...register("confirmPassword", { 
+          validate: (value) =&gt; 
+            value === password || "Las contraseñas no coinciden"
+        })} 
+        placeholder="Confirmar contraseña"
+      /&gt;
+      {errors.confirmPassword &amp;&amp; &lt;span&gt;{errors.confirmPassword.message}&lt;/span&gt;}
+      
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>Validación asíncrona</h3>
+<pre><code class="language-jsx">import { useForm } from 'react-hook-form';
+
+function FormularioAsync() {
+  const { register, handleSubmit, formState: { errors, isValidating } } = useForm({
+    mode: 'onBlur'  // Validar al salir del campo
+  });
+  
+  // Verificar si el email ya existe
+  const verificarEmail = async (email) =&gt; {
+    const response = await fetch(\`/api/check-email?email=\${email}\`);
+    const { exists } = await response.json();
+    return !exists || "Este email ya está registrado";
+  };
+  
+  return (
+    &lt;form onSubmit={handleSubmit(console.log)}&gt;
+      &lt;input 
+        {...register("email", { 
+          required: "Email requerido",
+          validate: verificarEmail
+        })} 
+      /&gt;
+      {isValidating &amp;&amp; &lt;span&gt;Verificando...&lt;/span&gt;}
+      {errors.email &amp;&amp; &lt;span&gt;{errors.email.message}&lt;/span&gt;}
+      
+      &lt;button type="submit"&gt;Registrar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="12-4-yup-para-validacion-de-esquemas">
+    <h2><i class="fa-solid fa-bullseye"></i> 12.4 Yup para validación de esquemas</h2>
+    <div class="doc-content">
+<h3>Instalación</h3>
+<pre><code class="language-bash">npm install yup @hookform/resolvers</code></pre>
+<h3>Esquema de validación</h3>
+<pre><code class="language-jsx">import { useForm } from 'react-hook-form';
+
+
+
+// Definir esquema de validación
+const schema = yup.object({
+  nombre: yup
+    .string()
+    .required("El nombre es obligatorio")
+    .min(2, "Mínimo 2 caracteres"),
+  
+  email: yup
+    .string()
+    .required("El email es obligatorio")
+    .email("Email inválido"),
+  
+  edad: yup
+    .number()
+    .typeError("Debe ser un número")
+    .required("La edad es obligatoria")
+    .min(18, "Debes ser mayor de 18")
+    .max(100, "Edad máxima 100"),
+  
+  password: yup
+    .string()
+    .required("La contraseña es obligatoria")
+    .min(6, "Mínimo 6 caracteres")
+    .matches(/[A-Z]/, "Debe contener una mayúscula")
+    .matches(/[0-9]/, "Debe contener un número"),
+  
+  confirmPassword: yup
+    .string()
+    .required("Confirma tu contraseña")
+    .oneOf([yup.ref('password')], "Las contraseñas no coinciden")
+});
+
+function FormularioYup() {
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors } 
+  } = useForm({
+    resolver: yupResolver(schema)
+  });
+  
+  const onSubmit = (data) =&gt; console.log(data);
+  
+  return (
+    &lt;form onSubmit={handleSubmit(onSubmit)}&gt;
+      &lt;input {...register("nombre")} placeholder="Nombre" /&gt;
+      {errors.nombre &amp;&amp; &lt;span&gt;{errors.nombre.message}&lt;/span&gt;}
+      
+      &lt;input {...register("email")} placeholder="Email" /&gt;
+      {errors.email &amp;&amp; &lt;span&gt;{errors.email.message}&lt;/span&gt;}
+      
+      &lt;input type="number" {...register("edad")} placeholder="Edad" /&gt;
+      {errors.edad &amp;&amp; &lt;span&gt;{errors.edad.message}&lt;/span&gt;}
+      
+      &lt;input type="password" {...register("password")} placeholder="Contraseña" /&gt;
+      {errors.password &amp;&amp; &lt;span&gt;{errors.password.message}&lt;/span&gt;}
+      
+      &lt;input type="password" {...register("confirmPassword")} placeholder="Confirmar" /&gt;
+      {errors.confirmPassword &amp;&amp; &lt;span&gt;{errors.confirmPassword.message}&lt;/span&gt;}
+      
+      &lt;button type="submit"&gt;Registrar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="12-5-funciones-utiles-de-react-hook-form">
+    <h2><i class="fa-solid fa-wrench"></i> 12.5 Funciones útiles de React Hook Form</h2>
+    <div class="doc-content">
+<h3>watch - Observar valores</h3>
+<pre><code class="language-jsx">import { useForm } from 'react-hook-form';
+
+function FormularioWatch() {
+  const { register, watch } = useForm();
+  
+  // Observar un campo específico
+  const nombre = watch("nombre");
+  
+  // Observar múltiples campos
+  const [email, password] = watch(["email", "password"]);
+  
+  // Observar todos los campos
+  const todosLosCampos = watch();
+  
+  return (
+    &lt;form&gt;
+      &lt;input {...register("nombre")} /&gt;
+      &lt;p&gt;Hola, {nombre || "visitante"}&lt;/p&gt;
+      
+      &lt;input {...register("email")} /&gt;
+      &lt;input type="password" {...register("password")} /&gt;
+      
+      &lt;pre&gt;{JSON.stringify(todosLosCampos, null, 2)}&lt;/pre&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>setValue y reset</h3>
+<pre><code class="language-jsx">import { useForm } from 'react-hook-form';
+
+function FormularioSetValue() {
+  const { register, handleSubmit, setValue, reset } = useForm({
+    defaultValues: {
+      nombre: "",
+      email: ""
+    }
+  });
+  
+  // Establecer valor de un campo
+  const cargarDatos = () =&gt; {
+    setValue("nombre", "Juan");
+    setValue("email", "juan@mail.com");
+  };
+  
+  // Cargar datos de API
+  const cargarUsuario = async (id) =&gt; {
+    const response = await fetch(\`/api/usuarios/\${id}\`);
+    const usuario = await response.json();
+    
+    // Establecer múltiples valores
+    reset(usuario);
+    // O individualmente:
+    // setValue("nombre", usuario.nombre);
+    // setValue("email", usuario.email);
+  };
+  
+  // Limpiar formulario
+  const limpiar = () =&gt; {
+    reset();  // Vuelve a defaultValues
+  };
+  
+  return (
+    &lt;form onSubmit={handleSubmit(console.log)}&gt;
+      &lt;input {...register("nombre")} /&gt;
+      &lt;input {...register("email")} /&gt;
+      
+      &lt;button type="button" onClick={cargarDatos}&gt;Cargar datos&lt;/button&gt;
+      &lt;button type="button" onClick={limpiar}&gt;Limpiar&lt;/button&gt;
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>Estados del formulario</h3>
+<pre><code class="language-jsx">import { useForm } from 'react-hook-form';
+
+function FormularioEstados() {
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { 
+      errors,
+      isSubmitting,    // Enviando
+      isValid,         // Sin errores
+      isDirty,         // Campos modificados
+      isSubmitted,     // Ya se envió
+      touchedFields,   // Campos tocados
+      dirtyFields      // Campos modificados
+    } 
+  } = useForm({ mode: 'onChange' });
+  
+  const onSubmit = async (data) =&gt; {
+    await new Promise(r =&gt; setTimeout(r, 2000));  // Simular delay
+    console.log(data);
+  };
+  
+  return (
+    &lt;form onSubmit={handleSubmit(onSubmit)}&gt;
+      &lt;input {...register("nombre", { required: true })} /&gt;
+      
+      &lt;button 
+        type="submit" 
+        disabled={!isValid || isSubmitting}
+      &gt;
+        {isSubmitting ? "Enviando..." : "Enviar"}
+      &lt;/button&gt;
+      
+      {isDirty &amp;&amp; &lt;p&gt;Has modificado el formulario&lt;/p&gt;}
+      {isSubmitted &amp;&amp; &lt;p&gt;Formulario enviado&lt;/p&gt;}
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="12-6-componentes-de-input-reutilizables">
+    <h2><i class="fa-solid fa-palette"></i> 12.6 Componentes de input reutilizables</h2>
+    <div class="doc-content">
+<h3>Input con error</h3>
+<pre><code class="language-jsx">// components/Input.jsx
+
+
+const Input = forwardRef(({ label, error, ...props }, ref) =&gt; {
+  return (
+    &lt;div className="form-group"&gt;
+      {label &amp;&amp; &lt;label&gt;{label}&lt;/label&gt;}
+      &lt;input 
+        ref={ref}
+        className={error ? "input-error" : ""}
+        {...props} 
+      /&gt;
+      {error &amp;&amp; &lt;span className="error-message"&gt;{error.message}&lt;/span&gt;}
+    &lt;/div&gt;
+  );
+});
+
+export default Input;</code></pre>
+<h3>Uso del componente</h3>
+<pre><code class="language-jsx">import { useForm } from 'react-hook-form';
+
+
+function Formulario() {
+  const { register, handleSubmit, formState: { errors } } = useForm();
+  
+  return (
+    &lt;form onSubmit={handleSubmit(console.log)}&gt;
+      &lt;Input
+        label="Nombre"
+        error={errors.nombre}
+        {...register("nombre", { required: "Campo requerido" })}
+      /&gt;
+      
+      &lt;Input
+        label="Email"
+        type="email"
+        error={errors.email}
+        {...register("email", { 
+          required: "Campo requerido",
+          pattern: {
+            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+            message: "Email inválido"
+          }
+        })}
+      /&gt;
+      
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="12-7-formulario-completo">
+    <h2><i class="fa-solid fa-clipboard-list"></i> 12.7 Formulario completo</h2>
+    <div class="doc-content">
+<h3>Ejemplo de registro</h3>
+<pre><code class="language-jsx">import { useForm } from 'react-hook-form';
+
+
+
+const schema = yup.object({
+  nombre: yup.string().required("Requerido").min(2, "Mínimo 2 caracteres"),
+  email: yup.string().required("Requerido").email("Email inválido"),
+  password: yup.string().required("Requerido").min(6, "Mínimo 6 caracteres"),
+  confirmPassword: yup.string()
+    .required("Requerido")
+    .oneOf([yup.ref('password')], "No coinciden"),
+  terminos: yup.boolean().oneOf([true], "Debes aceptar los términos")
+});
+
+function FormularioRegistro() {
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors, isSubmitting },
+    reset
+  } = useForm({
+    resolver: yupResolver(schema)
+  });
+  
+  const onSubmit = async (data) =&gt; {
+    try {
+      const response = await fetch('/api/registro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (response.ok) {
+        alert('Registro exitoso!');
+        reset();
+      }
+    } catch (error) {
+      alert('Error al registrar');
+    }
+  };
+  
+  return (
+    &lt;form onSubmit={handleSubmit(onSubmit)} className="form-registro"&gt;
+      &lt;div className="form-group"&gt;
+        &lt;label&gt;Nombre&lt;/label&gt;
+        &lt;input {...register("nombre")} /&gt;
+        {errors.nombre &amp;&amp; &lt;span className="error"&gt;{errors.nombre.message}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;div className="form-group"&gt;
+        &lt;label&gt;Email&lt;/label&gt;
+        &lt;input type="email" {...register("email")} /&gt;
+        {errors.email &amp;&amp; &lt;span className="error"&gt;{errors.email.message}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;div className="form-group"&gt;
+        &lt;label&gt;Contraseña&lt;/label&gt;
+        &lt;input type="password" {...register("password")} /&gt;
+        {errors.password &amp;&amp; &lt;span className="error"&gt;{errors.password.message}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;div className="form-group"&gt;
+        &lt;label&gt;Confirmar Contraseña&lt;/label&gt;
+        &lt;input type="password" {...register("confirmPassword")} /&gt;
+        {errors.confirmPassword &amp;&amp; &lt;span className="error"&gt;{errors.confirmPassword.message}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;div className="form-group checkbox"&gt;
+        &lt;input type="checkbox" {...register("terminos")} /&gt;
+        &lt;label&gt;Acepto los términos y condiciones&lt;/label&gt;
+        {errors.terminos &amp;&amp; &lt;span className="error"&gt;{errors.terminos.message}&lt;/span&gt;}
+      &lt;/div&gt;
+      
+      &lt;button type="submit" disabled={isSubmitting}&gt;
+        {isSubmitting ? 'Registrando...' : 'Registrar'}
+      &lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- **React Hook Form** reduce código y mejora rendimiento
+- **register** conecta inputs al formulario
+- **handleSubmit** maneja el envío con validación
+- **formState** contiene errors, isSubmitting, isValid, etc.
+- **watch** observa valores en tiempo real
+- **setValue** y **reset** manipulan valores
+- **Yup** permite esquemas de validación declarativos
+- Crear **componentes reutilizables** para inputs
+</blockquote>
+    </div>
+  </section>

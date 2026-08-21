@@ -1,0 +1,382 @@
+<!-- 02. Estructura del Componente - Vue 3 (Frameworks) -->
+  <section id="estructura-de-un-componente-vue-3">
+    <h2>Estructura de un Componente Vue 3</h2>
+    <div class="doc-content">
+<p>Un componente Vue 3 está compuesto por tres secciones principales: <code><template></code>, <code><script></code> y <code><style></code>. Con Vue 3 y la Composition API, la estructura interna del bloque <code><script></code> cambia significativamente, especialmente con la introducción de <code><script setup></code>.</p>
+<blockquote class="aside aside-tip">
+Los archivos de componente Vue tienen la extensión `.vue` y se conocen como Single-File Components (SFC).
+</blockquote>
+<h3>Estructura básica</h3>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;!-- Estructura HTML del componente --&gt;
+  &lt;div class="greeting"&gt;
+    &lt;h1&gt;{{ message }}&lt;/h1&gt;
+    &lt;button @click="increment"&gt;Contador: {{ count }}&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+  // Lógica del componente
+&lt;/script&gt;
+
+&lt;style&gt;
+  /* Estilos del componente */
+  .greeting {
+    color: #2c3e50;
+  }
+&lt;/style&gt;</code></pre>
+<h3>Ejemplo completo: Contador sin estilos</h3>
+<blockquote class="aside aside-tip">
+A continuación se muestra un ejemplo completo y funcional de un contador en Vue, implementado sin estilos para enfocarse en la estructura y funcionalidad del componente.
+</blockquote>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;div&gt;
+    &lt;h2&gt;Contador Simple&lt;/h2&gt;
+    &lt;p&gt;Valor actual: {{ count }}&lt;/p&gt;
+    &lt;button @click="increment"&gt;Incrementar&lt;/button&gt;
+    &lt;button @click="decrement"&gt;Decrementar&lt;/button&gt;
+    &lt;button @click="reset"&gt;Reiniciar&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+
+
+// Estado reactivo del contador
+const count = ref(0)
+
+// Métodos para manipular el contador
+function increment() {
+  count.value++
+}
+
+function decrement() {
+  count.value--
+}
+
+function reset() {
+  count.value = 0
+}
+&lt;/script&gt;
+</code></pre>
+<blockquote class="aside aside-note">
+Este contador demuestra los conceptos básicos de Vue:
+- Estado reactivo con `ref`
+- Interpolación de variables en el template con `{{ }}`
+- Manejo de eventos con `@click`
+- Funciones para actualizar el estado
+</blockquote>
+    </div>
+  </section>
+
+  <section id="template">
+    <h2>Template</h2>
+    <div class="doc-content">
+<p>El bloque <code><template></code> contiene la estructura HTML del componente. Vue utiliza una sintaxis de plantilla basada en HTML con algunas características especiales:</p>
+<h3>Interpolación de texto</h3>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;p&gt;{{ message }}&lt;/p&gt;
+  &lt;p&gt;{{ formatDate(date) }}&lt;/p&gt;
+&lt;/template&gt;
+</code></pre>
+<h3>Directivas</h3>
+<p>Las directivas son atributos especiales con el prefijo <code>v-</code>:</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;div v-if="isVisible"&gt;Contenido condicional&lt;/div&gt;
+  &lt;ul&gt;
+    &lt;li v-for="item in items" :key="item.id"&gt;{{ item.name }}&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;button v-on:click="handleClick"&gt;Click me&lt;/button&gt;
+  &lt;input v-model="username" placeholder="Username" /&gt;
+&lt;/template&gt;
+</code></pre>
+<h3>Binding de atributos</h3>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;img :src="imageUrl" :alt="imageDescription"&gt;
+  &lt;div :class="{ active: isActive }" :style="{ color: textColor }"&gt;&lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<h3>Slots</h3>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;slot name="header"&gt;&lt;/slot&gt;
+  &lt;slot&gt;&lt;/slot&gt; &lt;!-- slot por defecto --&gt;
+  &lt;slot name="footer"&gt;&lt;/slot&gt;
+&lt;/template&gt;
+</code></pre>
+    </div>
+  </section>
+
+  <section id="script-setup">
+    <h2>Script Setup</h2>
+    <div class="doc-content">
+<p>Vue 3 introduce <code><script setup></code>, una azucar sintáctica para usar Composition API con menos código repetitivo. Todo lo declarado dentro de <code><script setup></code> está disponible automáticamente en el template.</p>
+  <h4 class="tab-label">Script Setup</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    import { ref, computed, onMounted } from 'vue'
+    
+    // Variables reactivas
+    const count = ref(0)
+    const message = ref('Hola Vue 3')
+    
+    // Propiedades computadas
+    const doubleCount = computed(() =&gt; count.value * 2)
+    
+    // Métodos
+    function increment() {
+      count.value++
+    }
+    
+    // Hooks de ciclo de vida
+    onMounted(() =&gt; {
+      console.log('Componente montado')
+    })
+    &lt;/script&gt;
+    </code></pre>
+  <h4 class="tab-label">Script Normal</h4>
+    <pre><code class="language-vue">    &lt;script&gt;
+    import { ref, computed, onMounted } from 'vue'
+    
+    export default {
+      setup() {
+        // Variables reactivas
+        const count = ref(0)
+        const message = ref('Hola Vue 3')
+        
+        // Propiedades computadas
+        const doubleCount = computed(() =&gt; count.value * 2)
+        
+        // Métodos
+        function increment() {
+          count.value++
+        }
+        
+        // Hooks de ciclo de vida
+        onMounted(() =&gt; {
+          console.log('Componente montado')
+        })
+        
+        // Exponer al template
+        return {
+          count,
+          message,
+          doubleCount,
+          increment
+        }
+      }
+    }
+    &lt;/script&gt;
+    </code></pre>
+<h3>Ventajas de <code><script setup></code></h3>
+<ul>
+<li><strong>Menos código repetitivo</strong>: No es necesario devolver explícitamente las variables y funciones</li>
+<li><strong>Mejor rendimiento</strong>: La compilación es más eficiente</li>
+<li><strong>Mejor inferencia de tipos</strong>: Mejor soporte para TypeScript</li>
+<li><strong>Más legible</strong>: Estructura más clara y directa</li>
+</ul>
+<h3>Macros de compilación</h3>
+<p>En <code><script setup></code> se utilizan macros especiales para definir props, emits, etc.:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Props
+const props = defineProps({
+  title: String,
+  likes: { type: Number, default: 0 }
+})
+
+// Eventos
+const emit = defineEmits(['update', 'delete'])
+
+// Exponer propiedades/métodos al componente padre
+defineExpose({
+  submit() {
+    // ...
+  }
+})
+&lt;/script&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="style">
+    <h2>Style</h2>
+    <div class="doc-content">
+<p>El bloque <code><style></code> contiene los estilos CSS del componente. Vue permite estilos encapsulados con el atributo <code>scoped</code>.</p>
+  <h4 class="tab-label">Estilos básicos</h4>
+    <pre><code class="language-vue">    &lt;style&gt;
+    /* Estilos globales */
+    .button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    &lt;/style&gt;
+    </code></pre>
+  <h4 class="tab-label">Estilos con scope</h4>
+    <pre><code class="language-vue">    &lt;style scoped&gt;
+    /* Estilos encapsulados al componente */
+    .button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    &lt;/style&gt;
+    </code></pre>
+  <h4 class="tab-label">CSS con preprocesadores</h4>
+    <pre><code class="language-vue">    &lt;style lang="scss" scoped&gt;
+    $primary-color: #4CAF50;
+    
+    .button {
+      background-color: $primary-color;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      
+      &amp;:hover {
+        background-color: darken($primary-color, 10%);
+      }
+    }
+    &lt;/style&gt;
+    </code></pre>
+<h3>CSS Modules</h3>
+<p>Vue también soporta CSS Modules:</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;button :class="$style.button"&gt;Click me&lt;/button&gt;
+&lt;/template&gt;
+
+&lt;style module&gt;
+.button {
+  background-color: #4CAF50;
+  color: white;
+}
+&lt;/style&gt;
+</code></pre>
+    </div>
+  </section>
+
+  <section id="tipado-con-lang-ts">
+    <h2>Tipado con lang="ts"</h2>
+    <div class="doc-content">
+<p>Vue 3 ofrece excelente soporte para TypeScript. Para usar TypeScript en un componente, se agrega el atributo <code>lang="ts"</code> al bloque <code><script></code>.</p>
+<pre><code class="language-vue">&lt;script setup lang="ts"&gt;
+
+
+// Interfaces y tipos
+interface User {
+  id: number
+  name: string
+  email: string
+  active: boolean
+}
+
+// Variables tipadas
+const count = ref&lt;number&gt;(0)
+const user = ref&lt;User&gt;({
+  id: 1,
+  name: 'John Doe',
+  email: 'john@example.com',
+  active: true
+})
+
+// Props tipadas
+const props = defineProps&lt;{
+  title: string
+  items: Array&lt;{ id: number, text: string }&gt;
+  callback?: (id: number) =&gt; void
+}&gt;()
+
+// Emits tipados
+const emit = defineEmits&lt;{
+  (e: 'update', id: number, value: string): void
+  (e: 'select', item: { id: number, text: string }): void
+}&gt;()
+
+// Funciones tipadas
+function processUser(user: User): boolean {
+  return user.active
+}
+&lt;/script&gt;</code></pre>
+<h3>Definición de props con valores por defecto</h3>
+<p>En TypeScript, se puede usar <code>withDefaults</code> para definir valores por defecto para props tipadas:</p>
+<pre><code class="language-ts">interface Props {
+  title?: string
+  count?: number
+}
+
+const props = withDefaults(defineProps&lt;Props&gt;(), {
+  title: 'Untitled',
+  count: 0
+})
+</code></pre>
+    </div>
+  </section>
+
+  <section id="importacion-y-uso-de-componentes">
+    <h2>Importación y uso de componentes</h2>
+    <div class="doc-content">
+<p>En Vue 3 con <code><script setup></code>, los componentes importados se registran automáticamente.</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Importación de componentes
+
+
+
+
+// Los componentes importados están disponibles automáticamente en el template
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;BaseInput v-model="searchQuery" /&gt;
+    &lt;BaseButton @click="search"&gt;Buscar&lt;/BaseButton&gt;
+    
+    &lt;SearchBox /&gt;
+    &lt;FilterMenu :options="filterOptions" /&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<h3>Importación dinámica (Lazy Loading)</h3>
+<p>Para componentes grandes o que no son necesarios inmediatamente, se puede usar importación dinámica:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+
+
+const HeavyComponent = defineAsyncComponent(() =&gt; 
+  import('./HeavyComponent.vue')
+)
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;HeavyComponent v-if="showHeavyComponent" /&gt;
+&lt;/template&gt;
+</code></pre>
+<h3>Componentes globales vs. locales</h3>
+  <h4 class="tab-label">Registro global</h4>
+    <pre><code class="language-js">    // main.js
+    import { createApp } from 'vue'
+    import App from './App.vue'
+    import BaseButton from './components/BaseButton.vue'
+    import BaseInput from './components/BaseInput.vue'
+    
+    const app = createApp(App)
+    
+    // Registro global (disponible en toda la aplicación)
+    app.component('BaseButton', BaseButton)
+    app.component('BaseInput', BaseInput)
+    
+    app.mount('#app')
+    </code></pre>
+  <h4 class="tab-label">Registro local (recomendado)</h4>
+    <pre><code class="language-vue">    &lt;script setup&gt;
+    // Registro local (solo disponible en este componente)
+    import BaseButton from './components/BaseButton.vue'
+    import BaseInput from './components/BaseInput.vue'
+    &lt;/script&gt;
+    </code></pre>
+<blockquote class="aside aside-note">
+El registro local de componentes es generalmente preferible al registro global, ya que permite un mejor tree-shaking y hace que las dependencias sean más explícitas.
+</blockquote>
+    </div>
+  </section>

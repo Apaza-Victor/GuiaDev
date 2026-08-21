@@ -1,0 +1,59 @@
+<!-- 7. JOINS - SQL Server (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="inner-join">
+    <h2>INNER JOIN</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SELECT p.Nombre, c.Nombre AS Categoria, p.Precio
+FROM dbo.Productos p
+INNER JOIN dbo.Categorias c ON p.CategoriaId = c.Id;</code></pre>
+    </div>
+  </section>
+
+  <section id="left-right-full-outer">
+    <h2>LEFT / RIGHT / FULL OUTER</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- Todos los productos aunque no tengan venta
+SELECT p.Nombre, v.Fecha, v.Cantidad
+FROM dbo.Productos p
+LEFT JOIN dbo.Ventas v ON v.ProductoId = p.Id;
+
+-- Productos jamás vendidos
+SELECT p.Nombre
+FROM dbo.Productos p
+LEFT JOIN dbo.Ventas v ON v.ProductoId = p.Id
+WHERE v.Id IS NULL;
+
+-- FULL OUTER: todo de ambos lados
+SELECT p.Nombre, v.Fecha
+FROM dbo.Productos p
+FULL OUTER JOIN dbo.Ventas v ON v.ProductoId = p.Id;</code></pre>
+<blockquote class="aside aside-tip">
+<p>En un LEFT JOIN, filtros sobre la tabla derecha van mejor en el <code>ON</code>; ponerlos en el <code>WHERE</code> puede convertirlo en INNER.</p>
+</blockquote>
+    </div>
+  </section>
+
+  <section id="cross-join-y-auto-join">
+    <h2>CROSS JOIN y auto-join</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SELECT e.Nombre, t.Horario
+FROM dbo.Empleados e CROSS JOIN dbo.Turnos t;
+
+-- Empleado y su jefe (misma tabla)
+SELECT e.Nombre AS Empleado, j.Nombre AS Jefe
+FROM dbo.Empleados e
+LEFT JOIN dbo.Empleados j ON e.JefeId = j.Id;</code></pre>
+    </div>
+  </section>
+
+  <section id="varias-tablas-encadenadas">
+    <h2>Varias tablas encadenadas</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SELECT c.Nombre AS Cliente, p.Id AS Pedido, pr.Nombre AS Producto
+FROM dbo.Pedidos p
+INNER JOIN dbo.Clientes c ON p.ClienteId = c.Id
+INNER JOIN dbo.DetallesPedido d ON d.PedidoId = p.Id
+INNER JOIN dbo.Productos pr ON d.ProductoId = pr.Id
+ORDER BY c.Nombre;</code></pre>
+    </div>
+  </section>

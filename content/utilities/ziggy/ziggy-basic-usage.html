@@ -1,0 +1,218 @@
+<!-- 03. Uso básico en JavaScript puro - Ziggy (Utilidades) -->
+  <section id="importar-rutas-con-import-route-from-ziggy-js">
+    <h2>Importar rutas con import route from 'ziggy-js'</h2>
+    <div class="doc-content">
+<p>Una vez que has instalado y configurado Ziggy en tu proyecto Laravel, puedes comenzar a utilizarlo en tu código JavaScript. El primer paso es importar la función <code>route</code> desde el paquete <code>ziggy-js</code>.</p>
+<pre><code class="language-js">// Importar la función route
+
+
+// Si necesitas acceder al objeto Ziggy directamente
+
+</code></pre>
+<blockquote class="aside aside-tip">
+Si has seguido la configuración estándar, el archivo <code>ziggy.js</code> se generará automáticamente en la carpeta <code>resources/js</code> cuando ejecutes <code>php artisan ziggy:generate</code>.
+</blockquote>
+<h3>Uso global vs. importación en módulos</h3>
+<p>Existen dos formas principales de utilizar Ziggy en tu aplicación:</p>
+  <h4 class="tab-label">Uso global</h4>
+<p>Si has configurado Ziggy para estar disponible globalmente (usando <code>window.route = route</code>), puedes usarlo directamente sin importarlo:</p>
+    <pre><code class="language-js">    // En cualquier archivo JavaScript
+    const url = route('users.index');
+    </code></pre>
+<p>Esta es la forma más sencilla y es ideal para aplicaciones más pequeñas o cuando no estás utilizando un sistema de módulos.</p>
+  <h4 class="tab-label">Importación en módulos</h4>
+<p>Para aplicaciones más grandes o cuando estás utilizando un sistema de módulos, es mejor importar la función <code>route</code> donde la necesites:</p>
+    <pre><code class="language-js">    // En un módulo específico
+    import route from 'ziggy-js';
+    
+    export function getUserProfileUrl(userId) {
+      return route('users.profile', { id: userId });
+    }
+    </code></pre>
+<p>Este enfoque es más modular y facilita las pruebas unitarias.</p>
+    </div>
+  </section>
+
+  <section id="acceder-a-rutas-con-route-nombre-ruta">
+    <h2>Acceder a rutas con route('nombre.ruta')</h2>
+    <div class="doc-content">
+<p>La forma más básica de utilizar Ziggy es llamar a la función <code>route()</code> con el nombre de la ruta que deseas generar.</p>
+<pre><code class="language-js">// Generar una URL para la ruta 'home'
+const homeUrl = route('home');
+// Resultado: 'https://miapp.com/'
+
+// Generar una URL para la ruta 'dashboard'
+const dashboardUrl = route('dashboard');
+// Resultado: 'https://miapp.com/dashboard'
+
+// Generar una URL para una ruta con nombre compuesto
+const adminSettingsUrl = route('admin.settings');
+// Resultado: 'https://miapp.com/admin/settings'
+</code></pre>
+<h3>Verificar si una ruta existe</h3>
+<p>Puedes verificar si una ruta existe antes de intentar generarla:</p>
+<pre><code class="language-js">if (route().has('users.profile')) {
+  // La ruta 'users.profile' existe
+  const profileUrl = route('users.profile');
+} else {
+  // La ruta no existe, manejar el caso alternativo
+  console.warn('La ruta users.profile no está definida');
+}
+</code></pre>
+<h3>Listar todas las rutas disponibles</h3>
+<p>También puedes obtener un listado de todas las rutas disponibles:</p>
+<pre><code class="language-js">// Obtener todas las rutas disponibles
+const allRoutes = route().all();
+console.log(allRoutes);
+</code></pre>
+    </div>
+  </section>
+
+  <section id="generar-urls-con-parametros">
+    <h2>Generar URLs con parámetros</h2>
+    <div class="doc-content">
+<p>Muchas rutas en Laravel requieren parámetros, como IDs o slugs. Ziggy hace que sea fácil pasar estos parámetros al generar URLs.</p>
+<pre><code class="language-js">// Ruta con un parámetro
+const userProfileUrl = route('users.show', 1);
+// Resultado: 'https://miapp.com/users/1'
+
+// También puedes usar un objeto para mayor claridad
+const userProfileUrl = route('users.show', { user: 1 });
+// Resultado: 'https://miapp.com/users/1'
+
+// Múltiples parámetros
+const commentUrl = route('posts.comments.show', { post: 5, comment: 10 });
+// Resultado: 'https://miapp.com/posts/5/comments/10'
+</code></pre>
+<h3>Parámetros de consulta (query string)</h3>
+<p>Puedes añadir parámetros de consulta adicionales que no forman parte de la definición de la ruta:</p>
+<pre><code class="language-js">// Añadir parámetros de consulta
+const searchUrl = route('products.index', { 
+  category: 'electronics',
+  sort: 'price',
+  order: 'asc'
+});
+// Resultado: 'https://miapp.com/products?category=electronics&amp;sort=price&amp;order=asc'
+
+// Combinar parámetros de ruta y de consulta
+const filteredUserUrl = route('users.show', { 
+  user: 1,
+  tab: 'settings',
+  view: 'advanced'
+});
+// Resultado: 'https://miapp.com/users/1?tab=settings&amp;view=advanced'
+</code></pre>
+<blockquote class="aside aside-note">
+Ziggy es inteligente y sabe diferenciar entre parámetros que forman parte de la definición de la ruta y parámetros adicionales que deben ir en la query string.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="manejo-de-rutas-con-segmentos-opcionales-y-comodines">
+    <h2>Manejo de rutas con segmentos opcionales y comodines</h2>
+    <div class="doc-content">
+<p>Ziggy también soporta rutas de Laravel con segmentos opcionales y comodines.</p>
+<h3>Segmentos opcionales</h3>
+<p>En Laravel, puedes definir segmentos opcionales en tus rutas usando <code>?</code>. Ziggy maneja estos segmentos de manera intuitiva:</p>
+<pre><code class="language-js">// Supongamos que tienes esta ruta en Laravel:
+// Route::get('/projects/{project}/{task?}', 'ProjectController@show')-&gt;name('projects.show');
+
+// Sin el parámetro opcional
+const projectUrl = route('projects.show', { project: 123 });
+// Resultado: 'https://miapp.com/projects/123'
+
+// Con el parámetro opcional
+const taskUrl = route('projects.show', { project: 123, task: 456 });
+// Resultado: 'https://miapp.com/projects/123/456'
+</code></pre>
+<h3>Comodines (Wildcards)</h3>
+<p>Las rutas con comodines en Laravel (usando <code>*</code>) también son compatibles con Ziggy:</p>
+<pre><code class="language-js">// Supongamos que tienes esta ruta en Laravel:
+// Route::get('/files/{path}', 'FileController@show')-&gt;where('path', '.*')-&gt;name('files.show');
+
+// Acceder a un archivo en una subcarpeta
+const fileUrl = route('files.show', { path: 'documents/2023/report.pdf' });
+// Resultado: 'https://miapp.com/files/documents/2023/report.pdf'
+</code></pre>
+<h3>Rutas con restricciones (where)</h3>
+<p>Ziggy respeta las restricciones definidas en tus rutas de Laravel:</p>
+<pre><code class="language-js">// Supongamos que tienes esta ruta en Laravel con restricciones:
+// Route::get('/users/{id}', 'UserController@show')
+//     -&gt;where('id', '[0-9]+')
+//     -&gt;name('users.show');
+
+// Ziggy validará que el parámetro cumpla con la restricción
+const validUrl = route('users.show', { id: 123 });
+// Resultado: 'https://miapp.com/users/123'
+
+// Si intentas usar un valor que no cumple con la restricción,
+// Ziggy lanzará un error en modo de desarrollo
+try {
+  const invalidUrl = route('users.show', { id: 'abc' });
+} catch (error) {
+  console.error('Error:', error.message);
+  // Error: El parámetro "id" para la ruta "users.show" debe coincidir con el patrón "[0-9]+".
+}
+</code></pre>
+    </div>
+  </section>
+
+  <section id="ejemplos-practicos">
+    <h2>Ejemplos prácticos</h2>
+    <div class="doc-content">
+  <h4 class="tab-label">Navegación básica</h4>
+    <pre><code class="language-js">    // Redireccionar a otra página
+    window.location.href = route('dashboard');
+    
+    // Usar con enlaces
+    document.getElementById('profileLink').href = route('users.profile', { id: currentUser.id });
+    </code></pre>
+  <h4 class="tab-label">Peticiones AJAX</h4>
+    <pre><code class="language-js">    // Con Fetch API
+    fetch(route('api.users.index'))
+      .then(response =&gt; response.json())
+      .then(data =&gt; console.log(data));
+    
+    // Con Axios
+    axios.get(route('api.users.show', { user: userId }))
+      .then(response =&gt; {
+        console.log(response.data);
+      });
+    
+    // POST con datos
+    axios.post(route('api.users.store'), {
+      name: 'Nuevo Usuario',
+      email: 'usuario@ejemplo.com'
+    });
+    </code></pre>
+  <h4 class="tab-label">Formularios</h4>
+    <pre><code class="language-js">    // Configurar la acción de un formulario
+    document.getElementById('userForm').action = route('users.update', { user: userId });
+    
+    // Crear un formulario dinámicamente
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = route('logout');
+    
+    // Añadir token CSRF
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_token';
+    csrfInput.value = document.querySelector('meta[name="csrf-token"]').content;
+    form.appendChild(csrfInput);
+    
+    // Añadir método HTTP (para PUT, DELETE, etc.)
+    const methodInput = document.createElement('input');
+    methodInput.type = 'hidden';
+    methodInput.name = '_method';
+    methodInput.value = 'DELETE';
+    form.appendChild(methodInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+    </code></pre>
+<blockquote class="aside aside-tip">
+<p>Ziggy es especialmente útil cuando trabajas con APIs RESTful en Laravel, ya que te permite mantener todas tus rutas organizadas y accesibles de manera consistente tanto en el backend como en el frontend.</p>
+</blockquote>
+    </div>
+  </section>

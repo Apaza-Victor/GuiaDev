@@ -1,0 +1,564 @@
+<!-- 10. Manejo de sesiones y cookies - PHP (Lenguajes de Programación) -->
+  <section id="sesiones-en-php">
+    <h2>Sesiones en PHP</h2>
+    <div class="doc-content">
+<h3>10.1.1 ¿Qué son las sesiones?</h3>
+<p>Las sesiones permiten almacenar datos del usuario en el servidor durante un período de tiempo limitado. Cada usuario recibe un identificador único de sesión (generalmente almacenado en una cookie) que se utiliza para acceder a sus datos de sesión almacenados en el servidor.</p>
+<h3>10.1.2 Variables superglobales: $_SESSION</h3>
+<p>PHP proporciona la variable superglobal <code>$_SESSION</code> para acceder y manipular los datos de sesión. Esta variable es un array asociativo que contiene todas las variables de sesión disponibles para el script actual.</p>
+<h3>10.1.3 Iniciar una sesión</h3>
+<p>Antes de poder utilizar variables de sesión, debes iniciar la sesión con la función <code>session_start()</code>. Esta función debe ser llamada antes de cualquier salida al navegador.</p>
+<pre><code class="language-text">&lt;?php
+// Iniciar sesión (debe ser lo primero antes de cualquier salida HTML)
+session_start();
+
+// Ahora podemos trabajar con la variable $_SESSION
+$_SESSION['usuario'] = 'juan_perez';
+$_SESSION['nivel_acceso'] = 'administrador';
+$_SESSION['ultimo_acceso'] = time();
+?&gt;
+
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Ejemplo de Sesión&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Sesión iniciada&lt;/h1&gt;
+    &lt;p&gt;Bienvenido, &lt;?php echo $_SESSION['usuario']; ?&gt;!&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<blockquote class="aside aside-caution">
+La función `session_start()` debe ser llamada antes de cualquier salida HTML o de texto al navegador, incluyendo espacios en blanco. De lo contrario, PHP generará un error: "Headers already sent".
+</blockquote>
+<h3>10.1.4 Comprobar si una sesión está activa</h3>
+<p>Puedes verificar si una sesión ya está iniciada utilizando la función <code>session_status()</code>:</p>
+<pre><code class="language-text">&lt;?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Ahora es seguro trabajar con $_SESSION
+?&gt;</code></pre>
+<p>O comprobar si existe una variable específica en la sesión:</p>
+<pre><code class="language-text">&lt;?php
+session_start();
+
+// Comprobar si el usuario ha iniciado sesión
+if (isset($_SESSION['usuario'])) {
+    echo "Bienvenido de nuevo, " . $_SESSION['usuario'];
+} else {
+    echo "Por favor, inicia sesión";
+}
+?&gt;</code></pre>
+<h3>10.1.5 Eliminar datos de sesión</h3>
+<p>Puedes eliminar variables específicas de la sesión o destruir completamente la sesión:</p>
+<pre><code class="language-text">&lt;?php
+session_start();
+
+// Eliminar una variable específica de la sesión
+unset($_SESSION['ultimo_acceso']);
+
+// Eliminar todas las variables de sesión pero mantener la sesión activa
+$_SESSION = array();
+
+// Destruir completamente la sesión
+session_destroy();
+?&gt;</code></pre>
+<blockquote class="aside aside-note">
+`session_destroy()` destruye todos los datos asociados con la sesión actual, pero no elimina las variables globales asociadas con la sesión, ni elimina la cookie de sesión. Para eliminar completamente la sesión, debes también eliminar la cookie de sesión.
+</blockquote>
+<h3>10.1.6 Implementación de inicio y cierre de sesión</h3>
+<p>A continuación se muestra un ejemplo completo de implementación de inicio y cierre de sesión:</p>
+  <h4 class="tab-label">login.php</h4>
+    <pre><code class="language-text">&lt;?php
+session_start();
+
+// Verificar si el usuario ya ha iniciado sesión
+if (isset($_SESSION['usuario_id'])) {
+    // Redirigir a la página principal si ya está autenticado
+    header("Location: dashboard.php");
+    exit;
+}
+
+$error = "";
+
+// Procesar el formulario cuando se envía
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // En un caso real, estos valores vendrían de una base de datos
+    $usuario_correcto = "admin";
+    $password_correcto = "password123";
+    
+    // Obtener datos del formulario
+    $usuario = $_POST['usuario'] ?? '';
+    $password = $_POST['password'] ?? '';
+    
+    // Validar credenciales
+    if ($usuario === $usuario_correcto &amp;&amp; $password === $password_correcto) {
+        // Credenciales correctas, iniciar sesión
+        $_SESSION['usuario_id'] = 1;
+        $_SESSION['usuario_nombre'] = $usuario;
+        $_SESSION['tiempo_inicio'] = time();
+        
+        // Recordar usuario si se seleccionó la casilla
+        if (isset($_POST['recordar']) &amp;&amp; $_POST['recordar'] == 1) {
+            // Crear cookie que dura 30 días
+            setcookie('usuario_recordado', $usuario, time() + (86400 * 30), "/");
+        }
+        
+        // Redirigir al panel de control
+        header("Location: dashboard.php");
+        exit;
+    } else {
+        $error = "Usuario o contraseña incorrectos";
+    }
+}
+?&gt;
+
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Iniciar Sesión&lt;/title&gt;
+    &lt;style&gt;
+        body { font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; }
+        .error { color: red; margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 8px; }
+        button { padding: 10px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Iniciar Sesión&lt;/h1&gt;
+    
+    &lt;?php if ($error): ?&gt;
+        &lt;div class="error"&gt;&lt;?php echo $error; ?&gt;&lt;/div&gt;
+    &lt;?php endif; ?&gt;
+    
+    &lt;form method="post" action="&lt;?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?&gt;"&gt;
+        &lt;div class="form-group"&gt;
+            &lt;label for="usuario"&gt;Usuario:&lt;/label&gt;
+            &lt;input type="text" id="usuario" name="usuario" value="&lt;?php echo isset($_COOKIE['usuario_recordado']) ? $_COOKIE['usuario_recordado'] : ''; ?&gt;" required&gt;
+        &lt;/div&gt;
+        
+        &lt;div class="form-group"&gt;
+            &lt;label for="password"&gt;Contraseña:&lt;/label&gt;
+            &lt;input type="password" id="password" name="password" required&gt;
+        &lt;/div&gt;
+        
+        &lt;div class="form-group"&gt;
+            &lt;label&gt;
+                &lt;input type="checkbox" name="recordar" value="1" &lt;?php echo isset($_COOKIE['usuario_recordado']) ? 'checked' : ''; ?&gt;&gt; Recordar usuario
+            &lt;/label&gt;
+        &lt;/div&gt;
+        
+        &lt;button type="submit"&gt;Iniciar Sesión&lt;/button&gt;
+    &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+  <h4 class="tab-label">dashboard.php</h4>
+    <pre><code class="language-text">&lt;?php
+session_start();
+
+// Verificar si el usuario ha iniciado sesión
+if (!isset($_SESSION['usuario_id'])) {
+    // Redirigir al login si no está autenticado
+    header("Location: login.php");
+    exit;
+}
+
+// Verificar tiempo de inactividad (15 minutos = 900 segundos)
+$tiempo_inactividad = 900;
+if (isset($_SESSION['tiempo_inicio']) &amp;&amp; (time() - $_SESSION['tiempo_inicio'] &gt; $tiempo_inactividad)) {
+    // La sesión ha expirado por inactividad
+    session_unset();     // Eliminar todas las variables de sesión
+    session_destroy();   // Destruir la sesión
+    
+    header("Location: login.php?expirado=1");
+    exit;
+}
+
+// Actualizar el tiempo de inicio para reiniciar el contador de inactividad
+$_SESSION['tiempo_inicio'] = time();
+?&gt;
+
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Panel de Control&lt;/title&gt;
+    &lt;style&gt;
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; }
+        .logout { background-color: #f44336; color: white; padding: 8px 15px; text-decoration: none; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="header"&gt;
+        &lt;h1&gt;Panel de Control&lt;/h1&gt;
+        &lt;a href="logout.php" class="logout"&gt;Cerrar Sesión&lt;/a&gt;
+    &lt;/div&gt;
+    
+    &lt;p&gt;Bienvenido, &lt;?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?&gt;!&lt;/p&gt;
+    
+    &lt;p&gt;Esta es una página protegida que solo pueden ver los usuarios autenticados.&lt;/p&gt;
+    
+    &lt;p&gt;Información de la sesión:&lt;/p&gt;
+    &lt;ul&gt;
+        &lt;li&gt;ID de usuario: &lt;?php echo $_SESSION['usuario_id']; ?&gt;&lt;/li&gt;
+        &lt;li&gt;Tiempo de inicio: &lt;?php echo date('Y-m-d H:i:s', $_SESSION['tiempo_inicio']); ?&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+  <h4 class="tab-label">logout.php</h4>
+    <pre><code class="language-text">&lt;?php
+session_start();
+
+// Eliminar todas las variables de sesión
+$_SESSION = array();
+
+// Si se está usando una cookie de sesión, eliminarla también
+if (ini_get("session.use_cookies")) {
+    $params = session_get_cookie_params();
+    setcookie(session_name(), '', time() - 42000,
+        $params["path"], $params["domain"],
+        $params["secure"], $params["httponly"]
+    );
+}
+
+// Finalmente, destruir la sesión
+session_destroy();
+
+// Redirigir al login
+header("Location: login.php?logout=1");
+exit;
+?&gt;</code></pre>
+<h3>10.1.7 Configuración de sesiones</h3>
+<p>PHP ofrece varias opciones para configurar el comportamiento de las sesiones:</p>
+<pre><code class="language-text">&lt;?php
+// Configurar opciones de sesión antes de iniciarla
+ini_set('session.gc_maxlifetime', 3600); // Duración de la sesión en segundos (1 hora)
+ini_set('session.cookie_lifetime', 3600); // Duración de la cookie de sesión
+ini_set('session.use_strict_mode', 1); // Modo estricto para mayor seguridad
+ini_set('session.cookie_httponly', 1); // Evita acceso a la cookie desde JavaScript
+ini_set('session.cookie_secure', 1); // Solo enviar cookie por HTTPS
+ini_set('session.cookie_samesite', 'Lax'); // Protección contra CSRF
+
+// Iniciar la sesión con las configuraciones aplicadas
+session_start();
+?&gt;</code></pre>
+<p>También puedes configurar estas opciones en el archivo <code>php.ini</code> o usando <code>session_set_cookie_params()</code> antes de <code>session_start()</code>.</p>
+    </div>
+  </section>
+
+  <section id="cookies-en-php">
+    <h2>Cookies en PHP</h2>
+    <div class="doc-content">
+<h3>10.2.1 ¿Qué son las cookies?</h3>
+<p>Las cookies son pequeños archivos de texto que se almacenan en el navegador del usuario. A diferencia de las sesiones, las cookies se guardan en el lado del cliente (navegador) y no en el servidor.</p>
+<h3>10.2.2 Variables superglobales: $_COOKIE</h3>
+<p>PHP proporciona la variable superglobal <code>$_COOKIE</code> para acceder a las cookies enviadas por el navegador del usuario. Esta variable es un array asociativo que contiene todas las cookies disponibles para el script actual.</p>
+<h3>10.2.3 Crear cookies</h3>
+<p>Para crear una cookie, se utiliza la función <code>setcookie()</code>:</p>
+<pre><code class="language-text">&lt;?php
+// Sintaxis básica: setcookie(nombre, valor, tiempo_expiracion, ruta, dominio, seguro, httponly)
+
+// Crear una cookie que expira en 30 días
+setcookie('usuario', 'juan_perez', time() + (86400 * 30), "/");
+
+// Crear una cookie que expira al cerrar el navegador (cookie de sesión)
+setcookie('preferencia_tema', 'oscuro', 0, "/");
+
+// Crear una cookie segura (solo se envía por HTTPS)
+setcookie('token', 'abc123', time() + 3600, "/", "", true, true);
+?&gt;</code></pre>
+<blockquote class="aside aside-caution">
+Al igual que con `session_start()`, `setcookie()` debe ser llamada antes de cualquier salida al navegador, ya que modifica los encabezados HTTP.
+</blockquote>
+<h3>10.2.4 Leer cookies</h3>
+<p>Para leer el valor de una cookie, simplemente accede a la variable superglobal <code>$_COOKIE</code>:</p>
+<pre><code class="language-text">&lt;?php
+// Verificar si existe una cookie
+if (isset($_COOKIE['usuario'])) {
+    echo "Bienvenido de nuevo, " . htmlspecialchars($_COOKIE['usuario']);
+} else {
+    echo "Bienvenido, visitante";
+}
+
+// Acceder a una cookie con un valor predeterminado si no existe
+$tema = $_COOKIE['preferencia_tema'] ?? 'claro';
+echo "Tema actual: $tema";
+?&gt;</code></pre>
+<h3>10.2.5 Modificar cookies</h3>
+<p>Para modificar una cookie existente, simplemente crea una nueva cookie con el mismo nombre:</p>
+<pre><code class="language-text">&lt;?php
+// Modificar una cookie existente
+setcookie('preferencia_tema', 'claro', time() + (86400 * 30), "/");
+?&gt;</code></pre>
+<h3>10.2.6 Eliminar cookies</h3>
+<p>Para eliminar una cookie, establece su tiempo de expiración en el pasado:</p>
+<pre><code class="language-text">&lt;?php
+// Eliminar una cookie
+setcookie('usuario', '', time() - 3600, "/");
+?&gt;</code></pre>
+<h3>10.2.7 Implementación de "Recordar usuario"</h3>
+<p>A continuación se muestra un ejemplo de cómo implementar la funcionalidad "Recordar usuario" utilizando cookies:</p>
+<pre><code class="language-text">&lt;?php
+session_start();
+
+// Verificar si hay una cookie de "recordar usuario"
+if (!isset($_SESSION['usuario_id']) &amp;&amp; isset($_COOKIE['auth_token'])) {
+    // En un caso real, verificaríamos este token en la base de datos
+    $token = $_COOKIE['auth_token'];
+    $usuario_id = verificarToken($token); // Función hipotética
+    
+    if ($usuario_id) {
+        // Token válido, iniciar sesión automáticamente
+        $_SESSION['usuario_id'] = $usuario_id;
+        $_SESSION['usuario_nombre'] = obtenerNombreUsuario($usuario_id); // Función hipotética
+        $_SESSION['tiempo_inicio'] = time();
+    }
+}
+
+// Función para crear un token de autenticación
+function crearTokenRecordar($usuario_id) {
+    // En un caso real, generaríamos un token único y lo almacenaríamos en la base de datos
+    $token = bin2hex(random_bytes(32)); // Genera un token aleatorio seguro
+    
+    // Almacenar el token en una cookie que dura 30 días
+    setcookie('auth_token', $token, time() + (86400 * 30), "/", "", true, true);
+    
+    // Guardar el token en la base de datos junto con el ID de usuario
+    // guardarTokenEnBaseDeDatos($usuario_id, $token); // Función hipotética
+    
+    return $token;
+}
+
+// Función para eliminar el token de "recordar usuario"
+function eliminarTokenRecordar() {
+    if (isset($_COOKIE['auth_token'])) {
+        // Eliminar el token de la base de datos
+        // eliminarTokenDeBaseDeDatos($_COOKIE['auth_token']); // Función hipotética
+        
+        // Eliminar la cookie
+        setcookie('auth_token', '', time() - 3600, "/");
+    }
+}
+?&gt;</code></pre>
+<h3>10.2.8 Seguridad en cookies</h3>
+<p>Las cookies pueden ser vulnerables a varios tipos de ataques. Aquí hay algunas prácticas recomendadas para mejorar la seguridad:</p>
+<table>
+  <thead>
+    <tr>
+      <th>Parámetro</th>
+      <th>Descripción</th>
+      <th>Recomendación</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>httponly</td>
+      <td>Evita que la cookie sea accesible mediante JavaScript</td>
+      <td>Establecer a `true` para cookies sensibles</td>
+    </tr>
+    <tr>
+      <td>secure</td>
+      <td>La cookie solo se envía a través de conexiones HTTPS</td>
+      <td>Establecer a `true` en sitios con HTTPS</td>
+    </tr>
+    <tr>
+      <td>samesite</td>
+      <td>Controla cuándo se envían las cookies en solicitudes entre sitios</td>
+      <td>Usar 'Strict' o 'Lax' para prevenir CSRF</td>
+    </tr>
+    <tr>
+      <td>path</td>
+      <td>Ruta en el servidor donde la cookie estará disponible</td>
+      <td>Limitar al mínimo necesario, no usar '/' si no es necesario</td>
+    </tr>
+    <tr>
+      <td>domain</td>
+      <td>Dominio para el que la cookie es válida</td>
+      <td>Especificar solo si es necesario compartir entre subdominios</td>
+    </tr>
+  </tbody>
+</table>
+<pre><code class="language-text">&lt;?php
+// Ejemplo de cookie segura
+setcookie(
+    'token_seguro',           // Nombre
+    'valor_encriptado_aqui',  // Valor (idealmente encriptado)
+    time() + 3600,            // Expiración (1 hora)
+    '/app/',                  // Ruta (restringida a /app/)
+    'ejemplo.com',            // Dominio
+    true,                     // Secure (solo HTTPS)
+    true                      // HttpOnly (inaccesible por JavaScript)
+);
+
+// Para PHP 7.3+ puedes usar el parámetro adicional para samesite
+$opciones = [
+    'expires' =&gt; time() + 3600,
+    'path' =&gt; '/app/',
+    'domain' =&gt; 'ejemplo.com',
+    'secure' =&gt; true,
+    'httponly' =&gt; true,
+    'samesite' =&gt; 'Strict' // 'None', 'Lax', o 'Strict'
+];
+
+setcookie('token_seguro', 'valor_encriptado_aqui', $opciones);
+?&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="comparacion-entre-sesiones-y-cookies">
+    <h2>Comparación entre Sesiones y Cookies</h2>
+    <div class="doc-content">
+<table>
+  <thead>
+    <tr>
+      <th>Característica</th>
+      <th>Sesiones</th>
+      <th>Cookies</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Almacenamiento</td>
+      <td>Servidor</td>
+      <td>Cliente (navegador)</td>
+    </tr>
+    <tr>
+      <td>Seguridad</td>
+      <td>Mayor (datos sensibles en servidor)</td>
+      <td>Menor (datos expuestos al cliente)</td>
+    </tr>
+    <tr>
+      <td>Capacidad</td>
+      <td>Limitada por configuración del servidor</td>
+      <td>Limitada (~4KB por cookie)</td>
+    </tr>
+    <tr>
+      <td>Duración</td>
+      <td>Temporal (hasta cierre de navegador o timeout)</td>
+      <td>Configurable (temporal o persistente)</td>
+    </tr>
+    <tr>
+      <td>Dependencia</td>
+      <td>Requiere cookie o URL para ID de sesión</td>
+      <td>No requiere soporte adicional</td>
+    </tr>
+    <tr>
+      <td>Uso típico</td>
+      <td>Datos de autenticación, carritos de compra</td>
+      <td>Preferencias, seguimiento, recordar usuario</td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+  </section>
+
+  <section id="mejores-practicas">
+    <h2>Mejores prácticas</h2>
+    <div class="doc-content">
+<h3>10.4.1 Seguridad en sesiones</h3>
+<ol>
+<li><strong>Regenerar ID de sesión</strong>: Regenera el ID de sesión después de eventos importantes como inicio de sesión o cambio de privilegios.</li>
+</ol>
+<pre><code class="language-text">&lt;?php
+session_start();
+
+// Después de una autenticación exitosa
+if ($autenticacion_exitosa) {
+    // Regenerar ID de sesión para prevenir ataques de fijación de sesión
+    session_regenerate_id(true);
+    
+    $_SESSION['usuario_id'] = $usuario_id;
+    // Otros datos de sesión...
+}
+?&gt;</code></pre>
+<ol>
+<li><strong>Validar datos de sesión</strong>: Siempre valida los datos almacenados en la sesión antes de usarlos.</li>
+</ol>
+<ol>
+<li><strong>Establecer tiempo de expiración</strong>: Implementa un mecanismo de timeout para sesiones inactivas.</li>
+</ol>
+<ol>
+<li><strong>Usar HTTPS</strong>: Configura las cookies de sesión para que solo se transmitan por HTTPS.</li>
+</ol>
+<h3>10.4.2 Gestión de datos sensibles</h3>
+<ol>
+<li><strong>No almacenar datos sensibles en cookies</strong>: Las cookies son visibles para el usuario y pueden ser manipuladas.</li>
+</ol>
+<ol>
+<li><strong>Encriptar datos sensibles</strong>: Si necesitas almacenar datos sensibles, encriptalos antes.</li>
+</ol>
+<pre><code class="language-text">&lt;?php
+// Encriptar datos antes de almacenarlos en una cookie
+$datos_sensibles = "información_confidencial";
+$clave_encriptacion = "clave_secreta_muy_larga_y_compleja"; // En producción, usar una clave segura
+
+// Método simple (para datos no críticos)
+$datos_encriptados = base64_encode(openssl_encrypt(
+    $datos_sensibles,
+    'AES-256-CBC',
+    $clave_encriptacion,
+    0,
+    substr(md5($clave_encriptacion), 0, 16)
+));
+
+setcookie('datos', $datos_encriptados, time() + 3600, "/", "", true, true);
+
+// Para desencriptar
+if (isset($_COOKIE['datos'])) {
+    $datos_desencriptados = openssl_decrypt(
+        base64_decode($_COOKIE['datos']),
+        'AES-256-CBC',
+        $clave_encriptacion,
+        0,
+        substr(md5($clave_encriptacion), 0, 16)
+    );
+    
+    echo "Datos desencriptados: $datos_desencriptados";
+}
+?&gt;</code></pre>
+<h3>10.4.3 Manejo de errores y excepciones</h3>
+<p>Implementa un manejo adecuado de errores para situaciones como sesiones expiradas o cookies bloqueadas:</p>
+<pre><code class="language-text">&lt;?php
+// Verificar si las cookies están habilitadas
+setcookie('test_cookie', '1', 0, '/');
+
+if (isset($_COOKIE['test_cookie'])) {
+    echo "Las cookies están habilitadas";
+} else {
+    echo "Las cookies están deshabilitadas. Esta aplicación requiere cookies para funcionar correctamente.";
+}
+
+// Manejar sesión expirada
+session_start();
+
+if (isset($_SESSION['tiempo_ultimo_acceso'])) {
+    $inactividad = 1800; // 30 minutos
+    
+    if (time() - $_SESSION['tiempo_ultimo_acceso'] &gt; $inactividad) {
+        // La sesión ha expirado
+        session_unset();
+        session_destroy();
+        
+        // Redirigir con mensaje
+        header("Location: login.php?expirado=1");
+        exit;
+    }
+}
+
+// Actualizar tiempo de último acceso
+$_SESSION['tiempo_ultimo_acceso'] = time();
+?&gt;</code></pre>
+    </div>
+  </section>
+
+  <section id="conclusion">
+    <h2>Conclusión</h2>
+    <div class="doc-content">
+<p>El manejo adecuado de sesiones y cookies es fundamental para desarrollar aplicaciones web seguras y con buena experiencia de usuario. Las sesiones son ideales para almacenar datos sensibles y de autenticación en el servidor, mientras que las cookies son útiles para almacenar preferencias de usuario y facilitar funcionalidades como "recordarme" entre visitas.</p>
+<p>Al implementar estos mecanismos, siempre prioriza la seguridad siguiendo las mejores prácticas y considerando las implicaciones de privacidad para los usuarios de tu aplicación.</p>
+    </div>
+  </section>

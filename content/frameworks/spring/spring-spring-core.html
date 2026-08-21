@@ -1,0 +1,350 @@
+<!-- 03. Fundamentos de Spring Core - Java Spring (Frameworks) -->
+  <section id="3-1-concepto-de-ioc-inversion-of-control">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 3.1 Concepto de IoC (Inversion of Control)</h2>
+    <div class="doc-content">
+<h3>¿Qué es IoC?</h3>
+<p><strong>Inversión de Control (IoC)</strong> es un principio de diseño donde el control del flujo del programa se invierte: en lugar de que tu código controle la creación de objetos, el <strong>framework</strong> se encarga de ello.</p>
+<blockquote class="aside aside-tip">
+Piensa en IoC como un **restaurante**: tú no cocinas, solo pides lo que necesitas y el chef (Spring) te lo prepara.
+</blockquote>
+<h3>Sin IoC (control tradicional)</h3>
+<pre><code class="language-java">// ❌ TÚ controlas la creación de objetos
+public class PedidoService {
+    
+    public void procesarPedido() {
+        // Tú creas las dependencias manualmente
+        UsuarioRepository usuarioRepo = new UsuarioRepositoryImpl();
+        EmailService emailService = new GmailEmailService();
+        LogService logService = new FileLogService();
+        
+        // Usar las dependencias...
+    }
+}</code></pre>
+<h3>Con IoC (Spring controla)</h3>
+<pre><code class="language-java">// ✅ SPRING controla la creación de objetos
+@Service
+public class PedidoService {
+    
+    private final UsuarioRepository usuarioRepo;
+    private final EmailService emailService;
+    private final LogService logService;
+    
+    // Spring crea e inyecta las dependencias
+    public PedidoService(UsuarioRepository usuarioRepo, 
+                         EmailService emailService,
+                         LogService logService) {
+        this.usuarioRepo = usuarioRepo;
+        this.emailService = emailService;
+        this.logService = logService;
+    }
+    
+    public void procesarPedido() {
+        // Usar las dependencias ya inyectadas
+    }
+}</code></pre>
+<h3>Beneficios de IoC</h3>
+<table><thead><tr><th>Beneficio</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Desacoplamiento</strong></td><td>Las clases no conocen las implementaciones concretas</td></tr><tr><td><strong>Testabilidad</strong></td><td>Fácil inyectar mocks para testing</td></tr><tr><td><strong>Flexibilidad</strong></td><td>Cambiar implementaciones sin modificar código</td></tr><tr><td><strong>Mantenibilidad</strong></td><td>Código más limpio y organizado</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-2-inyeccion-de-dependencias-di">
+    <h2><i class="fa-solid fa-syringe"></i> 3.2 Inyección de Dependencias (DI)</h2>
+    <div class="doc-content">
+<h3>¿Qué es DI?</h3>
+<p><strong>Dependency Injection (DI)</strong> es el mecanismo mediante el cual Spring proporciona las dependencias que una clase necesita, en lugar de que la clase las cree por sí misma.</p>
+<pre><code class="language-java">// La dependencia se "inyecta" desde afuera
+@Service
+public class ProductoService {
+    
+    // Spring inyecta automáticamente esta dependencia
+    private final ProductoRepository repository;
+    
+    public ProductoService(ProductoRepository repository) {
+        this.repository = repository;  // ← Inyección
+    }
+    
+    public List&lt;Producto&gt; listarTodos() {
+        return repository.findAll();
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-3-tipos-de-inyeccion">
+    <h2><i class="fa-solid fa-wrench"></i> 3.3 Tipos de Inyección</h2>
+    <div class="doc-content">
+<h3>1. Inyección por Constructor (Recomendada $1 )</h3>
+<pre><code class="language-java">@Service
+public class UsuarioService {
+    
+    private final UsuarioRepository repository;
+    private final EmailService emailService;
+    
+    // ✅ Inyección por constructor - LA MEJOR OPCIÓN
+    @Autowired  // Opcional en Spring 4.3+ si hay un solo constructor
+    public UsuarioService(UsuarioRepository repository, 
+                          EmailService emailService) {
+        this.repository = repository;
+        this.emailService = emailService;
+    }
+}</code></pre>
+<p><strong>Ventajas:</strong></p>
+<ul>
+<li>Dependencias inmutables (<code>final</code>)</li>
+<li>Obligatorio proporcionar todas las dependencias</li>
+<li>Fácil de testear</li>
+<li>Detecta dependencias circulares en tiempo de compilación</li>
+</ul>
+<h3>2. Inyección por Setter</h3>
+<pre><code class="language-java">@Service
+public class NotificacionService {
+    
+    private EmailService emailService;
+    private SmsService smsService;
+    
+    // Inyección por setter
+    @Autowired
+    public void setEmailService(EmailService emailService) {
+        this.emailService = emailService;
+    }
+    
+    @Autowired(required = false)  // Dependencia opcional
+    public void setSmsService(SmsService smsService) {
+        this.smsService = smsService;
+    }
+}</code></pre>
+<p><strong>Cuándo usar:</strong></p>
+<ul>
+<li>Dependencias opcionales</li>
+<li>Configuración que puede cambiar en runtime</li>
+</ul>
+<h3>3. Inyección por Campo (No recomendada $1 )</h3>
+<pre><code class="language-java">@Service
+public class ReporteService {
+    
+    // ⚠️ Inyección por campo - EVITAR
+    @Autowired
+    private ReporteRepository repository;
+    
+    @Autowired
+    private PdfGenerator pdfGenerator;
+    
+    // Difícil de testear sin Spring
+}</code></pre>
+<blockquote class="aside aside-caution">
+La inyección por campo dificulta el testing y oculta las dependencias. Usa inyección por constructor siempre que sea posible.
+</blockquote>
+<h3>Comparación de tipos</h3>
+<table><thead><tr><th>Tipo</th><th>Inmutable</th><th>Testeable</th><th>Dependencias opcionales</th></tr></thead><tbody><tr><td>Constructor</td><td><i class="fa-solid fa-circle-check"></i> Sí</td><td><i class="fa-solid fa-circle-check"></i> Fácil</td><td><i class="fa-solid fa-xmark"></i> No</td></tr><tr><td>Setter</td><td><i class="fa-solid fa-xmark"></i> No</td><td><i class="fa-solid fa-triangle-exclamation"></i> Medio</td><td><i class="fa-solid fa-circle-check"></i> Sí</td></tr><tr><td>Campo</td><td><i class="fa-solid fa-xmark"></i> No</td><td><i class="fa-solid fa-xmark"></i> Difícil</td><td><i class="fa-solid fa-circle-check"></i> Sí</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-4-contenedor-de-spring">
+    <h2><i class="fa-solid fa-box"></i> 3.4 Contenedor de Spring</h2>
+    <div class="doc-content">
+<h3>¿Qué es el contenedor?</h3>
+<p>El <strong>contenedor de Spring</strong> (también llamado <strong>IoC Container</strong>) es el corazón del framework. Se encarga de:</p>
+<ol>
+<li><strong>Crear</strong> los objetos (beans)</li>
+<li><strong>Configurar</strong> las dependencias</li>
+<li><strong>Gestionar</strong> el ciclo de vida</li>
+<li><strong>Inyectar</strong> las dependencias donde se necesiten</li>
+</ol>
+<pre><code class="language-text">┌─────────────────────────────────────────────────────────┐
+│                  CONTENEDOR DE SPRING                    │
+│                                                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐              │
+│  │ Bean A   │  │ Bean B   │  │ Bean C   │              │
+│  │ @Service │  │ @Repo    │  │ @Comp    │              │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘              │
+│       │             │             │                     │
+│       └─────────────┼─────────────┘                     │
+│                     │                                   │
+│              INYECCIÓN DE                               │
+│              DEPENDENCIAS                               │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-5-beanfactory-vs-applicationcontext">
+    <h2><i class="fa-solid fa-industry"></i> 3.5 BeanFactory vs ApplicationContext</h2>
+    <div class="doc-content">
+<h3>BeanFactory</h3>
+<pre><code class="language-java">// BeanFactory - Contenedor básico
+// Carga beans de forma LAZY (cuando se solicitan)
+BeanFactory factory = new XmlBeanFactory(
+    new ClassPathResource("beans.xml")
+);
+
+// El bean se crea cuando lo solicitas
+MiServicio servicio = factory.getBean(MiServicio.class);</code></pre>
+<h3>ApplicationContext</h3>
+<pre><code class="language-java">// ApplicationContext - Contenedor avanzado (RECOMENDADO)
+// Carga beans de forma EAGER (al iniciar)
+ApplicationContext context = new AnnotationConfigApplicationContext(
+    AppConfig.class
+);
+
+// El bean ya está creado
+MiServicio servicio = context.getBean(MiServicio.class);</code></pre>
+<h3>Diferencias</h3>
+<table><thead><tr><th>Característica</th><th>BeanFactory</th><th>ApplicationContext</th></tr></thead><tbody><tr><td>Carga de beans</td><td>Lazy</td><td>Eager</td></tr><tr><td>Eventos</td><td><i class="fa-solid fa-xmark"></i> No</td><td><i class="fa-solid fa-circle-check"></i> Sí</td></tr><tr><td>Internacionalización</td><td><i class="fa-solid fa-xmark"></i> No</td><td><i class="fa-solid fa-circle-check"></i> Sí</td></tr><tr><td>Integración AOP</td><td><i class="fa-solid fa-xmark"></i> No</td><td><i class="fa-solid fa-circle-check"></i> Sí</td></tr><tr><td>Uso recomendado</td><td>Recursos limitados</td><td>Aplicaciones normales</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+En Spring Boot, el `ApplicationContext` se crea automáticamente al iniciar la aplicación.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-6-ciclo-de-vida-de-los-beans">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 3.6 Ciclo de Vida de los Beans</h2>
+    <div class="doc-content">
+<h3>Fases del ciclo de vida</h3>
+<pre><code class="language-text">┌─────────────────────────────────────────────────────────┐
+│                 CICLO DE VIDA DE UN BEAN                 │
+├─────────────────────────────────────────────────────────┤
+│  1. Instanciación      → Spring crea el objeto          │
+│  2. Inyección de DI    → Se inyectan dependencias       │
+│  3. @PostConstruct     → Método de inicialización       │
+│  4. Bean listo         → Disponible para uso            │
+│  5. @PreDestroy        → Método de limpieza             │
+│  6. Destrucción        → Spring destruye el bean        │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<h3>Ejemplo práctico</h3>
+<pre><code class="language-java">@Service
+public class ConexionService {
+    
+    private Connection conexion;
+    
+    // Constructor - Fase 1 y 2
+    public ConexionService() {
+        System.out.println("1. Bean instanciado");
+    }
+    
+    // Inicialización - Fase 3
+    @PostConstruct
+    public void inicializar() {
+        System.out.println("2. Inicializando conexión...");
+        this.conexion = crearConexion();
+    }
+    
+    // Uso normal - Fase 4
+    public void ejecutarQuery(String sql) {
+        // Bean en uso
+    }
+    
+    // Limpieza - Fase 5
+    @PreDestroy
+    public void limpiar() {
+        System.out.println("3. Cerrando conexión...");
+        this.conexion.close();
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-7-configuracion-xml-vs-java">
+    <h2><i class="fa-solid fa-pen-to-square"></i> 3.7 Configuración XML vs Java</h2>
+    <div class="doc-content">
+<h3>Configuración XML (Legacy)</h3>
+<pre><code class="language-xml">&lt;!-- beans.xml - Configuración tradicional --&gt;
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd"&gt;
+    
+    &lt;!-- Definir un bean --&gt;
+    &lt;bean id="usuarioService" class="com.ejemplo.UsuarioService"&gt;
+        &lt;constructor-arg ref="usuarioRepository"/&gt;
+    &lt;/bean&gt;
+    
+    &lt;bean id="usuarioRepository" class="com.ejemplo.UsuarioRepositoryImpl"/&gt;
+    
+&lt;/beans&gt;</code></pre>
+<h3>Configuración Java (Moderna $1 )</h3>
+<pre><code class="language-java">@Configuration
+public class AppConfig {
+    
+    @Bean
+    public UsuarioRepository usuarioRepository() {
+        return new UsuarioRepositoryImpl();
+    }
+    
+    @Bean
+    public UsuarioService usuarioService(UsuarioRepository repository) {
+        return new UsuarioService(repository);
+    }
+}</code></pre>
+<blockquote class="aside aside-tip">
+La configuración Java es **type-safe** y permite refactorización con el IDE. Siempre prefiere Java sobre XML.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-8-configuracion-basada-en-anotaciones">
+    <h2><i class="fa-solid fa-tag"></i> 3.8 Configuración Basada en Anotaciones</h2>
+    <div class="doc-content">
+<h3>Anotaciones principales</h3>
+<pre><code class="language-java">// @Configuration - Clase de configuración
+@Configuration
+public class AppConfig {
+    
+    // @Bean - Define un bean manualmente
+    @Bean
+    public MiServicio miServicio() {
+        return new MiServicio();
+    }
+}
+
+// @Component - Bean genérico (detectado por escaneo)
+@Component
+public class MiComponente { }
+
+// @Service - Bean de lógica de negocio
+@Service
+public class UsuarioService { }
+
+// @Repository - Bean de acceso a datos
+@Repository
+public class UsuarioRepository { }
+
+// @Controller - Bean de controlador web
+@Controller
+public class UsuarioController { }
+
+// @RestController - Controlador REST (combina @Controller + @ResponseBody)
+@RestController
+public class ApiController { }</code></pre>
+<h3>Escaneo de componentes</h3>
+<pre><code class="language-java">// Spring Boot escanea automáticamente desde el paquete base
+@SpringBootApplication  // Incluye @ComponentScan
+public class MiAplicacion {
+    public static void main(String[] args) {
+        SpringApplication.run(MiAplicacion.class, args);
+    }
+}
+
+// Escaneo manual (si es necesario)
+@Configuration
+@ComponentScan(basePackages = "com.ejemplo")
+public class AppConfig { }</code></pre>
+<h3>Jerarquía de anotaciones</h3>
+<pre><code class="language-text">                    @Component
+                         │
+          ┌──────────────┼──────────────┐
+          │              │              │
+     @Service      @Repository    @Controller
+          │                            │
+          │                      @RestController</code></pre>
+<blockquote class="aside aside-note">
+`@Service`, `@Repository` y `@Controller` son especializaciones de `@Component`. Funcionalmente son iguales, pero semánticamente indican el propósito del bean.
+</blockquote>
+    </div>
+  </section>

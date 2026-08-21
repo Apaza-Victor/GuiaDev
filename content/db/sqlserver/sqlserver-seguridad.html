@@ -1,0 +1,48 @@
+<!-- 15. Seguridad: logins, usuarios y permisos - SQL Server (Base de Datos) -->
+<!-- Contenido local del proyecto -->
+  <section id="login-vs-usuario">
+    <h2>Login vs Usuario</h2>
+    <div class="doc-content">
+<p>Un <strong>login</strong> da acceso al SERVIDOR; un <strong>usuario</strong> mapea ese login dentro de UNA base de datos. Son dos niveles.</p>
+<pre><code class="language-sql">-- Nivel servidor
+CREATE LOGIN vendedor WITH PASSWORD = 'S3gura!2026', CHECK_POLICY = ON;
+
+-- Nivel base de datos
+USE Tienda;
+CREATE USER vendedor FOR LOGIN vendedor;</code></pre>
+    </div>
+  </section>
+
+  <section id="roles-fijos-de-base-de-datos">
+    <h2>Roles fijos de base de datos</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">ALTER ROLE db_datareader ADD MEMBER vendedor;   -- solo lectura
+ALTER ROLE db_datawriter ADD MEMBER vendedor;   -- lectura/escritura
+ALTER ROLE db_ddladmin  ADD MEMBER desarrollador; -- puede crear objetos</code></pre>
+<p>Roles clave: <code>db_datareader</code>, <code>db_datawriter</code>, <code>db_ddladmin</code>, <code>db_owner</code> (control total de la BD).</p>
+    </div>
+  </section>
+
+  <section id="grant-deny-y-revoke">
+    <h2>GRANT, DENY y REVOKE</h2>
+    <div class="doc-content">
+<pre><code class="language-sql">GRANT SELECT, EXECUTE ON SCHEMA::ventas TO vendedor;
+DENY DELETE ON dbo.Facturas TO vendedor;   -- gana sobre cualquier GRANT
+REVOKE DENY ON dbo.Facturas FROM vendedor; -- revierte el DENY</code></pre>
+    </div>
+  </section>
+
+  <section id="buenas-practicas">
+    <h2>Buenas prácticas</h2>
+    <div class="doc-content">
+<ul>
+<li>Usa <strong>Windows Authentication</strong> cuando sea posible (integrada con AD).</li>
+<li>Principio de mínimo privilegio: nada de trabajar con <code>sa</code>.</li>
+<li>Contraseñas con política (<code>CHECK_POLICY = ON</code>).</li>
+<li>Audita con <code>sys.server_principals</code>, <code>sys.database_permissions</code> y SQL Server Audit.</li>
+</ul>
+<pre><code class="language-sql">-- ¿Quién tiene acceso y con qué permisos?
+SELECT name, type_desc FROM sys.server_principals WHERE type IN ('S','U');
+SELECT * FROM fn_my_permissions(NULL, 'DATABASE');</code></pre>
+    </div>
+  </section>

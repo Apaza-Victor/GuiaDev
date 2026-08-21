@@ -1,0 +1,255 @@
+<!-- 15. Programación asíncrona - JavaScript (Lenguajes de Programación) -->
+  <section id="callbacks-basico">
+    <h2>Callbacks <span class="hc-badge hc-badge-note">Básico</span></h2>
+    <div class="doc-content">
+<h3>Callbacks básicos</h3>
+<pre><code class="language-javascript">// Función con callback
+function obtenerDatos(callback) {
+    setTimeout(() =&gt; {
+        const datos = { id: 1, nombre: 'Juan' };
+        callback(datos);
+    }, 1000);
+}
+
+// Uso
+obtenerDatos((datos) =&gt; {
+    console.log(datos);
+});</code></pre>
+<h3>Callback Hell</h3>
+<pre><code class="language-javascript">obtenerUsuario(1, (usuario) =&gt; {
+    obtenerPosts(usuario.id, (posts) =&gt; {
+        obtenerComentarios(posts[0].id, (comentarios) =&gt; {
+            obtenerAutor(comentarios[0].autorId, (autor) =&gt; {
+                console.log(autor);
+            });
+        });
+    });
+});</code></pre>
+    </div>
+  </section>
+
+  <section id="promesas-importante">
+    <h2>Promesas <span class="hc-badge hc-badge-danger">Importante</span></h2>
+    <div class="doc-content">
+<h3>Crear promesas</h3>
+<pre><code class="language-javascript">// Crear una promesa
+const miPromesa = new Promise((resolve, reject) =&gt; {
+    setTimeout(() =&gt; {
+        const exito = true;
+        if (exito) {
+            resolve('Operación exitosa');
+        } else {
+            reject('Algo salió mal');
+        }
+    }, 1000);
+});
+
+// Usar la promesa
+miPromesa
+    .then(resultado =&gt; console.log(resultado))
+    .catch(error =&gt; console.error(error));</code></pre>
+<h3>Encadenar promesas</h3>
+<pre><code class="language-javascript">obtenerUsuario(1)
+    .then(usuario =&gt; obtenerPosts(usuario.id))
+    .then(posts =&gt; obtenerComentarios(posts[0].id))
+    .then(comentarios =&gt; obtenerAutor(comentarios[0].autorId))
+    .then(autor =&gt; console.log(autor))
+    .catch(error =&gt; console.error(error));</code></pre>
+<h3>Promise.all y Promise.race</h3>
+<pre><code class="language-javascript">// Ejecutar promesas en paralelo
+const promesa1 = fetch('/api/usuarios');
+const promesa2 = fetch('/api/posts');
+
+// Esperar que todas se completen
+Promise.all([promesa1, promesa2])
+    .then(([usuarios, posts]) =&gt; {
+        console.log(usuarios, posts);
+    })
+    .catch(error =&gt; console.error(error));
+
+// Obtener la primera que se complete
+Promise.race([promesa1, promesa2])
+    .then(resultado =&gt; console.log(resultado))
+    .catch(error =&gt; console.error(error));</code></pre>
+    </div>
+  </section>
+
+  <section id="async-await-moderno">
+    <h2>async/await <span class="hc-badge hc-badge-success">Moderno</span></h2>
+    <div class="doc-content">
+<h3>Sintaxis básica</h3>
+  <h4 class="tab-label">Ejemplo con API YesNo</h4>
+    <pre><code class="language-javascript">    async function obtenerRespuesta() {
+        try {
+            // Hacer la petición a la API
+            const respuesta = await fetch('https://yesno.wtf/api');
+            const datos = await respuesta.json();
+            
+            // Extraer la respuesta y la imagen
+            return {
+                respuesta: datos.answer,   // 'yes' o 'no'
+                imagen: datos.image       // URL del GIF
+            };
+        } catch (error) {
+            console.error('Error:', error);
+            throw error;
+        }
+    }
+
+    // Uso
+    const resultado = await obtenerRespuesta();
+    console.log(resultado);
+    // { respuesta: 'yes', imagen: 'https://yesno.wtf/assets/yes/2.gif' }
+    </code></pre>
+  <h4 class="tab-label">Ejemplo con Datos</h4>
+    <pre><code class="language-javascript">    async function obtenerDatos() {
+        try {
+            const usuario = await obtenerUsuario(1);
+            const posts = await obtenerPosts(usuario.id);
+            const comentarios = await obtenerComentarios(posts[0].id);
+            return comentarios;
+        } catch (error) {
+            console.error('Error:', error);
+            throw error;
+        }
+    }
+    </code></pre>
+<h3>Paralelismo con async/await</h3>
+<pre><code class="language-javascript">async function obtenerDatosParalelo() {
+    try {
+        // Iniciar todas las promesas
+        const usuarioPromise = obtenerUsuario(1);
+        const postsPromise = obtenerPosts(1);
+        
+        // Esperar que todas se completen
+        const [usuario, posts] = await Promise.all([
+            usuarioPromise,
+            postsPromise
+        ]);
+        
+        return { usuario, posts };
+    } catch (error) {
+        console.error('Error:', error);
+        throw error;
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <section id="patrones-avanzados-avanzado">
+    <h2>Patrones avanzados <span class="hc-badge hc-badge-note">Avanzado</span></h2>
+    <div class="doc-content">
+<h3>Retry pattern</h3>
+<pre><code class="language-javascript">async function conReintentos(fn, maxIntentos = 3) {
+    for (let intento = 1; intento &lt;= maxIntentos; intento++) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (intento === maxIntentos) throw error;
+            console.warn(\`Intento \${intento} fallido, reintentando...\`);
+            await new Promise(r =&gt; setTimeout(r, 1000 * intento));
+        }
+    }
+}</code></pre>
+<h3>Timeout pattern</h3>
+<pre><code class="language-javascript">function conTimeout(promesa, ms) {
+    const timeout = new Promise((_, reject) =&gt; {
+        setTimeout(() =&gt; reject(new Error('Timeout')), ms);
+    });
+    
+    return Promise.race([promesa, timeout]);
+}
+
+// Uso
+async function obtenerDatos() {
+    try {
+        const resultado = await conTimeout(
+            fetch('https://api.ejemplo.com/datos'),
+            5000
+        );
+        return resultado.json();
+    } catch (error) {
+        console.error('Error o timeout:', error);
+        throw error;
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <section id="mejores-practicas-recomendado">
+    <h2>Mejores prácticas <span class="hc-badge hc-badge-tip">Recomendado</span></h2>
+    <div class="doc-content">
+<h3>Manejo de errores</h3>
+<pre><code class="language-javascript">// ❌ Malo
+async function obtenerDatos() {
+    const datos = await fetch('/api/datos');
+    return datos.json();
+}
+
+// ✅ Bueno
+async function obtenerDatos() {
+    try {
+        const respuesta = await fetch('/api/datos');
+        if (!respuesta.ok) {
+            throw new Error(\`HTTP error! status: \${respuesta.status}\`);
+        }
+        const datos = await respuesta.json();
+        return datos;
+    } catch (error) {
+        console.error('Error al obtener datos:', error);
+        throw error;
+    }
+}</code></pre>
+<h3>Limpieza de recursos</h3>
+<pre><code class="language-javascript">class RecursoAsíncrono {
+    constructor() {
+        this.controlador = new AbortController();
+    }
+
+    async obtenerDatos() {
+        try {
+            const respuesta = await fetch('/api/datos', {
+                signal: this.controlador.signal
+            });
+            return await respuesta.json();
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('Solicitud cancelada');
+            }
+            throw error;
+        }
+    }
+
+    cancelar() {
+        this.controlador.abort();
+    }
+}</code></pre>
+<h3>Caché de promesas</h3>
+<pre><code class="language-javascript">class CachePromesas {
+    constructor() {
+        this.cache = new Map();
+    }
+
+    async obtener(key, promesaFn) {
+        if (!this.cache.has(key)) {
+            this.cache.set(key, promesaFn());
+        }
+        return this.cache.get(key);
+    }
+
+    limpiar(key) {
+        if (key) {
+            this.cache.delete(key);
+        } else {
+            this.cache.clear();
+        }
+    }
+}
+
+// Uso
+const cache = new CachePromesas();
+const datos = await cache.obtener('usuario-1', () =&gt; 
+    fetch('/api/usuarios/1').then(r =&gt; r.json())
+);</code></pre>
+    </div>
+  </section>
