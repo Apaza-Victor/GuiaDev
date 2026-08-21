@@ -8,7 +8,7 @@ Plataforma web de documentación técnica para aprender y consultar conceptos de
 - Navegación SPA basada en hash con scroll-spy y tabla de contenidos automática
 - Tema claro/oscuro con persistencia en `localStorage`
 - Buscador global con atajo `Ctrl+K`
-- Fondo 3D animado por sección (Vanta.js) con detección de WebGL y modo reducido
+- Fondos animados por sección (Vanta.js, GitGraph.js, tsParticles y canvas propio) con detección de WebGL y modo reducido
 - Iconos Font Awesome 6 y animaciones con anime.js
 - Contenido externalizado: cada lección vive en su propio HTML dentro de `content/` y se carga vía `fetch()`
 - Componentes de documentación: bloques de código con copiar, tabs, asides, steps, badges, diagramas PlantUML, demos HTML embebidas y pronunciación con Web Speech API
@@ -22,6 +22,7 @@ Plataforma web de documentación técnica para aprender y consultar conceptos de
 | Font Awesome 6 | Iconografía |
 | anime.js | Animaciones |
 | Vanta.js + three.js | Fondos 3D por sección |
+| GitGraph.js + tsParticles + Canvas 2D | Fondos temáticos (Git, Inglés, Recursos) |
 | highlight.js | Resaltado de sintaxis |
 | Web Speech API | Pronunciación (sección Inglés) |
 
@@ -38,7 +39,8 @@ GuiaDev/
 │   ├── page.js             ← Clase CategoryPage: carga lecciones desde content/ vía fetch
 │   ├── shared.js           ← Funciones compartidas GuiaDev.* (header nav, búsqueda, TOC)
 │   ├── animations.js       ← Animaciones GuiaDevAnimations.*
-│   └── bg3d.js             ← Fondo 3D Vanta.js por sección
+│   ├── bg3d.js             ← Fondos animados por sección (Vanta/GitGraph/tsParticles)
+│   └── bg-custom.js        ← Efectos canvas propios (letras flotantes)
 ├── pages/                  ← Una página por categoría (usan CategoryPage)
 │   ├── entrevistas.html
 │   ├── db.html

@@ -10,16 +10,25 @@
     'lenguajes': 'dots',
     'frameworks': 'topology',
     'db': 'fog',
-    'git': 'cells',
+    'git': 'gitgraph',
     'uml': 'net',
     'is': 'halo',
     'utilidades': 'rings',
     'entrevistas': 'birds',
-    'ingles': 'birds',
-    'recursos': 'halo'
+    'ingles': 'letters',
+    'recursos': 'firefly'
   };
 
   var P5_EFFECTS = ['trunk', 'topology'];
+  var GITGRAPH_URL = 'https://cdn.jsdelivr.net/npm/@gitgraph/js';
+  var TSP_PRESETS = {
+    firefly: {
+      script: 'https://cdn.jsdelivr.net/npm/@tsparticles/preset-firefly@4/tsparticles.preset.firefly.bundle.min.js',
+      loader: 'loadFireflyPreset'
+    }
+  };
+  var CUSTOM_2D = ['letters'];
+  var gen = 0;
   var VALID = Object.keys(SECTION_EFFECTS).map(function (k) { return SECTION_EFFECTS[k]; });
 
   function sectionEffect() {
@@ -139,37 +148,182 @@
     })(0);
   }
 
+  function startGitgraph(host, p, ready, fail) {
+    try {
+      var box = document.createElement('div');
+      box.className = 'bg-gitgraph';
+      host.appendChild(box);
+
+      var template = GitgraphJS.templateExtend('metro', {
+        colors: [
+          p.dark ? '#fbbf24' : '#b45309',
+          p.dark ? '#f97316' : '#d97706',
+          p.dark ? '#fde68a' : '#92400e'
+        ],
+        branch: { label: { display: false } },
+        commit: { message: { display: false }, dot: { size: 9 } }
+      });
+
+      var graph = GitgraphJS.createGitgraph(box, { template: template });
+      var main = graph.branch('main');
+      main.commit('init');
+
+      var branches = [];
+      var count = 1;
+      var MAX = 40;
+
+      var timer = setInterval(function () {
+        try {
+          var r = Math.random();
+          if (r < 0.45 || branches.length === 0) {
+            main.commit('commit');
+          } else if (r < 0.72) {
+            branches[Math.floor(Math.random() * branches.length)].commit('feat');
+          } else if (r < 0.88 && branches.length < 4) {
+            branches.push(main.branch('feature/' + (branches.length + 1)));
+          } else if (branches.length) {
+            main.merge(branches.splice(Math.floor(Math.random() * branches.length), 1)[0]);
+          }
+          count++;
+          if (count >= MAX) clearInterval(timer);
+        } catch (e) { /* grafo cerrado */ }
+      }, 800);
+
+      ready({
+        destroy: function () {
+          clearInterval(timer);
+          if (box.parentNode) box.parentNode.removeChild(box);
+        }
+      });
+    } catch (err) {
+      fail();
+    }
+  }
+
+  function startFirefly(name, host, p, ready, fail) {
+    var preset = TSP_PRESETS[name];
+    loadScript(preset.script, function () {
+      if (typeof tsParticles === 'undefined' || typeof window[preset.loader] !== 'function') {
+        fail();
+        return;
+      }
+      Promise.resolve(window[preset.loader](tsParticles))
+        .then(function () {
+          return tsParticles.load({
+            id: 'bg3d',
+            options: {
+              fullScreen: false,
+              preset: name,
+              background: { color: 'transparent' },
+              fpsLimit: 40,
+              detectRetina: true,
+              interactivity: {
+                events: { onHover: { enable: false }, onClick: { enable: false }, resize: false }
+              },
+              particles: {
+                number: { value: p.dark ? 42 : 30 },
+                move: { speed: 0.7 }
+              }
+            }
+          });
+        })
+        .then(function (inst) {
+          ready({
+            destroy: function () {
+              try { inst.destroy(); } catch (e) { /* noop */ }
+            }
+          });
+        })
+        .catch(fail);
+    }, fail);
+  }
+
   function start() {
     if (effect) return;
     if (!isMainView()) return;
-    if (mqReduce.matches || window.innerWidth < 900 || !webglOK()) return;
+    if (mqReduce.matches || window.innerWidth < 900) return;
+
+    var name = effectName();
+    var isCustom = name === 'gitgraph' || !!TSP_PRESETS[name] || CUSTOM_2D.indexOf(name) !== -1;
+    if (!isCustom && !webglOK()) return;
 
     var host = document.createElement('div');
     host.id = 'bg3d';
     document.body.insertBefore(host, document.body.firstChild);
 
-    var name = effectName();
+    var myGen = ++gen;
+
+    function ready(handle) {
+      if (myGen !== gen || !isMainView() || !document.getElementById('bg3d')) {
+        if (handle && typeof handle.destroy === 'function') {
+          try { handle.destroy(); } catch (e) { /* noop */ }
+        }
+        return;
+      }
+      effect = handle;
+      lastTheme = document.documentElement.getAttribute('data-theme');
+    }
+
+    function fail() {
+      if (myGen !== gen) return;
+      var h = document.getElementById('bg3d');
+      if (h) h.remove();
+    }
+
+    if (name === 'gitgraph') {
+      if (typeof window.GitgraphJS !== 'undefined') {
+        startGitgraph(host, palette(), ready, fail);
+      } else {
+        loadScript(GITGRAPH_URL, function () {
+          if (typeof window.GitgraphJS !== 'undefined') {
+            startGitgraph(host, palette(), ready, fail);
+          } else {
+            fail();
+          }
+        }, fail);
+      }
+      return;
+    }
+
+    if (TSP_PRESETS[name]) {
+      startFirefly(name, host, palette(), ready, fail);
+      return;
+    }
+
+    if (CUSTOM_2D.indexOf(name) !== -1) {
+      var boot = function () {
+        if (window.GuiaDevCustomBG && typeof window.GuiaDevCustomBG.start === 'function') {
+          var handle = window.GuiaDevCustomBG.start(name, host, palette());
+          if (handle) ready(handle);
+          else fail();
+        } else {
+          fail();
+        }
+      };
+      if (window.GuiaDevCustomBG) boot();
+      else loadScript('js/bg-custom.js', boot, fail);
+      return;
+    }
 
     loadEffectScript(name, function () {
-      if (!isMainView() || !document.getElementById('bg3d')) {
+      if (myGen !== gen || !isMainView() || !document.getElementById('bg3d')) {
         return;
       }
       var fn = typeof VANTA !== 'undefined' && VANTA[name.toUpperCase()];
       if (typeof fn !== 'function') {
-        host.remove();
+        fail();
         return;
       }
       try {
-        effect = fn(buildOptions(palette()));
-        lastTheme = document.documentElement.getAttribute('data-theme');
+        ready(fn(buildOptions(palette())));
       } catch (err) {
-        host.remove();
-        effect = null;
+        fail();
       }
     });
   }
 
   function stop() {
+    gen++;
     if (effect) {
       try { effect.destroy(); } catch (e) { /* noop */ }
       effect = null;
