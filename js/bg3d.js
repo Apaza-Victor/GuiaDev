@@ -10,13 +10,13 @@
     'lenguajes': 'dots',
     'frameworks': 'topology',
     'db': 'fog',
-    'git': 'trunk',
+    'git': 'cells',
     'uml': 'net',
     'is': 'halo',
     'utilidades': 'rings',
     'entrevistas': 'birds',
-    'ingles': 'waves',
-    'recursos': 'clouds'
+    'ingles': 'birds',
+    'recursos': 'halo'
   };
 
   var P5_EFFECTS = ['trunk', 'topology'];
@@ -84,6 +84,14 @@
         return Object.assign(base, { size: 1.1 });
       case 'birds':
         return Object.assign(base, { backgroundAlpha: 0 });
+      case 'cells':
+        return Object.assign(base, {
+          color1: p.color,
+          color2: p.color2,
+          color3: p.dark ? 0xfde68a : 0xb45309,
+          size: 1.15,
+          speed: 1.1
+        });
       case 'fog':
         return Object.assign(base, {
           highlightColor: p.color,
