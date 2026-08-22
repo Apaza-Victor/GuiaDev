@@ -6,7 +6,7 @@ Plataforma web de documentación técnica para aprender y consultar conceptos de
 
 ## Características
 
-- **470 lecciones** organizadas en **10 categorías** temáticas
+- **497 lecciones** organizadas en **10 categorías** temáticas
 - Navegación SPA basada en hash con scroll-spy y tabla de contenidos automática
 - **Hub de acceso rápido en Recursos**: todo el directorio de enlaces en una sola vista con filtro instantáneo, sin navegar lección por lección
 - Tema claro/oscuro con persistencia en `localStorage`
@@ -91,10 +91,10 @@ Luego abre `http://localhost:8080`.
 | Entrevistas Laborales | JavaScript, React, Java, Spring, TypeScript | 15 |
 | Ingeniería de Software | Fundamentos (4), Requerimientos (5), Ciclo de Vida (3) | 12 |
 | Utilidades | Librerías (9), Ziggy (6), NPM (1), PNPM (1) | 17 |
-| Inglés | Básico A1-A2 | 12 |
+| Inglés | Básico A1-A2 (12), Intermedio B1-B2 (10), Avanzado C1-C2 (5), Habilidades Clave (6), Para Devs (6) | 39 |
 | Control de Versiones | GitHub (7), GitLab (4), Bitbucket (3), Azure DevOps (4), Gitea (3), Clientes Gráficos (5), GitHub CLI (3), Git LFS (2), Calidad de Commits (3), CI/CD (4) | 38 |
 | Recursos | Docs oficiales (2), Herramientas (2), Práctica (2), Comunidades (3), Aprendizaje (1), Software Gratuito (1), Multimedia (1), Hosting y Despliegue (1), APIs y Datos (1), Inteligencia Artificial (1), Referencia Rápida (2) | 17 |
-| **Total** | | **470** |
+| **Total** | | **497** |
 
 ## Fondos animados por sección
 

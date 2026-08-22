@@ -6716,6 +6716,340 @@ const DOCS_DATA = {
             "contentFile": "content/ingles/basico/ing-produccion-final.html"
           }
         ]
+      },
+      {
+        "id": "intermedio",
+        "title": "Intermedio (B1-B2)",
+        "icon": "fa-solid fa-arrow-trend-up",
+        "lessons": [
+          {
+            "id": "ing-int-pasado",
+            "title": "01. Pasado Simple y Narración",
+            "content": "Tiempos de pasado, past continuous y cómo contar historias",
+            "sections": [
+              "Past Simple: Regulares e Irregulares",
+              "Past Continuous: Acciones en Progreso",
+              "Narrar Historias en Pasado"
+            ],
+            "contentFile": "content/ingles/intermedio/ing-int-pasado.html"
+          },
+          {
+            "id": "ing-int-present-perfect",
+            "title": "02. Present Perfect vs Past Simple",
+            "content": "El tiempo perfecto: experiencias, for/since y la decisión clave",
+            "sections": [
+              "Formación y Usos del Present Perfect",
+              "Just, Already, Yet y Experiencias",
+              "For vs Since",
+              "Present Perfect vs Past Simple"
+            ],
+            "contentFile": "content/ingles/intermedio/ing-int-present-perfect.html"
+          },
+          {
+            "id": "ing-int-futuros",
+            "title": "03. Todos los Futuros",
+            "content": "Will, going to, present continuous y futuros avanzados",
+            "sections": [
+              "Will: Predicciones y Decisiones",
+              "Going To: Planes e Intenciones",
+              "Present Continuous para Futuro",
+              "Futuros Avanzados: Perfecto y Continuo"
+            ],
+            "contentFile": "content/ingles/intermedio/ing-int-futuros.html"
+          },
+          {
+            "id": "ing-int-condicionales",
+            "title": "04. Condicionales del 0 al 3",
+            "content": "Zero, first, second, third y mixed conditionals",
+            "sections": [
+              "Zero y First Conditional",
+              "Second Conditional: Hipotéticos",
+              "Third Conditional: Pasados Imaginarios",
+              "Mixed Conditionals"
+            ],
+            "contentFile": "content/ingles/intermedio/ing-int-condicionales.html"
+          },
+          {
+            "id": "ing-int-modales",
+            "title": "05. Verbos Modales",
+            "content": "Habilidad, obligación, probabilidad y deducciones",
+            "sections": [
+              "Habilidad y Permiso: Can, Could, Be Able To",
+              "Obligación: Must, Have To, Should",
+              "Probabilidad: May, Might, Could",
+              "Deducciones: Must, Can't, Might"
+            ],
+            "contentFile": "content/ingles/intermedio/ing-int-modales.html"
+          },
+          {
+            "id": "ing-int-pasiva-reported",
+            "title": "06. Voz Pasiva y Reported Speech",
+            "content": "La pasiva técnica y contar lo que otros dijeron",
+            "sections": [
+              "La Voz Pasiva",
+              "Reported Speech: Statements",
+              "Preguntas y Órdenes Reportadas"
+            ],
+            "contentFile": "content/ingles/intermedio/ing-int-pasiva-reported.html"
+          },
+          {
+            "id": "ing-int-comparativos",
+            "title": "07. Comparativos, Superlativos y Relativas",
+            "content": "Comparar y unir ideas con cláusulas relativas",
+            "sections": [
+              "Comparativos y Superlativos",
+              "Cláusulas Relativas: Who, Which, That",
+              "Defining vs Non-Defining"
+            ],
+            "contentFile": "content/ingles/intermedio/ing-int-comparativos.html"
+          },
+          {
+            "id": "ing-int-usedto-gerundios",
+            "title": "08. Used To, Gerundios e Infinitivos",
+            "content": "Hábitos del pasado y la batalla -ing vs to",
+            "sections": [
+              "Used To, Be Used To, Get Used To",
+              "Verbos + Gerundio",
+              "Verbos + Infinitivo",
+              "Cambios de Significado"
+            ],
+            "contentFile": "content/ingles/intermedio/ing-int-usedto-gerundios.html"
+          },
+          {
+            "id": "ing-int-conectores",
+            "title": "09. Conectores y Párrafos",
+            "content": "Linking words y estructura de párrafo para escribir mejor",
+            "sections": [
+              "Conectores de Adición y Contraste",
+              "Causa, Resultado y Secuencia",
+              "Estructura del Párrafo"
+            ],
+            "contentFile": "content/ingles/intermedio/ing-int-conectores.html"
+          },
+          {
+            "id": "ing-int-phrasal-idioms",
+            "title": "10. Phrasal Verbs e Idioms Intermedios",
+            "content": "Los phrasals con GET, TAKE, PUT y los idioms esenciales",
+            "sections": [
+              "Phrasal Verbs con GET",
+              "Phrasal Verbs con TAKE y PUT",
+              "Idioms Esenciales"
+            ],
+            "contentFile": "content/ingles/intermedio/ing-int-phrasal-idioms.html"
+          }
+        ]
+      },
+      {
+        "id": "avanzado",
+        "title": "Avanzado (C1-C2)",
+        "icon": "fa-solid fa-crown",
+        "lessons": [
+          {
+            "id": "ing-adv-inversion",
+            "title": "01. Inversión y Énfasis",
+            "content": "Inversión con negativos, condicional formal y cleft sentences",
+            "sections": [
+              "Inversión con Negativos",
+              "Inversión Condicional",
+              "Cleft Sentences"
+            ],
+            "contentFile": "content/ingles/avanzado/ing-adv-inversion.html"
+          },
+          {
+            "id": "ing-adv-registro",
+            "title": "02. Registro Formal e Informal",
+            "content": "El espectro del registro, hedging y slang seguro",
+            "sections": [
+              "El Espectro del Registro",
+              "Hedging y Cortesía Avanzada",
+              "Colloquialisms y Slang Seguro"
+            ],
+            "contentFile": "content/ingles/avanzado/ing-adv-registro.html"
+          },
+          {
+            "id": "ing-adv-escritura",
+            "title": "03. Escritura Académica y Profesional",
+            "content": "Cohesión, nominalización, reports y estilo conciso",
+            "sections": [
+              "Cohesión y Nominalización",
+              "Reports y Propuestas",
+              "Estilo Conciso"
+            ],
+            "contentFile": "content/ingles/avanzado/ing-adv-escritura.html"
+          },
+          {
+            "id": "ing-adv-matices",
+            "title": "04. Matices Gramaticales Avanzados",
+            "content": "Modales en pasado, subjuntivo, ellipsis y discourse markers",
+            "sections": [
+              "Modales en Pasado",
+              "Subjuntivo y Fórmulas Fijas",
+              "Ellipsis y Substitution",
+              "Discourse Markers Sofisticados"
+            ],
+            "contentFile": "content/ingles/avanzado/ing-adv-matices.html"
+          },
+          {
+            "id": "ing-adv-fluidez",
+            "title": "05. Fluidez Nativa: Colocaciones y Estilo",
+            "content": "Colocaciones avanzadas, rango idiomático y cortesía social",
+            "sections": [
+              "Colocaciones Avanzadas",
+              "Rango Idiomático",
+              "Eufemismos y Cortesía Social"
+            ],
+            "contentFile": "content/ingles/avanzado/ing-adv-fluidez.html"
+          }
+        ]
+      },
+      {
+        "id": "habilidades",
+        "title": "Habilidades Clave",
+        "icon": "fa-solid fa-dumbbell",
+        "lessons": [
+          {
+            "id": "ing-hab-articulos",
+            "title": "01. Artículos y Estructuras Olvidadas",
+            "content": "A/an/the, zero article, there is/are y do-support",
+            "sections": [
+              "A vs An vs The",
+              "Zero Article en Detalle",
+              "There Is / There Are",
+              "Preguntas y Negaciones con Do"
+            ],
+            "contentFile": "content/ingles/habilidades/ing-hab-articulos.html"
+          },
+          {
+            "id": "ing-hab-sonidos",
+            "title": "02. Sonidos Problemáticos",
+            "content": "Minimal pairs, B/V, TH, terminación -ED y letras mudas",
+            "sections": [
+              "Minimal Pairs Críticos",
+              "B vs V y TH",
+              "Terminación -ED",
+              "Letras Mudas y Trampas"
+            ],
+            "contentFile": "content/ingles/habilidades/ing-hab-sonidos.html"
+          },
+          {
+            "id": "ing-hab-ritmo",
+            "title": "03. Ritmo: Acento y Connected Speech",
+            "content": "Word stress, weak forms, linking y entonación",
+            "sections": [
+              "Word Stress",
+              "Sentence Stress y Weak Forms",
+              "Linking y Elision",
+              "Entonación"
+            ],
+            "contentFile": "content/ingles/habilidades/ing-hab-ritmo.html"
+          },
+          {
+            "id": "ing-hab-falsos-amigos",
+            "title": "04. Falsos Amigos y Errores Típicos",
+            "content": "Los falsos amigos clásicos y el Spanglish a evitar",
+            "sections": [
+              "Falsos Amigos Clásicos",
+              "Errores de Hispanohablantes",
+              "Spanglish a Evitar"
+            ],
+            "contentFile": "content/ingles/habilidades/ing-hab-falsos-amigos.html"
+          },
+          {
+            "id": "ing-hab-writing",
+            "title": "05. Emails y Writing Práctico",
+            "content": "Emails formales e informales y mensajes profesionales",
+            "sections": [
+              "Email Formal vs Informal",
+              "Estructura de un Email",
+              "Mensajes Profesionales Cortos"
+            ],
+            "contentFile": "content/ingles/habilidades/ing-hab-writing.html"
+          },
+          {
+            "id": "ing-hab-autonomo",
+            "title": "06. Reading y Listening Autónomo",
+            "content": "Estrategias de lectura, escucha activa y rutina de inmersión",
+            "sections": [
+              "Estrategias de Lectura",
+              "Escucha Activa Diaria",
+              "Tu Rutina de Inmersión"
+            ],
+            "contentFile": "content/ingles/habilidades/ing-hab-autonomo.html"
+          }
+        ]
+      },
+      {
+        "id": "devs",
+        "title": "Inglés para Devs",
+        "icon": "fa-solid fa-code",
+        "lessons": [
+          {
+            "id": "ing-dev-vocabulario",
+            "title": "01. Vocabulario Técnico del Programador",
+            "content": "Términos del día a día, pronunciación tech y verbos fuertes",
+            "sections": [
+              "Términos del Día a Día",
+              "Pronunciación de Términos Tech",
+              "Verbos de Desarrollo"
+            ],
+            "contentFile": "content/ingles/devs/ing-dev-vocabulario.html"
+          },
+          {
+            "id": "ing-dev-standup",
+            "title": "02. Daily Standups y Ceremonias Ágiles",
+            "content": "Tu daily en inglés, blockers, retros y planning",
+            "sections": [
+              "Dar tu Daily en Inglés",
+              "Blockers y Updates",
+              "Retros y Planning"
+            ],
+            "contentFile": "content/ingles/devs/ing-dev-standup.html"
+          },
+          {
+            "id": "ing-dev-code-review",
+            "title": "03. Code Reviews y Feedback",
+            "content": "Comentar PRs, dar feedback con tacto y discutir trade-offs",
+            "sections": [
+              "Comentar un Pull Request",
+              "Dar Feedback con Tacto",
+              "Discutir Trade-offs"
+            ],
+            "contentFile": "content/ingles/devs/ing-dev-code-review.html"
+          },
+          {
+            "id": "ing-dev-documentacion",
+            "title": "04. Documentación Técnica en Inglés",
+            "content": "READMEs, conventional commits y estilo de docs",
+            "sections": [
+              "READMEs y Guías",
+              "Commits y PRs Convencionales",
+              "Estilo de Docs Técnicas"
+            ],
+            "contentFile": "content/ingles/devs/ing-dev-documentacion.html"
+          },
+          {
+            "id": "ing-dev-entrevistas",
+            "title": "05. Entrevistas Laborales en Inglés",
+            "content": "Pitch personal, método STAR y preguntas técnicas en voz alta",
+            "sections": [
+              "El Pitch Personal",
+              "STAR: Responder por Competencias",
+              "Preguntas Técnicas Comunes"
+            ],
+            "contentFile": "content/ingles/devs/ing-dev-entrevistas.html"
+          },
+          {
+            "id": "ing-dev-cv",
+            "title": "06. CV y LinkedIn en Inglés",
+            "content": "Action verbs, summary profesional y LinkedIn optimizado",
+            "sections": [
+              "Action Verbs que Venden",
+              "Summary y Experience",
+              "LinkedIn Optimizado"
+            ],
+            "contentFile": "content/ingles/devs/ing-dev-cv.html"
+          }
+        ]
       }
     ]
   },
@@ -6985,7 +7319,7 @@ const DOCS_DATA = {
 };
 
 const STATS = {
-  "lessons": "470",
+  "lessons": "497",
   "languages": "15",
   "frameworks": "9",
   "diagrams": "49"
