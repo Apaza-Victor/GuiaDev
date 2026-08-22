@@ -1,7 +1,6 @@
 const GuiaDevAnimations = {
   init() {
     if (typeof anime === 'undefined') return;
-    this.observeElements();
     this.initScrollAnimations();
   },
 
@@ -269,37 +268,6 @@ const GuiaDevAnimations = {
       el.style.opacity = '0';
       observer.observe(el);
     });
-  },
-
-  observeElements() {
-    if (typeof MutationObserver === 'undefined') return;
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach(mutation => {
-        mutation.addedNodes.forEach(node => {
-          if (node.nodeType !== 1) return;
-          if (node.classList && (node.classList.contains('category-card') || node.classList.contains('lesson-card'))) {
-            if (typeof IntersectionObserver !== 'undefined') {
-              const io = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                  if (entry.isIntersecting) {
-                    anime({
-                      targets: entry.target,
-                      opacity: [0, 1],
-                      translateY: [30, 0],
-                      duration: 500,
-                      easing: 'easeOutQuad'
-                    });
-                    io.unobserve(entry.target);
-                  }
-                });
-              }, { threshold: 0.1 });
-              io.observe(node);
-            }
-          }
-        });
-      });
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
   }
 };
 

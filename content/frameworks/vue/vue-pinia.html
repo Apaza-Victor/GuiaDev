@@ -1,10 +1,131 @@
-<!-- 16. Pinia (Reemplazo de Vuex) -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Instalar y configurar Pinia, defineStore(), uso de storeToRefs(), acceso a getters y acciones, compartir estado entre componentes</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- 16. Pinia (Reemplazo de Vuex) - Vue 3 (Frameworks) -->
+<section id="por-que-pinia">
+  <h2>¿Por qué Pinia?</h2>
+  <div class="doc-content">
+    <p><strong>Pinia</strong> es la librería oficial de manejo de estado para Vue 3 y reemplaza a Vuex. Nació como prototipo de Vuex 5 y terminó siendo mejor: misma API en todos los stores, tipado completo sin esfuerzo, devtools integrado y cero mutaciones.</p>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Vuex</th><th>Pinia</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>mutations + actions + getters</td><td>Solo state, getters y actions (las actions mutan directo)</td></tr>
+        <tr><td>Un solo store global con módulos</td><td>Múltiples stores planos por dominio</td></tr>
+        <tr><td>Tipado manual y verboso</td><td>Inferencia automática de TypeScript</td></tr>
+        <tr><td>Anidado por namespaces</td><td>Stores se importan y componen libremente</td></tr>
+      </tbody>
+    </table>
+    <p>Regla mental: el estado vive en Pinia cuando <strong>múltiples componentes no relacionados</strong> necesitan compartirlo. El estado local de un formulario o un modal sigue siendo <code>ref()</code> local — no todo debe ir al store.</p>
+  </div>
+</section>
+
+<section id="instalacion-y-configuracion-pinia">
+  <h2>Instalación y configuración</h2>
+  <div class="doc-content">
+    <pre><code class="language-bash">npm install pinia</code></pre>
+    <pre><code class="language-javascript">// src/main.js
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import App from './App.vue';
+
+createApp(App).use(createPinia()).mount('#app');</code></pre>
+    <p>Convención de estructura: un archivo por dominio en <code>src/stores/</code> (<code>counter.js</code>, <code>auth.js</code>, <code>carrito.js</code>). Stores pequeños y cohesivos vencen a un mega-store.</p>
+  </div>
+</section>
+
+<section id="definestore-y-estado">
+  <h2>defineStore() y estado</h2>
+  <div class="doc-content">
+    <pre><code class="language-javascript">// src/stores/carrito.js - sintaxis Options
+import { defineStore } from 'pinia';
+
+export const useCarrito = defineStore('carrito', {
+  state: () => ({
+    items: [],
+    abierto: false
+  }),
+});</code></pre>
+    <pre><code class="language-javascript">// Sintaxis Setup (recomendada en Composition API)
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+
+export const useCarrito = defineStore('carrito', () => {
+  // state = refs
+  const items = ref([]);
+  const abierto = ref(false);
+
+  // getter = computed
+  const total = computed(() =>
+    items.value.reduce((acc, i) => acc + i.precio * i.cantidad, 0)
+  );
+
+  // action = funciones normales
+  function agregar(producto) {
+    const existente = items.value.find(i => i.id === producto.id);
+    existente ? existente.cantidad++ : items.value.push({ ...producto, cantidad: 1 });
+  }
+  function vaciar() { items.value = []; }
+
+  return { items, abierto, total, agregar, vaciar };
+});</code></pre>
+    <ul>
+      <li>El primer argumento es el <strong>id único</strong> del store; úsalo en devtools.</li>
+      <li>En sintaxis setup: <code>ref</code> → state, <code>computed</code> → getter, función → action. Sin ceremonia.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="storetorefs-y-uso-en-componentes">
+  <h2>storeToRefs() y uso en componentes</h2>
+  <div class="doc-content">
+    <p>Dentro de componentes, desestructura con cuidado: las acciones pueden extraerse directo, pero el estado y getters necesitan <code>storeToRefs()</code> para mantener reactividad:</p>
+    <pre><code class="language-vue">&lt;script setup&gt;
+import { useCarrito } from '@/stores/carrito';
+import { storeToRefs } from 'pinia';
+
+const carrito = useCarrito();
+
+// INCORRECTO: pierde reactividad al desestructurar
+// const { items, total } = carrito;
+
+// CORRECTO: refs reactivas
+const { items, total } = storeToRefs(carrito);
+
+// Las acciones SI se extraen directo
+const { agregar, vaciar } = carrito;
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;p&gt;{{ items.length }} productos — Total: ${{ total }}&lt;/p&gt;
+  &lt;button @click="vaciar()"&gt;Vaciar&lt;/button&gt;
+&lt;/template&gt;</code></pre>
+  </div>
+</section>
+
+<section id="compartir-estado-entre-stores">
+  <h2>Compartir estado entre stores</h2>
+  <div class="doc-content">
+    <p>Los stores se combinan simplemente llamándose entre sí:</p>
+    <pre><code class="language-javascript">// src/stores/pedidos.js
+import { defineStore } from 'pinia';
+import { useCarrito } from './carrito';
+import api from '@/services/api';
+
+export const usePedidos = defineStore('pedidos', () => {
+  async function confirmar() {
+    const carrito = useCarrito();          // dentro de la accion
+    const pedido = await api.post('/pedidos', {
+      items: carrito.items,
+      total: carrito.total
+    });
+    carrito.vaciar();
+    return pedido;
+  }
+
+  return { confirmar };
+});</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Llama a otro store dentro de sus acciones, nunca en el nivel superior del setup del store: así evitas dependencias circulares al inicializar.</p>
+    </blockquote>
+    <p>Ejercicio propuesto: migra un estado compartido que hoy pases por props/emit (o un event bus) hacia un store Pinia con sintaxis setup. Mide cuántos props intermedios desaparecen del árbol de componentes.</p>
+  </div>
+</section>

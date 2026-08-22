@@ -1,0 +1,101 @@
+<!-- 2. Instalación de Gitea con Docker - Gitea (Self-hosted) (Control de Versiones) -->
+<section id="instalacion-binaria-simple">
+  <h2>Instalación binaria simple</h2>
+  <div class="doc-content">
+    <p>Gitea se distribuye como un único binario estático: descárgalo desde <code>dl.gitea.com/gitea</code>, dale permisos y ejecútalo.</p>
+    <pre><code class="language-bash"># Linux x64 — descargar el binario
+wget https://dl.gitea.com/gitea/1.22/gitea-1.22-linux-amd64
+chmod +x gitea-1.22-linux-amd64
+
+# Probarlo (usa SQLite por defecto)
+./gitea-1.22-linux-amd64 web
+# Servidor disponible en http://localhost:3000</code></pre>
+    <p>Para producción conviene crear un usuario dedicado (<code>git</code>) y un servicio systemd que lo mantenga vivo.</p>
+  </div>
+</section>
+
+<section id="instalacion-con-docker-compose">
+  <h2>Instalación con Docker Compose</h2>
+  <div class="doc-content">
+    <p>La forma recomendada: Gitea + PostgreSQL con persistencia en volúmenes.</p>
+    <pre><code class="language-yaml"># docker-compose.yml
+services:
+  gitea:
+    image: gitea/gitea:1.22
+    container_name: gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=postgres
+      - GITEA__database__HOST=db:5432
+      - GITEA__database__NAME=gitea
+      - GITEA__database__USER=gitea
+      - GITEA__database__PASSWD=gitea_pass_segura
+    restart: always
+    volumes:
+      - ./gitea-data:/data
+      - /etc/timezone:/etc/timezone:ro
+    ports:
+      - "3000:3000"   # interfaz web
+      - "2222:22"     # SSH de Git
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      - POSTGRES_USER=gitea
+      - POSTGRES_PASSWORD=gitea_pass_segura
+      - POSTGRES_DB=gitea
+    volumes:
+      - ./pg-data:/var/lib/postgresql/data</code></pre>
+    <pre><code class="language-bash">docker compose up -d
+docker compose logs -f gitea   # esperar a que esté listo</code></pre>
+  </div>
+</section>
+
+<section id="configuracion-inicial-wizard">
+  <h2>Configuración inicial (wizard)</h2>
+  <div class="doc-content">
+    <p>Al abrir <code>http://tu-servidor:3000</code> por primera vez aparece el instalador:</p>
+    <ol>
+      <li><strong>Database:</strong> ya viene precargada por las variables de entorno.</li>
+      <li><strong>General:</strong> título del sitio y URL base (importante para clones correctos).</li>
+      <li><strong>Cuenta admin:</strong> crea el usuario administrador aquí mismo (si no, el primer registrado será admin).</li>
+      <li>Opcional: desactivar autorregistro público si solo entrarán usuarios invitados.</li>
+    </ol>
+    <p>Toda la configuración queda en <code>/data/gitea/conf/app.ini</code>; puedes editarla y reiniciar el contenedor.</p>
+  </div>
+</section>
+
+<section id="https-con-proxy-inverso">
+  <h2>HTTPS con proxy inverso</h2>
+  <div class="doc-content">
+    <p>Gitea sirve HTTP plano; para HTTPS ponle delante Nginx, Caddy o Traefik. Ejemplo mínimo con Caddy (certificados automáticos):</p>
+    <pre><code class="language-ini"># Caddyfile
+git.tudominio.com {
+    reverse_proxy localhost:3000
+}</code></pre>
+    <p>Con Nginx necesitas certbot para Let's Encrypt y pasar los headers correctos. Recuerda también configurar en <code>app.ini</code>:</p>
+    <pre><code class="language-ini">[server]
+ROOT_URL = https://git.tudominio.com/
+PROTOCOL = http
+HTTP_ADDR = 0.0.0.0</code></pre>
+  </div>
+</section>
+
+<section id="copias-de-seguridad">
+  <h2>Copias de seguridad</h2>
+  <div class="doc-content">
+    <p>Gitea incluye respaldo integrado que exporta repos, base de datos y configuración:</p>
+    <pre><code class="language-bash"># Crear backup dentro del contenedor
+docker exec -u git gitea \
+  gitea dump -c /data/gitea/conf/app.ini
+
+# Genera: gitea-dump-20260821.zip en /data (o donde corriste el comando)
+
+# Restaurar: extraer el zip sobre /data y recuperar custom/, data/ y la BD</code></pre>
+    <p>Automatiza el dump con cron y copia el zip a almacenamiento externo. Como los repos son archivos planos, incluso un rsync del volumen <code>/data</code> con Gitea detenido es una estrategia válida.</p>
+  </div>
+</section>

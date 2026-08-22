@@ -1,10 +1,112 @@
-<!-- 25. Temas Avanzados y Expertos -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Spring WebFlux, programación reactiva, Spring Native, GraalVM y escalabilidad avanzada</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- Temas Avanzados - Spring (Frameworks) -->
+<section id="spring-aop-programacion-orientada-aspectos">
+  <h2>Spring AOP: programación orientada a aspectos</h2>
+  <div class="doc-content">
+    <p>AOP permite extraer lógica transversal (logging, seguridad, métricas) de la lógica de negocio. Un <strong>aspecto</strong> envuelve métodos que cumplen cierta condición sin modificarlos:</p>
+    <pre><code class="language-java">@Aspect
+@Component
+public class AuditoriaAspect {
+
+    @Pointcut("within(@org.springframework.web.bind.annotation.RestController *)")
+    public void controladores() {}
+
+    @Around("controladores()")
+    public Object auditar(ProceedingJoinPoint joinPoint) throws Throwable {
+        long inicio = System.currentTimeMillis();
+        try {
+            return joinPoint.proceed();
+        } finally {
+            long duracion = System.currentTimeMillis() - inicio;
+            log.info("{} ejecuto en {} ms",
+                joinPoint.getSignature().toShortString(), duracion);
+        }
+    }
+}</code></pre>
+    <p>Tipos de advice: <code>@Before</code> (antes), <code>@AfterReturning</code> (tras éxito), <code>@AfterThrowing</code> (excepción), <code>@Around</code> (envuelve todo — el más potente).</p>
+  </div>
+</section>
+
+<section id="perfilamiento-y-configuracion-por-entorno">
+  <h2>Perfilamiento y configuración por entorno</h2>
+  <div class="doc-content">
+    <p>Los perfiles separan configuración por entorno sin tocar código:</p>
+    <pre><code class="language-text"># application-dev.properties
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.jpa.show-sql=true
+
+# application-prod.properties
+spring.datasource.url=jdbc:postgresql://db:5432/app
+spring.jpa.show-sql=false</code></pre>
+    <pre><code class="language-bash">java -jar app.jar --spring.profiles.active=prod
+
+# O via variable de entorno
+SPRING_PROFILES_ACTIVE=prod</code></pre>
+    <ul>
+      <li><code>@Profile("dev")</code> activa beans solo en ese perfil (mocks, datos semilla).</li>
+      <li>Spring Boot Actuator expone /health, /metrics, /info para monitoreo en producción.</li>
+      <li>Credenciales SIEMPRE fuera del repo: variables de entorno o Spring Cloud Config/Vault.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="seguridad-con-spring-security">
+  <h2>Seguridad con Spring Security</h2>
+  <div class="doc-content">
+    <p>La configuración moderna usa un SecurityFilterChain declarativo:</p>
+    <pre><code class="language-java">@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated())
+            .formLogin(Customizer.withDefaults());
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}</code></pre>
+    <ul>
+      <li><strong>Sesiones + form login:</strong> apps web tradicionales.</li>
+      <li><strong>JWT stateless:</strong> APIs REST — desactiva sesiones y valida el token en cada request.</li>
+      <li>Nunca guardes contraseñas sin BCrypt; nunca escribas tu propio hash.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="caching-y-testing-integrado">
+  <h2>Caching y testing integrado</h2>
+  <div class="doc-content">
+    <pre><code class="language-java">// Cache: una anotacion evita repetir consultas costosas
+@Cacheable(value = "productos", key = "#id")
+public Producto buscar(Long id) { ... }
+
+@CacheEvict(value = "productos", key = "#producto.id")
+public Producto actualizar(Producto producto) { ... }</code></pre>
+    <pre><code class="language-java">// Testing con contexto real
+@SpringBootTest
+@AutoConfigureMockMvc
+class ProductoControllerTest {
+
+    @Autowired MockMvc mockMvc;
+
+    @Test
+    void listarProductos() throws Exception {
+        mockMvc.perform(get("/api/productos"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$[0].nombre").exists());
+    }
+}</code></pre>
+    <blockquote class="aside aside-tip">
+      <p><code>@SpringBootTest</code> levanta el contexto completo: potente pero lento. Para tests unitarios de servicios, inyecta mocks con Mockito y reserva el contexto completo para pruebas de integración puntuales.</p>
+    </blockquote>
+    <p>Ejercicio propuesto: agrega a un proyecto tuyo un aspecto de auditoría (@Around), dos perfiles con bases distintas, cache sobre el servicio más consultado y un test @SpringBootTest del endpoint principal.</p>
+  </div>
+</section>

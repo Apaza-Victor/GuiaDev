@@ -1,10 +1,88 @@
-<!-- 12. Despliegue y Producción -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Compilación con astro build, adaptadores para Netlify, Vercel y Cloudflare</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- 12. Despliegue y Producción - Astro (Frameworks) -->
+<section id="compilacion-para-produccion">
+  <h2>Compilación para producción</h2>
+  <div class="doc-content">
+    <p>El build de producción comprime, optimiza y genera HTML final. Es más estricto que el desarrollo: cualquier error de contenido o tipos rompe la compilación — exactamente lo que quieres antes de publicar:</p>
+    <pre><code class="language-bash"># Build completo (salida en dist/)
+npx astro build
+
+# Previsualizar el build tal como servira produccion
+npx astro preview
+
+# Verificar errores de Content Collections y enlaces
+npx astro check</code></pre>
+    <p>Qué hace el build por ti:</p>
+    <ul>
+      <li><strong>Minifica</strong> HTML, CSS y JS; elimina código muerto (tree-shaking).</li>
+      <li><strong>Cero JavaScript por defecto:</strong> las páginas sin islas JS no envían ni un byte de runtime.</li>
+      <li><strong>Optimiza imágenes</strong> con astro:assets (formatos WebP/AVIF según soporte).</li>
+      <li><strong>Hashing de archivos:</strong> nombres tipo <code>app.8f2c1a.js</code> para caché infinita segura.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="despliegue-en-netlify-y-vercel">
+  <h2>Netlify y Vercel</h2>
+  <div class="doc-content">
+    <p>Ambas plataformas detectan Astro automáticamente: conecta el repo, y cada push a main despliega con preview por PR. Configuración típica si necesitas personalizar:</p>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Plataforma</th><th>Comando build</th><th>Directorio salida</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Netlify / Vercel / Cloudflare</td><td><code>npm run build</code></td><td><code>dist/</code></td></tr>
+      </tbody>
+    </table>
+    <pre><code class="language-javascript">// Para SSR en estas plataformas agrega el adaptador
+import netlify from '@astrojs/netlify';   // npm i @astrojs/netlify
+export default defineConfig({
+  output: 'server',
+  adapter: netlify()
+});</code></pre>
+    <ul>
+      <li><strong>Sitio 100% estático:</strong> no necesitas adaptador; sube <code>dist/</code> y listo.</li>
+      <li><strong>Rutas SSR híbridas:</strong> adaptador + <code>prerender = false</code> solo donde haga falta.</li>
+      <li>Variables de entorno se configuran en el dashboard de la plataforma, no en el repo.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="cloudflare-pages">
+  <h2>Cloudflare Pages</h2>
+  <div class="doc-content">
+    <p>Cloudflare Pages ofrece edge rendering global con su adaptador propio:</p>
+    <pre><code class="language-bash">npm i @astrojs/cloudflare
+# astro.config.mjs
+# output: 'server', adapter: cloudflare()</code></pre>
+    <ul>
+      <li>Preset de framework "Astro" en el panel de Pages; detección automática del build.</li>
+      <li>Ideal cuando tu audiencia es global y quieres latencia mínima sin gestionar servidores.</li>
+      <li>Límite a considerar: runtime Workers no es Node completo (algunos paquetes nativos no funcionan).</li>
+    </ul>
+  </div>
+</section>
+
+<section id="hosting-propio-y-servidores-estaticos">
+  <h2>Hosting propio y servidores estáticos</h2>
+  <div class="doc-content">
+    <p>Un sitio Astro estático es una carpeta de archivos: cualquier servidor HTTP sirve <code>dist/</code>:</p>
+    <pre><code class="language-bash"># Nginx: apunta root al dist
+root /var/www/midominio/dist;
+index index.html;
+
+# O Docker minimalista
+FROM nginx:alpine
+COPY dist/ /usr/share/nginx/html</code></pre>
+    <p>Checklist pre-lanzamiento:</p>
+    <ul>
+      <li><code>site</code> configurado en astro.config.mjs (sitemap y canonical correctos).</li>
+      <li>Redirecciones y cabeceras de caché: assets con hash → <code>Cache-Control: immutable</code>.</li>
+      <li>404 personalizada (<code>404.astro</code> se genera automáticamente).</li>
+      <li>Prueba real con <code>astro preview</code> o el servidor de staging antes del dominio final.</li>
+    </ul>
+    <blockquote class="aside aside-tip">
+      <p>Estrategia de despliegue recomendada: preview automático en cada pull request + producción solo desde main. Así nadie revisa "en producción" jamás.</p>
+    </blockquote>
+    <p>Ejercicio propuesto: despliega un proyecto Astro estático tuyo en dos plataformas distintas (por ejemplo Netlify y Cloudflare Pages) y compara tiempos de respuesta globales con herramientas como webpagetest.org.</p>
+  </div>
+</section>

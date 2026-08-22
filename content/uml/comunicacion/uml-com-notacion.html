@@ -1,0 +1,91 @@
+<!-- 2. Notación y Ejemplos del Diagrama de Comunicación - Diag. Comunicación (UML) -->
+<section id="elementos-del-diagrama">
+  <h2>Elementos del diagrama</h2>
+  <div class="doc-content">
+    <p>Un diagrama de comunicación combina notación de objetos con notación de interacción:</p>
+    <ul>
+      <li><strong>Objetos:</strong> rectángulos subrayados con formato <code>nombre : Clase</code> (o anónimos <code>:Clase</code>). Cada objeto aparece una única vez sin importar cuántos mensajes intercambie.</li>
+      <li><strong>Enlaces:</strong> líneas sólidas conectando objetos; son instancias de asociaciones del modelo de clases. Por ellos viajan los mensajes.</li>
+      <li><strong>Mensajes:</strong> flechas sobre los enlaces, precedidas por su número secuencial y el nombre de la operación: <code>1.2: calcularTotal()</code>.</li>
+      <li><strong>Línea de vida activa:</strong> doble barra vertical sobre el objeto mientras procesa (<code>active</code> en PlantUML).</li>
+      <li><strong>Auto-mensaje:</strong> flecha que sale y vuelve al mismo objeto: <code>1.1: validarFormato()</code>.</li>
+    </ul>
+    <p>Los mensajes pueden marcarse con estereotipos: <code>&lt;&lt;create&gt;&gt;</code> si nace un objeto durante la interacción y <code>&lt;&lt;destroy&gt;&gt;</code> si se elimina.</p>
+  </div>
+</section>
+
+<section id="numeracion-jerarquica-de-mensajes">
+  <h2>Numeración jerárquica de mensajes</h2>
+  <div class="doc-content">
+    <p>La numeración codifica el anidamiento de llamadas. El siguiente mapa equivale a un diagrama de secuencia completo:</p>
+    <pre><code class="language-text">:Cliente ── 1: pagar(carrito) ──► :Checkout
+                                     │
+     1.1: total() ───────────────────┼──► :Carrito
+     1.2: procesar(pago)             │
+          ├── 1.2.1: autorizar() ────┼──► :PasarelaPago
+          └── 1.2.2: guardar() ──────┴──► :PedidoRepo
+     ◄── 1: confirmacion ═════════════╝ (retorno punteado)</code></pre>
+    <p>Lectura: primero se calcula el total (1.1), luego se procesa el pago (1.2), que internamente autoriza contra la pasarela (1.2.1) y persiste el pedido (1.2.2). Solo tras completarse todo eso vuelve la respuesta final al cliente.</p>
+    <p>Consejo de legibilidad: si superas tres niveles (x.y.z.w), considera dividir la interacción en dos diagramas o extraer un objeto coordinador que aplane la jerarquía.</p>
+  </div>
+</section>
+
+<section id="guardas-e-iteraciones-en-mensajes">
+  <h2>Guardas e iteraciones en mensajes</h2>
+  <div class="doc-content">
+    <p>Los mensajes admiten condiciones y repetición con corchetes y asterisco:</p>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Notación</th><th>Significado</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>[saldo &gt;= monto] 1: debitar()</code></td><td>Guarda: el mensaje solo se envía si la condición se cumple</td></tr>
+        <tr><td><code>1: *[i = 1..n] agregar(item[i])</code></td><td>Iteración: se repite para cada ítem</td></tr>
+        <tr><td><code>1: *[no validado] reintentar()</code></td><td>Iteración condicional: repetir mientras la guarda sea verdadera</td></tr>
+        <tr><td><code>1: [else] rechazar()</code></td><td>Rama alternativa explícita</td></tr>
+      </tbody>
+    </table>
+    <p>Equivalencias con el diagrama de secuencia: una guarda corresponde a un fragmento <code>opt</code>; una iteración, a un fragmento <code>loop</code>. La ventaja aquí es que la condición viaja junto al mensaje, sin cajas adicionales.</p>
+  </div>
+</section>
+
+<section id="ejemplo-comunicacion-plantuml">
+  <h2>Ejemplo completo con PlantUML</h2>
+  <div class="doc-content">
+    <p>PlantUML no tiene sintaxis nativa para este diagrama, pero se emula perfectamente con objetos y mensajes numerados sobre los enlaces:</p>
+    <pre><code class="language-plantuml">@startuml
+skinparam linetype ortho
+
+object ":Cliente" as cli
+object ":Cajero" as caj
+object ":SistemaBancario" as sis
+object ":Cuenta" as cue
+
+cli -- caj
+caj -- sis
+sis -- cue
+
+cli -> caj : 1: retirar(500)
+caj -> sis : 1.1: [saldo ok] autorizar(cli)
+sis -> cue : 1.1.1: debitar(500)
+sis -> cue : 1.1.2: consultarSaldo()
+sis --> caj : 1.2: aprobado
+caj --> cli : 2: entregarEfectivo()
+@enduml</code></pre>
+    <p>Análisis: la guarda <code>[saldo ok]</code> protege la autorización; el cajero nunca toca la cuenta directamente — toda operación pasa por el sistema bancario, respetando los límites del dominio. La numeración permite reconstruir la secuencia exacta mentalmente.</p>
+  </div>
+</section>
+
+<section id="buenas-practicas-comunicacion">
+  <h2>Buenas prácticas</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Máximo 5–7 objetos por diagrama:</strong> más allá, la maraña de enlaces deja de leerse; divide la interacción en escenarios.</li>
+      <li><strong>Numera siempre:</strong> sin numeración el diagrama es ambiguo; con ella es ejecutable en papel.</li>
+      <li><strong>Coherente con las clases:</strong> cada enlace debe tener su asociación en el modelo de clases y cada mensaje, su método. Si no existe, o falta en el modelo o sobra en el diseño.</li>
+      <li><strong>Nombra mensajes como operaciones reales:</strong> <code>calcularTotal()</code>, no "pide datos"; el diagrama debe poder traducirse a código casi literalmente.</li>
+      <li><strong>Úsalo como herramienta de diseño, no de documentación final:</strong> su mayor valor aparece antes de programar, al descubrir qué responsabilidades faltan en cada clase.</li>
+    </ul>
+    <p>Ejercicio propuesto: toma un caso de uso de tu proyecto, dibújalo primero en comunicación y conviértelo después a clases: cada objeto será una clase y cada enlace una asociación con sus métodos ya definidos.</p>
+  </div>
+</section>

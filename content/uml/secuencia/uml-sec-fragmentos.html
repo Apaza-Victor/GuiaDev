@@ -1,0 +1,157 @@
+<!-- 5. Fragmentos Combinados en Secuencia - Diag. Secuencia (UML) -->
+<section id="que-son-fragmentos-combinados">
+  <h2>5.1. ¿Qué son los fragmentos combinados?</h2>
+  <div class="doc-content">
+    <p>Los <strong>fragmentos combinados</strong> (combined fragments) son marcos rectangulares con una esquina etiquetada (<em>pentágono</em>) que indican el operador de control de flujo: <code>alt</code>, <code>opt</code>, <code>loop</code>, <code>par</code>, etc. Cubren un segmento de las líneas de vida y permiten modelar condicionales, bucles y concurrencia sin salir del diagrama.</p>
+    <pre><code class="language-text">┌─ alt ────────────────────────────────┐
+│ [condición A]                        │
+│ A → B : mensaje1()                   │
+├──────────────────────────────────────┤
+│ [condición B]                        │
+│ A → B : mensaje2()                   │
+└──────────────────────────────────────┘</code></pre>
+    <p>La condición entre corchetes se llama <strong>guarda</strong>. Un <code>alt</code> divide el marco en regiones separadas por línea discontinua; se ejecuta solo la primera cuya guarda sea verdadera.</p>
+  </div>
+</section>
+
+<section id="alt-alternativas-condicionales">
+  <h2>5.2. alt: alternativas condicionales</h2>
+  <div class="doc-content">
+    <p>Equivalente a un <em>if / else if / else</em>. Ejemplo: procesamiento de pago:</p>
+    <pre><code class="language-plantuml">@startuml
+actor Cliente
+participant "Checkout" as CO
+participant "PasarelaPago" as PP
+
+Cliente -> CO : confirmarPedido()
+CO -> PP : cobrar(total)
+alt pago aprobado
+  PP --> CO : autorizacion(nro)
+  CO --> Cliente : pedidoConfirmado()
+else tarjeta rechazada
+  PP --> CO : error(fondoInsuficiente)
+  CO --> Cliente : solicitarOtroMedio()
+else pasarela caída
+  PP --> CO : timeout
+  CO --> Cliente : reintentarMasTarde()
+end
+@enduml</code></pre>
+    <p>Regla: la última región puede quedar sin guarda para actuar como "else". Si todas las guardas son excluyentes, el diagrama documenta decisiones de negocio verificables.</p>
+  </div>
+</section>
+
+<section id="opt-opcion-unica">
+  <h2>5.3. opt: opción única</h2>
+  <div class="doc-content">
+    <p><code>opt</code> es un <code>alt</code> de una sola región: si la guarda es verdadera se ejecuta, si no, se omite. Ideal para comportamiento opcional como cupones o logs:</p>
+    <pre><code class="language-plantuml">@startuml
+participant Carrito
+participant Tienda
+
+Tienda -> Carrito : aplicarCupon(codigo)
+opt codigo valido
+  Carrito -> Tienda : descuento(porcentaje)
+end
+@enduml</code></pre>
+  </div>
+</section>
+
+<section id="loop-iteraciones">
+  <h2>5.4. loop: iteraciones</h2>
+  <div class="doc-content">
+    <p>El operador <code>loop</code> acepta una especificación de repetición en la guarda: <code>[min, max]</code>, <code>[i = 1..n]</code> o condiciones libres.</p>
+    <pre><code class="language-plantuml">@startuml
+participant App
+participant API
+
+App -> API : GET /productos?pagina=1
+loop mientras hayaPaginaSiguiente [pag &lt;= total]
+  App -> API : GET /productos?pagina=sig
+  API --> App : lote(productos)
+end
+@enduml</code></pre>
+    <p>Sugerencia: escribe la condición en lenguaje natural cuando el detalle numérico no aporta claridad ("mientras queden ítems por validar").</p>
+  </div>
+</section>
+
+<section id="par-concurrencia-paralela">
+  <h2>5.5. par: concurrencia paralela</h2>
+  <div class="doc-content">
+    <p><code>par</code> divide el flujo en regiones que ocurren <strong>simultáneamente</strong>, en cualquier orden o intercaladas. Es la forma correcta de modelar operaciones independientes:</p>
+    <pre><code class="language-plantuml">@startuml
+participant ServicioPedido
+participant Inventario
+participant Facturacion
+participant Notificaciones
+
+ServicioPedido -> Inventario : reservarStock(pedido)
+ServicioPedido -> Facturacion : emitirFactura(pedido)
+par notificaciones paralelas
+  ServicioPedido -> Notificaciones : email(cliente)
+else
+  ServicioPedido -> Notificaciones : push(app)
+end
+@enduml</code></pre>
+    <p>Útil también para documentar dónde el código real usa <code>Promise.all</code>, goroutines o hilos.</p>
+  </div>
+</section>
+
+<section id="break-critical-neg">
+  <h2>5.6. break, critical y neg</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>break:</strong> si su guarda se cumple, la secuencia del fragmento contenedor se abandona (equivalente al <em>break</em>/excepción temprana).</li>
+      <li><strong>critical:</strong> región que debe ejecutarse atómicamente, sin interleaving de otros flujos (secciones críticas, transacciones).</li>
+      <li><strong>neg:</strong> escenario inválido que el sistema debe prevenir; sirve para documentar restricciones y casos de abuso.</li>
+      <li><strong>ref:</strong> referencia a otra interacción definida en otro diagrama, evitando duplicación.</li>
+    </ul>
+    <pre><code class="language-plantuml">@startuml
+participant Gateway
+participant Cuenta
+
+Gateway -> Cuenta : retirar(monto)
+break saldo insuficiente
+  Cuenta --> Gateway : rechazo("fondos insuficientes")
+end
+critical transaccion atomica
+  Cuenta -> Cuenta : debitar(monto)
+  Cuenta -> Cuenta : registrarMovimiento()
+end
+@enduml</code></pre>
+  </div>
+</section>
+
+<section id="ejemplo-completo-fragmentos">
+  <h2>5.7. Ejemplo completo combinando fragmentos</h2>
+  <div class="doc-content">
+    <p>Proceso de compra que combina los cinco operadores principales:</p>
+    <pre><code class="language-plantuml">@startuml
+actor Usuario
+participant "App" as App
+participant "API" as API
+
+Usuario -> App : finalizarCompra()
+opt hay cupon
+  App -> API : validarCupon()
+end
+API -> API : calcularTotal()
+
+alt stock disponible
+  loop cada producto del carrito
+    API -> API : reservarUnidad()
+  end
+  par envio de confirmaciones
+    API -> App : email()
+  else
+    API -> App : push()
+  end
+  App --> Usuario : compra exitosa
+else sin stock
+  break producto agotado
+    App --> Usuario : aviso de agotamiento
+  end
+end
+@enduml</code></pre>
+    <p>Buena práctica final: no anides más de dos niveles de fragmentos; si necesitas más profundidad, extrae una interacción aparte con <code>ref</code>.</p>
+  </div>
+</section>

@@ -1,0 +1,83 @@
+<!-- 1. Fundamentos de CI/CD - CI/CD (Control de Versiones) -->
+<section id="que-es-ci-que-es-cd">
+  <h2>¿Qué es CI? ¿Qué es CD?</h2>
+  <div class="doc-content">
+    <p><strong>CI (Continuous Integration):</strong> cada push se compila y prueba automáticamente, detectando errores minutos después de cometerlos y no semanas después. El equipo integra cambios pequeños con frecuencia sobre una rama compartida.</p>
+    <p><strong>CD</strong> tiene dos niveles:</p>
+    <ul>
+      <li><strong>Continuous Delivery:</strong> el software queda siempre listo para desplegarse a producción (despliegue manual con un clic).</li>
+      <li><strong>Continuous Deployment:</strong> cada cambio validado llega a producción automáticamente, sin intervención humana.</li>
+    </ul>
+    <pre><code class="language-text">git push → [Build] → [Tests] → [Package] → [Deploy]
+           └────── CI ─────────┘  └──── CD ────┘</code></pre>
+  </div>
+</section>
+
+<section id="beneficios-y-metricas-dora">
+  <h2>Beneficios y métricas DORA</h2>
+  <div class="doc-content">
+    <p>Beneficios directos: bugs detectados temprano (baratos), main siempre desplegable, releases sin drama de fin de sprint y feedback rápido al desarrollador.</p>
+    <p>Las métricas <strong>DORA</strong> (DevOps Research and Assessment) miden la madurez del proceso:</p>
+    <table class="doc-table">
+      <thead><tr><th>Métrica</th><th>Qué mide</th></tr></thead>
+      <tbody>
+        <tr><td>Deployment frequency</td><td>Cada cuánto despliegas a producción</td></tr>
+        <tr><td>Lead time for changes</td><td>Tiempo entre commit y estar en producción</td></tr>
+        <tr><td>Change failure rate</td><td>% de despliegues que causan incidentes</td></tr>
+        <tr><td>Time to restore</td><td>Cuánto tardas en recuperarte de un fallo</td></tr>
+      </tbody>
+    </table>
+    <p>Equipos élite: deployments diarios/múltiples al día, lead time menor a un día, failure rate bajo 5%.</p>
+  </div>
+</section>
+
+<section id="anatomia-de-un-pipeline">
+  <h2>Anatomía de un pipeline</h2>
+  <div class="doc-content">
+    <p>Todo pipeline CI/CD sigue el mismo esqueleto conceptual sin importar la herramienta:</p>
+    <pre><code class="language-text">1. TRIGGER     push, PR, tag, cron o manual
+2. CHECKOUT    descargar el código
+3. BUILD       instalar dependencias + compilar
+4. TEST        unitarios → integración → E2E (falla rápida)
+5. PACKAGE     imagen Docker / artefacto versionado
+6. DEPLOY      staging → validación → producción
+7. NOTIFY      Slack/email/issue si algo falla</code></pre>
+    <ul>
+      <li><strong>Falla rápida:</strong> lo barato primero (lint), lo caro después (E2E).</li>
+      <li><strong>Puertas (gates):</strong> aprobaciones humanas antes de producción.</li>
+      <li><strong>Idempotencia:</strong> correr el pipeline dos veces debe dar el mismo resultado.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="estrategias-de-ramas-y-triggers">
+  <h2>Estrategias de ramas y triggers</h2>
+  <div class="doc-content">
+    <p>La estrategia de ramas define qué corre y cuándo:</p>
+    <table class="doc-table">
+      <thead><tr><th>Rama/evento</th><th>Pipeline típico</th></tr></thead>
+      <tbody>
+        <tr><td>PR hacia main</td><td>Lint + tests (validación previa)</td></tr>
+        <tr><td>Push a main</td><td>CI completo + deploy a staging</td></tr>
+        <tr><td>Tag v*</td><td>Release: versión final + deploy a producción</td></tr>
+        <tr><td>Cron nocturno</td><td>Tests pesados, escaneo de seguridad</td></tr>
+      </tbody>
+    </table>
+    <p>Estrategias comunes: <strong>GitHub Flow</strong> (main + feature branches — simple, ideal para CI/CD continuo), <strong>Gitflow</strong> (develop/release/hotfix — controlado, para releases planificados) y <strong>Trunk-Based Development</strong> (integraciones pequeñas varias veces al día, feature flags).</p>
+  </div>
+</section>
+
+<section id="panorama-de-herramientas">
+  <h2>Panorama de herramientas</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>GitHub Actions:</strong> nativo de GitHub; YAML simple; enorme marketplace.</li>
+      <li><strong>GitLab CI:</strong> integrado en GitLab; pipelines muy potentes self-hosted.</li>
+      <li><strong>Azure Pipelines:</strong> corporativo Microsoft; agentes Windows/macOS/Linux.</li>
+      <li><strong>Bitbucket Pipelines:</strong> simple, dentro de Bitbucket.</li>
+      <li><strong>Jenkins:</strong> el veterano self-hosted; máxima flexibilidad vía plugins.</li>
+      <li><strong>Otros:</strong> CircleCI, Travis CI, ArgoCD (CD GitOps para Kubernetes).</li>
+    </ul>
+    <p>Las siguientes lecciones profundizan en GitHub Actions y Jenkins, y cierran con una comparativa completa de plataformas y buenas prácticas universales.</p>
+  </div>
+</section>

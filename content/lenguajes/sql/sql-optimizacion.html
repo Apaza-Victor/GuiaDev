@@ -1,10 +1,86 @@
-<!-- 8. Optimización y Buenas Prácticas -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Aprende a optimizar consultas, crear índices y aplicar buenas prácticas en SQL</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- 8. Optimización y Buenas Prácticas - SQL (Lenguajes de Programación) -->
+<section id="indices-cuando-y-como">
+  <h2>Índices: cuándo y cómo</h2>
+  <div class="doc-content">
+    <p>Un índice es una estructura auxiliar (típicamente B-tree) que permite encontrar filas sin recorrer la tabla completa. Es la optimización con mejor relación esfuerzo/beneficio en SQL:</p>
+    <pre><code class="language-sql">-- MySQL
+CREATE INDEX idx_pedidos_cliente ON pedidos(cliente_id);
+CREATE INDEX idx_productos_busqueda ON productos(nombre(20));
+
+-- Oracle
+CREATE INDEX idx_empleados_dept ON empleados(departamento_id);</code></pre>
+    <p>Reglas prácticas para decidir dónde indexar:</p>
+    <ul>
+      <li><strong>Todas las FOREIGN KEY</strong> deben tener índice (MySQL InnoDB no las crea automáticamente).</li>
+      <li>Columnas frecuentes en <code>WHERE</code>, <code>JOIN ... ON</code> y <code>ORDER BY</code>.</li>
+      <li>Columnas con alta selectividad (muchos valores distintos) rinden más; indexar un campo "activo S/N" casi no ayuda.</li>
+      <li>Más no es mejor: cada índice penaliza INSERT/UPDATE/DELETE porque debe mantenerse.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="escribir-consultas-eficientes">
+  <h2>Escribir consultas eficientes</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Nunca <code>SELECT *</code> en producción:</strong> trae columnas innecesarias, impide usar índices cubrientes y rompe contratos si el esquema cambia.</li>
+      <li><strong>Filtra lo antes posible:</strong> condiciones en <code>WHERE</code> reducen datos antes de joins y agrupaciones.</li>
+      <li><strong>Cuidado con funciones sobre columnas:</strong> <code>WHERE YEAR(fecha) = 2026</code> invalida el índice; usa rangos: <code>fecha &gt;= '2026-01-01' AND fecha &lt; '2027-01-01'</code>.</li>
+      <li><strong>LIMIT/TOP siempre en listados:</strong> paginar 1 millón de filas "por si acaso" mata la aplicación.</li>
+      <li><strong>Evita <code>SELECT DISTINCT</code> como parche</strong> de joins mal planteados: suele esconder duplicación real de datos.</li>
+    </ul>
+    <pre><code class="language-sql">-- Lento: función sobre columna
+SELECT * FROM ventas WHERE UPPER(pais) = 'MEXICO';
+
+-- Rápido: usa el índice
+SELECT id, total FROM ventas WHERE pais = 'MEXICO';</code></pre>
+  </div>
+</section>
+
+<section id="analizar-planes-de-ejecucion">
+  <h2>Analizar planes de ejecución</h2>
+  <div class="doc-content">
+    <p>Antes de optimizar a ciegas, pregunta al motor cómo ejecutará tu consulta:</p>
+    <pre><code class="language-sql">EXPLAIN SELECT p.id, c.nombre
+FROM pedidos p JOIN clientes c ON c.id = p.cliente_id
+WHERE p.total > 1000;
+
+-- Oracle: EXPLAIN PLAN FOR ... ; luego SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);</code></pre>
+    <p>Lo que debes buscar:</p>
+    <ul>
+      <li><strong>Full table scan</strong> sobre tablas grandes → falta índice o condición no indexable.</li>
+      <li><strong>Tipo de join:</strong> nested loops para pocos registros, hash/merge para volúmenes grandes.</li>
+      <li><strong>Filas estimadas vs reales:</strong> estimaciones absurdas indican estadísticas desactualizadas (<code>ANALYZE TABLE</code>).</li>
+    </ul>
+    <blockquote class="aside aside-tip">
+      <p>Optimiza midiendo, nunca por intuición: una consulta "feosa" con buen plan supera a una elegante con full scan.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="buenas-practicas-de-esquema">
+  <h2>Buenas prácticas de esquema</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Tipos justos:</strong> <code>VARCHAR(50)</code> para un código postal, no <code>TEXT</code>; tipos pequeños = más filas por página = menos I/O.</li>
+      <li><strong>NOT NULL por defecto:</strong> los NULL complican consultas e índices; nullabilidad debe ser una decisión explícita.</li>
+      <li><strong>Normaliza hasta 3FN,</strong> luego desnormaliza con evidencia de rendimiento, no por comodidad.</li>
+      <li><strong>Claves subrogadas simples</strong> (AUTO_INCREMENT/IDENTITY/SEQUENCE) para joins limpios; deja las naturales como UNIQUE.</li>
+      <li><strong>Constraints siempre:</strong> integridad en la base, no solo en la aplicación; la app puede tener bugs, la constraint no.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="mantenimiento-y-monitoreo">
+  <h2>Mantenimiento y monitoreo</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Estadísticas al día:</strong> el optimizador decide con ellas; actualízalas tras cargas masivas.</li>
+      <li><strong>Índices muertos:</strong> audita uso (<code>sys.dm_db_index_usage_stats</code> en SQL Server, <code>sys.schema_index_statistics</code> en MySQL) y elimina los nunca leídos.</li>
+      <li><strong>Slow query log:</strong> actívalo en desarrollo; cualquier consulta &gt; 100 ms merece revisión.</li>
+      <li><strong>Transacciones cortas:</strong> mantén locks mínimos; nada de esperar input de usuario dentro de una transacción abierta.</li>
+      <li><strong>Bulk operations:</strong> inserciones masivas por lotes (500–5000 filas) en lugar de fila por fila.</li>
+    </ul>
+    <p>Ejercicio propuesto: toma las tres consultas más frecuentes de tu proyecto actual, ejecútalas con EXPLAIN y aplica una mejora concreta (índice, rango en lugar de función, columnas específicas). Mide tiempos antes y después.</p>
+  </div>
+</section>

@@ -1,10 +1,88 @@
-<!-- 13. Buenas prácticas -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Aprende sobre seguridad, optimización y estándares de codificación en PHP</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- 13. Buenas prácticas - PHP (Lenguajes de Programación) -->
+<section id="seguridad-fundamental-php">
+  <h2>Seguridad fundamental</h2>
+  <div class="doc-content">
+    <p>PHP es el lenguaje más atacado del web simplemente porque es el más usado. Estas cinco reglas eliminan la mayoría de vulnerabilidades:</p>
+    <ul>
+      <li><strong>Inyección SQL:</strong> nunca concatenes entrada del usuario en consultas; usa sentencias preparadas siempre.</li>
+      <li><strong>XSS:</strong> escapa toda salida HTML con <code>htmlspecialchars($valor, ENT_QUOTES, 'UTF-8')</code>.</li>
+      <li><strong>Passwords:</strong> jamás md5/sha1; usa <code>password_hash()</code> y verifica con <code>password_verify()</code>.</li>
+      <li><strong>CSRF:</strong> token aleatorio por sesión incluido en todo formulario que muta datos.</li>
+      <li><strong>Uploads:</strong> valida MIME real (no solo la extensión), renombra archivos y almacénalos fuera del docroot si sirven solo internamente.</li>
+    </ul>
+    <pre><code class="language-php">// Consulta segura con PDO
+$stmt = $pdo->prepare('SELECT * FROM usuarios WHERE email = :email');
+$stmt->execute(['email' => $_POST['email']]);
+$usuario = $stmt->fetch();
+
+// Password segura
+$hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
+if (password_verify($passwordIngresada, $hash)) { /* login ok */ }</code></pre>
+  </div>
+</section>
+
+<section id="estandares-de-codificacion-psr">
+  <h2>Estándares de codificación (PSR)</h2>
+  <div class="doc-content">
+    <p>Los <strong>PSR</strong> (PHP Standard Recommendations) de FIG son el acuerdo común que hace legible el código de cualquier proyecto PHP moderno:</p>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Estándar</th><th>Tema</th><th>Regla clave</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>PSR-1</td><td>Código básico</td><td>Tags <code>&lt;?php</code>, clases en StudlyCaps</td></tr>
+        <tr><td>PSR-12</td><td>Estilo de código</td><td>Indentación de 4 espacios, llaves consistentes</td></tr>
+        <tr><td>PSR-4</td><td>Autoload</td><td>Namespace refleja carpetas: <code>App\Models\User</code> → <code>src/Models/User.php</code></td></tr>
+        <tr><td>PSR-3</td><td>Logging</td><td>Interfaz LoggerInterface con niveles debug/info/error</td></tr>
+      </tbody>
+    </table>
+    <p>No memorices las reglas: automatízalas con <strong>PHP-CS-Fixer</strong> o <strong>PHP_CodeSniffer</strong> y deja que la herramienta corrija el estilo mientras tú piensas en la lógica.</p>
+  </div>
+</section>
+
+<section id="optimizacion-php">
+  <h2>Optimización de código PHP</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>OPcache activo:</strong> cachea bytecode compilado; es la optimización gratuita más grande.</li>
+      <li><strong>Evita consultas dentro de bucles:</strong> el clásico N+1; agrupa con IN o JOINs.</li>
+      <li><strong>Prefiere funciones nativas:</strong> <code>array_map</code>, <code>array_filter</code>, <code>in_array</code> están escritas en C y superan a loops manuales.</li>
+      <li><strong>Libera recursos grandes:</strong> unset() en arrays enormes y cierre explícito de cursores/cURL.</li>
+      <li><strong>Actualiza la versión de PHP:</strong> cada versión mayor trae ganancias sustanciales; PHP 8+ con JIT es dramáticamente más rápido que 7.x.</li>
+    </ul>
+    <pre><code class="language-ini">; php.ini - OPcache basico para produccion
+opcache.enable=1
+opcache.validate_timestamps=0
+opcache.memory_consumption=192</code></pre>
+    <blockquote class="aside aside-note">
+      <p>Con <code>validate_timestamps=0</code> PHP no comprueba cambios de archivos en cada petición (máximo rendimiento), pero tras cada deploy debes reiniciar PHP-FPM para recargar el código.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="estructura-y-herramientas-del-proyecto">
+  <h2>Estructura y herramientas del proyecto</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Composer siempre:</strong> gestiona dependencias y autoload; ningún proyecto serio debería existir sin él.</li>
+      <li><strong>Separa lógica:</strong> nada de SQL mezclado con HTML; como mínimo separa datos/lógica/vista, idealmente adopta un framework.</li>
+      <li><strong>Configuración por entorno:</strong> credenciales en variables de entorno (.env), jamás versionadas en Git.</li>
+      <li><strong>Tipado estricto:</strong> declara tipos y activa <code>strict_types=1</code>; convierte errores silenciosos en fallos tempranos y visibles.</li>
+      <li><strong>Herramientas de calidad:</strong> PHPUnit/Pest para pruebas, PHPStan o Psalm para análisis estático, ambos en el pipeline de CI.</li>
+    </ul>
+    <pre><code class="language-php">&lt;?php
+declare(strict_types=1);
+
+final class CalculadoraDescuento
+{
+    public function aplicar(float $total, int $porcentaje): float
+    {
+        if ($porcentaje &lt; 0 || $porcentaje > 100) {
+            throw new InvalidArgumentException('Porcentaje invalido');
+        }
+        return round($total * (1 - $porcentaje / 100), 2);
+    }
+}</code></pre>
+    <p>Ejercicio propuesto: audita un proyecto tuyo contra este checklist (prepared statements, escape de salida, PSR-4, .env fuera de Git, strict_types). Corrige lo que falle antes de escribir funcionalidad nueva.</p>
+  </div>
+</section>

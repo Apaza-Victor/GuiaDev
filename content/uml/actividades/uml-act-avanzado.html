@@ -1,0 +1,122 @@
+<!-- 4. Elementos Avanzados de Actividades - Actividades (UML) -->
+<section id="flujos-de-objetos-y-pines">
+  <h2>4.1. Flujos de objetos y pines</h2>
+  <div class="doc-content">
+    <p>Además del flujo de control (flechas sólidas), un diagrama de actividades puede mostrar el <strong>flujo de datos</strong>: qué objeto produce y consume cada acción. Los <strong>pines</strong> son los pequeños cuadrados en el borde de una acción que reciben o emiten esos objetos.</p>
+    <pre><code class="language-text">┌─────────────┐        ╔═══════════╗        ┌──────────────┐
+│ Tomar Pedido│ ─────► ║  Pedido   ║ ─────► │ Procesar     │
+└─────────────┘  out   ╚═══════════╝  in    │ Pago         │
+                    flujo de objeto         └──────────────┘</code></pre>
+    <p>En PlantUML se expresan con nodos de objeto conectados a las acciones:</p>
+    <pre><code class="language-plantuml">@startuml
+start
+:Tomar pedido;
+:Pedido] as pedido
+:Procesar pago;
+pedido --> :Preparar envio;
+:Envio] as envio
+stop
+@enduml</code></pre>
+    <p>Regla práctica: usa flujos de control para el orden lógico y flujos de objetos cuando <em>el dato que se transforma</em> es lo importante (procesos ETL, pipelines).</p>
+  </div>
+</section>
+
+<section id="nodos-de-datos-almacenes">
+  <h2>4.2. Nodos de datos (almacenes)</h2>
+  <div class="doc-content">
+    <p>Los <strong>nodos de almacenamiento de datos</strong> (cilindro) representan información persistente entre actividades: bases de datos, colas, archivos:</p>
+    <ul>
+      <li><strong>Nodo de datos central:</strong> todos leen/escriben del mismo almacén (patrón compartido).</li>
+      <li><strong>Almacén pasivo vs activo:</strong> un archivo es pasivo; una cola de mensajes (<code>&laquo;centralBuffer&raquo;</code>) procesa y entrega, siendo activo.</li>
+    </ul>
+    <pre><code class="language-plantuml">@startuml
+start
+:Generar reporte CSV;
+database "Cola de exportacion" as cola
+cola -> :Worker procesa export;
+:Notificar usuario;
+stop
+@enduml</code></pre>
+    <p>Cuando modelas arquitecturas con mensajería (RabbitMQ, Kafka), este elemento comunica mejor la desacoplamiento que una simple flecha.</p>
+  </div>
+</section>
+
+<section id="senales-de-envio-y-recepcion">
+  <h2>4.3. Señales de envío y recepción</h2>
+  <div class="doc-content">
+    <p>A veces el flujo no continúa "porque sí", sino porque <em>llegó un evento externo</em>. Para eso existen las señales:</p>
+    <ul>
+      <li><strong>Send signal (convexo):</strong> la actividad dispara un evento hacia fuera — notificación, webhook, mensaje.</li>
+      <li><strong>Accept signal (cóncavo):</strong> la actividad queda esperando un evento externo para continuar — respuesta de pasarela de pago, confirmación humana.</li>
+      <li><strong>Accept time (reloj de arena):</strong> espera temporal — timeout de 24 horas antes de cancelar el pedido.</li>
+    </ul>
+    <pre><code class="language-plantuml">@startuml
+start
+:Solicitar verificacion por email;
+:Enviar email (senal);
+repeat
+  :Esperar click del usuario;
+repeat while (recibio confirmacion?) is (no) 
+->si;
+:Cuenta verificada;
+stop
+@enduml</code></pre>
+    <p>Sin señales, los procesos asíncronos se dibujan mal; con ellas, el diagrama refleja fielmente sistemas dirigidos por eventos.</p>
+  </div>
+</section>
+
+<section id="actividades-anidadas-subactividades">
+  <h2>4.4. Actividades anidadas (subactividades)</h2>
+  <div class="doc-content">
+    <p>Una acción puede expandirse como un diagrama completo mediante el estereotipo <code>&laquo;subactivity&raquo;</code> o la referencia con horquilla (<em>rake symbol</em>). Esto permite:</p>
+    <ul>
+      <li>Mantener el nivel alto legible ("Onboard Cliente" como caja negra) y detallar internamente en otro diagrama.</li>
+      <li>Reutilizar subprocesos idénticos en varios flujos (ej.: "Validar Identidad").</li>
+    </ul>
+    <pre><code class="language-text">┌──────────────────────────────┐
+│ Onboarding de Cliente        │
+│ ⌐ «subactivity»              │ → se detalla en otro diagrama
+│ Validar Identidad            │
+└──────────────────────────────┘</code></pre>
+    <p>Equivalente conceptual al <code>ref</code> de secuencia y a las funciones en código: abstracción por niveles.</p>
+  </div>
+</section>
+
+<section id="regiones-de-interrupcion">
+  <h2>4.5. Regiones de interrupción</h2>
+  <div class="doc-content">
+    <p>Una <strong>región de interrupción</strong> (área punteada con rayo) define eventos que, si ocurren dentro de ella, abortan inmediatamente el resto del flujo:</p>
+    <pre><code class="language-plantuml">@startuml
+start
+:Procesar pedido;
+if (region interrumpible) then
+  partition ZonaInterrumpida {
+    :Verificar inventario;
+    :Reservar stock;
+  }
+  if (timeout de reserva) then (si)
+    :Liberar recursos;
+    :Avisar cliente;
+    stop
+  endif
+endif
+:Confirmar venta;
+stop
+@enduml</code></pre>
+    <p>Escenarios típicos: timeouts, cancelaciones del usuario, fallos de red. La región documenta explícitamente dónde el proceso puede morir y qué limpieza se ejecuta.</p>
+  </div>
+</section>
+
+<section id="buenas-practicas-procesos-complejos">
+  <h2>4.6. Buenas prácticas en procesos complejos</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Un solo inicio visible:</strong> si necesitas muchos nodos iniciales, probablemente son procesos distintos; sepáralos.</li>
+      <li><strong>Verbo + objeto en cada acción:</strong> "Validar tarjeta", no "Tarjeta".</li>
+      <li><strong>Máximo 15–20 acciones por diagrama:</strong> más allá, extrae subactividades.</li>
+      <li><strong>Nombrar todas las guardas:</strong> una decisión sin etiquetas en ambas salidas obliga a adivinar.</li>
+      <li><strong>Distingue decisión de fusión (merge):</strong> el rombo con una entrada y dos salidas decide; con dos entradas y una salida fusiona. No mezcles roles en el mismo rombo si buscas precisión.</li>
+      <li><strong>Swimlanes cuando hay actores múltiples:</strong> sin particiones, un proceso de 3 departamentos parece mágica interna.</li>
+    </ul>
+  </div>
+</section>

@@ -1,0 +1,100 @@
+<!-- 2. Notación y Ejemplos del Diagrama de Tiempos - Diag. Tiempos (UML) -->
+<section id="restricciones-temporales">
+  <h2>Restricciones temporales</h2>
+  <div class="doc-content">
+    <p>El valor diferencial del diagrama son las <strong>anotaciones entre llaves</strong> que acotan el tiempo y convierten el dibujo en especificación verificable:</p>
+    <ul>
+      <li><code>{&lt;= 50 ms}</code> junto a una transición: máximo retardo tolerado desde el evento disparador.</li>
+      <li><code>{3000 ms}</code> sobre un estado: duración fija requerida.</li>
+      <li><code>{t..t+200}</code>: ventana válida para ejecutar algo.</li>
+    </ul>
+    <pre><code class="language-text">Alarma
+  │ Inactiva    Activa{<=100ms}   Silenciada{10min}
+  │───────────────────┬───────────────┬────────►
+                    evento          timeout</code></pre>
+    <p>Estas restricciones son contratos: en pruebas automatizadas se convierten en aserciones de medición ("assert respuesta &lt;= 100ms") y en revisión de diseño, en criterios objetivos de aceptación o rechazo.</p>
+  </div>
+</section>
+
+<section id="duraciones-y-mensajes">
+  <h2>Duraciones y mensajes</h2>
+  <div class="doc-content">
+    <p>Los <strong>mensajes</strong> se dibujan como flechas horizontales entre bandas en un instante preciso, y las <strong>duraciones</strong> como segmentos sombreados o acotados:</p>
+    <ul>
+      <li><strong>Mensaje puntual:</strong> flecha en <code>@X</code>; documenta qué evento causó la transición.</li>
+      <li><strong>Duración de estado:</strong> distancia horizontal entre dos transiciones; puede anotarse con su valor esperado.</li>
+      <li><strong>Solapamiento:</strong> dos bandas cambian en el mismo instante → sincronización estricta; en instantes distintos → dependencia causal medible.</li>
+      <li><strong>Condiciones:</strong> las guardas también aplican: <code>[puerta cerrada] cerrar()</code>.</li>
+    </ul>
+    <pre><code class="language-plantuml">@startuml
+robust "Motor" as M
+binary "Boton" as B
+
+@0
+M is Parado
+B is 0
+
+@100
+B is 1
+
+@180
+M is Marcha
+
+@400
+B is 0
+
+@900
+M is Parado
+
+B -> M @180 : encender()
+@enduml</code></pre>
+    <p>Aquí se mide el retardo botón→motor: el botón se presionó en @100 y el motor arrancó en @180 — 80 ms de latencia, ya documentados para compararlos contra su requisito.</p>
+  </div>
+</section>
+
+<section id="ejemplo-semaforo">
+  <h2>Ejemplo completo: semáforo</h2>
+  <div class="doc-content">
+    <p>El ejemplo clásico: cruce con semáforo vehicular y peatonal coordinados. Fíjate en cómo el verde peatonal <strong>solo existe mientras</strong> el vehicular está en rojo:</p>
+    <pre><code class="language-plantuml">@startuml
+concise "Vehicular" as V
+concise "Peatonal" as P
+
+@0
+V is Verde
+P is Rojo
+
+@30000
+V is Amarillo
+
+@35000
+V is Rojo
+
+@36000
+P is Verde
+
+@56000
+P is Parpadeando
+
+@59000
+P is Rojo
+
+@60000
+V is Verde
+@enduml</code></pre>
+    <p>Restricciones expresables sobre este modelo: amarillo dura {5000}, el peatonal arranca {1000} después del rojo vehicular (margen de seguridad), el parpadeo avisa {3000} antes del corte. Un controlador real puede validarse contra este guion temporal ciclo a ciclo.</p>
+  </div>
+</section>
+
+<section id="herramientas-que-lo-soportan">
+  <h2>Herramientas que lo soportan</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>PlantUML:</strong> sintaxis nativa <code>concise</code>/<code>robust</code>/<code>binary</code> con marcas <code>@tiempo</code>; ideal para versionar el diagrama junto al código.</li>
+      <li><strong>Visual Paradigm / Enterprise Architect:</strong> soporte UML completo con simulación de restricciones temporales.</li>
+      <li><strong>wavedrom:</strong> estándar de facto en documentación de hardware/protocolos (generación desde JSON).</li>
+      <li><strong>Mermaid:</strong> aún no soporta timing diagrams nativamente; usa secuencias con notas como aproximación.</li>
+    </ul>
+    <p>Ejercicio propuesto: modela el ciclo de conexión de tu aplicación a la base de datos (intento, backoff, conectado, timeout) con tiempos reales medidos. ¿Dónde se va tu presupuesto de latencia?</p>
+  </div>
+</section>

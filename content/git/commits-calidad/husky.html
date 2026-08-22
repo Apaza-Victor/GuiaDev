@@ -1,0 +1,84 @@
+<!-- 2. Husky: Git hooks modernos - Calidad de Commits (Control de Versiones) -->
+<section id="que-son-los-git-hooks">
+  <h2>¿Qué son los Git hooks?</h2>
+  <div class="doc-content">
+    <p>Los <strong>Git hooks</strong> son scripts que Git ejecuta automáticamente en momentos clave del flujo: antes de un commit, después de un push, al reescribir historia... Viven en la carpeta oculta <code>.git/hooks/</code>.</p>
+    <pre><code class="language-text">.git/hooks/
+├── pre-commit.sample    ← se ejecuta ANTES de crear el commit
+├── commit-msg.sample    ← valida el MENSAJE del commit
+├── pre-push.sample      ← se ejecuta ANTES de pushear
+└── ...</code></pre>
+    <p>El problema: <code>.git/</code> no se versiona ni comparte. Si configuras hooks ahí, tus compañeros no los reciben con el clone. Ahí entra <strong>Husky</strong>: gestiona hooks dentro de una carpeta versionada (<code>.husky/</code>) y los instala automáticamente para todo el equipo.</p>
+  </div>
+</section>
+
+<section id="instalacion-y-configuracion-de-husky">
+  <h2>Instalación y configuración de Husky</h2>
+  <div class="doc-content">
+    <p>Husky v9+ (proyecto Node.js):</p>
+    <pre><code class="language-bash"># 1. Instalar como dependencia de desarrollo
+npm install --save-dev husky
+
+# 2. Inicializar (crea .husky/ y configura core.hooksPath)
+npx husky init
+
+# 3. Verificar que package.json quedó así:
+# "scripts": { "prepare": "husky" }</code></pre>
+    <p>El script <code>prepare</code> hace que cada quien que ejecute <code>npm install</code> reciba los hooks activos automáticamente.</p>
+    <pre><code class="language-bash"># Crear un hook nuevo
+echo "npm test" &gt; .husky/pre-push
+git add .husky
+# ¡Listo! Ahora npm test corre antes de cada push</code></pre>
+  </div>
+</section>
+
+<section id="hooks-pre-commit-y-pre-push">
+  <h2>Hooks pre-commit y pre-push</h2>
+  <div class="doc-content">
+    <p><strong>.husky/pre-commit</strong> — última línea de defensa antes de ensuciar el historial:</p>
+    <pre><code class="language-bash">#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+npm run lint        # estilo de código
+npm run typecheck   # errores de tipos</code></pre>
+    <p><strong>.husky/pre-push</strong> — validaciones más costosas, solo al compartir código:</p>
+    <pre><code class="language-bash">npm test            # suite completa de tests</code></pre>
+    <p>Si cualquier comando falla (exit code ≠ 0), Git cancela la operación. Para saltarlo en emergencias: <code>git commit --no-verify</code> — úsalo con criterio.</p>
+  </div>
+</section>
+
+<section id="combinar-con-lint-staged">
+  <h2>Combinar con lint-staged</h2>
+  <div class="doc-content">
+    <p>Ejecutar ESLint sobre TODO el proyecto en cada commit es lento. <strong>lint-staged</strong> aplica herramientas solo a los archivos staged:</p>
+    <pre><code class="language-bash">npm install --save-dev lint-staged</code></pre>
+    <pre><code class="language-json">// package.json
+{
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
+    "*.{json,css,md}": ["prettier --write"]
+  }
+}</code></pre>
+    <pre><code class="language-bash"># .husky/pre-commit ahora solo necesita:
+npx lint-staged</code></pre>
+    <p>Resultado: commits rápidos y archivos formateados/corregidos automáticamente justo antes de entrar al historial.</p>
+  </div>
+</section>
+
+<section id="ejemplo-completo-de-setup">
+  <h2>Ejemplo completo de setup</h2>
+  <div class="doc-content">
+    <pre><code class="language-bash"># Setup desde cero en 6 comandos:
+npm install --save-dev husky lint-staged eslint prettier
+npx husky init
+echo "npx lint-staged" &gt; .husky/pre-commit
+echo "npm test" &gt; .husky/pre-push
+
+# Agregar configuración de lint-staged a package.json (ver arriba)
+git add . &amp;&amp; git commit -m "chore: husky + lint-staged"</code></pre>
+    <pre><code class="language-text">Flujo resultante del equipo:
+git commit → lint-staged corrige/stagea → si hay error grave, aborta
+git push   → tests completos → si fallan, no sale nada roto</code></pre>
+    <p>Alternativas multi-lenguaje fuera de Node: <strong>pre-commit framework</strong> (Python) y <strong>Lefthook</strong> (Go, muy rápido).</p>
+  </div>
+</section>

@@ -1,0 +1,79 @@
+<!-- 5. Ejemplo Práctico: Arquitectura de Aplicación Web - Componentes (UML) -->
+<section id="planteamiento-sistema-web">
+  <h2>5.1. Planteamiento del sistema</h2>
+  <div class="doc-content">
+    <p>Vamos a modelar <strong>"TiendaCloud"</strong>, una aplicación web de e-commerce con esta descripción funcional:</p>
+    <ul>
+      <li><strong>SPA React</strong>: catálogo, carrito y checkout en el navegador.</li>
+      <li><strong>API Gateway</strong>: punto único de entrada HTTPS, autentica tokens.</li>
+      <li><strong>Servicio de Catálogo</strong>: productos y búsquedas (lectura intensiva, cacheable).</li>
+      <li><strong>Servicio de Pedidos</strong>: crea órdenes y coordina el pago.</li>
+      <li><strong>Pasarela de Pagos externa</strong> (Stripe): cobro con tarjeta.</li>
+      <li><strong>Base de datos PostgreSQL</strong> para pedidos; Redis como caché de catálogo.</li>
+    </ul>
+    <p>Pregunta guía del diagrama: <em>¿qué piezas existen, qué interfaces ofrecen y qué requieren?</em></p>
+  </div>
+</section>
+
+<section id="identificacion-componentes-interfaces">
+  <h2>5.2. Identificación de componentes e interfaces</h2>
+  <div class="doc-content">
+    <p>Pasos aplicados:</p>
+    <ol>
+      <li><strong>Listar componentes:</strong> cada desplegable independiente es candidato (SPA, Gateway, Catálogo, Pedidos).</li>
+      <li><strong>Definir interfaces provistas:</strong> lo que cada uno ofrece. Ej.: <code>&laquo;provide&raquo; ICatalogoAPI</code>, <code>IPedidosAPI</code>.</li>
+      <li><strong>Definir interfaces requeridas:</strong> lo que cada uno consume. Ej.: Pedidos requiere <code>IPagos</code> (externa) y usa la API de Catálogo.</li>
+      <li><strong>Distinguir protocolos:</strong> REST/JSON entre SPA-Gateway-Servicios; SQL hacia PostgreSQL; Redis protocolo RESP.</li>
+      <li><strong>Marcar lo externo:</strong> Stripe vive fuera de nuestra frontera → estereotipo <code>&laquo;external&raquo;</code> o contorno distinto.</li>
+    </ol>
+    <p>Regla usada: una interfaz por responsabilidad cohesiva. No creamos <code>IServicioPedidosCompletoGigante</code>; separamos <code>IConsultaPedidos</code> de <code>ICreacionPedidos</code>.</p>
+  </div>
+</section>
+
+<section id="diagrama-completo-componentes">
+  <h2>5.3. El diagrama completo</h2>
+  <div class="doc-content">
+    <pre><code class="language-plantuml">@startuml
+skinparam componentStyle rectangle
+
+component "SPA Tienda" as spa <<frontend>>
+component "API Gateway" as gw <<edge>>
+component "Servicio Catalogo" as cat <<service>>
+component "Servicio Pedidos" as ped <<service>>
+database "PostgreSQL" as db
+database "Redis Cache" as redis
+component "Stripe API" as stripe <<external>>
+
+interface "ICatalogoAPI" as icat
+interface "IPedidosAPI" as iped
+interface "IPagos" as ipag
+
+spa --> gw : HTTPS + JWT
+gw --> icat
+gw --> iped
+cat -(0- icat
+ped -(0- iped
+ped --(0- ipag : requiere
+ipag -0- stripe
+
+cat --> redis : lectura cache
+ped --> db : persistencia
+@enduml</code></pre>
+    <p>Lectura del diagrama en voz alta: "La SPA habla solo con el Gateway. El Gateway expone dos contratos que implementan Catálogo y Pedidos. Pedidos además requiere la interfaz IPagos, satisfecha por Stripe. Catálogo acelera lecturas con Redis; Pedidos persiste en PostgreSQL."</p>
+    <p>Esa narrativa es la prueba de que el diagrama funciona: cualquier miembro del equipo puede reconstruir la arquitectura sin leer código.</p>
+  </div>
+</section>
+
+<section id="lecciones-aprendidas-diseno">
+  <h2>5.4. Lecciones aprendidas del diseño</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>El Gateway absorbe complejidad transversal:</strong> auth, rate limiting y CORS viven ahí, no repetidos en cada servicio.</li>
+      <li><strong>Las interfaces revelan acoplamiento:</strong> al ver que Pedidos requiere IPagos apuntando afuera, queda claro dónde aislar fallos (circuit breaker) y mockear en tests.</li>
+      <li><strong>Caché es un detalle arquitectónico:</strong> Redis aparece como decisión explícita, no como optimización invisible.</li>
+      <li><strong>Fronteras externas claras evitan sorpresas contractuales:</strong> todo lo que cruza a Stripe merece timeouts y reintentos documentados.</li>
+      <li><strong>El diagrama evolucionó con el sistema:</strong> cuando agreguemos notificaciones, será un componente nuevo con sus interfaces — no un parche oculto.</li>
+    </ul>
+    <p>Ejercicio propuesto: agrega un componente "Servicio Notificaciones" que recibe eventos de Pedidos mediante cola de mensajes. ¿Qué interfaz provee? ¿Quién la requiere?</p>
+  </div>
+</section>

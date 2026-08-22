@@ -1,0 +1,82 @@
+<!-- 2. Flujo de trabajo con Git LFS - Git LFS (Control de Versiones) -->
+<section id="migrar-un-repositorio-existente">
+  <h2>Migrar un repositorio existente</h2>
+  <div class="doc-content">
+    <p>Si los binarios ya contaminan tu historial, <code>git lfs migrate</code> reescribe los commits pasados convirtiéndolos a punteros:</p>
+    <pre><code class="language-bash"># Migrar TODA la historia de los *.psd
+git lfs migrate import --include="*.psd" --everything
+
+# Migrar solo ramas recientes (más rápido, menos seguro)
+git lfs migrate import --include="*.psd" \
+  --include-ref=refs/heads/main
+
+# Ver qué archivos pesan en tu historial antes de decidir
+git lfs migrate info --include="*" --everything</code></pre>
+    <table class="doc-table">
+      <thead><tr><th>Consecuencia</th><th>Detalle</th></tr></thead>
+      <tbody>
+        <tr><td>Cambian todos los hashes</td><td>Es una reescritura de historia como filter-repo</td></tr>
+        <tr><td>Requiere force-push</td><td><code>git push --force origin main</code> coordinado con el equipo</td></tr>
+        <tr><td>Forks/clones viejos quedan obsoletos</td><td>Avisar a todos para re-clonar</td></tr>
+        <tr><td>Objetos viejos persisten en el remoto</td><td>Contacta soporte del hosting para purgar/GC</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="trabajo-diario-con-lfs">
+  <h2>Trabajo diario con LFS</h2>
+  <div class="doc-content">
+    <p>Bien configurado, LFS es transparente: haces <code>add/commit/push/pull</code> normal. Comandos útiles cuando algo falla:</p>
+    <pre><code class="language-bash"># ¿Qué archivos son LFS y su tamaño?
+git lfs ls-files
+
+# Descargar manualmente el contenido real (si clonaste sin él)
+git lfs pull
+
+# Solo traer metadatos (útil en CI donde no tocas los binarios)
+GIT_LFS_SKIP_SMUDGE=1 git clone url-del-repo
+
+# Verificar integridad de objetos LFS locales
+git lfs fsck
+
+# Push explícito de objetos LFS pendientes
+git lfs push origin main --all</code></pre>
+    <p>Error típico al pushear: <code>missing objects in LFS</code> → ejecuta <code>git lfs push --all</code> antes del push normal.</p>
+  </div>
+</section>
+
+<section id="cuotas-y-limites-por-plataforma">
+  <h2>Cuotas y límites por plataforma</h2>
+  <div class="doc-content">
+    <p>LFS consume dos recursos medidos: <strong>almacenamiento</strong> y <strong>ancho de banda mensual</strong>:</p>
+    <table class="doc-table">
+      <thead><tr><th>Plataforma</th><th>Gratis incluye</th><th>Tamaño máx./archivo</th></tr></thead>
+      <tbody>
+        <tr><td>GitHub</td><td>1 GB almacenamiento + 1 GB/mes ancho de banda</td><td>2 GB (Free) / 5 GB (Enterprise)</td></tr>
+        <tr><td>GitLab.com</td><td>Incluido en el límite general de storage del proyecto</td><td>Configurable (default ~5 GB)</td></tr>
+        <tr><td>Bitbucket</td><td>1 GB/mes + 1 GB storage (según plan)</td><td>Depende del plan</td></tr>
+        <tr><td>Gitea self-hosted</td><td>Sin cuotas: tú administras el disco</td><td>Tu disco manda</td></tr>
+      </tbody>
+    </table>
+    <p>GitHub bloquea subidas al agotar el paquete; se compran data packs (por ejemplo 50 GB). En equipos con muchos binarios esto escala rápido: calcula antes de migrar.</p>
+  </div>
+</section>
+
+<section id="buenas-practicas-y-alternativas">
+  <h2>Buenas prácticas y alternativas</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Rastrea por extensión, no archivo por archivo</strong>: reglas estables en .gitattributes evitan sorpresas.</li>
+      <li><strong>Define la política antes del primer push</strong>: migrar después duele (reescritura + force push).</li>
+      <li><strong>Documenta qué es LFS</strong> en el README: quien clone sin <code>git lfs install</code> verá punteros raros de 130 bytes.</li>
+      <li><strong>No versiones artefactos generables</strong>: builds, node_modules o datasets derivados pertenecen a CI/artefactos, no al repo.</li>
+    </ul>
+    <p>Alternativas según el caso:</p>
+    <ul>
+      <li><strong>DVC / LakeFS:</strong> para datasets de machine learning con versionado tipo Git.</li>
+      <li><strong>S3/Cloud Storage + referencias:</strong> activos enormes (video 4K) fuera del repo con hash en un manifest.json.</li>
+      <li><strong>Git Annex:</strong> predecesor flexible de LFS para casos exóticos multi-servidor.</li>
+    </ul>
+  </div>
+</section>

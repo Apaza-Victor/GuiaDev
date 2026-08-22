@@ -1,27 +1,94 @@
 <!-- 02. Instalación y configuración - Alpine.js (Frameworks) -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p># Instalación y configuración</p>
-<p>Puedes instalar Alpine.js mediante CDN o npm. Para comenzar rápidamente, agrega el siguiente script a tu HTML:</p>
-<blockquote class="aside aside-note">
-Si solo necesitas Alpine.js para funcionalidades básicas y prototipos, la opción de CDN es la más sencilla.
-</blockquote>
-    <h4 class="tab-label">CDN</h4>
-        <pre><code class="language-html">&lt;script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"&gt;&lt;/script&gt;</code></pre>
-<p>Esto cargará Alpine.js directamente desde un CDN. Coloca la etiqueta <code>&lt;script&gt;</code> antes del cierre de <code>&lt;/body&gt;</code> en tu archivo HTML.</p>
-    <h4 class="tab-label">npm</h4>
-        <pre><code class="language-bash">npm install alpinejs</code></pre>
-<p>Luego, importa Alpine.js en tu archivo JavaScript principal:</p>
-        <pre><code class="language-js">import Alpine from 'alpinejs';\nwindow.Alpine = Alpine;\nAlpine.start();</code></pre>
-<pre><code class="language-html">&lt;div x-data="{ open: false }"&gt;
-  &lt;button @click="open = !open"&gt;Mostrar/Ocultar&lt;/button&gt;
-  &lt;div x-show="open"&gt;
-    ¡Hola desde Alpine.js!
+<section id="incluir-alpine-por-cdn">
+  <h2>Incluir Alpine.js por CDN</h2>
+  <div class="doc-content">
+    <p>Alpine.js se diseñó para añadir interactividad a HTML existente sin build ni tooling. La forma más directa es el CDN:</p>
+    <pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html lang="es"&gt;
+&lt;head&gt;
+  &lt;!-- Diferir es OBLIGATORIO: Alpine debe leer el HTML ya renderizado --&gt;
+  &lt;script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div x-data="{ abierto: false }"&gt;
+    &lt;button @click="abierto = !abierto"&gt;Alternar&lt;/button&gt;
+    &lt;p x-show="abierto" x-transition&gt;&iexcl;Hola Alpine!&lt;/p&gt;
   &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <p>Eso es todo: sin npm, sin bundler, sin pasos de build. El atributo <code>defer</code> no es opcional — sin él, Alpine se ejecuta antes de que el DOM exista y no inicializa nada.</p>
+  </div>
+</section>
+
+<section id="instalacion-con-npm-y-bundler">
+  <h2>Instalación con npm y bundler</h2>
+  <div class="doc-content">
+    <p>En proyectos con Vite, Laravel Mix, Webpack o similares, instala como dependencia e importa explícitamente:</p>
+    <pre><code class="language-bash">npm install alpinejs</code></pre>
+    <pre><code class="language-javascript">// app.js (punto de entrada)
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;   // requerido para plugins y debug desde consola
+Alpine.start();</code></pre>
+    <ul>
+      <li>Asignar <code>window.Alpine</code> permite que los plugins oficiales (intersect, persist, collapse, focus) y tu consola accedan a él.</li>
+      <li>Llama <code>Alpine.start()</code> después de registrar tus componentes y directivas personalizadas.</li>
+      <li>Versión fija en producción: <code>alpinejs@3.14.1</code> mejor que <code>@3.x.x</code> del CDN.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="primer-componente-x-data">
+  <h2>Tu primer componente con x-data</h2>
+  <div class="doc-content">
+    <p>Todo en Alpine gira alrededor de <code>x-data</code>: define el estado y el alcance de un componente directamente en el HTML:</p>
+    <pre><code class="language-html">&lt;!-- Contador minimo --&gt;
+&lt;div x-data="{ contador: 0 }"&gt;
+  &lt;button @click="contador++"&gt;+&lt;/button&gt;
+  &lt;span x-text="contador"&gt;&lt;/span&gt;
+&lt;/div&gt;
+
+&lt;!-- Estado extraido a una funcion reutilizable --&gt;
+&lt;script&gt;
+function dropdown() {
+  return {
+    abierto: false,
+    alternar() { this.abierto = !this.abierto }
+  }
+}
+&lt;/script&gt;
+
+&lt;div x-data="dropdown()" @click.outside="abierto = false"&gt;
+  &lt;button @click="alternar()"&gt;Menu&lt;/button&gt;
+  &lt;ul x-show="abierto" x-cloak&gt;
+    &lt;li&gt;&lt;a href="#"&gt;Perfil&lt;/a&gt;&lt;/li&gt;
+  &lt;/ul&gt;
 &lt;/div&gt;</code></pre>
-<blockquote class="aside aside-tip">
-Consulta la <a href="https://alpinejs.dev/start-here" target="_blank">documentación oficial de Alpine.js</a> para más detalles y opciones avanzadas de configuración.
-</blockquote>
-    </div>
-  </section>
+  </div>
+</section>
+
+<section id="directivas-esenciales-de-arranque">
+  <h2>Directivas esenciales para arrancar</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Directiva</th><th>Función</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>x-data</code></td><td>Declara estado reactivo del componente</td></tr>
+        <tr><td><code>x-text</code> / <code>x-html</code></td><td>Enlaza texto / HTML al elemento</td></tr>
+        <tr><td><code>x-show</code> / <code>x-if</code></td><td>Visibilidad (display) / existencia real en el DOM</td></tr>
+        <tr><td><code>x-model</code></td><td>Enlace bidireccional en inputs</td></tr>
+        <tr><td><code>@click</code>, <code>@submit</code></td><td>Escucha de eventos (atajo de x-on)</td></tr>
+        <tr><td><code>x-init</code></td><td>Código que corre al inicializar el componente</td></tr>
+        <tr><td><code>x-cloak</code></td><td>Oculta contenido hasta que Alpine esté listo (usar con CSS)</td></tr>
+      </tbody>
+    </table>
+    <pre><code class="language-css">/* Imprescindible junto a x-cloak */
+[x-cloak] { display: none !important; }</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Regla de adopción: si tu página empieza a necesitar más de tres o cuatro componentes Alpine con lógica compartida compleja, probablemente ya necesitas Vue/Livewire/Inertia. Alpine brilla en dropdowns, tabs, modales y toggles — no en SPAs.</p>
+    </blockquote>
+    <p>Ejercicio propuesto: toma un HTML estático tuyo con un menú móvil oculto por JavaScript tradicional y reescríbelo íntegramente con Alpine (<code>x-data</code> + <code>x-show</code> + <code>x-cloak</code>). Compara líneas de JS antes/después.</p>
+  </div>
+</section>

@@ -1,0 +1,105 @@
+<!-- 2. Notación y Ejemplos del Diagrama de Paquetes - Diag. Paquetes (UML) -->
+<section id="notacion-de-paquetes-y-dependencias">
+  <h2>Notación de paquetes y dependencias</h2>
+  <div class="doc-content">
+    <p>Un paquete se dibuja como un <strong>rectángulo con pestaña</strong> (una lengüeta arriba a la izquierda). El nombre va dentro del cuerpo, o en la pestaña si el cuerpo muestra contenido:</p>
+    <pre><code class="language-plantuml">@startuml
+package "Ventas" {
+  class Factura
+  class Cliente
+}
+
+package VentasSimple
+note right of VentasSimple : nombre solo en la pestana
+@enduml</code></pre>
+    <p>Las dependencias se dibujan con <strong>flecha discontinua abierta</strong> (<code>..&gt;</code>) desde el paquete que necesita hacia el que provee. La flecha nunca es decorativa: marca la dirección del riesgo — quien recibe la punta es quien puede romper al otro al cambiar.</p>
+    <ul>
+      <li>Línea sólida con círculo (+) = realización: el paquete implementa una interfaz.</li>
+      <li>Anidamiento visual = composición de paquetes (el interno existe solo dentro del externo).</li>
+      <li>Calificación: <code>Padre::Hijo</code> referencia un elemento anidado sin dibujarlo.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="elementos-importados-y-visibilidad">
+  <h2>Elementos importados y visibilidad</h2>
+  <div class="doc-content">
+    <p>UML distingue dos formas de acceder a elementos de otro paquete, con estereotipos sobre la dependencia:</p>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Relación</th><th>Sintaxis PlantUML</th><th>Significado</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Import (privado)</td><td><code>A ..&gt; B : &lt;&lt;import&gt;&gt;</code></td><td>Los elementos de B se usan dentro de A con su nombre simple</td></tr>
+        <tr><td>Import público</td><td><code>A ..&gt; B : &lt;&lt;access&gt;&gt;</code></td><td>A usa B pero no re-exporta: C no ve B a través de A</td></tr>
+        <tr><td>Merge</td><td><code>A ..&gt; B : &lt;&lt;merge&gt;&gt;</code></td><td>B se fusiona conceptualmente en A (usado con perfiles)</td></tr>
+      </tbody>
+    </table>
+    <p>La <strong>visibilidad</strong> dentro del paquete funciona como en las clases: un elemento <code>+publico</code> es visible fuera del paquete; uno <code>-privado</code> solo es accesible desde su propio paquete. Así se ocultan clases internas de implementación y se expone únicamente la interfaz del módulo.</p>
+  </div>
+</section>
+
+<section id="estereotipos-estandar-utiles">
+  <h2>Estereotipos estándar útiles</h2>
+  <div class="doc-content">
+    <p>Los estereotipos documentan la intención arquitectónica de cada paquete:</p>
+    <ul>
+      <li><code>&lt;&lt;facade&gt;&gt;</code>: paquete que actúa como puerta de entrada; simplifica el acceso a un subsistema complejo.</li>
+      <li><code>&lt;&lt;framework&gt;&gt;</code>: paquete reutilizable que extiende el sistema (Spring, React).</li>
+      <li><code>&lt;&lt;subsystem&gt;&gt;</code>: grupo cohesivo con comportamiento propio, candidato a servicio independiente.</li>
+      <li><code>&lt;&lt;system&gt;&gt;</code>: el sistema completo visto como una unidad.</li>
+      <li><code>&lt;&lt;layer&gt;&gt;</code>: rebanada vertical de la arquitectura (presentación, dominio...).</li>
+    </ul>
+    <p>No hay que abusar: dos o tres estereotipos bien elegidos comunican más que una taxonomía completa que nadie recuerda.</p>
+  </div>
+</section>
+
+<section id="ejemplo-arquitectura-capas-plantuml">
+  <h2>Ejemplo completo con PlantUML</h2>
+  <div class="doc-content">
+    <p>Arquitectura en capas de una tienda en línea, con reglas de dependencia explícitas:</p>
+    <pre><code class="language-plantuml">@startuml
+skinparam packageStyle rectangle
+
+package "Presentacion <<layer>>" as UI {
+  package Web
+  package API_REST
+}
+
+package "Aplicacion <<layer>>" as App {
+  package Servicios
+}
+
+package "Dominio <<layer>>" as Dom {
+  package Entidades
+  package ReglasNegocio
+}
+
+package "Infraestructura <<layer>>" as Infra {
+  package Persistencia
+  package Notificaciones
+}
+
+Web ..> Servicios : <<import>>
+API_REST ..> Servicios : <<import>>
+Servicios ..> ReglasNegocio : <<import>>
+Persistencia .up.> Entidades : <<import>>
+Notificaciones .up.> Entidades : <<import>>
+@enduml</code></pre>
+    <p>Lectura del diagrama: toda petición entra por Web/API, pasa por servicios, aplica reglas del dominio y se materializa mediante infraestructura. Ningún elemento de UI conoce Persistencia directamente — cambiar Oracle por PostgreSQL no toca ni una línea de la capa de presentación.</p>
+  </div>
+</section>
+
+<section id="reglas-de-dependencias-limpias">
+  <h2>Reglas de dependencias limpias</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Cero ciclos:</strong> si A→B→A, extrae lo compartido a un tercer paquete C del que ambos dependan.</li>
+      <li><strong>Depende de abstracciones:</strong> la capa alta debería depender de interfaces (definidas en capas internas), no de implementaciones concretas.</li>
+      <li><strong>Estable abajo, volátil arriba:</strong> los paquetes de los que muchos dependen deben cambiar poco; el detalle cambiante vive en los bordes.</li>
+      <li><strong>Un motivo por paquete:</strong> si para describir un paquete necesitas la palabra "y", probablemente sean dos.</li>
+      <li><strong>Revísalo en cada release:</strong> las dependencias ilegales empiezan con un import "rápido"; automatiza la detección (Dependency Cruiser, ArchUnit, phparkitect).</li>
+    </ul>
+    <p>Ejercicio propuesto: dibuja los paquetes de tu proyecto actual tal como están <em>hoy</em>, no como deberían estar. Marca con rojo cada dependencia que viole las reglas anteriores — ese es tu mapa de deuda arquitectónica.</p>
+  </div>
+</section>

@@ -1,0 +1,78 @@
+<!-- 1. Introducción al Diagrama de Tiempos - Diag. Tiempos (UML) -->
+<section id="que-es-el-diagrama-de-tiempos">
+  <h2>¿Qué es el diagrama de tiempos?</h2>
+  <div class="doc-content">
+    <p>El diagrama de tiempos (<em>timing diagram</em>) es el menos conocido de los diagramas de interacción UML: muestra <strong>cómo cambia el estado de uno o varios objetos a lo largo del tiempo real</strong>. A diferencia del diagrama de secuencia, donde el eje vertical es solo orden, aquí el tiempo es <strong>cuantitativo</strong>: se miden duraciones exactas, retardos y solapamientos.</p>
+    <p>Es esencialmente un cronograma digital (como los de electrónica con osciloscopio) aplicado al software:</p>
+    <pre><code class="language-text">Puerta
+  │ Abierta          Cerrada        Abierta
+  │ ┌─────────┐     ┌──────┐      ┌────────► t (ms)
+  └─┘         └─────┘      └──────┘
+    0    120   150   600  640     1000</code></pre>
+    <p>Cada línea representa un objeto o señal; cada cambio de estado ocurre en una marca temporal concreta. De un vistazo ves cuánto duró cada estado y qué estados coincidieron en el tiempo.</p>
+  </div>
+</section>
+
+<section id="casos-de-uso-tipicos">
+  <h2>Casos de uso típicos</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Sistemas embebidos y tiempo real:</strong> sensores, actuadores, PLC industriales — donde "responder tarde" equivale a "fallar".</li>
+      <li><strong>Protocolos de comunicación:</strong> handshake UART/I2C/SPI, ciclos de petición-respuesta con timeouts.</li>
+      <li><strong>Máquinas con temporizadores:</strong> semáforos, rieles de producción, control de accesos con retardo.</li>
+      <li><strong>Análisis de rendimiento:</strong> visualizar en qué fases se consume el presupuesto de latencia de una operación.</li>
+      <li><strong>Documentación de SLAs:</strong> "el servicio debe pasar a modo degradado si la réplica no responde en 300 ms" se modela y verifica aquí.</li>
+    </ul>
+    <blockquote class="aside aside-note">
+      <p>No lo uses para lógica de negocio web tradicional: si solo necesitas orden de llamadas sin mediciones reales, el diagrama de secuencia comunica mejor con menor esfuerzo.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="elementos-basicos-tiempos">
+  <h2>Elementos básicos</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Elemento</th><th>Descripción</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Línea de valor (<code>concise</code>)</td><td>Una banda por objeto; su etiqueta de estado cambia en el tiempo</td></tr>
+        <tr><td>Línea general (<code>robust</code>)</td><td>Variante para señales discretas con estados bien definidos</td></tr>
+        <tr><td>Reloj/binario (<code>binary</code>, <code>clock</code>)</td><td>Señal de dos niveles (0/1) o pulso periódico con periodo definido</td></tr>
+        <tr><td>Marcas de tiempo (<code>@0</code>, <code>@150</code>)</td><td>Instantes exactos donde ocurre cada transición</td></tr>
+        <tr><td>Flechas de mensaje</td><td>Eventos entre líneas en un instante concreto</td></tr>
+        <tr><td>Restricciones temporales</td><td>Anotaciones como <code>{150 ms}</code> acotando duraciones</td></tr>
+      </tbody>
+    </table>
+    <p>El eje horizontal es el tiempo (con unidades explícitas); no hay eje vertical temporal — las bandas apiladas son objetos independientes cuyas escalas comparten origen.</p>
+  </div>
+</section>
+
+<section id="ejemplo-sencillo-tiempos">
+  <h2>Ejemplo sencillo</h2>
+  <div class="doc-content">
+    <p>Una lámpara automática con presencia: el sensor detecta movimiento, la lámpara enciende 5 segundos y vuelve a reposo:</p>
+    <pre><code class="language-plantuml">@startuml
+concise "Sensor" as SEN
+concise "Lampara" as LAM
+
+@0
+SEN is Reposo
+LAM is Apagada
+
+@200ms
+SEN is Detectando
+
+@250ms
+LAM is Encendida
+
+@3250ms
+LAM is Apagada
+
+@500ms
+SEN is Reposo
+@enduml</code></pre>
+    <p>Lectura: a los 200 ms el sensor pasa a detectar; 50 ms después (latencia de reacción) la lámpara enciende; permanece así 3000 ms y regresa a apagada. Dos objetos, cuatro instantes — y ya hay especificación verificable de comportamiento temporal.</p>
+  </div>
+</section>

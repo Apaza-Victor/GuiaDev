@@ -1,0 +1,66 @@
+<!-- 2. Colaboración en Bitbucket - Bitbucket (Control de Versiones) -->
+<section id="pull-requests-y-revision-de-codigo">
+  <h2>Pull Requests y revisión de código</h2>
+  <div class="doc-content">
+    <p>En Bitbucket todo pasa por <strong>pull requests</strong>: abres uno desde tu rama feature hacia main, asignas <strong>reviewers</strong>, discutes línea a línea y fusionas cuando hay aprobación.</p>
+    <pre><code class="language-bash">git checkout -b feat/login-oauth
+git add . &amp;&amp; git commit -m "feat: login con Google OAuth"
+git push -u origin feat/login-oauth
+# En la web: Create pull request → reviewers → merge checks</code></pre>
+    <p>Opciones de fusión: <strong>Merge commit</strong>, <strong>Squash</strong> (un solo commit limpio) o <strong>Fast-forward</strong>. Puedes bloquear el merge hasta que pasen los pipelines y haya N aprobaciones mínimas.</p>
+  </div>
+</section>
+
+<section id="estrategia-de-ramas">
+  <h2>Estrategia de ramas</h2>
+  <div class="doc-content">
+    <p>Bitbucket trae soporte pensado para flujos tipo <strong>Gitflow</strong>: define en <em>Repository settings → Branch model</em> cuál es tu rama principal, la de desarrollo y los prefijos de ramas feature/release/hotfix.</p>
+    <pre><code class="language-text">main      → producción
+develop   → integración continua del equipo
+feature/* → trabajo nuevo, nace de develop
+release/* → preparación de versión
+hotfix/*  → correcciones urgentes sobre main</code></pre>
+    <p>Definir el modelo hace que la UI sugiera la rama destino correcta al abrir cada PR y evita errores humanos.</p>
+  </div>
+</section>
+
+<section id="branch-permissions">
+  <h2>Branch permissions</h2>
+  <div class="doc-content">
+    <p>Con <strong>branch permissions</strong> restringes qué personas o grupos pueden hacer push, reescribir historia o eliminar ramas específicas. Lo mínimo recomendable:</p>
+    <ul>
+      <li><code>main</code>: solo escritura vía PR aprobado; nadie fuerza push ni borra.</li>
+      <li><code>develop</code>: escritura del equipo, pero con checks de pipeline.</li>
+      <li>Patrones como <code>release/*</code> protegidos para el responsable de releases.</li>
+    </ul>
+    <p>Esto previene accidentes clásicos como un <code>git push --force</code> que borra commits del resto del equipo.</p>
+  </div>
+</section>
+
+<section id="integracion-con-jira">
+  <h2>Integración con Jira</h2>
+  <div class="doc-content">
+    <p>La magia ocurre por convención de nombres. Si tu issue es <code>WEB-42</code>:</p>
+    <pre><code class="language-bash"># Rama que referencia el ticket
+git checkout -b WEB-42-carrito-compras
+
+# Commit que menciona el ticket
+git commit -m "WEB-42 #comment validación de stock agregada"</code></pre>
+    <ul>
+      <li>El ticket Jira muestra automáticamente rama, commits y PRs relacionados.</li>
+      <li>Palabras clave en la descripción del PR mueven el ticket: <code>fixes WEB-42</code>, <code>resolves WEB-42</code>.</li>
+      <li>Puedes exigir en el PR que todo commit referencie un ticket válido.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="snippets-y-descargas">
+  <h2>Snippets y descargas</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Snippets:</strong> fragmentos de código compartibles públicos o privados por workspace, útiles para scripts de setup y plantillas internas.</li>
+      <li><strong>Downloads:</strong> zona de archivos adjuntos del repositorio donde Pipelines puede publicar binarios compilados para QA o clientes.</li>
+      <li><strong>Wiki:</strong> cada repo puede tener documentación versionada en un repo aparte.</li>
+    </ul>
+  </div>
+</section>

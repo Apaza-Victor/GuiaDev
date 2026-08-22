@@ -1,0 +1,76 @@
+<!-- 1. Introducción al Diagrama de Estados - Diag. Estados (UML) -->
+<section id="que-es-maquina-estados">
+  <h2>¿Qué es una máquina de estados?</h2>
+  <div class="doc-content">
+    <p>El diagrama de estados (State Machine Diagram) modela el <strong>ciclo de vida de un único objeto</strong>: los estados en los que puede encontrarse, los eventos que provocan cambios entre ellos y las acciones ejecutadas durante las transiciones.</p>
+    <p>Se basa en el concepto matemático de <strong>máquina de estados finita</strong> (FSM):</p>
+    <ul>
+      <li>En cada instante, el objeto está en <em>exactamente un estado</em>.</li>
+      <li>Solo eventos específicos lo sacan de ese estado.</li>
+      <li>Cada transición puede llevar guardas (condiciones) y acciones.</li>
+      <li>Existe un estado inicial obligatorio y cero o más finales.</li>
+    </ul>
+    <pre><code class="language-text">●──► [Nuevo] ──pagar──► [Pagado] ──enviar──► [Enviado] ──entregar──► ◉</code></pre>
+    <p>A diferencia del diagrama de actividades (que modela un <em>proceso</em> con múltiples actores), el de estados describe <em>un solo objeto</em> reaccionando a su entorno.</p>
+  </div>
+</section>
+
+<section id="cuando-modelar-estados">
+  <h2>Cuándo modelar estados</h2>
+  <div class="doc-content">
+    <p>Señales claras de que una clase merece su diagrama de estados:</p>
+    <ul>
+      <li><strong>Tiene atributo "status" o "estado"</strong> en la base de datos: pedido, factura, cuenta, ticket, suscripción.</li>
+      <li><strong>Las operaciones válidas dependen del momento:</strong> no puedes cancelar lo ya entregado; no puedes pagar dos veces.</li>
+      <li><strong>El equipo pregunta "¿qué pasa si...?"</strong> sobre secuencias de eventos: ahí hay máquina escondida sin documentar.</li>
+      <li><strong>Bugs de flujo recurrentes:</strong> estados imposibles en producción = máquina mal definida o inexistente.</li>
+    </ul>
+    <p>Clases candidatas típicas por dominio:</p>
+    <table class="doc-table">
+      <thead><tr><th>Dominio</th><th>Objetos con ciclo de vida rico</th></tr></thead>
+      <tbody>
+        <tr><td>E-commerce</td><td>Pedido, Pago, Envío, Devolución</td></tr>
+        <tr><td>Banca</td><td>Cuenta, Préstamo, Transacción</td></tr>
+        <tr><td>Soporte IT</td><td>Ticket, Incidente, Cambio</td></tr>
+        <tr><td>RH</td><td>Vacante, Postulación, Contrato</td></tr>
+        <tr><td>Juegos</td><td>Personaje, Partida, Ronda</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="elementos-basicos-estados">
+  <h2>Elementos básicos</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead><tr><th>Elemento</th><th>Símbolo</th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td>Estado inicial</td><td>● círculo relleno</td><td>Dónde nace el objeto</td></tr>
+        <tr><td>Estado final</td><td>◉ círculo con aro</td><td>Cuándo muere o deja de importar</td></tr>
+        <tr><td>Estado</td><td>Rectángulo redondeado</td><td>Situación estable del objeto</td></tr>
+        <tr><td>Transición</td><td>Flecha</td><td>Movimiento disparado por evento</td></tr>
+        <tr><td>Evento / guarda</td><td><code>evento [guarda] / acción</code></td><td>Etiqueta de la flecha</td></tr>
+      </tbody>
+    </table>
+    <p>Anatomía completa de una etiqueta de transición: <code>evento(param) [condición] / acción() ^señalDestino</code>. En la práctica se usa solo lo necesario — muchas veces basta <code>pagar()</code>.</p>
+    <pre><code class="language-plantuml">@startuml
+[*] --> Nuevo
+Nuevo --> Pagado : pagar()
+Pagado --> Enviado : despachar()
+Enviado --> Entregado : confirmarEntrega()
+Entregado --> [*]
+@enduml</code></pre>
+  </div>
+</section>
+
+<section id="relacion-con-otros-diagramas">
+  <h2>Relación con otros diagramas</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Con Clases:</strong> el estado suele materializarse como atributo <code>estado</code> tipo enum; las transiciones se convierten en métodos (<code>pagar()</code>, <code>cancelar()</code>) con validación interna.</li>
+      <li><strong>Con Secuencia:</strong> cada mensaje recibido por el objeto protagonista probablemente dispara una transición; cruzar ambos diagramas detecta mensajes sin efecto documentado.</li>
+      <li><strong>Con Actividades:</strong> actividades = flujo del negocio completo; estados = vida de UN objeto dentro de ese flujo. Un proceso de compras contiene la máquina de estados de Pedido.</li>
+    </ul>
+    <p>Ejercicio propuesto: piensa en tu última app. ¿Cuál objeto tenía columna <code>status</code>? Dibuja sus estados reales y compáralos con los valores que acepta hoy el enum del código. Suele haber sorpresas.</p>
+  </div>
+</section>

@@ -1,10 +1,138 @@
-<!-- 17. Notificaciones y Correos -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Aprende a enviar notificaciones y correos electrónicos en Laravel</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- 17. Notificaciones y Correos - Laravel (Frameworks) -->
+<section id="sistema-de-notificaciones">
+  <h2>Sistema de notificaciones</h2>
+  <div class="doc-content">
+    <p>Las notificaciones de Laravel envían un mismo mensaje por múltiples canales (email, base de datos, Slack, SMS) con una sola clase. La diferencia conceptual clave: una <strong>notificación</strong> dice "algo le pasó a ESTE usuario"; un <strong>mailable</strong> es solo "manda este correo".</p>
+    <pre><code class="language-bash">php artisan make:notification FacturaPagada</code></pre>
+    <pre><code class="language-php">class FacturaPagada extends Notification
+{
+    public function __construct(public Factura $factura) {}
+
+    // Canales por los que viaja
+    public function via(object $notifiable): array
+    {
+        return ['mail', 'database'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->subject('Tu factura fue pagada')
+            ->greeting("Hola {$notifiable->name}")
+            ->line("La factura #{$this->factura->numero} fue pagada con exito.")
+            ->action('Ver factura', url("/facturas/{$this->factura->id}"));
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'factura_id' => $this->factura->id,
+            'mensaje' => 'Factura pagada',
+        ];
+    }
+}
+
+// Envio desde cualquier parte
+$usuario->notify(new FacturaPagada($factura));
+
+// A muchos a la vez
+Usuario::where('plan', 'premium')->each(
+    fn ($u) => $u->notify(new FacturaPagada($factura))
+);</code></pre>
+  </div>
+</section>
+
+<section id="notificaciones-en-base-de-datos">
+  <h2>Notificaciones en base de datos</h2>
+  <div class="doc-content">
+    <p>El canal <code>database</code> guarda cada notificación en la tabla <code>notifications</code> — la base del clásico sistema de campanita:</p>
+    <pre><code class="language-bash"># Tabla + columna en usuarios
+php artisan make:notifications-table
+php artisan migrate</code></pre>
+    <pre><code class="language-php">// Leer y marcar
+$noLeidas = $usuario->unreadNotifications;
+$usuario->notifications->markAsRead();
+
+// Broadcast en tiempo real (opcional)
+public function via($notifiable) { return ['database', 'broadcast']; }</code></pre>
+    <p>Con Laravel Echo + Pusher/Reverb, el canal broadcast actualiza la campanita sin recargar página.</p>
+  </div>
+</section>
+
+<section id="mailables-y-vistas-de-correo">
+  <h2>Mailables y vistas de correo</h2>
+  <div class="doc-content">
+    <p>Cuando necesitas control total del correo (diseño HTML propio, adjuntos complejos), los mailables son la herramienta:</p>
+    <pre><code class="language-bash">php artisan make:mail BienvenidaMail</code></pre>
+    <pre><code class="language-php">// app/Mail/BienvenidaMail.php
+class BienvenidaMail extends Mailable
+{
+    use Queueable;
+
+    public function __construct(public Usuario $usuario) {}
+
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: 'Bienvenido a nuestra plataforma',
+            tags: ['onboarding'],          // util para tracking
+            replyTo: ['soporte@midominio.com'],
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            markdown: 'emails.bienvenida',   // vista markdown con componentes
+            with: ['nombre' => $this->usuario->name],
+        );
+    }
+
+    public function attachments(): array
+    {
+        return [Attachment::fromPath(storage_path('app/manual.pdf'))];
+    }
+}
+
+// Envio
+Mail::to($usuario->email)->send(new BienvenidaMail($usuario));</code></pre>
+    <pre><code class="language-blade">&lt;!-- resources/views/emails/bienvenida.blade.php --&gt;
+&lt;x-mail::message&gt;
+# &iexcl;Bienvenido, {{ $nombre }}!
+
+Gracias por registrarte. Tu cuenta ya esta activa.
+
+&lt;x-mail::button :url="'https://app.midominio.com/login'"&gt;
+Entrar ahora
+&lt;/x-mail::button&gt;
+
+Saludos,&lt;br&gt;
+{{ config('app.name') }}
+&lt;/x-mail::message&gt;</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Las plantillas markdown de Laravel generan HTML responsive con botones y paneles listos. Empieza siempre ahí; solo construye CSS propio si la marca lo exige realmente.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="configuracion-smtp-y-pruebas">
+  <h2>Configuración SMTP y pruebas</h2>
+  <div class="doc-content">
+    <pre><code class="language-text"># .env - desarrollo local
+MAIL_MAILER=log              # escribe correos a storage/logs/laravel.log
+
+MAIL_MAILER=smtp             # produccion o Mailtrap para staging
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=xxx
+MAIL_PASSWORD=xxx
+MAIL_FROM_ADDRESS=hola@midominio.com</code></pre>
+    <ul>
+      <li><strong><code>MAIL_MAILER=log</code>:</strong> cero configuración para desarrollar; revisa el log.</li>
+      <li><strong>Mailtrap / Mailpit:</strong> bandeja falsa para staging — ves el diseño real sin enviar nada a clientes.</li>
+      <li><strong>Pruebas automatizadas:</strong> <code>Mail::fake()</code> + <code>Mail::assertSent(BienvenidaMail::class)</code>.</li>
+      <li>Envía mailables pesados SIEMPRE encolados: <code>send(new ...)</code> → <code>queue(new ...)</code>.</li>
+    </ul>
+    <p>Ejercicio propuesto: crea la notificación completa de "recuperación de contraseña" propia (canales mail + database), pruébala con MAIL_MAILER=log, y luego escribe el test que afirme su envío con Notification::fake().</p>
+  </div>
+</section>

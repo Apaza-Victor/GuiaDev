@@ -1,10 +1,99 @@
-<!-- 6. Navegación entre páginas -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Aprende a implementar navegación SPA con Inertia.js</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- Navegación - Inertia.js (Frameworks) -->
+<section id="el-componente-link">
+  <h2>El componente Link</h2>
+  <div class="doc-content">
+    <p>Inertia convierte tu app en SPA sin API: los enlaces se interceptan y resuelven por XHR sin recargar la página. El componente <code>&lt;Link&gt;</code> reemplaza al &lt;a&gt; tradicional:</p>
+    <pre><code class="language-vue">&lt;!-- Vue 3 --&gt;
+&lt;script setup&gt;
+import { Link } from '@inertiajs/vue3';
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;Link href="/usuarios"&gt;Usuarios&lt;/Link&gt;
+
+  &lt;!-- Con datos y metodo --&gt;
+  &lt;Link :href="`/usuarios/${usuario.id}`" method="delete" as="button"&gt;
+    Eliminar
+  &lt;/Link&gt;
+
+  &lt;!-- Estado activo automatico --&gt;
+  &lt;Link href="/panel" :class="{ activo: $page.url.startsWith('/panel') }"&gt;Panel&lt;/Link&gt;
+&lt;/template&gt;</code></pre>
+    <ul>
+      <li><code>method="post|put|patch|delete"</code>: permite acciones completas sin formularios.</li>
+      <li><code>data="{ filtro: 'activos' }"</code>: envía parámetros.</li>
+      <li><code>preserve-scroll</code>: mantiene posición de scroll (ideal paginación con filtros).</li>
+      <li><code>only={['users']}</code>: partial reload — recarga solo esas props.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="navegacion-programatica-con-router">
+  <h2>Navegación programática con router</h2>
+  <div class="doc-content">
+    <p>Para navegar desde JavaScript (tras un submit, una confirmación, un timeout):</p>
+    <pre><code class="language-javascript">import { router } from '@inertiajs/vue3';
+
+// Visitas
+router.visit('/usuarios');
+router.visit('/login', { method: 'post', data: { email, password } });
+
+// Atajos
+router.post('/pedidos', datos);
+router.put(`/perfil/${id}`, datos);
+router.delete(`/carrito/${itemId}`);
+router.reload();                    // refresca props de la pagina actual
+router.replace('/nueva-url');       // no agrega al historial
+
+// Opciones utiles
+router.visit('/dashboard', {
+  preserveState: true,              // no resetea estado local del componente
+  preserveScroll: true,
+  only: ['notificaciones'],
+  onSuccess: (page) => toast('Listo'),
+});</code></pre>
+  </div>
+</section>
+
+<section id="eventos-de-progreso-y-carga">
+  <h2>Eventos, indicador de progreso y carga</h2>
+  <div class="doc-content">
+    <pre><code class="language-javascript">// Barra de progreso integrada (en app.js)
+import { createInertiaApp } from '@inertiajs/vue3';
+
+createInertiaApp({
+  progress: {
+    color: '#29d',
+    showSpinner: true,
+  },
+});
+
+// Hooks globales para spinners propios
+router.on('start', () => cargando.value = true);
+router.on('finish', () => cargando.value = false);</code></pre>
+    <ul>
+      <li><code>on('start' | 'finish' | 'success' | 'error')</code>: eventos globales.</li>
+      <li>Por visita individual: callbacks <code>onSuccess</code>, <code>onError</code>, <code>onFinish</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="remember-y-estado-entre-navegaciones">
+  <h2>Remember: estado entre navegaciones</h2>
+  <div class="doc-content">
+    <p>Inertia guarda el snapshot de cada página en historial. Con <code>remember</code>, también preserva el estado local de componentes al volver atrás:</p>
+    <pre><code class="language-vue">&lt;script setup&gt;
+import { useForm } from '@inertiajs/vue3';
+
+// El formulario sobrevive a navegacion hacia atras/adelante
+const form = useForm({
+  titulo: '',
+  contenido: '',
+}, { remember: true });
+&lt;/script&gt;</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Usa remember en filtros de listado y formularios largos. Evítalo en datos sensibles o que caducan rápido (tokens, búsquedas temporales).</p>
+    </blockquote>
+    <p>Ejercicio propuesto: construye un listado con búsqueda + paginación donde la búsqueda use router.visit con preserveState/preserveScroll y solo=['usuarios'], y verifica en Network que solo viaja esa prop.</p>
+  </div>
+</section>

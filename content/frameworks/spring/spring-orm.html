@@ -1,10 +1,117 @@
-<!-- 26. ORM en Spring (JPA + Hibernate) -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Mapeo de entidades, relaciones, repositorios, consultas JPQL, paginación y optimización</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- ORM y JPA - Spring (Frameworks) -->
+<section id="jpa-e-hibernate-conceptos">
+  <h2>JPA e Hibernate: conceptos base</h2>
+  <div class="doc-content">
+    <p><strong>JPA</strong> es la especificación Java para mapeo objeto-relacional; <strong>Hibernate</strong> es su implementación más usada. Spring Data JPA añade repositorios que eliminan el 90% del código repetitivo:</p>
+    <pre><code class="language-java">@Entity
+@Table(name = "productos")
+public class Producto {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String nombre;
+
+    private BigDecimal precio;
+
+    @ManyToOne(fetch = FetchType.LAZY)     // LAZY por defecto en relaciones
+    @JoinColumn(name = "categoria_id")
+    private Categoria categoria;
+
+    // getters/setters
+}</code></pre>
+    <pre><code class="language-java">// Repositorio: sin implementar NADA
+public interface ProductoRepository extends JpaRepository&lt;Producto, Long&gt; {
+
+    List&lt;Producto&gt; findByNombreContainingIgnoreCase(String texto);
+
+    List&lt;Producto&gt; findByPrecioBetween(BigDecimal min, BigDecimal max);
+
+    @Query("SELECT p FROM Producto p WHERE p.categoria.nombre = :cat")
+    List&lt;Producto&gt; porCategoria(@Param("cat") String categoria);
+}</code></pre>
+  </div>
+</section>
+
+<section id="relaciones-entre-entidades">
+  <h2>Relaciones entre entidades</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Relación</th><th>Anotación</th><th>Ejemplo</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Muchos a uno</td><td><code>@ManyToOne</code></td><td>Varios productos → una categoría</td></tr>
+        <tr><td>Uno a muchos</td><td><code>@OneToMany(mappedBy)</code></td><td>Categoría → lista de productos</td></tr>
+        <tr><td>Uno a uno</td><td><code>@OneToOne</code></td><td>Usuario → perfil detallado</td></tr>
+        <tr><td>Muchos a muchos</td><td><code>@ManyToMany</code></td><td>Estudiantes ↔ cursos</td></tr>
+      </tbody>
+    </table>
+    <pre><code class="language-java">@Entity
+public class Categoria {
+    @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL)
+    private List&lt;Producto&gt; productos = new ArrayList&lt;&gt;();
+
+    public void agregarProducto(Producto p) {
+        productos.add(p);
+        p.setCategoria(this);   // sincroniza ambos lados SIEMPRE
+    }
+}</code></pre>
+    <ul>
+      <li><strong>cascade</strong>: propagar operaciones (guardar pedido guarda sus líneas).</li>
+      <li><strong>orphanRemoval = true</strong>: eliminar de la lista elimina de BD.</li>
+      <li>En bidireccionales, un solo lado es dueño (el ManyToOne); sincroniza ambos lados con métodos helper.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="lazy-loading-y-el-problema-n1">
+  <h2>Lazy loading y el problema N+1</h2>
+  <div class="doc-content">
+    <p>Con FetchType.LAZY, acceder a una relación dispara una consulta extra. En bucles esto explota al clásico problema N+1: 1 consulta para traer 50 pedidos + 50 consultas más (una por cliente):</p>
+    <pre><code class="language-text">SELECT * FROM pedidos;              -- 1 consulta
+SELECT * FROM clientes WHERE id=1;  -- x50 mas... desastre</code></pre>
+    <p>Soluciones, de preferencia:</p>
+    <pre><code class="language-java">// 1. JOIN FETCH en JPQL (la mas clara)
+@Query("SELECT p FROM Pedido p JOIN FETCH p.cliente WHERE p.fecha > :desde")
+List&lt;Pedido&gt; recientes(@Param("desde") LocalDate desde);
+
+// 2. @EntityGraph cuando no quieres JPQL
+@EntityGraph(attributePaths = {"cliente", "items"})
+List&lt;Pedido&gt; findByEstado(EstadoPedido estado);</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Síntoma infalible de N+1: logs SQL llenos de consultas idénticas con IDs distintos. Activa <code>spring.jpa.properties.hibernate.generate_statistics=true</code> en desarrollo para contarlas.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="transacciones-y-buenas-practicas">
+  <h2>Transacciones y buenas prácticas</h2>
+  <div class="doc-content">
+    <pre><code class="language-java">@Service
+public class TransferenciaService {
+
+    @Transactional   // todo o nada: rollback automatico ante excepcion
+    public void transferir(Long origenId, Long destinoId, BigDecimal monto) {
+        Cuenta origen = repo.findById(origenId).orElseThrow();
+        Cuenta destino = repo.findById(destinoId).orElseThrow();
+
+        origen.debitar(monto);
+        destino.acreditar(monto);
+        // sin save() explicito: dirty checking persiste cambios al cerrar
+    }
+
+    @Transactional(readOnly = true)   // optimizacion para lecturas
+    public List&lt;Cuenta&gt; listar() { return repo.findAll(); }
+}</code></pre>
+    <ul>
+      <li><code>@Transactional</code> va en la capa de SERVICIO, no en controladores ni repositorios.</li>
+      <li>Dentro de una transacción NO hagas llamadas lentas (APIs externas, emails) — mantén la transacción corta.</li>
+      <li>DTOs para exponer datos: nunca devuelvas entidades directamente (serialización perezosa + acoplamiento).</li>
+      <li>Valida con Bean Validation (<code>@NotNull</code>, <code>@Size</code>) sobre DTOs antes de tocar la entidad.</li>
+    </ul>
+    <p>Ejercicio propuesto: detecta un N+1 real en tu proyecto con estadísticas de Hibernate activas, corrígelo con JOIN FETCH y compara el conteo de consultas antes/después.</p>
+  </div>
+</section>

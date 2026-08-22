@@ -1,0 +1,133 @@
+<!-- 3. GitLab CI/CD - GitLab (Control de Versiones) -->
+<section id="conceptos-clave-pipeline-stages-y-jobs">
+  <h2>Conceptos clave: pipeline, stages y jobs</h2>
+  <div class="doc-content">
+    <p>La arquitectura de GitLab CI se apoya en tres conceptos:</p>
+    <ul>
+      <li><strong>Job:</strong> una tarea concreta (instalar, testear, construir). Es la unidad mínima.</li>
+      <li><strong>Stage:</strong> fase que agrupa jobs (build → test → deploy). Los jobs del mismo stage corren en paralelo.</li>
+      <li><strong>Pipeline:</strong> la secuencia completa de stages que se ejecuta ante un push o MR.</li>
+    </ul>
+    <pre><code class="language-text">Pipeline
+├── stage: build   → [job: install]  [job: compile]
+├── stage: test    → [job: unit]     [job: lint]
+└── stage: deploy  → [job: staging]</code></pre>
+    <p>Si cualquier job falla, los stages siguientes no se ejecutan: eso garantiza que nada roto avance hacia despliegue.</p>
+  </div>
+</section>
+
+<section id="el-archivo-gitlab-ciyml">
+  <h2>El archivo .gitlab-ci.yml</h2>
+  <div class="doc-content">
+    <p>Toda la configuración vive en un archivo <code>.gitlab-ci.yml</code> en la raíz del repositorio. GitLab lo detecta automáticamente en cada push.</p>
+    <pre><code class="language-yaml"># .gitlab-ci.yml mínimo
+stages:
+  - build
+  - test
+
+instalar:
+  stage: build
+  image: node:20
+  script:
+    - npm ci
+
+probar:
+  stage: test
+  image: node:20
+  script:
+    - npm ci
+    - npm test</code></pre>
+    <p>Cada job define al menos un <strong>stage</strong> y una lista de <strong>script</strong>. La clave <code>image</code> elige la imagen Docker donde corre el job.</p>
+  </div>
+</section>
+
+<section id="runners-compartidos-y-propios">
+  <h2>Runners: compartidos y propios</h2>
+  <div class="doc-content">
+    <p>Un <strong>runner</strong> es la máquina que ejecuta los jobs. Existen dos tipos:</p>
+    <ul>
+      <li><strong>Compartidos (shared):</strong> proporcionados por GitLab.com con minutos limitados según tu plan.</li>
+      <li><strong>Específicos (self-hosted):</strong> los instalas tú; minutos ilimitados y datos dentro de tu red.</li>
+    </ul>
+    <pre><code class="language-bash"># Registrar un runner self-hosted en un contenedor
+docker run --rm -it -v gitlab-runner-config:/etc/gitlab-runner \
+  gitlab/gitlab-runner register
+
+# Te pedirá:
+#  - URL de GitLab        → https://gitlab.com/
+#  - Token de registro    → Settings → CI/CD → Runners
+#  - Executor             → docker
+#  - Imagen por defecto   → docker:24</code></pre>
+  </div>
+</section>
+
+<section id="pipeline-de-ejemplo-completo">
+  <h2>Pipeline de ejemplo completo</h2>
+  <div class="doc-content">
+    <p>Pipeline Node.js típico con caché, artefactos y despliegue solo en main:</p>
+    <pre><code class="language-yaml">image: node:20
+
+cache:
+  paths:
+    - .npm/
+
+stages: [build, test, deploy]
+
+build:
+  stage: build
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 hour
+
+test:
+  stage: test
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm test
+
+deploy-staging:
+  stage: deploy
+  script:
+    - echo "Desplegando a staging..."
+  environment: staging
+  only:
+    - main</code></pre>
+  </div>
+</section>
+
+<section id="variables-cache-y-artefactos">
+  <h2>Variables, caché y artefactos</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Variables:</strong> define secretos en <em>Settings → CI/CD → Variables</em> (enmascaradas y protegidas) y úsalas como variables de entorno: <code>$DB_PASSWORD</code>.</li>
+      <li><strong>Caché:</strong> persiste directorios entre pipelines para acelerar instalaciones (<code>node_modules</code>, <code>.npm</code>).</li>
+      <li><strong>Artefactos:</strong> archivos que un job produce y los stages siguientes consumen, como la carpeta <code>dist/</code>.</li>
+    </ul>
+    <pre><code class="language-yaml">variables:
+  NODE_ENV: "production"
+
+test:
+  script:
+    - echo "Usando $NODE_ENV"
+  artifacts:
+    reports:
+      junit: resultados.xml   # reporte visible en la UI</code></pre>
+  </div>
+</section>
+
+<section id="buenas-practicas">
+  <h2>Buenas prácticas</h2>
+  <div class="doc-content">
+    <ul>
+      <li>Mantén los pipelines rápidos: usa caché e imágenes pequeñas (alpine).</li>
+      <li>Falla rápido: ordena stages de lo barato a lo costoso (lint antes que tests E2E).</li>
+      <li>Nunca imprimas secretos en logs; usa variables protegidas.</li>
+      <li>Usa <code>rules</code>/<code>only</code> para ejecutar jobs solo cuando aplique (ramas, tags, cambios de rutas).</li>
+      <li>Versiona las imágenes base (<code>node:20</code> mejor que <code>node:latest</code>) para builds reproducibles.</li>
+    </ul>
+  </div>
+</section>

@@ -1,10 +1,89 @@
-<!-- 10. Configuración Avanzada -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Configuración de astro.config.mjs, integraciones y adaptadores oficiales</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- 10. Configuración Avanzada - Astro (Frameworks) -->
+<section id="el-archivo-astro-config-mjs">
+  <h2>El archivo astro.config.mjs</h2>
+  <div class="doc-content">
+    <p>Toda la configuración de un proyecto Astro vive en <code>astro.config.mjs</code>. Es el corazón del proyecto: ahí se registran integraciones, se elige el modo de renderizado y se ajustan opciones de build:</p>
+    <pre><code class="language-javascript">import { defineConfig } from 'astro/config';
+import react from '@astrojs/react';
+import sitemap from '@astrojs/sitemap';
+
+export default defineConfig({
+  site: 'https://midominio.com',
+  output: 'static',            // 'static' (por defecto) o 'server'
+  integrations: [react(), sitemap()],
+  markdown: {
+    syntaxHighlight: 'shiki',
+    shikiConfig: { theme: 'github-dark' }
+  },
+  vite: {
+    resolve: { alias: { '@': '/src' } }
+  }
+});</code></pre>
+    <p>Opciones que conviene conocer desde el inicio:</p>
+    <ul>
+      <li><strong><code>site</code>:</strong> URL final del sitio; obligatoria para sitemap, canonical URLs y RSS.</li>
+      <li><strong><code>base</code>:</strong> si despliegas en subcarpeta (<code>/blog/</code>), aquí se define.</li>
+      <li><strong><code>trailingSlash</code>:</strong> controla si las URLs llevan barra final; alinéalo con tu hosting para evitar redirecciones.</li>
+      <li><strong><code>vite</code>:</strong> acceso directo a toda la configuración de Vite (alias, plugins, proxies).</li>
+    </ul>
+  </div>
+</section>
+
+<section id="integraciones-oficiales">
+  <h2>Integraciones oficiales</h2>
+  <div class="doc-content">
+    <p>Las integraciones añaden capacidades con una sola línea. Las oficiales más usadas:</p>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Integración</th><th>Aporta</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>@astrojs/react</code> / <code>vue</code> / <code>svelte</code></td><td>Componentes de esos frameworks dentro de Astro</td></tr>
+        <tr><td><code>@astrojs/tailwind</code></td><td>Tailwind CSS preconfigurado</td></tr>
+        <tr><td><code>@astrojs/sitemap</code></td><td>sitemap.xml automático en cada build</td></tr>
+        <tr><td><code>@astrojs/mdx</code></td><td>Soporte MDX (JSX dentro de Markdown)</td></tr>
+        <tr><td><code>@astrojs/partytown</code></td><td>Ejecuta scripts de terceros en un web worker sin bloquear el hilo principal</td></tr>
+      </tbody>
+    </table>
+    <pre><code class="language-bash"># Instalar una integración (el CLI actualiza astro.config.mjs por ti)
+npx astro add react
+npx astro add tailwind sitemap</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Regla minimalista de Astro: cada integración debe resolver una necesidad real. Añadir "por si acaso" es la forma más rápida de perder la velocidad que hace famoso a Astro.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="adaptadores-y-modo-server">
+  <h2>Adaptadores y modo server (SSR)</h2>
+  <div class="doc-content">
+    <p>Por defecto Astro genera HTML estático puro. Si necesitas endpoints dinámicos, cookies o contenido por usuario, activas SSR con un adaptador:</p>
+    <pre><code class="language-javascript">import netlify from '@astrojs/netlify';
+import vercel from '@astrojs/vercel';
+
+export default defineConfig({
+  output: 'server',
+  adapter: netlify()   // o vercel(), cloudflare(), node()
+});</code></pre>
+    <p>El enfoque recomendado en proyectos reales es <strong>híbrido</strong>: todo estático por defecto y solo las rutas específicas marcadas con <code>export const prerender = false</code> se renderizan bajo demanda. Lo mejor de ambos mundos: velocidad estática donde puedes, dinamismo donde debes.</p>
+  </div>
+</section>
+
+<section id="variables-de-entorno">
+  <h2>Variables de entorno</h2>
+  <div class="doc-content">
+    <p>Astro gestiona entornos de forma tipada y segura a través de archivos <code>.env</code>:</p>
+    <pre><code class="language-text"># .env
+PUBLIC_API_URL=https://api.midominio.com   # visible en cliente
+STRIPE_SECRET_KEY=sk_xxx                   # solo servidor/build</code></pre>
+    <pre><code class="language-javascript">// Uso con import.meta.env (tipado opcional via src/env.d.ts)
+const api = import.meta.env.PUBLIC_API_URL;
+const secret = import.meta.env.STRIPE_SECRET_KEY; // solo en frontmatter SSR</code></pre>
+    <ul>
+      <li>Solo variables con prefijo <code>PUBLIC_</code> llegan al navegador — imposible exponer secretos sin querer.</li>
+      <li>Define los tipos en <code>src/env.d.ts</code> con <code>ImportMetaEnv</code> para autocompletado.</li>
+      <li>Crea <code>.env.production</code> para valores distintos por entorno; nunca versiones secretos reales.</li>
+    </ul>
+    <p>Ejercicio propuesto: toma un proyecto Astro existente y extrae todas las URLs hardcodeadas hacia variables de entorno con prefijo PUBLIC_. Verifica que el build sigue funcionando tras moverlas.</p>
+  </div>
+</section>

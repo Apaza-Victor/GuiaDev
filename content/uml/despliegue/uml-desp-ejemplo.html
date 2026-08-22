@@ -1,0 +1,95 @@
+<!-- 5. Ejemplo Práctico: Arquitectura Cloud Moderna - Despliegue (UML) -->
+<section id="escenario-saas-multiusuario">
+  <h2>5.1. Escenario: aplicación SaaS multiusuario</h2>
+  <div class="doc-content">
+    <p>Modelaremos el despliegue de <strong>"FacturaFlow"</strong>, un SaaS de facturación con estos requisitos operativos:</p>
+    <ul>
+      <li>Usuarios en todo el mundo → necesita CDN y baja latencia.</li>
+      <li>Carga variable → autoescalado horizontal.</li>
+      <li>Datos sensibles → red privada, cifrado y backups.</li>
+      <li>Alta disponibilidad → sin punto único de fallo.</li>
+    </ul>
+    <p>Infraestructura elegida (nube pública genérica):</p>
+    <ul>
+      <li>CDN + balanceador HTTP(S) en el borde.</li>
+      <li>Kubernetes con 3 réplicas del backend en contenedores Docker.</li>
+      <li>PostgreSQL administrado con réplica de lectura.</li>
+      <li>Bucket de objetos para PDFs de facturas.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="diseno-diagrama-paso-a-paso">
+  <h2>5.2. Diseño del diagrama paso a paso</h2>
+  <div class="doc-content">
+    <ol>
+      <li><strong>Nodos de hardware/dispositivo:</strong> el navegador del usuario (<code>:Navegador</code>) como nodo externo; la nube como nodo raíz.</li>
+      <li><strong>Subdividir por zonas:</strong> región cloud con subred pública (borde) y subred privada (datos). Cada una es un <em>nodo de ejecución</em>.</li>
+      <li><strong>Colocar artefactos:</strong> dentro de cada dispositivo van los ejecutables — <code>&laquo;artifact&raquo; frontend.bundle</code>, <code>backend.jar</code>, <code>migraciones.sql</code>.</li>
+      <li><strong>Etiquetar protocolos y estereotipos:</strong> <code>&laquo;docker container&raquo;</code>, <code>&laquo;managed service&raquo;</code>; conexiones anotadas con HTTPS, SQL, TLS.</li>
+      <li><strong>Marcar réplicas:</strong> multiplicidad <code>3</code> en las instancias del backend comunica el escalado.</li>
+    </ol>
+    <p>Error típico evitado: no dibujamos "microservicios" aquí. Los servicios son lógica (diagrama de componentes); los contenedores que los hospedan son despliegue. Un backend puede empaquetarse en un solo artefacto aunque tenga cinco módulos internos.</p>
+  </div>
+</section>
+
+<section id="diagrama-completo-despliegue">
+  <h2>5.3. El diagrama completo</h2>
+  <div class="doc-content">
+    <pre><code class="language-plantuml">@startuml
+node ":Navegador del Cliente" as nav
+cloud "Cloud Region" {
+  node "Subred publica" as pub {
+    node "CDN + Balanceador" as lb <<managed service>>
+  }
+  node "Subred privada" as priv {
+    node "Cluster Kubernetes" as k8s {
+      node "Pod API x3" as pod <<docker container>>
+      artifact "backend.jar"
+    }
+    database "PostgreSQL primario" as dbpg <<managed service>>
+    database "Replica lectura" as dbro <<managed service>>
+    storage "Bucket PDFs" as bucket <<object storage>>
+  }
+}
+nav --> lb : HTTPS
+lb --> pod : HTTPS interno
+pod --> dbpg : SQL/TLS :5432
+pod --> dbro : consultas lectura
+pod --> bucket : S3 API
+dbpg --> dbro : replicacion streaming
+@enduml</code></pre>
+    <p>Verificación de requisitos contra el diagrama:</p>
+    <table class="doc-table">
+      <thead><tr><th>Requisito</th><th>Evidencia en el diagrama</th></tr></thead>
+      <tbody>
+        <tr><td>Baja latencia global</td><td>CDN en el borde</td></tr>
+        <tr><td>Autoescalado</td><td>Pods ×3 en Kubernetes</td></tr>
+        <tr><td>Seguridad</td><td>Datos en subred privada, TLS en toda conexión</td></tr>
+        <tr><td>Alta disponibilidad</td><td>Réplica de lectura, servicio administrado con failover</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="variaciones-serverless-kubernetes">
+  <h2>5.4. Variaciones comunes: serverless y Kubernetes</h2>
+  <div class="doc-content">
+    <p>La misma aplicación cambia radicalmente su diagrama según el modelo de cómputo:</p>
+    <ul>
+      <li><strong>Serverless:</strong> el "cluster Kubernetes" desaparece y aparece un componente <code>&laquo;execution environment&raquo; Funciones FaaS</code>. Ya no gestionas pods ni réplicas; el proveedor escala. Las conexiones pasan a ser invocaciones HTTP/eventos.</li>
+      <li><strong>Máquinas virtuales clásicas:</strong> en lugar del cluster verías dos nodos <code>:VM t3.large</code> detrás del balanceador, cada uno ejecutando <code>&laquo;artifact&raquo; backend.jar</code> sobre un SO completo.</li>
+      <li><strong>Híbrido/on-premise:</strong> puedes mezclar un nodo "Datacenter local" con otro "AWS"; las flechas cruzando fronteras revelan dónde viven los retos de latencia y VPN.</li>
+    </ul>
+    <pre><code class="language-plantuml">@startuml
+node "Balanceador" as lb
+node "<<execution environment>> FaaS" as faas {
+  artifact "fn-emitir-factura.js"
+}
+database "DynamoDB" as ddb
+lb --> faas : POST /facturas
+faas --> ddb : put()
+@enduml</code></pre>
+    <p>Ejercicio propuesto: toma este mismo sistema y dibuja su versión 100% serverless (FaaS + DynamoDB + S3). ¿Qué desaparece? ¿Qué complejidad se traslada al proveedor?</p>
+  </div>
+</section>

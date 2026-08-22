@@ -1,0 +1,98 @@
+<!-- 3. Bitbucket Pipelines - Bitbucket (Control de Versiones) -->
+<section id="que-son-los-bitbucket-pipelines">
+  <h2>¿Qué son los Bitbucket Pipelines?</h2>
+  <div class="doc-content">
+    <p><strong>Bitbucket Pipelines</strong> es el servicio CI/CD integrado de Bitbucket: cada push puede disparar builds y despliegues definidos en un solo archivo YAML dentro del repositorio. No necesitas conectar herramientas externas como Jenkins o CircleCI para automatizar.</p>
+    <p>Se factura por <strong>minutos de build</strong>: el plan gratuito incluye 50 minutos mensuales, suficiente para aprender y proyectos pequeños.</p>
+  </div>
+</section>
+
+<section id="el-archivo-bitbucket-pipelinesyml">
+  <h2>El archivo bitbucket-pipelines.yml</h2>
+  <div class="doc-content">
+    <p>Todo se define en <code>bitbucket-pipelines.yml</code> en la raíz del repo. La estructura básica:</p>
+    <pre><code class="language-yaml">image: node:20          # contenedor donde corren los steps
+
+pipelines:
+  default:              # corre en cualquier rama sin branch específico
+    - step:
+        name: Instalar y testear
+        script:
+          - npm ci
+          - npm test
+  branches:
+    main:               # pipeline exclusivo de main
+      - step:
+          name: Build
+          script:
+            - npm ci &amp;&amp; npm run build</code></pre>
+    <p>Cada <strong>step</strong> corre en su propio contenedor con la imagen indicada; los artefactos entre steps se pasan explícitamente.</p>
+  </div>
+</section>
+
+<section id="steps-caches-y-artifacts">
+  <h2>Steps, caches y artifacts</h2>
+  <div class="doc-content">
+    <p>Para acelerar builds y pasar datos entre pasos usa caches y artifacts:</p>
+    <pre><code class="language-yaml">pipelines:
+  default:
+    - step:
+        name: Build
+        caches:
+          - node           # cachea node_modules
+        script:
+          - npm ci
+          - npm run build
+        artifacts:
+          - dist/**        # pasa dist/ al siguiente step
+    - step:
+        name: Test sobre el build
+        script:
+          - npm ci
+          - npm test</code></pre>
+    <ul>
+      <li><strong>caches:</strong> reutiliza dependencias entre builds (<code>node</code>, <code>pip</code>, <code>maven</code>, custom).</li>
+      <li><strong>artifacts:</strong> archivos que sobreviven entre steps del mismo pipeline.</li>
+      <li><strong>max-time:</strong> límite de minutos por step para evitar bucles infinitos.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="despliegues-a-produccion">
+  <h2>Despliegues a producción</h2>
+  <div class="doc-content">
+    <p>Las secciones <code>branches</code> y las <strong>deployment environments</strong> permiten desplegar automáticamente según la rama, con control de permisos y variables por entorno:</p>
+    <pre><code class="language-yaml">pipelines:
+  branches:
+    develop:
+      - step:
+          name: Deploy staging
+          deployment: staging     # entorno declarado en Bitbucket
+          script:
+            - ./deploy.sh $STAGING_HOST
+    main:
+      - step:
+          name: Deploy produccion
+          deployment: production
+          trigger: manual         # requiere clic humano
+          script:
+            - ./deploy.sh $PROD_HOST</code></pre>
+    <p>Las variables <code>$STAGING_HOST</code> y secretos se configuran en <em>Repository settings → Repository/Pipeline/Deployment variables</em>, protegidas y ocultas en los logs.</p>
+  </div>
+</section>
+
+<section id="limites-del-plan-gratuito">
+  <h2>Límites del plan gratuito</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead><tr><th>Concepto</th><th>Valor típico Free</th></tr></thead>
+      <tbody>
+        <tr><td>Minutos de build/mes</td><td>50 minutos (compartidos por workspace)</td></tr>
+        <tr><td>Concurrencia</td><td>1 build simultáneo</td></tr>
+        <tr><td>Tamaño máx. step</td><td>4 GB RAM / 2 vCPU aprox.</td></tr>
+        <tr><td>Duración máx. build</td><td>120 minutos</td></tr>
+      </tbody>
+    </table>
+    <p>Si te quedas corto, opciones: pagar por minutos extra, usar runners self-hosted gratuitos o mover CI pesado a otra plataforma manteniendo Bitbucket como repositorio.</p>
+  </div>
+</section>

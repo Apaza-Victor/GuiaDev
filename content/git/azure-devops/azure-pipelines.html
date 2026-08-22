@@ -1,0 +1,102 @@
+<!-- 3. Azure Pipelines - Azure DevOps (Control de Versiones) -->
+<section id="conceptos-pipelines-agentes-y-etapas">
+  <h2>Conceptos: pipelines, agentes y etapas</h2>
+  <div class="doc-content">
+    <p>La jerarquía conceptual de Azure Pipelines:</p>
+    <pre><code class="language-text">Pipeline
+└── Stages (etapas: Build → Test → Deploy)
+    └── Jobs (unidades de trabajo en un agente)
+        └── Steps (tareas individuales: scripts o tasks)</code></pre>
+    <ul>
+      <li><strong>Agente:</strong> la máquina que ejecuta jobs. Puede ser <em>Microsoft-hosted</em> (mantenido por Azure) o <em>self-hosted</em> (tu propia VM).</li>
+      <li><strong>Task:</strong> paso empaquetado y reutilizable (npmInstall, Docker@2, AzureWebApp...).</li>
+    </ul>
+  </div>
+</section>
+
+<section id="el-archivo-azure-pipelinesyml">
+  <h2>El archivo azure-pipelines.yml</h2>
+  <div class="doc-content">
+    <p>El pipeline clásico se define en <code>azure-pipelines.yml</code>:</p>
+    <pre><code class="language-yaml">trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest       # agente hospedado por Microsoft
+
+stages:
+  - stage: Build
+    jobs:
+      - job: compilar
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '20.x'
+          - script: npm ci &amp;&amp; npm run build
+          - publish: dist/
+            artifact: webapp
+
+  - stage: Deploy
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: publicar
+        steps:
+          - download: current
+            artifact: webapp
+          - script: echo "Desplegando..."</code></pre>
+  </div>
+</section>
+
+<section id="triggers-tareas-y-plantillas">
+  <h2>Triggers, tareas y plantillas</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>trigger:</strong> ramas que disparan CI. <strong>pr:</strong> validación automática en pull requests.</li>
+      <li><strong>schedules:</strong> ejecuciones programadas tipo cron.</li>
+      <li><strong>templates:</strong> reutiliza YAML entre pipelines para no duplicar configuración.</li>
+    </ul>
+    <pre><code class="language-yaml"># templates/build-node.yml
+steps:
+  - task: NodeTool@0
+    inputs: { versionSpec: '${{ parameters.node }}' }
+  - script: npm ci &amp;&amp; npm test
+
+# azure-pipelines.yml lo consume
+jobs:
+  - template: templates/build-node.yml
+    parameters:
+      node: '20.x'</code></pre>
+  </div>
+</section>
+
+<section id="despliegue-a-azure-app-service">
+  <h2>Despliegue a Azure App Service</h2>
+  <div class="doc-content">
+    <p>Con una conexión de servicio (service connection) hacia tu suscripción Azure, el despliegue queda en dos pasos:</p>
+    <pre><code class="language-yaml">steps:
+  - task: AzureWebApp@1
+    inputs:
+      azureSubscription: 'conexion-mi-suscripcion'
+      appType: 'webAppLinux'
+      appName: 'mi-tienda-prod'
+      package: '$(Pipeline.Workspace)/webapp/**'</code></pre>
+    <p>La service connection guarda credenciales de forma segura; nunca pones secretos en el YAML.</p>
+  </div>
+</section>
+
+<section id="plan-gratuito">
+  <h2>Plan gratuito</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead><tr><th>Incluye gratis</th><th>Detalle</th></tr></thead>
+      <tbody>
+        <tr><td>Proyectos públicos</td><td>Pipelines ilimitados y gratis</td></tr>
+        <tr><td>Proyectos privados</td><td>1800 min/mes en agentes Microsoft-hosted + 1 job paralelo</td></tr>
+        <tr><td>Self-hosted agents</td><td>Ilimitados y sin costo de minutos</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>

@@ -1,0 +1,66 @@
+<!-- 1. Introducción al Diagrama de Comunicación - Diag. Comunicación (UML) -->
+<section id="que-es-el-diagrama-de-comunicacion">
+  <h2>¿Qué es el diagrama de comunicación?</h2>
+  <div class="doc-content">
+    <p>El diagrama de comunicación (antes llamado <em>diagrama de colaboración</em> en UML 1.x) muestra una interacción organizada alrededor de los <strong>objetos y sus enlaces</strong>, en lugar de la línea de tiempo. Responde a la pregunta: <strong>¿quién se comunica con quién, y mediante qué mensajes?</strong></p>
+    <p>Mientras el diagrama de secuencia es una película (los mensajes fluyen de arriba abajo en el tiempo), el de comunicación es un <strong>mapa de relaciones</strong>: los objetos están fijos en el espacio y cada enlace lleva numerados los mensajes que viajan por él.</p>
+    <pre><code class="language-text">┌────────────┐   1: validar()      ┌────────────┐
+│ :Cajero    │────────────────────►│ :Sistema   │
+└────────────┘ ◄──────────────────── └────────────┘
+                    1.1: confirmar()</code></pre>
+    <p>Es semánticamente equivalente al de secuencia: toda interacción expresable en uno puede convertirse en el otro. UML los considera dos vistas del mismo modelo.</p>
+  </div>
+</section>
+
+<section id="secuencia-vs-comunicacion">
+  <h2>Secuencia vs Comunicación</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Criterio</th><th>Diagrama de Secuencia</th><th>Diagrama de Comunicación</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Eje principal</td><td>Tiempo (vertical)</td><td>Espacio / enlaces entre objetos</td></tr>
+        <tr><td>Fortaleza</td><td>Ver orden y timing detallado</td><td>Ver estructura de colaboración estática</td></tr>
+        <tr><td>Objetos con muchos roles</td><td>Repetidos en varias líneas de vida</td><td>Aparecen una sola vez, con todos sus mensajes</td></tr>
+        <tr><td>Legibilidad con pocos objetos</td><td>Excelente</td><td>Excelente</td></tr>
+        <tr><td>Legibilidad con flujo largo</td><td>Buena</td><td>Se satura con numeración profunda</td></tr>
+        <tr><td>Soporte en herramientas</td><td>Universal</td><td>Limitado (PlantUML no lo tiene nativo)</td></tr>
+      </tbody>
+    </table>
+    <p>En la práctica moderna domina el de secuencia, pero el de comunicación sigue siendo valioso para <strong>diseñar las interfaces</strong>: al dibujar cada mensaje sobre su enlace, descubres qué operaciones necesita realmente cada clase — es un puente natural hacia el diagrama de clases.</p>
+  </div>
+</section>
+
+<section id="numeracion-de-mensajes">
+  <h2>Numeración de mensajes</h2>
+  <div class="doc-content">
+    <p>Como no hay eje temporal, el orden se expresa con <strong>numeración jerárquica</strong>:</p>
+    <ul>
+      <li><code>1:</code> primer mensaje de la interacción.</li>
+      <li><code>1.1:</code>, <code>1.2:</code> mensajes anidados que el receptor del 1 envía como parte de atenderlo.</li>
+      <li><code>1.1.1:</code> otro nivel más profundo de delegación.</li>
+      <li><code>2:</code> segundo mensaje raíz; solo comienza cuando terminó todo el árbol del 1.</li>
+    </ul>
+    <pre><code class="language-text">:Cajero ── 1: retirar(monto) ──► :Banco
+                                    │
+              1.1: debitar(cuenta) ─┤──► :CuentaBancaria
+              1.2: registrar() ─────┘───► :Bitacora</code></pre>
+    <p>La profundidad de la numeración es información de diseño: números como <code>1.2.3.1</code> revelan cadenas larguísimas de delegación que suelen indicar acoplamiento excesivo o una ley de Demeter violada.</p>
+  </div>
+</section>
+
+<section id="cuando-preferirlo">
+  <h2>Cuándo preferirlo</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Diseño bottom-up de clases:</strong> los enlaces del diagrama son candidatos directos a asociaciones en el modelo de clases.</li>
+      <li><strong>Interacciones cortas y densas:</strong> pocos objetos, muchos mensajes recíprocos — el mapa queda compacto donde la secuencia sería alta y estrecha.</li>
+      <li><strong>Documentar protocolos punto a punto:</strong> "el sensor habla con el gateway con estos tres mensajes" se lee de un vistazo.</li>
+      <li><strong>Enseñanza:</strong> obliga a pensar explícitamente qué objeto conoce a cuál, algo que la línea de tiempo del diagrama de secuencia deja implícito.</li>
+    </ul>
+    <blockquote class="aside aside-tip">
+      <p>Regla práctica: si te importa <em>cuándo</em>, usa secuencia; si te importa <em>entre quién</em>, usa comunicación. Y si dudas: secuencia — tus herramientas lo agradecerán.</p>
+    </blockquote>
+  </div>
+</section>

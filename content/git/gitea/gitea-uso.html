@@ -1,0 +1,98 @@
+<!-- 3. Uso diario de Gitea - Gitea (Self-hosted) (Control de Versiones) -->
+<section id="usuarios-organizaciones-y-equipos">
+  <h2>Usuarios, organizaciones y equipos</h2>
+  <div class="doc-content">
+    <p>La estructura social de Gitea imita a GitHub:</p>
+    <pre><code class="language-text">Organización: acme-corp
+├── Equipo: owners      → control total
+├── Equipo: devs        → lectura/escritura en repos del proyecto X
+└── Equipo: qa          → solo lectura + issues</code></pre>
+    <p>Desde el panel de administración (<code>/admin</code>) puedes crear usuarios manualmente, forzar 2FA, desactivar cuentas y auditar acciones. Para empresas conviene conectar LDAP/OAuth2 en <em>Site Administration → Authentication Sources</em> para que las cuentas provengan del directorio corporativo.</p>
+  </div>
+</section>
+
+<section id="claves-ssh-y-tokens">
+  <h2>Claves SSH y tokens</h2>
+  <div class="doc-content">
+    <p>Dos mecanismos de autenticación para tu trabajo diario:</p>
+    <ol>
+      <li><strong>Clave SSH:</strong> sube tu clave pública en <em>Settings → SSH / GPG Keys</em>.</li>
+    </ol>
+    <pre><code class="language-bash"># Generar clave si no tienes
+ssh-keygen -t ed25519 -C "tu@correo.com"
+
+# Copiar el contenido de ~/.ssh/id_ed25519.pub al campo SSH Key de Gitea
+
+# Probar (ajusta puerto si usaste 2222 en Docker)
+ssh -T -p 2222 git@tu-servidor.com
+
+# Clonar vía SSH
+git clone git@tu-servidor.com:22:/acme-corp/api.git
+# o formato estándar si SSH corre en el puerto 22
+git clone git@tu-servidor.com:acme-corp/api.git</code></pre>
+    <ol start="2">
+      <li><strong>Tokens de acceso:</strong> para HTTPS, API y CI. Genera en <em>Settings → Applications → Access Token</em> con scopes limitados.</li>
+    </ol>
+    <pre><code class="language-bash">git clone https://tu-usuario:TOKEN@tu-servidor.com/acme-corp/api.git</code></pre>
+  </div>
+</section>
+
+<section id="repositorios-issues-y-prs">
+  <h2>Repositorios, issues y PRs</h2>
+  <div class="doc-content">
+    <p>El flujo colaborativo es idéntico al que ya conoces de GitHub:</p>
+    <pre><code class="language-bash"># Rama feature y push
+git checkout -b feat/reportes-pdf
+git push -u origin feat/reportes-pdf
+
+# Desde la web: "New Pull Request" hacia main,
+# asigna reviewers y discute línea a línea.
+
+# O crea el PR directo desde git:
+git push -o repo.private=false -o title="feat: reportes PDF" \
+  origin feat/reportes-pdf</code></pre>
+    <ul>
+      <li>Protege main en <em>Repo Settings → Branch</em>: push bloqueado, PR obligatorio, aprobación requerida.</li>
+      <li>Vincula issues escribiendo <code>#12</code> en commits o descripciones; usa <code>Fixes #12</code> para cerrarlas al fusionar.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="gitea-actions">
+  <h2>Gitea Actions</h2>
+  <div class="doc-content">
+    <p>Desde la versión 1.19 Gitea incluye <strong>Actions</strong>, un sistema CI/CD compatible con workflows de GitHub Actions: mismos archivos YAML bajo <code>.gitea/workflows/</code> (o <code>.github/workflows/</code>) y marketplace de actions compatible.</p>
+    <pre><code class="language-yaml"># .gitea/workflows/test.yml
+name: Tests
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci &amp;&amp; npm test</code></pre>
+    <p>Se habilita en <code>app.ini</code>:</p>
+    <pre><code class="language-ini">[actions]
+ENABLED = true</code></pre>
+    <p>Necesitarás al menos un <strong>runner</strong> registrado (act_runner) ejecutándose en alguna máquina para procesar los jobs.</p>
+    <pre><code class="language-bash">docker run -d --name act-runner --restart always \
+  -v act-runner-data:/data \
+  -e GITEA_INSTANCE_URL=https://git.tudominio.com \
+  -e GITEA_RUNNER_REGISTRATION_TOKEN=TU_TOKEN \
+  gitea/act_runner:latest</code></pre>
+  </div>
+</section>
+
+<section id="mantenimiento-y-actualizacion">
+  <h2>Mantenimiento y actualización</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Actualizar con Docker:</strong> cambia el tag de imagen a la versión nueva y recrea el contenedor (los datos persisten en volúmenes):
+        <pre><code class="language-bash">docker compose pull &amp;&amp; docker compose up -d</code></pre></li>
+      <li><strong>Backups periódicos:</strong> programa <code>gitea dump</code> con cron y guarda fuera del servidor.</li>
+      <li><strong>Limpieza:</strong> en Site Administration existe "Health Check" y tareas de repositorios huérfanos.</li>
+      <li><strong>Logs:</strong> revisa <code>/data/gitea/log</code> ante comportamientos raros.</li>
+    </ul>
+    <p>Lee siempre las notas de versión antes de actualizar saltos grandes: algunas versiones exigen pasar intermedias o ejecutar migraciones.</p>
+  </div>
+</section>

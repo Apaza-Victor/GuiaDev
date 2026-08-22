@@ -92,6 +92,21 @@ class CategoryPage {
       }
       if (e.key === "Escape") this.closeSearch();
     });
+    window.addEventListener("hashchange", () => this.handleRouteChange());
+  }
+
+  handleRouteChange() {
+    const parts = window.location.hash.slice(1).split("/").filter(Boolean);
+
+    if (parts.length === 0) {
+      if (this.currentSub || this.currentLesson) this.showCategoryOverview();
+      return;
+    }
+    if (parts.length === 1 && parts[0] !== this.currentSub) {
+      this.selectSubcategory(parts[0]);
+    } else if (parts.length === 2 && parts[1] !== this.currentLesson) {
+      this.selectLesson(parts[0], parts[1]);
+    }
   }
 
   toggleSearch() {
@@ -192,7 +207,7 @@ class CategoryPage {
     this.render();
 
     if (prevLesson && prevLesson !== lessonId && typeof GuiaDevAnimations !== 'undefined') {
-      const direction = this.getLessonDirection(subId, lessonId);
+      const direction = this.getLessonDirection(subId, lessonId, prevLesson);
       GuiaDevAnimations.lessonNavigation(direction);
     }
 
@@ -207,9 +222,20 @@ class CategoryPage {
 
   async loadAndInjectContent(lesson) {
     const html = await this.loadLessonContent(lesson);
-    if (!html) return;
+    if (this.currentLesson !== lesson.id) return;
     const container = document.getElementById('lesson-external-content');
     if (!container) return;
+
+    if (!html) {
+      container.innerHTML = `
+        <div class="doc-section">
+          <h2>Contenido no disponible</h2>
+          <p>No se pudo cargar el contenido de esta leccion. Verifica tu conexion e intenta recargar la pagina.</p>
+        </div>
+      `;
+      return;
+    }
+
     const parsed = this.parseSectionsFromHTML(html);
     container.innerHTML = parsed.map(sec => `
       <div class="doc-section">
@@ -234,11 +260,14 @@ class CategoryPage {
     `;
   }
 
-  getLessonDirection(subId, lessonId) {
+  getLessonDirection(subId, lessonId, prevLessonId) {
     const sub = this.category?.subcategories.find((s) => s.id === subId);
     if (!sub) return 'next';
-    const idx = sub.lessons.findIndex((l) => l.id === lessonId);
-    return idx > 0 ? 'next' : 'prev';
+    const lessons = sub.lessons;
+    const newIdx = lessons.findIndex((l) => l.id === lessonId);
+    const prevIdx = prevLessonId ? lessons.findIndex((l) => l.id === prevLessonId) : -1;
+    if (newIdx === -1 || prevIdx === -1) return newIdx > 0 ? 'next' : 'prev';
+    return newIdx > prevIdx ? 'next' : 'prev';
   }
 
   scrollToTop() {
@@ -551,7 +580,15 @@ class CategoryPage {
   bindScrollEvents() {
     const content = document.getElementById("main-content");
     if (content) {
-      content.addEventListener("scroll", () => this.highlightToc());
+      let ticking = false;
+      content.addEventListener("scroll", () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          ticking = false;
+          this.highlightToc();
+        });
+      }, { passive: true });
     }
   }
 

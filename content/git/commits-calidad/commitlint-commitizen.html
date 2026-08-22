@@ -1,0 +1,90 @@
+<!-- 3. Commitlint y Commitizen - Calidad de Commits (Control de Versiones) -->
+<section id="instalar-y-configurar-commitlint">
+  <h2>Instalar y configurar commitlint</h2>
+  <div class="doc-content">
+    <p><strong>commitlint</strong> valida que los mensajes de commit cumplan Conventional Commits. Instalación en proyecto Node:</p>
+    <pre><code class="language-bash">npm install --save-dev @commitlint/cli @commitlint/config-conventional
+
+# Crear configuración
+echo "export default { extends: ['@commitlint/config-conventional'] };" &gt; commitlint.config.js
+
+# Probar manualmente
+echo "feat: nueva funcionalidad" | npx commitlint
+# (sin salida = válido ✓)
+
+echo "cambios varios" | npx commitlint
+# ✗ subject may not be empty [subject-empty]
+# ✗ type may not be empty [type-empty]</code></pre>
+    <p>La config preset rechaza tipos no estándar, subjects vacíos, mayúsculas iniciales y punto final, entre otras reglas.</p>
+  </div>
+</section>
+
+<section id="validar-desde-husky-commit-msg">
+  <h2>Validar desde husky (commit-msg)</h2>
+    <div class="doc-content">
+    <p>Con Husky ya instalado, agrega el hook <code>commit-msg</code>:</p>
+    <pre><code class="language-bash">echo "npx --no -- commitlint --edit \$1" &gt; .husky/commit-msg</code></pre>
+    <p>A partir de ahora, cada <code>git commit</code> con mensaje inválido es rechazado al instante:</p>
+    <pre><code class="language-text">$ git commit -m "arregle cosas"
+✗ type may not be empty
+✗ subject may not be empty
+
+$ git commit -m "fix: arreglé el cálculo del IVA"
+[main a1b2c3] fix: arreglé el cálculo del IVA ✓</code></pre>
+    <p>Reglas custom opcionales en <code>commitlint.config.js</code>:</p>
+    <pre><code class="language-js">export default {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'scope-enum': [2, 'always', ['auth', 'api', 'ui', 'db']],
+    'header-max-length': [2, 'always', 72]
+  }
+};</code></pre>
+  </div>
+</section>
+
+<section id="commitizen-commits-guiados">
+  <h2>Commitizen: commits guiados</h2>
+  <div class="doc-content">
+    <p><strong>Commitizen</strong> invierte el enfoque: en vez de validar después, te guía durante la escritura con preguntas interactivas.</p>
+    <pre><code class="language-bash"># Instalar el adaptador cz-conventional-changelog
+npm install --save-dev commitizen cz-conventional-changelog
+
+# package.json
+{
+  "config": {
+    "commitizen": { "path": "cz-conventional-changelog" }
+  },
+  "scripts": { "commit": "cz" }
+}</code></pre>
+    <pre><code class="language-text">$ npm run commit
+? Select the type of change:   ← flechas para elegir
+❯ feat:     A new feature
+  fix:      A bug fix
+  docs:     Documentation changes
+? What is the scope of this change? carrito
+? Write a SHORT description: cupones de descuento
+? Body / breaking changes? (opcional)
+→ Genera: feat(carrito): cupones de descuento ✓</code></pre>
+    <p>Uso global sin instalar nada en el repo: <code>npx cz</code>.</p>
+  </div>
+</section>
+
+<section id="changelog-automatico">
+  <h2>Changelog automático</h2>
+  <div class="doc-content">
+    <p>Con commits estandarizados, el CHANGELOG se genera solo:</p>
+    <pre><code class="language-bash"># Opción A: git-cliff (Rust, rápido, muy configurable)
+cargo install git-cliff
+git cliff -o CHANGELOG.md
+
+# Opción B: conventional-changelog (ecosistema Node)
+npx conventional-changelog-cli -p angular -i CHANGELOG.md -s</code></pre>
+    <pre><code class="language-markdown">&lt;!-- CHANGELOG.md generado --&gt;
+## v2.3.0 (2026-08-21)
+### Features
+* **carrito:** cupones de descuento
+### Bug Fixes
+* **auth:** expiración de tokens incorrecta</code></pre>
+    <p>Nivel avanzado: <strong>semantic-release</strong> o <strong>release-please</strong> combinan todo — leen commits, deciden versión semver, generan changelog, crean tag/release de GitHub y publican a npm, todo desde CI. Ese es el destino final de un flujo de commits de calidad.</p>
+  </div>
+</section>

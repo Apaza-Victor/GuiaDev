@@ -1,10 +1,102 @@
-<!-- 9. Props compartidas (Shared Props) -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Aprende a utilizar props compartidas en aplicaciones Inertia.js</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- Shared Props - Inertia.js (Frameworks) -->
+<section id="que-son-las-props-compartidas">
+  <h2>¿Qué son las props compartidas?</h2>
+  <div class="doc-content">
+    <p>El middleware <code>HandleInertiaRequests</code> define datos que llegan a TODAS las páginas: usuario autenticado, flash messages, configuración global. Es el reemplazo de los "global variables" de Blade:</p>
+    <pre><code class="language-php">// app/Http/Middleware/HandleInertiaRequests.php
+public function share(Request $request): array
+{
+    return [
+        ...parent::share($request),
+        'auth' => [
+            'user' => fn () => $request->user()
+                ? $request->user()->only('id', 'name', 'email')
+                : null,
+        ],
+        'flash' => [
+            'success' => fn () => $request->session()->get('success'),
+        ],
+        'app' => [
+            'nombre' => config('app.name'),
+            'url' => config('app.url'),
+        ],
+    ];
+}</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Las funciones flecha hacen la resolución LAZY: esa prop solo se calcula si la página la usa. Sin lazy, consultarías el usuario en cada request aunque la página no lo necesite.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="acceder-desde-el-frontend">
+  <h2>Acceder desde el frontend</h2>
+  <div class="doc-content">
+    <pre><code class="language-vue">&lt;script setup&gt;
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+
+const page = usePage();
+
+// Reactivo: se actualiza en cada visita
+const usuario = computed(() =&gt; page.props.auth.user);
+const nombre = computed(() =&gt; page.props.app.nombre);
+
+// En template directamente
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;nav v-if="usuario"&gt;
+    Hola, {{ usuario.name }}
+    &lt;Link :href="route('logout')" method="post"&gt;Salir&lt;/Link&gt;
+  &lt;/nav&gt;
+&lt;/template&gt;</code></pre>
+    <ul>
+      <li>En Vue también disponible como <code>$page.props...</code> directo en templates sin setup.</li>
+      <li>Úsalo para: usuario actual, permisos/roles, flash, i18n básico, csrf token si necesitas XHR manual.</li>
+      <li>NO lo uses para datos específicos de una página — esos van en sus props propias.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="patron-layout-y-props-compartidas">
+  <h2>Patrón layout + props compartidas</h2>
+  <div class="doc-content">
+    <p>Combinación típica: props compartidas alimentan el layout persistente (navbar, sidebar, footer):</p>
+    <pre><code class="language-vue">&lt;!-- resources/js/Layouts/MainLayout.vue --&gt;
+&lt;script setup&gt;
+import { usePage } from '@inertiajs/vue3';
+
+const page = usePage();
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;header&gt;{{ page.props.app.nombre }}&lt;/header&gt;
+  &lt;aside v-if="page.props.auth.user"&gt;&lt;!-- menu --&gt;&lt;/aside&gt;
+  &lt;main&gt;
+    &lt;slot /&gt;
+  &lt;/main&gt;
+  &lt;Toast /&gt;  &lt;!-- lee flash --&gt;
+&lt;/template&gt;</code></pre>
+    <p>Cada página envuelve su contenido con el layout y recibe gratis usuario, menú condicionado por rol y toasts flash — sin repetir lógica en ninguna página.</p>
+  </div>
+</section>
+
+<section id="tipado-de-props-compartidas">
+  <h2>Tipado de props compartidas</h2>
+  <div class="doc-content">
+    <p>Con TypeScript declara la forma de tus props compartidas una vez y úsala en todo el proyecto:</p>
+    <pre><code class="language-typescript">// resources/js/types/index.d.ts
+export interface SharedProps {
+  auth: { user: { id: number; name: string; email: string } | null };
+  flash: { success?: string; error?: string };
+  app: { nombre: string; url: string };
+}
+
+declare module '@inertiajs/core' {
+  interface PageProps extends InertiaPageProps {
+    [key: string]: unknown;
+  }
+}</code></pre>
+    <p>Ejercicio propuesto: audita tu app — ¿cuántas páginas repiten "traer usuario" o "leer flash" manualmente? Muévelas todas a props compartidas lazy y elimina la duplicación.</p>
+  </div>
+</section>

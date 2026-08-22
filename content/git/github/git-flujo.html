@@ -1,215 +1,112 @@
 <!-- 7. Flujo básico - GitHub (Control de Versiones) -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Esta sección te enseña el flujo de trabajo esencial que necesitas para trabajar con Git en el día a día, especialmente cuando trabajas en múltiples máquinas.</p>
-<h3><i class="fa-solid fa-rocket"></i> Primer Setup: Subir proyecto por primera vez</h3>
-<p>Cuando tienes un proyecto local y quieres subirlo a GitHub por primera vez:</p>
-<pre><code class="language-bash"># 1. Inicializar repositorio local (si no lo has hecho)
-git init
+<section id="el-ciclo-de-trabajo-diario">
+  <h2>El ciclo de trabajo diario</h2>
+  <div class="doc-content">
+    <p>El 90% de tu vida con Git se resume en un ciclo de cuatro pasos que repetirás miles de veces:</p>
+    <pre><code class="language-text">┌──────────┐   add    ┌─────────┐   commit   ┌──────────┐   push   ┌────────┐
+│ Working  │ ───────► │ Staging │ ─────────► │ Repositorio│ ──────► │ Remoto │
+│ Directory│          │  Area   │            │   Local   │          │        │
+└──────────┘          └─────────┘            └──────────┘          └────────┘
+      ▲                                                                  │
+      └──────────────────── pull ◄──────────────────────────────────────┘</code></pre>
+    <ol>
+      <li><strong>Modificas archivos</strong> en tu directorio de trabajo.</li>
+      <li><strong>Preparas cambios</strong> con <code>git add</code> (los seleccionas conscientemente).</li>
+      <li><strong>Confirmas</strong> con <code>git commit</code> (foto del proyecto).</li>
+      <li><strong>Sincronizas</strong> con <code>git pull</code> antes y <code>git push</code> después.</li>
+    </ol>
+  </div>
+</section>
 
-# 2. Agregar todos los archivos
-git add .
-
-# 3. Hacer el primer commit
-git commit -m "Primer commit: proyecto inicial"
-
-# 4. Verificar que todo está bien
+<section id="add-commit-push-paso-a-paso">
+  <h2>Add → Commit → Push paso a paso</h2>
+  <div class="doc-content">
+    <pre><code class="language-bash"># Ver qué cambió antes de hacer nada
 git status
 
-# 5. Crear la rama main y moverse a ella
-git branch -M main
+# Revisar el detalle línea por línea
+git diff
 
-# 6. Conectar con repositorio remoto en GitHub
-git remote add origin https://github.com/tu-usuario/tu-repositorio.git
+# Preparar archivos específicos (preferible a git add .)
+git add index.html css/style.css
 
-# 7. Subir por primera vez
-git push -u origin main
+# Confirmar con mensaje claro
+git commit -m "feat: agrega validacion al formulario de contacto"
 
-# El -u establece el tracking, después solo necesitarás: git push origin main</code></pre>
-<h3><i class="fa-solid fa-arrows-rotate"></i> Flujo Diario: Subir cambios desde tu máquina principal</h3>
-<p>Cuando ya tienes tu proyecto configurado y quieres subir cambios:</p>
-<pre><code class="language-bash"># 1. Ver qué archivos han cambiado
-git status
+# Publicar tus commits al remoto
+git push origin main</code></pre>
+    <p>Buenos hábitos en este ciclo:</p>
+    <ul>
+      <li><strong>Commits pequeños y frecuentes:</strong> cada commit debería representar un cambio lógico completo ("agrega validación"), no media jornada ("avances").</li>
+      <li><strong>Mensajes descriptivos:</strong> en imperativo y explicando el qué; tu yo del futuro (y tus compañeros) leerán ese historial.</li>
+      <li><strong>Revisa siempre <code>git status</code></strong> antes de añadir: evita subir archivos temporales o secretos.</li>
+    </ul>
+  </div>
+</section>
 
-# 2. Agregar archivos específicos O todos
-git add archivo.txt        # Archivo específico
-git add .                  # Todos los archivos
+<section id="actualizar-tu-copia-local">
+  <h2>Actualizar tu copia local</h2>
+  <div class="doc-content">
+    <p>Antes de empezar a trabajar y antes de publicar, sincroniza con el remoto:</p>
+    <pre><code class="language-bash"># Descarga cambios y los integra a tu rama actual
+git pull origin main
 
-# 3. Hacer commit con mensaje descriptivo
-git commit -m "Descripción clara de los cambios"
+# Alternativa más segura: descargar sin integrar primero
+git fetch origin
+git log HEAD..origin/main --oneline   # ver que hay nuevo
+git merge origin/main                  # integrar cuando decidas</code></pre>
+    <ul>
+      <li><strong><code>pull</code></strong> = <code>fetch</code> + <code>merge</code> automático; cómodo pero puede sorprenderte con conflictos.</li>
+      <li><strong><code>fetch</code></strong> solo descarga; te deja decidir cuándo y cómo integrar.</li>
+      <li>Si <code>pull</code> reporta conflictos: no entres en pánico — edita los archivos marcados con <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, elige el contenido final y confirma el merge.</li>
+    </ul>
+  </div>
+</section>
 
-# 4. Subir cambios al repositorio remoto
-git push origin main        # o git push origin nombre-de-tu-rama
+<section id="flujo-con-ramas-resumido">
+  <h2>Flujo con ramas resumido</h2>
+  <div class="doc-content">
+    <p>Incluso trabajando solo, la variante profesional del ciclo usa una rama por tarea:</p>
+    <pre><code class="language-bash"># 1. Rama nueva desde main actualizado
+git checkout main
+git pull origin main
+git checkout -b feature/login
 
-# ¡Listo! Tus cambios están en GitHub</code></pre>
-<h3><i class="fa-solid fa-download"></i> Descargar proyecto en otra máquina</h3>
-<p>Cuando quieres trabajar en una máquina diferente por primera vez:</p>
-<pre><code class="language-bash"># 1. Clonar el repositorio completo
-git clone https://github.com/tu-usuario/tu-repositorio.git
-
-# 2. Entrar al directorio del proyecto
-cd tu-repositorio
-
-# 3. Verificar que todo está bien
-git status
-git log --oneline
-
-# ¡Ya tienes todo el proyecto en esta máquina!</code></pre>
-<h3><i class="fa-solid fa-arrows-rotate"></i> Flujo entre máquinas: Sincronizar cambios (descargar cambios)</h3>
-<p><strong>Escenario:</strong> Trabajaste en la Máquina A, subiste cambios, ahora quieres trabajar en la Máquina B.</p>
-  <h4 class="tab-label">En Máquina B: Descargar cambios</h4>
-    <pre><code class="language-bash"># 1. Antes de empezar a trabajar, descargar últimos cambios
-    git pull
-    
-    # Esto es equivalente a:
-    # git fetch + git merge
-    
-    # 2. Verificar que tienes la última versión
-    git log --oneline -5
-    
-    # 3. Ahora puedes trabajar con la versión más reciente</code></pre>
-  <h4 class="tab-label">Trabajar en Máquina B</h4>
-    <pre><code class="language-bash"># 1. Hacer tus cambios en los archivos
-    # ... editar archivos ...
-    
-    # 2. Ver qué cambios hiciste
-    git status
-    git diff
-    
-    # 3. Agregar y commitear
-    git add .
-    git commit -m "Cambios realizados en Máquina B"
-    
-    # 4. Subir cambios
-    git push origin main     # o git push origin nombre-de-tu-rama</code></pre>
-  <h4 class="tab-label">Volver a Máquina A</h4>
-    <pre><code class="language-bash"># 1. En Máquina A, descargar los cambios de Máquina B
-    git pull
-    
-    # 2. Continuar trabajando con la versión actualizada
-    # ... hacer más cambios ...
-    
-    # 3. Subir nuevos cambios
-    git add .
-    git commit -m "Más cambios desde Máquina A"
-    git push origin main     # o git push origin nombre-de-tu-rama</code></pre>
-<h3><i class="fa-solid fa-clipboard-list"></i> Comandos Esenciales - Cheat Sheet</h3>
-<span class="gd-badge gd-badge-tip">Comandos que usarás todos los días</span>
-  <h4 class="tab-label">Comandos Básicos Diarios</h4>
-    <pre><code class="language-bash"># Ver estado actual
-    git status
-    
-    # Agregar archivos
-    git add .                    # Todos los archivos
-    git add archivo.txt          # Archivo específico
-    git add *.js                 # Todos los .js
-    
-    # Hacer commit
-    git commit -m "Mensaje descriptivo"
-    
-    # Subir cambios
-    git push origin main     # o git push origin nombre-de-tu-rama
-    
-    # Descargar cambios
-    git pull
-    
-    # Ver historial
-    git log --oneline</code></pre>
-  <h4 class="tab-label">Comandos de Información</h4>
-    <pre><code class="language-bash"># Ver diferencias
-    git diff                     # Cambios no agregados
-    git diff --staged            # Cambios agregados
-    
-    # Ver historial detallado
-    git log                      # Historial completo
-    git log --oneline -10        # Últimos 10 commits
-    git log --graph              # Con gráfico de ramas
-    
-    # Ver ramas
-    git branch                   # Ramas locales
-    git branch -a                # Todas las ramas
-    
-    # Ver remotos
-    git remote -v                # Ver repositorios remotos</code></pre>
-  <h4 class="tab-label">Comandos de Emergencia</h4>
-    <pre><code class="language-bash"># Deshacer cambios no guardados
-    git checkout -- archivo.txt     # Deshacer cambios en un archivo
-    git checkout .                   # Deshacer todos los cambios
-    
-    # Quitar archivos del staging
-    git reset archivo.txt            # Quitar archivo específico
-    git reset                        # Quitar todos los archivos
-    
-    # Deshacer último commit (mantener cambios)
-    git reset --soft HEAD~1
-    
-    # Ver qué pasó (historial de comandos)
-    git reflog</code></pre>
-<h3><i class="fa-solid fa-bullseye"></i> Flujo Completo: Ejemplo Real</h3>
-<p>Imagina que trabajas en casa y en la oficina. Aquí tienes el flujo completo:</p>
-<ol class="steps">
-<ol>
-  <li>
-<p><strong>En Casa - Lunes por la mañana:</strong></p>
-    <pre><code class="language-bash">git pull                           # Descargar últimos cambios
-echo "nueva función" &gt;&gt; app.js     # Trabajar en el código
+# 2. Trabajas y confirmas (varios ciclos add/commit)
 git add .
-git commit -m "Agregada nueva función de login"
-git push origin main               # Subir cambios (o git push origin nombre-de-tu-rama)</code></pre>
-  </li>
-  <li>
-<p><strong>En la Oficina - Lunes por la tarde:</strong></p>
-    <pre><code class="language-bash">git pull                           # Descargar cambios de casa
-echo "fix bug" &gt;&gt; app.js           # Corregir un bug
-git add .
-git commit -m "Corregido bug en función de login"
-git push origin main               # Subir corrección (o git push origin nombre-de-tu-rama)</code></pre>
-  </li>
-  <li>
-<p><strong>En Casa - Martes por la mañana:</strong></p>
-    <pre><code class="language-bash">git pull                           # Descargar corrección de oficina
-echo "tests" &gt;&gt; test.js            # Agregar tests
-git add .
-git commit -m "Agregados tests para login"
-git push origin main               # Subir tests (o git push origin nombre-de-tu-rama)</code></pre>
-  </li>
-</ol>
-</ol>
-<blockquote class="aside aside-tip">
-**<i class="fa-solid fa-lightbulb"></i> Regla de Oro:** Siempre haz `git pull` antes de empezar a trabajar y `git push` cuando termines. Esto evita conflictos y mantiene todo sincronizado.
-</blockquote>
-<h3><i class="fa-solid fa-triangle-exclamation"></i> Problemas Comunes y Soluciones</h3>
-  <h4 class="tab-label">Error: Push Rechazado</h4>
-<p><strong>Problema:</strong> <code>git push</code> dice que hay cambios remotos</p>
-    <pre><code class="language-bash"># Solución: Descargar cambios primero
-    git pull
-    
-    # Si hay conflictos, Git te ayudará a resolverlos
-    # Después de resolver conflictos:
-    git add .
-    git commit -m "Resueltos conflictos"
-    git push origin main     # o git push origin nombre-de-tu-rama</code></pre>
-  <h4 class="tab-label">Olvidé hacer pull</h4>
-<p><strong>Problema:</strong> Trabajaste sin hacer <code>git pull</code> primero</p>
-    <pre><code class="language-bash"># Si no has hecho commit aún:
-    git stash                    # Guardar cambios temporalmente
-    git pull                     # Descargar cambios
-    git stash pop                # Recuperar tus cambios
-    
-    # Si ya hiciste commit:
-    git pull --rebase            # Reorganizar commits</code></pre>
-  <h4 class="tab-label">Archivo muy grande</h4>
-<p><strong>Problema:</strong> Git rechaza archivo muy grande</p>
-    <pre><code class="language-bash"># Ver qué archivos están siendo agregados
-    git status
-    
-    # Quitar archivo grande del staging
-    git reset archivo-grande.zip
-    
-    # Agregar archivo al .gitignore
-    echo "archivo-grande.zip" &gt;&gt; .gitignore
-    git add .gitignore
-    git commit -m "Ignorar archivos grandes"</code></pre>
-    </div>
-  </section>
+git commit -m "feat: pantalla de login basica"
+
+# 3. Subes tu rama
+git push -u origin feature/login
+
+# 4. Abres Pull Request, revisan, aprueban y fusionan
+# 5. Actualizas main local y borras la rama terminada
+git checkout main && git pull origin main
+git branch -d feature/login</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Nunca hagas push directamente a <code>main</code> en proyectos compartidos: la rama protegida + pull request es el mínimo de seguridad colaborativa.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="chuleta-de-comandos-diarios">
+  <h2>Chuleta de comandos diarios</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Comando</th><th>Para qué sirve</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>git status</code></td><td>Estado actual: qué cambió, qué está preparado</td></tr>
+        <tr><td><code>git diff</code></td><td>Diferencias aún no preparadas</td></tr>
+        <tr><td><code>git add archivo</code></td><td>Preparar un archivo para commit</td></tr>
+        <tr><td><code>git commit -m "msg"</code></td><td>Confirmar lo preparado</td></tr>
+        <tr><td><code>git log --oneline</code></td><td>Historial compacto</td></tr>
+        <tr><td><code>git pull</code></td><td>Traer e integrar cambios remotos</td></tr>
+        <tr><td><code>git push</code></td><td>Publicar commits locales</td></tr>
+        <tr><td><code>git restore archivo</code></td><td>Deshacer cambios NO confirmados</td></tr>
+      </tbody>
+    </table>
+    <p>Ejercicio propuesto: durante una semana completa, prohibete usar <code>git add .</code>. Añade archivos uno por uno tras revisar <code>git status</code> y observa cómo mejora la calidad de tus commits.</p>
+  </div>
+</section>

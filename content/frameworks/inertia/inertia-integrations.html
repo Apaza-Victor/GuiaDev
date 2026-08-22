@@ -1,10 +1,113 @@
-<!-- 12. Integración con otras librerías -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Aprende a integrar Inertia.js con otras librerías y frameworks</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- Integraciones - Inertia.js (Frameworks) -->
+<section id="inertia-con-laravel-vite">
+  <h2>Inertia con Laravel + Vite</h2>
+  <div class="doc-content">
+    <p>La integración canónica de Inertia es Laravel como backend + Vite como bundler. El punto de unión son tres archivos:</p>
+    <pre><code class="language-php">&lt;!-- resources/views/app.blade.php: raiz SPA --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html lang="{{ str_replace('_', '-', app()->getLocale()) }}"&gt;
+&lt;head&gt;
+    @viteReactRefresh
+    @vite('resources/js/app.js')
+    @inertiaHead
+&lt;/head&gt;
+&lt;body&gt;
+    @inertia
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <pre><code class="language-javascript">// resources/js/app.js: bootstrap
+import { createInertiaApp } from '@inertiajs/vue3';
+import { createApp } from 'vue';
+
+createInertiaApp({
+  resolve: (name) => {
+    const pages = import.meta.glob('./Pages/**/*.vue');
+    return pages[`./Pages/${name}.vue`]();
+  },
+  setup({ el, App, props, plugin }) {
+    createApp({ render: () => h(App, props) })
+      .use(plugin)
+      .mount(el);
+  },
+});</code></pre>
+    <p>Con esto funcionan HMR en desarrollo y builds optimizados con code splitting automático.</p>
+  </div>
+</section>
+
+<section id="librerias-de-ui-y-componentes">
+  <h2>Librerías de UI y componentes</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Librería</th><th>Estilo</th><th>Nota para Inertia</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Tailwind CSS</td><td>Utility-first</td><td>El estándar del ecosistema; Breeze la incluye</td></tr>
+        <tr><td>shadcn/ui</td><td>Copiar-pega (Radix)</td><td>Componentes tuyos, cero lock-in</td></tr>
+        <tr><td>Headless UI</td><td>Sin estilos, accesible</td><td>Dropdowns/modales accesibles listos</td></tr>
+        <tr><td>Vuetify / PrimeVue</td><td>Kit completo</td><td>Productividad inmediata, bundle mayor</td></tr>
+      </tbody>
+    </table>
+    <p>Recomendación práctica por tipo de proyecto: admin interno → kit completo; producto público → Tailwind + shadcn/ui o Headless UI.</p>
+  </div>
+</section>
+
+<section id="formularios-y-validacion-integrada">
+  <h2>Formularios y validación integrada</h2>
+  <div class="doc-content">
+    <p>El helper <code>useForm</code> es la pieza que más se disfruta de Inertia — estado, errores, progreso y reset en un objeto:</p>
+    <pre><code class="language-vue">&lt;script setup&gt;
+import { useForm } from '@inertiajs/vue3';
+
+const form = useForm({
+  titulo: '',
+  descripcion: '',
+});
+
+function submit() {
+  form.post(route('posts.store'), {
+    onSuccess: () =&gt; form.reset(),
+  });
+}
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;form @submit.prevent="submit"&gt;
+    &lt;input v-model="form.titulo" :error="form.errors.titulo" /&gt;
+    &lt;textarea v-model="form.descripcion" /&gt;
+    &lt;button type="submit" :disabled="form.processing"&gt;Publicar&lt;/button&gt;
+  &lt;/form&gt;
+&lt;/template&gt;</code></pre>
+    <ul>
+      <li><code>v-model</code> directo sobre propiedades del form.</li>
+      <li>Errores server-side aparecen en <code>form.errors.campo</code> sin lógica extra.</li>
+      <li>Métodos útiles: <code>put/patch/delete/reset/clearErrors</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="testing-e2e-con-inertia">
+  <h2>Testing E2E con Inertia</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Laravel Dusk / Playwright:</strong> pruebas de navegador reales — login, crear registro, verificar toast. Como Inertia no cambia URLs al navegar, tus selectores apuntan a contenido, no a rutas.</li>
+      <li><strong>Tests HTTP de Laravel:</strong> afirman las páginas Inertia directamente:</li>
+    </ul>
+    <pre><code class="language-php">public function test_panel_muestra_usuario(): void
+{
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->get('/panel');
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('Panel')                       // pagina correcta
+        ->has('auth.user')                         // props presentes
+        ->where('auth.user.email', $user->email)
+    );
+}</code></pre>
+    <blockquote class="aside aside-tip">
+      <p><code>assertInertia</code> verifica página Y props sin navegador: rápido y estable. Reserva Dusk/Playwright para los flujos críticos de negocio, no para cada pantalla.</p>
+    </blockquote>
+    <p>Ejercicio propuesto: instala Inertia en un Laravel limpio, integra tu librería de UI favorita y escribe un test assertInertia que valide la página dashboard con sus tres primeras props.</p>
+  </div>
+</section>

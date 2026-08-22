@@ -1,0 +1,86 @@
+<!-- 5. Buenas Prácticas y Errores Comunes - Casos de Uso (UML) -->
+<section id="errores-frecuentes-casos-de-uso">
+  <h2>5.1. Errores frecuentes al modelar casos de uso</h2>
+  <div class="doc-content">
+    <p>Estos son los fallos clásicos que arruinan un diagrama de casos de uso:</p>
+    <ul>
+      <li><strong>Convertir pasos en casos de uso:</strong> "Ingresar usuario", "Validar contraseña" y "Mostrar menú" no son casos de uso; son pasos internos de "Iniciar Sesión". Un caso de uso entrega un <em>resultado completo y valioso</em> para el actor.</li>
+      <li><strong>Actores que son sistemas sin rol:</strong> modelar "Base de Datos" como actor. La BD es interna; los actores son externos (personas u otros sistemas).</li>
+      <li><strong>Casos CRUD mecánicos:</strong> cuatro burbujas "Crear Usuario", "Editar Usuario"... cuando una sola "Gestionar Usuarios" comunica mejor.</li>
+      <li><strong>Abusar de include/extend:</strong> si cada caso tiene cinco flechas punteadas, el diagrama se vuelve ilegible. Úsalos solo para comportamiento realmente compartido u opcional.</li>
+      <li><strong>Flujo dentro del diagrama:</strong> el diagrama muestra <em>qué</em>, no <em>cómo</em>. Los pasos van en la especificación textual.</li>
+      <li><strong>Sin frontera del sistema:</strong> rectángulo ausente → imposible distinguir actores de procesos internos.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="granularidad-correcta">
+  <h2>5.2. La granularidad correcta</h2>
+  <div class="doc-content">
+    <p>La pregunta filtro: <strong>"¿El actor obtiene aquí un objetivo de negocio completo?"</strong></p>
+    <table class="doc-table">
+      <thead><tr><th>Muy pequeño ❌</th><th>Correcto ✔</th><th>Muy grande ❌</th></tr></thead>
+      <tbody>
+        <tr><td>"Guardar venta"</td><td>"Registrar Venta"</td><td>"Administrar Tienda"</td></tr>
+        <tr><td>"Abrir formulario"</td><td>"Reservar Habitación"</td><td>"Operar Sistema Hotelero"</td></tr>
+        <tr><td>"Enviar email"</td><td>"Notificar Pedido Listo"</td><td>"Gestionar Logística Completa"</td></tr>
+      </tbody>
+    </table>
+    <p>Regla empírica: un sistema mediano suele tener entre 10 y 30 casos de uso. Si superas 50, estás fragmentando; si tienes menos de 8, probablemente agrupaste demasiado.</p>
+  </div>
+</section>
+
+<section id="documentar-flujo-de-cada-caso">
+  <h2>5.3. Documentar el flujo de cada caso de uso</h2>
+  <div class="doc-content">
+    <p>El diagrama por sí solo no basta: cada burbuja merece una especificación textual mínima. Plantilla recomendada:</p>
+    <pre><code class="language-markdown"># CU-07: Retirar Efectivo
+
+- **Actor principal:** Cliente del banco
+- **Precondición:** Tarjeta válida insertada y PIN verificado
+- **Flujo principal:**
+  1. El cliente selecciona "Retiro"
+  2. Ingresa el monto deseado
+  3. El sistema verifica fondos disponibles
+  4. El cajero dispensa el efectivo e imprime comprobante
+- **Flujos alternativos:**
+  - 3a. Fondos insuficientes → se informa y se solicita otro monto
+- **Postcondición:** Saldo actualizado y transacción registrada</code></pre>
+    <p>Esa especificación vive en la wiki o en el propio repositorio; el diagrama enlaza a ella mediante el ID (<code>CU-07</code>).</p>
+  </div>
+</section>
+
+<section id="casos-de-uso-vs-historias-de-usuario">
+  <h2>5.4. Casos de uso vs historias de usuario</h2>
+  <div class="doc-content">
+    <p>En equipos ágiles surge la duda natural. No compiten: cubren necesidades distintas.</p>
+    <table class="doc-table">
+      <thead><tr><th>Aspecto</th><th>Caso de Uso (UML)</th><th>Historia de Usuario</th></tr></thead>
+      <tbody>
+        <tr><td>Formato</td><td>Diagrama + especificación formal</td><td>Frase corta: "Como X quiero Y para Z"</td></tr>
+        <tr><td>Detalle</td><td>Flujos principales y alternativos completos</td><td>Criterios de aceptación puntuales</td></tr>
+        <tr><td>Duración</td><td>Vive durante toda la vida del sistema</td><td>Se cierra al terminar el sprint</td></tr>
+        <tr><td>Audiencia ideal</td><td>Diseño, contratos, sistemas críticos</td><td>Backlog ágil, conversación diaria</td></tr>
+      </tbody>
+    </table>
+    <p>Patrón híbrido habitual: las historias del backlog <em>cortan</em> horizontalmente un caso de uso grande ("Implementar flujo principal de CU-07").</p>
+  </div>
+</section>
+
+<section id="checklist-calidad-casos-de-uso">
+  <h2>5.5. Checklist de calidad</h2>
+  <div class="doc-content">
+    <p>Antes de presentar el modelo, verifica:</p>
+    <ul>
+      <li>[ ] ¿Cada caso de uso entrega valor observable a un actor?</li>
+      <li>[ ] ¿Los nombres empiezan con verbo fuerte en infinitivo?</li>
+      <li>[ ] ¿Todos los actores están fuera de la frontera?</li>
+      <li>[ ] ¿Cada actor participa en al menos un caso de uso?</li>
+      <li>[ ] ¿<code>&laquo;include&raquo;</code> se usa solo para lógica compartida obligatoria?</li>
+      <li>[ ] ¿<code>&laquo;extend&raquo;</code> se usa solo para comportamiento opcional/condicional?</li>
+      <li>[ ] ¿Los casos críticos tienen especificación textual documentada?</li>
+      <li>[ ] ¿Un lector ajeno al proyecto entiende el sistema en 2 minutos?</li>
+    </ul>
+    <p>Si respondiste "no" a dos o más, dedica otra iteración al modelo antes de avanzar a diseño detallado.</p>
+  </div>
+</section>

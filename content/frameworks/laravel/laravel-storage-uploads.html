@@ -1,10 +1,115 @@
-<!-- 14. Archivos, Storage y Uploads -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Aprende a gestionar archivos, subir archivos y configurar almacenamiento en Laravel</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- 14. Archivos, Storage y Uploads - Laravel (Frameworks) -->
+<section id="discos-de-almacenamiento">
+  <h2>Discos de almacenamiento (Storage)</h2>
+  <div class="doc-content">
+    <p>La facade <code>Storage</code> de Laravel abstrae el sistema de archivos gracias a Flysystem: el mismo código funciona sobre disco local, S3, FTP o Dropbox. Los discos se definen en <code>config/filesystems.php</code>:</p>
+    <pre><code class="language-php">'disks' => [
+    'local' => [
+        'driver' => 'local',
+        'root' => storage_path('app/private'),   // NO accesible por web
+    ],
+    'public' => [
+        'driver' => 'local',
+        'root' => storage_path('app/public'),
+        'url' => env('APP_URL').'/storage',
+        'visibility' => 'public',
+    ],
+    's3' => [
+        'driver' => 's3',
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION'),
+        'bucket' => env('AWS_BUCKET'),
+    ],
+],</code></pre>
+    <p>No olvides el enlace simbólico que expone el disco public en la carpeta web: <code>php artisan storage:link</code>.</p>
+  </div>
+</section>
+
+<section id="operaciones-basicas-de-storage">
+  <h2>Operaciones básicas</h2>
+  <div class="doc-content">
+    <pre><code class="language-php">use Illuminate\Support\Facades\Storage;
+
+// Guardar
+Storage::disk('local')->put('facturas/2026/f001.pdf', $contenido);
+
+// Leer y verificar
+$contenido = Storage::get('facturas/2026/f001.pdf');
+Storage::exists('facturas/2026/f001.pdf');
+
+// Copiar, mover y eliminar
+Storage::copy('viejo.pdf', 'nuevo.pdf');
+Storage::move('temporal.pdf', 'definitivo.pdf');
+Storage::delete(['a.pdf', 'b.jpg']);
+
+// Listar y tamanos
+Storage::files('facturas/2026');
+Storage::size('facturas/2026/f001.pdf');   // bytes
+Storage::lastModified('facturas/2026/f001.pdf');</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Especifica siempre el disco explícitamente (<code>Storage::disk('s3')</code>) en código de negocio. Depender del default hace que cambiar configuración mueva datos sin querer.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="subir-archivos-validados">
+  <h2>Subir archivos validados</h2>
+  <div class="doc-content">
+    <p>El request maneja uploads nativamente. Valida tipo y tamaño ANTES de mover nada:</p>
+    <pre><code class="language-php">// Formulario: &lt;form method="POST" enctype="multipart/form-data"&gt;
+
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'avatar' => ['required', 'image', 'mimes:jpg,png,webp', 'max:2048'],   // KB
+        'documento' => ['required', 'file', 'mimetypes:application/pdf', 'max:10240'],
+    ]);
+
+    $ruta = $request->file('avatar')->store('avatars', 'public');
+
+    // Con nombre propio en lugar del hash aleatorio
+    $rutaDoc = $request->file('documento')->storeAs(
+        'documentos',
+        now()->format('Ymd') . '-usuario-' . auth()->id() . '.pdf',
+        'local'
+    );
+
+    Perfil::create(['avatar_path' => $ruta]);
+}</code></pre>
+    <ul>
+      <li><code>store()</code> genera nombre seguro automático (hash) — preferible para contenido de usuario.</li>
+      <li><code>mimes:</code> valida extensión; <code>mimetypes:</code> valida el tipo real del archivo. Usa ambos cuando el riesgo lo amerite.</li>
+      <li><code>max:</code> se expresa en kilobytes; recuerda también los límites de php.ini (upload_max_filesize) si despliegas sin Laravel Sail.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="publico-vs-privado-y-descargas">
+  <h2>Público vs privado, URLs y descargas</h2>
+  <div class="doc-content">
+    <pre><code class="language-php">// URL publica (requiere storage:link o disco cloud)
+$url = Storage::url('avatars/hash.jpg');          // /storage/avatars/hash.jpg
+
+// Archivo PRIVADO: nunca URL directa; sirve via controlador
+Route::get('/facturas/{factura}/descargar', function (Factura $factura) {
+    $this->authorize('view', $factura);           // solo su dueno
+
+    return Storage::download(
+        "facturas/{$factura->archivo}",
+        "factura-{$factura->numero}.pdf"          // nombre al usuario
+    );
+});
+
+// Visibilidad temporal (S3): URLs firmadas con expiracion
+$urlTemporal = Storage::temporaryUrl(
+    'privado/video.mp4', now()->addMinutes(30)
+);</code></pre>
+    <ul>
+      <li><strong>Público</strong>: imágenes de perfil, logos — accesibles por URL directa.</li>
+      <li><strong>Privado + controlador con authorize:</strong> facturas, documentos sensibles — la autorización vive en tu código, no en el filesystem.</li>
+      <li>En S3, <code>temporaryUrl</code> descarga directo desde AWS sin pasar por tu servidor: ahorra ancho de banda.</li>
+    </ul>
+    <p>Ejercicio propuesto: implementa subida de avatar con validación estricta, versión privada de documentos con controlador autorizado, y una URL firmada temporal sobre un disco S3 local simulado.</p>
+  </div>
+</section>

@@ -71,6 +71,29 @@ class GuiaDevApp {
         this.closeSearch();
       }
     });
+    window.addEventListener("hashchange", () => this.handleRouteChange());
+  }
+
+  handleRouteChange() {
+    const parts = window.location.hash.slice(1).split("/").filter(Boolean);
+
+    if (parts.length === 0) {
+      if (this.currentPage !== "home") {
+        this.currentPage = "home";
+        this.currentCategory = null;
+        this.currentSubcategory = null;
+        this.currentLesson = null;
+        this.render();
+      }
+      return;
+    }
+    if (parts.length === 1 && parts[0] !== this.currentCategory) {
+      this.navigateTo(parts[0]);
+    } else if (parts.length === 2 && parts[1] !== this.currentSubcategory) {
+      this.navigateToSubcategory(parts[0], parts[1]);
+    } else if (parts.length === 3 && parts[2] !== this.currentLesson) {
+      this.navigateToLesson(parts[0], parts[1], parts[2]);
+    }
   }
 
   toggleSearch() {
@@ -177,19 +200,22 @@ class GuiaDevApp {
     this.render();
 
     if (prevLesson && prevLesson !== lessonId && typeof GuiaDevAnimations !== 'undefined') {
-      const direction = this.getLessonDirection(categoryId, subcategoryId, lessonId);
+      const direction = this.getLessonDirection(categoryId, subcategoryId, lessonId, prevLesson);
       GuiaDevAnimations.lessonNavigation(direction);
     }
 
     this.scrollToTop();
   }
 
-  getLessonDirection(categoryId, subcategoryId, lessonId) {
+  getLessonDirection(categoryId, subcategoryId, lessonId, prevLessonId) {
     const cat = DOCS_DATA.categories.find((c) => c.id === categoryId);
     const sub = cat?.subcategories.find((s) => s.id === subcategoryId);
     if (!sub) return 'next';
-    const idx = sub.lessons.findIndex((l) => l.id === lessonId);
-    return idx > 0 ? 'next' : 'prev';
+    const lessons = sub.lessons;
+    const newIdx = lessons.findIndex((l) => l.id === lessonId);
+    const prevIdx = prevLessonId ? lessons.findIndex((l) => l.id === prevLessonId) : -1;
+    if (newIdx === -1 || prevIdx === -1) return newIdx > 0 ? 'next' : 'prev';
+    return newIdx > prevIdx ? 'next' : 'prev';
   }
 
   scrollToTop() {
@@ -324,7 +350,7 @@ class GuiaDevApp {
               </div>
               <div class="feature-card">
                 <div class="feature-icon"><i class="fa-solid fa-laptop-code"></i></div>
-                <h3>Ejemplos praticos</h3>
+                <h3>Ejemplos prácticos</h3>
                 <p>Codigo ejecutable en cada leccion</p>
               </div>
               <div class="feature-card">
@@ -371,7 +397,8 @@ class GuiaDevApp {
       'is': 'pages/is.html',
       'utilities': 'pages/utilidades.html',
       'entrevistas': 'pages/entrevistas.html',
-      'ingles': 'pages/ingles.html'
+      'ingles': 'pages/ingles.html',
+      'recursos': 'pages/recursos.html'
     };
     const pageUrl = pageMap[category.id] || '#';
 
@@ -395,9 +422,12 @@ class GuiaDevApp {
   renderDocPage() {
     const cat = DOCS_DATA.categories.find((c) => c.id === this.currentCategory);
     const sub = cat?.subcategories.find((s) => s.id === this.currentSubcategory);
-    const lesson = sub?.lessons.find((l) => l.id === this.currentLesson);
 
-    const currentLessonIndex = sub ? sub.lessons.findIndex((l) => l.id === this.currentLesson) : -1;
+    if (!cat || !sub) return this.renderHome();
+
+    const lesson = sub.lessons.find((l) => l.id === this.currentLesson);
+
+    const currentLessonIndex = sub.lessons.findIndex((l) => l.id === this.currentLesson);
     const prevLesson = currentLessonIndex > 0 ? sub.lessons[currentLessonIndex - 1] : null;
     const nextLesson = currentLessonIndex < sub.lessons.length - 1 ? sub.lessons[currentLessonIndex + 1] : null;
 
@@ -528,7 +558,15 @@ class GuiaDevApp {
   bindEvents() {
     const content = document.getElementById("main-content");
     if (content) {
-      content.addEventListener("scroll", () => this.highlightToc());
+      let ticking = false;
+      content.addEventListener("scroll", () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          ticking = false;
+          this.highlightToc();
+        });
+      }, { passive: true });
     }
   }
 

@@ -605,9 +605,467 @@ const DOCS_DATA = {
             "title": "7. Flujo básico",
             "content": "Aprende el flujo básico de Git.",
             "sections": [
-              "Contenido"
+              "El ciclo de trabajo diario",
+              "Add → Commit → Push paso a paso",
+              "Actualizar tu copia local",
+              "Flujo con ramas resumido",
+              "Chuleta de comandos diarios"
             ],
             "contentFile": "content/git/github/git-flujo.html"
+          }
+        ]
+      },
+      {
+        "id": "gitlab",
+        "title": "GitLab",
+        "icon": "fa-brands fa-gitlab",
+        "lessons": [
+          {
+            "id": "gitlab-intro",
+            "title": "1. Introducción a GitLab",
+            "content": "Conoce GitLab, la plataforma DevOps completa que integra repositorios, CI/CD y despliegue en una sola aplicación",
+            "sections": [
+              "¿Qué es GitLab?",
+              "GitLab vs GitHub",
+              "SaaS y self-hosted",
+              "Crear cuenta y primer proyecto",
+              "Tour por la interfaz"
+            ],
+            "contentFile": "content/git/gitlab/gitlab-intro.html"
+          },
+          {
+            "id": "gitlab-proyectos",
+            "title": "2. Proyectos y Merge Requests",
+            "content": "Aprende a gestionar proyectos en GitLab: repositorios, ramas protegidas, merge requests y revisión de código",
+            "sections": [
+              "Creación y clonado de proyectos",
+              "Visibilidad y membresías",
+              "Ramas protegidas",
+              "Merge Requests: flujo de trabajo",
+              "Revisión y aprobaciones"
+            ],
+            "contentFile": "content/git/gitlab/gitlab-proyectos.html"
+          },
+          {
+            "id": "gitlab-ci",
+            "title": "3. GitLab CI/CD",
+            "content": "Domina los pipelines de GitLab: stages, jobs, runners y el archivo .gitlab-ci.yml paso a paso",
+            "sections": [
+              "Conceptos clave: pipeline, stages y jobs",
+              "El archivo .gitlab-ci.yml",
+              "Runners: compartidos y propios",
+              "Pipeline de ejemplo completo",
+              "Variables, caché y artefactos",
+              "Buenas prácticas"
+            ],
+            "contentFile": "content/git/gitlab/gitlab-ci.html"
+          },
+          {
+            "id": "gitlab-pages",
+            "title": "4. GitLab Pages",
+            "content": "Publica sitios estáticos gratis con GitLab Pages usando pipelines automáticos",
+            "sections": [
+              "¿Qué es GitLab Pages?",
+              "Configuración del job pages",
+              "Publicar un sitio estático",
+              "Dominios y HTTPS"
+            ],
+            "contentFile": "content/git/gitlab/gitlab-pages.html"
+          }
+        ]
+      },
+      {
+        "id": "bitbucket",
+        "title": "Bitbucket",
+        "icon": "fa-brands fa-bitbucket",
+        "lessons": [
+          {
+            "id": "bitbucket-intro",
+            "title": "1. Introducción a Bitbucket",
+            "content": "Descubre Bitbucket, la plataforma de Atlassian para hospedar repositorios Git con integración nativa a Jira",
+            "sections": [
+              "¿Qué es Bitbucket?",
+              "El ecosistema Atlassian",
+              "Crear cuenta y workspace",
+              "Primer repositorio"
+            ],
+            "contentFile": "content/git/bitbucket/bitbucket-intro.html"
+          },
+          {
+            "id": "bitbucket-colaboracion",
+            "title": "2. Colaboración en Bitbucket",
+            "content": "Trabaja en equipo con pull requests, estrategias de ramas, permisos e integración con Jira en Bitbucket",
+            "sections": [
+              "Pull Requests y revisión de código",
+              "Estrategia de ramas",
+              "Branch permissions",
+              "Integración con Jira",
+              "Snippets y descargas"
+            ],
+            "contentFile": "content/git/bitbucket/bitbucket-colaboracion.html"
+          },
+          {
+            "id": "bitbucket-pipelines",
+            "title": "3. Bitbucket Pipelines",
+            "content": "Automatiza builds y despliegues con Bitbucket Pipelines usando el archivo bitbucket-pipelines.yml",
+            "sections": [
+              "¿Qué son los Bitbucket Pipelines?",
+              "El archivo bitbucket-pipelines.yml",
+              "Steps, caches y artifacts",
+              "Despliegues a producción",
+              "Límites del plan gratuito"
+            ],
+            "contentFile": "content/git/bitbucket/bitbucket-pipelines.html"
+          }
+        ]
+      },
+      {
+        "id": "azure-devops",
+        "title": "Azure DevOps",
+        "icon": "fa-brands fa-microsoft",
+        "lessons": [
+          {
+            "id": "azure-intro",
+            "title": "1. Introducción a Azure DevOps",
+            "content": "Explora Azure DevOps, la suite corporativa de Microsoft: Boards, Repos, Pipelines, Test Plans y Artifacts",
+            "sections": [
+              "¿Qué es Azure DevOps?",
+              "Los cinco servicios principales",
+              "Organizaciones y proyectos",
+              "Crear tu organización gratuita"
+            ],
+            "contentFile": "content/git/azure-devops/azure-intro.html"
+          },
+          {
+            "id": "azure-repos",
+            "title": "2. Azure Repos",
+            "content": "Gestiona repositorios Git en la nube de Microsoft con políticas de rama y revisión obligatoria",
+            "sections": [
+              "Azure Repos: características",
+              "Clonar y trabajar con tu repositorio",
+              "Pull Requests y políticas de rama",
+              "Integración con Visual Studio y VS Code"
+            ],
+            "contentFile": "content/git/azure-devops/azure-repos.html"
+          },
+          {
+            "id": "azure-pipelines",
+            "title": "3. Azure Pipelines",
+            "content": "Crea pipelines de CI/CD multiplataforma con YAML en Azure Pipelines",
+            "sections": [
+              "Conceptos: pipelines, agentes y etapas",
+              "El archivo azure-pipelines.yml",
+              "Triggers, tareas y plantillas",
+              "Despliegue a Azure App Service",
+              "Plan gratuito"
+            ],
+            "contentFile": "content/git/azure-devops/azure-pipelines.html"
+          },
+          {
+            "id": "azure-boards",
+            "title": "4. Azure Boards y gestión ágil",
+            "content": "Planifica y da seguimiento al trabajo con Azure Boards: work items, sprints, tableros Kanban y consultas",
+            "sections": [
+              "Work items y tipos de trabajo",
+              "Tableros Kanban y sprints",
+              "Consultas y gráficos",
+              "Vincular commits y PRs a work items"
+            ],
+            "contentFile": "content/git/azure-devops/azure-boards.html"
+          }
+        ]
+      },
+      {
+        "id": "gitea",
+        "title": "Gitea (Self-hosted)",
+        "icon": "fa-solid fa-server",
+        "lessons": [
+          {
+            "id": "gitea-intro",
+            "title": "1. Introducción a Gitea",
+            "content": "Monta tu propio servidor Git ligero y open source con Gitea, alternativa self-hosted a GitHub y GitLab",
+            "sections": [
+              "¿Qué es Gitea y cuándo usarlo?",
+              "Gitea vs Forgejo vs GitLab self-hosted",
+              "Requisitos del servidor",
+              "Características principales"
+            ],
+            "contentFile": "content/git/gitea/gitea-intro.html"
+          },
+          {
+            "id": "gitea-instalacion",
+            "title": "2. Instalación de Gitea con Docker",
+            "content": "Despliega Gitea en minutos usando Docker Compose, con base de datos y persistencia incluidas",
+            "sections": [
+              "Instalación binaria simple",
+              "Instalación con Docker Compose",
+              "Configuración inicial (wizard)",
+              "HTTPS con proxy inverso",
+              "Copias de seguridad"
+            ],
+            "contentFile": "content/git/gitea/gitea-instalacion.html"
+          },
+          {
+            "id": "gitea-uso",
+            "title": "3. Uso diario de Gitea",
+            "content": "Organizaciones, usuarios, claves SSH, Actions y administración de un servidor Gitea en producción",
+            "sections": [
+              "Usuarios, organizaciones y equipos",
+              "Claves SSH y tokens",
+              "Repositorios, issues y PRs",
+              "Gitea Actions",
+              "Mantenimiento y actualización"
+            ],
+            "contentFile": "content/git/gitea/gitea-uso.html"
+          }
+        ]
+      },
+      {
+        "id": "clientes-graficos",
+        "title": "Clientes Gráficos",
+        "icon": "fa-solid fa-desktop",
+        "lessons": [
+          {
+            "id": "gui-github-desktop",
+            "title": "1. GitHub Desktop",
+            "content": "El cliente oficial y gratuito de GitHub: commits visuales, ramas, pull requests y resolución de conflictos sin terminal",
+            "sections": [
+              "Instalación y configuración inicial",
+              "Interfaz y flujo básico",
+              "Ramas y sincronización",
+              "Resolver conflictos visualmente",
+              "Cuándo usarlo y cuándo no"
+            ],
+            "contentFile": "content/git/clientes-graficos/gui-github-desktop.html"
+          },
+          {
+            "id": "gui-sourcetree",
+            "title": "2. Sourcetree",
+            "content": "Cliente gratuito de Atlassian con grafo completo de ramas, ideal para proyectos con historial complejo",
+            "sections": [
+              "Descarga y registro",
+              "El grafo de commits",
+              "Staging selectivo por fragmentos",
+              "Stash, rebase y cherry-pick visual"
+            ],
+            "contentFile": "content/git/clientes-graficos/gui-sourcetree.html"
+          },
+          {
+            "id": "gui-gitkraken",
+            "title": "3. GitKraken",
+            "content": "El cliente más visual del mercado: grafo interactivo, integración con GitHub, GitLab y Bitbucket y editor de conflictos",
+            "sections": [
+              "Instalación y planes",
+              "Conectar tus cuentas remotas",
+              "Navegar el grafo de commits",
+              "Edición visual de conflictos",
+              "Funciones de los planes de pago"
+            ],
+            "contentFile": "content/git/clientes-graficos/gui-gitkraken.html"
+          },
+          {
+            "id": "gui-fork",
+            "title": "4. Fork",
+            "content": "Cliente Git rápido y liviano para Windows y macOS, con interactive rebase visual y licencia gratuita tras evaluación",
+            "sections": [
+              "Instalación y primeras impresiones",
+              "Interactive rebase visual",
+              "Gestión de stashes",
+              "Atajos de teclado esenciales"
+            ],
+            "contentFile": "content/git/clientes-graficos/gui-fork.html"
+          },
+          {
+            "id": "gui-vscode",
+            "title": "5. Git integrado en VS Code",
+            "content": "Todo el poder de Git dentro de tu editor: Source Control, GitLens y resolución de conflictos en línea",
+            "sections": [
+              "Source Control integrado",
+              "Commits, ramas y sync desde el editor",
+              "GitLens: blame e historial",
+              "Resolución de conflictos en el editor",
+              "Comandos útiles de la paleta"
+            ],
+            "contentFile": "content/git/clientes-graficos/gui-vscode.html"
+          }
+        ]
+      },
+      {
+        "id": "github-cli",
+        "title": "GitHub CLI (gh)",
+        "icon": "fa-solid fa-terminal",
+        "lessons": [
+          {
+            "id": "gh-intro",
+            "title": "1. Introducción a GitHub CLI",
+            "content": "Gestiona GitHub desde tu terminal: repos, issues, pull requests y acciones con el comando gh",
+            "sections": [
+              "¿Qué es gh?",
+              "Instalación en Windows, Linux y macOS",
+              "Autenticación con gh auth login",
+              "Comandos esenciales"
+            ],
+            "contentFile": "content/git/github-cli/gh-intro.html"
+          },
+          {
+            "id": "gh-prs-issues",
+            "title": "2. Pull Requests e Issues con gh",
+            "content": "Crea, revisa y fusiona pull requests y gestiona issues sin salir de la terminal",
+            "sections": [
+              "Crear un PR desde tu rama",
+              "Ver y revisar PRs",
+              "Fusionar PRs: merge, squash y rebase",
+              "Gestionar issues y labels",
+              "Monitorear Actions con gh run"
+            ],
+            "contentFile": "content/git/github-cli/gh-prs-issues.html"
+          },
+          {
+            "id": "gh-trucos",
+            "title": "3. Alias, extensiones y trucos de gh",
+            "content": "Personaliza gh con alias, extensiones de la comunidad y automatiza tareas repetitivas",
+            "sections": [
+              "Alias útiles",
+              "Extensiones de la comunidad",
+              "gh api para casos avanzados",
+              "Scripts y automatización"
+            ],
+            "contentFile": "content/git/github-cli/gh-trucos.html"
+          }
+        ]
+      },
+      {
+        "id": "git-lfs",
+        "title": "Git LFS",
+        "icon": "fa-solid fa-file-zipper",
+        "lessons": [
+          {
+            "id": "lfs-intro",
+            "title": "1. Introducción a Git LFS",
+            "content": "Maneja archivos grandes (binarios, modelos, multimedia) en Git sin inflar tu repositorio gracias a Git LFS",
+            "sections": [
+              "El problema de los archivos grandes en Git",
+              "¿Cómo funciona Git LFS?",
+              "Instalación y configuración",
+              "Rastrear patrones con .gitattributes"
+            ],
+            "contentFile": "content/git/git-lfs/lfs-intro.html"
+          },
+          {
+            "id": "lfs-flujo",
+            "title": "2. Flujo de trabajo con Git LFS",
+            "content": "Migra repositorios existentes, conoce los límites de cada plataforma y las buenas prácticas con Git LFS",
+            "sections": [
+              "Migrar un repositorio existente",
+              "Trabajo diario con LFS",
+              "Cuotas y límites por plataforma",
+              "Buenas prácticas y alternativas"
+            ],
+            "contentFile": "content/git/git-lfs/lfs-flujo.html"
+          }
+        ]
+      },
+      {
+        "id": "commits-calidad",
+        "title": "Calidad de Commits",
+        "icon": "fa-solid fa-clipboard-check",
+        "lessons": [
+          {
+            "id": "conventional-commits",
+            "title": "1. Conventional Commits",
+            "content": "Estandariza tus mensajes de commit con la especificación Conventional Commits y genera changelogs automáticamente",
+            "sections": [
+              "¿Por qué estandarizar los commits?",
+              "La especificación: tipo, scope y descripción",
+              "Tipos principales",
+              "Breaking changes y footers",
+              "Herramientas que lo aprovechan"
+            ],
+            "contentFile": "content/git/commits-calidad/conventional-commits.html"
+          },
+          {
+            "id": "husky",
+            "title": "2. Husky: Git hooks modernos",
+            "content": "Ejecuta validaciones automáticas antes de cada commit o push con Husky en proyectos JavaScript",
+            "sections": [
+              "¿Qué son los Git hooks?",
+              "Instalación y configuración de Husky",
+              "Hooks pre-commit y pre-push",
+              "Combinar con lint-staged",
+              "Ejemplo completo de setup"
+            ],
+            "contentFile": "content/git/commits-calidad/husky.html"
+          },
+          {
+            "id": "commitlint-commitizen",
+            "title": "3. Commitlint y Commitizen",
+            "content": "Valida que tus commits cumplan Conventional Commits y crea mensajes guiados e interactivos con Commitizen",
+            "sections": [
+              "Instalar y configurar commitlint",
+              "Validar desde husky (commit-msg)",
+              "Commitizen: commits guiados",
+              "Changelog automático"
+            ],
+            "contentFile": "content/git/commits-calidad/commitlint-commitizen.html"
+          }
+        ]
+      },
+      {
+        "id": "ci-cd",
+        "title": "CI/CD",
+        "icon": "fa-solid fa-infinity",
+        "lessons": [
+          {
+            "id": "cicd-fundamentos",
+            "title": "1. Fundamentos de CI/CD",
+            "content": "Entiende la integración y entrega continuas: conceptos, beneficios, métricas DORA y cómo encaja en el flujo Git",
+            "sections": [
+              "¿Qué es CI? ¿Qué es CD?",
+              "Beneficios y métricas DORA",
+              "Anatomía de un pipeline",
+              "Estrategias de ramas y triggers",
+              "Panorama de herramientas"
+            ],
+            "contentFile": "content/git/ci-cd/cicd-fundamentos.html"
+          },
+          {
+            "id": "github-actions",
+            "title": "2. GitHub Actions",
+            "content": "Automatiza workflows directamente en GitHub: triggers, jobs, matrices, secrets y marketplace",
+            "sections": [
+              "Conceptos: workflow, job y step",
+              "El directorio .github/workflows",
+              "Triggers y matriz de versiones",
+              "Secrets y variables de entorno",
+              "Marketplace y actions reutilizables"
+            ],
+            "contentFile": "content/git/ci-cd/github-actions.html"
+          },
+          {
+            "id": "jenkins",
+            "title": "3. Jenkins",
+            "content": "El servidor de automatización open source más usado en empresas: instala, configura plugins y escribe un Jenkinsfile",
+            "sections": [
+              "¿Qué es Jenkins y cuándo usarlo?",
+              "Instalación con Docker",
+              "Plugins esenciales",
+              "Jenkinsfile: pipeline declarativo",
+              "Agentes distribuidos"
+            ],
+            "contentFile": "content/git/ci-cd/jenkins.html"
+          },
+          {
+            "id": "cicd-comparativa",
+            "title": "4. Comparativa y buenas prácticas de CI/CD",
+            "content": "Compara GitHub Actions, GitLab CI, Bitbucket Pipelines, Azure Pipelines y Jenkins, y aplica buenas prácticas universales",
+            "sections": [
+              "Criterios de comparación",
+              "Tabla comparativa",
+              "Buenas prácticas universales",
+              "Seguridad en pipelines",
+              "Costos y runners propios"
+            ],
+            "contentFile": "content/git/ci-cd/cicd-comparativa.html"
           }
         ]
       }
@@ -731,7 +1189,11 @@ const DOCS_DATA = {
             "title": "8. Optimización y Buenas Prácticas",
             "content": "Aprende a optimizar consultas, crear índices y aplicar buenas prácticas en SQL",
             "sections": [
-              "Contenido"
+              "Índices: cuándo y cómo",
+              "Escribir consultas eficientes",
+              "Analizar planes de ejecución",
+              "Buenas prácticas de esquema",
+              "Mantenimiento y monitoreo"
             ],
             "contentFile": "content/lenguajes/sql/sql-optimizacion.html"
           }
@@ -898,7 +1360,10 @@ const DOCS_DATA = {
             "title": "13. Buenas prácticas",
             "content": "Aprende sobre seguridad, optimización y estándares de codificación en PHP",
             "sections": [
-              "Contenido"
+              "Seguridad fundamental",
+              "Estándares de codificación (PSR)",
+              "Optimización de código PHP",
+              "Estructura y herramientas del proyecto"
             ],
             "contentFile": "content/lenguajes/php/php-buenas-practicas.html"
           }
@@ -2894,7 +3359,10 @@ const DOCS_DATA = {
             "title": "10. Configuración Avanzada",
             "content": "Configuración de astro.config.mjs, integraciones y adaptadores oficiales",
             "sections": [
-              "Contenido"
+              "El archivo astro.config.mjs",
+              "Integraciones oficiales",
+              "Adaptadores y modo server (SSR)",
+              "Variables de entorno"
             ],
             "contentFile": "content/frameworks/astro/astro-10-configuracion-avanzada.html"
           },
@@ -2903,7 +3371,10 @@ const DOCS_DATA = {
             "title": "11. Integraciones Externas",
             "content": "Plugins Remark y Rehype, analíticas, scripts externos y CMS",
             "sections": [
-              "Contenido"
+              "Plugins Remark y Rehype",
+              "Analíticas y scripts externos",
+              "CMS headless y fuentes de contenido",
+              "Fuentes y terceros optimizados"
             ],
             "contentFile": "content/frameworks/astro/astro-11-integraciones-externas.html"
           },
@@ -2912,7 +3383,10 @@ const DOCS_DATA = {
             "title": "12. Despliegue y Producción",
             "content": "Compilación con astro build, adaptadores para Netlify, Vercel y Cloudflare",
             "sections": [
-              "Contenido"
+              "Compilación para producción",
+              "Netlify y Vercel",
+              "Cloudflare Pages",
+              "Hosting propio y servidores estáticos"
             ],
             "contentFile": "content/frameworks/astro/astro-12-despliegue-produccion.html"
           }
@@ -3111,7 +3585,11 @@ const DOCS_DATA = {
             "title": "15. Vue Router con Composition API",
             "content": "Configuración de rutas, navegación dinámica, useRouter() y useRoute(), rutas hijas y dinámicas",
             "sections": [
-              "Contenido"
+              "Instalación y configuración del router",
+              "Navegación declarativa y programática",
+              "useRouter() y useRoute()",
+              "Rutas dinámicas e hijas",
+              "Guardias de navegación"
             ],
             "contentFile": "content/frameworks/vue/vue-vue-router.html"
           },
@@ -3120,7 +3598,11 @@ const DOCS_DATA = {
             "title": "16. Pinia (Reemplazo de Vuex)",
             "content": "Instalar y configurar Pinia, defineStore(), uso de storeToRefs(), acceso a getters y acciones, compartir estado entre componentes",
             "sections": [
-              "Contenido"
+              "¿Por qué Pinia?",
+              "Instalación y configuración",
+              "defineStore() y estado",
+              "storeToRefs() y uso en componentes",
+              "Compartir estado entre stores"
             ],
             "contentFile": "content/frameworks/vue/vue-pinia.html"
           },
@@ -3270,7 +3752,10 @@ const DOCS_DATA = {
             "title": "02. Instalación y configuración",
             "content": "Cómo instalar y configurar Alpine.js en tu proyecto.",
             "sections": [
-              "Contenido"
+              "Incluir Alpine.js por CDN",
+              "Instalación con npm y bundler",
+              "Tu primer componente con x-data",
+              "Directivas esenciales para arrancar"
             ],
             "contentFile": "content/frameworks/alpine/alpine-installation.html"
           },
@@ -3597,7 +4082,10 @@ const DOCS_DATA = {
             "title": "14. Archivos, Storage y Uploads",
             "content": "Aprende a gestionar archivos, subir archivos y configurar almacenamiento en Laravel",
             "sections": [
-              "Contenido"
+              "Discos de almacenamiento (Storage)",
+              "Operaciones básicas",
+              "Subir archivos validados",
+              "Público vs privado, URLs y descargas"
             ],
             "contentFile": "content/frameworks/laravel/laravel-storage-uploads.html"
           },
@@ -3606,7 +4094,10 @@ const DOCS_DATA = {
             "title": "15. Eventos, Listeners y Observers",
             "content": "Aprende a crear y utilizar eventos, listeners y observers en Laravel",
             "sections": [
-              "Contenido"
+              "Eventos y listeners: el concepto",
+              "Crear y despachar eventos",
+              "Event subscribers",
+              "Model Observers"
             ],
             "contentFile": "content/frameworks/laravel/laravel-events-listeners.html"
           },
@@ -3615,7 +4106,10 @@ const DOCS_DATA = {
             "title": "16. Jobs, Queues y Workers",
             "content": "Aprende a crear y gestionar jobs, colas y workers en Laravel",
             "sections": [
-              "Contenido"
+              "¿Por qué colas?",
+              "Crear y despachar jobs",
+              "Workers en producción",
+              "Failed jobs y batching"
             ],
             "contentFile": "content/frameworks/laravel/laravel-jobs-queues.html"
           },
@@ -3624,7 +4118,10 @@ const DOCS_DATA = {
             "title": "17. Notificaciones y Correos",
             "content": "Aprende a enviar notificaciones y correos electrónicos en Laravel",
             "sections": [
-              "Contenido"
+              "Sistema de notificaciones",
+              "Notificaciones en base de datos",
+              "Mailables y vistas de correo",
+              "Configuración SMTP y pruebas"
             ],
             "contentFile": "content/frameworks/laravel/laravel-notifications-mail.html"
           }
@@ -3703,7 +4200,10 @@ const DOCS_DATA = {
             "title": "6. Navegación entre páginas",
             "content": "Aprende a implementar navegación SPA con Inertia.js",
             "sections": [
-              "Contenido"
+              "El componente Link",
+              "Navegación programática con router",
+              "Eventos, indicador de progreso y carga",
+              "Remember: estado entre navegaciones"
             ],
             "contentFile": "content/frameworks/inertia/inertia-navigation.html"
           },
@@ -3723,7 +4223,10 @@ const DOCS_DATA = {
             "title": "8. Manejo de respuestas y redirecciones",
             "content": "Aprende a manejar respuestas y redirecciones en aplicaciones Inertia.js",
             "sections": [
-              "Contenido"
+              "Respuestas de Inertia: la convención",
+              "Redirects después de acciones",
+              "Flash messages",
+              "Manejo de errores de validación"
             ],
             "contentFile": "content/frameworks/inertia/inertia-responses-redirects.html"
           },
@@ -3732,7 +4235,10 @@ const DOCS_DATA = {
             "title": "9. Props compartidas (Shared Props)",
             "content": "Aprende a utilizar props compartidas en aplicaciones Inertia.js",
             "sections": [
-              "Contenido"
+              "¿Qué son las props compartidas?",
+              "Acceder desde el frontend",
+              "Patrón layout + props compartidas",
+              "Tipado de props compartidas"
             ],
             "contentFile": "content/frameworks/inertia/inertia-shared-props.html"
           },
@@ -3741,7 +4247,10 @@ const DOCS_DATA = {
             "title": "10. Carga diferida y Lazy Loading",
             "content": "Aprende a implementar carga diferida y lazy loading en aplicaciones Inertia.js",
             "sections": [
-              "Contenido"
+              "Code splitting de páginas",
+              "Partial reloads con only",
+              "Lazy loading en el backend",
+              "Componentes y assets diferidos"
             ],
             "contentFile": "content/frameworks/inertia/inertia-lazy-loading.html"
           },
@@ -3750,7 +4259,10 @@ const DOCS_DATA = {
             "title": "11. Middlewares y autenticación",
             "content": "Aprende a implementar middlewares y autenticación en aplicaciones Inertia.js",
             "sections": [
-              "Contenido"
+              "Autenticación con Breeze: el punto de partida",
+              "Proteger rutas en el backend",
+              "Redirigir a login desde Inertia",
+              "Estado de auth en el frontend"
             ],
             "contentFile": "content/frameworks/inertia/inertia-middleware-auth.html"
           },
@@ -3759,7 +4271,10 @@ const DOCS_DATA = {
             "title": "12. Integración con otras librerías",
             "content": "Aprende a integrar Inertia.js con otras librerías y frameworks",
             "sections": [
-              "Contenido"
+              "Inertia con Laravel + Vite",
+              "Librerías de UI y componentes",
+              "Formularios y validación integrada",
+              "Testing E2E con Inertia"
             ],
             "contentFile": "content/frameworks/inertia/inertia-integrations.html"
           }
@@ -4321,7 +4836,10 @@ const DOCS_DATA = {
             "title": "25. Temas Avanzados y Expertos",
             "content": "Spring WebFlux, programación reactiva, Spring Native, GraalVM y escalabilidad avanzada",
             "sections": [
-              "Contenido"
+              "Spring AOP: programación orientada a aspectos",
+              "Perfilamiento y configuración por entorno",
+              "Seguridad con Spring Security",
+              "Caching y testing integrado"
             ],
             "contentFile": "content/frameworks/spring/spring-temas-avanzados.html"
           },
@@ -4330,7 +4848,10 @@ const DOCS_DATA = {
             "title": "26. ORM en Spring (JPA + Hibernate)",
             "content": "Mapeo de entidades, relaciones, repositorios, consultas JPQL, paginación y optimización",
             "sections": [
-              "Contenido"
+              "JPA e Hibernate: conceptos base",
+              "Relaciones entre entidades",
+              "Lazy loading y el problema N+1",
+              "Transacciones y buenas prácticas"
             ],
             "contentFile": "content/frameworks/spring/spring-orm.html"
           }
@@ -4399,6 +4920,20 @@ const DOCS_DATA = {
               "4.4. Estereotipos y etiquetas"
             ],
             "contentFile": "content/uml/clases/uml-clases-notacion.html"
+          },
+          {
+            "id": "uml-clases-avanzado",
+            "title": "5. Conceptos Avanzados de Diagramas de Clases",
+            "content": "Clases abstractas, interfaces, genéricos, miembros estáticos y el mapeo del diagrama hacia código",
+            "sections": [
+              "5.1. Clases abstractas e interfaces",
+              "5.2. Clases parametrizadas (genéricos)",
+              "5.3. Miembros estáticos y de clase",
+              "5.4. Estereotipos estándar útiles",
+              "5.5. Del diagrama de clases al código",
+              "5.6. Errores comunes en diagramas de clases"
+            ],
+            "contentFile": "content/uml/clases/uml-clases-avanzado.html"
           }
         ]
       },
@@ -4468,6 +5003,19 @@ const DOCS_DATA = {
               "Resumen de Buenas Prácticas"
             ],
             "contentFile": "content/uml/casos-uso/uml-cu-ejemplos.html"
+          },
+          {
+            "id": "uml-cu-buenas-practicas",
+            "title": "5. Buenas Prácticas y Errores Comunes",
+            "content": "Cómo modelar casos de uso con la granularidad correcta y evitar los errores clásicos",
+            "sections": [
+              "5.1. Errores frecuentes al modelar casos de uso",
+              "5.2. La granularidad correcta",
+              "5.3. Documentar el flujo de cada caso de uso",
+              "5.4. Casos de uso vs historias de usuario",
+              "5.5. Checklist de calidad"
+            ],
+            "contentFile": "content/uml/casos-uso/uml-cu-buenas-practicas.html"
           }
         ]
       },
@@ -4534,6 +5082,21 @@ const DOCS_DATA = {
               "4.8. Sistema de Control de Acceso"
             ],
             "contentFile": "content/uml/secuencia/uml-sec-ejemplos.html"
+          },
+          {
+            "id": "uml-sec-fragmentos",
+            "title": "5. Fragmentos Combinados en Secuencia",
+            "content": "Fragmentos alt, opt, loop, par, break, critical y neg para modelar lógica condicional e iterativa",
+            "sections": [
+              "5.1. ¿Qué son los fragmentos combinados?",
+              "5.2. alt: alternativas condicionales",
+              "5.3. opt: opción única",
+              "5.4. loop: iteraciones",
+              "5.5. par: concurrencia paralela",
+              "5.6. break, critical y neg",
+              "5.7. Ejemplo completo combinando fragmentos"
+            ],
+            "contentFile": "content/uml/secuencia/uml-sec-fragmentos.html"
           }
         ]
       },
@@ -4583,6 +5146,20 @@ const DOCS_DATA = {
               "3.6. Proceso de Gestión de Incidentes IT"
             ],
             "contentFile": "content/uml/actividades/uml-act-ejemplos.html"
+          },
+          {
+            "id": "uml-act-avanzado",
+            "title": "4. Elementos Avanzados de Actividades",
+            "content": "Flujos de objetos, pines, nodos de datos, señales y actividades anidadas para modelar procesos complejos",
+            "sections": [
+              "4.1. Flujos de objetos y pines",
+              "4.2. Nodos de datos (almacenes)",
+              "4.3. Señales de envío y recepción",
+              "4.4. Actividades anidadas (subactividades)",
+              "4.5. Regiones de interrupción",
+              "4.6. Buenas prácticas en procesos complejos"
+            ],
+            "contentFile": "content/uml/actividades/uml-act-avanzado.html"
           }
         ]
       },
@@ -4654,6 +5231,18 @@ const DOCS_DATA = {
               "4.10. Mejores prácticas de notación"
             ],
             "contentFile": "content/uml/componentes/uml-comp-notacion.html"
+          },
+          {
+            "id": "uml-comp-ejemplo",
+            "title": "5. Ejemplo Práctico: Arquitectura de Aplicación Web",
+            "content": "Diseño paso a paso del diagrama de componentes de una aplicación web completa con frontend, API y servicios",
+            "sections": [
+              "5.1. Planteamiento del sistema",
+              "5.2. Identificación de componentes e interfaces",
+              "5.3. El diagrama completo",
+              "5.4. Lecciones aprendidas del diseño"
+            ],
+            "contentFile": "content/uml/componentes/uml-comp-ejemplo.html"
           }
         ]
       },
@@ -4726,6 +5315,18 @@ const DOCS_DATA = {
               "4.10. Mejores prácticas de notación"
             ],
             "contentFile": "content/uml/despliegue/uml-desp-notacion.html"
+          },
+          {
+            "id": "uml-desp-ejemplo",
+            "title": "5. Ejemplo Práctico: Arquitectura Cloud Moderna",
+            "content": "Diseño del diagrama de despliegue de una aplicación SaaS completa con balanceo, contenedores y base de datos",
+            "sections": [
+              "5.1. Escenario: aplicación SaaS multiusuario",
+              "5.2. Diseño del diagrama paso a paso",
+              "5.3. El diagrama completo",
+              "5.4. Variaciones comunes: serverless y Kubernetes"
+            ],
+            "contentFile": "content/uml/despliegue/uml-desp-ejemplo.html"
           }
         ]
       },
@@ -4792,6 +5393,252 @@ const DOCS_DATA = {
               "4.6. Mejores prácticas"
             ],
             "contentFile": "content/uml/entidad-relacion/uml-er-notacion.html"
+          },
+          {
+            "id": "uml-er-sql",
+            "title": "5. Del Diagrama ER al Modelo Físico (SQL)",
+            "content": "Cómo traducir un diagrama entidad-relación a tablas, claves foráneas y un script SQL ejecutable",
+            "sections": [
+              "5.1. Mapeo de entidades a tablas",
+              "5.2. Traducción de relaciones y cardinalidades",
+              "5.3. Relaciones N:M y tablas intermedias",
+              "5.4. Normalización aplicada al diseño",
+              "5.5. Script SQL final completo"
+            ],
+            "contentFile": "content/uml/entidad-relacion/uml-er-sql.html"
+          }
+        ]
+      },
+      {
+        "id": "fundamentos",
+        "title": "Fundamentos UML",
+        "icon": "fa-solid fa-book-open",
+        "lessons": [
+          {
+            "id": "uml-fund-introduccion",
+            "title": "1. ¿Qué es UML?",
+            "content": "Definición, historia, propósito y los dos grandes grupos de diagramas del Lenguaje Unificado de Modelado",
+            "sections": [
+              "Definición e historia de UML",
+              "Para qué sirve UML en la práctica",
+              "Diagramas estructurales y de comportamiento",
+              "Mitos y malentendidos comunes"
+            ],
+            "contentFile": "content/uml/fundamentos/uml-fund-introduccion.html"
+          },
+          {
+            "id": "uml-fund-diagramas",
+            "title": "2. Los 14 Diagramas UML y Cuándo Usar Cada Uno",
+            "content": "Guía completa de los 14 diagramas oficiales de UML 2.5 con criterios prácticos para elegir el correcto",
+            "sections": [
+              "Los 7 diagramas estructurales",
+              "Los 7 diagramas de comportamiento",
+              "Tabla resumen: cuál usar según la situación",
+              "Cómo se relacionan entre sí"
+            ],
+            "contentFile": "content/uml/fundamentos/uml-fund-diagramas.html"
+          }
+        ]
+      },
+      {
+        "id": "objetos",
+        "title": "Diag. Objetos",
+        "icon": "fa-solid fa-cube",
+        "lessons": [
+          {
+            "id": "uml-obj-introduccion",
+            "title": "1. Introducción al Diagrama de Objetos",
+            "content": "Qué es una instantánea del sistema en tiempo de ejecución y su relación con el diagrama de clases",
+            "sections": [
+              "¿Qué es un diagrama de objetos?",
+              "Objetos vs Clases: la diferencia clave",
+              "Relación con el diagrama de clases",
+              "Cuándo usarlo"
+            ],
+            "contentFile": "content/uml/objetos/uml-obj-introduccion.html"
+          },
+          {
+            "id": "uml-obj-notacion",
+            "title": "2. Notación y Ejemplos del Diagrama de Objetos",
+            "content": "Notación de objetos, enlaces entre ellos y ejemplos completos con PlantUML",
+            "sections": [
+              "Notación de un objeto",
+              "Enlaces entre objetos",
+              "Ejemplo completo con PlantUML",
+              "Buenas prácticas"
+            ],
+            "contentFile": "content/uml/objetos/uml-obj-notacion.html"
+          }
+        ]
+      },
+      {
+        "id": "estados",
+        "title": "Diag. Estados",
+        "icon": "fa-solid fa-arrows-spin",
+        "lessons": [
+          {
+            "id": "uml-est-introduccion",
+            "title": "1. Introducción al Diagrama de Estados",
+            "content": "Máquinas de estados: cómo modelar el ciclo de vida de un objeto según los eventos que recibe",
+            "sections": [
+              "¿Qué es una máquina de estados?",
+              "Cuándo modelar estados",
+              "Elementos básicos",
+              "Relación con otros diagramas"
+            ],
+            "contentFile": "content/uml/estados/uml-est-introduccion.html"
+          },
+          {
+            "id": "uml-est-notacion",
+            "title": "2. Notación y Ejemplos del Diagrama de Estados",
+            "content": "Estados simples y compuestos, transiciones con eventos y guardas, y ejemplos completos",
+            "sections": [
+              "Estados, transiciones y eventos",
+              "Guardas y acciones",
+              "Estados compuestos e iniciales anidados",
+              "Ejemplo completo: ciclo de vida de un pedido",
+              "Buenas prácticas"
+            ],
+            "contentFile": "content/uml/estados/uml-est-notacion.html"
+          }
+        ]
+      },
+      {
+        "id": "paquetes",
+        "title": "Diag. Paquetes",
+        "icon": "fa-solid fa-boxes-stacked",
+        "lessons": [
+          {
+            "id": "uml-paq-introduccion",
+            "title": "1. Introducción al Diagrama de Paquetes",
+            "content": "Organización arquitectónica del sistema en paquetes y capas con dependencias controladas",
+            "sections": [
+              "¿Qué es un paquete en UML?",
+              "Organización por capas",
+              "Dependencias entre paquetes",
+              "Cuándo usarlo"
+            ],
+            "contentFile": "content/uml/paquetes/uml-paq-introduccion.html"
+          },
+          {
+            "id": "uml-paq-notacion",
+            "title": "2. Notación y Ejemplos del Diagrama de Paquetes",
+            "content": "Notación de paquetes, estereotipos estándar y ejemplos de arquitectura en capas",
+            "sections": [
+              "Notación de paquetes y dependencias",
+              "Elementos importados y visibilidad",
+              "Estereotipos estándar útiles",
+              "Ejemplo completo con PlantUML",
+              "Reglas de dependencias limpias"
+            ],
+            "contentFile": "content/uml/paquetes/uml-paq-notacion.html"
+          }
+        ]
+      },
+      {
+        "id": "comunicacion",
+        "title": "Diag. Comunicación",
+        "icon": "fa-solid fa-comments",
+        "lessons": [
+          {
+            "id": "uml-com-introduccion",
+            "title": "1. Introducción al Diagrama de Comunicación",
+            "content": "La vista estructural de las interacciones: quién habla con quién, complemento del diagrama de secuencia",
+            "sections": [
+              "¿Qué es el diagrama de comunicación?",
+              "Secuencia vs Comunicación",
+              "Numeración de mensajes",
+              "Cuándo preferirlo"
+            ],
+            "contentFile": "content/uml/comunicacion/uml-com-introduccion.html"
+          },
+          {
+            "id": "uml-com-notacion",
+            "title": "2. Notación y Ejemplos del Diagrama de Comunicación",
+            "content": "Objetos, enlaces, numeración jerárquica de mensajes y ejemplos completos",
+            "sections": [
+              "Elementos del diagrama",
+              "Numeración jerárquica de mensajes",
+              "Guardas e iteraciones en mensajes",
+              "Ejemplo completo con PlantUML",
+              "Buenas prácticas"
+            ],
+            "contentFile": "content/uml/comunicacion/uml-com-notacion.html"
+          }
+        ]
+      },
+      {
+        "id": "tiempos",
+        "title": "Diag. Tiempos",
+        "icon": "fa-solid fa-clock",
+        "lessons": [
+          {
+            "id": "uml-tie-introduccion",
+            "title": "1. Introducción al Diagrama de Tiempos",
+            "content": "El diagrama menos conocido de UML: cambios de estado a lo largo del tiempo para sistemas embebidos y reales",
+            "sections": [
+              "¿Qué es el diagrama de tiempos?",
+              "Casos de uso típicos",
+              "Elementos básicos",
+              "Ejemplo sencillo"
+            ],
+            "contentFile": "content/uml/tiempos/uml-tie-introduccion.html"
+          },
+          {
+            "id": "uml-tie-notacion",
+            "title": "2. Notación y Ejemplos del Diagrama de Tiempos",
+            "content": "Restricciones temporales, duraciones, mensajes y el ejemplo clásico del semáforo",
+            "sections": [
+              "Restricciones temporales",
+              "Duraciones y mensajes",
+              "Ejemplo completo: semáforo",
+              "Herramientas que lo soportan"
+            ],
+            "contentFile": "content/uml/tiempos/uml-tie-notacion.html"
+          }
+        ]
+      },
+      {
+        "id": "herramientas",
+        "title": "Herramientas UML",
+        "icon": "fa-solid fa-toolbox",
+        "lessons": [
+          {
+            "id": "uml-herr-plantuml",
+            "title": "1. PlantUML: Diagramas como Código",
+            "content": "Genera diagramas UML escribiendo texto plano: la herramienta ideal para documentación versionada en Git",
+            "sections": [
+              "¿Qué es PlantUML?",
+              "Sintaxis esencial",
+              "PlantUML en tu flujo de trabajo",
+              "Ventajas y limitaciones"
+            ],
+            "contentFile": "content/uml/herramientas/uml-herr-plantuml.html"
+          },
+          {
+            "id": "uml-herr-drawio",
+            "title": "2. draw.io (diagrams.net)",
+            "content": "El editor de diagramas gratuito más popular: arrastrar y soltar con formas UML nativas e integración con repositorios",
+            "sections": [
+              "Qué es y por qué es tan popular",
+              "Formas y plantillas UML",
+              "Integración con repositorios",
+              "Trucos útiles"
+            ],
+            "contentFile": "content/uml/herramientas/uml-herr-drawio.html"
+          },
+          {
+            "id": "uml-herr-comparativa",
+            "title": "3. Comparativa de Herramientas UML",
+            "content": "PlantUML, draw.io, Mermaid, StarUML, Lucidchart y Visual Paradigm comparadas para elegir la correcta",
+            "sections": [
+              "Criterios de elección",
+              "Tabla comparativa",
+              "Mermaid: documentación viva en Markdown",
+              "Herramientas CASE profesionales",
+              "Recomendación por escenario"
+            ],
+            "contentFile": "content/uml/herramientas/uml-herr-comparativa.html"
           }
         ]
       }
@@ -5978,6 +6825,157 @@ const DOCS_DATA = {
               "Lee y mira contenido de calidad"
             ],
             "contentFile": "content/recursos/comunidades/rec-comunidades-blogs.html"
+          },
+          {
+            "id": "rec-comunidades-creadores",
+            "title": "Creadores en Español",
+            "content": "Los referentes hispanohablantes: Midudev, MoureDev y los mejores canales, blogs, podcasts y comunidades en español.",
+            "sections": [
+              "YouTube y creadores de contenido",
+              "Blogs, webs y newsletters",
+              "Podcasts y comunidades"
+            ],
+            "contentFile": "content/recursos/comunidades/rec-comunidades-creadores.html"
+          }
+        ]
+      },
+      {
+        "id": "aprendizaje",
+        "title": "Aprendizaje",
+        "icon": "fa-solid fa-graduation-cap",
+        "lessons": [
+          {
+            "id": "rec-aprend-plataformas",
+            "title": "Cursos y Plataformas Gratuitas",
+            "content": "Plataformas interactivas, cursos universitarios y manuales gratuitos para aprender a programar.",
+            "sections": [
+              "Plataformas interactivas",
+              "Universidades y cursos académicos",
+              "En español y comunidad",
+              "Universidades abiertas y rutas guiadas"
+            ],
+            "contentFile": "content/recursos/aprendizaje/rec-aprend-plataformas.html"
+          }
+        ]
+      },
+      {
+        "id": "software",
+        "title": "Software Gratuito",
+        "icon": "fa-solid fa-download",
+        "lessons": [
+          {
+            "id": "rec-soft-programas",
+            "title": "Programas y Software Esencial",
+            "content": "Editores, utilidades del sistema, diseño multimedia y ofimática: todo gratuito.",
+            "sections": [
+              "Programas para desarrollar",
+              "Utilidades del sistema",
+              "Diseño, multimedia y ofimática"
+            ],
+            "contentFile": "content/recursos/software/rec-soft-programas.html"
+          }
+        ]
+      },
+      {
+        "id": "multimedia",
+        "title": "Multimedia",
+        "icon": "fa-solid fa-images",
+        "lessons": [
+          {
+            "id": "rec-media-recursos",
+            "title": "Imágenes, Iconos y Multimedia",
+            "content": "Fotos, iconos, ilustraciones, fuentes, video, audio y optimizadores gratuitos.",
+            "sections": [
+              "Imágenes y fotos gratis",
+              "Iconos e ilustraciones",
+              "Fuentes tipográficas",
+              "Video, audio y optimización",
+              "Colores, mockups y utilidades de imagen"
+            ],
+            "contentFile": "content/recursos/multimedia/rec-media-recursos.html"
+          }
+        ]
+      },
+      {
+        "id": "hosting",
+        "title": "Hosting y Despliegue",
+        "icon": "fa-solid fa-cloud",
+        "lessons": [
+          {
+            "id": "rec-hosting-despliegue",
+            "title": "Hosting y Backend Gratuito",
+            "content": "Hosting estático, bases de datos free tier, dominios, DNS y extras sin costo.",
+            "sections": [
+              "Hosting estático gratuito",
+              "Backend y bases de datos (free tier)",
+              "Dominios, DNS y extras"
+            ],
+            "contentFile": "content/recursos/hosting/rec-hosting-despliegue.html"
+          }
+        ]
+      },
+      {
+        "id": "apis",
+        "title": "APIs y Datos",
+        "icon": "fa-solid fa-plug",
+        "lessons": [
+          {
+            "id": "rec-apis-publicas",
+            "title": "APIs Públicas y Datos Abiertos",
+            "content": "Directorios de APIs, APIs gratuitas para practicar y fuentes de datasets.",
+            "sections": [
+              "Directorios de APIs",
+              "APIs populares para practicar",
+              "Datos abiertos y datasets"
+            ],
+            "contentFile": "content/recursos/apis/rec-apis-publicas.html"
+          }
+        ]
+      },
+      {
+        "id": "inteligencia-artificial",
+        "title": "Inteligencia Artificial",
+        "icon": "fa-solid fa-robot",
+        "lessons": [
+          {
+            "id": "rec-ia-herramientas",
+            "title": "Herramientas de IA Gratuitas",
+            "content": "Chatbots LLM, IA en el editor, imagen/audio/video y productividad con IA gratis.",
+            "sections": [
+              "Chatbots y asistentes LLM",
+              "IA en el editor",
+              "Imagen, audio y video con IA",
+              "Extras para productividad con IA"
+            ],
+            "contentFile": "content/recursos/inteligencia-artificial/rec-ia-herramientas.html"
+          }
+        ]
+      },
+      {
+        "id": "referencia",
+        "title": "Referencia Rápida",
+        "icon": "fa-solid fa-bolt",
+        "lessons": [
+          {
+            "id": "rec-ref-cheatsheets",
+            "title": "Cheat Sheets y Referencia",
+            "content": "Chuletas visuales, documentación unificada y tutoriales interactivos de consulta inmediata.",
+            "sections": [
+              "Chuletas y referencia rápida",
+              "Aprende practicando con referencia"
+            ],
+            "contentFile": "content/recursos/referencia/rec-ref-cheatsheets.html"
+          },
+          {
+            "id": "rec-ref-online-tools",
+            "title": "Playgrounds y Herramientas Web",
+            "content": "Editores online, convertidores de formato, análisis npm y directorios de herramientas gratuitas.",
+            "sections": [
+              "Editores y playgrounds online",
+              "Convertidores y utilidades de formato",
+              "Ecosistema npm y directorios de gratuidad"
+            ],
+            "contentFile": "content/recursos/referencia/rec-ref-online-tools.html"
           }
         ]
       }
@@ -5987,8 +6985,8 @@ const DOCS_DATA = {
 };
 
 const STATS = {
-  "lessons": "408",
-  "languages": "7",
+  "lessons": "470",
+  "languages": "15",
   "frameworks": "9",
-  "diagrams": "27"
+  "diagrams": "49"
 };

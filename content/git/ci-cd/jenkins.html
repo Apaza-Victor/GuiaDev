@@ -1,0 +1,114 @@
+<!-- 3. Jenkins - CI/CD (Control de Versiones) -->
+<section id="que-es-jenkins-y-cuando-usarlo">
+  <h2>¿Qué es Jenkins y cuándo usarlo?</h2>
+  <div class="doc-content">
+    <p><strong>Jenkins</strong> es el servidor de automatización open source más veterano y extendido del mundo empresarial (Java, 2011). No es un hosting: lo instalas y administras tú. Su superpoder es el ecosistema de <strong>+1800 plugins</strong> que conecta con absolutamente todo.</p>
+    <p>Úsalo cuando:</p>
+    <ul>
+      <li>Necesitas <strong>control total</strong> on-premises (bancos, gobierno, salud).</li>
+      <li>Tienes pipelines <strong>complejos o heterogéneos</strong> que las plataformas SaaS no cubren.</li>
+      <li>Herencias infraestructura existente basada en Jenkins.</li>
+    </ul>
+    <p>Evítalo si buscas cero mantenimiento: un SaaS como GitHub Actions te ahorra actualizar servidor, plugins y backups.</p>
+  </div>
+</section>
+
+<section id="instalacion-con-docker">
+  <h2>Instalación con Docker</h2>
+  <div class="doc-content">
+    <pre><code class="language-bash"># Jenkins LTS con persistencia
+docker run -d --name jenkins \
+  -p 8080:8080 -p 50000:50000 \
+  -v jenkins_home:/var/jenkins_home \
+  jenkins/jenkins:lts
+
+# Obtener la contraseña inicial del log
+docker logs jenkins | grep -A 5 "initialAdminPassword"
+# o desde dentro:
+docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword</code></pre>
+    <ol>
+      <li>Abre <code>http://localhost:8080</code>.</li>
+      <li>Pega la contraseña inicial.</li>
+      <li>Elige "Install suggested plugins".</li>
+      <li>Crea tu usuario admin — listo para usar.</li>
+    </ol>
+  </div>
+</section>
+
+<section id="plugins-esenciales">
+  <h2>Plugins esenciales</h2>
+  <div class="doc-content">
+    <p>Se instalan desde <em>Manage Jenkins → Plugins</em>:</p>
+    <table class="doc-table">
+      <thead><tr><th>Plugin</th><th>Función</th></tr></thead>
+      <tbody>
+        <tr><td>Git + GitHub Integration</td><td>Conectar repos y webhooks</td></tr>
+        <tr><td>Pipeline</td><td>Jenkinsfile y pipelines as code</td></tr>
+        <tr><td>Docker Pipeline</td><td>Builds y push de imágenes Docker</td></tr>
+        <tr><td>Blue Ocean</td><td>UI visual moderna de pipelines</td></tr>
+        <tr><td>Credentials Binding</td><td>Gestión segura de secretos</td></tr>
+        <tr><td>NodeJS / JDK / Python</td><td>Herramientas por versión en jobs</td></tr>
+      </tbody>
+    </table>
+    <p>Regla de oro: menos plugins = menos problemas de actualización. Audita y elimina los que no uses.</p>
+  </div>
+</section>
+
+<section id="jenkinsfile-pipeline-declarativo">
+  <h2>Jenkinsfile: pipeline declarativo</h2>
+  <div class="doc-content">
+    <p>El pipeline se define en un archivo <code>Jenkinsfile</code> versionado junto al código:</p>
+    <pre><code class="language-groovy">// Jenkinsfile
+pipeline {
+    agent any
+
+    environment {
+        NODE_VERSION = '20'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+        stage('Install') {
+            steps { sh 'npm ci' }
+        }
+        stage('Test') {
+            steps { sh 'npm test' }
+            post {
+                always {
+                    junit 'test-results/**/*.xml'
+                }
+            }
+        }
+        stage('Deploy') {
+            when { branch 'main' }
+            steps { sh './deploy.sh' }
+        }
+    }
+
+    post {
+        failure { echo 'Notificar al equipo...' }
+        success { echo 'Pipeline OK ✓' }
+    }
+}</code></pre>
+    <p>Cada push dispara el pipeline; los resultados se ven como etapas coloreadas en la UI.</p>
+  </div>
+</section>
+
+<section id="agentes-distribuidos">
+  <h2>Agentes distribuidos</h2>
+  <div class="doc-content">
+    <p>El controlador (master) orquesta pero conviene no ejecutar builds en él. Los <strong>agentes</strong> hacen el trabajo pesado:</p>
+    <ul>
+      <li><strong>Permanent agents:</strong> VMs/físicas dedicadas registradas vía SSH.</li>
+      <li><strong>Docker agents:</strong> cada build corre en un contenedor efímero.</li>
+      <li><strong>Kubernetes plugin:</strong> agentes autoescalables en clúster K8s.</li>
+    </ul>
+    <pre><code class="language-groovy">pipeline {
+    agent { docker { image 'node:20' } }   // build en contenedor Node
+    ...
+}</code></pre>
+    <p>Etiqueta agentes (<code>linux, gpu, windows</code>) y asígnalas por job: <code>agent { label 'linux &amp;&amp; docker' }</code>. Con esto escala horizontalmente sin límite práctico.</p>
+  </div>
+</section>

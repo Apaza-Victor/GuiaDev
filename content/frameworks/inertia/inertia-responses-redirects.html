@@ -1,10 +1,101 @@
-<!-- 8. Manejo de respuestas y redirecciones -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Aprende a manejar respuestas y redirecciones en aplicaciones Inertia.js</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- Responses y Redirects - Inertia.js (Frameworks) -->
+<section id="respuestas-de-inertia">
+  <h2>Respuestas de Inertia: la convención</h2>
+  <div class="doc-content">
+    <p>En Inertia no hay endpoints JSON: cada ruta devuelve o una página completa (primer render) o una respuesta Inertia (XHR con props). El mismo método sirve ambas:</p>
+    <pre><code class="language-php">// Laravel: Inertia::render() en lugar de view()
+use Inertia\Inertia;
+
+public function index()
+{
+    return Inertia::render('Users/Index', [
+        'users' => User::paginate(10),
+        'filtros' => request()->only(['busqueda', 'rol']),
+    ]);
+}</code></pre>
+    <p>Cuando el request llega por XHR (header <code>X-Inertia</code>), Laravel devuelve JSON parcial automáticamente; cuando es navegación normal, HTML completo. Tu código no distingue.</p>
+  </div>
+</section>
+
+<section id="redirects-despues-de-acciones">
+  <h2>Redirects después de acciones</h2>
+  <div class="doc-content">
+    <pre><code class="language-php">public function store(Request $request)
+{
+    $pedido = Pedido::create($request->validated());
+
+    // Redirect estandar de Laravel - Inertia lo interpreta
+    return redirect()->route('pedidos.show', $pedido);
+
+    // Otras variantes utiles
+    return back();                          // volver a donde estaba
+    return redirect('/pedidos')->with('success', 'Pedido creado!');
+}</code></pre>
+    <ul>
+      <li><code>back()</code> + formularios: patrón crear-y-volver.</li>
+      <li>El <code>with()</code> viaja en flash session — se consume en el siguiente render.</li>
+      <li>Tras DELETE suele redirigirse al index, nunca a un recurso inexistente.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="flash-messages">
+  <h2>Flash messages</h2>
+  <div class="doc-content">
+    <p>El mensaje "Pedido creado" debe mostrarse una sola vez, en la página siguiente. Eso es exactamente la flash session:</p>
+    <pre><code class="language-php">// Laravel: enviar
+return redirect('/pedidos')->with('success', 'Pedido creado correctamente');</code></pre>
+    <pre><code class="language-javascript">// Laravel (HandleInertiaRequests): compartir SIEMPRE
+public function share(Request $request): array
+{
+    return [
+        ...parent::share($request),
+        'flash' => [
+            'success' => fn () => $request->session()->get('success'),
+            'error' => fn () => $request->session()->get('error'),
+        ],
+    ];
+}</code></pre>
+    <pre><code class="language-vue">&lt;!-- Vue: componente Toast global que lee $page.props.flash --&gt;
+&lt;script setup&gt;
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+
+const page = usePage();
+const mensaje = computed(() =&gt; page.props.flash.success);
+&lt;/script&gt;</code></pre>
+    <p>Como las props compartidas se resuelven en cada visita (por eso el <code>fn ()</code>, lazy evaluation), el toast aparece tras cualquier acción que redirija con <code>with()</code>.</p>
+  </div>
+</section>
+
+<section id="manejo-de-errores-de-validacion">
+  <h2>Manejo de errores de validación</h2>
+  <div class="doc-content">
+    <p>Los errores de validación de Laravel vuelven como redirect + errors en sesión. El helper <code>useForm</code> los recibe listos para usar:</p>
+    <pre><code class="language-vue">&lt;script setup&gt;
+import { useForm } from '@inertiajs/vue3';
+
+const form = useForm({ nombre: '', email: '' });
+
+function submit() {
+  form.post('/usuarios');
+}
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;form @submit.prevent="submit"&gt;
+    &lt;input v-model="form.nombre" /&gt;
+    &lt;div v-if="form.errors.nombre" class="error"&gt;{{ form.errors.nombre }}&lt;/div&gt;
+    &lt;button :disabled="form.processing"&gt;
+      {{ form.processing ? 'Guardando...' : 'Guardar' }}
+    &lt;/button&gt;
+  &lt;/form&gt;
+&lt;/template&gt;</code></pre>
+    <ul>
+      <li><code>form.errors</code>: objeto con errores por campo (422 automático).</li>
+      <li><code>form.processing</code>: true mientras dura la petición — deshabilita botones con él.</li>
+      <li><code>form.reset()</code>: limpia campos tras éxito (en onSuccess).</li>
+    </ul>
+    <p>Ejercicio propuesto: implementa el flujo completo crear-usuario con useForm: validación server-side, errores por campo, botón con processing y flash success tras redirect.</p>
+  </div>
+</section>

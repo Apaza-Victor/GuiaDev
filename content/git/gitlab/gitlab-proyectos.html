@@ -1,0 +1,76 @@
+<!-- 2. Proyectos y Merge Requests - GitLab (Control de Versiones) -->
+<section id="creacion-y-clonado-de-proyectos">
+  <h2>Creación y clonado de proyectos</h2>
+  <div class="doc-content">
+    <p>Un <strong>proyecto</strong> en GitLab equivale a un repositorio con todo su ecosistema (issues, pipelines, wiki). Puedes crearlo desde la web, desde la CLI o importándolo desde GitHub/Bitbucket con el asistente de importación.</p>
+    <pre><code class="language-bash"># Clonar por HTTPS (pedirá token como contraseña)
+git clone https://gitlab.com/grupo/api-ventas.git
+
+# Clonar por SSH (recomendado para trabajo diario)
+git clone git@gitlab.com:grupo/api-ventas.git
+
+# Crear proyecto local y conectarlo a un repo vacío existente
+git init
+git remote add origin git@gitlab.com:grupo/api-ventas.git
+git push -u origin main</code></pre>
+  </div>
+</section>
+
+<section id="visibilidad-y-membresias">
+  <h2>Visibilidad y membresías</h2>
+  <div class="doc-content">
+    <p>Cada proyecto tiene tres niveles de visibilidad:</p>
+    <ul>
+      <li><strong>Private:</strong> solo miembros del proyecto.</li>
+      <li><strong>Internal:</strong> cualquier usuario autenticado de la instancia.</li>
+      <li><strong>Public:</strong> cualquiera puede verlo.</li>
+    </ul>
+    <p>Los miembros se agregan desde <em>Manage → Members</em> con roles jerárquicos: <strong>Guest, Reporter, Developer, Maintainer, Owner</strong>. El rol <em>Developer</em> puede hacer push a ramas no protegidas y abrir merge requests; <em>Maintainer</em> administra configuración y despliegues.</p>
+  </div>
+</section>
+
+<section id="ramas-protegidas">
+  <h2>Ramas protegidas</h2>
+  <div class="doc-content">
+    <p>En <em>Settings → Repository → Protected branches</em> defines quién puede hacer <strong>push</strong> y quién puede <strong>merge</strong> sobre ramas críticas como <code>main</code>. Es habitual protegerlas para que nadie suba directamente y todo pase por merge request revisado.</p>
+    <pre><code class="language-text">Rama: main
+  Allowed to merge:   Maintainers
+  Allowed to push:    Nobody   ← obliga a usar Merge Requests
+  Allowed to force push: off  ← protege el historial</code></pre>
+    <p>También puedes definir patrones con comodines, por ejemplo <code>release/*</code>, para proteger todas las ramas de release a la vez.</p>
+  </div>
+</section>
+
+<section id="merge-requests-flujo-de-trabajo">
+  <h2>Merge Requests: flujo de trabajo</h2>
+  <div class="doc-content">
+    <p>El equivalente al pull request de GitHub es el <strong>Merge Request (MR)</strong>. El flujo típico:</p>
+    <pre><code class="language-bash"># 1. Crea una rama de trabajo
+git checkout -b feat/descuentos
+
+# 2. Desarrolla y sube los cambios
+git add . &amp;&amp; git commit -m "feat: aplicar descuento por volumen"
+git push -u origin feat/descuentos
+
+# 3. Abre el MR (o usa el enlace que imprime git push)
+git push -o merge_request.create -o merge_request.target=main</code></pre>
+    <p>Al abrir el MR verás los cambios lado a lado, el pipeline asociado corriendo automáticamente y opciones como asignar revisores, etiquetas, milestone y cerrar issues vinculando texto como <code>Closes #12</code>.</p>
+  </div>
+</section>
+
+<section id="revision-y-aprobaciones">
+  <h2>Revisión y aprobaciones</h2>
+  <div class="doc-content">
+    <p>En cada MR puedes exigir <strong>aprobaciones</strong> mínimas antes de permitir el merge (<em>Settings → Merge requests → Approvals</em>). Los revisores comentan línea por línea, sugieren cambios aplicables con un clic y aprueban cuando el código cumple los criterios.</p>
+    <p>Opciones útiles al fusionar:</p>
+    <table class="doc-table">
+      <thead><tr><th>Método</th><th>Efecto en main</th></tr></thead>
+      <tbody>
+        <tr><td>Merge commit</td><td>Conserva todos los commits + commit de fusión</td></tr>
+        <tr><td>Squash</td><td>Comprime la rama en un único commit limpio</td></tr>
+        <tr><td>Fast-forward</td><td>Sin commit de merge; historial lineal</td></tr>
+      </tbody>
+    </table>
+    <p>Activa además <strong>Merge checks</strong>: pipelines exitosos obligatorios y resolución de todos los hilos de comentarios antes del merge.</p>
+  </div>
+</section>

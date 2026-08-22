@@ -1,0 +1,87 @@
+<!-- 1. PlantUML: Diagramas como Código - Herramientas UML (UML) -->
+<section id="que-es-plantuml">
+  <h2>¿Qué es PlantUML?</h2>
+  <div class="doc-content">
+    <p><strong>PlantUML</strong> es una herramienta open source que genera diagramas a partir de <strong>texto plano</strong>. Escribes una descripción declarativa, y el motor la renderiza como imagen. Su filosofía es la misma que Markdown hizo popular para documentos: <em>los diagramas como código</em>.</p>
+    <pre><code class="language-plantuml">@startuml
+class Usuario {
+  -email : String
+  +login()
+}
+
+class Sesion {
+  -token : String
+}
+
+Usuario "1" --> "*" Sesion : abre
+@enduml</code></pre>
+    <p>Ese bloque de texto produce un diagrama de clases completo y determinista: el mismo código genera siempre la misma imagen. Soporta casi todos los diagramas UML (clases, secuencia, casos de uso, estados, componentes, despliegue...) más extras como Gantt, JSON y YAML visualizados.</p>
+    <p>Puedes probarlo sin instalar nada en <code>plantuml.com/plantuml</code> (editor online) o con las extensiones oficiales para VS Code e IntelliJ.</p>
+  </div>
+</section>
+
+<section id="sintaxis-esencial">
+  <h2>Sintaxis esencial</h2>
+  <div class="doc-content">
+    <p>Todo diagrama vive entre <code>@startuml</code> y <code>@enduml</code>. Los bloques fundamentales:</p>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Diagrama</th><th>Instrucciones clave</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Secuencia</td><td><code>actor</code>, <code>participant</code>, <code>-&gt;</code>, <code>--&gt;</code>, <code>alt/else/end</code>, <code>loop ... end</code></td></tr>
+        <tr><td>Clases</td><td><code>class Nombre { }</code>, visibilidad <code>+ - # ~</code>, flechas <code>--&gt;</code>, <code>--|&gt;</code>, <code>*--</code></td></tr>
+        <tr><td>Casos de uso</td><td><code>actor</code>, <code>usecase</code>, <code>(Texto)</code>, <code>--</code> para asociaciones</td></tr>
+        <tr><td>Estados</td><td><code>state</code>, <code>[*] --&gt; EstadoInicial</code>, <code>Estado1 --&gt; Estado2 : evento</code></td></tr>
+        <tr><td>Componentes</td><td><code>component</code>, <code>interface</code>, <code>package</code>, <code>..&gt;</code></td></tr>
+      </tbody>
+    </table>
+    <p>Decoradores útiles que elevan la calidad al instante:</p>
+    <ul>
+      <li><code>skinparam</code>: colores, fuentes, estilo de líneas (<code>skinparam linetype ortho</code> para ángulos rectos).</li>
+      <li><code>title</code> y <code>caption</code>: título del diagrama y numeración de figuras.</li>
+      <li><code>note left/right/top of X</code>: anotaciones sobre cualquier elemento.</li>
+      <li><code>!theme</code>: temas predefinidos (por ejemplo <code>!theme cerulean-outline</code>).</li>
+    </ul>
+  </div>
+</section>
+
+<section id="plantuml-en-tu-flujo-de-trabajo">
+  <h2>PlantUML en tu flujo de trabajo</h2>
+  <div class="doc-content">
+    <p>Aquí es donde brilla frente a los editores gráficos: los archivos <code>.puml</code> son texto, y el texto se lleva bien con todo lo que ya usas:</p>
+    <ul>
+      <li><strong>Git:</strong> diffs línea a línea, pull requests que muestran exactamente qué cambió en el diseño, sin binarios.</li>
+      <li><strong>Documentación viva:</strong> incrusta el mismo archivo fuente en README, wikis o docs generadas (MkDocs, Docusaurus) vía extensiones o CI.</li>
+      <li><strong>CI/CD:</strong> regenera las imágenes en cada build y falla el pipeline si un .puml tiene error de sintaxis — tus diagramas nunca quedan obsoletos en silencio.</li>
+      <li><strong>IDEs:</strong> VS Code (extensión PlantUML) e IntelliJ ofrecen preview en vivo mientras escribes.</li>
+    </ul>
+    <pre><code class="language-bash"># Renderizar localmente (requiere Java + Graphviz)
+java -jar plantuml.jar diagramas/*.puml
+
+# O con Docker, sin instalar dependencias
+docker run --rm -v $(pwd):/data plantuml/plantuml /data/*.puml</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Conviención recomendada: guarda los <code>.puml</code> junto al código que documentan (<code>docs/diagrams/</code>) y referencia las imágenes generadas desde el README. El diseño viaja con la implementación, nunca se separan.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="ventajas-y-limitaciones">
+  <h2>Ventajas y limitaciones</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Ventajas</th><th>Limitaciones</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Versionable en Git con diffs reales</td><td>Control fino del layout limitado: el motor decide posiciones</td></tr>
+        <tr><td>Rápido: editar texto es mucho más veloz que arrastrar cajas</td><td>Curva inicial de sintaxis por tipo de diagrama</td></tr>
+        <tr><td>Determinista y consistente entre autores</td><td>Diagramas muy grandes requieren partición manual</td></tr>
+        <tr><td>Automatizable en pipelines y docs</td><td>Necesita Java/Graphviz (o servidor remoto) para renderizar</td></tr>
+        <tr><td>Gratis, open source, comunidad enorme</td><td>Algunos diagramas exóticos de UML (tiempos avanzados) son básicos</td></tr>
+      </tbody>
+    </table>
+    <p>Regla de decisión: si tu prioridad es mantener documentación arquitectónica viva y versionada, PlantUML es imbatible. Si necesitas maquetar un diagrama "de marketing" con estética milimétrica, un editor visual te costará menos pelea.</p>
+  </div>
+</section>

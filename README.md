@@ -6,8 +6,9 @@ Plataforma web de documentación técnica para aprender y consultar conceptos de
 
 ## Características
 
-- **408 lecciones** organizadas en **10 categorías** temáticas
+- **470 lecciones** organizadas en **10 categorías** temáticas
 - Navegación SPA basada en hash con scroll-spy y tabla de contenidos automática
+- **Hub de acceso rápido en Recursos**: todo el directorio de enlaces en una sola vista con filtro instantáneo, sin navegar lección por lección
 - Tema claro/oscuro con persistencia en `localStorage`
 - Buscador global con atajo `Ctrl+K`
 - Fondos animados con un efecto único por sección (Vanta.js, GitGraph.js, tsParticles y canvas propio), visibles solo en las vistas principales de cada categoría
@@ -40,6 +41,7 @@ GuiaDev/
 │   ├── data.js             ← Registro central: categorías, subcategorías y lecciones
 │   ├── app.js              ← SPA del home
 │   ├── page.js             ← Clase CategoryPage: carga lecciones desde content/ vía fetch
+│   ├── recursos-hub.js     ← RecursosHub (extiende CategoryPage): directorio con búsqueda en vivo
 │   ├── shared.js           ← Funciones compartidas GuiaDev.* (header nav, búsqueda, TOC)
 │   ├── animations.js       ← Animaciones GuiaDevAnimations.*
 │   ├── bg3d.js             ← Fondos animados por sección (Vanta/GitGraph/tsParticles)
@@ -85,14 +87,14 @@ Luego abre `http://localhost:8080`.
 | Lenguajes | SQL (8), PHP (13), Java (11), Python (11), HTML (10), CSS (11), JavaScript (20), TypeScript (8), C# (8), C++ (8), Go (8), Rust (8), Kotlin (8), Swift (8), Bash (6) | 146 |
 | Frameworks | React (16), Astro (12), Vue 3 (18), Java Swing (6), Alpine.js (10), Laravel (17), Inertia (12), FastAPI (11), Spring (26) | 128 |
 | Base de Datos | Oracle (12), MySQL (9), SQL Server (15) | 36 |
-| UML | Clases, Casos de Uso, Secuencia, Actividades, Componentes, Despliegue, Entidad-Relación | 27 |
+| UML | Fundamentos (2), Clases (5), Casos de Uso (5), Secuencia (5), Actividades (4), Componentes (5), Despliegue (5), Entidad-Relación (5), Objetos (2), Estados (2), Paquetes (2), Comunicación (2), Tiempos (2), Herramientas (3) | 49 |
 | Entrevistas Laborales | JavaScript, React, Java, Spring, TypeScript | 15 |
 | Ingeniería de Software | Fundamentos (4), Requerimientos (5), Ciclo de Vida (3) | 12 |
 | Utilidades | Librerías (9), Ziggy (6), NPM (1), PNPM (1) | 17 |
 | Inglés | Básico A1-A2 | 12 |
-| Control de Versiones | GitHub | 7 |
-| Recursos | Docs oficiales (2), Herramientas (2), Práctica (2), Comunidades (2) | 8 |
-| **Total** | | **408** |
+| Control de Versiones | GitHub (7), GitLab (4), Bitbucket (3), Azure DevOps (4), Gitea (3), Clientes Gráficos (5), GitHub CLI (3), Git LFS (2), Calidad de Commits (3), CI/CD (4) | 38 |
+| Recursos | Docs oficiales (2), Herramientas (2), Práctica (2), Comunidades (3), Aprendizaje (1), Software Gratuito (1), Multimedia (1), Hosting y Despliegue (1), APIs y Datos (1), Inteligencia Artificial (1), Referencia Rápida (2) | 17 |
+| **Total** | | **470** |
 
 ## Fondos animados por sección
 

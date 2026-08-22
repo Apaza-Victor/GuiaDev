@@ -1,0 +1,107 @@
+<!-- 2. Pull Requests e Issues con gh - GitHub CLI (gh) (Control de Versiones) -->
+<section id="crear-un-pr-desde-tu-rama">
+  <h2>Crear un PR desde tu rama</h2>
+  <div class="doc-content">
+    <p>Con tu feature pusheada, un comando crea el pull request completo:</p>
+    <pre><code class="language-bash">git push -u origin feat/login
+gh pr create --title "feat: login con OAuth" \
+  --body "Implementa Google y GitHub OAuth. Closes #42"</code></pre>
+    <p>Atajos prácticos:</p>
+    <ul>
+      <li>Sin argumentos: gh abre un editor interactivo para título/cuerpo.</li>
+      <li><code>--fill</code>: rellena título y cuerpo con el primer commit de la rama.</li>
+      <li><code>--base develop</code>: apunta el PR a otra rama destino.</li>
+      <li><code>--draft</code>: lo crea como borrador.</li>
+      <li><code>--reviewer @usuario</code>: asigna revisores al vuelo.</li>
+    </ul>
+    <pre><code class="language-bash"># El flujo completo en una línea:
+git checkout -b feat/x &amp;&amp; git commit -am "feat: x" \
+  &amp;&amp; git push -u origin feat/x &amp;&amp; gh pr create --fill</code></pre>
+  </div>
+</section>
+
+<section id="ver-y-revisar-prs">
+  <h2>Ver y revisar PRs</h2>
+  <div class="doc-content">
+    <pre><code class="language-bash"># Listar PRs abiertos del repo actual
+gh pr list
+#  #58  feat: pagos con Stripe   [feat/pagos]
+#  #57  fix: fuga de memoria     [fix/memoria]
+
+# Ver detalles, checks y comentarios
+gh pr view 58
+
+# Ver SOLO los diffs
+gh pr diff 58
+
+# Revisar desde la terminal
+gh pr review 58 --approve -m "LGTM 🚀"
+gh pr review 58 --request-changes -m "Falta test del caso límite"
+gh pr review 58 --comment -m "Duda en la línea 20"
+
+# Bajarte el PR de otro a tu máquina para probarlo localmente
+gh pr checkout 58</code></pre>
+    <p><code>gh pr checkout</code> es oro puro: te posiciona en la rama del PR sin buscar URLs ni fetch manuales.</p>
+  </div>
+</section>
+
+<section id="fusionar-prs-merge-squash-y-rebase">
+  <h2>Fusionar PRs: merge, squash y rebase</h2>
+  <div class="doc-content">
+    <pre><code class="language-bash">gh pr merge 58 --merge    # merge commit clásico
+gh pr merge 58 --squash   # comprime todos los commits en uno
+gh pr merge 58 --rebase   # aplica commits sobre main sin merge commit
+
+# Fusionar Y borrar la rama remota en un paso:
+gh pr merge 58 --squash --delete-branch</code></pre>
+    <table class="doc-table">
+      <thead><tr><th>Estrategia</th><th>Cuándo usarla</th></tr></thead>
+      <tbody>
+        <tr><td>merge</td><td>Quieres preservar todo el historial de la rama + merge visible</td></tr>
+        <tr><td>squash</td><td>Rama con commits "wip" desordenados → historial limpio</td></tr>
+        <tr><td>rebase</td><td>Historial lineal estricto (sin nodos de merge)</td></tr>
+      </tbody>
+    </table>
+    <p>Si el repo exige checks verdes o aprobaciones, gh respeta esas reglas igual que la web.</p>
+  </div>
+</section>
+
+<section id="gestionar-issues-y-labels">
+  <h2>Gestionar issues y labels</h2>
+  <div class="doc-content">
+    <pre><code class="language-bash"># Crear issue interactivamente o directo:
+gh issue create --title "Bug: login falla con email largo" \
+  --body "Pasos: ..." --label bug --assignee @me
+
+# Filtrar
+gh issue list --label "bug" --state open --limit 10
+gh issue list --assignee "@me"
+
+# Cerrar / reabrir / comentar
+gh issue close 42 --comment "Resuelto por PR #58"
+gh issue comment 42 -m "Reproducido en v2.1.0"
+
+# Crear labels personalizadas
+gh label create "prioridad-alta" --color d93f0b</code></pre>
+  </div>
+</section>
+
+<section id="monitorear-actions-con-gh-run">
+  <h2>Monitorear Actions con gh run</h2>
+  <div class="doc-content">
+    <pre><code class="language-bash"># Últimas ejecuciones de workflows
+gh run list
+#  ✓ deploy.yml   Deploy to prod   main   hace 5 min
+#  ✗ tests.yml    CI               #58    hace 2 min
+
+# Seguir en vivo una ejecución (se actualiza sola)
+gh run watch
+
+# Inspeccionar logs de un run fallido
+gh run view 1234567890 --log-failed
+
+# Reintentar
+gh run rerun 1234567890</code></pre>
+    <p>Ciclo típico: haces push → <code>gh run watch</code> → si falla, <code>gh run view --log-failed</code> → corriges — todo sin salir de la terminal.</p>
+  </div>
+</section>

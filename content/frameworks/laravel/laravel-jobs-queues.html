@@ -1,10 +1,97 @@
-<!-- 16. Jobs, Queues y Workers -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Aprende a crear y gestionar jobs, colas y workers en Laravel</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- 16. Jobs, Queues and Workers - Laravel (Frameworks) -->
+<section id="por-que-colas">
+  <h2>¿Por qué colas?</h2>
+  <div class="doc-content">
+    <p>Todo lo que tarde más de ~100ms y no sea necesario para responder al usuario pertenece a una cola: enviar emails, procesar videos, llamar APIs lentas, generar reportes PDF. El patrón:</p>
+    <pre><code class="language-text">Request HTTP ──► Job serializado ──► Driver (Redis/database)
+                        │
+Usuario recibe         ▼
+respuesta YA      Worker (php artisan queue:work) procesa en background</code></pre>
+    <p>Sin colas, un email de bienvenida de 3 segundos retrasa cada registro; con colas, el registro responde en 50ms y el email sale cuando salga.</p>
+    <ul>
+      <li><strong>database</strong>: cero infraestructura extra, ideal para empezar.</li>
+      <li><strong>redis</strong>: el estándar en producción, rapidísimo.</li>
+      <li><strong>sqs</strong>: servicio administrado AWS.</li>
+    </ul>
+    <p>Configuración en <code>.env</code>: <code>QUEUE_CONNECTION=database</code>, luego <code>php artisan queue:table && php artisan migrate</code>.</p>
+  </div>
+</section>
+
+<section id="crear-y-despachar-jobs">
+  <h2>Crear y despachar jobs</h2>
+  <div class="doc-content">
+    <pre><code class="language-bash">php artisan make:job ProcesarVideo</code></pre>
+    <pre><code class="language-php">// app/Jobs/ProcesarVideo.php
+class ProcesarVideo implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;        // reintentos maximos
+    public int $timeout = 300;    // segundos antes de abortar
+
+    public function __construct(
+        public Video $video,          // SerializesModels guarda solo el ID
+        public string $calidad = '720p'
+    ) {}
+
+    public function handle(VideoProcessor $processor): void
+    {
+        $processor->convertir($this->video, $this->calidad);
+    }
+
+    // Opcional: si falla tras todos los intentos
+    public function failed(Throwable $e): void
+    {
+        Log::error('Fallo procesando video', ['id' => $this->video->id]);
+    }
+}
+
+// Despachar desde controlador o listener
+ProcesarVideo::dispatch($video);
+ProcesarVideo::dispatch($video)->delay(now()->addMinutes(5));
+ProcesarVideo::dispatch($video)->onQueue('videos');   // cola especifica</code></pre>
+    <blockquote class="aside aside-tip">
+      <p><code>SerializesModels</code> no serializa el objeto completo: almacena su ID y lo re-hidrata desde BD al ejecutar el job. Por eso los datos que muten durante la espera se leen frescos — y por eso nunca confíes en atributos "capturados" hace minutos.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="workers-en-produccion">
+  <h2>Workers en producción</h2>
+  <div class="doc-content">
+    <pre><code class="language-bash"># Worker basico
+php artisan queue:work
+
+# Con supervisor en Linux (reinicia si muere)
+[program:laravel-worker]
+command=php /var/www/app/artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+numprocs=4
+autostart=true
+autorestart=true</code></pre>
+    <ul>
+      <li><strong><code>--tries=3</code>:</strong> máximo de intentos por job.</li>
+      <li><strong><code>--backoff=30</code>:</strong> espera entre reintentos (los jobs lentos suelen fallar por dependencias externas caídas momentáneamente).</li>
+      <li><strong><code>--max-time=3600</code>:</strong> el worker se reinicia cada hora — libera memoria acumulada.</li>
+      <li><strong>Regla de oro del deploy:</strong> tras desplegar código nuevo, ejecuta <code>php artisan queue:restart</code>; los workers viejos tienen el código anterior cargado en memoria.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="failed-jobs-y-batching">
+  <h2>Failed jobs y batching</h2>
+  <div class="doc-content">
+    <pre><code class="language-bash"># Tabla de fallos + inspeccion
+php artisan queue:failed-table && php artisan migrate
+php artisan queue:failed            # listar
+php artisan queue:retry all         # reintentar
+php artisan queue:flush             # limpiar</code></pre>
+    <pre><code class="language-php">// Batch: grupo de jobs con callback final
+Bus::batch([
+    new ImportarCsv($chunk1),
+    new ImportarCsv($chunk2),
+])->then(fn (Batch $batch) => NotificarImportacion::dispatch())
+  ->catch(fn (Batch $batch, Throwable $e) => Log::error($e))
+  ->dispatch();</code></pre>
+    <p>Ejercicio propuesto: mueve el envío de email de tu flujo de registro a un job encolado con tries=3 y backoff. Simula una falla (SMTP apagado), verifica el job en queue:failed, reinténtalo y confirma la entrega.</p>
+  </div>
+</section>

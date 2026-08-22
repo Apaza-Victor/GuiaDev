@@ -1,6 +1,9 @@
 (function () {
   if (typeof localStorage !== 'undefined' && localStorage.getItem('gd-bg3d') === 'off') return;
 
+  var SCRIPT_BASE = (document.currentScript && document.currentScript.src
+    ? document.currentScript.src : location.href).replace(/[^/]*$/, '');
+
   var mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   var effect = null;
   var lastTheme = null;
@@ -20,6 +23,7 @@
   };
 
   var P5_EFFECTS = ['trunk', 'topology'];
+  var THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js';
   var GITGRAPH_URL = 'https://cdn.jsdelivr.net/npm/@gitgraph/js';
   var TSP_PRESETS = {
     firefly: {
@@ -130,9 +134,13 @@
       return;
     }
 
+    var isP5 = P5_EFFECTS.indexOf(name) !== -1;
     var queue = [];
-    if (P5_EFFECTS.indexOf(name) !== -1 && typeof window.p5 === 'undefined') {
+    if (isP5 && typeof window.p5 === 'undefined') {
       queue.push('https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.10.2/p5.min.js');
+    }
+    if (!isP5 && typeof window.THREE === 'undefined') {
+      queue.push(THREE_URL);
     }
     queue.push('https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.' + name + '.min.js');
 
@@ -301,7 +309,7 @@
         }
       };
       if (window.GuiaDevCustomBG) boot();
-      else loadScript('js/bg-custom.js', boot, fail);
+      else loadScript(SCRIPT_BASE + 'bg-custom.js', boot, fail);
       return;
     }
 

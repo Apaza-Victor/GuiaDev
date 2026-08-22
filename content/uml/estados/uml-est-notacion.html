@@ -1,0 +1,118 @@
+<!-- 2. Notación y Ejemplos del Diagrama de Estados - Diag. Estados (UML) -->
+<section id="estados-transiciones-eventos">
+  <h2>Estados, transiciones y eventos</h2>
+  <div class="doc-content">
+    <p>La notación completa de una transición combina hasta cuatro piezas opcionales:</p>
+    <pre><code class="language-text">        evento [guarda] / acción
+Origen ────────────────────────────► Destino</code></pre>
+    <ul>
+      <li><strong>Evento:</strong> estímulo externo o llamada que dispara el cambio (<code>clicPagar()</code>, <code>timeout</code>).</li>
+      <li><strong>Guarda [condición]:</strong> expresión booleana; la transición solo ocurre si es verdadera (<code>[saldo &gt;= monto]</code>).</li>
+      <li><strong>/ Acción:</strong> efecto ejecutado al cruzar (<code>/ enviarRecibo()</code>). Debe ser rápida; para trabajo largo, usa acciones internas del estado.</li>
+    </ul>
+    <p>Un estado también puede tener <strong>acciones internas</strong>, listadas dentro del rectángulo redondeado con palabras clave estándar:</p>
+    <pre><code class="language-text">╭─────────────────────╮
+│ Procesando          │
+├─────────────────────┤
+│ entry / abrirLote() │  ← al entrar
+│ do / validarDocs()  │  ← mientras dura (actividad)
+│ exit / cerrarLote() │  ← al salir
+│ cancelar / limpiar()│  ← reacción interna sin cambiar de estado
+╰─────────────────────╯</code></pre>
+  </div>
+</section>
+
+<section id="guardas-y-acciones">
+  <h2>Guardas y acciones</h2>
+  <div class="doc-content">
+    <p>Ejemplo con decisiones condicionales en las transiciones — retiro bancario:</p>
+    <pre><code class="language-plantuml">@startuml
+state "Esperando Monto" as espera
+state "Validando" as valida
+state "Dispensando" as dispensa
+
+[*] --> espera
+espera --> valida : montoIngresado(m)
+valida --> dispensa : continuar [saldo &gt;= m] / debitar(m)
+valida --> espera : rechazar [saldo &lt; m] / mostrarError()
+dispensa --> [*] : completar() / expulsarTarjeta()
+@enduml</code></pre>
+    <p>Reglas de oro:</p>
+    <ul>
+      <li>Dos transiciones saliendo del mismo estado no deben poder activarse simultáneamente: sus guardas deben ser mutuamente excluyentes.</li>
+      <li>Si un estado tiene muchas salidas idénticas, considera una <em>pseudoelección</em> (rombo) como en actividades.</li>
+      <li>Los eventos sin transición correspondiente se ignoran silenciosamente según la especificación — decide si eso es aceptable en tu dominio.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="estados-compuestos">
+  <h2>Estados compuestos e iniciales anidados</h2>
+  <div class="doc-content">
+    <p>Cuando un grupo de estados comparte lógica, se agrupan en un <strong>estado compuesto</strong>. El ejemplo clásico: "Activo" contiene subestados, y un evento exterior (suspender) aplica desde cualquiera de ellos:</p>
+    <pre><code class="language-plantuml">@startuml
+state Activo {
+  state "Navegando" as nav
+  state "Comprando" as comp
+  [*] --> nav
+  nav --> comp : iniciarCompra()
+  comp --> nav : abandonarCarrito()
+}
+
+state Suspendido
+state Cerrado
+
+[*] --> Activo
+Activo --> Suspendido : inactividad90dias
+Suspendido --> Activo : reactivar()
+Suspendido --> Cerrado : borrarSolicitud
+Cerrado --> [*]
+@enduml</code></pre>
+    <p>Ventajas: elimina decenas de flechas repetidas hacia Suspendido y documenta jerarquía real del dominio. También existen <strong>historial superficial (H)</strong> y profundo (H*) para volver al último subestado tras una interrupción.</p>
+  </div>
+</section>
+
+<section id="ejemplo-ciclo-vida-pedido">
+  <h2>Ejemplo completo: ciclo de vida de un pedido</h2>
+  <div class="doc-content">
+    <pre><code class="language-plantuml">@startuml
+state "Nuevo" as nuevo
+state "Pagado" as pagado
+state "En Preparacion" as prep {
+  state "Empacando" as empaca
+  state "Etiquetado" as etiqueta
+  [*] --> empaca
+  empaca --> etiqueta : imprimirGuia()
+}
+state "Enviado" as enviado
+state "Entregado" as entregado
+state "Cancelado" as cancelado
+state "Devuelto" as devuelto
+
+[*] --> nuevo
+nuevo --> pagado : pagar() [stock reservado] / notificarCliente()
+nuevo --> cancelado : cancelar() / liberarStock()
+pagado --> prep
+prep --> enviado : entregarTransportista()
+enviado --> entregado : confirmacionCourier() / solicitarResena()
+entregado --> devuelto : iniciarDevolucion() [dentroDe30Dias]
+devuelto --> [*] : reembolsar()
+cancelado --> [*]
+entregado --> [*]
+@enduml</code></pre>
+    <p>Este diagrama responde preguntas de negocio directamente: ¿se puede cancelar tras pagar? No hay flecha Pagado→Cancelado: la política dice que no. ¿Cuándo se puede devolver? Solo desde Entregado y con guarda temporal. Esa precisión es lo que convierte al diagrama en especificación ejecutable.</p>
+  </div>
+</section>
+
+<section id="buenas-practicas-estados">
+  <h2>Buenas prácticas</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Nombres adjetivos o sustantivos:</strong> los estados son condiciones ("Pagado", "Enviado"), no acciones ("Pagando" ambiguo).</li>
+      <li><strong>Todo estado alcanzable y con salida:</strong> estados huérfanos o trampas (sin salida) son errores de diseño.</li>
+      <li><strong>Un solo diagrama por clase protagonista:</strong> mezclar Pedido y Pago en una máquina confunde; cada objeto su máquina.</li>
+      <li><strong>Sincroniza con el código:</strong> si implementas con librerías tipo XState o Spring Statemachine, mantén nombres idénticos entre diagrama y enum.</li>
+      <li><strong>Documenta eventos imposibles:</strong> anotar qué NO puede pasar ("no existe cancelar tras Enviado") previene features mal especificadas.</li>
+    </ul>
+  </div>
+</section>

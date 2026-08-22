@@ -1,0 +1,81 @@
+<!-- 3. Alias, extensiones y trucos de gh - GitHub CLI (gh) (Control de Versiones) -->
+<section id="alias-utiles">
+  <h2>Alias útiles</h2>
+  <div class="doc-content">
+    <p><code>gh alias</code> crea atajos personales para tus comandos más usados. Se guardan en tu configuración (<code>~/.config/gh/config.yml</code>).</p>
+    <pre><code class="language-bash"># Sintaxis
+gh alias set NOMBRE "comando a expandir"
+
+# Mis alias favoritos:
+gh alias set co 'pr checkout'          # gh co 58
+gh alias set vp 'pr view --web'        # ver PR en navegador
+gh alias set il 'issue list --assignee @me'
+gh alias set rw 'run watch'</code></pre>
+    <p>Los alias aceptan argumentos posicionales con <code>$1</code>, <code>$2</code>:</p>
+    <pre><code class="language-bash">gh alias set bug 'issue create --title "$1" --label bug'
+# Uso: gh bug "El botón no responde"</code></pre>
+    <p>Listalos todos con <code>gh alias list</code> y elimina con <code>gh alias delete NOMBRE</code>.</p>
+  </div>
+</section>
+
+<section id="extensiones-de-la-comunidad">
+  <h2>Extensiones de la comunidad</h2>
+  <div class="doc-content">
+    <p>Cualquiera puede publicar extensiones (binarios o scripts) que se instalan como subcomandos <code>gh nombre</code>:</p>
+    <pre><code class="language-bash"># Buscar e instalar
+gh extension search dashboard
+gh extension install dlvhdr/gh-dash
+
+# Listar, actualizar y desinstalar
+gh extension list
+gh extension upgrade --all
+gh extension remove gh-dash</code></pre>
+    <p>Extensiones populares:</p>
+    <ul>
+      <li><strong>gh-dash:</strong> panel TUI con PRs e issues de varios repos en tiempo real.</li>
+      <li><strong>gh-copilot:</strong> asistente IA en la terminal (<code>gh copilot suggest</code>).</li>
+      <li><strong>gh-eco:</strong> estadísticas de contribución estilo tarjeta de perfil.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="gh-api-para-casos-avanzados">
+  <h2>gh api para casos avanzados</h2>
+  <div class="doc-content">
+    <p>Cuando un subcomando no cubre algo, <code>gh api</code> expone la API REST completa autenticada:</p>
+    <pre><code class="language-bash"># Info del usuario actual
+gh api user --jq .login
+
+# Estrellas de un repo
+gh api repos/torvalds/linux --jq .stargazers_count
+
+# Crear un release con assets
+gh api repos/:owner/:repo/releases \
+  -f tag_name=v1.2.0 -f name="v1.2.0"
+
+# GraphQL (más eficiente para consultas complejas)
+gh api graphql -f query='
+  { viewer { login repositories(first: 5) { totalCount } } }'</code></pre>
+    <p>El flag <code>--jq</code> filtra la respuesta JSON sin necesitar jq instalado.</p>
+  </div>
+</section>
+
+<section id="scripts-y-automatizacion">
+  <h2>Scripts y automatización</h2>
+  <div class="doc-content">
+    <p>Combina gh con bash para automatizar rutinas. Ejemplo: cerrar issues obsoletas con label "stale":</p>
+    <pre><code class="language-bash">#!/usr/bin/env bash
+# cierra-issues-stale.sh
+for issue in $(gh issue list --label stale --json number --jq '.[].number'); do
+  gh issue close "$issue" -c "Cerrada por inactividad tras 30 días."
+done</code></pre>
+    <p>Otro clásico: abrir PR automático al terminar el día si hay cambios pendientes.</p>
+    <pre><code class="language-bash">if [[ -n $(git status --porcelain) ]]; then
+  git checkout -b backup/$(date +%F)
+  git add -A &amp;&amp; git commit -m "chore: backup diario"
+  git push -u origin HEAD
+  gh pr create --fill --draft
+fi</code></pre>
+    <p>En GitHub Actions, gh ya viene instalado en los runners: usa la variable <code>GITHUB_TOKEN</code> para scripts dentro de tus workflows.</p>
+  </div>
+</section>

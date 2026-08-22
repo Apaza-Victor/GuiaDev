@@ -1,10 +1,97 @@
-<!-- 11. Integraciones Externas -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Plugins Remark y Rehype, analíticas, scripts externos y CMS</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- 11. Integraciones Externas - Astro (Frameworks) -->
+<section id="plugins-remark-y-rehype">
+  <h2>Plugins Remark y Rehype</h2>
+  <div class="doc-content">
+    <p>Astro procesa Markdown con el ecosistema <strong>unified</strong>: los plugins <strong>Remark</strong> transforman el Markdown crudo y los <strong>Rehype</strong> actúan sobre el HTML resultante. Se registran en la sección <code>markdown</code>:</p>
+    <pre><code class="language-javascript">import remarkGfm from 'remark-gfm';
+import remarkSmartypants from 'remark-smartypants';
+import rehypeSlug from 'rehype-slug';
+import rehypeExternalLinks from 'rehype-external-links';
+
+export default defineConfig({
+  markdown: {
+    remarkPlugins: [remarkGfm, remarkSmartypants],
+    rehypePlugins: [
+      rehypeSlug,                       // ids en headings para anclas
+      [rehypeExternalLinks, { target: '_blank', rel: 'noopener' }]
+    ]
+  }
+});</code></pre>
+    <p>Los más útiles para blogs y documentación:</p>
+    <ul>
+      <li><code>remark-gfm</code>: tablas, tachado y checkboxes estilo GitHub.</li>
+      <li><code>rehype-slug</code> + <code>rehype-autolink-headings</code>: anclas navegables en cada título.</li>
+      <li><code>rehype-accessible-images</code>: avisa de imágenes sin alt.</li>
+      <li><code>remark-code-titles</code>: títulos personalizados en bloques de código.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="analiticas-y-scripts-externos">
+  <h2>Analíticas y scripts externos</h2>
+  <div class="doc-content">
+    <p>Los scripts de terceros (analytics, chat, ads) son el enemigo clásico del rendimiento. Astro ofrece dos caminos:</p>
+    <ul>
+      <li><strong>&lt;Script /&gt; con estrategia:</strong> componente nativo que controla cuándo carga el script.</li>
+      <li><strong>Partytown:</strong> mueve scripts a un web worker para que jamás bloqueen el renderizado.</li>
+    </ul>
+    <pre><code class="language-astro">---
+import Script from 'astro/components/Script.astro';
+---
+<!-- Cargar tras ser visible o idle -->
+<Script src="https://plausible.io/js/script.js" strategy="lazy-onload" />
+
+<!-- Scripts pesados fuera del hilo principal -->
+<Script src="/scripts/analytics.js" is:inline data-partytown />
+
+<!-- Alternativa simple: inline directo -->
+<script is:inline>console.log('sin procesar por Vite');</script></code></pre>
+    <ul>
+      <li><code>strategy="idle"</code>: cuando el navegador esté libre (ideal analytics).</li>
+      <li><code>strategy="interaction"</code>: al primer clic/touch (ideal chat widgets).</li>
+      <li><code>strategy="load"</code>: inmediato tras window load.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="cms-headless-con-content-collections">
+  <h2>CMS headless y fuentes de contenido</h2>
+  <div class="doc-content">
+    <p>Astro no impone CMS: consume contenido local (Content Collections) o remoto en build time:</p>
+    <ul>
+      <li><strong>Content Collections (local):</strong> tipa tu Markdown con esquemas Zod en <code>src/content/config.ts</code>; errores de contenido rompen el build, nunca producción.</li>
+      <li><strong>CMS headless (remoto):</strong> Contentful, Sanity, Strapi, WordPress headless — consultas en frontmatter durante el build con <code>fetch()</code>.</li>
+      <li><strong>Patrón híbrido habitual:</strong> blog estático local + páginas institucionales editables desde CMS.</li>
+    </ul>
+    <pre><code class="language-javascript">// src/content/config.ts - esquema tipado
+import { defineCollection, z } from 'astro:content';
+
+const blog = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    pubDate: z.coerce.date(),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false)
+  })
+});
+
+export const collections = { blog };</code></pre>
+  </div>
+</section>
+
+<section id="fuentes-y-terceros-optimizados">
+  <h2>Fuentes y terceros optimizados</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Fuentes locales:</strong> usa <code>@fontsource/*</code> como dependencia npm — se versionan y auto-serviven desde tu dominio (sin conexión externa en runtime).</li>
+      <li><strong>Google Fonts igualmente posibles,</strong> pero suman una petición cross-origin; mide antes de decidir.</li>
+      <li><strong>Videos embebidos:</strong> carga YouTube/Vimeo con fachada (miniatura + iframe solo al clic) — librerías tipo lite-youtube ahorran cientos de KB iniciales.</li>
+      <li><strong>Mapas:</strong> mismo principio: imagen estática primero, mapa interactivo bajo demanda.</li>
+    </ul>
+    <blockquote class="aside aside-tip">
+      <p>Cada script externo debe justificar su peso en Lighthouse. Si un tercero no aporta valor medible al usuario o al negocio, su lugar es fuera del proyecto.</p>
+    </blockquote>
+    <p>Ejercicio propuesto: audita con PageSpeed un sitio tuyo con scripts de terceros activos vs. desactivados. Documenta la diferencia de LCP/TBT y decide qué terceros migrar a Partytown o eliminar.</p>
+  </div>
+</section>

@@ -1,0 +1,85 @@
+<!-- 1. Conventional Commits - Calidad de Commits (Control de Versiones) -->
+<section id="por-que-estandarizar-los-commits">
+  <h2>¿Por qué estandarizar los commits?</h2>
+  <div class="doc-content">
+    <p>Mensajes como <code>"arreglos"</code>, <code>"cambios varios"</code> o <code>"asdf"</code> hacen imposible entender el historial. <strong>Conventional Commits</strong> es una especificación ligera que da estructura a los mensajes, y esa estructura se vuelve <em>procesable por máquinas</em>:</p>
+    <ul>
+      <li>Generación automática de <strong>CHANGELOG</strong>.</li>
+      <li>Determinación automática de <strong>versiones semánticas</strong> (¿sube patch, minor o major?).</li>
+      <li>Comunicación clara de la naturaleza del cambio a todo el equipo.</li>
+      <li>Disparo de pipelines según el tipo de cambio.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="la-especificacion-tipo-scope-y-descripcion">
+  <h2>La especificación: tipo, scope y descripción</h2>
+  <div class="doc-content">
+    <pre><code class="language-text">&lt;tipo&gt;[scope opcional]: &lt;descripción&gt;
+
+[cuerpo opcional]
+
+[footer(s) opcional]</code></pre>
+    <p>Ejemplos reales:</p>
+    <pre><code class="language-text">feat: agregar botón de pago con PayPal
+fix(auth): corregir expiración de tokens
+docs: actualizar guía de instalación
+feat(api)!: rompe compatibilidad en endpoint /users
+
+BREAKING CHANGE: el campo email ahora es obligatorio</code></pre>
+    <p>Reglas de oro: descripción en minúsculas e imperativo ("agregar", no "agregué"), sin punto final, máximo ~72 caracteres para el título.</p>
+  </div>
+</section>
+
+<section id="tipos-principales">
+  <h2>Tipos principales</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead><tr><th>Tipo</th><th>Significado</th><th>Impacto versión (semver)</th></tr></thead>
+      <tbody>
+        <tr><td><code>feat</code></td><td>Nueva funcionalidad</td><td>MINOR (1.4.0 → 1.5.0)</td></tr>
+        <tr><td><code>fix</code></td><td>Corrección de bug</td><td>PATCH (1.4.0 → 1.4.1)</td></tr>
+        <tr><td><code>docs</code></td><td>Solo documentación</td><td>—</td></tr>
+        <tr><td><code>style</code></td><td>Formato (espacios, comas); no afecta lógica</td><td>—</td></tr>
+        <tr><td><code>refactor</code></td><td>Cambio de código que ni agrega feature ni arregla bug</td><td>—</td></tr>
+        <tr><td><code>perf</code></td><td>Mejora de rendimiento</td><td>—</td></tr>
+        <tr><td><code>test</code></td><td>Agregar/corregir tests</td><td>—</td></tr>
+        <tr><td><code>build</code></td><td>Sistema de build o dependencias</td><td>—</td></tr>
+        <tr><td><code>ci</code></td><td>Cambios en configuración CI/CD</td><td>—</td></tr>
+        <tr><td><code>chore</code></td><td>Tareas de mantenimiento</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="breaking-changes-y-footers">
+  <h2>Breaking changes y footers</h2>
+  <div class="doc-content">
+    <p>Un cambio que rompe compatibilidad se marca de dos formas (ambas válidas):</p>
+    <pre><code class="language-text"># Forma 1: signo ! después del tipo/scope
+refactor!: eliminar soporte para Node 16
+
+# Forma 2: footer BREAKING CHANGE con descripción
+feat: nuevo formato de respuesta API
+
+BREAKING CHANGE: /api/users ahora devuelve array paginado.
+Migración: usar response.data.items.</code></pre>
+    <p>Otros footers útiles: <code>Closes #42</code>, <code>Refs #17</code>, <code>Reviewed-by: Ana &lt;ana@x.com&gt;</code>. Las herramientas de release leen BREAKING CHANGE para subir el MAJOR automáticamente.</p>
+  </div>
+</section>
+
+<section id="herramientas-que-lo-aprovechan">
+  <h2>Herramientas que lo aprovechan</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>commitlint:</strong> valida que cada mensaje cumpla la spec (lección siguiente).</li>
+      <li><strong>semantic-release / release-please:</strong> versionan y publican automáticamente leyendo los commits.</li>
+      <li><strong>git-chglog / conventional-changelog:</strong> generan el CHANGELOG.md desde el historial.</li>
+      <li><strong>Commitizen:</strong> asistente interactivo para escribir commits conformes.</li>
+    </ul>
+    <pre><code class="language-bash"># El flujo completo típico:
+git commit -m "feat(carrito): cupones de descuento"
+# → semantic-release detecta feat → publica v2.3.0
+# → changelog actualizado con la entrada nueva</code></pre>
+  </div>
+</section>

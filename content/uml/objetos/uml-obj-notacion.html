@@ -1,0 +1,88 @@
+<!-- 2. Notación y Ejemplos del Diagrama de Objetos - Diag. Objetos (UML) -->
+<section id="notacion-de-un-objeto">
+  <h2>Notación de un objeto</h2>
+  <div class="doc-content">
+    <p>Un objeto se dibuja como un rectángulo con dos o tres compartimentos, siempre <strong>subrayado</strong>. El título admite tres variantes:</p>
+    <pre><code class="language-text">1) Con nombre y clase:        2) Anónimo (solo clase):    3) Solo nombre:
+┌─────────────────┐           ┌──────────────────┐         ┌───────────────┐
+│  pedido47 :     │           │   :Pedido        │         │  pedido47     │
+│  Pedido         │           ├──────────────────┤         └───────────────┘
+├─────────────────┤           │ total = 250.00   │          (clase deducible
+│ total = 250.00  │           │ estado = "nuevo" │           del contexto)
+│ estado = "nuevo"│           └──────────────────┘
+└─────────────────┘</code></pre>
+    <p>Detalles de notación:</p>
+    <ul>
+      <li>Formato del título: <code>nombreObjeto : NombreClase</code>, subrayado, con espacios alrededor de los dos puntos.</li>
+      <li>Cada atributo muestra su valor actual: <code>atributo = valor</code>.</li>
+      <li>No se dibujan métodos: todos los objetos de una clase comparten la misma operación.</li>
+      <li>Los valores pueden llevar estado: <code>items = [A, B, C]</code> para colecciones.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="enlaces-entre-objetos">
+  <h2>Enlaces entre objetos</h2>
+  <div class="doc-content">
+    <p>Un <strong>enlace</strong> (link) es la instancia de una asociación. Se dibuja como línea sólida entre rectángulos; puede tener nombre y navegabilidad igual que las asociaciones:</p>
+    <pre><code class="language-text">┌──────────────┐   jefe_de    ┌──────────────┐
+│ maria :      │─────────────►│ pedro :      │
+│ Empleado     │              │ Empleado     │
+└──────────────┘              └──────────────┘</code></pre>
+    <p>Diferencias respecto a las asociaciones de clases:</p>
+    <ul>
+      <li><strong>Sin multiplicidades:</strong> el enlace conecta exactamente un objeto con otro; ya no hay "0..*" porque la cantidad está fijada por la foto.</li>
+      <li><strong>Sí puede haber rol y navegabilidad:</strong> <code>jefe_de</code> con flecha indica dirección de acceso.</li>
+      <li><strong>Agregación/composición sí aparecen:</strong> un carrito contiene ítems concretos con rombo relleno.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="ejemplo-completo-objetos">
+  <h2>Ejemplo completo con PlantUML</h2>
+  <div class="doc-content">
+    <p>Foto instantánea de un carrito de compras en memoria:</p>
+    <pre><code class="language-plantuml">@startuml
+object "maria : Cliente" as c {
+  email = "maria@mail.com"
+}
+
+object "pedido47 : Pedido" as p {
+  fecha = "2026-08-21"
+  total = 318.00
+  estado = "confirmado"
+}
+
+object "item1 : LineaPedido" as l1 {
+  producto = "Teclado"
+  cantidad = 2
+  precio = 89.90
+}
+
+object "item2 : LineaPedido" as l2 {
+  producto = "Monitor"
+  cantidad = 1
+  precio = 129.20
+}
+
+c --> p : realizo
+p *--> l1
+p *--> l2
+@enduml</code></pre>
+    <p>Análisis de la foto: el pedido 47 pertenece a María, está confirmado, y se compone de dos líneas (composición — si muere el pedido, mueren sus líneas). El total coincide con 2×89.90 + 129.20 = 318.00: los diagramas de objetos permiten verificar aritmética del dominio.</p>
+  </div>
+</section>
+
+<section id="buenas-practicas-objetos">
+  <h2>Buenas prácticas</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Nombres significativos:</strong> <code>pedido47</code> mejor que <code>p1</code>; el identificador debe contar historia.</li>
+      <li><strong>Pocos objetos por diagrama:</strong> 5–10 instancias comunican bien; 30 convierten la foto en ruido. Filtra al subdominio relevante.</li>
+      <li><strong>Consistente con las clases:</strong> ningún atributo ni enlace que no exista en el diagrama de clases correspondiente.</li>
+      <li><strong>Momento explícito:</strong> titula el diagrama ("tras confirmar el pedido", "estado inicial del test") — una foto sin contexto temporal confunde.</li>
+      <li><strong>Útil en documentación de API:</strong> ejemplos JSON de request/response son, en esencia, diagramas de objetos serializados.</li>
+    </ul>
+    <p>Ejercicio propuesto: toma tu diagrama de clases de un proyecto real y dibuja la "foto" del escenario más frecuente de tus usuarios. ¿Los multiplicidades de clases se sostienen con datos reales?</p>
+  </div>
+</section>

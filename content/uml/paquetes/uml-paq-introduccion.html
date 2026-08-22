@@ -1,0 +1,69 @@
+<!-- 1. Introducción al Diagrama de Paquetes - Diag. Paquetes (UML) -->
+<section id="que-es-un-paquete-en-uml">
+  <h2>¿Qué es un paquete en UML?</h2>
+  <div class="doc-content">
+    <p>Un <strong>paquete</strong> es el mecanismo de UML para agrupar elementos relacionados y tratarlos como una sola unidad. No describe comportamiento ni lógica: describe <strong>organización</strong>. Es al diseño de software lo que las carpetas son a los archivos.</p>
+    <p>Mientras que el diagrama de clases muestra "cómo es" cada pieza, el diagrama de paquetes muestra "dónde vive" cada pieza y <strong>cómo dependen los grupos entre sí</strong>. Es, en la práctica, una vista de la arquitectura del sistema:</p>
+    <pre><code class="language-text">Sistema completo
+├── paquete Presentacion  → pantallas, controladores UI
+├── paquete Aplicacion    → casos de uso, servicios
+├── paquete Dominio       → entidades y reglas de negocio
+└── paquete Infraestructura → BD, APIs externas, framework</code></pre>
+    <p>Cada paquete puede contener clases, interfaces, otros paquetes (anidamiento) e incluso diagramas completos. En el código se refleja como namespaces (C#, PHP), packages (Java, Go) o módulos/carpetas (Python, TypeScript).</p>
+  </div>
+</section>
+
+<section id="organizacion-por-capas">
+  <h2>Organización por capas</h2>
+  <div class="doc-content">
+    <p>El uso más común del diagrama de paquetes es documentar una <strong>arquitectura en capas</strong>, donde cada capa tiene una responsabilidad única:</p>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Capa</th><th>Responsabilidad</th><th>Ejemplos de contenido</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Presentación</td><td>Interacción con el usuario</td><td>Vistas, componentes, controladores HTTP</td></tr>
+        <tr><td>Aplicación</td><td>Orquestar casos de uso</td><td>Servicios, manejadores, DTOs</td></tr>
+        <tr><td>Dominio</td><td>Reglas de negocio puras</td><td>Entidades, objetos de valor, interfaces de repositorio</td></tr>
+        <tr><td>Infraestructura</td><td>Detalles técnicos</td><td>ORM, clientes REST, envío de email, configuración</td></tr>
+      </tbody>
+    </table>
+    <p>La regla de oro: las dependencias apuntan <strong>hacia adentro</strong>. La presentación depende de aplicación, aplicación de dominio... pero el dominio no sabe nada de nadie. Esto permite cambiar la base de datos o el framework sin tocar las reglas de negocio.</p>
+  </div>
+</section>
+
+<section id="dependencias-entre-paquetes">
+  <h2>Dependencias entre paquetes</h2>
+  <div class="doc-content">
+    <p>Una <strong>dependencia</strong> entre paquetes significa que si el paquete destino cambia su interfaz pública, el origen debe revisarse. Se dibuja con flecha punteada:</p>
+    <pre><code class="language-plantuml">@startuml
+package Presentacion
+package Aplicacion
+package Dominio
+
+Presentacion ..> Aplicacion : usa
+Aplicacion ..> Dominio : usa
+@enduml</code></pre>
+    <p>Tres señales de alerta que este diagrama hace visibles al instante:</p>
+    <ul>
+      <li><strong>Dependencias circulares:</strong> A depende de B y B de A; ningún paquete puede compilarse ni entenderse sin el otro.</li>
+      <li><strong>Dependencias cruzadas entre capas:</strong> presentación accediendo directo a infraestructura salta la capa de aplicación.</li>
+      <li><strong>Paquete "comodín":</strong> todos dependen de él y él de todos; suele ser un cajón desastre mal nombrado como <code>Common</code> o <code>Utils</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="cuando-usarlo">
+  <h2>Cuándo usarlo</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Al iniciar un proyecto grande:</strong> define los módulos antes de escribir clases; es más barato mover paquetes en papel que refactorizar carpetas con código.</li>
+      <li><strong>Para documentar la arquitectura:</strong> un diagrama de paquetes actualizado comunica la estructura a nuevos integrantes mejor que mil párrafos.</li>
+      <li><strong>Al dividir trabajo entre equipos:</strong> cada equipo es dueño de paquetes; las dependencias definidas son contratos de integración.</li>
+      <li><strong>Antes de extraer microservicios o librerías:</strong> los límites de paquetes limpios son candidatos naturales a módulos independientes.</li>
+    </ul>
+    <blockquote class="aside aside-tip">
+      <p>No lo uses en proyectos pequeños: si todo cabe en tres carpetas y cabe en pantalla, el diagrama de paquetes añade ruido, no claridad. Su valor aparece cuando la cantidad de clases supera lo que una persona puede mantener en la cabeza.</p>
+    </blockquote>
+  </div>
+</section>

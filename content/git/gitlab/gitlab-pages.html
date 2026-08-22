@@ -1,0 +1,64 @@
+<!-- 4. GitLab Pages - GitLab (Control de Versiones) -->
+<section id="que-es-gitlab-pages">
+  <h2>¿Qué es GitLab Pages?</h2>
+  <div class="doc-content">
+    <p><strong>GitLab Pages</strong> permite publicar sitios estáticos (HTML/CSS/JS, documentación, blogs generados) directamente desde un repositorio, gratis y con HTTPS incluido. El sitio se publica como parte de un pipeline: cada push puede regenerar y publicar la versión nueva.</p>
+    <p>Casos típicos: portafolios, documentación técnica con MkDocs/VitePress/Docusaurus, demos de proyectos y páginas de producto.</p>
+  </div>
+</section>
+
+<section id="configuracion-del-job-pages">
+  <h2>Configuración del job pages</h2>
+  <div class="doc-content">
+    <p>Pages funciona mediante un job especial llamado <code>pages</code> que debe producir un artefacto con nombre exacto <code>public/</code>:</p>
+    <pre><code class="language-yaml">pages:
+  stage: deploy
+  image: node:20
+  script:
+    - npm ci
+    - npm run build          # genera dist/ o build/
+    - mkdir -p public
+    - cp -r dist/* public/   # Pages exige una carpeta llamada public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH</code></pre>
+    <p>Dos reglas de oro: el artefacto debe llamarse <code>public</code> y el job debe llamarse <code>pages</code>.</p>
+  </div>
+</section>
+
+<section id="publicar-un-sitio-estatico">
+  <h2>Publicar un sitio estático</h2>
+  <div class="doc-content">
+    <p>Ejemplo completo sin herramientas externas, solo HTML plano:</p>
+    <pre><code class="language-yaml">pages:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - mkdir -p public
+    - cp -r sitio/* public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - main</code></pre>
+    <p>Al terminar el pipeline, tu sitio queda disponible en la URL que muestra <em>Deploy → Pages</em>, normalmente:</p>
+    <pre><code class="language-text">https://tu-usuario.gitlab.io/mi-proyecto/
+
+# Si el proyecto vive en un grupo:
+https://grupo.gitlab.io/mi-proyecto/</code></pre>
+  </div>
+</section>
+
+<section id="dominios-y-https">
+  <h2>Dominios y HTTPS</h2>
+  <div class="doc-content">
+    <p>En <em>Deploy → Pages</em> puedes añadir un dominio propio (por ejemplo <code>docs.tuempresa.com</code>). GitLab genera certificados TLS automáticamente con Let's Encrypt si usas DNS administrado, o te pide verificar la propiedad con un registro TXT.</p>
+    <ul>
+      <li>Crea un registro CNAME apuntando al dominio Pages de tu proyecto.</li>
+      <li>Habilita "Force HTTPS" para redirigir siempre tráfico seguro.</li>
+      <li>Los sitios privados requieren plan Premium (acceso restringido a miembros).</li>
+    </ul>
+  </div>
+</section>

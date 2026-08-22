@@ -1,10 +1,74 @@
-<!-- 11. Middlewares y autenticación -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Aprende a implementar middlewares y autenticación en aplicaciones Inertia.js</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- Middleware y Autenticación - Inertia.js (Frameworks) -->
+<section id="autenticacion-con-breeze">
+  <h2>Autenticación con Breeze: el punto de partida</h2>
+  <div class="doc-content">
+    <p>Para proyectos nuevos, Laravel Breeze instala el stack completo de auth con Inertia ya funcionando: login, registro, reset de contraseña, verificación de email:</p>
+    <pre><code class="language-bash">composer require laravel/breeze --dev
+php artisan breeze:install vue   # o react
+npm install && npm run dev
+php artisan migrate</code></pre>
+    <p>Breeze usa la autenticación nativa de Laravel (sesiones + cookies). No hay tokens JWT ni API keys: el navegador mantiene la sesión como siempre lo hizo un sitio clásico, pero la interfaz es SPA. Menos piezas = menos superficie de ataque.</p>
+  </div>
+</section>
+
+<section id="proteger-rutas-en-el-backend">
+  <h2>Proteger rutas en el backend</h2>
+  <div class="doc-content">
+    <p>La protección es Laravel puro — middleware estándar sobre rutas que renderizan páginas Inertia:</p>
+    <pre><code class="language-php">// routes/web.php
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/panel', PanelController::class)->name('panel');
+});
+
+// Con roles/permisos (gate o middleware propio)
+Route::middleware('can:administrar')->group(function () {
+    Route::resource('/admin/usuarios', AdminUsuarioController::class);
+});</code></pre>
+    <p>Regla de oro: la seguridad vive en el servidor. El frontend oculta botones por conveniencia visual; el middleware decide quién entra de verdad.</p>
+  </div>
+</section>
+
+<section id="redirigir-a-login-desde-inertia">
+  <h2>Redirigir a login desde Inertia</h2>
+  <div class="doc-content">
+    <p>Cuando una visita XHR llega sin sesión válida, el middleware Authenticate debe responder con una redirección que Inertia entienda (401 → redirect al login):</p>
+    <pre><code class="language-php">// app/Http/Middleware/Authenticate.php
+protected function redirectTo(Request $request): ?string
+{
+    return $request->expectsJson() ? null : route('login');
+}</code></pre>
+    <p>Inertia detecta el redirect y navega suavemente a /login sin error visible. El usuario inicia sesión y regresa exactamente donde estaba gracias a la URL previa guardada.</p>
+  </div>
+</section>
+
+<section id="estado-de-auth-en-el-frontend">
+  <h2>Estado de auth en el frontend</h2>
+  <div class="doc-content">
+    <p>El usuario autenticado viaja como prop compartida (patrón visto en Shared Props) y alimenta toda la UI condicional:</p>
+    <pre><code class="language-php">// HandleInertiaRequests
+'auth' => [
+    'user' => fn () => $request->user()
+        ? $request->user()->only('id', 'name', 'email')
+        : null,
+],</code></pre>
+    <pre><code class="language-vue">&lt;script setup&gt;
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+
+const user = computed(() =&gt; usePage().props.auth.user);
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;Link v-if="!user" href="/login"&gt;Iniciar sesion&lt;/Link&gt;
+  &lt;Link v-else :href="route('logout')" method="post" as="button"&gt;
+    Cerrar sesion
+  &lt;/Link&gt;
+&lt;/template&gt;</code></pre>
+    <ul>
+      <li><strong>Logout:</strong> Link con <code>method="post"</code> hacia la ruta logout (POST, nunca GET — evita cierre por prefetch/crawlers).</li>
+      <li><strong>Roles:</strong> agrega <code>'roles' => $user->roles->pluck('name')</code> a la prop compartida para menús condicionales.</li>
+      <li><strong>Email verification:</strong> el middleware <code>verified</code> redirige a la página verify-email de Breeze automáticamente.</li>
+    </ul>
+    <p>Ejercicio propuesto: protege tres rutas con auth+verified, cierra sesión manualmente borrando la cookie de sesión y verifica que la siguiente navegación XHR te lleva a /login conservando la intención original.</p>
+  </div>
+</section>

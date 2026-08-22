@@ -1,0 +1,110 @@
+<!-- 4. Comparativa y buenas prácticas de CI/CD - CI/CD (Control de Versiones) -->
+<section id="criterios-de-comparacion">
+  <h2>Criterios de comparación</h2>
+  <div class="doc-content">
+    <p>Para elegir plataforma CI/CD evalúa:</p>
+    <ul>
+      <li><strong>Integración con tu hosting Git:</strong> nativa o requiere webhooks/config extra.</li>
+      <li><strong>Modelo de costos:</strong> minutos incluidos, concurrencia, runners self-hosted.</li>
+      <li><strong>Facilidad de configuración:</strong> YAML declarativo vs UI vs scripting.</li>
+      <li><strong>Ecosistema:</strong> marketplace/plugins, comunidad, ejemplos.</li>
+      <li><strong>Sistemas operativos de runners:</strong> Linux, Windows, macOS, ARM.</li>
+      <li><strong>Self-hosting:</strong> ¿puedes correr todo en tu infraestructura?</li>
+    </ul>
+  </div>
+</section>
+
+<section id="tabla-comparativa">
+  <h2>Tabla comparativa</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Plataforma</th><th>Config</th><th>Gratis incluye</th><th>Self-hosted runner</th><th>Ideal para</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>GitHub Actions</strong></td>
+          <td>YAML en .github/workflows</td>
+          <td>2000 min/mes (privados), ilimitado público</td>
+          <td>Sí, gratis</td>
+          <td>Proyectos en GitHub; ecosistema marketplace</td>
+        </tr>
+        <tr>
+          <td><strong>GitLab CI</strong></td>
+          <td>.gitlab-ci.yml</td>
+          <td>400 min/mes + CI completo integrado</td>
+          <td>Sí, gratis</td>
+          <td>DevOps integral; instancias self-hosted</td>
+        </tr>
+        <tr>
+          <td><strong>Azure Pipelines</strong></td>
+          <td>azure-pipelines.yml</td>
+          <td>1800 min/mes + 1 job paralelo</td>
+          <td>Sí, gratis</td>
+          <td>Empresas Microsoft/.NET</td>
+        </tr>
+        <tr>
+          <td><strong>Bitbucket Pipelines</strong></td>
+          <td>bitbucket-pipelines.yml</td>
+          <td>50 min/mes</td>
+          <td>Sí (plan pago)</td>
+          <td>Equipos Atlassian/Jira pequeños</td>
+        </tr>
+        <tr>
+          <td><strong>Jenkins</strong></td>
+          <td>Jenkinsfile (Groovy)</td>
+          <td>Todo gratis — mantienes el servidor</td>
+          <td>Tú eres el runner</td>
+          <td>Control total on-premises, casos complejos</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Nota práctica: los YAML son tan parecidos que migrar entre plataformas suele ser cuestión de horas, no semanas.</p>
+  </div>
+</section>
+
+<section id="buenas-practicas-universales">
+  <h2>Buenas prácticas universales</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Pipelines como código:</strong> versionados junto al proyecto, revisados por PR.</li>
+      <li><strong>Falla rápida:</strong> lint → unit → build → E2E. Aborta temprano.</li>
+      <li><strong>Pipelines rápidos (&lt;10 min):</strong> caché de dependencias, paralelismo, tests selectivos.</li>
+      <li><strong>Un pipeline verde es sagrado:</strong> main roto = prioridad #1 del equipo.</li>
+      <li><strong>Misma vía para todos:</strong> lo que despliegas a producción pasa por el mismo pipeline que un hotfix.</li>
+      <li><strong>Artefactos inmutables:</strong> construye UNA vez y promociona ese mismo binario/imagen por entornos.</li>
+      <li><strong>Idempotencia y rollback:</strong> desplegar dos veces no rompe nada; volver atrás toma segundos.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="seguridad-en-pipelines">
+  <h2>Seguridad en pipelines</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Secretos fuera del código:</strong> usa el almacén cifrado de la plataforma; rota credenciales periódicamente.</li>
+      <li><strong>Principio de mínimo privilegio:</strong> tokens con scope solo para lo necesario.</li>
+      <li><strong>Fija versiones de actions/plugins</strong> (tag o SHA) — una action comprometida es una puerta trasera.</li>
+      <li><strong>Protege workflows contra PRs maliciosos:</strong> no ejecutes código de forks con secretos disponibles.</li>
+      <li><strong>Escanea dependencias e imágenes</strong> (Dependabot, Trivy, Snyk) dentro del propio pipeline.</li>
+    </ul>
+    <pre><code class="language-yaml"># Ejemplo: escaneo de vulnerabilidades en cada PR
+- name: Escanear dependencias
+  run: npm audit --audit-level=high</code></pre>
+  </div>
+</section>
+
+<section id="costos-y-runners-propios">
+  <h2>Costos y runners propios</h2>
+  <div class="doc-content">
+    <p>Los minutos SaaS se cobran con multiplicadores (Windows ×2, macOS ×10). Cuando la factura crece, hay dos palancas:</p>
+    <ol>
+      <li><strong>Runners self-hosted:</strong> registras tus propias máquinas/VPS — minutos ilimitados sin costo de cómputo (solo tu infraestructura):
+        <pre><code class="language-bash"># GitHub Actions runner self-hosted
+./config.sh --url https://github.com/mi-org/mi-repo --token TOKEN
+./run.sh   # queda escuchando jobs</code></pre></li>
+      <li><strong>Optimización:</strong> cachés agresivos, matrices reducidas, skip de jobs irrelevantes (<code>paths</code>/<code>changes only</code>).</li>
+    </ol>
+    <p>Regla final: empieza simple (SaaS del hosting donde ya vives), mide tiempos y costos reales, y migra a self-hosted solo cuando los números lo justifiquen.</p>
+  </div>
+</section>

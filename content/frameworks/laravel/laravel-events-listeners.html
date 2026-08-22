@@ -1,10 +1,114 @@
-<!-- 15. Eventos, Listeners y Observers -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Aprende a crear y utilizar eventos, listeners y observers en Laravel</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- 15. Eventos, Listeners y Observers - Laravel (Frameworks) -->
+<section id="eventos-y-listeners-concepto">
+  <h2>Eventos y listeners: el concepto</h2>
+  <div class="doc-content">
+    <p>Un <strong>evento</strong> anuncia que algo ocurrió ("se registró un pedido"); los <strong>listeners</strong> reaccionan a ese anuncio. Esto desacopla el flujo principal de las tareas secundarias:</p>
+    <pre><code class="language-text">PedidoController::store()
+      │ despacha
+      ▼
+Evento: PedidoRegistrado ──► Listener: EnviarEmailConfirmacion
+                        └──► Listener: ActualizarEstadisticas
+                        └──► Listener: NotificarAlmacen</code></pre>
+    <p>El controlador solo crea el pedido y dispara el evento. Si mañana agregas "generar PDF fiscal", creas un listener nuevo — sin tocar el controlador jamás.</p>
+  </div>
+</section>
+
+<section id="crear-y-despachar-eventos">
+  <h2>Crear y despachar eventos</h2>
+  <div class="doc-content">
+    <pre><code class="language-bash">php artisan make:event PedidoRegistrado
+php artisan make:listener EnviarEmailConfirmacion --event=PedidoRegistrado</code></pre>
+    <pre><code class="language-php">// app/Events/PedidoRegistrado.php
+class PedidoRegistrado
+{
+    public function __construct(public Pedido $pedido) {}
+}
+
+// app/Listeners/EnviarEmailConfirmacion.php
+class EnviarEmailConfirmacion
+{
+    public function handle(PedidoRegistrado $event): void
+    {
+        Mail::to($event->pedido->cliente_email)
+            ->send(new ConfirmacionPedido($event->pedido));
+    }
+}</code></pre>
+    <p>El registro puede ir en <code>app/Providers/EventServiceProvider.php</code> o — más simple — implementar la interfaz <code>ShouldDiscoverEvents</code> para autodescubrimiento por convención de nombres.</p>
+    <pre><code class="language-php">// Despachar desde cualquier lugar
+use App\Events\PedidoRegistrado;
+
+PedidoRegistrado::dispatch($pedido);
+// o con el helper:
+event(new PedidoRegistrado($pedido));
+
+// Asincrono: el listener implementa ShouldQueue
+class EnviarEmailConfirmacion implements ShouldQueue
+{
+    use InteractsWithQueue;
+    // ...
+}</code></pre>
+  </div>
+</section>
+
+<section id="event-subscribers">
+  <h2>Event subscribers</h2>
+  <div class="doc-content">
+    <p>Un subscriber agrupa varios listeners relacionados en una sola clase:</p>
+    <pre><code class="language-php">class PedidoSubscriber
+{
+    public function handlePedidoRegistrado(PedidoRegistrado $e): void { /* ... */ }
+    public function handlePedidoCancelado(PedidoCancelado $e): void { /* ... */ }
+
+    public function subscribe(Dispatcher $events): array
+    {
+        return [
+            PedidoRegistrado::class => 'handlePedidoRegistrado',
+            PedidoCancelado::class => 'handlePedidoCancelado',
+        ];
+    }
+}
+
+// Registro en EventServiceProvider
+protected $subscribe = [PedidoSubscriber::class];</code></pre>
+    <p>Úsalo cuando varios listeners comparten dominio (todo lo del ciclo de pedidos) y prefieras una clase organizada sobre diez archivos sueltos.</p>
+  </div>
+</section>
+
+<section id="model-observers">
+  <h2>Model Observers</h2>
+  <div class="doc-content">
+    <p>Los observers escuchan el <strong>ciclo de vida de un modelo Eloquent</strong> sin necesidad de eventos custom:</p>
+    <pre><code class="language-bash">php artisan make:observer UsuarioObserver --model=Usuario</code></pre>
+    <pre><code class="language-php">class UsuarioObserver
+{
+    public function creating(Usuario $usuario): void
+    {
+        $usuario->token_activacion = Str::random(32);
+    }
+
+    public function deleted(Usuario $usuario): void
+    {
+        Storage::disk('public')->delete($usuario->avatar_path);
+    }
+}
+
+// Registro en AppServiceProvider (boot)
+Usuario::observe(UsuarioObserver::class);</code></pre>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Momento</th><th>Cuándo se dispara</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>creating / created</code></td><td>Antes / después de INSERT</td></tr>
+        <tr><td><code>updating / updated</code></td><td>Antes / después de UPDATE</td></tr>
+        <tr><td><code>saving / saved</code></td><td>Create o update (ambos)</td></tr>
+        <tr><td><code>deleting / deleted</code></td><td>Antes / después de DELETE</td></tr>
+        <tr><td><code>retrieved</code></td><td>Al traerlo de base de datos</td></tr>
+      </tbody>
+    </table>
+    <blockquote class="aside aside-tip">
+      <p>Diferencia clave: usa <strong>observers</strong> para invariantes del modelo (siempre que exista un usuario pasa X); usa <strong>eventos/listeners</strong> para flujos de negocio (al registrar un pedido ocurre Y). Mezclarlos hace el comportamiento imposible de rastrear.</p>
+    </blockquote>
+    <p>Ejercicio propuesto: refactoriza un controlador tuyo que envíe email + genere log al crear registro. Extrae esas responsabilidades a evento + dos listeners (uno encolado) y compara la legibilidad del método store() resultante.</p>
+  </div>
+</section>

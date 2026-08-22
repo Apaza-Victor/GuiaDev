@@ -1,0 +1,99 @@
+<!-- 5. Del Diagrama ER al Modelo Físico (SQL) - Entidad-Relación (UML) -->
+<section id="mapeo-entidades-a-tablas">
+  <h2>5.1. Mapeo de entidades a tablas</h2>
+  <div class="doc-content">
+    <p>Un diagrama ER bien hecho se traduce casi mecánicamente a DDL. Reglas del mapeo:</p>
+    <table class="doc-table">
+      <thead><tr><th>Diseño lógico</th><th>Modelo físico</th></tr></thead>
+      <tbody>
+        <tr><td>Entidad</td><td>Tabla</td></tr>
+        <tr><td>Atributo simple</td><td>Columna</td></tr>
+        <tr><td>Atributo identificador</td><td>PRIMARY KEY (idealmente surrogate key: <code>id</code>)</td></tr>
+        <tr><td>Atributo multivaluado</td><td>Tabla aparte con FK a la entidad</td></tr>
+        <tr><td>Atributo compuesto (dirección)</td><td>Columnas atómicas (<code>calle</code>, <code>ciudad</code>, <code>cp</code>)</td></tr>
+        <tr><td>Atributo derivado (edad)</td><td>No se almacena; se calcula con consulta o vista</td></tr>
+      </tbody>
+    </table>
+    <p>Partimos del ejemplo de la lección anterior: <strong>Cliente, Pedido, Producto</strong>.</p>
+  </div>
+</section>
+
+<section id="traduccion-relaciones-cardinalidades">
+  <h2>5.2. Traducción de relaciones y cardinalidades</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>1:N</strong> — la clave foránea vive en el lado N. Un Pedido pertenece a un Cliente: <code>pedidos.cliente_id → clientes.id</code>.</li>
+      <li><strong>1:1</strong> — FK en cualquiera de los dos lados + constraint UNIQUE para garantizar exclusividad.</li>
+      <li><strong>Opcionalidad:</strong> si la entidad del lado N puede existir sin padre, la columna es NULL; si no, NOT NULL.</li>
+    </ul>
+    <pre><code class="language-sql">CREATE TABLE clientes (
+  id     BIGSERIAL PRIMARY KEY,
+  nombre VARCHAR(120) NOT NULL,
+  email  VARCHAR(160) NOT NULL UNIQUE
+);
+
+CREATE TABLE pedidos (
+  id         BIGSERIAL PRIMARY KEY,
+  cliente_id BIGINT NOT NULL REFERENCES clientes(id),
+  fecha      TIMESTAMP NOT NULL DEFAULT now(),
+  total      NUMERIC(10,2) NOT NULL DEFAULT 0
+);</code></pre>
+  </div>
+</section>
+
+<section id="relaciones-nm-tablas-intermedias">
+  <h2>5.3. Relaciones N:M y tablas intermedias</h2>
+  <div class="doc-content">
+    <p>La relación "Pedido incluye muchos Productos / Producto aparece en muchos Pedidos" no existe como tal en relacional: se materializa una <strong>tabla intermedia</strong> cuyos atributos propios pasan a ser columnas (cantidad, precio histórico):</p>
+    <pre><code class="language-sql">CREATE TABLE productos (
+  id       BIGSERIAL PRIMARY KEY,
+  nombre   VARCHAR(150) NOT NULL,
+  precio   NUMERIC(10,2) NOT NULL CHECK (precio &gt;= 0)
+);
+
+CREATE TABLE pedido_producto (
+  pedido_id   BIGINT NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
+  producto_id BIGINT NOT NULL REFERENCES productos(id),
+  cantidad    INT NOT NULL CHECK (cantidad &gt; 0),
+  precio_unit NUMERIC(10,2) NOT NULL,
+  PRIMARY KEY (pedido_id, producto_id)
+);</code></pre>
+    <p>Notas: la PK compuesta evita duplicar el mismo producto dos veces en un pedido; <code>precio_unit</code> congela el precio al momento de la venta aunque el catálogo cambie después.</p>
+  </div>
+</section>
+
+<section id="normalizacion-aplicada">
+  <h2>5.4. Normalización aplicada al diseño</h2>
+  <div class="doc-content">
+    <p>Verificación rápida contra las formas normales antes de ejecutar el script:</p>
+    <ul>
+      <li><strong>1FN:</strong> todas las columnas atómicas (no guardamos "calle y ciudad" juntas ni listas separadas por comas).</li>
+      <li><strong>2FN:</strong> en <code>pedido_producto</code>, <code>cantidad</code> depende de la clave completa (pedido+producto), no solo de parte.</li>
+      <li><strong>3FN:</strong> ningún atributo no-clave depende de otro no-clave: el nombre del cliente no se copia en pedidos, se obtiene por JOIN.</li>
+    </ul>
+    <p>Desnormalizar (guardar <code>total</code> en pedidos) es aceptable cuando es un valor calculado costoso que además tiene semántica de "foto histórica". Documenta siempre esa decisión.</p>
+  </div>
+</section>
+
+<section id="script-sql-final">
+  <h2>5.5. Script SQL final completo</h2>
+  <div class="doc-content">
+    <p>Orden de creación respetando dependencias de FK e índices útiles:</p>
+    <pre><code class="language-sql">-- 1. Catalogos base
+CREATE TABLE productos (...);
+
+-- 2. Maestros
+CREATE TABLE clientes (...);
+
+-- 3. Transacciones dependen de maestros
+CREATE TABLE pedidos (...);
+
+-- 4. Tabla puente
+CREATE TABLE pedido_producto (...);
+
+-- Indices para rutas de consulta frecuentes
+CREATE INDEX idx_pedidos_cliente ON pedidos(cliente_id);
+CREATE INDEX idx_pp_producto ON pedido_producto(producto_id);</code></pre>
+    <p>Ciclo completo dominado: <em>diagrama ER → mapeo → DDL → índices según consultas esperadas</em>. Cuando el modelo cambie, actualiza primero el diagrama: es más barato mover rectángulos que migraciones en producción.</p>
+  </div>
+</section>

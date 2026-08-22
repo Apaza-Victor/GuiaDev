@@ -1,10 +1,136 @@
-<!-- 15. Vue Router con Composition API -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Configuración de rutas, navegación dinámica, useRouter() y useRoute(), rutas hijas y dinámicas</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- 15. Vue Router con Composition API - Vue 3 (Frameworks) -->
+<section id="instalacion-y-configuracion-del-router">
+  <h2>Instalación y configuración del router</h2>
+  <div class="doc-content">
+    <p>Vue Router es el enrutador oficial de Vue 3 para construir SPAs. Instalación y registro básico:</p>
+    <pre><code class="language-bash">npm install vue-router@4</code></pre>
+    <pre><code class="language-javascript">// src/router/index.js
+import { createRouter, createWebHistory } from 'vue-router';
+import HomeView from '@/views/HomeView.vue';
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    { path: '/', name: 'home', component: HomeView },
+    {
+      path: '/about',
+      name: 'about',
+      // Lazy loading: solo se descarga al visitar la ruta
+      component: () => import('@/views/AboutView.vue')
+    }
+  ]
+});
+
+export default router;</code></pre>
+    <pre><code class="language-javascript">// src/main.js
+import { createApp } from 'vue';
+import App from './App.vue';
+import router from './router';
+
+createApp(App).use(router).mount('#app');</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Usa siempre rutas nombradas (<code>name:</code>): referenciar por nombre sobrevive a cambios de path y hace el código autodocumentado.</p>
+    </blockquote>
+  </div>
+</section>
+
+<section id="navegacion-declarativa-y-programatica">
+  <h2>Navegación declarativa y programática</h2>
+  <div class="doc-content">
+    <pre><code class="language-html">&lt;!-- Declarativa: componente RouterLink --&gt;
+&lt;RouterLink to="/"&gt;Inicio&lt;/RouterLink&gt;
+&lt;!-- Con nombre y params --&gt;
+&lt;RouterLink :to="{ name: 'user', params: { id: 42 } }"&gt;
+  Ver usuario
+&lt;/RouterLink&gt;
+
+&lt;!-- Donde se renderiza la ruta activa --&gt;
+&lt;RouterView /&gt;</code></pre>
+    <pre><code class="language-javascript">// Programática: tras un submit, por ejemplo
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+async function guardar() {
+  await api.crear(datos);
+  router.push({ name: 'detail', params: { id: nuevo.id } });
+}</code></pre>
+    <ul>
+      <li><code>push()</code>: navega y añade al historial.</li>
+      <li><code>replace()</code>: navega sin añadir al historial (login → dashboard).</li>
+      <li><code>back() / forward() / go(-2)</code>: control del historial.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="userouter-y-useroute">
+  <h2>useRouter() y useRoute()</h2>
+  <div class="doc-content">
+    <p>En Composition API, dos composables sustituyen a this.$router y this.$route:</p>
+    <pre><code class="language-vue">&lt;script setup&gt;
+import { useRoute, useRouter } from 'vue-router';
+import { computed, watch } from 'vue';
+
+const route = useRoute();   // leer informacion de la ruta ACTUAL
+const router = useRouter(); // ACCIONES de navegacion
+
+// /usuarios/42?tab=posts
+const userId = route.params.id;   // "42"
+const tab = route.query.tab;      // "posts"
+
+// Reaccionar a cambios de la MISMA ruta (param distinto reutiliza componente)
+watch(() => route.params.id, (nuevoId) => {
+  cargarUsuario(nuevoId);
+});
+&lt;/script&gt;</code></pre>
+    <p>Clave conceptual: <strong>route</strong> es un objeto reactivo de solo lectura; <strong>router</strong> es el motor que navega. Cambiar de parámetro en la misma ruta NO recrea el componente — observa los params si necesitas recargar datos.</p>
+  </div>
+</section>
+
+<section id="rutas-dinamicas-e-hijas">
+  <h2>Rutas dinámicas e hijas</h2>
+  <div class="doc-content">
+    <pre><code class="language-javascript">const routes = [
+  // Dinamica: segmento variable
+  { path: '/productos/:id', component: ProductoView },
+
+  // Anidadas: RouterView dentro del padre renderiza las hijas
+  {
+    path: '/panel',
+    component: PanelLayout,
+    children: [
+      { path: '', component: PanelHome },        // /panel
+      { path: 'perfil', component: PerfilView }, // /panel/perfil
+      { path: 'ajustes', component: AjustesView }// /panel/ajustes
+    ]
+  },
+
+  // Catch-all 404 (siempre al final)
+  { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView }
+];</code></pre>
+    <p>El layout padre contiene un <code>&lt;RouterView /&gt;</code> interno donde se pintan las hijas — perfecto para sidebars persistentes con contenido cambiante.</p>
+  </div>
+</section>
+
+<section id="guardias-de-navegacion">
+  <h2>Guardias de navegación</h2>
+  <div class="doc-content">
+    <p>Los guards interceptan la navegación: protegen rutas, cargan datos previos o bloquean salidas sin guardar:</p>
+    <pre><code class="language-javascript">// Global: se ejecuta en TODA navegacion
+router.beforeEach((to) => {
+  const auth = useAuthStore();
+  if (to.meta.requiereAuth && !auth.estaLogueado) {
+    return { name: 'login', query: { redirect: to.fullPath } };
+  }
+});
+
+// Por ruta via meta + guard global (patron recomendado)
+{ path: '/admin', component: AdminView, meta: { requiereAuth: true } }</code></pre>
+    <ul>
+      <li><strong><code>beforeEach</code>:</strong> antes de entrar — el más usado (autenticación).</li>
+      <li><strong><code>beforeResolve</code>:</strong> justo antes de confirmar, ideal para precargar datos.</li>
+      <li><strong><code>onBeforeRouteLeave</code></strong> (en componente): confirmar salida con formulario sucio.</li>
+    </ul>
+    <p>Ejercicio propuesto: implementa rutas anidadas para un panel con sidebar, protege /panel con meta + beforeEach y agrega lazy loading en todas las vistas hijas.</p>
+  </div>
+</section>

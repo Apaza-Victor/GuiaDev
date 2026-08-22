@@ -1,10 +1,91 @@
-<!-- 10. Carga diferida y Lazy Loading -->
-  <section id="contenido">
-    <h2>Contenido</h2>
-    <div class="doc-content">
-<p>Aprende a implementar carga diferida y lazy loading en aplicaciones Inertia.js</p>
-<blockquote class="aside aside-note">
-<p>Estamos trabajando para traerte esta lección completa muy pronto.</p>
-</blockquote>
-    </div>
-  </section>
+<!-- Lazy Loading - Inertia.js (Frameworks) -->
+<section id="code-splitting-de-paginas">
+  <h2>Code splitting de páginas</h2>
+  <div class="doc-content">
+    <p>Sin configuración extra, Inertia + Vite divide tu app en chunks por página: cada visitante descarga solo el JS de la página que ve, no toda la aplicación:</p>
+    <pre><code class="language-javascript">// resources/js/app.js
+import { createInertiaApp } from '@inertiajs/vue3';
+
+createInertiaApp({
+  resolve: (name) => {
+    const pages = import.meta.glob('./Pages/**/*.vue');
+    return pages[`./Pages/${name}.vue`]();   // lazy automatico
+  },
+});</code></pre>
+    <p>El patrón <code>import.meta.glob</code> crea un chunk dinámico por cada archivo en Pages/. Resultado: una app de 40 páginas carga ~15KB iniciales en vez de megabytes.</p>
+  </div>
+</section>
+
+<section id="partial-reloads-con-only">
+  <h2>Partial reloads con only</h2>
+  <div class="doc-content">
+    <p>Cuando solo necesitas refrescar UNA prop sin re-renderizar todo, pide únicamente esa:</p>
+    <pre><code class="language-vue">&lt;script setup&gt;
+import { router } from '@inertiajs/vue3';
+import { watch } from 'vue';
+
+// Al cambiar la busqueda, solo llega "usuarios"
+watch(busqueda, (nueva) =&gt; {
+  router.visit('/usuarios', {
+    only: ['usuarios'],
+    preserveState: true,
+    preserveScroll: true,
+    data: { busqueda: nueva },
+  });
+});
+&lt;/script&gt;</code></pre>
+    <ul>
+      <li><code>only</code>: lista blanca — SOLO esas props viajan y se actualizan.</li>
+      <li><code>except</code>: inversa — todas menos esas.</li>
+      <li>Las props compartidas lazy también se resuelven aquí si las incluyes en only.</li>
+      <li>Ideal para: búsqueda en vivo, notificaciones, dashboards que se auto-refrescan.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="lazy-loading-en-el-backend">
+  <h2>Lazy loading en el backend</h2>
+  <div class="doc-content">
+    <p>La otra cara del partial reload: el backend puede saber qué props pidieron y evitar computar lo demás:</p>
+    <pre><code class="language-php">public function index(Request $request)
+{
+    return Inertia::render('Users/Index', [
+        // Solo consulta pesada si alguien pidio esta prop
+        'estadisticas' => fn () => Estadistica::complejas(),
+
+        'usuarios' => User::paginate(10),   // siempre
+    ]);
+}</code></pre>
+    <p>Laravel detecta automáticamente si la prop fue solicitada en un partial reload. Si nadie pidió <code>estadisticas</code>, ni siquiera se ejecuta el closure.</p>
+  </div>
+</section>
+
+<section id="componentes-y-assets-diferidos">
+  <h2>Componentes y assets diferidos</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>defineAsyncComponent</strong>: componentes Vue pesados (gráficos, editores) cargan al usarse:</li>
+    </ul>
+    <pre><code class="language-javascript">const EditorChart = defineAsyncComponent(() =&gt;
+  import('@/Components/EditorChart.vue')
+);</code></pre>
+    <ul>
+      <li><strong>Dynamic import()</strong> para librerías grandes dentro de acciones (al abrir modal de exportación → cargar jsPDF).</li>
+      <li><strong>&lt;Deferred&gt; de Inertia:</strong> muestra placeholder mientras llegan props lentas:</li>
+    </ul>
+    <pre><code class="language-vue">&lt;script setup&gt;
+import { Deferred } from '@inertiajs/vue3';
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;Deferred data="estadisticas"&gt;
+    &lt;template #fallback&gt;Cargando estadisticas...&lt;/template&gt;
+    &lt;PanelEstadisticas /&gt;
+  &lt;/Deferred&gt;
+&lt;/template&gt;</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Métrica objetivo: primera visita bajo 200KB de JS. Si superas eso, revisa imports estáticos de librerías pesadas — casi siempre hay alguna candidata a diferirse.</p>
+    </blockquote>
+    <p>Ejercicio propuesto: mide el bundle inicial de tu app Inertia (vite build --report). Identifica la librería más pesada, muévela a dynamic import y documenta cuántos KB bajó la carga inicial.</p>
+  </div>
+</section>

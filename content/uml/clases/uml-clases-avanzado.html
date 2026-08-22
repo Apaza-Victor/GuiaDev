@@ -1,0 +1,135 @@
+<!-- 5. Conceptos Avanzados de Diagramas de Clases - Diag. Clases (UML) -->
+<section id="clases-abstractas-e-interfaces">
+  <h2>5.1. Clases abstractas e interfaces</h2>
+  <div class="doc-content">
+    <p>Una <strong>clase abstracta</strong> no puede instanciarse: define comportamiento común para sus hijas. En UML se escribe su nombre en <em>cursiva</em> o con el estereotipo <code>{abstract}</code>. Una <strong>interfaz</strong> es un contrato de métodos sin implementación; se representa como un círculo (lollipop) o como clase estereotipada <code>&laquo;interface&raquo;</code>.</p>
+    <pre><code class="language-plantuml">@startuml
+abstract class Figura {
+  {abstract} +calcularArea() : double
+  +describir() : String
+}
+
+interface Movable {
+  +mover(x: int, y: int)
+}
+
+class Circulo {
+  -radio : double
+}
+class Cuadrado {
+  -lado : double
+}
+
+Figura &lt;|-- Circulo
+Figura &lt;|-- Cuadrado
+Figura ..|> Movable
+@enduml</code></pre>
+    <p>Cómo distinguirlos en el diagrama:</p>
+    <table class="doc-table">
+      <thead><tr><th>Concepto</th><th>Notación</th><th>Relación típica</th></tr></thead>
+      <tbody>
+        <tr><td>Clase abstracta</td><td>Nombre en cursiva</td><td>Herencia: flecha con triángulo vacío</td></tr>
+        <tr><td>Interfaz provista</td><td>Círculo unido a la clase</td><td>Realización: <code>..|&gt;</code> línea discontinua</td></tr>
+        <tr><td>Interfaz requerida</td><td>Semicírculo (socket)</td><td>Dependencia de uso</td></tr>
+      </tbody>
+    </table>
+    <p>Regla práctica: herencia (<em>es-un</em>) solo entre clases fuertemente relacionadas; si la relación es <em>puede-hacer</em>, modela interfaz.</p>
+  </div>
+</section>
+
+<section id="clases-parametrizadas-genericos">
+  <h2>5.2. Clases parametrizadas (genéricos)</h2>
+  <div class="doc-content">
+    <p>Las colecciones tipadas se modelan con un <strong>rectángulo punteado</strong> anclado que indica el parámetro de tipo:</p>
+    <pre><code class="language-text">┌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┐
+╎ &lt;T&gt;          ╎   ← parámetro formal
+╎ List&lt;T&gt;      ╎
+╎ +add(t: T)   ╎
+└╌╌╌╌╌╌╌╌╌╌╌╌╌╌┘
+        ┊ «bind»
+   List&lt;Cliente&gt;   ← enlace de vinculación</code></pre>
+    <p>En PlantUML basta escribir el genérico directamente:</p>
+    <pre><code class="language-plantuml">@startuml
+class "List<T>" as List
+class Cliente
+List "clientes *" --o "1..*" Cliente : contiene
+note right of List : «bind» List&lt;Cliente&gt;
+@enduml</code></pre>
+  </div>
+</section>
+
+<section id="miembros-estaticos-y-de-clase">
+  <h2>5.3. Miembros estáticos y de clase</h2>
+  <div class="doc-content">
+    <p>Los miembros estáticos (de clase, no de instancia) se subrayan en la notación UML clásica. En PlantUML se marcan con el modificador <code>{static}</code>:</p>
+    <pre><code class="language-plantuml">@startuml
+class MathUtils {
+  {static} +PI : double = 3.14159
+  {static} +max(a: double, b: double) : double
+  +normalizar(valor: double) : double
+}
+@enduml</code></pre>
+    <p>Convenciones habituales del equipo: constantes en MAYÚSCULAS, fábricas estáticas (<code>+crear()</code>) junto a constructores privados cuando aplicas el patrón Singleton o Factory Method.</p>
+  </div>
+</section>
+
+<section id="estereotipos-estandar-utiles">
+  <h2>5.4. Estereotipos estándar útiles</h2>
+  <div class="doc-content">
+    <p>Los estereotipos refinan el significado de un elemento. Los más usados en diagramas de clases:</p>
+    <ul>
+      <li><code>&laquo;entity&raquo;</code> — clase persistente mapeada a base de datos.</li>
+      <li><code>&laquo;control&raquo;</code> — lógica de coordinación/orquestación.</li>
+      <li><code>&laquo;border&raquo;</code> / <code>&laquo;boundary&raquo;</code> — interfaz con el usuario.</li>
+      <li><code>&laquo;utility&raquo;</code> — colección de funciones estáticas.</li>
+      <li><code>&laquo;exception&raquo;</code> — clase de error lanzable.</li>
+      <li><code>&laquo;DTO&raquo;</code> / <code>&laquo;ValueObject&raquo;</code> — objetos de transferencia sin lógica.</li>
+    </ul>
+    <pre><code class="language-plantuml">@startuml
+class Usuario <<entity>> {
+  -id : UUID
+  -email : String
+}
+class RegistroController <<control>>
+class VistaRegistro <<boundary>>
+
+VistaRegistro --> RegistroController
+RegistroController --> Usuario
+@enduml</code></pre>
+  </div>
+</section>
+
+<section id="del-diagrama-de-clases-al-codigo">
+  <h2>5.5. Del diagrama de clases al código</h2>
+  <div class="doc-content">
+    <p>Cada elemento del diagrama tiene traducción directa al lenguaje orientado a objetos:</p>
+    <table class="doc-table">
+      <thead><tr><th>UML</th><th>Java / C# / TypeScript</th></tr></thead>
+      <tbody>
+        <tr><td><code>- atributo</code></td><td><code>private atributo;</code></td></tr>
+        <tr><td><code># metodo()</code></td><td><code>protected void metodo() {}</code></td></tr>
+        <tr><td><code>+ metodo(): Tipo</code></td><td><code>public Tipo metodo() {...}</code></td></tr>
+        <tr><td>Asociación 1 → 0..*</td><td><code>List&lt;Otro&gt; otros;</code></td></tr>
+        <tr><td>Agregación ◇—</td><td>Campo referenciado inyectado desde fuera</td></tr>
+        <tr><td>Composición ◆—</td><td>Objeto creado dentro de la clase (<code>new</code> en constructor)</td></tr>
+        <tr><td>Herencia —▷</td><td><code>extends</code> / <code>:</code> base</td></tr>
+        <tr><td>Realización ⋯▷</td><td><code>implements</code> / <code>: IInterfaz</code></td></tr>
+      </tbody>
+    </table>
+    <p>Esta correspondencia es lo que convierte al diagrama de clases en el plano maestro del diseño OO: quien lee el código debería poder dibujar el diagrama mentalmente.</p>
+  </div>
+</section>
+
+<section id="errores-comunes-en-diagramas-de-clases">
+  <h2>5.6. Errores comunes en diagramas de clases</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Todo privado vs todo público:</strong> exponer todo rompe el encapsulamiento; ocultarlo todo obliga a getters absurdos. Decide por responsabilidad.</li>
+      <li><strong>Herencia para reutilizar código:</strong> si la relación no es "es-un", usa composición ("tiene-un").</li>
+      <li><strong>Dibujar getters/setters:</strong> ruido innecesario; omítelos salvo que aporten semántica.</li>
+      <li><strong>Confundir agregación con composición:</strong> pregunta: ¿si muere el contenedor, muere la parte? Sí → composición.</li>
+      <li><strong>Diagramas enciclopédicos:</strong> un diagrama con 40 clases no comunica nada; parte por dominio o capa.</li>
+      <li><strong>Multiplicidades olvidadas:</strong> una asociación sin multiplicidad está incompleta.</li>
+    </ul>
+  </div>
+</section>

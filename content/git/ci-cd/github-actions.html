@@ -1,0 +1,106 @@
+<!-- 2. GitHub Actions - CI/CD (Control de Versiones) -->
+<section id="conceptos-workflow-job-y-step">
+  <h2>Conceptos: workflow, job y step</h2>
+  <div class="doc-content">
+    <p>La jerarquía de GitHub Actions:</p>
+    <ul>
+      <li><strong>Workflow:</strong> proceso automatizado completo definido en un YAML bajo <code>.github/workflows/</code>.</li>
+      <li><strong>Job:</strong> unidad que corre en una máquina virtual (runner). Los jobs corren en paralelo por defecto.</li>
+      <li><strong>Step:</strong> comando shell o acción reutilizable dentro de un job. Los steps comparten máquina y filesystem.</li>
+    </ul>
+    <pre><code class="language-text">Workflow: ci.yml
+├── job: lint     (ubuntu runner)
+│   ├── step: checkout
+│   └── step: npm run lint
+└── job: test     (paralelo a lint)
+    ├── step: checkout
+    └── step: npm test</code></pre>
+  </div>
+</section>
+
+<section id="el-directorio-github-workflows">
+  <h2>El directorio .github/workflows</h2>
+  <div class="doc-content">
+    <p>Primer workflow completo — CI de un proyecto Node:</p>
+    <pre><code class="language-yaml"># .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4        # clona tu repo en el runner
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'                   # cachea ~/.npm
+
+      - run: npm ci
+      - run: npm test</code></pre>
+    <p><code>uses:</code> invoca acciones reutilizables del marketplace; <code>run:</code> ejecuta comandos shell. Guarda el archivo, haz push, y verás el workflow en la pestaña <strong>Actions</strong> del repo.</p>
+  </div>
+</section>
+
+<section id="triggers-y-matriz-de-versiones">
+  <h2>Triggers y matriz de versiones</h2>
+  <div class="doc-content">
+    <p>La <strong>matriz</strong> ejecuta el mismo job contra combinaciones de versiones/sistemas — perfecto para librerías multiplataforma:</p>
+    <pre><code class="language-yaml">jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [18, 20, 22]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci &amp;&amp; npm test
+# = 6 ejecuciones en paralelo (2 SO × 3 versiones)</code></pre>
+    <p>Otros triggers útiles: <code>workflow_dispatch</code> (botón manual), <code>schedule</code> (cron), <code>release</code>, <code>issues</code>.</p>
+  </div>
+</section>
+
+<section id="secrets-y-variables-de-entorno">
+  <h2>Secrets y variables de entorno</h2>
+  <div class="doc-content">
+    <p>Los secretos se guardan cifrados en <em>Settings → Secrets and variables → Actions</em> y nunca aparecen en logs:</p>
+    <pre><code class="language-yaml">steps:
+  - name: Deploy
+    env:
+      API_KEY: ${{ secrets.API_KEY }}       # secreto
+      NODE_ENV: production                   # variable normal
+    run: ./deploy.sh</code></pre>
+    <ul>
+      <li><code>${{ secrets.X }}</code>: enmascarado en logs, solo lectura en workflows.</li>
+      <li><code>${{ vars.X }}</code>: variables no sensibles configurables por repo/entorno.</li>
+      <li>Los secrets de <strong>Environments</strong> (production) pueden exigir revisores humanos.</li>
+      <li>Regla de seguridad: jamás imprimas secretos ni los metas en el código.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="marketplace-y-actions-reutilizables">
+  <h2>Marketplace y actions reutilizables</h2>
+  <div class="doc-content">
+    <p>El <a href="#" onclick="return false;">Marketplace</a> ofrece miles de acciones listas: despliegues (Vercel, AWS, Firebase), seguridad (CodeQL), notificaciones (Slack)... Las más usadas son oficiales de GitHub: <code>checkout</code>, <code>setup-node</code>, <code>upload-artifact</code>.</p>
+    <p>También puedes crear tus propias actions (Docker o JavaScript) o reutilizar workflows completos entre repos:</p>
+    <pre><code class="language-yaml">jobs:
+  deploy:
+    uses: mi-org/workflows-compartidos/.github/workflows/deploy.yml@v2
+    with:
+      entorno: produccion
+    secrets: inherit</code></pre>
+    <p>Buenas prácticas finales: fija versiones por tag (<code>@v4</code> o mejor <code>@v4.1.2</code>/SHA), mantén workflows pequeños, usa cachés y falla rápido ordenando steps de lo barato a lo caro.</p>
+  </div>
+</section>

@@ -1,0 +1,81 @@
+<!-- 1. Introducción al Diagrama de Objetos - Diag. Objetos (UML) -->
+<section id="que-es-diagrama-objetos">
+  <h2>¿Qué es un diagrama de objetos?</h2>
+  <div class="doc-content">
+    <p>El diagrama de objetos es una <strong>fotografía del sistema en un instante concreto</strong> de su ejecución: muestra las instancias reales existentes en memoria, con sus valores concretos y los enlaces activos entre ellas.</p>
+    <p>Mientras el diagrama de clases describe el <em>plano</em> ("toda Persona tiene nombre y edad"), el de objetos captura el <em>edificio construido</em> ("ahora mismo existen Ana(34) y Luis(28), y Ana es amiga de Luis").</p>
+    <ul>
+      <li><strong>Nivel tipo:</strong> Clases → describe todos los posibles sistemas.</li>
+      <li><strong>Nivel instancia:</strong> Objetos → describe UNA configuración concreta.</li>
+    </ul>
+    <p>Es el diagrama estructural menos usado de forma independiente, pero muy valioso como complemento explicativo.</p>
+  </div>
+</section>
+
+<section id="objetos-vs-clases">
+  <h2>Objetos vs Clases: la diferencia clave</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead><tr><th>Aspecto</th><th>Diagrama de Clases</th><th>Diagrama de Objetos</th></tr></thead>
+      <tbody>
+        <tr><td>Elemento</td><td>Clase (plantilla)</td><td>Objeto (instancia)</td></tr>
+        <tr><td>Título del rectángulo</td><td><code>Persona</code></td><td><code>ana : Persona</code> (subrayado)</td></tr>
+        <tr><td>Atributos</td><td>Solo nombres y tipos</td><td>Con valores: <code>edad = 34</code></td></tr>
+        <tr><td>Métodos</td><td>Sí, se listan</td><td>No se listan (son compartidos por la clase)</td></tr>
+        <tr><td>Relaciones</td><td>Asociaciones entre tipos</td><td><em>Enlaces</em> (links) entre instancias</td></tr>
+        <tr><td>Cantidad de elementos</td><td>Fija (las que diseñaste)</td><td>Variable según el momento de ejecución</td></tr>
+        <tr><td>Anonimato</td><td>—</td><td>Permitido: <code>:Persona</code> sin nombre</td></tr>
+      </tbody>
+    </table>
+    <p>Ejemplo visual de un objeto bien notado:</p>
+    <pre><code class="language-text">┌──────────────────┐
+│  ana : Persona   │   ← nombre : Clase, todo subrayado
+├──────────────────┤
+│ edad = 34        │   ← valores concretos
+│ ciudad = "Lima"  │
+└──────────────────┘</code></pre>
+  </div>
+</section>
+
+<section id="relacion-con-clases">
+  <h2>Relación con el diagrama de clases</h2>
+  <div class="doc-content">
+    <p>Cada objeto debe ser <strong>instancia de una clase existente</strong>, y cada enlace debe ser instancia de una asociación declarada. El diagrama de objetos es entonces una prueba de consistencia:</p>
+    <pre><code class="language-plantuml">@startuml
+class Departamento {
+  nombre : String
+}
+class Empleado {
+  nombre : String
+}
+Departamento "1" -- "0..*" Empleado : emplea
+
+object "RRHH" as d1 {
+  nombre = "Recursos Humanos"
+}
+object "ana : Empleado" as e1 {
+  nombre = "Ana Torres"
+}
+object "luis : Empleado" as e2 {
+  nombre = "Luis Rojas"
+}
+d1 --> e1
+d1 --> e2
+@enduml</code></pre>
+    <p>Lectura: RRHH es un Departamento real; Ana y Luis son Empleados reales; ambos enlaces materializan la asociación 1 a muchos "emplea". Si dibujas un enlace que no existe como asociación, hay error de diseño.</p>
+  </div>
+</section>
+
+<section id="cuando-usar-objetos">
+  <h2>Cuándo usarlo</h2>
+  <div class="doc-content">
+    <ul>
+      <li><strong>Explicar estructuras recursivas o complejas:</strong> árboles, grafos y listas enlazadas se entienden mejor con instancias concretas que con la clase abstracta <code>Nodo&lt;T&gt;</code>.</li>
+      <li><strong>Documentar casos de prueba:</strong> "con estos tres pedidos y este cliente, el sistema debe..." — el diagrama de objetos ES ese escenario de datos.</li>
+      <li><strong>Diseñar fixtures de test:</strong> lo que dibujas en el diagrama es literalmente el arrange de tu unit test.</li>
+      <li><strong>Enseñar OO:</strong> para estudiantes, ver la diferencia clase/instancia dibujada elimina años de confusión.</li>
+      <li><strong>Comunicar snapshots de negocio:</strong> "estado actual del inventario", "carrito de María ahora".</li>
+    </ul>
+    <p>Regla práctica: úsalo cuando el valor está en los <strong>valores concretos</strong> y las relaciones entre instancias específicas; si te interesa solo la estructura general, quédate con el de clases.</p>
+  </div>
+</section>
