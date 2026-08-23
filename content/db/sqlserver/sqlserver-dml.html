@@ -1,63 +1,196 @@
 <!-- 10. DML: INSERT, UPDATE, DELETE y MERGE - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="insert">
-    <h2>INSERT</h2>
+<section id="insert">
+    <h2><i class="fa-solid fa-plus"></i> INSERT: variantes y recuperación de IDs</h2>
     <div class="doc-content">
-<pre><code class="language-sql">INSERT INTO dbo.Clientes (Email) VALUES (N'ana@mail.com');
+        <pre><code class="language-sql">-- Multi-row estándar:
+INSERT INTO Clientes (nombre, email, pais) VALUES
+    ('Ana', 'ana@mail.com', 'ES'),
+    ('Luis', 'luis@mail.com', 'MX'),
+    ('Marta', 'marta@mail.com', 'AR');
 
-INSERT INTO dbo.Clientes (Email) VALUES
-  (N'luis@mail.com'), (N'maria@mail.com');
+-- INSERT ... SELECT:
+INSERT INTO Archivo_2025
+SELECT * FROM Pedidos WHERE YEAR(fecha) = 2025;
 
-INSERT INTO dbo.ClientesArchivo (Id, Email)
-SELECT Id, Email FROM dbo.Clientes WHERE Activo = 0;
+-- ✨ OUTPUT: recuperar lo insertado (el superpoder T-SQL):
+INSERT INTO Clientes (nombre, email)
+OUTPUT inserted.cliente_id, inserted.email   -- a resultados
+VALUES ('Carlos', 'carlos@mail.com');
 
--- Insertar y recuperar el Id generado
-INSERT INTO dbo.Clientes (Email) OUTPUT INSERTED.Id VALUES (N'leo@mail.com');</code></pre>
+OUTPUT inserted.* INTO @tabla_temporal;      -- o capturarlo a variable tabla
+
+DECLARE @nuevos TABLE (id INT, email NVARCHAR(120));
+INSERT INTO Clientes (nombre, email)
+OUTPUT inserted.cliente_id, inserted.email INTO @nuevos
+VALUES ('Diana','d@mail.com'), ('Eva','e@mail.com');
+SELECT * FROM @nuevos;   -- IDs exactos sin importar triggers</code></pre>
+
+        <h3>Obtener el ID generado: las tres vías</h3>
+        <table>
+            <thead>
+                <tr><th>Método</th><th>Ámbito</th><th>Seguro con triggers?</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>SCOPE_IDENTITY()</code></td><td>Tu scope actual</td><td>✅ Sí</td></tr>
+                <tr><td><code>@@IDENTITY</code></td><td>Sesión completa</td><td>❌ Puede devolver ID de trigger</td></tr>
+                <tr><td><code>OUTPUT inserted.id</code></td><td>La sentencia</td><td>✅ El más robusto (multi-fila incluido)</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>IDENTITY_INSERT permite insertar IDs manuales en migraciones: SET IDENTITY_INSERT Tabla ON → inserts con id explícito → OFF. Recuerda reajustar el contador con DBCC CHECKIDENT ('Tabla', RESEED, ultimo_id_insertado).</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="update-con-from-y-join">
-    <h2>UPDATE con FROM y JOIN</h2>
+<section id="update-con-from-y-join">
+    <h2><i class="fa-solid fa-pen"></i> UPDATE ... FROM con JOIN</h2>
     <div class="doc-content">
-<pre><code class="language-sql">UPDATE dbo.Productos SET Precio = Precio * 1.10 WHERE CategoriaId = 2;
+        <pre><code class="language-sql">-- La sintaxis T-SQL estrella: UPDATE con FROM+JOIN:
+UPDATE p
+SET p.total = p.total * 0.95,
+    p.modificado_el = SYSDATETIME()
+FROM Pedidos p
+JOIN Clientes c ON c.cliente_id = p.cliente_id
+WHERE c.vip = 1;
 
-UPDATE p SET p.Stock = 0
-FROM dbo.Productos p
-INNER JOIN dbo.Categorias c ON p.CategoriaId = c.Id
-WHERE c.Nombre = N'Ofertas';</code></pre>
-<blockquote class="aside aside-caution">
-<p>Antes de un UPDATE masivo, envuélvelo en una transacción y verifica con SELECT: si algo sale mal, <code>ROLLBACK</code>.</p>
-</blockquote>
+-- Sincronizar desde tabla de staging:
+UPDATE dest
+SET dest.stock = src.stock,
+    dest.precio = src.precio
+FROM Productos dest
+JOIN Staging_Inventario src ON src.sku = dest.sku
+WHERE dest.stock &lt;&gt; src.stock OR dest.precio &lt;&gt; src.precio;
+
+-- Con OUTPUT para auditar qué cambió:
+UPDATE TOP (100) t
+SET t.procesado = 1
+OUTPUT deleted.log_id, inserted.procesado
+FROM Logs t WHERE t.procesado = 0;</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>Si el JOIN multiplica filas (varios match por destino), SQL Server actualiza "una arbitraria" sin avisar — resultado impredecible. Garantiza unicidad del lado origen (agrupa antes) o usa MERGE con validación.</p>
+        </blockquote>
+
+        <h3>El ritual seguro antes de cualquier UPDATE serio</h3>
+        <ol>
+            <li>SELECT con el MISMO FROM/WHERE: verifica filas objetivo.</li>
+            <li>BEGIN TRAN + UPDATE + revisa @@ROWCOUNT contra esperado.</li>
+            <li>Coincide → COMMIT. No → ROLLBACK e investiga.</li>
+        </ol>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="delete-y-output">
-    <h2>DELETE y OUTPUT</h2>
+<section id="delete-y-output">
+    <h2><i class="fa-solid fa-eraser"></i> DELETE con OUTPUT y archivado</h2>
     <div class="doc-content">
-<pre><code class="language-sql">DELETE FROM dbo.Clientes WHERE Id = 10;
+        <pre><code class="language-sql">-- DELETE con join estilo T-SQL:
+DELETE p
+FROM Pedidos p
+JOIN Clientes c ON c.cliente_id = p.cliente_id
+WHERE c.bloqueado = 1;
 
-DELETE TOP (1000) FROM dbo.Logs;   -- borra por lotes
+-- Archivar ANTES de borrar (patrón profesional):
+DELETE d
+OUTPUT deleted.* INTO Archivo_Detalle_2025   -- captura exacta de lo borrado
+FROM Detalle d
+JOIN Pedidos p ON p.pedido_id = d.pedido_id
+WHERE p.fecha &lt; '2025-01-01';
 
-DELETE FROM dbo.Clientes
-OUTPUT DELETED.Id, DELETED.Email INTO dbo.ClientesEliminados
-WHERE Activo = 0;</code></pre>
+-- Borrado masivo por lotes (evita locks eternos):
+WHILE 1 = 1
+BEGIN
+    DELETE TOP (10000) FROM Log_Antiguo
+    WHERE creado_el &lt; '2024-01-01';
+    IF @@ROWCOUNT = 0 BREAK;
+END;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Estrategia borrado masivo</th><th>Riesgo evitado</th><th>Coste</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>DELETE único gigante</td><td>Ninguno… aparentemente</td><td>Locks largos, log enorme, replicación colapsada ❌</td></tr>
+                <tr><td>Lotes DELETE TOP(n) + WHILE</td><td>Todo lo anterior ✅</td><td>Más código; tiempo total similar</td></tr>
+                <tr><td>Partición switch (Enterprise)</td><td>Instantáneo a nivel metadatos</td><td>Diseño particionado previo</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>OUTPUT deleted.* INTO archivo es la pareja perfecta del borrado: auditoría EXACTA fila a fila sin triggers ni lecturas previas razonables. En entornos regulados es oro puro.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="merge-upsert-en-una-sentencia">
-    <h2>MERGE: upsert en una sentencia</h2>
+<section id="merge-upsert-en-una-sentencia">
+    <h2><i class="fa-solid fa-code-merge"></i> MERGE: upsert en una sentencia</h2>
     <div class="doc-content">
-<pre><code class="language-sql">MERGE dbo.Inventario AS dest
-USING (VALUES (1, 50), (2, 30)) AS src(Id, Stock)
-ON dest.Id = src.Id
-WHEN MATCHED THEN
-  UPDATE SET dest.Stock = src.Stock
-WHEN NOT MATCHED THEN
-  INSERT (Id, Stock) VALUES (src.Id, src.Stock)
-WHEN SOURCE ROW NOT MATCHED BY TARGET AND dest.Stock = 0 THEN
-  DELETE;</code></pre>
-<blockquote class="aside aside-note">
-<p><code>MERGE</code> combina INSERT/UPDATE/DELETE comparando origen y destino en una sola operación atómica.</p>
-</blockquote>
+        <p>MERGE compara destino vs origen y ejecuta INSERT/UPDATE/DELETE según exista o no la pareja — sincronización declarativa:</p>
+        <pre><code class="language-sql">MERGE Productos AS dest
+USING Staging_Productos AS src
+ON dest.sku = src.sku
+WHEN MATCHED AND (
+        ISNULL(dest.precio,-1) &lt;&gt; ISNULL(src.precio,-1)
+     OR ISNULL(dest.stock,-1)  &lt;&gt; ISNULL(src.stock,-1))
+    THEN UPDATE
+        SET dest.precio = src.precio,
+            dest.stock  = src.stock,
+            dest.actualizado_el = SYSDATETIME()
+WHEN NOT MATCHED BY TARGET THEN
+    INSERT (sku, nombre, precio, stock)
+    VALUES (src.sku, src.nombre, src.precio, src.stock)
+WHEN NOT MATCHED BY SOURCE AND dest.activo = 1 THEN
+    UPDATE SET dest.activo = 0          -- descontinuar, NO borrar
+OUTPUT $action, inserted.sku, inserted.precio;
+-- $action = 'INSERT' | 'UPDATE' | 'DELETE' por fila afectada</code></pre>
+
+        <h3>Las cinco cláusulas WHEN posibles</h3>
+        <table>
+            <thead>
+                <tr><th>Cláusula</th><th>Dispara cuando…</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>WHEN MATCHED [AND cond]</code></td><td>Pareja existe → UPDATE/DELETE</td></tr>
+                <tr><td><code>NOT MATCHED BY TARGET</code></td><td>Origen sin pareja en destino → INSERT</td></tr>
+                <tr><td><code>NOT MATCHED BY SOURCE</code></td><td>Destino huérfano del origen → UPDATE/DELETE</td></tr>
+                <tr><td>Varias WHEN MATCHED con condiciones</td><td>Ramas alternativas mutuamente excluyentes</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>MERGE exige que cada fila destino sea tocada COMO MÁXIMO una vez: origen duplicado sobre misma clave = error "The MERGE statement attempted to UPDATE or DELETE the same row more than once". Deduplica/agrega el USING antes. Y con Hint HOLDLOCK en destino para upserts concurrentes seguros.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>@@IDENTITY tras tabla con trigger</td><td>ID equivocado silencioso</td><td>SCOPE_IDENTITY() u OUTPUT</td></tr>
+                <tr><td>UPDATE...FROM con origen duplicado</td><td>Fila final "aleatoria"</td><td>Pre-agregar origen garantizando unicidad</td></tr>
+                <tr><td>MERGE sin HOLDLOCK bajo concurrencia</td><td>Duplicados en carreras de procesos</td><td>WITH (HOLDLOCK) en target del MERGE</td></tr>
+                <tr><td>DELETE masivo único</td><td>Bloqueos, log lleno, lag réplica</td><td>Lotes DELETE TOP(n)</td></tr>
+                <tr><td>Olvidar WHERE en UPDATE/DELETE</td><td>Tabla entera modificada</td><td>Transacción + @@ROWCOUNT verificado siempre</td></tr>
+                <tr><td>NOT MATCHED BY SOURCE destructivo directo</td><td>Borrados en cascada imprevistos</td><td>Soft-delete (activo=0) como en el ejemplo</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Ingesta con IDs</strong>: carga multi-row capturando todos los IDs generados via OUTPUT INTO variable tabla; verifica correspondencia exacta.</li>
+            <li><strong>Update VIP ritualizado</strong>: descuento VIP con SELECT previo + transacción + @@ROWCOUNT check documentado paso a paso.</li>
+            <li><strong>Archivador anual</strong>: mueve pedidos viejos a histórico usando DELETE OUTPUT INTO dentro de UNA transacción; valida conteos cuadrando.</li>
+            <li><strong>Purga por lotes</strong>: genera 300k logs; purga con WHILE/TOP(10000) midiendo duración por lote vs intento único fallido/lento.</li>
+            <li><strong>Merge completo</strong>: staging→productos con las tres ramas WHEN + condiciones de cambio real + $action reportado; prueba concurrencia con dos sesiones simultáneas.</li>
+        </ol>
+    </div>
+</section>

@@ -1,36 +1,248 @@
 <!-- 3. Control de Flujo - Swift (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
+
+  <section id="condicionales-if">
+    <h2><i class="fa-solid fa-code-branch"></i> Condicionales: if, else if, else</h2>
+    <div class="doc-content">
+<p>El control de flujo decide <strong>qué instrucciones se ejecutan y cuáles no</strong>: es el paso de "receta lineal" a "programa que reacciona". Swift mantiene la forma clásica del <code>if</code>, pero con dos reglas estrictas que eliminan bugs históricos: las condiciones van <em>sin paréntesis</em> y las llaves son <em>obligatorias siempre</em>.</p>
+<pre><code class="language-swift">let temperatura = 31
+
+if temperatura &gt;= 30 {
+    print("Día caluroso")
+} else if temperatura &gt;= 20 {
+    print("Día templado")
+} else {
+    print("Día frío")
+}</code></pre>
+<h3>¿Por qué tantas llaves obligatorias?</h3>
+<p>En lenguajes donde las llaves son opcionales, añadir una línea "dentro" de un if sin llaves produce desastres famosos: el fallo <em>goto fail</em> de Apple (2014) fue exactamente eso, dos líneas ejecutándose cuando solo una debía. El compilador de Swift hace ese error imposible.</p>
+<pre><code class="language-swift">// ❌ Ni siquiera compila: faltan llaves
+// if activo print("encendido")
+
+// ✅ Siempre con bloque
+if activo {
+    print("encendido")
+}</code></pre>
+<h3>Solo Bool vale como condición</h3>
+<p>A diferencia de JavaScript o Python, un número o string no cuenta como condición: debe ser un <code>Bool</code> real. Esto mata la familia de errores de "¿0 es falso aquí?" y obliga a escribir intenciones explícitas:</p>
+<pre><code class="language-swift">let visitas = 0
+// if visitas { }            ❌ error: 'Int' is not convertible to 'Bool'
+if visitas == 0 { }          // ✅ la intención queda escrita
+
+// Operadores lógicos: ! , && , ||
+if temperatura &gt;= 20 &amp;&amp; temperatura &lt;= 30 {
+    print("Zona de confort")
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Para elegir entre dos valores (no entre dos acciones) existe el operador ternario: <code>let estado = visitas &gt; 0 ? "con tráfico" : "vacío"</code>. Úsalo solo en asignaciones cortas; para lógica compleja, mejor un <code>if</code> completo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="switch-exhaustivo">
+    <h2><i class="fa-solid fa-arrows-split-up-and-left"></i> Switch exhaustivo</h2>
+    <div class="doc-content">
+<p>El <code>switch</code> de Swift no se parece al de C: compara cualquier tipo (números, strings, tuplas, enums…), no necesita <code>break</code> porque <strong>cada caso termina solo</strong> y, sobre todo, debe ser <strong>exhaustivo</strong>: entre todos los casos debe cubrirse cada valor posible. Si no lo está, el programa ni compila.</p>
+<pre><code class="language-swift">let codigo = "ES"
+
+switch codigo {
+case "ES", "MX", "AR":       // varios valores por caso, separados por comas
+    print("País hispanohablante")
+case "DE":
+    print("Alemania")
+default:                     // obligatorio: cubre todo lo demás
+    print("Otro país")
+}</code></pre>
+<h3>Sin caídas accidentales</h3>
+<p>En C, olvidar un <code>break</code> hacía que la ejecución "cayera" al siguiente caso. Swift elimina esa trampa: cada caso es independiente. Si de verdad quieres heredar el siguiente caso, debes pedirlo explícitamente con la palabra <code>fallthrough</code>, dejando rastro en el código:</p>
+<pre><code class="language-swift">let nivel = 1
+var puntos = 0
+
+switch nivel {
+case 1:
+    puntos += 100
+    fallthrough          // continúa deliberadamente en el caso 2
+case 2:
+    puntos += 50
+default:
+    break                // 'default' vacío necesita break o algo ejecutable
+}
+print(puntos)   // 150</code></pre>
+<blockquote class="aside aside-note"><p>Cuando compares contra los casos de un <code>enum</code>, el compilador conoce todos los valores posibles: te avisará si falta alguno y hasta ofrecerá insertarlos. Por eso el switch brilla especialmente con enums.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
 
   <section id="switch-avanzado">
-    <h2>Switch avanzado</h2>
+    <h2><i class="fa-solid fa-diagram-project"></i> Switch avanzado: rangos, tuplas y where</h2>
     <div class="doc-content">
-<pre><code class="language-swift">switch nota {
-case 90...100: print("Excelente")
-case 70..&lt;90:  print("Aprobado")
-case let x where x &lt; 70: print("Reprobado: \(x)")
-default: break
+<p>Aquí empieza la magia. Un caso de switch puede ser un patrón completo: rangos numéricos, tuplas con comodines, variables capturadas (<em>value binding</em>) y condiciones extra con <code>where</code>. Muchas cadenas larguísimas de if/else se convierten en una tabla de decisión legible:</p>
+<pre><code class="language-swift">let nota = 84
+
+switch nota {
+case 90...100:
+    print("Excelente")
+case 70..&lt;90:
+    print("Aprobado")
+case let x where x &lt; 70:
+    print("Reprobado: \(x)")   // captura el valor y lo filtra
+default:
+    print("Fuera de rango")
+}</code></pre>
+<h3>Tuplas, value binding y where en un solo caso</h3>
+<p>Con tuplas comparas varias cosas a la vez usando <code>_</code> para ignorar partes; <code>case let x</code> captura valores mientras decides (<em>value binding</em>) y <code>where</code> añade la condición final:</p>
+<pre><code class="language-swift">let punto = (x: 1, y: 1)
+
+switch punto {
+case (0, 0):
+    print("Origen")
+case (_, 0):
+    print("Sobre el eje X")
+case (let x, let y) where x == y:
+    print("Diagonal positiva en (\(x), \(y))")
+case let (x, y):
+    print("Punto general (\(x), \(y))")   // captura sin condición
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="bucles-for-in">
+    <h2><i class="fa-solid fa-repeat"></i> Bucles for-in y rangos</h2>
+    <div class="doc-content">
+<p>El <code>for-in</code> es el bucle por excelencia de Swift: recorre cualquier secuencia (rangos, arrays, strings, diccionarios) sin manejar contadores a mano, lo que elimina de raíz los clásicos errores de "me pasé uno" (<em>off-by-one</em>). Los rangos definen los límites:</p>
+<pre><code class="language-swift">for i in 1...5 {        // cerrado: 1, 2, 3, 4, 5 (incluye el 5)
+    print(i)
 }
 
-let punto = (1, 1)
-switch punto {
-case (0, 0): print("origen")
-case (_, 0): print("eje X")
-case (let x, let y) where x == y: print("diagonal")
-default: print("cuadrante")
+for i in 0..&lt;5 {        // medio abierto: 0, 1, 2, 3, 4 (ideal con count)
+    print("vuelta \(i)")
+}
+
+for _ in 0..&lt;3 {        // _ ignora el valor: solo repito 3 veces
+    print("clap!")
+}
+
+for i in (1...5).reversed() {   // cuenta atrás: 5, 4, 3, 2, 1
+    print(i)
 }</code></pre>
+<h3>stride: pasos personalizados</h3>
+<p>Cuando necesitas saltos distintos de 1 (pares, cuenta atrás de 10 en 10, decimales), <code>stride</code> genera la secuencia. La diferencia clave está en si el final queda incluido o no:</p>
+<table><thead><tr><th>Llamada</th><th>Genera</th><th>¿Incluye el final?</th></tr></thead><tbody><tr><td><code>stride(from: 0, to: 10, by: 2)</code></td><td>0, 2, 4, 6, 8</td><td>No (<code>to</code> es exclusivo)</td></tr><tr><td><code>stride(from: 0, through: 10, by: 2)</code></td><td>0, 2, 4, 6, 8, 10</td><td>Sí (<code>through</code> incluye)</td></tr><tr><td><code>stride(from: 3, to: 0, by: -1)</code></td><td>3, 2, 1</td><td>No; con paso negativo cuenta hacia atrás</td></tr></tbody></table>
+<pre><code class="language-swift">for minuto in stride(from: 10, to: 0, by: -2) {
+    print("Despegue en \(minuto)…")
+}   // decimales también: stride(from: 0.0, through: 1.0, by: 0.25)</code></pre>
+<p>---</p>
     </div>
   </section>
 
   <section id="bucles">
-    <h2>Bucles</h2>
+    <h2><i class="fa-solid fa-arrows-rotate"></i> while, repeat-while y saltos etiquetados</h2>
     <div class="doc-content">
-<pre><code class="language-swift">for i in 1...5 { print(i) }
-for i in stride(from: 10, to: 0, by: -2) { print(i) }
+<p>Cuando no sabes cuántas iteraciones necesitas (esperar un evento, validar entrada, simular), los bucles condicionales toman el relevo. <code>while</code> evalúa la condición <em>antes</em> de cada vuelta; <code>repeat-while</code> ejecuta primero y pregunta después, garantizando al menos una vuelta:</p>
+<table><thead><tr><th>Bucle</th><th>¿Cuándo evalúa?</th><th>Ejecuciones mínimas</th><th>Caso típico</th></tr></thead><tbody><tr><td><code>while cond { }</code></td><td>Antes de cada vuelta</td><td>Cero</td><td>Puede que no toque iterar ni una vez</td></tr><tr><td><code>repeat { } while cond</code></td><td>Después de cada vuelta</td><td>Una</td><td>Menús, pedir dato y validarlo</td></tr></tbody></table>
+<pre><code class="language-swift">// while: puede no ejecutarse nunca
+var dado = 0
+while dado != 6 {
+    dado = Int.random(in: 1...6)
+}
+print("¡Seis tras tirar!")
 
-let nombres = ["Ana", "Luis"]
-for (i, n) in nombres.enumerated() { print("\(i): \(n)") }
+// repeat-while: mínimo una vuelta (menús interactivos)
+var opcion: String
+repeat {
+    opcion = ["jugar", "salir"].randomElement()!
+    print("Menú: \(opcion)")
+} while opcion != "salir"</code></pre>
+<h3>break y continue con etiquetas</h3>
+<p><code>continue</code> salta a la siguiente vuelta y <code>break</code> abandona el bucle. En bucles anidados, ambos actúan sobre el bucle más interno; las <strong>etiquetas</strong> permiten nombrar un bucle exterior y saltarlo directamente:</p>
+<pre><code class="language-swift">tablas: for i in 1...10 {
+    for j in 1...10 {
+        if i * j &gt; 40 {
+            break tablas        // abandona AMBOS bucles a la vez
+        }
+        if j % 2 == 0 {
+            continue tablas     // pasa a la siguiente vuelta del EXTERIOR
+        }
+        print("\(i) × \(j) = \(i * j)")
+    }
+}</code></pre>
+<blockquote class="aside aside-caution"><p>Vigila las condiciones de salida: si nada dentro del bucle puede volver la condición falsa, tienes un bucle infinito y el programa se cuelga. Antes de escribir <code>while true</code>, asegúrate de que existe un <code>break</code> alcanzable.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
 
-var contador = 0
-while contador &lt; 3 { contador += 1 }</code></pre>
+  <section id="guard-y-salidas-tempranas">
+    <h2><i class="fa-solid fa-door-open"></i> Guard y salidas tempranas</h2>
+    <div class="doc-content">
+<p>Ya viste <code>guard let</code> desenvolviendo optionals; aquí interesa su papel como herramienta general de control de flujo. Un <code>guard</code> exige que su condición sea cierta para continuar, y su bloque <code>else</code> debe abandonar el ámbito (<code>return</code>, <code>break</code>, <code>continue</code>…). El resultado: las validaciones se concentran arriba y el código importante queda plano.</p>
+<table><thead><tr><th>Criterio</th><th>if</th><th>guard</th></tr></thead><tbody><tr><td>Camino principal</td><td>Dentro del bloque (más indentación)</td><td>Fuera, tras el guard (sin anidar)</td></tr><tr><td>Obliga a salir si falla</td><td>No</td><td>Sí, compilador lo verifica</td></tr><tr><td>Ideal para</td><td>Ramas alternativas equivalentes</td><td>Validaciones previas imprescindibles</td></tr></tbody></table>
+<pre><code class="language-swift">let pedidos = [
+    (cliente: "Ana", unidades: 3),
+    (cliente: "", unidades: 0),      // fila inválida
+    (cliente: "Luis", unidades: 12)
+]
+
+for pedido in pedidos {
+    guard !pedido.cliente.isEmpty, (1...10).contains(pedido.unidades) else {
+        print("Descartado: \(pedido)")
+        continue                     // guard también funciona en bucles
+    }
+    print("Procesando \(pedido.unidades) uds. para \(pedido.cliente)")
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Lee <code>guard</code> como una afirmación: "garantizo que el cliente no esté vacío y las unidades sean válidas; de lo contrario, fuera". Ese estilo declarativo hace que las precondiciones de cada función se lean como una lista de requisitos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas de control de flujo</h2>
+    <div class="doc-content">
+<h3>1. Prefiere switch sobre cadenas largas de else-if</h3>
+<pre><code class="language-swift">// ❌ Difícil de leer y mantener
+if codigo == 200 { ok() }
+else if codigo == 301 || codigo == 308 { redirige() }
+else if codigo &gt;= 400 && codigo &lt; 500 { errorCliente() }
+else if codigo &gt;= 500 { errorServidor() }
+
+// ✅ Tabla de decisión clara
+switch codigo {
+case 200:              ok()
+case 301, 308:         redirige()
+case 400..&lt;500:        errorCliente()
+case 500...:           errorServidor()
+default:               print("Código inusual: \(codigo)")
+}</code></pre>
+<h3>2. Sal pronto, anida poco</h3>
+<p>Si una función acumula tres niveles de indentación "porque sí", extrae validaciones con <code>guard</code> o divide en funciones pequeñas. Cada nivel de anidación multiplica los estados mentales que el lector debe sostener.</p>
+<h3>3. Comprueba la disponibilidad de APIs del sistema</h3>
+<p>Al tocar frameworks de Apple, tu código puede ejecutarse en versiones antiguas del sistema operativo. Los checks de disponibilidad evitan crashes y comunican el requisito mínimo:</p>
+<pre><code class="language-swift">if #available(iOS 17, *) {
+    usarAPIsNuevas()          // camino moderno
+} else {
+    alternativaCompatible()   // soporte para versiones previas
+}</code></pre>
+<h3>4. Nombra las condiciones complejas</h3>
+<pre><code class="language-swift">// ❌ ¿Qué significa esto dentro de seis meses?
+if edad &gt;= 13 &amp;&amp; edad &lt;= 17 &amp;&amp; tutor || edad &gt;= 18 { ... }
+
+// ✅ Extrae la intención a constantes booleanas
+let esAdolescenteConTutor = (13...17).contains(edad) &amp;&amp; tieneTutor
+let esAdulto = edad &gt;= 18
+if esAdolescenteConTutor || esAdulto { ... }</code></pre>
+<blockquote class="aside aside-success"><p>Un buen test mental: lee tus condiciones en voz alta. Si necesitas respirar a mitad de frase, divídelas. El control de flujo bien escrito se lee casi como español: <em>"si hay stock y es cliente frecuente, aplica descuento"</em>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Del más sencillo al más retador:</p>
+<ol>
+<li><strong>Clasificador de nota:</strong> pide un valor <code>nota: Int</code> y clasifícalo con un único <code>switch</code> usando rangos: sobresaliente (90+), notable (70–89), aprobado (50–69) y suspenso (&lt;50); imprime también la nota capturada con value binding.</li>
+<li><strong>FizzBuzz swiftiano:</strong> recorre <code>1...30</code> imprimiendo "Fizz" para múltiplos de 3, "Buzz" para múltiplos de 5, "FizzBuzz" para ambos (pista: un <code>switch</code> sobre la tupla <code>(n % 3, n % 5)</code> queda elegante).</li>
+<li><strong>Cazador de productos:</strong> con bucles anidados sobre <code>1...9</code>, encuentra el primer producto <code>i * j</code> mayor que 60 usando una etiqueta y <code>break</code>; imprime los factores hallados y cuántas vueltas diste (contador).</li>
+<li><strong>Menú de cajero:</strong> simula un menú con <code>repeat-while</code> eligiendo opciones aleatorias de un array <code>["consultar", "retirar", "salir"]</code>; valida con <code>guard</code> que el saldo simulado no baje de cero al retirar montos aleatorios, y termina solo con "salir".</li>
+<li><strong>Depuradora de registros:</strong> dada una lista de tuplas <code>(nombre: String, edad: Int?, email: String?)</code>, procesa cada registro con <code>guard</code> encadenado: descarta con mensaje específico los que fallen cada validación (nombre vacío, edad nil o menor de 14, email nil o sin "@") y devuelve el array de usuarios válidos formateados.</li>
+</ol>
     </div>
   </section>

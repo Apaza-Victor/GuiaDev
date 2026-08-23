@@ -1,60 +1,199 @@
 <!-- 9. Subconsultas y CTEs - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="subconsultas-escalares-y-con-in">
-    <h2>Subconsultas escalares y con IN</h2>
+<section id="subconsultas-escalares-y-con-in">
+    <h2><i class="fa-solid fa-magnifying-glass"></i> Subconsultas escalares y con IN</h2>
     <div class="doc-content">
-<pre><code class="language-sql">-- Escalar: un solo valor
-SELECT Nombre, Precio FROM dbo.Productos
-WHERE Precio &gt; (SELECT AVG(Precio) FROM dbo.Productos);
+        <p>Una subconsulta es un SELECT dentro de otro. La <strong>escalar</strong> devuelve un único valor usable donde iría una columna; la de lista alimenta IN/ANY:</p>
+        <pre><code class="language-sql">-- Escalar en SELECT (contexto por fila):
+SELECT nombre,
+       salario,
+       (SELECT AVG(salario) FROM Empleados) AS media_empresa,
+       salario - (SELECT AVG(salario) FROM Empleados) AS diferencia
+FROM Empleados;
 
--- Lista de valores
-SELECT Nombre FROM dbo.Productos
-WHERE CategoriaId IN (SELECT Id FROM dbo.Categorias WHERE Activa = 1);</code></pre>
+-- Escalar en WHERE:
+SELECT * FROM Pedidos
+WHERE total = (SELECT MAX(total) FROM Pedidos);
+
+-- Lista con IN:
+SELECT nombre FROM Clientes
+WHERE cliente_id IN (
+    SELECT cliente_id FROM Pedidos WHERE total &gt; 1000
+);
+
+-- NOT IN + NULL = TRAMPA CLÁSICA:
+SELECT * FROM Clientes
+WHERE cliente_id NOT IN (SELECT cliente_id FROM Pedidos);
+-- si la subconsulta devuelve UN NULL: resultado VACÍO siempre ⚠️</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>NOT IN con subconsulta que contenga un solo NULL devuelve cero filas silenciosamente (three-valued logic). Alternativas seguras: NOT EXISTS, o LEFT JOIN ... IS NULL. Es el bug #1 al migrar lógica entre motores.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="exists-y-subconsultas-correlacionadas">
-    <h2>EXISTS y subconsultas correlacionadas</h2>
+<section id="exists-y-subconsultas-correlacionadas">
+    <h2><i class="fa-solid fa-rotate"></i> EXISTS y correlacionadas</h2>
     <div class="doc-content">
-<pre><code class="language-sql">-- Productos con al menos una venta
-SELECT p.Nombre
-FROM dbo.Productos p
-WHERE EXISTS (SELECT 1 FROM dbo.Ventas v WHERE v.ProductoId = p.Id);</code></pre>
-<blockquote class="aside aside-tip">
-<p><code>EXISTS</code> suele ser más eficiente que <code>IN</code> con subconsultas grandes porque deja de buscar al primer match.</p>
-</blockquote>
+        <p>Una subconsulta <strong>correlacionada</strong> referencia columnas del query externo y se re-evalúa por fila. Con EXISTS solo importa SI existe match, no qué valores:</p>
+        <pre><code class="language-sql">-- El patrón seguro anti-huérfanos:
+SELECT c.nombre FROM Clientes c
+WHERE EXISTS (
+    SELECT 1 FROM Pedidos p          -- 1 = no leo datos, solo pruebo existencia
+    WHERE p.cliente_id = c.cliente_id
+      AND p.total &gt; 1000
+);
+
+-- Y su negación segura:
+SELECT c.nombre FROM Clientes c
+WHERE NOT EXISTS (
+    SELECT 1 FROM Pedidos p WHERE p.cliente_id = c.cliente_id
+);   -- ✅ inmune a NULLs, optimizador lo adora
+
+-- Correlacionada como columna calculada:
+SELECT p.pedido_id, p.total,
+       (SELECT SUM(total) FROM Pedidos x
+        WHERE x.cliente_id = p.cliente_id) AS acumulado_cliente
+FROM Pedidos p;</code></pre>
+
+        <table>
+            <thead>
+                <tr><th>Forma</th><th>Cuándo gana</th><th>Peligro</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>IN (subquery)</code></td><td>Listas pequeñas, sin NULLs posibles</td><td>NOT IN + NULL = vacío trampa</td></tr>
+                <tr><td><code>EXISTS</code></td><td>Solo importa existencia; semántica NULL-safe</td><td>Ninguno relevante ✅ default profesional</td></tr>
+                <tr><td>Correlacionada escalar</td><td>Filas pocas, índice cubre lookup</td><td>Re-ejecución por fila en tablas enormes</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>El optimizador moderno reescribe IN↔EXISTS frecuentemente, pero la SEMÁNTICA difiere ante NULLs. Escribe EXISTS por defecto para "existe/no-existe" y deja IN para listas literales ('ES','MX','AR').</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="cte-common-table-expressions">
-    <h2>CTE: Common Table Expressions</h2>
+<section id="cte-common-table-expressions">
+    <h2><i class="fa-solid fa-cubes-stacked"></i> CTEs (Common Table Expressions)</h2>
     <div class="doc-content">
-<pre><code class="language-sql">WITH ProductosCaros AS (
-  SELECT Id, Nombre, Precio FROM dbo.Productos WHERE Precio &gt; 10000
+        <p>Una CTE define conjuntos temporales CON NOMBRE que viven durante UNA sola sentencia — legibilidad estructurada sin persistir nada:</p>
+        <pre><code class="language-sql">WITH VentasPorCliente AS (
+    SELECT cliente_id, SUM(total) AS gastado
+    FROM Pedidos
+    GROUP BY cliente_id
+),
+ClientesVIP AS (
+    SELECT cliente_id, gastado
+    FROM VentasPorCliente           -- CTEs pueden encadenarse
+    WHERE gastado &gt; 5000
 )
-SELECT pc.Nombre, c.Nombre AS Categoria
-FROM ProductosCaros pc
-LEFT JOIN dbo.Categorias c ON c.Id = pc.Id;
+SELECT c.nombre, v.gastado
+FROM ClientesVIP v
+JOIN Clientes c ON c.cliente_id = v.cliente_id
+ORDER BY v.gastado DESC;
 
--- Varias CTEs encadenadas
-WITH Base AS (...), Resumen AS (...)
-SELECT * FROM Resumen;</code></pre>
-    </div>
-  </section>
-
-  <section id="cte-recursiva-jerarquias">
-    <h2>CTE recursiva (jerarquías)</h2>
-    <div class="doc-content">
-<pre><code class="language-sql">WITH Jerarquia AS (
-  SELECT Id, Nombre, JefeId, 1 AS Nivel
-  FROM dbo.Empleados WHERE JefeId IS NULL
-  UNION ALL
-  SELECT e.Id, e.Nombre, e.JefeId, j.Nivel + 1
-  FROM dbo.Empleados e
-  INNER JOIN Jerarquia j ON e.JefeId = j.Id
+-- CTE con parámetros de contexto (TOP/DELETE/UPDATE legibles):
+WITH PeoresStock AS (
+    SELECT TOP 10 producto_id
+    FROM Productos ORDER BY stock ASC
 )
-SELECT REPLICATE('— ', Nivel-1) + Nombre AS Organigrama, Nivel
-FROM Jerarquia
-OPTION (MAXRECURSION 100);</code></pre>
+DELETE FROM Productos
+WHERE producto_id IN (SELECT producto_id FROM PeoresStock);</code></pre>
+
+        <h3>CTE vs tabla derivada vs vista vs temporal</h3>
+        <table>
+            <thead>
+                <tr><th>Herramienta</th><th>Vida</th><th>Reutilizable en query?</th><th>Ideal para…</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>CTE</td><td>Una sentencia</td><td>Múltiples referencias ✅</td><td>Pipelines legibles multi-paso</td></tr>
+                <tr><td>Tabla derivada <code>(FROM (...))</code></td><td>Una sentencia</td><td>No (una vez)</td><td>Transformaciones puntuales</td></tr>
+                <tr><td>Vista</td><td>Permanente</td><td>Todas las sesiones</td><td>Lógica compartida estandarizada</td></tr>
+                <tr><td>#Temporal</td><td>La sesión/procedimiento</td><td>Con índices propios</td><td>Resultados grandes reusables multi-query</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>Mito frecuente: "la CTE materializa y se calcula una vez". Falso: SQL Server puede expandirla inline y re-evaluarla en cada referencia. Si tu CTE pesada se usa dos veces y notas doble coste → #tabla temporal con índice.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="cte-recursiva-jerarquias">
+    <h2><i class="fa-solid fa-sitemap"></i> CTE recursiva: jerarquías completas</h2>
+    <div class="doc-content">
+        <p>El superpoder exclusivo real de las CTEs: recorrerse a sí mismas. Ancla + recursión hasta agotar filas nuevas:</p>
+        <pre><code class="language-sql">WITH Organigrama AS (
+    -- ANCLA: la raíz:
+    SELECT id, nombre, jefe_id, 0 AS nivel,
+           CAST(nombre AS NVARCHAR(400)) AS ruta
+    FROM Empleados WHERE jefe_id IS NULL
+
+    UNION ALL
+
+    -- RECURSIÓN: hijos del nivel anterior:
+    SELECT e.id, e.nombre, e.jefe_id, o.nivel + 1,
+           CAST(o.ruta + ' &gt; ' + e.nombre AS NVARCHAR(400))
+    FROM Empleados e
+    JOIN Organigrama o ON e.jefe_id = o.id
+)
+SELECT REPLICATE(N'    ', nivel) + nombre AS organigrama, nivel, ruta
+FROM Organigrama
+ORDER BY ruta;
+
+-- Descendientes de UN nodo concreto:
+WITH Subordinados AS (
+    SELECT id FROM Empleados WHERE jefe_id = @jefe
+    UNION ALL
+    SELECT e.id FROM Empleados e JOIN Subordinados s ON e.jefe_id = s.id
+)
+SELECT COUNT(*) AS reportes_totales FROM Subordinados;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Pieza</th><th>Rol</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Ancla</td><td>Filas iniciales (raíz o nodo de arranque)</td></tr>
+                <tr><td>UNION ALL</td><td>Une ancla+recursión (ALL obligatorio aquí)</td></tr>
+                <tr><td>Miembro recursivo</td><td>Referencia la propia CTE: genera siguiente nivel</td></tr>
+                <tr><td>OPTION (MAXRECURSION n)</td><td>Tope iteraciones (default 100; 0 = ilimitado)</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>Datos ciclicos (A→B→C→A) disparan recursión infinita: error 530 al llegar a MAXRECURSION. Protege con rutas visitadas en la recursión o OPTION (MAXRECURSION 50) consciente mientras depuras.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>NOT IN con NULLs en lista</td><td>Resultado vacío inexplicable</td><td>NOT EXISTS / filtrar NULLs primero</td></tr>
+                <tr><td>CTE reutilizada fuera de su sentencia</td><td>"Invalid object name"</td><td>CTE vive SOLO en el statement siguiente inmediato</td></tr>
+                <tr><td>Asumir materialización de CTE</td><td>Coste duplicado con múltiples referencias</td><td>#temp con índice cuando pesa y reusa</td></tr>
+                <tr><td>Recursión sin condición de corte clara</td><td>Error MAXRECURSION 100</td><td>Ancla correcta + datos acíclicos + MAXRECURSION explícito</td></tr>
+                <tr><td>Subconsulta escalar devolviendo &gt;1 fila</td><td>"Subquery returned more than 1 value"</td><td>TOP 1 + ORDER BY o agregar (MAX/MIN)</td></tr>
+                <tr><td>UNION ALL faltante en CTE recursiva</td><td>Sintaxis inválida</td><td>Siempre UNION ALL entre ancla y recursión</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Cazador de NOT IN</strong>: construye caso con NULL en sublista demostrando vaciado; reescribe con NOT EXISTS y compara planes.</li>
+            <li><strong>Pipeline legible</strong>: refactoriza una query de 4 niveles anidados en pipeline de 3 CTEs encadenadas con nombres de negocio.</li>
+            <li><strong>Organigrama completo</strong>: implementa la CTE recursiva con niveles y rutas; añade OPTION(MAXRECURSION) y cuenta iteraciones.</li>
+            <li><strong>BOM explosión</strong>: jerarquía de componentes de producto (pieza→subpiezas) recursiva sumando costes acumulados por rama.</li>
+            <li><strong>CTE vs #temp</strong>: CTE pesada referida 2 veces; mide lecturas vs versión #tabla temporal indexada; documenta cuándo cambia la balanza.</li>
+        </ol>
+    </div>
+</section>

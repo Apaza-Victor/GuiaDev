@@ -2,41 +2,144 @@
 <!-- Contenido local del proyecto -->
 
   <section id="por-que-rust">
-    <h2>¿Por qué Rust?</h2>
+    <h2><i class="fa-solid fa-shield-halved"></i> ¿Por qué existe Rust?</h2>
     <div class="doc-content">
-<ul>
-<li>Seguridad de memoria sin garbage collector</li>
-<li>Rendimiento comparable a C/C++</li>
-<li>Excelente herramienta integrada: cargo, rustfmt, clippy</li>
-<li>El lenguaje más valorado en encuestas de desarrolladores</li>
-</ul>
+<p><strong>Rust</strong> nació en 2006 como el proyecto personal de <strong>Graydon Hoare</strong>, un ingeniero frustrado por un bug de memoria que hacía fallar el software de un ascensor. En 2009 <strong>Mozilla</strong> patrocinó el desarrollo para reconstruir su motor CSS, y en mayo de 2015 se publicó la versión estable <strong>Rust 1.0</strong>. La meta era ambiciosa: lograr el rendimiento de C/C++ eliminando, de raíz, toda una familia de errores que llevan décadas causando vulnerabilidades.</p>
+<h3>El problema que resuelve: la seguridad sin recolector de basura</h3>
+<p>Java o Python garantizan memoria con un <em>garbage collector</em> que pausa tu programa; C/C++ dan control total pero delegan toda la responsabilidad en ti. Rust propone una tercera vía: el modelo de <strong>ownership</strong>, reglas que el compilador verifica en tiempo de compilación. El resultado es binario nativo tan rápido como C donde fugas, punteros colgantes y carreras de datos simplemente no compilan:</p>
+<pre><code class="language-rust">fn main() {
+    let mut nombres = vec![String::from("Ana"), String::from("Luis")];
+    let primero = &amp;nombres[0];           // préstamo inmutable
+    nombres.push(String::from("Beto")); // ❌ ERROR: mutar durante un préstamo
+    println!("El primero es {}", primero);
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Si tu código compila en Rust, la memoria ya es segura: sin segfaults por punteros nulos, sin doble liberación y sin carreras de datos. Ese es el lema "fearless concurrency".</p></blockquote>
+<h3>Ventajas frente a trade-offs</h3>
+<p>Ningún lenguaje es gratis. Rust cobra su seguridad en forma de curva de aprendizaje y tiempos de compilación, y conviene saberlo antes de empezar:</p>
+<table><thead><tr><th>Ventaja</th><th>Trade-off asociado</th></tr></thead><tbody><tr><td><strong>Memoria segura garantizada al compilar</strong></td><td>Curva de aprendizaje pronunciada (ownership, borrowing, lifetimes)</td></tr><tr><td><strong>Rendimiento comparable a C/C++</strong></td><td>Tiempos de compilación más largos que lenguajes interpretados</td></tr><tr><td><strong>Herramienta integrada excelente (cargo, clippy, rustfmt)</strong></td><td>Ecosistema más joven; menos librerías que en Java o Python</td></tr><tr><td><strong>Mensajes de error didácticos con sugerencias</strong></td><td>Luchar contra el "borrow checker" desanima a principiantes</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="casos-de-uso">
+    <h2><i class="fa-solid fa-earth-americas"></i> Dónde se usa Rust en el mundo real</h2>
+    <div class="doc-content">
+<p>Rust ya no es un experimento académico: está dentro del kernel de Linux, del navegador que quizás usas ahora mismo y de la infraestructura que sirve gran parte del tráfico web. Su nicho natural son los lugares donde antes solo se atrevía C/C++ pero donde un fallo de memoria sale carísimo.</p>
+<table><thead><tr><th>Área</th><th>Proyectos reales</th><th>Por qué Rust</th></tr></thead><tbody><tr><td><strong>Herramientas CLI</strong></td><td>ripgrep, fd, bat</td><td>Binario único, arranque instantáneo, multiplataforma</td></tr><tr><td><strong>Navegadores</strong></td><td>Firefox (componentes de Servo)</td><td>Paralelismo seguro para renderizado CSS</td></tr><tr><td><strong>Kernels y drivers</strong></td><td>Kernel Linux (desde 6.1), drivers de Windows</td><td>Menos del 70% de las vulnerabilidades de CVEs son de memoria</td></tr><tr><td><strong>WebAssembly</strong></td><td>Juegos, módulos Figma/1Password</td><td>Binarios pequeños y predecibles para WASM</td></tr><tr><td><strong>Servidores y cloud</strong></td><td>AWS Firecracker, Discord, Cloudflare</td><td>Baja latencia sin GC, consumo mínimo de RAM</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>Desde la versión 6.1 del kernel Linux (2022) ya se aceptan drivers escritos en Rust: la comunidad espera reducir drásticamente los bugs de memoria en código nuevo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-rustup">
+    <h2><i class="fa-solid fa-download"></i> Instalación con rustup</h2>
+    <div class="doc-content">
+<p>La forma oficial de instalar Rust es <strong>rustup</strong>, un gestor de versiones que instala todo el toolchain y te permite cambiar entre canales (<code>stable</code>, <code>beta</code>, <code>nightly</code>). Esta guía usa <strong>Edition 2021 con Rust 1.75+</strong>, disponible en el canal estable actual.</p>
+<pre><code class="language-bash"># Windows: descarga y ejecuta https://rustup.rs (rustup-init.exe)
+# macOS / Linux:
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Verificar la instalación
+rustc --version   # compilador
+cargo --version   # gestor de proyectos y dependencias
+
+# Mantener todo al día
+rustup update
+
+# Abrir la documentación local completa
+rustup doc</code></pre>
+<table><thead><tr><th>Componente</th><th>Rol</th></tr></thead><tbody><tr><td><code>rustup</code></td><td>Gestor del toolchain: instala y actualiza versiones de Rust</td></tr><tr><td><code>rustc</code></td><td>El compilador: transforma .rs en binarios nativos</td></tr><tr><td><code>cargo</code></td><td>Sistema de builds + gestor de paquetes (crates.io)</td></tr><tr><td><code>clippy</code></td><td>Linter con más de 700 reglas de buenas prácticas</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>En Windows, rustup necesita las <strong>C++ Build Tools de Visual Studio</strong> (el enlazador MSVC). Si la instalación falla, instala "Desktop development with C++" desde el instalador de Visual Studio y vuelve a intentarlo.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="primer-proyecto">
-    <h2>Primer proyecto</h2>
+    <h2><i class="fa-solid fa-rocket"></i> Tu primer proyecto con cargo</h2>
     <div class="doc-content">
-<pre><code class="language-bash">rustup update
-cargo new hola
-cd hola
+<p>Olvida compilar archivos sueltos: en Rust siempre trabajas dentro de un proyecto gestionado por <strong>cargo</strong>. Un solo comando crea la estructura completa, lista para crecer:</p>
+<pre><code class="language-bash">cargo new hola_guia_dev
+cd hola_guia_dev
 cargo run</code></pre>
-<pre><code class="language-rust">fn main() {
-    println!("Hola, GuiaDev!");
+<p>Cargo genera <code>Cargo.toml</code> (manifiesto) y <code>src/main.rs</code> (punto de entrada), listos para crecer. Además distingue tres formas de trabajar sobre tu proyecto, cada una pensada para un momento distinto del ciclo de desarrollo:</p>
+<table><thead><tr><th>Comando</th><th>Qué hace</th><th>Cuándo usarlo</th></tr></thead><tbody><tr><td><code>cargo check</code></td><td>Valida tipos y ownership SIN generar binario</td><td>Verificación rápida mientras escribes código</td></tr><tr><td><code>cargo build</code></td><td>Compila a <code>target/debug/</code> sin ejecutar</td><td>Preparar el ejecutable para pruebas locales</td></tr><tr><td><code>cargo run</code></td><td>Compila (si hace falta) y ejecuta</td><td>Probar el programa en desarrollo</td></tr><tr><td><code>cargo build --release</code></td><td>Compila optimizado a <code>target/release/</code></td><td>Entregar o medir rendimiento real</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p>Acostúmbrate al ciclo <code>cargo check</code> &rarr; editar &rarr; <code>cargo check</code>. Es varias veces más rápido que <code>cargo build</code> porque omite la generación del binario, y detecta el 90% de los errores del borrow checker igualmente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="anatomia-del-hello-world">
+    <h2><i class="fa-solid fa-code"></i> Anatomía del Hello World y println!</h2>
+    <div class="doc-content">
+<p>El archivo <code>src/main.rs</code> generado contiene apenas dos líneas, pero encierran dos conceptos clave del lenguaje: la función de entrada <code>main</code> y las <strong>macros</strong>.</p>
+<pre><code class="language-rust">fn main() {                          // fn declara funciones; main es el punto de entrada
+    println!("Hola, GuiaDev!");      // macro de impresión con salto de línea
 }</code></pre>
+<h3>¿Por qué println! lleva signo de exclamación?</h3>
+<p>No es una función: es una <strong>macro</strong>. El <code>!</code> indica que se expande en tiempo de compilación, lo que permite aceptar cualquier número de argumentos y validar el formato antes de ejecutar el programa. Si pasas un tipo incorrecto al marcador, el error aparece al compilar, no en producción.</p>
+<pre><code class="language-rust">fn main() {
+    let nombre = "Rust";
+    let anio = 2026;
+    let pi = 3.14159;
+
+    println!("Lenguaje: {}", nombre);              // marcador posicional clásico
+    println!("Año: {}", anio);
+    println!("Pi con 2 decimales: {:.2}", pi);     // formato de precisión
+    println!("{nombre} también interpola directo"); // captura variables del scope
+    println!("Depuración: {:?}", (nombre, anio));  // {:?} formato Debug para tuplas
+    print!("Sin salto");                            // print! NO agrega \n
+    println!();                                     // línea en blanco
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Desde Rust 1.58, <code>println!("{nombre}")</code> interpola variables locales sin pasarlas como argumento: es el estilo recomendado hoy en la mayoría de proyectos.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="variables-y-mutabilidad">
-    <h2>Variables y mutabilidad</h2>
+    <h2><i class="fa-solid fa-key"></i> Primer contacto: variables y mutabilidad</h2>
     <div class="doc-content">
-<pre><code class="language-rust">let x = 5;          // inmutable por defecto
-// x = 6;           // error!
-let mut y = 5;      // mutable
-y = 6;
+<p>Aquí aparece la primera sorpresa filosófica de Rust: <strong>toda variable es inmutable por defecto</strong>. No es capricho: si el estado no puede cambiar, razonar sobre el código (y paralelizarlo) se vuelve trivial. Cuando necesites modificar algo, lo declaras explícitamente con <code>mut</code>:</p>
+<pre><code class="language-rust">fn main() {
+    let x = 5;
+    // x = 6;            // ❌ error[E0384]: cannot assign twice to immutable variable
 
-let z = 5;
-let z = z + 1;      // shadowing: nueva variable
-let z = z * 2;      // 12</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> En Rust todo es inmutable por defecto: usa <code>mut</code> solo cuando realmente necesites cambiar el valor.</blockquote>
+    let mut y = 5;       // mut declara intención de cambiar el valor
+    y = 6;               // ✅ permitido
+    println!("y vale {}", y);
+
+    // Shadowing: crea una NUEVA variable que oculta a la anterior
+    let x = x + 1;       // nueva x = 6
+    let x = x * 2;       // nueva x = 12
+    let x = x.to_string(); // incluso puede CAMBIAR DE TIPO: i32 → String
+    println!("x ahora es texto: {}", x);
+}</code></pre>
+<p>No confundas shadowing con mutabilidad: el shadowing crea una variable NUEVA (puede cambiar de tipo y volver a ser inmutable), mientras <code>mut</code> modifica siempre la misma celda del mismo tipo hasta el fin del scope. El shadowing brilla en pipelines de transformación; <code>mut</code>, en acumuladores y contadores.</p>
+<blockquote class="aside aside-tip"><p>Regla práctica de la comunidad: empieza con <code>let</code>; añade <code>mut</code> solo cuando el compilador te lo pida. El código inmutable es más fácil de testear y de paralelizar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes-inicio">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes del principiante</h2>
+    <div class="doc-content">
+<p>Los primeros días con Rust se pelean más con el compilador que con el problema. Estas son las fricciones habituales y cómo resolverlas sin frustración:</p>
+<table><thead><tr><th>Error o warning típico</th><th>Causa</th><th>Solución</th></tr></thead><tbody><tr><td><code>error[E0384]</code> cannot assign twice to immutable variable</td><td>Asignar sin haber declarado <code>mut</code></td><td>Añade <code>mut</code> en la declaración</td></tr><tr><td><code>warning: unused variable</code></td><td>Variable declarada y nunca leída</td><td>Elimínala o renómbrala a <code>_variable</code> si es intencional</td></tr><tr><td><code>error[E0308]</code> mismatched types</td><td>Rust NUNCA convierte números implícitamente (i32 vs f64)</td><td>Convierte explícito: <code>x as f64</code> o <code>x.into()</code></td></tr><tr><td>Compilación lentísima en cada prueba</td><td>Usas <code>cargo run</code> para validar sintaxis</td><td>Alterna con <code>cargo check</code></td></tr><tr><td>Compilar archivo suelto con <code>rustc main.rs</code></td><td>Hábito heredado de otros lenguajes</td><td>Trabaja siempre dentro de un proyecto <code>cargo new</code></td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>Los mensajes de error de Rust incluyen secciones <code>help:</code> con el fix sugerido y, muchas veces, el comando exacto. Leerlos completos (no solo la primera línea) acorta enormemente la curva de aprendizaje.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Instalación verificada</strong>: instala rustup, ejecuta <code>rustc --version</code> y <code>cargo --version</code>, y abre <code>rustup doc</code> para localizar el libro oficial de Rust en tu máquina.</li>
+<li><strong>Primer proyecto</strong>: crea un proyecto llamado <code>presentacion</code> con <code>cargo new</code>, modifica <code>main.rs</code> para imprimir tu nombre, ciudad y año con <code>println!</code> usando interpolación directa <code>{variable}</code>, y ejecútalo con <code>cargo run</code>.</li>
+<li><strong>Formato avanzado</strong>: imprime el número pi con 1, 3 y 5 decimales usando especificadores <code>{:.1}</code>, <code>{:.3}</code> y <code>{:.5}</code>; luego imprime una tupla <code>("GuiaDev", 2026)</code> con <code>{:?}</code> y con <code>{:#?}</code> y observa la diferencia.</li>
+<li><strong>Inmutabilidad a propósito</strong>: declara una variable <code>puntos = 100</code>, intenta reasignarla sin <code>mut</code>, lee el error E0384 completo y corrígelo de DOS maneras distintas: con <code>mut</code> y con shadowing.</li>
+<li><strong>Mini calculadora</strong>: en un solo <code>main</code>, declara dos números enteros, calcula suma, resta, multiplicación y división entera, guarda cada resultado con shadowing incremental y muestra una tabla formateada en consola usando <code>println!</code> con marcadores alineados <code>{:&gt;5}</code>.</li>
+</ol>
+<p>En la próxima lección dominaremos Cargo a fondo: dependencias, perfiles, tests y documentación automática.</p>
     </div>
   </section>

@@ -1,35 +1,183 @@
-<!-- 4. Bucles - Bash (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="for">
-    <h2>for</h2>
+<!-- 5. Bucles - Bash (Lenguajes de Programación) -->
+<section id="for">
+    <h2><i class="fa-solid fa-repeat"></i> for: listas, rangos y estilo C</h2>
     <div class="doc-content">
-<pre><code class="language-bash">for fruta in manzana pera uva; do
-    echo "Me gusta la $fruta"
+        <p>El for de bash itera SOBRE LISTAS DE PALABRAS — no es numérico por defecto. Esta mentalidad ("para cada elemento de esta lista") desbloquea el 90% de los casos reales:</p>
+
+        <h3>For sobre lista</h3>
+        <pre><code class="language-bash"># Lista literal:
+for fruta in manzana pera uva; do
+    echo "Me como una $fruta"
 done
 
-for i in {1..5}; do echo "vuelta $i"; done
+# Sobre glob (archivos) — EL uso estrella:
+for archivo in *.log; do
+    [ -e "$archivo" ] || continue      # si no hay matches, evita literal '*.log'
+    echo "Procesando $archivo ($(wc -l &lt; "$archivo") líneas)"
+done
 
-for archivo in *.txt; do
-    echo "Procesando $archivo"
+# Sobre elementos de un array:
+servidores=("web01" "db01" "cache01")
+for srv in "${servidores[@]}"; do
+    ping -c1 "$srv" &amp;&gt;/dev/null || echo "⚠️  $srv no responde"
 done</code></pre>
-    </div>
-  </section>
 
-  <section id="while-y-until">
-    <h2>while y until</h2>
-    <div class="doc-content">
-<pre><code class="language-bash">contador=0
-while [ $contador -lt 3 ]; do
-    echo "contador: $contador"
-    ((contador++))
+        <h3>Rangos con seq y brace expansion</h3>
+        <pre><code class="language-bash"># Brace expansion (compilación del shell, instantánea):
+for i in {1..10}; do
+    echo "Iteración $i"
 done
 
-# Leer archivo línea a línea (patrón clásico)
+# Rango con paso:
+for i in {0..100..5}; do
+    echo "$i%"                          # 0, 5, 10... 100
+done
+
+# seq para límites DINÁMICOS (variables):
+FIN=20
+for i in $(seq 1 "$FIN"); do
+    touch "pagina_$i.html"
+done</code></pre>
+
+        <h3>For estilo C: control total</h3>
+        <pre><code class="language-bash">for ((i = 0; i &lt; 10; i++)); do
+    if ((i % 2 == 0)); then             # aritmética con (( ))
+        echo "$i es par"
+    fi
+done
+
+# Contador regresivo con doble variable:
+for ((i = 0, j = 10; i &lt; j; i++, j--)); do
+    echo "i=$i j=$j"
+done</code></pre>
+        <blockquote class="aside aside-tip">
+            <p><code>(( ))</code> evalúa aritmética y devuelve exit code: 0 si el resultado ≠ 0. Por eso <code>if ((x))</code> funciona como "si x no es cero". Dentro NO necesitas $ en las variables.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="while-y-until">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> while, until y lectura segura de archivos</h2>
+    <div class="doc-content">
+        <h3>while: condición al inicio</h3>
+        <pre><code class="language-bash"># Contador clásico:
+CONTADOR=1
+while [ "$CONTADOR" -le 5 ]; do
+    echo "Vuelta $CONTADOR"
+    CONTADOR=$((CONTADOR + 1))
+done
+
+# Esperar a que un servicio levante (patrón DevOps diario):
+until curl -s http://localhost:8080/health &amp;&gt;/dev/null; do
+    echo "Esperando al servidor..."
+    sleep 2
+done
+echo "✅ Servicio arriba"</code></pre>
+
+        <h3>while read: procesar archivos línea a línea</h3>
+        <pre><code class="language-bash"># LA forma correcta (memoria O(1), preserva espacios, maneja última línea sin \n):
 while IFS= read -r linea; do
     echo "-&gt; $linea"
-done &lt; datos.txt
+done &lt; usuarios.txt
 
-# break y continue funcionan como en otros lenguajes</code></pre>
+# Con campos separados por delimitador (CSV simple):
+while IFS=: read -r usuario uid resto; do
+    echo "Usuario: $usuario (uid $uid)"
+done &lt; /etc/passwd
+
+# Desde la salida de un comando SIN subshell roto (patrón pro):
+while IFS= read -r ip; do
+    ssh "admin@$ip" 'uptime'
+done &lt; &lt;(cat servidores.txt | grep -v '^#')     # process substitution</code></pre>
+        <table>
+            <thead>
+                <tr><th>Pieza</th><th>Rol crítico</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>IFS=</code></td><td>No recortar espacios/tabuladores de inicio/fin</td></tr>
+                <tr><td><code>-r</code></td><td>No interpretar backslashes (raw)</td></tr>
+                <tr><td><code>&lt; archivo</code></td><td>Redirige stdin AL WHILE (no cat | while)</td></tr>
+                <tr><td><code>&lt;&lt;&lt;</code> herestring</td><td>Alimentar string directo: while ... ; done &lt;&lt;&lt; "$var"</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p><code>cat archivo | while read x; do CONT=$((CONT+1)); done; echo $CONT</code> imprime 0 SIEMPRE: el pipe crea un SUBSHELL y las variables mueren dentro. Solución: redirección <code>&lt; archivo</code> o process substitution <code>&lt; &lt;(comando)</code>. Este bug confunde a todo el mundo exactamente una vez.</p>
+        </blockquote>
+
+        <h3>break, continue e infinitos</h3>
+        <pre><code class="language-bash"># Menú interactivo infinito:
+while true; do
+    echo "1) Estado  2) Logs  0) Salir"
+    read -rp "&gt; " opcion
+    case "$opcion" in
+        1) systemctl status nginx --no-pager ;;
+        2) tail -f /var/log/nginx/error.log ;;
+        0) break ;;
+        *) echo "Opción inválida"; continue ;;
+    esac
+done</code></pre>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="buenas-practicas-bucles">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>"$@" y glob entre comillas en for</td><td>Nombres con espacios sobreviven intactos</td></tr>
+                <tr><td>[ -e ] guard en globs que pueden no matchear</td><td>nullglob no siempre activo; evita procesar '*.log' literal</td></tr>
+                <tr><td>while + redirección en vez de cat|while</td><td>Variables sobreviven; un proceso menos</td></tr>
+                <tr><td>IFS= read -r canónico siempre</td><td>Datos intactos: espacios y backslashes seguros</td></tr>
+                <tr><td>Timeouts en bucles de espera (contador máximo)</td><td>Evita loops eternos colgando pipelines</td></tr>
+                <tr><td>echo de simulación antes de acciones masivas</td><td>rm/mv sobre miles de archivos: ensaya primero</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-bash"># Bucle de espera CON timeout (patrón profesional):
+TIMEOUT=30
+ELAPSED=0
+until nc -z "$HOST" 5432; do
+    [ "$ELAPSED" -ge "$TIMEOUT" ] &amp;&amp; { echo "Timeout esperando BD" &gt;&amp;2; exit 1; }
+    sleep 2
+    ELAPSED=$((ELAPSED + 2))
+done</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Variables muertas tras pipe-while</td><td>Contador/acumulador en 0</td><td>done &lt; archivo / process substitution</td></tr>
+                <tr><td>Glob sin matches procesa patrón literal</td><td>"No such file '*.log'"</td><td>[ -e "$archivo" ] || continue</td></tr>
+                <tr><td>read sin -r ni IFS=</td><td>Espacios recortados, backslashes tragados</td><td>IFS= read -r línea canónica</td></tr>
+                <tr><td>Bucle infinito olvidando incrementar contador</td><td>Terminal congelada / disco lleno</td><td>set -e ayuda poco aquí: revisa lógica; timeouts</td></tr>
+                <tr><td>$((i++)) como statement suelto</td><td>Exit code 1 cuando i era 0 → mata set -e</td><td>((++i)) o i=$((i+1))</td></tr>
+                <tr><td>seq sin comillas con variable vacía</td><td>seq: missing operand / loop raro</td><td>"${FIN:-10}" defaults</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Generador de páginas</strong>: for {1..10} creando pagina_N.html cada una con título numerado dentro; verifica con ls y head.</li>
+            <li><strong>Analizador de logs</strong>: while IFS= read -r sobre access.log contando peticiones por código HTTP con case interno; reporta top de errores.</li>
+            <li><strong>Cazador del subshell</strong>: implementa el contador roto con pipe (imprime 0) y la versión corregida con redirección; documenta AMBOS resultados.</li>
+            <li><strong>Monitor con timeout</strong>: until que espere un puerto abierto máximo 15 segundos con progreso por iteración; falla limpio con exit 1 al expirar.</li>
+            <li><strong>Batch renamer seguro</strong>: for sobre *.txt mostrando mv simulado viejo→nuevo (prefijo fecha); añade flag real para ejecutar de verdad solo con argumento --apply.</li>
+        </ol>
+    </div>
+</section>

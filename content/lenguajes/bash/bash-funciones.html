@@ -1,30 +1,221 @@
-<!-- 5. Funciones - Bash (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="definicion-y-uso">
-    <h2>Definición y uso</h2>
+<!-- 6. Funciones - Bash (Lenguajes de Programación) -->
+<section id="definicion-y-uso">
+    <h2><i class="fa-solid fa-cube"></i> Definición y uso de funciones</h2>
     <div class="doc-content">
-<pre><code class="language-bash">saludar() {
-    local quien="$1"          # local: no contamina el scope global
-    echo "Hola, $quien"
+        <p>Las funciones organizan scripts largos, evitan repetición y permiten librerías reutilizables. Sintaxis simple: nombre + paréntesis + bloque. Los parámetros llegan como $1, $2… igual que los argumentos del script — cada llamada tiene su propio conjunto:</p>
+
+        <h3>Definir y llamar</h3>
+        <pre><code class="language-bash">#!/bin/bash
+
+# Definición (ambas formas equivalentes):
+saludar() {
+    echo "Hola, $1"
 }
 
-saludar "Ana"                 # llamada SIN paréntesis</code></pre>
+function despedir {          # estilo keyword (menos común)
+    echo "Adiós, $1"
+}
+
+saludar "Ana"                # Hola, Ana
+despedir "Luis"
+
+# Parámetros y metainformación:
+resumen() {
+    echo "Primer arg: $1"
+    echo "Cantidad: $#"
+    echo "Todos: $@"
+}
+
+resumen a b c
+# Primer arg: a
+# Cantidad: 3
+# Todos: a b c</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Las funciones DEBEN definirse antes de usarse en el flujo de ejecución. Convención profesional: helpers arriba, main() al final con la orquestación — el script se lee como un programa real.</p>
+        </blockquote>
+
+        <h3>Variables locales: local</h3>
+        <pre><code class="language-bash">CONTADOR=0                   # global
+
+sumar_veces() {
+    local -i n="$1"          # local: SOLO existe dentro de la función
+    for ((i = 1; i &lt;= n; i++)); do
+        ((CONTADOR++))       # global sí accesible/modificable
+    done
+}
+
+sumar_veces 5
+echo "$CONTADOR"             # 5
+# echo "$n"                  ❌ vacía: nunca salió del scope</code></pre>
+
+        <h3>Retornar VALORES: stdout, no return</h3>
+        <table>
+            <thead>
+                <tr><th>Mecanismo</th><th>Para qué</th><th>Ejemplo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>return N</code></td><td>Código de estado 0-255 (éxito/fallo)</td><td>return 1 si validación falla</td></tr>
+                <tr><td><code>echo valor</code></td><td>"Devolver" dato vía captura $( )</td><td>RESULTADO=$(obtener_fecha)</td></tr>
+                <tr><td>Variable global mutada</td><td>Efecto lateral deliberado documentado</td><td>contador compartido</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-bash"># Patrón estándar: función que ESCRIBE resultado, llamador CAPTURA:
+obtener_rama_git() {
+    git rev-parse --abbrev-ref HEAD 2&gt;/dev/null
+}
+
+RAMA=$(obtener_rama_git)
+echo "Estás en: ${RAMA:-sin-git}"
+
+# Mezcla peligrosa: logs a stderr, datos a stdout
+procesar() {
+    echo "Iniciando proceso..." &gt;&amp;2      # &gt;&amp;2 = log, NO contamina captura
+    sleep 1
+    echo "resultado-limpio"              # esto SÍ es lo capturado
+}
+
+DATO=$(procesar)                          # DATO="resultado-limpio" ✅</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>Todo echo extra dentro de una función capturada CONTAMINA el resultado. Regla de oro: datos por stdout, diagnósticos SIEMPRE por stderr (&gt;&amp;2). Revisa tus funciones dos veces cuando las captures.</p>
+        </blockquote>
+
+        <h3>Librerías con source</h3>
+        <pre><code class="language-bash"># lib/log.sh
+log_info()  { echo "[INFO]  $(date '+%H:%M:%S') $*" &gt;&amp;2; }
+log_error() { echo "[ERROR] $(date '+%H:%M:%S') $*" &gt;&amp;2; }
+die()       { log_error "$1"; exit "${2:-1}"; }</code></pre>
+        <pre><code class="language-bash">#!/bin/bash
+set -euo pipefail
+source "$(dirname "$0")/lib/log.sh"
+
+log_info "Comenzando deploy..."
+[ -f app.conf ] || die "app.conf requerido" 2
+log_info "Deploy OK"</code></pre>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="exit-status">
-    <h2>Exit status</h2>
+<section id="exit-status">
+    <h2><i class="fa-solid fa-door-open"></i> Exit status y composición</h2>
     <div class="doc-content">
-<pre><code class="language-bash">existe_archivo() {
-    [ -f "$1" ]
-}                             # el return implícito es el último comando
+        <p>Toda función devuelve un código de salida (el de su último comando, o explícito con return). Este código ES la interfaz booleana de bash:</p>
+        <pre><code class="language-bash">es_par() {
+    [ $(( $1 % 2 )) -eq 0 ]     # último comando decide el status
+}
 
-if existe_archivo "/etc/passwd"; then
-    echo "existe"
+if es_par 4; then
+    echo "4 es par"
 fi
 
-echo $?    # 0 éxito, distinto de 0 error</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> En bash las funciones devuelven <em>status</em> (0-255), no valores. Para "retornar" datos usa <code>echo</code> y captura con <code>$(funcion)</code>.</blockquote>
+validar_config() {
+    [ -f "$1" ] || { echo "Falta config" &gt;&amp;2; return 1; }
+    grep -q "puerto" "$1" || { echo "Falta puerto en config" &gt;&amp;2; return 2; }
+    return 0                     # éxito explícito
+}
+
+validar_config app.conf
+case $? in
+    0) echo "Válida" ;;
+    1) exit 1 ;;
+    2) exit 2 ;;
+esac</code></pre>
+        <table>
+            <thead>
+                <tr><th>Convención de códigos</th><th>Significado habitual</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>0</td><td>Éxito universal</td></tr>
+                <tr><td>1</td><td>Error genérico</td></tr>
+                <tr><td>2</td><td>Uso incorrecto / misusage (getopts lo usa)</td></tr>
+                <tr><td>126-127</td><td>Sin permisos / comando no encontrado</td></tr>
+                <tr><td>130+</td><td>Terminado por señal (Ctrl+C = 130)</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Funciones + traps: limpieza garantizada</h3>
+        <pre><code class="language-bash">TMPDIR=$(mktemp -d)
+
+cleanup() {
+    rm -rf "$TMPDIR"                 # se ejecuta SIEMPRE al salir
+    echo "Temp limpiado" &gt;&amp;2
+}
+trap cleanup EXIT                    # EXIT cubre éxito, error y Ctrl+C
+
+echo "Trabajando en $TMPDIR..."
+cp grandes_archivos/* "$TMPDIR"/
+# aunque algo falle a mitad: cleanup corre igualmente ✅</code></pre>
+        <blockquote class="aside aside-success">
+            <p>El trío funciones + set -euo pipefail + trap cleanup EXIT convierte un script frágil en herramienta confiable para CI/CD. Es EL estándar mínimo de calidad que esperan revisores senior en cualquier repo serio.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="buenas-practicas-funciones">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>local en TODA variable interna de función</td><td>Sin local pisa globales: bugs cruzados imposibles de rastrear</td></tr>
+                <tr><td>Verbos descriptivos: validar_x(), obtener_y(), instalar_z()</td><td>main() se lee como índice de acciones</td></tr>
+                <tr><td>Una función = una responsabilidad corta</td><td>Testeable mentalmente; reusable</td></tr>
+                <tr><td>Logs &gt;&amp;2; datos stdout puro en capturas</td><td>Separación limpia entre UI y datos</td></tr>
+                <tr><td>return codes diferenciados + case $? en llamador</td><td>Fallos distinguibles programáticamente</td></tr>
+                <tr><td>lib/ con source + readonly SCRIPT_DIR</td><td>Reutilización entre scripts sin duplicar</td></tr>
+                <tr><td>trap cleanup EXIT ante recursos temporales</td><td>Cero basura residual tras fallos</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-bash">#!/usr/bin/env bash
+set -euo pipefail
+
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &amp;&amp; pwd)"
+source "$SCRIPT_DIR/lib/log.sh"
+
+main() {
+    log_info "Iniciando..."
+    parsear_argumentos "$@"
+    validar_precondiciones
+    ejecutar_despliegue
+    log_info "Completado ✅"
+}
+
+main "$@"</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Llamar función con paréntesis: foo()</td><td>Bash intenta ejecutar subshell/comando foo</td><td>Definir foo() {...}; llamar solo foo</td></tr>
+                <tr><td>return con número &gt;255 o strings</td><td>Overflow módulo 256 / no compila</td><td>return solo 0-255; valores por stdout</td></tr>
+                <tr><td>Olvidar local</td><td>Variable pisada entre llamadas recursivas/anidadas</td><td>local sistemático</td></tr>
+                <tr><td>echo de debug dentro de función capturada</td><td>Resultado contaminado con "[DEBUG]..."</td><td>&gt;&amp;2 en TODO log</td></tr>
+                <tr><td>Usar $? después de otro comando intermedio</td><td>Siempre pierde el original</td><td>Capturar inmediato: rc=$?; luego decidir</td></tr>
+                <tr><td>Funciones definidas después del flujo principal</td><td>"command not found" en runtime</td><td>Helpers arriba / main() abajo</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Calculadora modular</strong>: funciones sumar/restar/multiplicar/dividir (validando división por cero con return code); menú while+case que las invoque.</li>
+            <li><strong>Librería de logging</strong>: crea lib/log.sh con niveles INFO/WARN/ERROR coloreados (códigos ANSI), timestamp y función die; úsala desde script principal.</li>
+            <li><strong>Validador compuesto</strong>: validar_archivo, validar_permisos, validar_tamaño cada una con código distinto; orquestador que reporte exactamente qué falló via case $?</li>
+            <li><strong>Recursión controlada</strong>: factorial con recursión usando local; compara con versión iterativa en bucle; límite máximo documentado.</li>
+            <li><strong>Script a prueba de fallos</strong>: toma tu mejor ejercicio previo y aplícale el paquete completo: set -euo pipefail, trap cleanup EXIT con mktemp, librería sourced y main(). Verifica que Ctrl+C a mitad deja cero residuos.</li>
+        </ol>
+    </div>
+</section>

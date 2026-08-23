@@ -1,39 +1,211 @@
 <!-- 3. Tipos y Structs - Rust (Lenguajes de Programación) -->
 <!-- Contenido local del proyecto -->
 
-  <section id="tipos">
-    <h2>Tipos</h2>
+  <section id="variables-inmutabilidad-y-shadowing">
+    <h2><i class="fa-solid fa-lock"></i> Variables: inmutabilidad, mut y shadowing</h2>
     <div class="doc-content">
-<pre><code class="language-rust">let entero: i32 = -42;
-let sin_signo: u64 = 42;
-let decimal: f64 = 3.14;
-let bandera: bool = true;
-let letra: char = 'ñ';
-let tupla: (i32, f64) = (500, 6.4);
-let (a, b) = tupla;              // destructuring
-let arreglo: [i32; 3] = [1, 2, 3];</code></pre>
+<p>En Rust <code>let</code> crea una variable <strong>inmutable por defecto</strong>. Esta decisión de diseño es deliberada: si un valor no puede cambiar, el compilador y cualquier persona que lea el código pueden razonar sobre él sin rastrear mutaciones. Cuando realmente necesitas modificar un valor, lo pides explícitamente con <code>mut</code>, dejando constancia en la firma misma del código:</p>
+<pre><code class="language-rust">fn main() {
+    let x = 5;
+    // x = 6;            // ❌ error[E0384]: cannot assign twice to immutable variable
+
+    let mut y = 5;       // mut = "esta variable va a cambiar"
+    y += 1;              // ✅ permitido
+    println!("y vale {}", y);
+}</code></pre>
+<h3>Shadowing: no es lo mismo que mut</h3>
+<p>El <strong>shadowing</strong> redeclara la variable con otro <code>let</code>: se crea una variable <em>nueva</em> que oculta a la anterior hasta el fin del scope. La diferencia con <code>mut</code> es fundamental y aparece en entrevistas:</p>
+<pre><code class="language-rust">fn main() {
+    let saldo = 100;
+    let saldo = saldo + 50;      // shadowing: NUEVA variable (150)
+    let saldo = saldo.to_string(); // ✅ incluso puede cambiar de TIPO: "150"
+
+    let mut deuda = 30;
+    // deuda = "treinta";        // ❌ con mut NO puedes cambiar el tipo
+
+    println!("saldo = {}", saldo);   // imprime el más reciente
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Diferencia clave para entrevistas: el shadowing crea una variable <em>nueva</em> (puede cambiar de tipo y volver a ser inmutable); <code>mut</code> modifica siempre la misma celda, del mismo tipo, hasta el fin del scope.</p></blockquote>
+<p>Además existen <strong>constantes</strong>: <code>const MAX_INTENTOS: u32 = 3;</code>. Tipo anotado obligatorio, valor calculado en compilación y nombres en MAYÚSCULAS_CON_GUIONES por convención.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipos">
+    <h2><i class="fa-solid fa-hashtag"></i> Tipos escalares: enteros, flotantes, bool y char</h2>
+    <div class="doc-content">
+<p>Rust es <strong>estática y fuertemente tipado</strong>: cada valor tiene un tipo conocido en compilación y no hay conversiones implícitas entre números. A cambio, el compilador infiere el tipo casi siempre, así que rara vez anotas:</p>
+<pre><code class="language-rust">fn main() {
+    let entero = -42;            // i32 inferido (el default)
+    let grande: u64 = 42_u64 * 1_000_000_000;  // sufijo explícito
+    let decimal = 3.14;          // f64 inferido (el default)
+    let activo = true;           // bool
+    let letra = 'ñ';             // char con comilla SIMPLE
+    let emoji = '🚀';            // char soporta TODO Unicode
+
+    println!("{} {} {} {} {} {}", entero, grande, decimal, activo, letra, emoji);
+}</code></pre>
+<table><thead><tr><th>Tipo</th><th>Tamaño</th><th>Rango / uso</th></tr></thead><tbody><tr><td><code>i8</code> / <code>u8</code></td><td>1 byte</td><td>-128..127 / 0..255</td></tr><tr><td><code>i32</code> (default)</td><td>4 bytes</td><td>≈ ±2 147 millones</td></tr><tr><td><code>i64</code> / <code>u64</code></td><td>8 bytes</td><td>±9,2 × 10¹⁸ / 0..18 446 × 10¹⁵</td></tr><tr><td><code>usize</code>/<code>isize</code></td><td>según arquitectura</td><td>Índices de colecciones (64 bits en tu PC)</td></tr><tr><td><code>f32</code> / <code>f64</code> (default)</td><td>4 / 8 bytes</td><td>~7 dígitos / ~15 dígitos de precisión</td></tr><tr><td><code>bool</code></td><td>1 byte</td><td>true / false</td></tr><tr><td><code>char</code></td><td>4 bytes</td><td>Cualquier carácter Unicode ('ñ', '中', '🚀')</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>A diferencia de C, un <code>char</code> en Rust ocupa 4 bytes porque representa un punto Unicode completo, no un byte ASCII. Y los literales numéricos aceptan guion bajo como separador visual: <code>1_000_000</code>.</p></blockquote>
+<blockquote class="aside aside-caution"><p>Un desbordamiento de entero hace <strong>pánico en modo debug</strong> pero <strong>wraps silenciosamente en release</strong>. Si el límite importa en tu lógica, usa métodos como <code>checked_add()</code> o <code>saturating_add()</code> en lugar de confiar en el perfil de compilación.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipos-compuestos">
+    <h2><i class="fa-solid fa-layer-group"></i> Tipos compuestos: tuplas, arrays y rangos</h2>
+    <div class="doc-content">
+<h3>Tuplas: heterogéneas y de tamaño fijo</h3>
+<p>Una tupla agrupa valores de tipos distintos en un solo valor fijo. Se accede por posición con <code>.0</code>, <code>.1</code>... o se desestructura:</p>
+<pre><code class="language-rust">fn main() {
+    let persona: (&amp;str, i32, bool) = ("Ana", 30, true);
+
+    // Acceso posicional
+    println!("Nombre: {}, edad: {}", persona.0, persona.1);
+
+    // Destructuring: extrae los componentes de golpe
+    let (nombre, edad, _activo) = persona;
+    println!("{} tiene {} años", nombre, edad);
+}</code></pre>
+<h3>Arrays: tamaño fijo, vivos en el stack</h3>
+<p>A diferencia de otros lenguajes, el array de Rust tiene longitud <strong>parte de su tipo</strong> (<code>[i32; 3]</code> ≠ <code>[i32; 4]</code>) y vive en el stack. Para colecciones dinámicas usarás <code>Vec</code>:</p>
+<pre><code class="language-rust">fn main() {
+    let dias = ["lun", "mar", "mié"];       // [&amp;str; 3]: el 3 está en el tipo
+    let ceros = [0_u8; 512];                // 512 ceros inicializados
+    let primero = dias[0];                  // indexación con corchetes
+
+    println!("{} días, len={}", dias.len(), ceros.len());
+    // let fuera = dias[7];  // ❌ compila, pero PANIC en ejecución: out of bounds
+}</code></pre>
+<h3>Rangos para iterar y acotar</h3>
+<pre><code class="language-rust">fn main() {
+    for i in 0..5 { print!("{} ", i); }      // 0 1 2 3 4   (exclusivo)
+    println!();
+    for i in 1..=5 { print!("{} ", i); }     // 1 2 3 4 5   (inclusivo con =)
+
+    // También acotan slices: &amp;nums[1..4] toma los elementos 1, 2 y 3
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="structs-personalizados">
+    <h2><i class="fa-solid fa-cubes"></i> Structs: tus propios tipos con nombre</h2>
+    <div class="doc-content">
+<p>Los <strong>structs</strong> empaquetan datos relacionados bajo un nombre con significado de dominio. Son el ladrillo básico de modelado en Rust: donde en otros lenguajes crearías una clase solo para guardar datos, aquí basta un struct:</p>
+<pre><code class="language-rust">#[derive(Debug)]                 // habilita impresión con {:?}
+struct Usuario {
+    nombre: String,
+    edad: u8,
+    activo: bool,
+}
+
+fn main() {
+    let mut u = Usuario {
+        nombre: String::from("Ana"),
+        edad: 30,
+        activo: true,
+    };
+
+    u.edad += 1;
+    let admin = Usuario {               // sintaxis de actualización:
+        nombre: String::from("Beto"),   // copia los campos restantes
+        ..u                             // ⚠️ mueve u.nombre: u queda parcialmente inutilizable
+    };
+    println!("{:?}\n{:#?}", admin, admin);   // Debug en línea y bonito
+}</code></pre>
+<h3>Tuple structs y unit structs</h3>
+<p>Existen dos variantes adicionales con casos de uso específicos:</p>
+<pre><code class="language-rust">// Tuple struct: campos SIN nombre, útiles para wrappers tipados
+struct Coordenada(f64, f64);
+struct Milimetros(f64);
+struct Pulgadas(f64);
+
+// Unit struct: sin datos, útil como marcador o para implementar traits
+struct Auditoria;
+
+fn main() {
+    let origen = Coordenada(0.0, 0.0);
+    println!("x = {}, y = {}", origen.0, origen.1);
+
+    let largo = Milimetros(250.0);
+    let ancho = Pulgadas(9.8);
+    // largo == ancho ❌ ni siquiera compilan juntas: son tipos DISTINTOS
+    // Eso es justo lo que buscábamos: imposible confundir unidades.
+    let _ = Auditoria;   // instancia vacía de un tipo marcador
+}</code></pre>
+<p>Envolver primitivos en tuple structs (<strong>newtype pattern</strong>) es idiomático: da semántica al tipo e impide mezclas de unidades como la que costó la sonda Mars Climate Orbiter.</p>
+<p>---</p>
     </div>
   </section>
 
   <section id="structs-y-metodos">
-    <h2>Structs y métodos</h2>
+    <h2><i class="fa-solid fa-gears"></i> Métodos con impl: comportamiento junto a los datos</h2>
     <div class="doc-content">
-<pre><code class="language-rust">struct Rectangulo {
+<p>Los métodos se definen en un bloque <code>impl</code>, separado de los datos. Dentro, <code>Self</code> es un alias del tipo que se implementa. Hay dos clases de funciones:</p>
+<table><thead><tr><th>Clase</th><th>Reconócela</th><th>Cómo se llama</th></tr></thead><tbody><tr><td><strong>Método de instancia</strong></td><td>Primer parámetro <code>&amp;self</code> o <code>&amp;mut self</code></td><td><code>objeto.metodo()</code></td></tr><tr><td><strong>Función asociada</strong></td><td>Sin <code>self</code> (como constructores)</td><td><code>Tipo::funcion()</code></td></tr></tbody></table>
+<pre><code class="language-rust">#[derive(Debug)]
+struct Rectangulo {
     ancho: f64,
     alto: f64,
 }
 
 impl Rectangulo {
-    fn nuevo(ancho: f64, alto: f64) -&gt; Self {
+    // Función ASOCIADA: constructor por convención llamado `new`
+    fn new(ancho: f64, alto: f64) -&gt; Self {
+        // Self es alias de Rectangulo; la abreviatura omite campo: valor
         Self { ancho, alto }
     }
 
-    fn area(&amp;self) -&gt; f64 {          // método
+    fn area(&amp;self) -&gt; f64 {              // &amp;self: solo lectura
         self.ancho * self.alto
+    }
+
+    fn escalar(&amp;mut self, factor: f64) { // &amp;mut self: modifica
+        self.ancho *= factor;
+        self.alto *= factor;
+    }
+
+    fn es_cuadrado(&amp;self) -&gt; bool {     // los métodos pueden devolver lo que sea
+        (self.ancho - self.alto).abs() &lt; f64::EPSILON
     }
 }
 
-let r = Rectangulo::nuevo(3.0, 4.0);
-println!("{}", r.area());            // 12</code></pre>
+fn main() {
+    let mut r = Rectangulo::new(3.0, 4.0);   // llamada con :: (función asociada)
+    println!("Área inicial: {}", r.area());   // llamada con . (método)
+
+    r.escalar(2.0);                           // necesita que r sea mut
+    println!("Tras escalar: {:?}", r);
+    println!("¿Cuadrado? {}", r.es_cuadrado());
+}</code></pre>
+<blockquote class="aside aside-note"><p>Rust no tiene herencia de structs: no hay <code>class B extends A</code>. La reutilización se logra con composición (un struct dentro de otro) y con traits, que verás en su propia lección. Es una decisión consciente contra el infierno de jerarquías profundas.</p></blockquote>
+<blockquote class="aside aside-success"><p>Hábito pro: deriva <code>Debug</code> en todos tus structs desde el principio. Te permitirá imprimirlos con <code>{:?}</code>/<code>{:#?}</code> durante toda la vida del proyecto sin toques extra.</p></blockquote>
+<p>---</p>
     </div>
   </section>
+
+  <section id="errores-comunes-tipos">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes con tipos y structs</h2>
+    <div class="doc-content">
+<p>Estos son los tropiezos típicos al empezar con el sistema de tipos de Rust, con su diagnóstico y remedio:</p>
+<table><thead><tr><th>Síntoma</th><th>Causa probable</th><th>Solución</th></tr></thead><tbody><tr><td><code>doesn't implement Debug</code> al usar <code>{:?}</code></td><td>Falta derivar el trait</td><td>Añade <code>#[derive(Debug)]</code> sobre el struct</td></tr><tr><td>Comparar floats con <code>==</code> da resultados raros</td><td>Precisión binaria de IEEE-754</td><td><code>(a - b).abs() &lt; f64::EPSILON</code></td></tr><tr><td><code>mismatched types: expected f64, found i32</code></td><td>Rust no convierte números solos</td><td>Conversión explícita: <code>x as f64</code> o <code>f64::from(x)</code></td></tr><tr><td><code>cannot borrow as mutable</code> al llamar método</td><td>La variable no era <code>mut</code></td><td><code>let mut obj = ...;</code></td></tr><tr><td>Desbordamiento silencioso en release</td><td>Wraps sin avisar fuera de debug</td><td><code>checked_add()</code> / <code>saturating_add()</code></td></tr><tr><td>Índice fuera de rango panea el programa</td><td>Indexación directa de array/Vec</td><td>Usa <code>.get(i)</code> que devuelve <code>Option&lt;&amp;T&gt;</code></td></tr></tbody></table>
+<blockquote class="aside aside-danger"><p>No uses <code>as</code> para conversiones numéricas "porque compila": <code>300_u64 as u8</code> trunca a 44 silenciosamente. Para conversiones que pueden perder información prefiere <code>try_from()</code>, que devuelve <code>Result</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuelve en orden creciente; cada uno refuerza lo anterior.</p>
+<ol>
+<li><strong>Inferencia y escalares</strong>: declara una variable de cada tipo escalar (i32, u64, f64, bool, char) sin anotar tipos, imprímelas con <code>{:?}</code>, y luego fuerza el error E0308 mezclando i32 con f64 en una suma para leer el mensaje del compilador.</li>
+<li><strong>Shadowing vs mut</strong>: parte de la cadena "42" y conviértela a número con shadowing (<code>parse().unwrap()</code>), súmale 8 y muestra el resultado; después repítelo usando <code>let mut</code> y observa qué problema de tipos aparece.</li>
+<li><strong>Tupla de coordenadas</strong>: crea una tupla <code>(f64, f64)</code> como punto, desestrúcturala y calcula la distancia al origen con <code>x * x + y * y</code> y raíz cuadrada (<code>f64::sqrt</code>).</li>
+<li><strong>Struct Libro</strong>: modela <code>Libro</code> con título, autor, páginas y leído (bool); deriva Debug; crea dos instancias (una con sintaxis de actualización), marca uno como leído mediante un método <code>terminar(&amp;mut self)</code>, e imprime ambos con <code>{:#?}</code>.</li>
+<li><strong>Cuenta bancaria</strong>: implementa <code>CuentaBancaria</code> con constructor asociado <code>nueva(titular, saldo_inicial)</code> que rechace saldos negativos devolviendo <code>Option&lt;CuentaBancaria&gt;</code>, más métodos <code>depositar(&amp;mut self, monto: f64)</code> y <code>retirar(&amp;mut self, monto: f64) -&gt; Result&lt;(), String&gt;</code>; simula varias operaciones e imprime el estado final con Debug.</li>
+</ol>
+    </div>
+  </section>
+

@@ -1,26 +1,174 @@
-<!-- 6. Pipes y Herramientas - Bash (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="pipes-y-redireccion">
-    <h2>Pipes y redirección</h2>
+<!-- 7. Pipes y Herramientas - Bash (Lenguajes de Programación) -->
+<section id="pipes-y-redireccion">
+    <h2><i class="fa-solid fa-diagram-project"></i> Pipes y redirección: la filosofía Unix</h2>
     <div class="doc-content">
-<pre><code class="language-bash">ls -la | grep ".txt"          # salida de uno entra al otro
-ps aux | sort -rk 3 | head -5 # top 5 procesos por CPU
+        <p>Cada programa Unix hace UNA cosa bien. El <strong>pipe</strong> (<code>|</code>) encadena programas conectando la salida de uno a la entrada del siguiente — componiendo herramientas simples en pipelines poderosos:</p>
 
-echo "log" &gt; salida.txt        # sobrescribe
-echo "más" &gt;&gt; salida.txt       # agrega
-comando 2&gt;/dev/null            # descarta errores
-wc -l &lt; entrada.txt            # redirige entrada</code></pre>
+        <h3>Los tres streams y su redirección</h3>
+        <table>
+            <thead>
+                <tr><th>Stream</th><th>Número</th><th>Destino default</th><th>Redirección</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>stdin</td><td>0</td><td>Teclado</td><td><code>&lt; archivo</code></td></tr>
+                <tr><td>stdout</td><td>1</td><td>Pantalla</td><td><code>&gt;</code> trunca, <code>&gt;&gt;</code> añade</td></tr>
+                <tr><td>stderr</td><td>2</td><td>Pantalla</td><td><code>2&gt;</code>, <code>2&gt;&gt;</code>, <code>2&gt;/dev/null</code></td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-bash"># Combinaciones esenciales:
+comando &gt; salida.txt 2&gt; errores.log     # separar streams
+comando &amp;&gt; todo.log                      # ambos al mismo archivo
+comando &gt;&amp;/dev/null                      # silenciar TODO (cuidado)
+grep error app.log 2&gt;/dev/null           # ignora fallos de apertura
+
+# stdin desde archivo:
+mysql -u user &lt; dump.sql
+sort &lt; nombres.txt
+
+# Heredoc: bloques multi-línea literales:
+cat &lt;&lt;EOF &gt; config.ini
+[server]
+host = localhost
+puerto = 8080
+EOF</code></pre>
+
+        <h3>Pipelines que usarás cada día</h3>
+        <pre><code class="language-bash">ps aux | grep nginx                       # procesos filtrados
+cat access.log | awk '{print $1}' | sort -u    # IPs únicas
+du -sh * | sort -rh | head -5             # top 5 carpetas más pesadas
+history | awk '{print $2}' | sort | uniq -c | sort -rn | head   # tus comandos top
+
+# tee: ver Y guardar simultáneamente:
+make 2&gt;&amp;1 | tee build.log                 # output en pantalla + log
+
+# xargs: convertir texto en ARGUMENTOS:
+cat urls.txt | xargs -n1 curl -sO         # descarga cada URL
+find . -name "*.tmp" | xargs rm -f        # borrar lo encontrado</code></pre>
+        <blockquote class="aside aside-tip">
+            <p><code>xargs -n1</code> ejecuta un comando POR línea de entrada; sin -n1 agrupa todos como argumentos únicos. Y para pipes con comandos que fallan: <code>set -o pipefail</code> hace que el pipeline entero falle si CUALQUIER eslabón falla — crítico en CI.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="grep-sed-awk-find">
-    <h2>grep, sed, awk, find</h2>
+<section id="grep-sed-awk-find">
+    <h2><i class="fa-solid fa-magnifying-glass-chart"></i> grep, sed, awk, find: el cuarteto</h2>
     <div class="doc-content">
-<pre><code class="language-bash">grep -rn "TODO" src/           # busca recursivo con línea
-sed 's/viejo/nuevo/g' file.txt # reemplaza todo
-awk '{print $1}' datos.csv     # primera columna
-find . -name "*.log" -mtime +7 -delete   # logs viejos</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> La filosofía Unix: cada herramienta hace UNA cosa bien, y las combinas con pipes para resolver problemas complejos.</blockquote>
+        <table>
+            <thead>
+                <tr><th>Herramienta</th><th>Rol mental</th><th>Ejemplo canónico</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>find</code></td><td>BUSCAR archivos por atributos</td><td>find . -name "*.log" -mtime +7</td></tr>
+                <tr><td><code>grep</code></td><td>FILTRAR líneas por contenido</td><td>grep -r "TODO" src/</td></tr>
+                <tr><td><code>sed</code></td><td>TRANSFORMAR/editar texto en flujo</td><td>sed 's/viejo/nuevo/g' file</td></tr>
+                <tr><td><code>awk</code></td><td>EXTRAER campos / agregar columnas</td><td>awk '{suma+=$3} END {print suma}'</td></tr>
+            </tbody>
+        </table>
+
+        <h3>grep: buscar dentro de archivos</h3>
+        <pre><code class="language-bash">grep "ERROR" app.log                  # líneas con ERROR
+grep -i "error" app.log               # case-insensitive
+grep -v "^#" config.txt               # INVERSO: sin comentarios
+grep -rn "función" src/               # recursivo + número de línea
+grep -c "GET" access.log              # solo CONTAR matches
+grep -A2 -B1 "Exception" log.txt      # 2 después, 1 antes de contexto
+grep -E "[0-9]{3}-[0-9]{4}" datos.txt # regex extendida
+ps aux | grep -v grep | grep nginx    # el clásico anti-autogrep</code></pre>
+
+        <h3>sed: editor de flujo</h3>
+        <pre><code class="language-bash">sed 's/perro/gato/' animales.txt          # primera ocurrencia por línea
+sed 's/perro/gato/g' animales.txt         # TODAS las ocurrencias
+sed -i.bak 's/8080/3000/g' server.conf    # editar EN SITIO + backup
+sed '/^#/d' config                        # borrar comentarios
+sed -n '10,20p' archivo                   # imprimir solo líneas 10-20
+echo "Hola Mundo" | sed 's/\b[A-Z]/\U&amp;/g' # mayúsculas iniciales (GNU)</code></pre>
+
+        <h3>awk: mini-lenguaje de columnas</h3>
+        <pre><code class="language-bash">awk '{print $1}' access.log               # primera columna (IPs)
+awk -F',' '{print $2, $4}' datos.csv      # delimitador coma, cols 2 y 4
+awk '$9 == 500 {count++} END {print count}' access.log   # contar errores 500
+awk '{total += $5} END {printf "%.2f MB\n", total/1024/1024}' logs/*
+
+# Reporte agregado completo:
+df -h | awk 'NR&gt;1 {print $6, $5}' | sort -k2 -rh    # uso% por mount</code></pre>
+
+        <h3>find: localizar y actuar</h3>
+        <pre><code class="language-bash">find . -name "*.jpg"                      # por nombre (glob)
+find . -iname "*.JPG"                     # case-insensitive
+find /var -type f -size +100M             # archivos &gt;100MB
+find . -type f -mtime -7                  # modificados últimos 7 días
+find . -name "*.sh" -exec chmod +x {} \;  # actuar sobre resultados
+find . -empty -type d -delete             # limpiar dirs vacíos</code></pre>
+
+        <h3>El combo final: pipeline de análisis real</h3>
+        <pre><code class="language-bash">#!/bin/bash
+# Top 10 IPs atacantes en el access log:
+grep " 40[13] " /var/log/nginx/access.log \
+  | awk '{print $1}' \
+  | sort \
+  | uniq -c \
+  | sort -rn \
+  | head -10 \
+  | while read -r cuenta ip; do
+        echo "$ip → $cuenta intentos bloqueados"
+    done</code></pre>
+        <blockquote class="aside aside-success">
+            <p>Siete herramientas pequeñas compusieron un reporte de seguridad en 12 líneas. Ninguna sabe qué es nginx ni seguridad — cada una solo filtra, corta o ordena. Esa composición sin acoplamiento es la lección eterna de Unix.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="buenas-practicas-pipes">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Filtrar temprano en el pipeline</td><td>grep antes de sort: menos datos arrastrados</td></tr>
+                <tr><td>pipefail en scripts productivos</td><td>Sin él, fallos medios pasan invisibles si el último triunfa</td></tr>
+                <tr><td>sed -i SIEMPRE con sufijo backup (-i.bak)</td><td>Edición destructiva irreversible sin copia previa</td></tr>
+                <tr><td>-exec sobre xargs cuando nombres tienen espacios raros</td><td>xargs parte mal por defecto (-0 ayuda)</td></tr>
+                <tr><td>head/tail limitan exploración interactiva de logs gigantes</td><td>less +F mejor aún para seguir en vivo</td></tr>
+                <tr><td>uniq necesita sort previo (solo agrupa adyacentes)</td><td>El par sort|uniq es inseparable en la práctica</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>&gt; sobre el mismo archivo que lees</td><td>Archivo truncado ANTES de leerlo: vacío total</td><td>temp + mv, o sponge (moreutils)</td></tr>
+                <tr><td>grep exit code 1 tratado como error grave</td><td>set -e mata script por "sin matches"</td><td>|| true consciente, o if grep -q</td></tr>
+                <tr><td>sed -i sin backup en producción</td><td>Config destrozada sin vuelta atrás</td><td>-i.bak siempre</td></tr>
+                <tr><td>awk $2 asumiendo espacios en CSV con comas dentro de textos</td><td>Columnas desplazadas silenciosamente</td><td>Parser CSV real o -F"," + cuidado</td></tr>
+                <tr><td>find -exec rm sin confirmar lista primero</td><td>Borrado masivo accidental</td><td>find ... | head primero; luego exec</td></tr>
+                <tr><td>Confundir 2&gt;&amp;1 con 2 &gt; &amp;1 (espacios)</td><td>"ambiguous redirect"</td><td>Junto: 2&gt;&amp;1</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+        <li><strong>Análisis de access log</strong>: genera/simula un access.log; construye pipelines separados que respondan: ¿IP más frecuente? ¿hora pico? ¿cuántos 404? ¿tamaño medio de respuesta?</li>
+        <li><strong>Limpiador de config</strong>: con sed elimina comentarios (#...) y líneas vacías de cualquier archivo; compara original vs resultado con diff.</li>
+        <li><strong>Reporte de disco</strong>: du + sort + head + awk produciendo tabla formateada de las 5 mayores carpetas con unidades legibles.</li>
+        <li><strong>Búsqueda quirúrgica</strong>: find que liste archivos JS modificados esta semana con más de 100 líneas (wc integrado), excluyendo node_modules.</li>
+        <li><strong>Monitor one-liner</strong>: watch + pipeline propio que muestre cada 5s los 3 procesos con más CPU filtrando ruido de grep — documenta cada eslabón del pipe en comentario.</li>
+    </ol>
+    </div>
+</section>

@@ -1,31 +1,212 @@
 <!-- 3. Control de Flujo y Funciones - C++ (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="condicionales-y-bucles">
-    <h2>Condicionales y bucles</h2>
+<section id="condicionales-y-bucles">
+    <h2><i class="fa-solid fa-code-branch"></i> Condicionales y bucles modernos</h2>
     <div class="doc-content">
-<pre><code class="language-cpp">for (int i = 0; i &lt; 5; ++i) std::cout &lt;&lt; i;
+        <p>La estructura del control de flujo en C++ es la clásica de la familia C, pero el C++ moderno añade azúcares que reducen errores y mejoran legibilidad: inicializadores dentro de if/switch (C++17) y bucles range-based.</p>
 
-for (int n : {1, 2, 3}) std::cout &lt;&lt; n;   // range-based
+        <h3>if con inicializador: acotar el alcance</h3>
+        <pre><code class="language-cpp">// La variable 'it' SOLO existe dentro del if/else
+if (auto it = mapa.find(clave); it != mapa.end()) {
+    std::cout &lt;&lt; "Encontrado: " &lt;&lt; it-&gt;second &lt;&lt; "\n";
+} else {
+    // aquí 'it' sigue visible: útil para mensajes de error
+    std::cout &lt;&lt; clave &lt;&lt; " no está\n";
+}
+// ...fuera, 'it' ya no existe: imposible usarlo por accidente</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Este patrón elimina una categoría entera de bugs: variables "temporales" que se filtran a scopes amplios y se reutilizan mal. Úsalo siempre que una condición dependa de un cálculo previo.</p>
+        </blockquote>
 
-while (true) { break; }
-
-if (int r = calcular(); r &gt; 0) {  // inicializador en if (C++17)
-    usar(r);
-}</code></pre>
-    </div>
-  </section>
-
-  <section id="funciones-y-referencias">
-    <h2>Funciones y referencias</h2>
-    <div class="doc-content">
-<pre><code class="language-cpp">void intercambiar(int&amp; a, int&amp; b) {   // por referencia
-    int t = a; a = b; b = t;
+        <h3>switch: saltos discretos</h3>
+        <pre><code class="language-cpp">switch (codigo) {
+    case 200:
+        std::cout &lt;&lt; "OK\n";
+        break;                       // sin break: CAE al siguiente caso
+    case 301:
+    case 302:                        // casos apilados = OR
+        std::cout &lt;&lt; "Redirección\n";
+        break;
+    default:
+        std::cout &lt;&lt; "Otro código\n";
 }
 
-int suma(int a, int b) { return a + b; }
-double suma(double a, double b) { return a + b; }  // sobrecarga
+// switch con init + [[fallthrough]] explícito cuando SÍ quieres caer:
+switch (auto d = digito(); d) {
+    case 0:
+    case 1:
+        [[fallthrough]];             // silencia el warning honestamente
+    case 2:
+        std::cout &lt;&lt; "dígito bajo\n";
+        break;
+}</code></pre>
 
-auto lambda = [](int x) { return x * x; };  // lambda</code></pre>
+        <h3>Los tres bucles</h3>
+        <table>
+            <thead>
+                <tr><th>Bucle</th><th>Cuándo usarlo</th><th>Ejemplo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>range-based for</td><td>Recorrer TODO un contenedor (90% de los casos)</td><td><code>for (const auto&amp; x : v)</code></td></tr>
+                <tr><td>for clásico</td><td>Necesitas índice, salto o recorrido parcial</td><td><code>for (size_t i = 0; i &lt; n; i += 2)</code></td></tr>
+                <tr><td>while / do-while</td><td>Condición dinámica, iteraciones desconocidas</td><td>Leer entrada hasta EOF</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-cpp">std::vector&lt;int&gt; datos{10, 20, 30, 40};
+
+// Range-based: LA opción por defecto
+for (const auto&amp; x : datos) {   // const auto&amp;: sin copias, sin mutar
+    std::cout &lt;&lt; x &lt;&lt; ' ';
+}
+
+// Con índice cuando lo necesitas
+for (size_t i = 0; i &lt; datos.size(); ++i) {
+    std::cout &lt;&lt; i &lt;&lt; ": " &lt;&lt; datos[i] &lt;&lt; '\n';
+}
+
+// Estructuradas (C++17): pares y mapas elegantes
+std::map&lt;std::string, int&gt; edades{{"Ana", 30}, {"Luis", 25}};
+for (const auto&amp; [nombre, edad] : edades) {
+    std::cout &lt;&lt; nombre &lt;&lt; " → " &lt;&lt; edad &lt;&lt; '\n';
+}</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>En range-based for usa <code>const auto&amp;</code> para tipos grandes (strings, vectores) — <code>auto</code> a secas COPIA cada elemento. Reserva <code>auto&amp;</code> (sin const) solo cuando vayas a modificar.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="funciones-y-referencias">
+    <h2><i class="fa-solid fa-function"></i> Funciones, sobrecarga y referencias</h2>
+    <div class="doc-content">
+        <h3>Sobrecarga y argumentos por defecto</h3>
+        <p>Varias funciones pueden compartir nombre si difieren en parámetros — el compilador elige según los tipos exactos:</p>
+        <pre><code class="language-cpp">int    maximo(int a, int b)             { return a &gt; b ? a : b; }
+double maximo(double a, double b)       { return a &gt; b ? a : b; }
+int    maximo(const std::vector&lt;int&gt;&amp; v) {
+    return *std::max_element(v.begin(), v.end());
+}
+
+// Argumentos por defecto: declarados UNA vez (en el header)
+void conectar(std::string host, int puerto = 8080, bool ssl = true);
+
+conectar("api.ejemplo.com");              // 8080, ssl
+conectar("localhost", 3000);              // ssl=true
+// OJO: no puedes omitir 'puerto' y dar solo 'ssl' — son posicionales</code></pre>
+
+        <h3>Paso por valor vs referencia: LA decisión diaria</h3>
+        <table>
+            <thead>
+                <tr><th>Firma</th><th>Copia</th><th>Muta original</th><th>Acepta literales/temporales</th><th>Uso ideal</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>f(Tipo x)</code></td><td>Sí (costoso si grande)</td><td>No</td><td>Sí</td><td>Tipos pequeños (int, double), cuando necesitas copia propia</td></tr>
+                <tr><td><code>f(Tipo&amp; x)</code></td><td>No</td><td><strong>Sí</strong></td><td>No</td><td>Out-parameter: función que devuelve por ahí</td></tr>
+                <tr><td><code>f(const Tipo&amp; x)</code></td><td>No</td><td>No</td><td>Sí</td><td>Lectura de objetos grandes — el estándar de facto</td></tr>
+                <tr><td><code>f(Tipo* x)</code></td><td>No (copia puntero)</td><td>Vía *</td><td>Sí (&amp;var)</td><td>Puede ser nullptr: opcionalidad estilo C</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-cpp">void duplicar(int&amp; n) { n *= 2; }          // muta al llamador
+
+void reporte(const std::vector&lt;int&gt;&amp; datos) {  // sin copia, sin riesgo
+    for (int x : datos) std::cout &lt;&lt; x &lt;&lt; ' ';
+}
+
+int valor = 21;
+duplicar(valor);
+std::cout &lt;&lt; valor &lt;&lt; "\n";  // 42</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Regla mnemotécnica: <strong>"const ref para leer, ref pelada para escribir, valor solo para baratos"</strong>. Si firmas <code>void f(std::string s)</code> para leer un string, pagas una copia completa en cada llamada sin razón.</p>
+        </blockquote>
+
+        <h3>Retorno múltiple moderno: structured bindings</h3>
+        <pre><code class="language-cpp">struct Resultado {
+    bool ok;
+    std::string mensaje;
+};
+
+Resultado procesar(int codigo) {
+    if (codigo % 2 == 0) return {true, "par procesado"};
+    return {false, "impar rechazado"};
+}
+
+// Desempaquetar sin conocer el struct interno:
+auto [exito, texto] = procesar(42);   // C++17
+std::cout &lt;&lt; texto &lt;&lt; '\n';           // "par procesado"
+
+// std::pair/tuple también funcionan:
+auto [minimo, maximo] = std::minmax({4, 8, 15, 16, 23});</code></pre>
+
+        <h3>Lambdas: funciones anónimas en línea</h3>
+        <p>Las lambdas capturan variables del entorno y viven donde se usan — fundamentales junto a los algoritmos de la STL:</p>
+        <pre><code class="language-cpp">auto cuadrado = [](int x) { return x * x; };
+std::cout &lt;&lt; cuadrado(7) &lt;&lt; "\n";     // 49
+
+int factor = 3;
+auto triplicar = [factor](int x) { return x * factor; };  // captura POR COPIA
+auto incrementarY = [&amp;y](int x) { y += x; };              // captura POR REFERENCIA
+
+std::vector&lt;int&gt; v{5, 2, 9};
+std::sort(v.begin(), v.end(), [](int a, int b) { return a &gt; b; }); // descendente</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>Capturar por referencia <code>[&amp;]</code> una variable local y luego invocar la lambda FUERA de su scope es use-after-free. Para callbacks que sobreviven al scope, captura por copia <code>[=]</code> o lista explícita <code>[factor]</code>.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="buenas-practicas-flujo">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón concreta</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Rango-based for como defecto</td><td>Elimina errores off-by-one y iteradores inválidos del for clásico</td></tr>
+                <tr><td>if con inicializador para condiciones calculadas</td><td>Scope mínimo: la temporal muere donde debe</td></tr>
+                <tr><td>break SIEMPRE en cada case (salvo apilados)</td><td>El fallthrough accidental es bug clásico; compila con -Wimplicit-fallthrough</td></tr>
+                <tr><td>const auto&amp; en bucles sobre objetos</td><td>Cero copias, cero mutaciones accidentales</td></tr>
+                <tr><td>Funciones cortas de un propósito</td><td>El compilador inlining hace gratis extraer funciones claras</td></tr>
+                <tr><td>structured bindings en vez de out-parameters dobles</td><td>Retornar struct/pair es más claro que f(a, &amp;b, &amp;c)</td></tr>
+                <tr><td>Lambda explícita en capturas ([factor], no [&amp;])</td><td>Documenta qué toca y evita referencias colgantes</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-note">
+            <p>Los compiladores modernos inlinean funciones pequeñas automáticamente: dividir código en funciones descriptivas NO cuesta rendimiento. La legibilidad sale gratis.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Qué pasa realmente</th><th>Solución</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Falta break en switch</td><td>Ejecución cae al siguiente case ("fallthrough" accidental)</td><td>Break sistemático + [[fallthrough]] cuando sea intencional</td></tr>
+                <tr><td>Declarar default args en header Y cpp</td><td>Error de redefinición</td><td>Solo en la declaración visible (header)</td></tr>
+                <tr><td>auto (sin &amp;) en bucle sobre vector&lt;string&gt;</td><td>Copia cada string en cada iteración</td><td>const auto&amp;</td></tr>
+                <tr><td>Comparar floats con == en condición</td><td>Bucle/condición nunca termina de comportarse como esperas</td><td>Tolerancia epsilon</td></tr>
+                <tr><td>Lambda [&amp;] almacenada y usada después</td><td>Dangling reference: comportamiento indefinido</td><td>Captura por valor o shared_ptr para estado compartido</td></tr>
+                <tr><td>Índice int contra size_t: <code>i &lt; v.size()</code> con warnings</td><td>Conversiones signed/unsigned sutiles; -1 se vuelve gigante</td><td>size_t o ranged-for</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Clasificador HTTP</strong>: función que reciba un código int y devuelva su clase (2xx éxito, 3xx redirección…) usando switch con rangos apilados; pruébala con structured bindings retornando (clase, descripción).</li>
+            <li><strong>Estadísticas sin copias</strong>: escribe <code>stats(const std::vector&lt;double&gt;&amp;)</code> que retorne struct con min, max, promedio; verifica con sizeof que no hay copias ocultas (compila con -Wall).</li>
+            <li><strong>FizzBuzz funcional</strong>: resuélvelo tres veces: for clásico, range-based y con std::transform + lambda; compara legibilidad en comentarios.</li>
+            <li><strong>Contador de palabras</strong>: dado un texto, construye map&lt;string,int&gt; de frecuencias recorriéndolo con ranged-for estructurado e imprime ordenado.</li>
+            <li><strong>Cazador de fallthrough</strong>: escribe un switch SIN breaks que clasifique notas (1-5) y observa la salida errónea; corrígelo y añade [[fallthrough]] documentando el único lugar donde sí aplica.</li>
+        </ol>
+    </div>
+</section>

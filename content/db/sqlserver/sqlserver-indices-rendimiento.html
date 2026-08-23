@@ -1,54 +1,182 @@
 <!-- 14. Índices y rendimiento - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="clustered-vs-nonclustered">
-    <h2>Clustered vs Nonclustered</h2>
+<section id="clustered-vs-nonclustered">
+    <h2><i class="fa-solid fa-book-bookmark"></i> Clustered vs Nonclustered</h2>
     <div class="doc-content">
-<p>La tabla solo puede tener UN índice clustered (define el orden físico de las filas; normalmente la PRIMARY KEY). Los nonclustered son estructuras aparte tipo "índice de libro".</p>
-<pre><code class="language-sql">CREATE NONCLUSTERED INDEX IX_Productos_Categoria
-ON dbo.Productos (CategoriaId);
+        <p>La distinción que organiza TODO el diseño físico de SQL Server: la tabla clustered ES el orden físico; los nonclustered son punteros ordenados hacia ella:</p>
+        <table>
+            <thead>
+                <tr><th>Aspecto</th><th>CLUSTERED (la tabla)</th><th>NONCLUSTERED (índice aparte)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Cantidad por tabla</td><td><strong>1 sola</strong></td><td>Hasta 999</td></tr>
+                <tr><td>Hojas contienen…</td><td>Filas completas de datos</td><td>Claves + locator a fila (o INCLUDEs)</td></tr>
+                <tr><td>Ejemplo natural</td><td>PK IDENTITY (append-only ✅)</td><td>Email, SKU, fecha+estado compuestos</td></tr>
+                <tr><td>Peligro clásico</td><td>GUID aleatorio → fragmentación brutal</td><td>Sobrecarga en cada DML si hay 20 índices</td></tr>
+                <tr><td>Sin definirlo</td><td>Toma heap (sin orden) — casi nunca deseado</td><td>N/A</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">CREATE TABLE Eventos (
+    evento_id BIGINT IDENTITY PRIMARY KEY CLUSTERED,   -- la tabla misma
+    usuario_id INT NOT NULL,
+    tipo       VARCHAR(30) NOT NULL,
+    creado_el  DATETIME2 NOT NULL
+);
+CREATE INDEX IX_Eventos_usuario_fecha      -- nonclustered:
+    ON Eventos (usuario_id, creado_el DESC); -- clave ordenada útil
 
-CREATE UNIQUE INDEX IX_Clientes_Email
-ON dbo.Clientes (Email);</code></pre>
+-- Índice único y compuesto multi-columna:
+CREATE UNIQUE NONCLUSTERED INDEX UX_Productos_sku
+ON Productos (sku);</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Orden de columnas en índice compuesto = orden de búsqueda: IX(a, b, c) sirve WHERE a=..., WHERE a AND b, WHERE a AND b AND c — pero NO b o c solos. Regla: igualdades primero, rango último.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="indices-con-include-y-filtrados">
-    <h2>Índices con INCLUDE y filtrados</h2>
+<section id="indices-con-include-y-filtrados">
+    <h2><i class="fa-solid fa-layer-plus"></i> INCLUDE y filtros: índices inteligentes</h2>
     <div class="doc-content">
-<pre><code class="language-sql">-- Covering index: la consulta se resuelve sin tocar la tabla
-CREATE NONCLUSTERED INDEX IX_Ventas_Fecha
-ON dbo.Ventas (Fecha) INCLUDE (Total);
+        <pre><code class="language-sql">-- COVERING index: la query se responde SOLO leyendo el índice:
+CREATE INDEX IX_Pedidos_cliente_covering
+ON Pedidos (cliente_id, fecha DESC)
+INCLUDE (total, estado);        -- columnas cubiertas SIN entrar al índice base
+GO
 
--- Índice filtrado: solo filas relevantes
-CREATE NONCLUSTERED INDEX IX_Pedidos_Pendientes
-ON dbo.Pedidos (Fecha)
-WHERE Estado = N'Pendiente';</code></pre>
-<blockquote class="aside aside-tip">
-<p>Regla práctica: indexa las columnas del <code>WHERE</code>, <code>JOIN</code> y <code>ORDER BY</code> más frecuentes. Cada índice adicional ralentiza INSERT/UPDATE/DELETE.</p>
-</blockquote>
+SELECT total, estado FROM Pedidos
+WHERE cliente_id = 42 AND fecha &gt; '2026-01-01';
+-- Plan muestra Index Seek + sin Key Lookup = covering logrado ⚡
+
+-- Índice FILTRADO: solo una porción de filas (exclusivo T-SQL):
+CREATE INDEX IX_Pedidos_pendientes
+ON Pedidos (fecha, cliente_id)
+WHERE estado = 'pendiente';     -- mini-índice ultradenso para la cola activa
+
+CREATE UNIQUE INDEX UX_Email_activos
+ON Clientes (email) WHERE activo = 1;   -- unicidad SOLO entre activos</code></pre>
+
+        <h3>Cuándo cada arma brilla</h3>
+        <table>
+            <thead>
+                <tr><th>Arma</th><th>Escenario ideal</th><th>Señal en el plan</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>INCLUDE</td><td>SELECT pocas columnas extra frecuentes</td><td>Key Lookup eliminado tras crearlo</td></tr>
+                <tr><td>Filtrado WHERE=constante</td><td>Estados calientes (pendientes), soft-delete</td><td>Seek directo con Predicate en índice</td></tr>
+                <tr><td>Compuesto bien ordenado</td><td>Mixtos igualdad+rango</td><td>Seek con Seek Predicates múltiples</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>El índice filtrado falla silenciosamente (no se usa) si tu query parametriza el filtro (@estado vs literal 'pendiente'): el plan debe servir cualquier valor. Funciona perfecto desde queries literales o vistas indexadas específicas.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="medir-antes-de-optimizar">
-    <h2>Medir antes de optimizar</h2>
+<section id="medir-antes-de-optimizar">
+    <h2><i class="fa-solid fa-gauge-high"></i> Medir antes de optimizar: planes y estadísticas</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SET STATISTICS IO ON;    -- lecturas lógicas/físicas
-SET STATISTICS TIME ON;  -- tiempo CPU
+        <pre><code class="language-sql">SET STATISTICS IO ON;      -- lecturas lógicas/físicas por tabla
+SET STATISTICS TIME ON;    -- CPU y elapsed reales
+-- ejecuta la query... lee Messages:
 
-SELECT * FROM dbo.Productos WHERE CategoriaId = 2;
+-- Table 'Pedidos'. Scan count 1, logical reads 45812   ← el número que importa
+-- SQL Server Execution Times: CPU time = 1234 ms
 
--- Ver los índices existentes
-SELECT name, type_desc FROM sys.indexes
-WHERE object_id = OBJECT_ID('dbo.Productos');</code></pre>
-<p>En SSMS activa <em>Incluir plan de ejecución real</em> (Ctrl+M): busca <strong>Table Scan</strong> en tablas grandes (malo) versus <strong>Index Seek</strong> (bueno).</p>
+-- El plan real (no estimado):
+SET STATISTICS PROFILE ON;             -- texto completo post-ejecución
+-- o en SSMS: Ctrl+M (Include Actual Execution Plan)
+
+-- Operadores buenos vs malos del plan:
+-- ✅ Index SEEK: acceso quirúrgico por índice
+-- ⚠️ Index SCAN: recorre TODO el índice (ok si tabla chica)
+-- ❌ Table SCAN: heap entero leído — sospechoso siempre
+-- 🚨 Key Lookup ×N: miles de saltos al clustered = falta INCLUDE
+-- 🚨 Hash Match / Sort spill a tempdb: memoria insuficiente o stats malas
+
+-- Estadísticas obsoletas = planes malos:
+UPDATE STATISTICS Pedidos WITH FULLSCAN;      -- manual puntual
+SELECT * FROM sys.dm_db_stats_properties(OBJECT_ID('Pedidos'), 1);  -- frescura</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Lecturas lógicas (logical reads) es LA métrica comparable: páginas tocadas en buffer. Bajarlas 10x baja CPU y latencia proporcionalmente. El tiempo absoluto varía por caché/carga; las lecturas no mienten.</p>
+        </blockquote>
+
+        <h3>DMVs esenciales para diagnóstico</h3>
+        <table>
+            <thead>
+                <tr><th>DMV</th><th>Responde…</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>sys.dm_db_missing_index_details</code></td><td>¿Qué índice pide a gritos mi carga?</td></tr>
+                <tr><td><code>sys.dm_db_index_usage_stats</code></td><td>¿Qué índices NADIE usa? (candidatos a drop)</td></tr>
+                <tr><td><code>sys.dm_exec_query_stats</code></td><td>Top queries por CPU/lecturas acumuladas</td></tr>
+                <tr><td><code>sys.dm_exec_requests</code></td><td>¿Qué corre AHORA y qué bloquea?</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="mantenimiento">
-    <h2>Mantenimiento</h2>
+<section id="mantenimiento">
+    <h2><i class="fa-solid fa-screwdriver"></i> Mantenimiento: fragmentación y estadísticas</h2>
     <div class="doc-content">
-<pre><code class="language-sql">UPDATE STATISTICS dbo.Productos;              -- refresca estadísticas
-ALTER INDEX ALL ON dbo.Productos REORGANIZE;  -- desfragmentación ligera
-ALTER INDEX ALL ON dbo.Productos REBUILD;     -- reconstrucción completa</code></pre>
+        <pre><code class="language-sql">-- Diagnóstico de fragmentación:
+SELECT ips.index_id, i.name,
+       ips.avg_fragmentation_in_percent,
+       ips.page_count
+FROM sys.dm_db_index_physical_stats(DB_ID(), OBJECT_ID('Eventos'),
+                                    NULL, NULL, 'LIMITED') ips
+JOIN sys.indexes i ON i.object_id = ips.object_id AND i.index_id = ips.index_id;
+
+-- Remedio según severidad:
+ALTER INDEX IX_Eventos_usuario_fecha ON Eventos REORGANIZE;  -- &lt;30%: online ligero
+ALTER INDEX ALL ON Eventos REBUILD WITH (ONLINE = ON);        -- &gt;30%: reconstrucción
+
+-- Actualizar estadísticas tras cargas masivas:
+UPDATE STATISTICS Eventos;
+
+-- Ojo con la sobrecarga: cada índice cobra en INSERT/UPDATE/DELETE:
+SELECT i.name, us.user_seeks, us.user_scans, us.user_lookups, us.user_updates
+FROM sys.dm_db_index_usage_stats us
+JOIN sys.indexes i ON i.index_id = us.index_id AND i.object_id = us.object_id
+WHERE us.database_id = DB_ID()
+ORDER BY us.user_updates DESC;    -- muchos updates, cero seeks ⇒ candidato drop</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>"Añade un índice" no es gratis: cada uno duplica escritura potencialmente y ocupa cache valioso. La meta no es máxima velocidad de SELECT sino balance read/write sostenible. Un índice que nadie seek-ea pero todos actualizan es deuda técnica pura.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+        <thead>
+            <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Función sobre columna en WHERE</td><td>Índice ignorado (non-SARGable)</td><td>Rangos directos: col &gt;= x AND col &lt; y</td></tr>
+            <tr><td>LIKE '%inicio'</td><td>Scan inevitable</td><td>Búsqueda sufijo → FULLTEXT/otra estrategia</td></tr>
+            <tr><td>Clustered sobre GUID NEWID()</td><td>Fragmentación y page splits crónicos</td><td>IDENTITY/sequential GUID como clustered</td></tr>
+            <tr><td>Índices por cada queja de lentitud</td><td>Escrituras asfixiadas</td><td>Medir uso real; drop de índices muertos</td></tr>
+            <tr><td>Confiar en plan ESTIMADO</td><td>Optimización fantasma</td><td>Plan REAL (Ctrl+M) + STATISTICS IO</td></tr>
+            <tr><td>Stats desactualizadas tras carga nocturna</td><td>Planes buenos→malos "de repente"</td><td>UPDATE STATISTICS programado tras ETL</td></tr>
+        </tbody>
+    </table>
+    <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+        <li><strong>Laboratorio SARGable</strong>: tabla 500k filas; compara YEAR(col)=2026 vs rango con STATISTICS IO; documenta lecturas ambas.</li>
+        <li><strong>Cazador de Key Lookup</strong>: query frecuente con lookup ×10k; crea INCLUDE correcto; verifica desaparición del operador en plan.</li>
+        <li><strong>Índice filtrado vivo</strong>: cola de pendientes con índice filtrado; mide su tamaño vs índice equivalente completo; prueba uso con parámetro vs literal.</li>
+        <li><strong>Auditoría de índices muertos</strong>: usa dm_db_index_usage_stats para listar candidatos a drop en tu BD práctica; justifica cada uno.</li>
+        <li><strong>Ciclo completo</strong>: fragmenta deliberadamente (insert/delete masivo GUID), mide %, REORGANIZE vs REBUILD comparando tiempos y resultado final.</li>
+    </ol>
+    </div>
+</section>

@@ -1,52 +1,193 @@
 <!-- 8. Agregación y agrupamiento - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="funciones-de-agregacion">
-    <h2>Funciones de agregación</h2>
+<section id="funciones-de-agregacion">
+    <h2><i class="fa-solid fa-calculator"></i> Funciones de agregación</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT COUNT(*) AS Total FROM dbo.Productos;
-SELECT AVG(Precio) AS Promedio, MIN(Precio) AS Minimo, MAX(Precio) AS Maximo
-FROM dbo.Productos;
-SELECT SUM(Cantidad) AS Unidades FROM dbo.Ventas;</code></pre>
-<blockquote class="aside aside-note">
-<p><code>COUNT(*)</code> cuenta filas; <code>COUNT(Columna)</code> omite nulos; <code>COUNT(DISTINCT Columna)</code> omite repetidos.</p>
-</blockquote>
-    </div>
-  </section>
+        <pre><code class="language-sql">SELECT
+    COUNT(*)                    AS total_pedidos,     -- todas las filas
+    COUNT(fecha_envio)          AS enviados,          -- ignora NULL
+    SUM(total)                  AS facturado,
+    AVG(total)                  AS ticket_medio,
+    MIN(total)                  AS minimo,
+    MAX(total)                  AS maximo,
+    STDEV(total)                AS desviacion,        -- extra T-SQL
+    VAR(total)                  AS varianza
+FROM dbo.Pedidos;
 
-  <section id="group-by-y-having">
-    <h2>GROUP BY y HAVING</h2>
+-- DISTINCT dentro del agregado:
+SELECT COUNT(DISTINCT cliente_id) AS clientes_unicos FROM Pedidos;
+SELECT AVG(DISTINCT ciudad_id) -- raro pero existe
+
+-- STRING_AGG: el GROUP_CONCAT de T-SQL (2017+):
+SELECT cliente_id,
+       STRING_AGG(producto, ', ') WITHIN GROUP (ORDER BY producto) AS lista
+FROM Vista_Compras
+GROUP BY cliente_id;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Función</th><th>Con NULL</th><th>Vacío →</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>COUNT(*)</code></td><td>Cuenta todo</td><td>0</td></tr>
+                <tr><td><code>COUNT(col)</code>/<code>SUM/AVG/MIN/MAX</code></td><td>Salta NULLs</td><td>NULL</td></tr>
+                <tr><td><code>COUNT_BIG(*)</code></td><td>Igual que COUNT</td><td>0 (tipo BIGINT — requerido por vistas indexadas)</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>T-SQL añade estadística real: STDEV/VAR sobre columnas numéricas. Para dashboards de control de calidad o dispersiones de precios evitas exportar datos: calculas en origen.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="group-by-y-having">
+    <h2><i class="fa-solid fa-layer-group"></i> GROUP BY y HAVING</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT c.Nombre, COUNT(p.Id) AS Productos, ROUND(AVG(p.Precio),2) AS Promedio
-FROM dbo.Categorias c
-LEFT JOIN dbo.Productos p ON p.CategoriaId = c.Id
-GROUP BY c.Nombre
-HAVING COUNT(p.Id) &gt;= 3
-ORDER BY Productos DESC;</code></pre>
-    </div>
-  </section>
+        <pre><code class="language-sql">SELECT c.ciudad,
+       COUNT(*)              AS clientes,
+       AVG(edad)             AS edad_media
+FROM dbo.Clientes c
+WHERE c.activo = 1                    -- filtra FILAS (antes)
+GROUP BY c.ciudad                     -- agrupa
+HAVING COUNT(*) &gt;= 10                 -- filtra GRUPOS (después)
+   AND AVG(edad) BETWEEN 25 AND 65
+ORDER BY clientes DESC;
 
-  <section id="rollup-y-grouping-sets">
-    <h2>ROLLUP y GROUPING SETS</h2>
+-- Agrupar por múltiples columnas/expresiones:
+SELECT YEAR(p.fecha) AS anio,
+       MONTH(p.fecha) AS mes,
+       p.estado,
+       SUM(p.total) AS monto
+FROM dbo.Pedidos p
+GROUP BY YEAR(p.fecha), MONTH(p.fecha), p.estado
+ORDER BY anio DESC, mes DESC;</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>SQL Server aplica ONLY_FULL_GROUP_BY SIEMPRE e inapelablemente: toda columna del SELECT fuera de agregados debe estar en el GROUP BY. No hay modo para "apagarlo" como en MySQL antiguo — y eso es bueno: los resultados arbitrarios de grupos mal definidos son bugs enlatados.</p>
+        </blockquote>
+
+        <h3>Window functions: agregar SIN colapsar</h3>
+        <pre><code class="language-sql">SELECT nombre, departamento, salario,
+       AVG(salario) OVER (PARTITION BY departamento) AS media_depto,
+       salario - AVG(salario) OVER (PARTITION BY departamento) AS vs_media,
+       RANK()       OVER (PARTITION BY departamento ORDER BY salario DESC) AS puesto_depto,
+       SUM(salario) OVER (ORDER BY contrato ROWS UNBOUNDED PRECEDING) AS acumulado
+FROM dbo.Empleados;
+-- Cada fila sobrevive con su grupo de contexto a la vista ✨</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="rollup-y-grouping-sets">
+    <h2><i class="fa-solid fa-chart-column"></i> ROLLUP y GROUPING SETS: subtotales profesionales</h2>
     <div class="doc-content">
-<pre><code class="language-sql">-- Subtotales por categoría + gran total
-SELECT CategoriaId, COUNT(*) AS Total
-FROM dbo.Productos
-GROUP BY ROLLUP (CategoriaId);
+        <p>Aquí SQL Server brilla frente a MySQL: subtotales multi-nivel declarativos sin UNION manual:</p>
+        <pre><code class="language-sql">-- ROLLUP: jerarquía año → mes con subtotales + gran total:
+SELECT YEAR(fecha)  AS anio,
+       MONTH(fecha) AS mes,
+       SUM(total)   AS ventas
+FROM dbo.Pedidos
+GROUP BY ROLLUP(YEAR(fecha), MONTH(fecha));
+-- filas (año,mes) + subtotal por año + TOTAL GENERAL
 
--- Agregaciones personalizadas en una sola pasada
-SELECT CategoriaId, COUNT(*) AS Total
-FROM dbo.Productos
-GROUP BY GROUPING SETS ((CategoriaId), ());</code></pre>
+-- CUBE: TODAS las combinaciones (año×estado, año, estado, total):
+GROUP BY CUBE(YEAR(fecha), estado);
+
+-- GROUPING SETS: TÚ eliges qué conjuntos:
+SELECT pais, ciudad, COUNT(*) AS n
+FROM dbo.Clientes
+GROUP BY GROUPING SETS (
+    (pais, ciudad),      -- detalle completo
+    (pais),              -- subtotal país
+    ()                   -- gran total
+);
+
+-- Distinguir filas de detalle vs subtotal:
+SELECT GROUPING(ciudad) AS es_subtotal_ciudad,   -- 1 = fila agregada
+       ciudad, COUNT(*)
+FROM dbo.Clientes
+GROUP BY ROLLUP(ciudad);</code></pre>
+        <table>
+            <thead>
+                <tr><th>Operador</th><th>Genera…</th><th>Uso típico</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>ROLLUP(a,b)</code></td><td>(a,b) + (a) + ()</td><td>Jerarquías naturales fecha/geo</td></tr>
+                <tr><td><code>CUBE(a,b)</code></td><td>Todas las combinaciones 2ⁿ</td><td>Análisis dimensional exploratorio</td></tr>
+                <tr><td><code>GROUPING SETS(...)</code></td><td>Solo sets listados</td><td>Reportes exactos sin extras</td></tr>
+                <tr><td><code>GROUPING(col)</code></td><td>Flag 1/0 por columna</td><td>Etiquetar "TOTAL" en app/reportes</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Un reporte de ventas con subtotales por mes y gran total suele escribirse como 3 queries unidas por UNION ALL. GROUPING SETS lo hace en UN solo escaneo de datos — hasta 3x más rápido en tablas grandes.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="agregaciones-con-case">
-    <h2>Agregaciones con CASE</h2>
+<section id="agregaciones-con-case">
+    <h2><i class="fa-solid fa-table-pivot"></i> Agregaciones condicionales y PIVOT</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT
-  COUNT(*) AS Total,
-  SUM(CASE WHEN Precio &gt; 1000 THEN 1 ELSE 0 END) AS Caros,
-  SUM(CASE WHEN Precio &lt;= 1000 THEN 1 ELSE 0 END) AS Baratos
-FROM dbo.Productos;</code></pre>
+        <pre><code class="language-sql">-- KPIs múltiples en un solo escaneo:
+SELECT
+    COUNT(*)                                        AS total,
+    SUM(CASE WHEN estado='pagado'    THEN 1 ELSE 0 END) AS pagados,
+    SUM(CASE WHEN estado='pendiente' THEN 1 ELSE 0 END) AS pendientes,
+    SUM(CASE WHEN estado='pagado' THEN total END)       -- sin ELSE = NULL = no suma ✅
+        AS cobrado,
+    AVG(CASE WHEN vip=1 THEN total END)                 AS ticket_vip
+FROM dbo.Pedidos;
+
+-- PIVOT nativo: filas → columnas:
+SELECT anio, [ES], [MX], [AR]
+FROM (
+    SELECT YEAR(fecha) AS anio, pais, total FROM Ventas
+) fuente
+PIVOT (
+    SUM(total) FOR pais IN ([ES], [MX], [AR])
+) p;
+
+-- La versión CASE suele ser más flexible/mantenible:
+SELECT YEAR(fecha) AS anio,
+       SUM(CASE WHEN pais='ES' THEN total END) AS [ES],
+       SUM(CASE WHEN pais='MX' THEN total END) AS [MX],
+       SUM(CASE WHEN pais='AR' THEN total END) AS [AR]
+FROM dbo.Ventas
+GROUP BY YEAR(fecha);</code></pre>
+        <blockquote class="aside aside-note">
+            <p>PIVOT requiere listar columnas estáticas ([ES],[MX]...): dinámico real necesita SQL dinámico. Por eso en reporting moderno gana el patrón CASE — legible, versionable y parametrizable desde la app.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Columna suelta fuera de GROUP BY</td><td>"is invalid in the select list..." error 8127</td><td>Agregarla al GROUP BY o agregarla</td></tr>
+                <tr><td>Filtro de grupos en WHERE</td><td>"Invalid use of aggregate"</td><td>HAVING</td></tr>
+                <tr><td>Leer subtotales ROLLUP como datos reales</td><td>Números duplicados inflan reportes</td><td>GROUPING() para etiquetar/excluir</td></tr>
+                <tr><td>AVG con ELSE 0 cuando quería excluir</td><td>Media hundida artificialmente</td><td>Sin ELSE (NULL excluye) según intención</td></tr>
+                <tr><td>STRING_AGG superando 8000 bytes</td><td>"String or binary data would be truncated"</td><td>CAST a NVARCHAR(MAX) antes: STRING_AGG(CAST(x AS NVARCHAR(MAX)), ...)</td></tr>
+                <tr><td>Esperar PIVOT dinámico automático</td><td>Columnas fijas obligatorias</td><td>CASE pattern o SQL dinámico documentado</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Dashboard KPI</strong>: una sola query con total/pagados/cancelados/cobrado/ticket-vip vía SUM(CASE) sobre tus pedidos.</li>
+            <li><strong>Reporte jerárquico</strong>: ROLLUP año→mes con GROUPING() etiquetando subtotales "SUBTOTAL" y "GRAN TOTAL" en la salida.</li>
+            <li><strong>Ranking con contexto</strong>: window functions para salario vs media de departamento + rank global y departamental simultáneos.</li>
+            <li><strong>Matriz país×año</strong>: misma matriz con PIVOT nativo y con SUM(CASE); compara legibilidad y flexibilidad.</li>
+            <li><strong>Comparador de eficiencia</strong>: reporte con subtotales via 3 UNIONs vs GROUPING SETS; SET STATISTICS IO ON y documenta lecturas.</li>
+        </ol>
+    </div>
+</section>

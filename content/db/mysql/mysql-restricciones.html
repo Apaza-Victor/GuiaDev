@@ -1,58 +1,251 @@
 <!-- 4. Restricciones (Constraints) - MySQL (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="primary-key-y-auto-increment">
-    <h2>PRIMARY KEY y AUTO_INCREMENT</h2>
+<section id="primary-key-y-auto-increment">
+    <h2><i class="fa-solid fa-key"></i> PRIMARY KEY y AUTO_INCREMENT</h2>
     <div class="doc-content">
-<p>La llave primaria identifica cada fila de forma única. Con <code>AUTO_INCREMENT</code>, MySQL genera el valor por ti.</p>
-<pre><code class="language-sql">CREATE TABLE clientes (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(120) NOT NULL UNIQUE
-);</code></pre>
-    </div>
-  </section>
-
-  <section id="foreign-key">
-    <h2>FOREIGN KEY</h2>
-    <div class="doc-content">
-<p>La llave foránea vincula una columna con la llave primaria de otra tabla, impidiendo valores huérfanos.</p>
-<pre><code class="language-sql">CREATE TABLE pedidos (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  cliente_id INT NOT NULL,
-  FOREIGN KEY (cliente_id) REFERENCES clientes(id)
-    ON DELETE CASCADE     -- al borrar el cliente, se borran sus pedidos
-    ON UPDATE CASCADE     -- al cambiar su id, se propaga
-);</code></pre>
-<p>Opciones de eliminación: <code>CASCADE</code> (propaga), <code>SET NULL</code> (deja huérfano permitido), <code>RESTRICT</code>/<code>NO ACTION</code> (bloquea el borrado).</p>
-    </div>
-  </section>
-
-  <section id="unique-not-null-default-y-check">
-    <h2>UNIQUE, NOT NULL, DEFAULT y CHECK</h2>
-    <div class="doc-content">
-<pre><code class="language-sql">CREATE TABLE empleados (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  curp CHAR(18) NOT NULL UNIQUE,          -- no repetido
-  nombre VARCHAR(80) NOT NULL,            -- obligatorio
-  salario DECIMAL(10,2) DEFAULT 15000.00, -- valor por defecto
-  edad TINYINT CHECK (edad &gt;= 18),        -- regla de validación (MySQL 8.0.16+)
-  departamento VARCHAR(40) DEFAULT 'General'
-);</code></pre>
-    </div>
-  </section>
-
-  <section id="restricciones-con-nombre">
-    <h2>Restricciones con nombre</h2>
-    <div class="doc-content">
-<p>Nombrar las restricciones facilita eliminarlas o depurarlas después.</p>
-<pre><code class="language-sql">CREATE TABLE pagos (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  empleado_id INT NOT NULL,
-  monto DECIMAL(10,2) NOT NULL,
-  CONSTRAINT fk_pagos_empleado FOREIGN KEY (empleado_id)
-    REFERENCES empleados(id),
-  CONSTRAINT ck_pagos_monto CHECK (monto &gt; 0)
+        <p>La <strong>clave primaria</strong> identifica cada fila de forma ÚNICA y NO nula. MySQL crea automáticamente un índice agrupado sobre ella (en InnoDB, la tabla física se ordena por la PK), lo que la convierte en el camino más rápido posible hacia una fila.</p>
+        <pre><code class="language-sql">CREATE TABLE clientes (
+    id       INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    dni      CHAR(9) NOT NULL UNIQUE      -- identidad natural separada
 );
 
-ALTER TABLE pagos DROP FOREIGN KEY fk_pagos_empleado;</code></pre>
+-- PK compuesta (varias columnas juntas):
+CREATE TABLE inscripciones (
+    alumno_id   INT UNSIGNED NOT NULL,
+    curso_id    INT UNSIGNED NOT NULL,
+    nota        DECIMAL(4,2),
+    PRIMARY KEY (alumno_id, curso_id)     -- el PAR debe ser único
+);</code></pre>
+
+        <h3>AUTO_INCREMENT: IDs generados</h3>
+        <pre><code class="language-sql">INSERT INTO clientes (dni) VALUES ('12345678A');
+SELECT LAST_INSERT_ID();          -- id generado para TU conexión
+
+-- Ver el siguiente valor:
+SHOW TABLE STATUS LIKE 'clientes'\G
+-- o en 8.0:
+SELECT AUTO_INCREMENT FROM information_schema.TABLES
+WHERE TABLE_NAME = 'clientes';
+
+-- Reiniciar (peligroso si hay filas):
+ALTER TABLE clientes AUTO_INCREMENT = 1000;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Criterio</th><th>PK auto-increment</th><th>PK natural (DNI, email)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Estabilidad</td><td>Nunca cambia ✅</td><td>Puede cambiar en la vida real</td></tr>
+                <tr><td>Tamaño índice</td><td>Compacto (4-8 bytes)</td><td>VARCHAR pesa en cada FK hija</td></tr>
+                <tr><td>Joins/FKs</td><td>Baratos</td><td>Costosos</td></tr>
+                <tr><td>Sensibilidad negocio</td><td>Ninguna ✅</td><td>DNI/email expuestos en URLs</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Regla del diseño profesional: PK sintética auto_increment SIEMPRE + UNIQUE constraint sobre la clave natural (dni). Obtienes velocidad e integridad a la vez.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="foreign-key">
+    <h2><i class="fa-solid fa-link"></i> FOREIGN KEY e integridad referencial</h2>
+    <div class="doc-content">
+        <p>Una FK garantiza que el valor de una columna EXISTE en la tabla padre. Es la diferencia entre "espero que nadie inserte pedidos de clientes inexistentes" y "el motor lo impide matemáticamente":</p>
+
+        <h3>Modelo de referencia que usaremos</h3>
+        <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d206261636b67726f756e64436f6c6f7220234644464446380a736b696e706172616d2064656661756c74466f6e7453697a652031310a6869646520636972636c650a0a656e746974792022636c69656e746573222061732063207b0a20202a20636c69656e74655f6964203a20494e5420554e5349474e4544203c3c504b3e3e0a20202d2d0a20202a206e6f6d627265203a2056415243484152283830290a20202a20656d61696c203a20564152434841522832353429203c3c55513e3e0a7d0a0a656e74697479202270656469646f73222061732070207b0a20202a2070656469646f5f6964203a20494e5420554e5349474e4544203c3c504b3e3e0a20202a20636c69656e74655f6964203a20494e5420554e5349474e4544203c3c464b3e3e0a20202d2d0a20202a206665636861203a204441544554494d450a20202a20746f74616c203a20444543494d414c2831302c32290a7d0a0a656e746974792022646574616c6c655f70656469646f222061732064207b0a20202a2070656469646f5f6964203a20494e5420554e5349474e4544203c3c464b2c504b3e3e0a20202a2070726f647563746f5f6964203a20494e5420554e5349474e4544203c3c464b2c504b3e3e0a20202d2d0a20202a2063616e7469646164203a20494e540a20202a2070726563696f5f756e6974203a20444543494d414c2831302c32290a7d0a0a656e74697479202270726f647563746f7322206173207072207b0a20202a2070726f647563746f5f6964203a20494e5420554e5349474e4544203c3c504b3e3e0a20202d2d0a20202a206e6f6d627265203a205641524348415228313230290a20202a2070726563696f203a20444543494d414c2831302c32290a7d0a0a63207c7c2d2d6f7b2070203a20227265616c697a61220a70207c7c2d2d7c7b2064203a2022636f6e7469656e65220a7072207c7c2d2d6f7b2064203a20226170617265636520656e220a40656e64756d6c" alt="Diagrama entidad-relación tienda" loading="lazy"  />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam backgroundColor #FDFDF8
+skinparam defaultFontSize 11
+hide circle
+
+entity "clientes" as c {
+  * cliente_id : INT UNSIGNED &lt;&lt;PK&gt;&gt;
+  --
+  * nombre : VARCHAR(80)
+  * email : VARCHAR(254) &lt;&lt;UQ&gt;&gt;
+}
+
+entity "pedidos" as p {
+  * pedido_id : INT UNSIGNED &lt;&lt;PK&gt;&gt;
+  * cliente_id : INT UNSIGNED &lt;&lt;FK&gt;&gt;
+  --
+  * fecha : DATETIME
+  * total : DECIMAL(10,2)
+}
+
+entity "detalle_pedido" as d {
+  * pedido_id : INT UNSIGNED &lt;&lt;FK,PK&gt;&gt;
+  * producto_id : INT UNSIGNED &lt;&lt;FK,PK&gt;&gt;
+  --
+  * cantidad : INT
+  * precio_unit : DECIMAL(10,2)
+}
+
+entity "productos" as pr {
+  * producto_id : INT UNSIGNED &lt;&lt;PK&gt;&gt;
+  --
+  * nombre : VARCHAR(120)
+  * precio : DECIMAL(10,2)
+}
+
+c ||--o{ p : "realiza"
+p ||--|{ d : "contiene"
+pr ||--o{ d : "aparece en"
+@enduml</code></pre>
+  </details>
+</div>
+
+        <pre><code class="language-sql">CREATE TABLE pedidos (
+    pedido_id   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    cliente_id  INT UNSIGNED NOT NULL,
+    fecha       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    total       DECIMAL(10,2) NOT NULL DEFAULT 0,
+
+    CONSTRAINT fk_pedido_cliente
+        FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+        ON DELETE RESTRICT          -- no borrar cliente con pedidos
+        ON UPDATE CASCADE           -- si cambia id, arrastrar hijos
+);
+
+-- Probar la protección:
+INSERT INTO pedidos (cliente_id, total) VALUES (99999, 100);
+-- ERROR 1452: Cannot add or update a child row (FK constraint fails)</code></pre>
+
+        <h3>Acciones referenciales ON DELETE / ON UPDATE</h3>
+        <table>
+            <thead>
+                <tr><th>Acción</th><th>Al borrar el padre…</th><th>Cuándo usarla</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>RESTRICT</code> (default)</td><td>Rechaza el borrado si hay hijos</td><td>Datos críticos: auditable siempre</td></tr>
+                <tr><td><code>CASCADE</code></td><td>Borra los hijos en cadena</td><td>Detalle de pedido muere con su pedido</td></tr>
+                <tr><td><code>SET NULL</code></td><td>Huerfana con NULL (columna debe ser nullable)</td><td>"Producto sin categoría" es válido</td></tr>
+                <tr><td><code>NO ACTION</code></td><td>Igual que RESTRICT en InnoDB</td><td>—</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">-- Detalle SÍ cascadea (muere con su pedido), cliente NO:
+CREATE TABLE detalle_pedido (
+    pedido_id    INT UNSIGNED NOT NULL,
+    producto_id  INT UNSIGNED NOT NULL,
+    cantidad     SMALLINT UNSIGNED NOT NULL CHECK (cantidad &gt; 0),
+    precio_unit  DECIMAL(10,2) NOT NULL,
+    PRIMARY KEY (pedido_id, producto_id),
+    CONSTRAINT fk_det_pedido FOREIGN KEY (pedido_id)
+        REFERENCES pedidos(pedido_id) ON DELETE CASCADE,
+    CONSTRAINT fk_det_producto FOREIGN KEY (producto_id)
+        REFERENCES productos(id) ON DELETE RESTRICT
+);
+
+-- Inspeccionar FKs existentes:
+SELECT CONSTRAINT_NAME, TABLE_NAME, REFERENCED_TABLE_NAME
+FROM information_schema.KEY_COLUMN_USAGE
+WHERE REFERENCED_TABLE_SCHEMA = 'tienda';</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>CASCADE encadenado mal diseñado borra árboles enteros por accidente (borras un país → borra ciudades → borra usuarios...). Diseña el grafo de cascadas conscientemente: solo relaciones composición fuerte.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="unique-not-null-default-y-check">
+    <h2><i class="fa-solid fa-shield-halved"></i> UNIQUE, NOT NULL, DEFAULT y CHECK</h2>
+    <div class="doc-content">
+        <pre><code class="language-sql">CREATE TABLE usuarios (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    email      VARCHAR(254) NOT NULL UNIQUE,        -- sin duplicados
+    telefono   VARCHAR(20) NULL UNIQUE,             -- varios NULL permitidos ✅
+    apodo      VARCHAR(30) NOT NULL DEFAULT 'anon',
+    edad       TINYINT UNSIGNED NULL,
+    pais       CHAR(2) NOT NULL DEFAULT 'ES',
+
+    -- CHECK (MySQL 8.0.16+ ¡realmente aplica!):
+    CONSTRAINT chk_edad CHECK (edad IS NULL OR (edad BETWEEN 0 AND 130)),
+    CONSTRAINT chk_email_formato CHECK (email LIKE '%_@_%._%')
+);
+
+-- UNIQUE compuesto: combinación única, valores individuales repetibles:
+CREATE TABLE favoritos (
+    usuario_id   INT UNSIGNED NOT NULL,
+    producto_id  INT UNSIGNED NOT NULL,
+    UNIQUE KEY uq_fav (usuario_id, producto_id)
+);
+-- El mismo usuario puede favoritar productos distintos;
+-- ningún producto dos veces para el mismo usuario.</code></pre>
+        <table>
+            <thead>
+                <tr><th>Constraint</th><th>Protege contra</th><th>Nota</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>NOT NULL</td><td>Filas semivacías inutilizables</td><td>Default sensato en todo lo esencial</td></tr>
+                <tr><td>UNIQUE</td><td>Duplicados lógicos (email, SKU)</td><td>Múltiples NULLs NO chocan entre sí</td></tr>
+                <tr><td>DEFAULT</td><td>Omisión accidental de datos conocidos</td><td>Incluye CURRENT_TIMESTAMP</td></tr>
+                <tr><td>CHECK</td><td>Rangos/formatos absurdos</td><td>8.0.16+ lo aplica de verdad (antes ignorado)</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="restricciones-con-nombre">
+    <h2><i class="fa-solid fa-tag"></i> Administrar restricciones con nombre</h2>
+    <div class="doc-content">
+        <p>Todo constraint puede (y debe) llevar nombre explícito. Sin él, MySQL genera nombres automáticos crípticos que dificultan mantenimiento:</p>
+        <pre><code class="language-sql">-- Ver TODOS los constraints de la base:
+SELECT TABLE_NAME, CONSTRAINT_NAME, CONSTRAINT_TYPE
+FROM information_schema.TABLE_CONSTRAINTS
+WHERE CONSTRAINT_SCHEMA = 'tienda';
+
+-- Añadir constraint después:
+ALTER TABLE empleados
+    ADD CONSTRAINT chk_salario_min CHECK (salario &gt;= 1080.00);
+
+-- Eliminar por NOMBRE (por eso nombrar importa):
+ALTER TABLE empleados DROP CHECK chk_salario_min;
+ALTER TABLE pedidos DROP FOREIGN KEY fk_pedido_cliente;
+ALTER TABLE usuarios DROP INDEX email;
+
+-- Desactivar chequeo FK temporalmente (cargas masivas):
+SET FOREIGN_KEY_CHECKS = 0;
+-- ... bulk load ...
+SET FOREIGN_KEY_CHECKS = 1;</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>SET FOREIGN_KEY_CHECKS=0 deja la puerta abierta a huérfanos reales. Tras cargas masivas con esta bandera, VERIFICA integridad con LEFT JOIN buscando hijos sin padre antes de reactivar producción.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/consecuencia</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Insertar hijo con padre inexistente</td><td>Error 1452 FK constraint fails</td><td>Crear padre primero o validar en app + transacción</td></tr>
+                <tr><td>Borrar padre con hijos RESTRICT</td><td>Error 1451 cannot delete</td><td>Borrar hijos primero / SET NULL / repensar acción</td></tr>
+                <tr><td>CASCADE indiscriminado</td><td>Borrados en cadena masivos sorpresivos</td><td>Cascade SOLO composición fuerte (pedido→detalle)</td></tr>
+                <tr><td>Confianza en CHECK pre-8.0.16</td><td>Datos absurdos ya insertados históricamente</td><td>Verificar versión; limpiar datos + añadir check</td></tr>
+                <tr><td>Email VARCHAR UNIQUE sin normalizar mayúsculas</td><td>Ana@x.com y ana@x.com duplican lógica</td><td>Normalizar en app + collation _ci ayuda parcialmente</td></tr>
+                <tr><td>PK natural mutable (email como PK)</td><td>Cambios de email rompen todas las FKs</td><td>ID sintético + UNIQUE email</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Modelo completo tienda</strong>: implementa las 4 tablas del diagrama ER con todos sus constraints nombrados; prueba cada error (1452, 1451, duplicate) deliberadamente.</li>
+            <li><strong>Laboratorio de acciones</strong>: tres tablas hijas con RESTRICT/CASCADE/SET NULL respectivamente; borra el mismo padre en cada una y documenta los tres comportamientos.</li>
+            <li><strong>PK compuesta real</strong>: modela matrículas (alumno+curso+periodo) con PK triple; intenta duplicar exacta y observa el rechazo.</li>
+            <li><strong>Bulk import seguro</strong>: carga CSV grande con FOREIGN_KEY_CHECKS=0; luego detecta huérfanos con LEFT JOIN ... WHERE padre IS NULL.</li>
+            <li><strong>Auditoría de constraints</strong>: consulta information_schema para listar todos los constraints de tu base; genera reporte legible con nombres faltantes (los automáticos).</li>
+        </ol>
+    </div>
+</section>

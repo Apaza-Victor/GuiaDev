@@ -2,35 +2,203 @@
 <!-- Contenido local del proyecto -->
 
   <section id="vector">
-    <h2>Vector</h2>
+    <h2><i class="fa-solid fa-list-ol"></i> Vec&lt;T&gt;: la colección por defecto</h2>
     <div class="doc-content">
-<pre><code class="language-rust">let mut v: Vec&lt;i32&gt; = Vec::new();
-v.push(1);
-v.push(2);
+<p>El <strong><code>Vec&lt;T&gt;</code></strong> es un array dinámico que crece en el heap: el equivalente a listas de Python o arrays de JavaScript, pero con las reglas de ownership aplicadas. Es la colección más usada de todo Rust:</p>
+<pre><code class="language-rust">fn main() {
+    // Dos formas de crearlo:
+    let mut notas: Vec&lt;f64&gt; = Vec::new();     // explícito
+    let mut primos = vec![2, 3, 5, 7];        // macro vec!: inferencia incluida
 
-let tercero: Option&lt;&amp;i32&gt; = v.get(2);   // seguro
-let segundo = v[1];                      // pánico si no existe
+    notas.push(7.5);                          // push añade al final (necesita mut)
+    notas.push(9.0);
+    notas.insert(0, 5.0);                     // insertar en posición concreta
 
-for n in &amp;v { println!("{}", n); }</code></pre>
+    let ultima = notas.pop();                 // Option&lt;f64&gt;: Some(9.0) si había
+
+    // ACCESO: dos caminos con filosofías distintas
+    let segunda = notas[1];                   // f64 directo — PANIC si no existe
+    let segura = notas.get(10);               // Option — None en vez de paniquear
+
+    println!("segunda={} get(10)={:?}", segunda, segura);
+    println!("¿Contiene el 3? {}", primos.contains(&amp;3));
+}</code></pre>
+<table><thead><tr><th>Operación</th><th>Comportamiento</th><th>Cuándo usarla</th></tr></thead><tbody><tr><td><code>v[i]</code></td><td>Devuelve T directo; PANICA fuera de rango</td><td>Índices garantizados por tu lógica</td></tr><tr><td><code>v.get(i)</code></td><td>Devuelve Option&lt;&amp;T&gt;; None si falta</td><td>Índices externos o dudosos</td></tr><tr><td><code>v.push(x)</code> / <code>v.pop()</code></td><td>Añade / extrae del final (O(1))</td><td>Pilas y acumulación secuencial</td></tr><tr><td><code>v.remove(i)</code> / <code>v.insert(i,x)</code></td><td>Desplaza elementos (O(n))</td><td>Mutación puntual en medio</td></tr><tr><td><code>v.len()</code> / <code>v.is_empty()</code></td><td>Tamaño actual</td><td>Condicionales y bucles</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>El pánico <code>index out of bounds</code> derriba el programa completo. Si el índice viene de entrada del usuario o de datos externos, usa SIEMPRE <code>.get()</code> y decide qué hacer con el None.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="string-vs-str">
+    <h2><i class="fa-solid fa-font"></i> String vs &amp;str: la confusión número uno</h2>
+    <div class="doc-content">
+<p>Rust tiene DOS tipos de texto y entenderlos desbloquea la lectura de cualquier API. <strong>String</strong> es dueño de sus bytes en el heap (crecible); <strong>&amp;str</strong> ("string slice") es una vista prestada sobre texto existente:</p>
+<table><thead><tr><th>Aspecto</th><th>String</th><th>&amp;str</th></tr></thead><tbody><tr><td>Propiedad</td><td>Dueño de su buffer en heap</td><td>Préstamo (slice) sobre otro texto</td></tr><tr><td>Estructura interna</td><td>Puntero + longitud + capacidad</td><td>Puntero + longitud (fat pointer)</td></tr><tr><td>Mutar/crecer</td><td>Sí: <code>push_str</code>, <code>+ </code>, etc.</td><td>No: es inmutable y fijo</td></tr><tr><td>Uso ideal</td><td>Campos de struct, acumular texto, devolver</td><td>Parámetros de funciones, leer fragmentos</td></tr></tbody></table>
+<p>La coerción automática hace que un <code>&amp;String</code> se convierta en <code>&amp;str</code> donde haga falta, pero no al revés:</p>
+<pre><code class="language-rust">fn saludar(nombre: &amp;str) {           // acepta &amp;str Y &amp;String gracias al deref
+    println!("¡Hola, {}!", nombre);
+}
+
+fn main() {
+    let owned = String::from("GuiaDev");   // String: dueño en el heap
+    let literal = "Rust";                  // &amp;'static str: incrustado en el binario
+
+    saludar(&amp;owned);                       // &amp;String → &amp;str automáticamente
+    saludar(literal);
+
+    let vista: &amp;str = &amp;owned[0..4];        // slice "Guid" SIN copiar nada
+    let copia: String = literal.to_string(); // ahora sí, dueño nuevo
+    println!("{} {} {}", vista, copia.len(), owned);
+}</code></pre>
+<blockquote class="aside aside-note"><p>Regla de oro para firmas: parámetros → <code>&amp;str</code> (máxima flexibilidad); campos y retornos → <code>String</code> (propiedad clara). Así diseñan las APIs estándar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="operar-strings">
+    <h2><i class="fa-solid fa-i-cursor"></i> Operar strings: concatenar y construir</h2>
+    <div class="doc-content">
+<p>Los textos UTF-8 de Rust no se indexan por caracteres (¡'ñ' ocupa 2 bytes, '🚀' cuatro!), pero sí ofrecen un arsenal de operaciones seguras:</p>
+<pre><code class="language-rust">fn main() {
+    let mut saludo = String::from("Hola");
+    saludo.push_str(", mundo");          // añade un &amp;str
+    saludo.push('!');                    // añade UN char
+
+    // format! NO consume nada y es el preferido para combinar:
+    let mensaje = format!("{} — {}", saludo, "Rust es rápido");
+    println!("{}", mensaje);
+
+    // Transformaciones habituales:
+    let limpio = "  Hola Mundo  ".trim().to_lowercase();
+    let palabras: Vec&lt;&amp;str&gt; = "a,b,c".split(',').collect();
+    println!("{} | {:?}", limpio, palabras);
+}</code></pre>
+<table><thead><tr><th>Forma</th><th>Consume operandos</th><th>Recomendada para</th></tr></thead><tbody><tr><td><code>s.push_str(t)</code> / <code>s.push(c)</code></td><td>No (muta s)</td><td>Construir incrementalmente</td></tr><tr><td><code>s1 + &amp;s2</code></td><td>Sí: mueve s1</td><td>Casi nunca (sorprende)</td></tr><tr><td><code>format!("{}{}", a, b)</code></td><td>No</td><td>Combinar varios valores con formato</td></tr><tr><td><code>.concat()</code> / <code>.join(sep)</code></td><td>No</td><td>Unir colecciones de &amp;str</td></tr></tbody></table>
+<p>---</p>
     </div>
   </section>
 
   <section id="hashmap">
-    <h2>HashMap</h2>
+    <h2><i class="fa-solid fa-table-cells"></i> HashMap y la entry API</h2>
     <div class="doc-content">
+<p><code>HashMap&lt;K, V&gt;</code> mapea claves a valores con acceso O(1). Viene del módulo collections (no está precargado), y sus métodos de acceso devuelven Option, coherente con lo aprendido:</p>
 <pre><code class="language-rust">use std::collections::HashMap;
 
-let mut edades = HashMap::new();
-edades.insert("Ana", 30);
-edades.insert("Luis", 25);
+fn main() {
+    let mut edades = HashMap::new();
+    edades.insert("Ana", 30);
+    edades.insert("Luis", 25);
 
-match edades.get("Ana") {
-    Some(e) =&gt; println!("Ana tiene {}", e),
-    None =&gt; println!("Desconocida"),
-}
+    match edades.get("Ana") {            // get devuelve Option&lt;&amp;i32&gt;
+        Some(e) =&gt; println!("Ana tiene {}", e),
+        None =&gt; println!("Desconocida"),
+    }
 
-for (nombre, edad) in &amp;edades {
-    println!("{}: {}", nombre, edad);
+    edades.remove("Luis");
+    println!("¿Está Luis? {}", edades.contains_key("Luis"));
+
+    for (nombre, edad) in &amp;edades {      // iterar pares clave-valor
+        println!("{}: {}", nombre, edad);
+    }
 }</code></pre>
+<h3>entry(): el patrón clásico de conteo de palabras</h3>
+<p>El escenario más común —"si la clave existe suma, si no inicializa"— tiene un método dedicado que evita búsquedas duplicadas:</p>
+<pre><code class="language-rust">use std::collections::HashMap;
+
+fn main() {
+    let texto = "hola mundo hola rust hola mundo";
+    let mut conteo = HashMap::new();
+
+    for palabra in texto.split_whitespace() {
+        // entry devuelve Vacant (inserta 0) u Occupied (devuelve el valor)
+        *conteo.entry(palabra).or_insert(0) += 1;
+    }
+
+    println!("{:#?}", conteo);
+    // {"hola": 3, "mundo": 2, "rust": 1}
+}</code></pre>
+<blockquote class="aside aside-success"><p><code>*map.entry(k).or_insert(default) += 1</code> es EL patrón para contadores, cachés y agrupaciones. Apréndelo de memoria: aparece en cada codebase Rust del planeta.</p></blockquote>
+<p>---</p>
     </div>
   </section>
+
+  <section id="iteradores">
+    <h2><i class="fa-solid fa-repeat"></i> Iteradores: map, filter y collect</h2>
+    <div class="doc-content">
+<p>Toda colección expone un <strong>iterador</strong>: un objeto perezoso que produce valores bajo demanda. Los <em>adaptadores</em> (map, filter) transforman el flujo sin consumirlo aún; los <em>consumidores</em> (collect, sum) disparan el trabajo real:</p>
+<pre><code class="language-rust">fn main() {
+    let nums = [1, 2, 3, 4, 5, 6];
+
+    // Pipeline: pares al cuadrado. NADA se ejecuta hasta collect()
+    let cuadrados_pares: Vec&lt;i32&gt; = nums
+        .into_iter()               // toma posesión del array
+        .filter(|&amp;n| n % 2 == 0)   // deja pasar 2, 4, 6
+        .map(|n| n * n)            // transforma: 4, 16, 36
+        .collect();                // ← aquí SÍ se itera de verdad
+
+    println!("{:?}", cuadrados_pares);   // [4, 16, 36]
+
+    // Consumidores numéricos directos:
+    let total: i32 = nums.iter().sum();
+    let maximo = nums.iter().max();
+    println!("suma={} max={:?}", total, maximo);
+}</code></pre>
+<h3>Perezosos por diseño</h3>
+<p>La evaluación es <strong>lazy</strong>: puedes encadenar diez adaptadores y el coste será un único recorrido cuando llegue el consumidor. No hay arrays intermedios ocultos como en otros lenguajes funcionales.</p>
+<blockquote class="aside aside-tip"><p>Si <code>collect()</code> se queja de tipos ambiguos, anota el destino (<code>let v: Vec&lt;i32&gt;</code>) o usa el turbofish: <code>collect::&lt;Vec&lt;i32&gt;&gt;()</code>. Es el error de compilación #1 de esta sección.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tres-formas-de-iterar">
+    <h2><i class="fa-solid fa-shuffle"></i> iter(), into_iter() e iter_mut()</h2>
+    <div class="doc-content">
+<p>Tres métodos parecidos con consecuencias de ownership radicalmente distintas. Elegir mal es fuente constante de errores de compilación:</p>
+<table><thead><tr><th>Método</th><th>Entrega</th><th>¿Consume la colección?</th><th>Úsalo para</th></tr></thead><tbody><tr><td><code>.iter()</code></td><td><code>&amp;T</code> (referencias)</td><td>No</td><td>Solo LEER elementos</td></tr><tr><td><code>.iter_mut()</code></td><td><code>&amp;mut T</code></td><td>No</td><td>MODIFICAR en sitio</td></tr><tr><td><code>.into_iter()</code></td><td><code>T</code> (valores propios)</td><td>SÍ: la colección muere</td><td>Transformar/transferir propiedad</td></tr></tbody></table>
+<pre><code class="language-rust">fn main() {
+    let mut nombres = vec![String::from("ana"), String::from("luis")];
+
+    // iter(): préstamo de lectura — nombres sigue vivo después
+    let longitudes: Vec&lt;usize&gt; = nombres.iter().map(|n| n.len()).collect();
+
+    // iter_mut(): préstamo mutable — transforma sin mover
+    for n in nombres.iter_mut() {
+        n.make_ascii_uppercase();
+    }
+
+    // into_iter(): CONSUME — tras este bucle, nombres ya no existe
+    for n in nombres.into_iter() {
+        println!("procesando y descartando: {}", n);
+    }
+
+    println!("{:?} {:?}", longitudes, "fin");   // nombres aquí daría E0382
+}</code></pre>
+<blockquote class="aside aside-caution"><p>Un bucle <code>for x in coleccion</code> sin método llama implícitamente a <code>into_iter()</code>: ¡consume la colección! Si necesitas seguir usándola después, escribe <code>for x in &amp;coleccion</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes-colecciones">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes con colecciones</h2>
+    <div class="doc-content">
+<p>Los mismos cuatro o cinco errores se repiten en todo el mundo Rust al manejar Vec, String y HashMap. Reconocerlos ahorra horas:</p>
+<table><thead><tr><th>Error / síntoma</th><th>Causa</th><th>Solución</th></tr></thead><tbody><tr><td>Panic <code>index out of bounds</code></td><td>Indexar con <code>v[i]</code> fuera de rango</td><td>Usa <code>v.get(i)</code> y maneja el None</td></tr><tr><td><code>E0382</code> tras concatenar con <code>+</code></td><td>El operador + mueve el primer String</td><td>Usa <code>format!</code></td></tr><tr><td><code>E0502</code>: borrow while iterating</td><td>Mutar mientras un iterador prestado vive</td><td><code>iter_mut()</code>, o construir una nueva colección</td></tr><tr><td><code>E0382</code> después de un for</td><td>El bucle consumió la colección (into_iter implícito)</td><td>Itera con <code>&amp;coleccion</code></td></tr><tr><td><code>type annotations needed</code> con collect</td><td>Inferencia no sabe qué colección quieres</td><td>Anota: <code>Vec&lt;T&gt;</code>, <code>HashMap&lt;K,V&gt;</code>... o turbofish</td></tr><tr><td>HashMap "desordena" las claves</td><td>Es por diseño (hash aleatorio por ejecución)</td><td>Usa <code>BTreeMap</code> si necesitas orden estable</td></tr></tbody></table>
+<blockquote class="aside aside-danger"><p>No copies colecciones enteras con <code>.clone()</code> para poder mutarlas "tranquilamente": casi siempre hay una versión con referencias o iteradores que resuelve sin coste.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Réslolos en orden; los últimos combinan varias colecciones a la vez.</p>
+<ol>
+<li><strong>Gestor de notas</strong>: crea <code>Vec&lt;String&gt;</code> con 4 notas, imprime la media con <code>iter().sum()</code>, la máxima SIN usar <code>max()</code> (bucle manual) y elimina la última con <code>pop()</code>.</li>
+<li><strong>Normalizador</strong>: dado <code>[" ana ", "LUIS", "Beto "]</code>, genera un nuevo <code>Vec&lt;String&gt;</code> con nombres trimados y capitalizados usando solo iteradores (<code>map</code> + <code>to_lowercase</code> + manipulación del primer char).</li>
+<li><strong>Vocales por palabra</strong>: cuenta cuántas vocales tiene cada palabra de una frase y guarda el resultado en un HashMap usando <code>entry().or_insert(0)</code>; imprime el mapa ordenado alfabéticamente (pista: recolecta y ordena las claves).</li>
+<li><strong>Inventario</strong>: define struct <code>Producto { nombre: String, precio: f64, categoria: String }</code>; con iteradores obtén: productos bajo $50 (Vec), valor total del inventario (sum) y un <code>HashMap&lt;String, f64&gt;</code> con el subtotal por categoría.</li>
+<li><strong>Top-3 palabras</strong>: analiza un párrafo completo, cuenta frecuencias con HashMap entry API y muestra las 3 palabras más repetidas usando sort_by sobre un Vec de tuplas —sin consumir el mapa original.</li>
+</ol>
+    </div>
+  </section>
+

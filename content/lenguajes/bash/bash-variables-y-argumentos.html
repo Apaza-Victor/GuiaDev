@@ -1,34 +1,190 @@
-<!-- 2. Variables y Argumentos - Bash (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="variables">
-    <h2>Variables</h2>
+<!-- 3. Variables y Argumentos - Bash (Lenguajes de Programación) -->
+<section id="variables">
+    <h2><i class="fa-solid fa-box"></i> Variables: asignación y expansión</h2>
     <div class="doc-content">
-<pre><code class="language-bash">nombre="Ana"          # SIN espacios alrededor del =
-echo "Hola, $nombre"  # doble comilla: expande
-echo 'Hola, $nombre'  # simple: literal
+        <p>Las variables en bash son cadenas de texto por defecto — sin tipos, sin declaraciones. La regla #1 que separa scripts funcionales de scripts rotos: <strong>SIN espacios alrededor del =</strong> al asignar, y SIEMPRE entre comillas dobles al usar.</p>
 
-ejecutables=$(ls /bin | wc -l)   # sustitución de comandos
-echo "Hay $ejecutables comandos"
+        <h3>Asignación y expansión</h3>
+        <pre><code class="language-bash">nombre="Ana"            # SIN espacios: nombre = "Ana" NO funciona
+edad=30                 # sigue siendo string "30"
+RUTA="/var/log"         # convención: MAYÚSCULAS = constantes/env
 
-readonly PI=3.14        # constante
-unset nombre            # eliminar</code></pre>
+echo "$nombre tiene $edad años"     # comillas DOBLES expanden
+echo '$nombre'                       # comillas SIMPLES: literal, no expande
+
+# Variables de entorno útiles (siempre disponibles):
+echo "$HOME"      # /home/ana
+echo "$USER"      # ana
+echo "$PATH"      # dónde busca ejecutables
+echo "$PWD"       # directorio actual
+echo "$RANDOM"    # número aleatorio 0-32767</code></pre>
+
+        <h3>Comandos dentro de variables: $( )</h3>
+        <pre><code class="language-bash">HOY=$(date +%Y-%m-%d)              # capturar SALIDA de comando
+ARCHIVOS=$(ls | wc -l)             # contar elementos
+PID_NGINX=$(pgrep nginx)
+
+# Sustitución anidada posible:
+BACKUP="respaldo_$(date +%Y%m%d).tar.gz"</code></pre>
+
+        <h3>Expansiones paramétricas: defaults y manipulación</h3>
+        <table>
+            <thead>
+                <tr><th>Expansión</th><th>Hace qué</th><th>Ejemplo resultado</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>${var:-default}</code></td><td>Default si vacía/no definida</td><td><code>${PUERTO:-8080}</code></td></tr>
+                <tr><td><code>${var:=default}</code></td><td>Default Y ASIGNA permanentemente</td><td><code>${CONFIG:=/etc/app.conf}</code></td></tr>
+                <tr><td><code>${#var}</code></td><td>Longitud</td><td><code>echo ${#nombre}</code> → 3</td></tr>
+                <tr><td><code>${var%.*}</code></td><td>Corta desde el final (patrón)</td><td>"foto.jpg" → "foto" (quita extensión)</td></tr>
+                <tr><td><code>${var#*.}</code></td><td>Corta desde el inicio</td><td>"foto.jpg" → "jpg"</td></tr>
+                <tr><td><code>${var/old/new}</code></td><td>Reemplaza primera ocurrencia</td><td><code>${ruta:/home:/mnt}</code></td></tr>
+                <tr><td><code>${var//old/new}</code></td><td>Reemplaza TODAS</td><td>normalizar espacios/slashes</td></tr>
+                <tr><td><code>${var^^}</code> / <code>${var,,}</code></td><td>MAYÚSCULAS / minúsculas (bash 4+)</td><td>normalización de input</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-bash">archivo="informe.final.pdf"
+
+echo "${archivo%.*}"     # informe.final   ← sin extensión
+echo "${archivo##*.}"    # pdf             ← solo extensión
+echo "${archivo//./-}"   # informe-final-pdf
+
+PUERTO="${1:-8080}"      # argumento 1, o 8080 si no vino</code></pre>
+
+        <h3>Arrays indexados</h3>
+        <pre><code class="language-bash">servidores=("web01" "db01" "cache01")
+
+echo "${servidores[0]}"        # web01 — índice individual
+echo "${servidores[@]}"        # TODOS los elementos
+echo "${#servidores[@]}"       # cantidad: 3
+echo "${servidores[-1]}"       # cache01 — último (bash 4.3+)
+
+for srv in "${servidores[@]}"; do
+    echo "Revisando $srv..."
+done
+
+# Añadir:
+servidores+=("worker01")</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>LA regla sagrada: <code>"$var"</code> SIEMPRE entre comillas dobles. Sin ellas, un valor con espacios se ROMPE en palabras: <code>archivo="mi informe.txt"; rm $archivo</code> ejecuta <code>rm mi informe.txt</code> — borra "mi" e "informe.txt". Con comillas, una sola pieza. Este bug ha borrado servidores enteros.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="argumentos-del-script">
-    <h2>Argumentos del script</h2>
+<section id="argumentos-del-script">
+    <h2><i class="fa-solid fa-inbox"></i> Argumentos del script</h2>
     <div class="doc-content">
-<pre><code class="language-bash">#!/bin/bash
-echo "Script: $0"
-echo "Primer arg: $1"
-echo "Todos: $@"
-echo "Cantidad: $#"
+        <p>Los parámetros posicionales llegan como variables especiales numeradas:</p>
+        <table>
+            <thead>
+                <tr><th>Variable</th><th>Contiene</th><th>Ejemplo con ./deploy.sh prod v2.1</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>$0</code></td><td>Nombre del script</td><td>./deploy.sh</td></tr>
+                <tr><td><code>$1</code>, <code>$2</code>…</td><td>Argumento n</td><td>$1=prod, $2=v2.1</td></tr>
+                <tr><td><code>$#</code></td><td>Número de argumentos</td><td>2</td></tr>
+                <tr><td><code>$@</code></td><td>TODOS los args (cada uno intacto)</td><td>"prod" "v2.1"</td></tr>
+                <tr><td><code>$*</code></td><td>Todos como UNA cadena</td><td>prod v2.1</td></tr>
+                <tr><td><code>$?</code></td><td>Exit code del último comando</td><td>0 éxito, ≠0 fallo</td></tr>
+                <tr><td><code>$$</code></td><td>PID del script actual</td><td>para lockfiles temporales</td></tr>
+                <tr><td><code>shift</code></td><td>Descarta $1 y recorre el resto</td><td>parseo manual de flags</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-bash">#!/bin/bash
+# deploy.sh — uso: ./deploy.sh &lt;entorno&gt; [version]
+
+ENTORNO="${1:?Error: falta entorno}"      # :? aborta con mensaje si vacío
+VERSION="${2:-latest}"
 
 if [ $# -lt 1 ]; then
-    echo "Uso: $0 &lt;archivo&gt;"
-    exit 1
-fi</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> Siempre valida <code>$#</code> antes de usar argumentos: evita comportamientos raros con variables vacías.</blockquote>
+    echo "Uso: $0 &lt;entorno&gt; [version]" &gt;&amp;2
+    exit 1                                 # código ≠ 0 = fracaso para CI/cron
+fi
+
+echo "Desplegando $VERSION a $ENTORNO..."
+echo "Recibidos $# argumentos: $@"</code></pre>
+
+        <h3>getopts: flags profesionales (-v --verbose style)</h3>
+        <pre><code class="language-bash">#!/bin/bash
+VERBOSE=false
+OUTPUT="salida.txt"
+
+while getopts "vo:h" opt; do
+    case $opt in
+        v) VERBOSE=true ;;
+        o) OUTPUT="$OPTARG" ;;          # OPTARG = valor tras -o
+        h) echo "Uso: $0 [-v] [-o archivo]"; exit 0 ;;
+        *) echo "Flag inválida" &gt;&amp;2; exit 1 ;;
+    esac
+done
+shift $((OPTIND - 1))                    # lo restante son args posicionales
+
+$VERBOSE &amp;&amp; echo "Modo verbose activo"   # truco: ejecutar condicionalmente
+echo "Escribiendo a $OUTPUT..."</code></pre>
+        <blockquote class="aside aside-tip">
+            <p><code>"${1:-valor}"</code>, <code>"${1:?mensaje}"</code> y getopts cubren el 95% de las necesidades de parámetros. Para CLIs complejas considera saltar directamente a un lenguaje real (Python/Go) — bash escala hasta cierto punto y luego duele.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="buenas-practicas-vars">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>set -euo pipefail al inicio de todo script serio</td><td>-e: salir ante error; -u: error si variable no definida; pipefail: falla si CUALQUIER eslabón del pipe falla</td></tr>
+                <tr><td>MAYÚSCULAS para env/constantes; minúsculas locales</td><td>Evita chocar con variables del sistema (PATH, HOME...)</td></tr>
+                <tr><td>Comillas dobles en TODA expansión</td><td>Espacios y globs no rompen valores</td></tr>
+                <tr><td>${var:-default} en toda variable externa opcional</td><td>Scripts configurables vía entorno sin if extra</td></tr>
+                <tr><td>readonly CONSTANTE="valor"</td><td>Error temprano si algo la sobreescribe</td></tr>
+                <tr><td>Ruta absoluta en cron/systemd ($0 relativo engaña)</td><td>Los jobs no heredan tu cwd ni PATH</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-bash">#!/usr/bin/env bash
+set -euo pipefail          # modo estricto: la cabecera profesional estándar
+
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &amp;&amp; pwd)"
+CONFIG="${APP_CONFIG:-$SCRIPT_DIR/config.toml}"
+
+echo "Corriendo desde $SCRIPT_DIR con config $CONFIG"</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Espacios en asignación: <code>x = 5</code></td><td>"x: command not found" (intentó EJECUTAR x)</td><td>x=5 pegado</td></tr>
+                <tr><td>Expandir sin comillas con paths con espacios</td><td>Word splitting: un archivo → dos argumentos</td><td>"$archivo" siempre</td></tr>
+                <tr><td>Usar backticks `` `cmd` `` anidados</td><td>Ilegible y frágil al anidar</td><td>$( ) moderno anidable limpiamente</td></tr>
+                <tr><td>Asumir $1 definido sin validar</td><td>Comandos raros con "" vacío</td><td>"${1:?falta arg}" o check $#</td></tr>
+                <tr><td>Confundir $@ sin comillas</td><td>Args con espacios re-splitteados</td><td>"$@" SIEMPRE entrecomillado</td></tr>
+                <tr><td>Variabes MAYÚSCULAS casuales tipo TEMP/PATH propias</td><td>Pisa variable del sistema: PATH roto</td><td>Reservar mayúsculas a env conocidas</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Ficha personal</strong>: script con variables nombre/edad/ciudad impresas interpoladas; demuestra comillas simples vs dobles vs backslash escape en tres echos.</li>
+            <li><strong>Renombrador masivo</strong>: dado un patrón, usa ${var// /_} para convertir espacios a guiones bajos en nombres de archivos de una carpeta (con echo previo de simulación).</li>
+            <li><strong>CLI con getopts</strong>: herramienta backup.sh con -d destino, -v verbose, -h help; valida destino requerido y documenta uso.</li>
+            <li><strong>Demostrador word splitting</strong>: crea "mi archivo.txt", intenta borrarlo con rm $VAR sin comillas (¡en carpeta de prueba!), observa el doble-borrado fallido; arregla con comillas.</li>
+            <li><strong>Script estricto</strong>: añade set -euo pipefail a tu mejor ejercicio anterior y provoca deliberadamente cada protección (variable indefinida, comando fallando en pipe) documentando los errores.</li>
+        </ol>
+    </div>
+</section>

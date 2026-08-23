@@ -1,38 +1,286 @@
 <!-- 4. Funciones Avanzadas - Kotlin (Lenguajes de Programación) -->
 <!-- Contenido local del proyecto -->
 
-  <section id="default-y-named-args">
-    <h2>Default y named args</h2>
+  <section id="single-expression-functions">
+    <h2><i class="fa-solid fa-feather-pointed"></i> Funciones de expresión única</h2>
     <div class="doc-content">
-<pre><code class="language-kotlin">fun saludar(nombre: String, saludo: String = "Hola") =
-    "$saludo, $nombre!"
+<p>Cuando una función devuelve el resultado de una única expresión, Kotlin permite omitir las llaves, la palabra <code>return</code> y hasta el tipo declarado: basta con el signo <code>=</code>. No es azúcar gratuito: obliga a pensar en las funciones como <strong>transformaciones de datos</strong> (entrada → salida) en lugar de como secuencias de instrucciones, y esa mentalidad funcional paga dividendos cuando lleguen las colecciones y las corrutinas.</p>
+<pre><code class="language-kotlin">// Forma clásica con bloque
+fun areaCirculo(radio: Double): Double {
+    return Math.PI * radio * radio
+}
 
-saludar("Ana")                          // Hola, Ana!
-saludar("Ana", saludo = "Bienvenida")   // named arg</code></pre>
+// Misma función como EXPRESIÓN ÚNICA: más corta e igual de clara
+fun areaCirculoBreve(radio: Double): Double = Math.PI * radio * radio
+
+// El tipo de retorno puede INFERIRSE (solo válido en este estilo)
+fun suma(a: Int, b: Int) = a + b            // Int deducido
+
+// Se combinan naturalmente con when e if como expresiones
+fun imc(categoria: String): String = when (categoria) {
+    "bajo" -&gt; "Consultar nutricionista"
+    "normal" -&gt; "¡Todo en orden!"
+    else -&gt; "Consulta médica preventiva"
+}
+
+// Con parámetros por defecto y una línea: máxima densidad de información
+fun impuesto(monto: Double, tasa: Double = 0.16) = monto * tasa</code></pre>
+<blockquote class="aside aside-note"><p>En APIs públicas conviene declarar el tipo de retorno explícito aunque se pueda inferir: sirve de documentación y evita que un cambio accidental del cuerpo altere silenciosamente el contrato de la función.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="default-y-named-args">
+    <h2><i class="fa-solid fa-sliders"></i> Argumentos por defecto y nombrados: adiós a los overloads</h2>
+    <div class="doc-content">
+<p>En Java, dar opciones a una función obligaba a escribir múltiples versiones (el llamado <em>telescopaje de constructores</em>) o recurrir al patrón Builder. Kotlin lo resuelve en la propia firma: cada parámetro puede llevar un <code>= valorPorDefecto</code>, y quien llama decide qué pasar. Combinado con los <strong>argumentos nombrados</strong> —que permiten saltarse parámetros intermedios y autodocumentar la llamada— el boilerplate desaparece.</p>
+<pre><code class="language-kotlin">fun enviarCorreo(
+    destino: String,
+    asunto: String,
+    copia: String? = null,
+    urgente: Boolean = false,
+    firma: String = "Equipo GuiaDev"
+): String {
+    val marca = if (urgente) "[URGENTE] " else ""
+    return "$marca$asunto -&gt; enviado a $destino"
+}
+
+// Llamada mínima: solo lo obligatorio
+enviarCorreo("ana@ejemplo.com", "Bienvenida")
+
+// Saltando parámetros intermedios gracias a los NOMBRES
+enviarCorreo("luis@ejemplo.com", "Reporte mensual", urgente = true)
+
+// Nombrados también mejoran la legibilidad con valores booleanos sueltos
+enviarCorreo("soporte@ejemplo.com", "Cambio de plan", firma = "Soporte N1")
+
+// Regla sintáctica: los posicionales van PRIMERO, los nombrados después
+// enviarCorreo(destino = "x@y.com", "Asunto")  // ❌ error de compilación</code></pre>
+<h3>El problema que resuelve: explosión de sobrecargas</h3>
+<pre><code class="language-kotlin">// ❌ Equivalente Java: cada combinación necesita SU versión
+// fun enviarCorreo(destino: String, asunto: String) { ... }
+// fun enviarCorreo(destino: String, asunto: String, urgente: Boolean) { ... }
+// fun enviarCorreo(d: String, a: String, u: Boolean, f: String) { ... }
+
+// ✅ Kotlin: UNA firma cubre todas las variantes
+fun crearUsuario(nombre: String, rol: String = "editor", activo: Boolean = true) =
+    "$nombre ($rol${if (activo) "" else ", inactivo"})"
+
+println(crearUsuario("Ana"))                          // Ana (editor)
+println(crearUsuario("Luis", rol = "admin"))          // Luis (admin)
+println(crearUsuario("María", activo = false))        // María (editor, inactivo)</code></pre>
+<blockquote class="aside aside-caution"><p>Ojo al interoperar: el bytecode JVM no conoce los valores por defecto, así que desde Java tendrías que pasar todos los argumentos. La anotación <code>@JvmOverloads</code> genera las sobrecargas automáticamente — la verás a fondo en la lección de interoperabilidad con Java.</p></blockquote>
+<blockquote class="aside aside-tip"><p>Hábito profesional: en llamadas con tres o más parámetros del mismo tipo (dos Strings seguidos, por ejemplo), usa argumentos nombrados aunque sean obligatorios. Un <code>transferir(origen = "...", destino = "...")</code> evita intercambiarlos por accidente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="vararg-e-infix">
+    <h2><i class="fa-solid fa-layer-group"></i> vararg, el operador spread e infix functions</h2>
+    <div class="doc-content">
+<p>Tres herramientas pequeñas que hacen las firmas mucho más naturales. <code>vararg</code> acepta un número variable de argumentos; el operador spread (<code>*</code>) despliega un array existente dentro de esa lista; y las funciones <code>infix</code> permiten llamarlas sin punto ni paréntesis, creando mini-lenguajes legibles.</p>
+<pre><code class="language-kotlin">// vararg: cero o más valores del tipo indicado, recibidos como Array&lt;Int&gt;
+fun promedio(vararg notas: Int): Double {
+    require(notas.isNotEmpty()) { "Se requiere al menos una nota" }
+    return notas.average()
+}
+
+promedio(8, 9, 10)          // 9.0
+promedio()                  // lanza IllegalArgumentException con mensaje claro
+
+// Spread * : expande un Array en argumentos individuales
+val historico = intArrayOf(6, 7, 9)
+println(promedio(*historico, 10))   // mezcla array + valores sueltos: 8.0
+
+// infix: método/función de UN parámetro llamada sin punto ni paréntesis
+infix fun Int.potencia(exponente: Int): Int {
+    var resultado = 1
+    repeat(exponente) { resultado *= this }
+    return resultado
+}
+
+println(2 potencia 8)        // 256 — se lee casi como matemática
+println(5 potencia 3)        // 125
+
+// El "to" que ya usaste en mapas ES una infix function de la librería estándar:
+val par: Pair&lt;String, Int&gt; = "edad" to 30   // crea un Pair("edad", 30)</code></pre>
+<h3>Reglas de las funciones infix</h3>
+<table><thead><tr><th>Requisito</th><th>Detalle</th></tr></thead><tbody>
+<tr><td>Un solo parámetro</td><td>Sin valor por defecto ni vararg</td></tr>
+<tr><td>Miembro o extensión</td><td>Debe pertenecer a una clase o extender un tipo</td></tr>
+<tr><td>No debe ser ambigua</td><td>El receptor va a la izquierda, el argumento a la derecha</td></tr>
+<tr><td>Uso recomendado</td><td>Relaciones que se lean como frases: <code>x to y</code>, <code>elemento in lista</code></td></tr>
+</tbody></table>
+<blockquote class="aside aside-note"><p>El operador spread solo funciona sobre arrays, no sobre List. Si tienes una <code>List&lt;Int&gt;</code>, conviértela primero con <code>.toIntArray()</code> (o <code>.toTypedArray()</code> para tipos genéricos).</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="extension-functions">
-    <h2>Extension functions</h2>
+    <h2><i class="fa-solid fa-plus"></i> Extension functions y properties</h2>
     <div class="doc-content">
-<pre><code class="language-kotlin">fun String.gritar(): String = uppercase() + "!!!"
+<p>Las funciones de extensión te permiten añadir comportamiento a clases <em>ajenas</em> —incluidas clases de librerías que no puedes modificar— sin herencia ni wrappers. Se declaran anteponiendo el tipo receptor: <code>fun Tipo.nombre()</code>. Dentro, <code>this</code> apunta al objeto receptor. La clave conceptual: <strong>se resuelven en tiempo de compilación</strong>; no modifican la clase real, sino que compilan como funciones estáticas que reciben el receptor por parámetro.</p>
+<pre><code class="language-kotlin">// Extensión sobre String: validación reutilizable en todo el proyecto
+fun String.esEmailValido(): Boolean =
+    contains("@") &amp;&amp; endsWith(".com") || endsWith(".es")
 
-"hola".gritar()   // "HOLA!!!"
+println("ana@guiadev.com".esEmailValido())   // true
 
-fun Int.doble() = this * 2
-5.doble()         // 10</code></pre>
+// Extensiones útiles sobre colecciones
+fun List&lt;Double&gt;.media(): Double = if (isEmpty()) 0.0 else average()
+fun List&lt;String&gt;.aMayusculas(): List&lt;String&gt; = map { it.uppercase() }
+
+println(listOf(7.0, 8.0, 9.0).media())       // 8.0
+
+// EXTENSION PROPERTY: se declara como propiedad pero siempre necesita getter
+val String.iniciales: String
+    get() = split(" ").mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("")
+
+println("Ada Lovelace".iniciales)             // AL
+
+// Dentro de una extensión puedes usar this para encadenar
+fun StringBuilder.envolver(tag: String): StringBuilder {
+    insert(0, "&lt;$tag&gt;")                       // this.insert(...)
+    append("&lt;/$tag&gt;")
+    return this                               // habilita encadenamiento
+}</code></pre>
+<blockquote class="aside aside-danger"><p>Las extensiones NO pueden acceder a miembros <code>private</code>/<code>protected</code> de la clase extendida: son invitadas de fuera, no parte de la familia. Si necesitas tocar estado interno, la solución es refactorizar la clase, no forzar la extensión.</p></blockquote>
+<blockquote class="aside aside-caution"><p>Si una clase ya tiene un miembro con el mismo nombre, el miembro <strong>siempre gana</strong> sobre la extensión (y el compilador no avisa). Para llamar a tu extensión en ese caso, usa <code>this@Clase.extensión()</code> o renómbrala.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="lambdas">
-    <h2>Lambdas</h2>
+    <h2><i class="fa-solid fa-function"></i> Lambdas e it: funciones como valores</h2>
     <div class="doc-content">
-<pre><code class="language-kotlin">val suma = { a: Int, b: Int -&gt; a + b }
-suma(2, 3)
+<p>Una lambda es una función literal: se define donde se usa, sin nombre, entre llaves. En Kotlin las funciones son <em>ciudadanos de primera clase</em>: se guardan en variables, se pasan como argumento y se devuelven desde otras funciones. A las funciones que reciben o devuelven funciones se les llama <strong>higher-order functions</strong> (de orden superior), y son el motor de toda la API funcional de colecciones que usarás en la próxima lección.</p>
+<pre><code class="language-kotlin">// Sintaxis general: { parámetros -&gt; cuerpo }
+val suma = { a: Int, b: Int -&gt; a + b }
+println(suma(2, 3))                    // 5
 
-val numeros = listOf(1, 2, 3)
-numeros.filter { it % 2 == 0 }
-       .map { it * 10 }
-       .forEach(::println)</code></pre>
+// Si la lambda tiene UN parámetro, se llama it automáticamente
+val alCuadrado: (Int) -&gt; Int = { it * it }   // el tipo vive fuera: no hace falta declarar it
+println(alCuadrado(7))                 // 49
+
+// Higher-order function: recibe otra función como parámetro
+fun filtrar(numeros: List&lt;Int&gt;, criterio: (Int) -&gt; Boolean): List&lt;Int&gt; {
+    val resultado = mutableListOf&lt;Int&gt;()
+    for (n in numeros) if (criterio(n)) resultado.add(n)
+    return resultado
+}
+
+val pares = filtrar((1..10).toList()) { it % 2 == 0 }   // [2, 4, 6, 8, 10]
+
+// TRAILING LAMBDA: si el último parámetro es una función, sale de los paréntesis
+val nombres = listOf("Ana", "Alberto", "Luis")
+nombres.filter { it.startsWith("A") }.forEach { println(it) }   // Ana, Alberto
+
+// Referencias :: : si ya existe una función, pásala sin envolverla en lambda
+fun esPar(n: Int) = n % 2 == 0
+val evens = filtrar((1..10).toList(), ::esPar)</code></pre>
+<h3>Tipos de función: el lenguaje de las firmas</h3>
+<table><thead><tr><th>Tipo de función</th><th>Ejemplo de declaración</th><th>Significado</th></tr></thead><tbody>
+<tr><td><code>() -&gt; Unit</code></td><td><code>val saludo: () -&gt; Unit = { println("hola") }</code></td><td>No recibe nada, no devuelve nada útil</td></tr>
+<tr><td><code>(Int) -&gt; Boolean</code></td><td><code>val test: (Int) -&gt; Boolean = { it &gt; 0 }</code></td><td>Recibe Int, devuelve Boolean</td></tr>
+<tr><td><code>(A, B) -&gt; C</code></td><td><code>val combinar: (Int, Int) -&gt; Int</code></td><td>Dos entradas, una salida</td></tr>
+<tr><td><code>Int.(Int) -&gt; Int</code></td><td>Lambda con receptor</td><td>El primer Int es el receptor: dentro se accede con <code>this</code></td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>Usa <code>it</code> solo cuando su significado sea obvio por contexto (una lista de números, un filtro simple). Con dos lambdas anidadas o elementos complejos, nómbralos explícitamente: <code>{ pedido -&gt; pedido.total }</code> comunica mucho más que otro <code>it</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="scope-functions">
+    <h2><i class="fa-solid fa-box-open"></i> Scope functions: let, run, apply, also y with</h2>
+    <div class="doc-content">
+<p>La librería estándar incluye cinco funciones de orden superior cuyo único propósito es ejecutar un bloque <em>sobre un objeto</em>. Todas hacen algo muy parecido, así que la pregunta correcta no es "¿cuál existe?" sino "¿qué referencia uso dentro (this vs it) y qué quiero devolver (el objeto o el resultado)?". Esta tabla es la chuleta definitiva:</p>
+<table><thead><tr><th>Función</th><th>Receptor dentro del bloque</th><th>Devuelve</th><th>Escenario ideal</th></tr></thead><tbody>
+<tr><td><strong>let</strong></td><td><code>it</code></td><td>Resultado del bloque</td><td>Ejecutar código solo si un valor no es null; transformar un valor</td></tr>
+<tr><td><strong>run</strong></td><td><code>this</code></td><td>Resultado del bloque</td><td>Calcular un valor tras configurar el objeto (objeto: bloque)</td></tr>
+<tr><td><strong>with</strong></td><td><code>this</code></td><td>Resultado del bloque</td><td>Agrupar llamadas sobre un objeto ya creado (no es extensión)</td></tr>
+<tr><td><strong>apply</strong></td><td><code>this</code></td><td>El propio objeto</td><td>Inicializar/configurar: builders, intentos, propiedades</td></tr>
+<tr><td><strong>also</strong></td><td><code>it</code></td><td>El propio objeto</td><td>Efectos secundarios dentro de una cadena: log, validación, métricas</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">data class Servidor(val host: String) {
+    var puerto: Int = 80
+    var ssl: Boolean = false
+    override fun toString() = "$host:${if (ssl) puerto else puerto} (ssl=$ssl)"
+}
+
+// APPLY: configuración fluida; dentro, this implícito; devuelve el objeto listo
+val servidor = Servidor("api.guiadev.dev").apply {
+    puerto = 8443
+    ssl = true
+}   // servidor ya configurado, sin variables temporales
+
+// ALSO: inspección sin romper la cadena; el objeto sigue viajando
+val nombres = listOf("Ana", "Luis", "María")
+    .also { println("Procesando ${it.size} nombres") }   // log intermedio
+    .filter { it.length &gt; 3 }
+
+// LET + Elvis: el clásico de null-safety
+fun procesarEntrada(texto: String?): String =
+    texto?.let { it.trim().uppercase() } ?: "entrada vacía"
+
+// WITH: agrupar operaciones sobre un objeto existente
+with(servidor) {
+    println("Conectando a $host en el puerto $puerto")
+}
+
+// RUN: configurar y calcular en el mismo aliento
+val descripcion = servidor.run {
+    puerto += 1
+    "Servidor activo en $this"
+}</code></pre>
+<blockquote class="aside aside-caution"><p>Anidar scope functions distintas produce bosques de <code>this</code> e <code>it</code> imposibles de seguir ("¿este <code>it</code>, de qué lambda era?"). Regla práctica: máximo una por expresión; si necesitas más, extrae variables con nombre.</p></blockquote>
+<blockquote class="aside aside-success"><p>Atajo mental para elegirlas: ¿devuelvo el MISMO objeto? → <code>apply</code> (configuro) o <code>also</code> (observo). ¿Devuelvo OTRA cosa? → <code>let</code> (con nulls) o <code>run</code>/<code>with</code> (calculo usando sus miembros).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas-funciones">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+<p>Estas reglas destilan la experiencia colectiva de la comunidad Kotlin y las guías oficiales de estilo. Aplicarlas desde el principio hace que tu código parezca escrito por alguien con años de Kotlin.</p>
+<table><thead><tr><th>Práctica</th><th>Razón</th></tr></thead><tbody>
+<tr><td>Nombres verbales y específicos</td><td><code>calcularTotal()</code> comunica; <code>proceso()</code> no dice nada</td></tr>
+<tr><td>Una responsabilidad por función</td><td>Fáciles de probar, reutilizar y depurar</td></tr>
+<tr><td>≤ 3–4 parámetros; si hay más, agrúpalos en data class</td><td>Firmas largas indican un concepto sin nombre todavía</td></tr>
+<tr><td>Defaults + named args antes que overloads</td><td>Menos código duplicado y llamadas auto-documentadas</td></tr>
+<tr><td>Expresión única cuando cabe en una pantalla</td><td>Elimina ceremonia; si necesita comentarios, usa bloques</td></tr>
+<tr><td>Extensiones para utilidades de tipos ajenos</td><td>Alternativa idiomática a clases <code>StringUtils</code>/helpers</td></tr>
+<tr><td>KDoc (<code>/** */</code>) en funciones públicas</td><td>Documenta contrato y aparece en el autocompletado del equipo</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">// ❌ Firma confusa: ¿qué es cada String? ¿y ese boolean?
+fun registrar(u: String, t: String, m: Boolean): String { /* ... */ }
+registrar("ana", "admin", true)
+
+// ✅ Misma idea: defaults, nombres claros y llamada legible
+data class Registro(val usuario: String, val rol: String)
+
+fun registrar(datos: Registro, notificar: Boolean = false, origen: String = "web"): String =
+    "${datos.usuario} registrado como ${datos.rol} desde $origen" +
+    if (notificar) " (notificación enviada)" else ""
+
+registrar(
+    datos = Registro(usuario = "ana", rol = "admin"),
+    notificar = true
+)</code></pre>
+<blockquote class="aside aside-tip"><p>Deja que IntelliJ trabaje para ti: <em>Refactor → Extract Function</em> (Ctrl+Alt+M) sobre cualquier bloque largo, y la inspección "Convert to single-expression function" sugiere cuándo simplificar a la forma con <code>=</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Pon a prueba la lección completa: cada ejercicio exige combinar varias técnicas vistas aquí. Resuélvelos en el playground de Kotlin.</p>
+<ol>
+<li><strong>Facturador compacto:</strong> escribe <code>fun total(precio: Double, cantidad: Int = 1, descuento: Double = 0.0, iva: Double = 0.21)</code> como función de expresión única que aplique descuento y sume IVA. Haz tres llamadas distintas usando argumentos nombrados, incluyendo una que salte <code>cantidad</code>.</li>
+<li><strong>Estadísticas flexibles:</strong> crea <code>fun estadisticas(vararg valores: Double)</code> que valide que no venga vacía (con <code>require</code>) y devuelva un String con media, mínimo y máximo. Pruébala con valores sueltos Y con un array pasado mediante el operador spread.</li>
+<li><strong>Biblioteca de extensiones:</strong> implementa <code>fun String.aTitulo(): String</code> (primera letra de cada palabra en mayúscula), <code>val Int.esPar: Boolean</code> (extensión property con getter) y úsalas juntas sobre una lista de frases.</li>
+<li><strong>Filtro configurable:</strong> escribe una higher-order function <code>fun procesar(lista: List&lt;Int&gt;, criterio: (Int) -&gt; Boolean, transformacion: (Int) -&gt; Int): List&lt;Int&gt;</code> que filtre y transforme; llámala dos veces con lambdas distintas (pares al cuadrado; impares negados) y una vez con referencias <code>::</code>.</li>
+<li><strong>Builder con apply:</strong> modela <code>data class Receta(val nombre: String)</code> con <code>var ingredientes: MutableList&lt;String&gt;</code>, <code>var minutos: Int = 30</code> y <code>var vegetariana: Boolean = false</code>. Construye dos recetas encadenando <code>apply</code> para configurarlas, inserta un log con <code>also</code> en la cadena y finaliza imprimiendo ambas con <code>with</code>.</li>
+</ol>
     </div>
   </section>

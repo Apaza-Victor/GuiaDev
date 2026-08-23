@@ -1,48 +1,185 @@
 <!-- 2. Ownership y Borrowing - Rust (Lenguajes de Programación) -->
 <!-- Contenido local del proyecto -->
 
-  <section id="ownership">
-    <h2>Ownership</h2>
+  <section id="stack-vs-heap">
+    <h2><i class="fa-solid fa-memory"></i> Stack vs Heap: el mapa del territorio</h2>
     <div class="doc-content">
-<pre><code class="language-rust">let s1 = String::from("hola");
-let s2 = s1;              // MOVE: s1 ya no es válido
-// println!("{}", s1);    // error: value borrowed after move
+<p>Todas las reglas de ownership existen por cómo se organiza la memoria en ejecución. El <strong>stack</strong> es una región ordenada y ultrarrápida donde viven los valores de tamaño conocido en compilación: enteros, booleanos, punteros. El <strong>heap</strong> es la zona flexible donde se colocan datos cuyo tamaño solo se conoce al correr: el contenido de un <code>String</code>, los elementos de un <code>Vec</code>. Acceder al heap cuesta más: hay que pedir espacio al asignador y llegar hasta él mediante un puntero.</p>
+<p>Cuando una función termina, su marco del stack se descarta automáticamente. La pregunta que ownership responde es otra: <em>¿quién libera el bloque del heap?</em> Sin garbage collector, alguien debe liberarlo exactamente una vez.</p>
+<table><thead><tr><th>Propiedad</th><th>Stack</th><th>Heap</th></tr></thead><tbody><tr><td>Velocidad de asignación</td><td>Mover un puntero: casi gratis</td><td>Pedir bloque al allocator: más lento</td></tr><tr><td>Tamaño</td><td>Fijo y conocido en compilación</td><td>Dinámico, crece en ejecución</td></tr><tr><td>Gestión</td><td>Automática al salir del scope</td><td>Necesita dueño responsable</td></tr><tr><td>Habitantes típicos</td><td>i32, bool, char, tuplas, punteros</td><td>String, Vec, HashMap, Box</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
 
-let n1 = 5;
-let n2 = n1;              // COPY (tipos simples)
-println!("{} {}", n1, n2); // OK</code></pre>
-<blockquote class="aside aside-caution"><strong>Cuidado:</strong> Al asignar o pasar a una función, los tipos complejos (String, Vec) se mueven; los simples (int, bool) se copian.</blockquote>
+  <section id="ownership">
+    <h2><i class="fa-solid fa-key"></i> Ownership: las tres reglas y el move</h2>
+    <div class="doc-content">
+<p><strong>Ownership</strong> es el conjunto de reglas con las que el compilador decide quién limpia cada dato del heap. Son solo tres, pero gobiernan todo:</p>
+<ol>
+<li>Cada valor en Rust tiene un único <strong>dueño</strong> (una variable) en todo momento.</li>
+<li>Solo puede haber <strong>un dueño a la vez</strong>.</li>
+<li>Cuando el dueño sale del scope, el valor se <strong>libera automáticamente</strong> (se llama a <code>drop</code>).</li>
+</ol>
+<pre><code class="language-rust">fn main() {
+    {                                   // abre un scope interno
+        let s = String::from("dueño temporal");
+        println!("{}", s);
+    }                                   // ← aquí drop(s): heap liberado SIN GC
+
+    let s1 = String::from("guía");
+    let s2 = s1;                        // MOVE: la propiedad pasa a s2
+    // println!("{}", s1);              // ❌ error[E0382]: s1 ya no posee nada
+    println!("{}", s2);                 // ✅ solo el dueño actual puede usarla
+}</code></pre>
+<h3>Move semantics: transferir, no copiar</h3>
+<p>La asignación <code>let s2 = s1;</code> no duplica el bloque del heap (sería caro); transfiere el "control remoto": ptr/len/cap pasan a s2 y <strong>s1 queda invalidada</strong>. Así se evita el clásico bug de C++ llamado <em>double free</em>: dos variables creyendo ser dueñas del mismo bloque. El compilador lo explica con el error <strong>E0382: borrow of moved value</strong>, sugiriendo incluso <code>s1.clone()</code> si la copia fuera aceptable.</p>
+<blockquote class="aside aside-danger"><p>Si vienes de Python o JavaScript, este es EL momento de choque: pasar una variable a una función también hace <strong>move</strong>, y no podrás usarla después. No es un bug del compilador: es el diseño funcionando.</p></blockquote>
+<h3>Mover hacia funciones y devolver propiedad</h3>
+<pre><code class="language-rust">fn consumir(s: String) {
+    println!("consumo {}", s);
+}                       // s muere aquí: la función ahora es la dueña final
+
+fn producir() -&gt; String {
+    String::from("nuevo dueño")   // la propiedad sale hacia quien llame
+}
+
+fn main() {
+    let texto = String::from("adiós");
+    consumir(texto);            // mueve el valor DENTRO de la función
+    // println!("{}", texto);   // ❌ moved value: ya pertenece a consumir
+
+    let recuperado = producir();   // y devolverlo transfiere la propiedad afuera
+    println!("{}", recuperado);
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="copy-vs-clone">
+    <h2><i class="fa-solid fa-copy"></i> Copy vs Clone: dos formas de duplicar</h2>
+    <div class="doc-content">
+<p>¿Por qué los enteros NO sufren moves? Porque implementan el trait <code>Copy</code>: son tan baratos de duplicar bit a bit que la asignación copia implícitamente y ambas variables siguen válidas. Los tipos del heap (String, Vec) no pueden ser Copy —duplicarlos sería caro—, así que ofrecen <code>Clone</code>: una copia profunda <em>explícita</em>.</p>
+<table><thead><tr><th>Tipo</th><th>Asignar <code>b = a</code> hace...</th><th>¿a sigue usable?</th></tr></thead><tbody><tr><td>i32, f64, bool, char</td><td>Copy implícito (bits duplicados)</td><td>Sí, siempre</td></tr><tr><td>Tuplas de tipos Copy</td><td>Copy implícito</td><td>Sí, siempre</td></tr><tr><td>String, Vec&lt;T&gt;, HashMap</td><td>MOVE (transfiere propiedad)</td><td>No</td></tr><tr><td>Tus structs propios</td><td>MOVE salvo que derives Copy/Clone</td><td>Depende</td></tr></tbody></table>
+<pre><code class="language-rust">fn main() {
+    // COPY: implícito y barato
+    let n1 = 42;
+    let n2 = n1;
+    println!("{} y {} siguen vivos", n1, n2);
+
+    // CLONE: copia profunda EXPLÍCITA (cuesta tiempo y memoria)
+    let s1 = String::from("original");
+    let s2 = s1.clone();            // duplica también el heap
+    println!("{} y {}", s1, s2);    // ✅ ambos válidos
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Rust exige escribir <code>.clone()</code> a propósito para hacer visible dónde se paga el coste de copiar. Si te ves añadiendo clones para "callar" al compilador, detente: probablemente necesitas referencias, no copias.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="visualizando-move-y-borrow">
+    <h2><i class="fa-solid fa-right-left"></i> Move y borrow en un diagrama</h2>
+    <div class="doc-content">
+<p>Antes de entrar a las referencias, fija la intuición visual. Un <strong>move</strong> cambia quién es dueño sin tocar el heap; un <strong>borrow</strong> deja la propiedad intacta y entrega acceso temporal:</p>
+<pre><code class="language-text">MOVE   : s1 ──✗──► heap        s2 ──► heap      (el heap NO se copia)
+BORROW : r1 = &amp;s , r2 = &amp;s ──► leen el heap de s, que sigue siendo el
+         ÚNICO dueño y lo liberará UNA sola vez al salir del scope.</code></pre>
+<p>---</p>
     </div>
   </section>
 
   <section id="referencias-borrowing">
-    <h2>Referencias (borrowing)</h2>
+    <h2><i class="fa-solid fa-handshake"></i> Referencias y las reglas del borrowing</h2>
     <div class="doc-content">
-<pre><code class="language-rust">fn longitud(s: &amp;String) -&gt; usize {  // presta, no mueve
+<p>Mover valores hacia funciones es incómodo si luego los necesitas. La solución son las <strong>referencias</strong>: acceder al dato sin adquirir su propiedad. Con <code>&amp;</code> tomas un préstamo de lectura; con <code>&amp;mut</code>, un préstamo de escritura:</p>
+<pre><code class="language-rust">fn longitud(s: &amp;String) -&gt; usize {   // pide prestado, NO toma propiedad
     s.len()
 }
 
-let s = String::from("hola");
-let l = longitud(&amp;s);
-println!("'{}' mide {}", s, l);      // s sigue válida
-
-fn agregar(s: &amp;mut String) {
-    s.push_str(", mundo");           // préstamo mutable
+fn agregar(saludo: &amp;mut String) {    // préstamo mutable para escribir
+    saludo.push_str(", mundo");
 }
 
-let mut t = String::from("hola");
-agregar(&amp;mut t);                     // solo UN &amp;mut a la vez</code></pre>
+fn main() {
+    let texto = String::from("hola");
+
+    let largo = longitud(&amp;texto);     // préstamo temporal, luego devuelto
+    println!("'{}' mide {} caracteres", texto, largo);  // ✅ texto sigue vivo
+
+    let mut saludo = String::from("hola");
+    agregar(&amp;mut saludo);              // hay que pedir &amp;mut EXPLÍCITAMENTE
+    println!("{}", saludo);            // "hola, mundo"
+}</code></pre>
+<h3>Las reglas del borrowing</h3>
+<p>El préstamo tiene condiciones estrictas que el borrow checker verifica en compilación. En cualquier punto del programa vale exactamente UNO de estos dos escenarios:</p>
+<ul>
+<li><strong>Una o muchas referencias inmutables</strong> (<code>&amp;T</code>): cualquier cantidad de lectores simultáneos.</li>
+<li><strong>Exactamente una referencia mutable</strong> (<code>&amp;mut T</code>): un único escritor, sin lectores concurrentes.</li>
+</ul>
+<p>Nunca ambas a la vez. Y ninguna referencia puede sobrevivir al dato que presta (nada cuelga).</p>
+<pre><code class="language-rust">fn main() {
+    let mut v = vec![1, 2, 3];
+
+    let r3 = &amp;v;
+    v.push(5);                 // ❌ error[E0502]: mutar mientras r3 está vivo
+    println!("{}", r3[0]);     // ✅ solución: usar r3 antes del push (NLL)
+}</code></pre>
+<blockquote class="aside aside-caution"><p>Gracias a la <em>Non-Lexical Lifetimes</em> (NLL), un préstamo termina en su último uso, no al final del bloque. Acortar el alcance de tus referencias es la herramienta número uno para calmar al borrow checker.</p></blockquote>
+<h3>Referencias colgantes: imposibles por diseño</h3>
+<pre><code class="language-rust">fn colgante() -&gt; &amp;String {          // ❌ esto NO compila
+    let s = String::from("adiós");
+    &amp;s                               // s muere al terminar la función:
+}                                    // devolver &amp;s dejaría un puntero inválido
+// error[E0106]: missing lifetime specifier — Rust exige probar
+// que la referencia sobrevive a la función.</code></pre>
+<h3>Adelanto: lifetimes</h3>
+<p>Cuando el compilador no puede inferir cuánto vive una referencia entre varias implicadas, te pide anotarlo con <strong>lifetimes</strong>: <code>fn mas_larga&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str</code> declara que el resultado vive como mínimo tanto como ambas entradas. No crean valores nuevos ni cambian nada en runtime: son metadatos para el borrow checker. Las verás a fondo cuando construyas APIs más complejas; por ahora basta reconocerlas.</p>
+<p>---</p>
     </div>
   </section>
 
   <section id="slices">
-    <h2>Slices</h2>
+    <h2><i class="fa-solid fa-scissors"></i> Slices: vistas sin copiar (&amp;str y &amp;[T])</h2>
     <div class="doc-content">
-<pre><code class="language-rust">let texto = String::from("Hola mundo");
-let hola = &amp;texto[0..4];     // "Hola"
-let mundo = &amp;texto[5..];     // "mundo"
+<p>Un <strong>slice</strong> es una referencia a una secuencia contigua de elementos: un puntero + longitud, sin copiar nada. El tipo <code>&amp;str</code> que ya usaste en literales ES un slice de cadena:</p>
+<pre><code class="language-rust">fn main() {
+    let frase = String::from("Hola mundo en Rust");
 
-let nums = [1, 2, 3, 4];
-let mitad = &amp;nums[0..2];     // [1, 2]</code></pre>
+    let hola = &amp;frase[0..4];      // "Hola" — vista sobre los bytes de frase
+    let resto = &amp;frase[5..];      // desde el índice 5 hasta el final
+    let todo = &amp;frase[..];        // toda la cadena
+
+    println!("{} | {} | {}", hola, resto, todo);
+}                                  // frase sigue siendo la dueña única
+</code></pre>
+<table><thead><tr><th>Slice</th><th>Apunta a</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>&amp;str</code></td><td>Bytes UTF-8 de un texto</td><td><code>&amp;texto[0..4]</code>, <code>"literal"</code></td></tr><tr><td><code>&amp;[T]</code></td><td>Elementos contiguos de array/Vec</td><td><code>&amp;v[1..3]</code></td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Firma idiomática: prefiere parámetros genéricos como <code>&amp;str</code> y <code>&amp;[T]</code> antes que <code>&amp;String</code>/<code>&amp;Vec&lt;T&gt;</code>. Por coerción de deref aceptan ambos casos y tu API resulta más flexible.</p></blockquote>
+<blockquote class="aside aside-danger"><p>Los rangos de <code>&amp;str</code> cortan por BYTES, no por caracteres: <code>&amp;texto[0..3]</code> hace pánico si cae dentro de un carácter multibyte (como 'ñ' o '🚀'). Para recorrer por caracteres usa <code>.chars()</code>.</p></blockquote>
+<p>---</p>
     </div>
   </section>
+
+  <section id="errores-comunes-borrow">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes del borrow checker</h2>
+    <div class="doc-content">
+<p>Estos cuatro mensajes concentran el 90% de las peleas iniciales con el compilador. Apréndelos como viejos conocidos:</p>
+<table><thead><tr><th>Error</th><th>Causa raíz</th><th>Salida típica</th></tr></thead><tbody><tr><td><code>E0382</code> borrow of moved value</td><td>Usar variable tras un move</td><td>Pasa <code>&amp;valor</code> o clona conscientemente</td></tr><tr><td><code>E0502</code> cannot borrow as mutable...</td><td>Solapaste <code>&amp;</code> con <code>&amp;mut</code></td><td>Reduce el alcance de los préstamos</td></tr><tr><td><code>E0597</code> does not live long enough</td><td>La referencia sobrevive al dueño</td><td>Devuelve valor propio (String) no referencia</td></tr><tr><td><code>E0106</code> missing lifetime specifier</td><td>Firma ambigua entre entradas/salida</td><td>Anota lifetimes explícitos ('a)</td></tr></tbody></table>
+<blockquote class="aside aside-danger"><p>No "resuelvas" el borrow checker sembrando <code>.clone()</code> por todas partes: funciona pero esconde el problema real (diseño de propiedades) y mata rendimiento. Entiende el mensaje, reorganiza alcances, y clona solo cuando el coste esté justificado.</p></blockquote>
+<blockquote class="aside aside-success"><p>Buenas noticias: el borrow checker es conservador pero justo. Si compila, tu código no tiene carreras de datos ni punteros colgantes — toda esa clase de bugs desaparece de tu depurador.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Hazlos en orden: provocar el error y arreglarlo enseña más que evitarlo.</p>
+<ol>
+<li><strong>Detecta el move</strong>: crea un <code>String</code>, asígnalo a otra variable, intenta imprimir la original, lee el error E0382 completo y arréglalo de dos formas: con <code>.clone()</code> y pasando una referencia.</li>
+<li><strong>Función que presta</strong>: escribe <code>fn contar_vocales(texto: &amp;str) -&gt; u32</code> y llámala tres veces seguidas con el mismo String para demostrar que los préstamos inmutables pueden repetirse libremente.</li>
+<li><strong>Rompe las reglas a propósito</strong>: dentro de un mismo scope, mantén un <code>&amp;vec</code> activo mientras haces <code>push</code>; observa E0502 y corrígelo acotando el préstamo en un bloque interno.</li>
+<li><strong>Slices de texto</strong>: dada la frase "Aprendiendo Rust con GuiaDev", extrae con slices la primera palabra, la última (con <code>split_whitespace().last()</code>) y una función <code>palabra_mas_larga(frase: &amp;str) -&gt; &amp;str</code>.</li>
+<li><strong>Reto lifetime</strong>: implementa <code>fn mas_larga&lt;'a&gt;(x: &amp;'a str, y: &amp;'a str) -&gt; &amp;'a str</code>, pruébala con un literal estático y un String local, y explica por qué el compilador rechaza devolver una referencia creada DENTRO de la función.</li>
+</ol>
+    </div>
+  </section>
+

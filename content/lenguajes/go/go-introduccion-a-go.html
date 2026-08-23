@@ -2,23 +2,88 @@
 <!-- Contenido local del proyecto -->
 
   <section id="por-que-go">
-    <h2>¿Por qué Go?</h2>
+    <h2><i class="fa-solid fa-bolt"></i> ¿Por qué Go?</h2>
     <div class="doc-content">
+<p><strong>Go (también llamado Golang)</strong> es un lenguaje de programación creado en <strong>Google en 2009</strong> por <strong>Rob Pike</strong>, <strong>Ken Thompson</strong> y <strong>Robert Griesemer</strong>: tres veteranos con décadas de experiencia en sistemas (entre ellos están Unix, el editor Plan 9 y el estándar UTF-8). Su motivación era muy concreta: en Google, los proyectos gigantes escritos en C++ tardaban <em>minutos u horas</em> en compilar, Java se sentía pesado y verboso, y Python era demasiado lento para la infraestructura crítica. Go nació como respuesta directa a ese problema.</p>
+<h3>Filosofía: la simplicidad como ventaja competitiva</h3>
+<p>La gran apuesta de Go es tener <strong>menos características, no más</strong>. No hay herencia clásica, no hay sobrecarga de operadores, no hay excepciones tradicionales, no existe el bucle <code>while</code>. Todo eso se resuelve con mecanismos más simples: composición, valores de error y un único bucle <code>for</code>. La consecuencia práctica es notable: <strong>dos equipos distintos escriben código Go sorprendentemente parecido</strong>, lo que reduce el coste de leer y mantener código ajeno.</p>
+<table><thead><tr><th>Pilar de diseño</th><th>Qué significa en la práctica</th></tr></thead><tbody><tr><td><strong>Simplicidad radical</strong></td><td>Cerca de 25 palabras clave (Java tiene ~50); una sola forma correcta de hacer cada cosa</td></tr><tr><td><strong>Compilación ultrarrápida</strong></td><td>Proyectos enormes compilan en segundos gracias a un modelo de dependencias estricto</td></tr><tr><td><strong>Binario estático</strong></td><td>El ejecutable incluye todo el runtime: se copia a cualquier servidor o contenedor sin instalar nada</td></tr><tr><td><strong>Concurrencia nativa</strong></td><td>Goroutines y channels forman parte del lenguaje, no de librerías externas</td></tr><tr><td><strong>Recolector de basura</strong></td><td>Memoria gestionada automáticamente, pero con pausas de microsegundos pensadas para servidores</td></tr></tbody></table>
+<h3>De código fuente a un único ejecutable</h3>
+<pre><code class="language-text">Código fuente (.go)
+      |
+      v   go build
++-----------------------------+
+|   Compilador oficial de Go  |
+|   (rapido: segundos)        |
++-----------------------------+
+      |
+      v
+Binario estático ejecutable
+(sin VM, sin intérprete,
+ sin dependencias del sistema)</code></pre>
+<blockquote class="aside aside-note"><p>Ese binario autocontenido explica por qué Go domina el mundo de los contenedores: una imagen Docker de un servicio en Go puede pesar 10&nbsp;MB, mientras que la misma aplicación en otros lenguajes fácilmente supera los 300&nbsp;MB.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="casos-de-uso-reales">
+    <h2><i class="fa-solid fa-earth-americas"></i> Casos de uso reales: quién usa Go y para qué</h2>
+    <div class="doc-content">
+<p>Go no es un lenguaje académico: fue diseñado para resolver problemas reales de escala, y hoy sostiene buena parte de la infraestructura de internet. Si alguna vez has usado Docker, Kubernetes o Terraform, ya has ejecutado software escrito íntegramente en Go.</p>
+<h3>Proyectos famosos escritos en Go</h3>
+<table><thead><tr><th>Proyecto</th><th>Qué es</th><th>Por qué Go encaja tan bien</th></tr></thead><tbody><tr><td><strong>Docker</strong></td><td>Plataforma de contenedores</td><td>Binario estático + goroutines para gestionar miles de contenedores</td></tr><tr><td><strong>Kubernetes</strong></td><td>Orquestador de contenedores</td><td>Concurrencia barata para vigilar clústeres completos de nodos</td></tr><tr><td><strong>Terraform</strong></td><td>Infraestructura como código</td><td>Distribución sencilla: una CLI que corre en cualquier SO</td></tr><tr><td><strong>Prometheus</strong></td><td>Monitorización y alertas</td><td>Alto rendimiento concurrente ingiriendo millones de métricas</td></tr><tr><td><strong>Hugo</strong></td><td>Generador de sitios estáticos</td><td>Compilación paralela: construye sitios enormes en milisegundos</td></tr><tr><td><strong>CockroachDB</strong></td><td>Base de datos SQL distribuida</td><td>Rendimiento cercano a C con seguridad de memoria automática</td></tr></tbody></table>
+<h3>Perfiles profesionales donde Go brilla hoy</h3>
 <ul>
-<li>Sintaxis mínima y compilación ultrarrápida</li>
-<li>Concurrencia integrada (goroutines/channels)</li>
-<li>Binario estático: sin dependencias en producción</li>
-<li>Estándar en cloud: Docker, Kubernetes están escritos en Go</li>
+<li><strong>Backends y APIs</strong>: servidores HTTP de altísimo rendimiento con la librería estándar, sin frameworks obligatorios.</li>
+<li><strong>Microservicios</strong>: despliegues pequeños, arranque instantáneo y consumo mínimo de RAM.</li>
+<li><strong>Herramientas CLI</strong>: Terraform, gh (GitHub CLI) o kubectl son el estándar de oro de las interfaces de consola.</li>
+<li><strong>DevOps y cloud-native</strong>: casi todo el ecosistema CNCF (Cloud Native Computing Foundation) está escrito en Go.</li>
+<li><strong>Redes y proxies</strong>: manejo eficiente de miles de conexiones simultáneas.</li>
 </ul>
+<pre><code class="language-bash"># Un mismo proyecto Go se distribuye a todas las plataformas
+# compilando en tu propia maquina, sin maquinas virtuales:
+GOOS=linux   GOARCH=amd64 go build -o app-linux
+GOOS=darwin  GOARCH=arm64 go build -o app-mac
+GOOS=windows GOARCH=amd64 go build -o app.exe</code></pre>
+<blockquote class="aside aside-success"><p>Aprender Go abre puertas laborales muy concretas: DevOps, SRE, plataformas cloud y backends de alto rendimiento. Es, literalmente, el idioma nativo de la computación cloud-native moderna.</p></blockquote>
+<blockquote class="aside aside-caution"><p>Go <strong>no</strong> es la mejor opción para todo: las GUIs de escritorio, la ciencia de datos intensiva o los videojuegos AAA tienen mejores herramientas en otros ecosistemas. Go domina donde importan red, concurrencia y despliegue sencillo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-y-primeros-pasos">
+    <h2><i class="fa-solid fa-download"></i> Instalación oficial y workspace moderno con módulos</h2>
+    <div class="doc-content">
+<h3>Instalar el compilador</h3>
+<p>La forma recomendada es descargar el instalador oficial desde <a href="https://go.dev/dl/" target="_blank" rel="noopener">go.dev/dl</a>. Existen instaladores gráficos para Windows y macOS, y un tarball para Linux. Elige siempre la <strong>versión estable más reciente</strong>: Go garantiza compatibilidad hacia atrás, de modo que código escrito en 2012 sigue compilando hoy sin cambios.</p>
+<ol>
+<li><strong>Descarga</strong> el instalador para tu sistema operativo desde go.dev/dl</li>
+<li><strong>Ejecuta</strong> el instalador con los valores por defecto (configura el PATH automáticamente)</li>
+<li><strong>Abre una terminal nueva</strong> y verifica la instalación:</li>
+</ol>
+<pre><code class="language-bash">go version
+# go version go1.22.5 windows/amd64</code></pre>
+<blockquote class="aside aside-caution"><p>Si tras instalar recibes <code>go: command not found</code> (o "no se reconoce como comando") en Windows, cierra y vuelve a abrir la terminal: el PATH solo se recarga al iniciar una sesión nueva.</p></blockquote>
+<h3>El workspace moderno: módulos, no GOPATH</h3>
+<p>Antes de 2018, Go obligaba a guardar todos los proyectos en una carpeta global llamada <code>GOPATH</code>, algo incómodo. Hoy el estándar son los <strong>módulos</strong>: cada proyecto es una carpeta independiente con su propio archivo <code>go.mod</code>, ubicada donde tú quieras. Crear un proyecto nuevo son dos comandos:</p>
+<pre><code class="language-bash">mkdir hola
+cd hola
+go mod init guidev/hola
+# go: creating new go.mod: module guidev/hola</code></pre>
+<p>El comando <code>go mod init</code> genera el archivo <code>go.mod</code>, la "credencial de identidad" del proyecto:</p>
+<pre><code class="language-text">module guidev/hola
+
+go 1.22</code></pre>
+<p>La primera línea declara el <strong>nombre del módulo</strong> (su identificador único, importante cuando otros proyectos lo importen) y la segunda indica la <strong>versión mínima de Go</strong> necesaria para compilarlo.</p>
+<blockquote class="aside aside-tip"><p>No necesitas un IDE pesado: <strong>VSCode + la extensión oficial de Go</strong> ofrece autocompletado, depurador, detección de errores en tiempo real y formateo automático al guardar. Es la combinación usada por la mayoría de la comunidad.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="primer-programa">
-    <h2>Primer programa</h2>
+    <h2><i class="fa-solid fa-play"></i> Tu primer programa, explicado línea a línea</h2>
     <div class="doc-content">
-<pre><code class="language-bash">go version
-go mod init guidev/hola
-go run main.go</code></pre>
+<p>Crea dentro de la carpeta del proyecto un archivo llamado <code>main.go</code> con este contenido clásico:</p>
 <pre><code class="language-go">package main
 
 import "fmt"
@@ -26,5 +91,82 @@ import "fmt"
 func main() {
 	fmt.Println("Hola, GuiaDev!")
 }</code></pre>
+<p>Aunque parece trivial, cada línea encierra una decisión de diseño importante:</p>
+<table><thead><tr><th>Línea</th><th>Explicación</th></tr></thead><tbody><tr><td><code>package main</code></td><td>Todo archivo Go declara a qué paquete pertenece. El paquete <code>main</code> es especial: define un <strong>programa ejecutable</strong> (los demás paquetes son librerías reutilizables)</td></tr><tr><td><code>import "fmt"</code></td><td>Importa <code>fmt</code>, el paquete estándar de entrada/salida formateada. Go <strong>prohíbe importar sin usar</strong>: si no lo empleas, el compilador rechaza el programa</td></tr><tr><td><code>func main()</code></td><td>Punto de entrada del ejecutable: aquí comienza y termina el programa. No recibe argumentos ni devuelve valores</td></tr><tr><td><code>fmt.Println(...)</code></td><td>Imprime los argumentos en consola seguidos de un salto de línea. Fíjate: la letra mayúscula (<code>Println</code>) indica que es <strong>público</strong>, exportado por el paquete</td></tr></tbody></table>
+<h3>Ejecutarlo de dos maneras</h3>
+<pre><code class="language-bash"># Modo desarrollo: compila en memoria y ejecuta al instante
+go run .
+# Hola, GuiaDev!
+
+# Modo distribucion: genera el binario real en la carpeta actual
+go build
+# Windows crea hola.exe ; Linux/macOS crean ./hola</code></pre>
+<blockquote class="aside aside-note"><p><code>go run</code> compila a un archivo temporal, lo ejecuta y lo borra: perfecto para iterar rápido. <code>go build</code> produce el artefacto definitivo, el que copiarías a producción.</p></blockquote>
+<blockquote class="aside aside-danger"><p>Solo puede existir <strong>una</strong> función <code>main</code> por programa y debe vivir en el paquete <code>main</code>. Si tu archivo dice <code>package utils</code>, obtendrás librerías, nunca un ejecutable: el error "runtime: no main function" te lo recordará.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="comandos-esenciales">
+    <h2><i class="fa-solid fa-screwdriver-wrench"></i> Los comandos esenciales de la herramienta go</h2>
+    <div class="doc-content">
+<p>Go destaca porque <strong>no necesitas un ecosistema de herramientas externas</strong> para ser productivo: un único comando, <code>go</code>, cubre compilar, formatear, analizar, testear y documentar. Estas son las subórdenes que usarás a diario:</p>
+<table><thead><tr><th>Comando</th><th>Para qué sirve</th><th>Ejemplo típico</th></tr></thead><tbody><tr><td><code>go run</code></td><td>Compila en memoria y ejecuta en un paso (ideal para desarrollo)</td><td><code>go run .</code></td></tr><tr><td><code>go build</code></td><td>Genera el binario ejecutable final</td><td><code>go build ./cmd/app</code></td></tr><tr><td><code>go fmt</code></td><td>Reformatea el código al estilo oficial (gofmt)</td><td><code>go fmt ./...</code></td></tr><tr><td><code>go vet</code></td><td>Análisis estático: detecta errores sospechosos que compilan pero son bugs</td><td><code>go vet ./...</code></td></tr><tr><td><code>go install</code></td><td>Compila e instala el binario en <code>$HOME/go/bin</code> (accesible desde el PATH)</td><td><code>go install</code></td></tr><tr><td><code>go get</code></td><td>Añade o actualiza dependencias externas al <code>go.mod</code></td><td><code>go get github.com/google/uuid</code></td></tr><tr><td><code>go test</code></td><td>Ejecuta las pruebas unitarias del proyecto</td><td><code>go test ./...</code></td></tr><tr><td><code>go doc</code></td><td>Muestra documentación desde la terminal, sin internet</td><td><code>go doc fmt.Println</code></td></tr></tbody></table>
+<p>El patrón <code>./...</code> significa "este paquete y todos sus subpaquetes recursivamente", así que esas variantes son las que normalmente pondrás en tus scripts de CI.</p>
+<blockquote class="aside aside-danger"><p>Nunca despliegues producción con <code>go run</code>: compila cada vez que arranca y depende de fuentes presentes en el servidor. El flujo profesional es <code>go build</code> una vez, distribuir el binario resultante.</p></blockquote>
+<blockquote class="aside aside-tip"><p>Prueba <code>go doc net/http.ServeMux</code> o <code>go doc strings.Builder</code>: toda la documentación de la librería estándar vive instalada en tu máquina, disponible sin conexión y con ejemplos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="go-frente-a-otros-lenguajes">
+    <h2><i class="fa-solid fa-scale-balanced"></i> Go frente a Python, Java y C++</h2>
+    <div class="doc-content">
+<p>Situar Go respecto a lenguajes que ya conoces aclara rápidamente su nicho: quiere la <strong>velocidad y seguridad de un lenguaje compilado</strong> con la <strong>agilidad de un lenguaje moderno y minimalista</strong>.</p>
+<table><thead><tr><th>Dimensión</th><th>Go</th><th>Python</th><th>Java</th><th>C++</th></tr></thead><tbody><tr><td><strong>Tipado</strong></td><td>Estático y fuerte, con inferencia corta (<code>:=</code>)</td><td>Dinámico</td><td>Estático, verboso</td><td>Estático, complejo</td></tr><tr><td><strong>Ejecución</strong></td><td>Compila a binario nativo</td><td>Interpretado</td><td>Bytecode sobre JVM</td><td>Compila a binario nativo</td></tr><tr><td><strong>Tiempo de compilación</strong></td><td>Segundos</td><td>No compila</td><td>Minutos en proyectos grandes</td><td>Minutos u horas</td></tr><tr><td><strong>Despliegue</strong></td><td>Un único binario</td><td>Intérprete + dependencias</td><td>JRE + archivos JAR</td><td>Binario + librerías del sistema</td></tr><tr><td><strong>Concurrencia</strong></td><td>Goroutines y channels nativos</td><td>Limitada por el GIL</td><td>Hilos pesados del SO</td><td>Hilos manuales, propensos a errores</td></tr><tr><td><strong>Curva inicial</strong></td><td>Muy suave (se aprende en días)</td><td>Suave</td><td>Moderada</td><td>Empinada</td></tr><tr><td><strong>Terreno estrella</strong></td><td>Cloud, CLIs, microservicios</td><td>Datos, IA, scripting</td><td>Enterprise, Android</td><td>Juegos, motores, alta frecuencia</td></tr></tbody></table>
+<h3>Un mismo programa en Go</h3>
+<pre><code class="language-go">// Go: tipado estatico con inferencia, compilable a binario
+package main
+
+import "fmt"
+
+func main() {
+	lenguaje := "Go"                 // := declara e infiere el tipo (string)
+	anio := 2009                     // int
+	fmt.Printf("%s nacio en %d\n", lenguaje, anio)
+}</code></pre>
+<blockquote class="aside aside-note"><p>Go eligió deliberadamente <strong>no tener herencia ni excepciones</strong>: en su lugar usa composición (structs embebidos) y errores como valores ordinarios. Parecen ausencias, pero son decisiones que eliminan categorías enteras de bugs. Las verás en profundidad en las lecciones 4, 5 y 6.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas-desde-el-primer-dia">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas desde el primer día</h2>
+    <div class="doc-content">
+<p>La comunidad Go tiene una cultura de uniformidad poco común, y conviene adoptarla desde el primer programa para no arrastrar malos hábitos de otros lenguajes.</p>
+<h3>Reglas de oro del principiante Go</h3>
+<table><thead><tr><th>Práctica</th><th>Razón</th></tr></thead><tbody><tr><td><strong>Ejecuta <code>go fmt</code> siempre</strong></td><td>El formato no se debate: tabuladores, llaves en la misma línea, imports agrupados. Configura tu editor para formatear al guardar</td></tr><tr><td><strong>Nombres cortos cerca, largos lejos</strong></td><td><code>i</code> vale para un índice de 3 líneas; <code>maxConexionesServidor</code> para un campo exportado. El contexto acorta los nombres</td></tr><tr><td><strong>Errores explícitos</strong></td><td>No ocultes fallos: devuélvelos como valor <code>error</code> y decide arriba qué hacer con ellos</td></tr><tr><td><strong>Menos abstracción</strong></td><td>No crees interfaces "por si acaso" ni capas de indirección: Go premia el código directo y legible</td></tr><tr><td><strong>Comenta el porqué, no el qué</strong></td><td>El código ya dice qué hace; el comentario valioso explica la intención o la decisión</td></tr></tbody></table>
+<pre><code class="language-go">// Mal: nombre largo y redundante en un contexto pequeno
+var nombreDelUsuarioActual string = "Ana"
+
+// Bien: contexto local, nombre corto, tipo inferido
+name := "Ana"</code></pre>
+<blockquote class="aside aside-caution"><p><code>go fmt</code> embellece, pero <strong>no detecta errores lógicos</strong>. Combínalo siempre con <code>go vet</code>, que encuentra descuidos clásicos como formatos incorrectos en <code>Printf</code> o variables capturadas por referencia en bucles.</p></blockquote>
+<blockquote class="aside aside-success"><p>Hábito ganador: antes de cada commit ejecuta <code>go vet ./... &amp;&amp; go test ./...</code>. Dos comandos que evitan el 90% de las sorpresas en revisión de código.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Instala el entorno y consolida el flujo de trabajo básico de todo desarrollador Go. Resuélvelos en orden: cada uno apoya al siguiente.</p>
+<ol>
+<li><strong>Verificación del entorno</strong>: instala Go 1.22 o superior, ejecuta <code>go version</code> y anota tu combinación de sistema operativo y arquitectura (por ejemplo <code>windows/amd64</code>). Comprueba también dónde quedó instalado el binario con <code>where go</code> o <code>which go</code>.</li>
+<li><strong>Primer módulo</strong>: crea una carpeta <code>saludo</code>, inicialízala con <code>go mod init guidev/saludo</code> y escribe un programa que imprima tres líneas: tu nombre, la versión de Go en ejecución (pista: <code>fmt.Println(runtime.Version())</code> importando <code>runtime</code>) y tu sistema operativo.</li>
+<li><strong>Domar al compilador</strong>: provoca a propósito los dos errores más famosos de Go: usa una variable sin utilizar y declara un import sin usar. Lee con calma los mensajes del compilador (indican archivo y línea exacta) y corrige ambos.</li>
+<li><strong>Higiene de código</strong>: desordena a mano la indentación y las llaves de tu <code>main.go</code>, ejecuta <code>go fmt .</code> y comprueba cómo queda restaurado. Después corre <code>go vet .</code> y verifica que tu código pasa limpio.</li>
+<li><strong>Multiplataforma</strong>: compila tu programa con <code>go build</code> y anota el tamaño del binario. Luego cross-compila para otra plataforma (<code>$env:GOOS="darwin"; $env:GOARCH="arm64"; go build</code> en PowerShell) y confirma que se genera un ejecutable nuevo para macOS sin cambiar una sola línea de código. Restaura las variables con <code>Remove-Item Env:GOOS, Env:GOARCH</code>.</li>
+</ol>
     </div>
   </section>

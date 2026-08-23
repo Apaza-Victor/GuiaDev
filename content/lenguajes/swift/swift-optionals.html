@@ -1,34 +1,201 @@
 <!-- 2. Optionals - Swift (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
 
   <section id="que-es-un-optional">
-    <h2>¿Qué es un optional?</h2>
+    <h2><i class="fa-solid fa-box-open"></i> ¿Qué es un optional?</h2>
     <div class="doc-content">
-<pre><code class="language-swift">var edad: Int? = nil       // puede no tener valor
-edad = 25
+<p>En 1965 Tony Hoare inventó la referencia nula y décadas después la llamó <em>"mi error de mil millones de dólares"</em>: en la mayoría de lenguajes, <strong>cualquier</strong> variable puede ser <code>null</code> sin avisar, y el programa explota en tiempo de ejecución cuando alguien olvida comprobarlo. La respuesta de Swift es radical: la ausencia de valor deja de estar escondida y pasa a formar parte del <strong>sistema de tipos</strong>.</p>
+<p>Un <strong>optional</strong> es un tipo que dice honestamente: <em>"aquí puede haber un valor de tipo T… o puede que no haya nada"</em>. Y aquí está el detalle elegante: internamente no es magia, es un simple <strong>enum</strong> de la librería estándar:</p>
+<pre><code class="language-swift">// Esto es (aproximadamente) lo que escribe el compilador cuando ves T?
+enum Optional&lt;Wrapped&gt; {
+    case none            // no hay valor
+    case some(Wrapped)   // hay un valor envuelto
+}
 
-// Fuerza (!) peligrosa: crash si es nil
-// let valor = edad!
+let corto: String? = nil          // Optional.none
+let largo: String? = "Toro"       // Optional.some("Toro")
 
-if let e = edad {           // unwrapping seguro
-    print("Tiene \(e) años")
+print(largo)                      // Optional("Toro") ← sigue envuelto</code></pre>
+<p>La sintaxis <code>String?</code> es azúcar para <code>Optional&lt;String&gt;</code>. Por eso <code>print</code> muestra el valor <em>envuelto</em>: obtener el valor de verdad se llama <strong>desenvolver</strong> (unwrapping) y es justo el tema de esta lección.</p>
+<h3>Cómo leer los tipos opcionales</h3>
+<p>El sufijo <code>?</code> se pega al tipo completo: <code>Int?</code> se lee "un Int o nada", <code>[Double]?</code> es "una lista de Double o nada", <code>(Int, Int)?</code> es "una tupla de dos Int o nada". En todos los casos equivale a <code>Optional&lt;…&gt;</code> del tipo interior.</p>
+<blockquote class="aside aside-note"><p><code>nil</code> en Swift <strong>no es un puntero nulo</strong> ni memoria basura: es simplemente el caso <code>.none</code> de un enum. Solo los optionals pueden valer <code>nil</code>; asignarlo a un <code>Int</code> normal ni siquiera compila.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="if-let-seguro">
+    <h2><i class="fa-solid fa-unlock"></i> Desenvoltura segura con if let</h2>
+    <div class="doc-content">
+<p>La forma básica y segura de desenvolver es <code>if let</code>: "si hay valor, créame una constante con él y entra al bloque". Dentro del <code>if</code> trabajas con un valor real, no opcional; fuera, el compilador te recuerda que sigues sin saberlo:</p>
+<pre><code class="language-swift">let edades = ["ana": 30, "luis": 25]
+let edadAna: Int? = edades["ana"]     // las búsquedas devuelven optionals
+
+if let edad = edadAna {
+    print("Ana tiene \(edad) años")   // edad es Int, sin envolver
+}
+// print(edad)  ❌ error: 'edad' solo existe dentro del if</code></pre>
+<h3>La forma corta (Swift 5.7+)</h3>
+<p>Cuando quieres mantener el mismo nombre, puedes omitir el <code>= expresión</code>: el compilador crea una constante sombra (<em>shadowing</em>) no opcional con ese nombre:</p>
+<pre><code class="language-swift">if let edadAna {                          // sombra NO opcional, mismo nombre
+    print("Ana tiene \(edadAna) años")    // aquí edadAna es Int puro
 }</code></pre>
+<h3>Varias desenvolturas y condiciones combinadas</h3>
+<p>Puedes desenvolver varios valores en una sola línea separándolos con comas, e incluso añadir condiciones extra tras el <code>where</code> implícito:</p>
+<pre><code class="language-swift">if let edad = padron["ana"], edad &gt;= 18 {   // desenvolver + condición extra
+    print("Puede votar (\(edad) años)")
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Nombra la constante desenvuelta según su contenido (<code>edad</code>, <code>textoLimpio</code>), no <code>x</code> ni <code>valor</code>. El código se lee mucho mejor cuando el nombre explica qué se desenvolvió.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="guard-let-y">
-    <h2>guard let y ??</h2>
+    <h2><i class="fa-solid fa-door-open"></i> guard let y salida temprana</h2>
     <div class="doc-content">
+<p><code>guard let</code> invierte la lógica: <em>"si NO hay valor, sal de aquí; si lo hay, continúa"</em>. Su superpoder es que la constante desenvuelta queda disponible <strong>después</strong> del guard, hasta el final del ámbito, porque el flujo garantiza que solo se llega ahí si había valor:</p>
 <pre><code class="language-swift">func procesar(edad: Int?) {
-    guard let edad = edad, edad &gt;= 18 else {
-        print("Edad inválida o menor de edad")
-        return               // guard exige salir del scope
+    guard let edad, edad &gt;= 18 else {
+        print("Edad ausente o menor de edad")
+        return               // guard EXIGE salir del scope aquí
     }
-    print("Adulto de \(edad) años")   // edad ya desenvolvida
+    // A partir de este punto 'edad' es Int normal
+    print("Adulto de \(edad) años")
 }
 
-let nombre: String? = nil
-let final = nombre ?? "anónimo"    // valor por defecto</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> Prefiere <code>guard let</code> cuando la ausencia del valor impide continuar: mantiene el código principal sin anidar.</blockquote>
+procesar(edad: 25)   // Adulto de 25 años
+procesar(edad: nil)  // Edad ausente o menor de edad</code></pre>
+<h3>¿Por qué guard prefiere la salida temprana?</h3>
+<p>Con <code>if let</code> anidados, el código importante se hunde cada vez más a la derecha (la temida <em>pirámide de la perdición</em>). Con <code>guard</code>, los casos inválidos se descartan arriba y el caso feliz queda plano:</p>
+<pre><code class="language-swift">// ✅ Guard plano: valida y abandona cuanto antes
+func enviar(mensaje: String?) {
+    guard let mensaje, !mensaje.isEmpty, mensaje.count &lt;= 140 else {
+        return   // aquí iría avisar al usuario; sin valor no hay nada que hacer
+    }
+    print("Enviando: \(mensaje)")   // código principal sin anidar
+}</code></pre>
+<p>El bloque <code>else</code> del guard debe terminar forzosamente transfiriendo el control: <code>return</code>, <code>break</code>, <code>continue</code>, <code>throw</code> o una función que nunca retorna. Si no, el compilador lo rechaza. Esa exigencia es lo que hace fiable el patrón.</p>
+<blockquote class="aside aside-tip"><p>Regla práctica: usa <code>if let</code> cuando la ausencia del valor sea un camino alternativo legítimo, y <code>guard let</code> cuando <strong>sin el valor no tiene sentido continuar</strong> (validaciones al inicio de una función).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="operador-nil-coalescing">
+    <h2><i class="fa-solid fa-arrows-left-right-to-line"></i> Nil coalescing: el operador ??</h2>
+    <div class="doc-content">
+<p>Muchas veces no necesitas dos caminos: necesitas <em>"el valor, o este otro por defecto"</em>. Para eso existe el operador <code>a ?? b</code>: devuelve <code>a</code> si tiene valor, y <code>b</code> si <code>a</code> es <code>nil</code>. Es un <code>if let</code> comprimido en dos caracteres:</p>
+<pre><code class="language-swift">let nombreUsuario: String? = nil
+let mostrado = nombreUsuario ?? "anónimo"   // "anónimo"
+
+let configuracion = ["tema": "oscuro"]
+let tema = configuracion["tema"] ?? "claro"      // "oscuro"
+let idioma = configuracion["idioma"] ?? "es"     // "es" (clave ausente)
+
+// Se pueden encadenar alternativas
+let elegido = nombreUsuario ?? configuracion["usuario"] ?? "invitado"</code></pre>
+<p>Un detalle fino: la parte derecha se evalúa <strong>solo si hace falta</strong> (el operador recibe un autoclosure perezoso). Puedes poner ahí cálculos costosos o incluso efectos, sabiendo que solo ocurren ante un <code>nil</code>:</p>
+<pre><code class="language-swift">let cache: String? = nil
+let dato = cache ?? cargarDeDisco()   // cargarDeDisco() solo si cache == nil
+
+func cargarDeDisco() -&gt; String { "leído del disco" }</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="optional-chaining">
+    <h2><i class="fa-solid fa-link"></i> Optional chaining: encadenar con ?.</h2>
+    <div class="doc-content">
+<p>Cuando accedes a propiedades o métodos de un valor que podría ser <code>nil</code>, el <strong>encadenamiento opcional</strong> con <code>?</code> evita comprobar cada nivel: si cualquier eslabón es <code>nil</code>, toda la cadena devuelve <code>nil</code> sin ejecutarse (cortocircuito); si todos existen, obtienes el resultado… pero envuelto otra vez en un optional:</p>
+<pre><code class="language-swift">struct Direccion { var ciudad: String }
+struct Persona {
+    var nombre: String
+    var direccion: Direccion?
+}
+
+let ana = Persona(nombre: "Ana", direccion: Direccion(ciudad: "Lima"))
+let fantasma = Persona(nombre: "?", direccion: nil)
+
+ana.direccion?.ciudad        // Optional("Lima")
+fantasma.direccion?.ciudad   // nil (ni intenta acceder)
+
+// Combinado con ?? recuperas un valor garantizado
+let destino = ana.direccion?.ciudad ?? "Desconocida"   // "Lima"</code></pre>
+<p>También sirve para llamar métodos o asignar a través de la cadena: <code>carrito?.agregar("té")</code> solo ejecuta si el objeto existe; si es <code>nil</code>, toda la línea se salta sin error.</p>
+<blockquote class="aside aside-caution"><p>El resultado de una cadena <code>?.</code> siempre es opcional, aunque la última propiedad no lo sea. Olvidarlo lleva a errores de tipos; acostúmbrate a cerrar la cadena con <code>?? valor</code> o a desenvolverla con <code>if let</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="force-unwrap-y-iuo">
+    <h2><i class="fa-solid fa-burst"></i> Fuerza bruta (!), IUO y pattern matching</h2>
+    <div class="doc-content">
+<h3>Force unwrap: el operador !</h3>
+<p>Escribir <code>opcional!</code> dice <em>"confía en mí, sé que hay valor"</em>. Si te equivocas, el programa muere al instante con un error en tiempo de ejecución. No hay segunda oportunidad ni recuperación:</p>
+<pre><code class="language-swift">let entrada: String? = nil
+// print(entrada!)
+// 💥 Fatal error: Unexpectedly found nil while unwrapping an Optional value</code></pre>
+<h3>IUO: Implicitly Unwrapped Optionals (Tipo!)</h3>
+<p>Un optional implícitamente desenvuelto se declara con <code>!</code> y funciona como optional, pero el compilador lo desenvuelve automáticamente en cada uso. Existe por dos razones históricas: la interoperabilidad con Objective-C y la inicialización en dos fases, donde una propiedad aún no tiene valor al terminar el <code>init</code> pero lo tendrá antes de usarse (el caso típico son los <code>@IBOutlet</code> conectados desde Interface Builder).</p>
+<table><thead><tr><th>Situación</th><th>¿Es buena idea usar IUO?</th></tr></thead><tbody><tr><td><code>@IBOutlet weak var etiqueta: UILabel!</code> (Xcode)</td><td>Sí: patrón generado oficialmente, el sistema la conecta al cargar la vista</td></tr><tr><td>Interoperar con APIs de Objective-C heredadas</td><td>Sí, mientras migras el código</td></tr><tr><td>Propiedades tuyas "que siempre tendrán valor"</td><td>No: decláralas no opcionales o usa inicialización diferida (<code>lazy</code>)</td></tr><tr><td>"Para ahorrarme escribir if let"</td><td>No: estás reintroduciendo el error de los mil millones de dólares</td></tr></tbody></table>
+<h3>Pattern matching con case let</h3>
+<p>Como un optional es un enum, también puedes desenvolverlo con <code>switch</code> o <code>if case</code>, dejando visible su naturaleza de dos casos:</p>
+<pre><code class="language-swift">let apodo: String? = "Toro"
+
+switch apodo {
+case .some(let valor): print("Apodo: \(valor)")   // caso some(Wrapped)
+case .none:            print("Sin apodo")         // caso nil
+}
+
+if case let valor? = apodo {          // azúcar idiomático para .some(let valor)
+    print("Hay valor: \(valor)")
+}</code></pre>
+<h3>Todas las formas de desenvolver, de un vistazo</h3>
+<table><thead><tr><th>Forma</th><th>Ejemplo</th><th>Cuándo usarla</th></tr></thead><tbody><tr><td><code>if let</code></td><td><code>if let x = op { … }</code></td><td>Cuando nil es un camino alternativo normal</td></tr><tr><td><code>guard let</code></td><td><code>guard let x = op else { return }</code></td><td>Cuando sin valor no se puede continuar; evita anidar</td></tr><tr><td><code>??</code></td><td><code>op ?? "defecto"</code></td><td>Cuando basta un valor de respaldo</td></tr><tr><td><code>?.</code></td><td><code>obj?.prop.metodo()</code></td><td>Cadenas de acceso donde cualquier nivel puede ser nil</td></tr><tr><td><code>case let</code></td><td><code>if case let x? = op { … }</code></td><td>Dentro de switch/patrones; deja ver los casos del enum</td></tr><tr><td><code>!</code></td><td><code>op!</code></td><td>Casi nunca: prototipos, tests o invariantes demostrables</td></tr></tbody></table>
+<blockquote class="aside aside-danger"><p>Un <code>!</code> en producción es una bomba de tiempo: hoy la invarianta se cumple, mañana alguien cambia el orden de carga y la app crashea para usuarios reales. Cada vez que sientas la tentación de escribir <code>!</code>, pregúntate qué haría el programa si el valor faltara… y escríbelo tú mismo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes con optionals</h2>
+    <div class="doc-content">
+<h3>1. Comprobar nil pero usar el optional directamente</h3>
+<pre><code class="language-swift">let edad: Int? = 30
+if edad != nil {
+    // print(edad + 1)   ❌ error: 'edad' sigue siendo Int?
+    print(edad! + 1)     // ⚠️ compila pero abusa del !
+}
+if let edad {           // ✅ dentro, 'edad' es Int
+    print(edad + 1)
+}</code></pre>
+<h3>2. Silenciar con ?? "" o ?? 0 sin pensar</h3>
+<pre><code class="language-swift">// ❌ Oculta el problema: ¿era legítimo que faltara el precio?
+let precio = producto.precio ?? 0.0
+
+// ✅ Decide conscientemente: valor por defecto razonable O manejo del fallo
+guard let precio = producto.precio else {
+    print("Producto sin precio: no facturable")
+    return
+}</code></pre>
+<h3>3. Forzar optionales de búsquedas que legítimamente fallan</h3>
+<pre><code class="language-swift">let usuarios = ["ana": 1]
+// let ana = usuarios["ana"]!    // ok hoy…
+// let pepe = usuarios["pepe"]!  // 💥 crash: la clave no existe
+let pepe = usuarios["pepe"] ?? 0 // ✅ o if let para tratar la ausencia</code></pre>
+<blockquote class="aside aside-success"><p>Buen hábito definitivo: trata todo <code>!</code> como deuda técnica y todo <code>?? defecto</code> como una decisión de negocio que merece un segundo de reflexión. Los optionals no son un estorbo del compilador: son documentación ejecutable sobre dónde puede fallar tu lógica.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuélvelos en orden en un Playground; cada uno apoya al siguiente:</p>
+<ol>
+<li><strong>Detección de envoltorio:</strong> declara <code>var ciudad: String? = "Lima"</code>, imprímela tal cual (observa <code>Optional("Lima")</code>), asígnale <code>nil</code> y vuelve a imprimirla. Explica en un comentario qué caso del enum representa cada impresión.</li>
+<li><strong>Saludo tolerante:</strong> escribe una función <code>saludar(_ nombre: String?) -&gt; String</code> que devuelva <code>"Hola, \(nombre)"</code> o <code>"Hola, invitado"</code> usando únicamente el operador <code>??</code>.</li>
+<li><strong>Validador con guard:</strong> crea <code>func inscribir(edad: Int?, nombre: String?)</code> que use un único <code>guard let</code> para validar ambos datos y rechace menores de 18 años; imprime la confirmación con los valores ya desenvueltos.</li>
+<li><strong>Cadena de direcciones:</strong> define <code>struct Empresa { var web: String? }</code> y <code>struct Cliente { var empresa: Empresa? }</code>; dado un cliente cuya empresa es <code>nil</code>, obtén su web con optional chaining y un valor por defecto <code>"sin sitio web"</code>, sin un solo <code>if</code>.</li>
+<li><strong>Caza del crash:</strong> recibe el diccionario <code>precios = ["café": 1.5, "té": 1.2]</code> y una lista de pedidos <code>["café", "jugo", "té"]</code>; calcula el total del pedido desenvolviendo cada búsqueda de forma segura (nada de <code>!</code>) e informa qué productos no estaban en catálogo. Reescríbelo después con <code>case let</code> en un <code>switch</code>.</li>
+</ol>
     </div>
   </section>

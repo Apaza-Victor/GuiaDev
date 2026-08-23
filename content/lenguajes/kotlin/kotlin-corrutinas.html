@@ -1,23 +1,284 @@
 <!-- 7. Corrutinas - Kotlin (Lenguajes de Programación) -->
 <!-- Contenido local del proyecto -->
 
-  <section id="conceptos-base">
-    <h2>Conceptos base</h2>
+  <section id="el-problema-con-hilos-y-callbacks">
+    <h2><i class="fa-solid fa-network-wired"></i> El problema: hilos pesados e infierno de callbacks</h2>
     <div class="doc-content">
+<p>Casi toda aplicación moderna necesita hacer varias cosas "a la vez": una app móvil pinta la interfaz mientras descarga datos, un servidor atiende miles de peticiones simultáneas. Durante décadas hubo dos respuestas, ambas dolorosas. Los <strong>hilos</strong> (<code>Thread</code>) son caros: cada uno reserva ~1 MB de pila, el sistema operativo tarda en crearlos y cambiar entre ellos, y bloquear el hilo de la UI mientras llega una respuesta congela la aplicación. Las <strong>callbacks</strong> evitan el bloqueo, pero anidan funciones dentro de funciones hasta formar la temida <em>pirámide de la perdición</em>, donde los errores se manejan dispersos y el flujo se vuelve ilegible.</p>
+<pre><code class="language-kotlin">// ❌ Callback hell clásico: cada paso anida el siguiente
+// api.obtenerUsuario(id) { usuario -&gt;
+//     api.obtenerPedidos(usuario) { pedidos -&gt;
+//         api.obtenerDetalle(pedidos[0]) { detalle -&gt;
+//             api.calcularEnvio(detalle) { costo -&gt;
+//                 ui.mostrar(costo)          // ¿y si falla el paso 3? 😱
+//             }
+//         }
+//     }
+// }</code></pre>
+<p>Las <strong>corrutinas</strong> atacan ambos problemas: son computaciones que pueden <em>suspenderse</em> sin bloquear el hilo que las ejecuta, cuestan unos pocos bytes (puedes lanzar decenas de miles donde antes cabían cientos de hilos) y permiten escribir código asíncrono con la apariencia lineal y legible del código síncrono.</p>
+<table><thead><tr><th>Aspecto</th><th>Hilos</th><th>Corrutinas</th></tr></thead><tbody>
+<tr><td>Coste por unidad</td><td>~1 MB de pila + gestión del SO</td><td>Unos pocos bytes en heap</td></tr>
+<tr><td>Escala práctica</td><td>Cientos por proceso</td><td>Decenas de miles por proceso</td></tr>
+<tr><td>Bloqueo</td><td><code>sleep()</code>/<code>read()</code> detienen el hilo entero</td><td><code>delay()</code>/suspend liberan el hilo al instante</td></tr>
+<tr><td>Composición</td><td>Callbacks o futures verbosos</td><td>Código secuencial normal con <code>suspend</code></td></tr>
+</tbody></table>
+<blockquote class="aside aside-note"><p>Las corrutinas NO son multihilo mágico: por defecto una corrutina corre sobre el hilo que la lanzó. Lo que aportan es <em>concurrencia ligera</em>; el paralelismo real se controla después con los dispatchers.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="conceptos-base">
+    <h2><i class="fa-solid fa-pause"></i> Funciones suspend y el modelo mental correcto</h2>
+    <div class="doc-content">
+<p>La palabra clave <code>suspend</code> marca funciones que pueden <strong>pausarse</strong> sin bloquear el hilo: entregan el hilo a otros trabajos y retoman su ejecución más tarde, exactamente donde la dejaron. La función <code>delay()</code> es el equivalente amable de <code>Thread.sleep()</code>: espera ese tiempo pero <em>libera</em> el hilo para que otros lo aprovechen. Regla de oro del lenguaje: solo se puede llamar a una función <code>suspend</code> desde otra función <code>suspend</code> o desde dentro de una corrutina.</p>
 <pre><code class="language-kotlin">import kotlinx.coroutines.*
 
-suspend fun descargar(): String {
-    delay(1000)                       // no bloquea el hilo
-    return "contenido"
+suspend fun descargarPerfil(): String {
+    delay(1000)                        // pausa SIN bloquear el hilo
+    return "perfil@kotlin.dev"
+}
+
+suspend fun descargarAmigos(): List&lt;String&gt; {
+    delay(1500)
+    return listOf("Ana", "Luis")
 }
 
 fun main() = runBlocking {
-    launch {                          // fire and forget
-        repeat(3) { delay(300); println("latido") }
+    // Llamadas secuenciales: total = 1000 + 1500 ms
+    val perfil = descargarPerfil()
+    val amigos = descargarAmigos()
+    println("$perfil con ${amigos.size} amigos")
+
+    // Concurrencia ligera: dos latidos conviven en el mismo hilo
+    launch {
+        repeat(3) {
+            delay(400)
+            println("latido ${it + 1}")
+        }
     }
-    val resultado = async { descargar() }.await()
-    println(resultado)
+    println("main sigue vivo")         // se imprime ANTES de los latidos
 }</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> Una corrutina consume ~unos bytes frente a ~1MB de un hilo: puedes lanzar decenas de miles simultáneas.</blockquote>
+<h3>runBlocking: el puente, solo para demos</h3>
+<p><code>runBlocking</code> crea una corrutina y <strong>bloquea el hilo actual</strong> hasta terminar. Es el puente perfecto entre el mundo síncrono (la función <code>main</code> de tus experimentos, tests unitarios) y las corrutinas… y también la peor elección en producción: bloquear el hilo principal de una app o servidor anula todo el beneficio. En aplicaciones reales existen scopes integrados (<code>lifecycleScope</code> en Android, el scope del framework en servidores).</p>
+<pre><code class="language-kotlin">// ✅ Aceptable en ejemplos/tests: main ya es "tierra firme" que puede esperar
+fun main() = runBlocking {
+    val datos = descargarPerfil()
+    println(datos)
+}
+
+// ❌ En una app real jamás: bloquearía el hilo de la interfaz
+// fun onClickGuardar() {
+//     runBlocking { api.guardar(...) }   // UI congelada 💀
+// }</code></pre>
+<blockquote class="aside aside-tip"><p>Diferencia clave para entrevistas: <code>Thread.sleep(1000)</code> retiene el hilo secuestrado 1 segundo; <code>delay(1000)</code> devuelve el hilo al pool y programa la reanudación. Con miles de tareas concurrentes, esa diferencia es abismal.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="launch-vs-async">
+    <h2><i class="fa-solid fa-code-fork"></i> Builders: launch vs async/await</h2>
+    <div class="doc-content">
+<p>Los <em>builders</em> son las funciones que crean corrutinas. Elegir bien entre ellos depende de una sola pregunta: <strong>¿necesito el resultado?</strong>. Si solo quieres efectos secundarios (escribir logs, actualizar pantalla), <code>launch</code>; si esperas un valor futuro, <code>async</code> + <code>await</code>.</p>
+<table><thead><tr><th>Builder</th><th>Devuelve</th><th>Ideal para…</th><th>Excepciones</th></tr></thead><tbody>
+<tr><td><strong>launch</strong></td><td><code>Job</code> (sin resultado)</td><td>"Fire and forget": efectos, animaciones, logs</td><td>Falla inmediatamente hacia el padre</td></tr>
+<tr><td><strong>async</strong></td><td><code>Deferred&lt;T&gt;</code></td><td>Cálculos/descargas cuyo valor necesitarás</td><td>Se lanza en <code>await()</code></td></tr>
+<tr><td><strong>runBlocking</strong></td><td>T del bloque</td><td>Puente síncrono: main y tests únicamente</td><td>Se propagan como normales</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">fun main() = runBlocking {
+    // LAUNCH: enciende y sigue; el resultado (si hay) se ignora
+    val job: Job = launch {
+        delay(500)
+        println("Tarea lateral terminada")
+    }
+
+    // ASYNC: arranca YA, en paralelo, y entrega promesas Deferred
+    val perfil: Deferred&lt;String&gt; = async { descargarPerfil() }      // 1 s
+    val amigos: Deferred&lt;List&lt;String&gt;&gt; = async { descargarAmigos() } // 1.5 s
+
+    println("Descargando...")        // corre MIENTRAS ambas avanzan
+
+    // AWAIT: espera el resultado (ya casi listo porque corrieron en paralelo)
+    println("${perfil.await()} + ${amigos.await().size} amigos")
+    // Total ≈ 1.5 s (el máximo), NO 2.5 s (la suma)
+
+    job.join()                       // espera a que la tarea lateral acabe
+}
+
+// AWAITALL: muchas promesas a la vez
+suspend fun cargarTodo(): List&lt;Int&gt; =
+    listOf(async { servicioA() }, async { servicioB() }, async { servicioC() })
+        .awaitAll()                  // lista con los tres resultados</code></pre>
+<blockquote class="aside aside-caution"><p>Lanza varios <code>async</code> ANTES de llamar a sus <code>await</code>: así trabajan en paralelo. Si escribes <code>a().await()</code> y luego <code>b().await()</code>, cada async nace después del await anterior y recuperas la ejecución secuencial sin darte cuenta.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="jobs-y-concurrencia-estructurada">
+    <h2><i class="fa-solid fa-sitemap"></i> Jobs, scopes y concurrencia estructurada</h2>
+    <div class="doc-content">
+<p>Cada corrutina devuelve un <code>Job</code>: su identificador manipulable, capaz de <code>join()</code> (esperar), <code>cancel()</code> (abortar) o consultar estado (<code>isActive</code>). Sobre esa pieza se levanta la idea más elegante de la librería: la <strong>concurrencia estructurada</strong>. Toda corrutina vive dentro de un scope; si el scope termina, esperan a sus hijas; si se cancela, se cancela todo el árbol; si una hija falla, el padre se entera. Resultado: <strong>no existen corrutinas huérfanas</strong> que sobrevivan a quien las creó.</p>
+<pre><code class="language-kotlin">fun main() = runBlocking {
+    // El scope PADRE no finaliza hasta que TODAS sus hijas terminen
+    launch {
+        delay(800)
+        println("Hija lenta terminó")
+    }
+    val rapida = launch {
+        delay(200)
+        println("Hija rápida terminó")
+    }
+    rapida.join()                    // espera explícita a UNA hija concreta
+    println("main termina")          // ...pero aún aguarda a la lenta
+}
+
+// COROUTINESCOPE: crea sub-scopes dentro de funciones suspend,
+// heredando contexto y garantizando la misma estructura padre→hijas
+suspend fun cargarPantalla(): String = coroutineScope {
+    val encabezado = async { descargarPerfil() }
+    val contenido  = async { descargarAmigos() }
+    "${encabezado.await()} (${contenido.await().size} amigos)"
+}   // si algo falla aquí, AMBAS hijas mueren con él: sin fugas</code></pre>
+<h3>Cancelación cooperativa</h3>
+<p>Una corrutina no puede ser asesinada a la fuerza: se le <em>solicita</em> la cancelación y ella decide cuándo obedecer, comprobando puntos de suspensión como <code>delay()</code> o verificando <code>isActive</code>. Por eso un bucle intensivo de CPU debe cooperar expresamente.</p>
+<pre><code class="language-kotlin">val trabajo = launch {
+    repeat(1000) { i -&gt;
+        ensureActive()               // lanza CancellationException si pidieron cancelar
+        Thread.sleep(10)             // simulamos cálculo pesado SIN puntos de suspensión
+        if (i % 100 == 0) println("progreso $i")
+    }
+}
+delay(250)
+trabajo.cancel("Ya no hace falta")
+println("¿Activo? ${!trabajo.isCancelled}")</code></pre>
+<blockquote class="aside aside-danger"><p>Huye de <code>GlobalScope.launch</code> en aplicaciones reales: sus corrutinas viven tanto como el proceso, ignoran ciclos de vida (pantallas cerradas, requests terminados) y producen fugas silenciosas. Todo trabajo debe nacer dentro de un scope con dueño.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="dispatchers-y-ejemplo-practico">
+    <h2><i class="fa-solid fa-microchip"></i> Dispatchers y un ejemplo completo: UI + red</h2>
+    <div class="doc-content">
+<p>Los <strong>dispatchers</strong> deciden QUÉ hilos ejecutan cada corrutina. La función <code>withContext(dispatcher)</code> cambia de contexto para un bloque concreto y vuelve después: es la herramienta estándar para mover trabajo pesado fuera del hilo de interfaz.</p>
+<table><thead><tr><th>Dispatcher</th><th>Qué usa</th><th>Diseñado para</th></tr></thead><tbody>
+<tr><td><strong>Dispatchers.Default</strong></td><td>Pool compartido (≈ núcleos de CPU)</td><td>Cálculo intensivo: parsing, ordenamientos, criptografía</td></tr>
+<tr><td><strong>Dispatchers.IO</strong></td><td>Pool elástico amplio (64+)</td><td>Operaciones bloqueantes: archivos, red legacy, BD</td></tr>
+<tr><td><strong>Dispatchers.Main</strong></td><td>El hilo de la UI</td><td>Tocar vistas/pantalla (Android, Swing, JavaFX)</td></tr>
+<tr><td><strong>Dispatchers.Unconfined</strong></td><td>El que toque en cada momento</td><td>Casos raros; evitar salvo frameworks internos</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">import kotlinx.coroutines.*
+import kotlin.system.measureTimeMillis
+
+// Simulación de capas de una app: "red" en IO, "UI" en Main
+suspend fun llamarApi(endpoint: String): String = withContext(Dispatchers.IO) {
+    delay(600)                                  // latencia de red simulada
+    """{ "endpoint": "$endpoint", "ok": true }"""
+}
+
+suspend fun refrescarPantalla() = withContext(Dispatchers.Main) {
+    println("[UI] giro de spinner...")           // tocaría vistas reales aquí
+}
+
+fun main() = runBlocking(Dispatchers.Main) {    // actuamos como si fuéramos el hilo UI
+    val milis = measureTimeMillis {
+        refrescarPantalla()
+
+        val perfil = async { llamarApi("/perfil") }      // paralelas entre sí
+        val posts  = async { llamarApi("/posts") }
+
+        val datos = "${perfil.await()} | ${posts.await()}"
+
+        withContext(Dispatchers.Main) { println("[UI] pintando: $datos") }
+    }
+    println("Pantalla cargada en ~$milis ms")    // ≈ 600 ms, no 1200
+}</code></pre>
+<blockquote class="aside aside-success"><p>Mira el flujo completo: sin un solo callback anidado, el código se lee de arriba abajo como un guion secuencial —y debajo corre concurrencia real con cambio de hilos incluido—. Esa legibilidad es LA razón por la que Kotlin ganó Android.</p></blockquote>
+<blockquote class="aside aside-tip"><p>En Android existe además la variante <code>withContext(Dispatchers.IO) { ... }</code> como patrón de repositorio: las funciones suspend declaran DÓNDE trabajan internamente, y el ViewModel ni se entera.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="manejo-de-excepciones">
+    <h2><i class="fa-solid fa-bug-slash"></i> Manejo básico de excepciones</h2>
+    <div class="doc-content">
+<p>Las buenas noticias: un <code>try/catch</code> normal funciona igual alrededor de llamadas suspend. Las matizaciones llegan según el builder: en <code>launch</code> la excepción golpea al padre apenas ocurre (por eso conviene capturarla dentro del propio bloque); en <code>async</code> queda guardada en el <code>Deferred</code> y se lanza cuando llamas a <code>await()</code>, momento ideal para capturarla.</p>
+<pre><code class="language-kotlin">suspend fun servicioInestable(): String {
+    delay(300)
+    throw IllegalStateException("El servicio caído de nuevo")
+}
+
+fun main() = runBlocking {
+    // LAUNCH: captura DENTRO del bloque, donde ocurre
+    launch {
+        try {
+            servicioInestable()
+        } catch (e: Exception) {
+            println("[launch] capturado: ${e.message}")
+        }
+    }
+
+    // ASYNC: la excepción viaja hasta el await(); allí se captura
+    val promesa = async { servicioInestable() }
+    try {
+        promesa.await()
+    } catch (e: IllegalStateException) {
+        println("[async] capturado en await: ${e.message}")
+    }
+
+    // RED DE ÚLTIMO INSTANTE para launch sin capturar:
+    val handler = CoroutineExceptionHandler { _, ex -&gt;
+        println("[handler] no atrapada: ${ex.message}")
+    }
+    launch(handler) { throw RuntimeException("imprevisto") }
+}</code></pre>
+<blockquote class="aside aside-danger"><p>Nunca absorbas una <code>CancellationException</code> con un <code>catch (e: Exception)</code> genérico: estás rompiendo el mecanismo de cancelación y tu corrutina se volverá inmortal. Si capturas Exception genérico, reenvía primero las de cancelación: <code>if (e is CancellationException) throw e</code>.</p></blockquote>
+<blockquote class="aside aside-note"><p>Cuando un hijo falla sin captura, cancela a su padre y a todos los hermanos (modelo de fallo rápido). Para jerarquías donde un fallo no debe tumbar al resto existen los <code>SupervisorJob</code> y <code>supervisorScope</code> — tema de siguiente nivel que conviene saber que existe.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes-corrutinas">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<p>La curva de las corrutinas no está en la sintaxis sino en estos malentendidos recurrentes. Repásalos antes de escribir tu primer código real con concurrencia.</p>
+<table><thead><tr><th>Error</th><th>Síntoma</th><th>Solución</th></tr></thead><tbody>
+<tr><td><code>runBlocking</code> dentro de la app</td><td>UI/servidor congelado</td><td>Usar scopes reales: <code>lifecycleScope</code>, scope del framework</td></tr>
+<tr><td><code>Thread.sleep()</code> en corrutina</td><td>Hilo bloqueado, pool agotado</td><td><code>delay()</code>, que libera el hilo</td></tr>
+<tr><td><code>async { }.await()</code> seguidos</td><td>Rendimiento secuencial disfrazado</td><td>Lanzar TODOS los async primero, await después</td></tr>
+<tr><td>Cancelar corrutina CPU-bound</td><td>Sigue corriendo eternamente</td><td><code>ensureActive()</code>/<code>isActive</code> dentro de los bucles</td></tr>
+<tr><td>Tragar <code>CancellationException</code></td><td>Cancelaciones ignoradas, fugas</td><td>Relanzarla siempre tras registrarla</td></tr>
+<tr><td>Estado compartido mutable sin protección</td><td>Resultados distintos en cada ejecución</td><td>Confina estado en un actor/single-thread dispatcher o usa <code>Mutex</code></td></tr>
+<tr><td><code>GlobalScope.launch</code> por comodidad</td><td>Trabajo huérfano imposible de testear</td><td>Inyectar/crear scopes estructurados con ciclo de vida</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">// ❌ catch genérico que sabotea la cancelación
+try {
+    trabajarLargo()
+} catch (e: Exception) {
+    println("error: ${e.message}")       // ¡también atrapó la cancelación!
+}
+
+// ✅ Deja pasar siempre la señal de cancelación
+try {
+    trabajarLargo()
+} catch (e: CancellationException) {
+    throw e                              // la cancelación NO se negocia
+} catch (e: Exception) {
+    println("error real: ${e.message}")
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Depura tiempos con <code>kotlinx.coroutines.debug</code> (propiedad de JVM <code>-Dkotlinx.coroutines.debug</code>): los logs mostrarán qué corrutina imprimió cada línea, revelando carreras invisibles a simple vista.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuélvelos en el playground oficial (ya incluye kotlinx.coroutines). Cada ejercicio construye sobre el anterior hasta llegar a un patrón de producción real.</p>
+<ol>
+<li><strong>Latidos concurrentes:</strong> lanza dos corrutinas con <code>launch</code>: una imprime "tick" cada 300 ms (3 veces) y otra "tock" cada 450 ms (2 veces). Observa el orden de salida en varias ejecuciones y explica en comentario por qué varía.</li>
+<li><strong>Paralelismo medible:</strong> con <code>measureTimeMillis</code>, compara descargar dos perfiles simulados (dos funciones suspend con <code>delay(1000)</code>) de forma secuencial versus dos <code>async</code> + <code>await</code>. Imprime ambos tiempos y verifica la diferencia (~2 s vs ~1 s).</li>
+<li><strong>Trabajador cancelable:</strong> lanza una corrutina que imprima números del 1 en adelante cada 100 ms usando <code>ensureActive()</code>; desde fuera, cancélala tras medio segundo con <code>cancel()</code> y confirma con <code>join()</code> que terminó limpiamente, imprimiendo su estado final.</li>
+<li><strong>Mini cliente resiliente:</strong> implementa <code>suspend fun descargarConDispatcher(url: String): String</code> que use <code>withContext(Dispatchers.IO)</code>, simule la red con <code>delay(500)</code> y devuelva "datos de $url". Combínalo con un segundo endpoint mediante <code>async</code>/<code>await</code> y muestra el tiempo total con <code>measureTimeMillis</code>.</li>
+<li><strong>Patrón retry profesional:</strong> escribe <code>suspend fun &lt;T&gt; conReintentos(veces: Int = 3, bloque: suspend () -&gt; T): T</code> que ejecute el bloque y, si lanza excepción, espere <code>delay(200 * intento)</code> antes de reintentar; las <code>CancellationException</code> deben propagarse sin reintentar. Pruébalo con un servicio que falla las dos primeras veces (usa un contador) y añade un <code>CoroutineExceptionHandler</code> al scope para cubrir cualquier fallo final.</li>
+</ol>
     </div>
   </section>

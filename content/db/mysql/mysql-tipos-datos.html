@@ -1,69 +1,202 @@
 <!-- 2. Tipos de datos en MySQL - MySQL (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="tipos-numericos">
-    <h2>Tipos numéricos</h2>
+<section id="tipos-numericos">
+    <h2><i class="fa-solid fa-calculator"></i> Tipos numéricos</h2>
     <div class="doc-content">
-<p>MySQL ofrece enteros de distintos tamaños y decimales exactos o aproximados. Elegir bien el tipo ahorra espacio y evita errores de redondeo.</p>
-<pre><code class="language-sql">-- Enteros: TINYINT, SMALLINT, MEDIUMINT, INT, BIGINT
--- Decimales exactos (dinero): DECIMAL(M,D)
--- Decimales aproximados (científicos): FLOAT, DOUBLE
-CREATE TABLE ejemplo_numerico (
-  edad TINYINT UNSIGNED,          -- 0 a 255
-  contador INT,                   -- ~-2.147M a 2.147M
-  poblacion BIGINT,               -- miles de millones
-  precio DECIMAL(10,2),           -- hasta 99.999.999,99 exacto
-  peso DOUBLE                     -- aproximado
-);</code></pre>
-<blockquote class="aside aside-tip">
-<p>Para dinero usa siempre <code>DECIMAL</code>. <code>FLOAT</code> y <code>DOUBLE</code> generan errores de redondeo acumulables.</p>
-</blockquote>
-<p><code>TINYINT(1)</code> se usa como booleano; <code>BOOLEAN</code> es un alias de <code>TINYINT(1)</code>.</p>
-    </div>
-  </section>
+        <p>Elegir el tipo correcto define tamaño en disco, velocidad de índices y exactitud de cálculos. MySQL separa enteros (exactos) de decimales de coma flotante (aproximados) — y añade <code>DECIMAL</code> para exactitud decimal absoluta.</p>
 
-  <section id="tipos-de-texto">
-    <h2>Tipos de texto</h2>
-    <div class="doc-content">
-<p><code>CHAR(n)</code> reserva siempre n caracteres (útil para códigos fijos) y <code>VARCHAR(n)</code> solo lo necesario. Los tipos <code>TEXT</code> almacenan textos largos fuera de la fila.</p>
-<pre><code class="language-sql">CREATE TABLE ejemplo_texto (
-  codigo CHAR(2),                 -- 'MX', 'ES': longitud fija
-  nombre VARCHAR(100),            -- longitud variable
-  descripcion TEXT,               -- hasta 65.535 caracteres
-  documento LONGTEXT,             -- hasta 4 GB
-  estado ENUM('activo','inactivo','suspendido')
-);</code></pre>
-<blockquote class="aside aside-note">
-<p><code>ENUM</code> limita la columna a una lista de valores. Es cómodo, pero si la lista puede crecer es mejor una tabla catálogo.</p>
-</blockquote>
-    </div>
-  </section>
+        <h3>Enteros</h3>
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Bytes</th><th>Rango con signo</th><th>Sin signo (UNSIGNED)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>TINYINT</code></td><td>1</td><td>-128 a 127</td><td>0 a 255</td></tr>
+                <tr><td><code>SMALLINT</code></td><td>2</td><td>±32 mil</td><td>0 a 65 mil</td></tr>
+                <tr><td><code>MEDIUMINT</code></td><td>3</td><td>±8.4 millones</td><td>0 a 16.7 millones</td></tr>
+                <tr><td><code>INT</code></td><td>4</td><td>±2.100 millones</td><td>0 a 4.200 millones</td></tr>
+                <tr><td><code>BIGINT</code></td><td>8</td><td>±9.2 × 10¹⁸</td><td>0 a 1.8 × 10¹⁹</td></tr>
+            </tbody>
+        </table>
 
-  <section id="fecha-y-hora">
-    <h2>Fecha y hora</h2>
-    <div class="doc-content">
-<pre><code class="language-sql">CREATE TABLE ejemplo_fechas (
-  fecha_nacimiento DATE,                          -- solo fecha
-  hora_entrada TIME,                              -- solo hora
-  registrado_en DATETIME,                         -- fecha y hora literal
-  ultimo_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ON UPDATE CURRENT_TIMESTAMP                   -- se actualiza solo
-);</code></pre>
-<p><code>DATETIME</code> guarda la fecha tal cual (rango 1000-9999); <code>TIMESTAMP</code> la convierte a UTC internamente (rango 1970-2038) y permite actualización automática.</p>
-    </div>
-  </section>
+        <h3>Decimales: la decisión crítica del dinero</h3>
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Naturaleza</th><th>Uso correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>DECIMAL(M,D)</code></td><td>EXACTO decimal fijo</td><td>💰 Precios, saldos, impuestos — SIEMPRE</td></tr>
+                <tr><td><code>FLOAT</code></td><td>Aproximado 4 bytes</td><td>Científico con tolerancia</td></tr>
+                <tr><td><code>DOUBLE</code></td><td>Aproximado 8 bytes</td><td>Estadística, coordenadas GPS</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">CREATE TABLE productos (
+    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre      VARCHAR(120) NOT NULL,
+    precio      DECIMAL(10,2) NOT NULL,     -- hasta 99,999,999.99 EXACTO
+    peso_kg     DECIMAL(6,3),               -- 999.999 gramos finos
+    stock       INT UNSIGNED DEFAULT 0,
+    es_activo   TINYINT(1) DEFAULT 1        -- booleano por convención
+);
 
-  <section id="ejemplo-integral">
-    <h2>Ejemplo integral</h2>
-    <div class="doc-content">
-<pre><code class="language-sql">CREATE TABLE empleados (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  rfc CHAR(13) NOT NULL UNIQUE,
-  nombre VARCHAR(80) NOT NULL,
-  salario DECIMAL(10,2) NOT NULL,
-  activo BOOLEAN DEFAULT TRUE,
-  contratado_el DATE NOT NULL,
-  creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);</code></pre>
-<p>Con esto ya puedes describir cualquier entidad real. En la siguiente lección veremos cómo crear y modificar estas tablas.</p>
+-- Demostración del error clásico:
+SELECT CAST(0.1 AS DOUBLE) + CAST(0.2 AS DOUBLE);
+-- 0.30000000000000004  ← FLOAT/DOUBLE aproximan
+SELECT 0.1 + 0.2;   -- DECIMAL literal: 0.3 exacto ✅</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>Jamás guardes dinero en FLOAT/DOUBLE: los redondeos acumulados desequilibran contabilidad real. DECIMAL(12,2) para precios normales; BIGINT en centavos si el rendimiento extremo importa y controlas la conversión en app.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="tipos-de-texto">
+    <h2><i class="fa-solid fa-font"></i> Tipos de texto</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Límite</th><th>Almacenamiento</th><th>Úsalo para</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>CHAR(N)</code></td><td>Fijo N (0-255)</td><td>Siempre N chars (rellena espacios)</td><td>Códigos fijos: país 'ES', DNI</td></tr>
+                <tr><td><code>VARCHAR(N)</code></td><td>Variable hasta N</td><td>Largo real + 1-2 bytes</td><td>Nombres, emails, títulos — default</td></tr>
+                <tr><td><code>TINYTEXT</code></td><td>255 B</td><td>Como VARCHAR(255)</td><td>Raro: usa VARCHAR</td></tr>
+                <tr><td><code>TEXT</code></td><td>64 KB</td><td>Off-page si grande</td><td>Descripciones largas</td></tr>
+                <tr><td><code>MEDIUMTEXT</code></td><td>16 MB</td><td>Off-page</td><td>Artículos, HTML de contenido</td></tr>
+                <tr><td><code>LONGTEXT</code></td><td>4 GB</td><td>Off-page</td><td>Raro: mejor objetos en storage</td></tr>
+                <tr><td><code>JSON</code> (5.7+)</td><td>1 GB</td><td>Validado + binario optimizado</td><td>Atributos flexibles semi-estructurados</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">CREATE TABLE usuarios (
+    id       INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    email    VARCHAR(254) NOT NULL,        -- RFC máximo teórico
+    pais     CHAR(2) NOT NULL,             -- código ISO 3166
+    bio      TEXT NULL,
+    preferencias JSON NULL                 -- {"tema":"oscuro","idioma":"es"}
+);
+
+-- Consultar dentro de JSON:
+SELECT nombre_preferencias-&gt;&gt;'$.idioma' FROM usuarios;</code></pre>
+        <h3>Charsets y collations</h3>
+        <pre><code class="language-sql">CREATE TABLE clientes (
+    nombre VARCHAR(100)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- utf8mb4 = UTF-8 REAL (emojis incluidos). El "utf8" de MySQL es un
+-- alias histórico de utf8mb3 que NO soporta emojis ni algunos símbolos.</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>El charset por defecto antiguo latin1 corrompe nombres con tildes al migrar. En MySQL 8 el default ya es utf8mb4, pero verifica bases heredadas con <code>SHOW CREATE TABLE</code>. Migrar charset después es doloroso: hazlo bien desde el día uno.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="fecha-y-hora">
+    <h2><i class="fa-solid fa-calendar-days"></i> Fecha y hora</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Formato</th><th>Rango</th><th>Notas</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>DATE</code></td><td>'YYYY-MM-DD'</td><td>1000-01-01 a 9999-12-31</td><td>Solo fecha</td></tr>
+                <tr><td><code>DATETIME</code></td><td>'YYYY-MM-DD HH:MM:SS'</td><td>Igual que DATE</td><td>8 bytes, sin zona horaria</td></tr>
+                <tr><td><code>TIMESTAMP</code></td><td>'YYYY-MM-DD HH:MM:SS'</td><td>1970 a 2038 ⚠️</td><td>Guarda UTC, convierte según time_zone sesión</td></tr>
+                <tr><td><code>TIME</code></td><td>'HH:MM:SS'</td><td>-838 a 838 horas</td><td>Duraciones posibles</td></tr>
+                <tr><td><code>YEAR</code></td><td>YYYY</td><td>1901-2155</td><td>Raro: usa SMALLINT o DATE</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">CREATE TABLE pedidos (
+    id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    creado_en    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,  -- auto-touch
+    fecha_entrega DATE NULL
+);
+
+-- Funciones frecuentes:
+SELECT NOW(), CURDATE();
+SELECT DATE_ADD(creado_en, INTERVAL 30 DAY) FROM pedidos;
+SELECT DATEDIFF(NOW(), creado_en) AS dias_transcurridos FROM pedidos;
+SELECT DATE_FORMAT(creado_en, '%d/%m/%Y %H:%i') FROM pedidos;
+
+-- TIMESTAMP con zona horaria automática:
+SET time_zone = 'America/Mexico_City';
+SELECT created_at FROM sesiones;   -- se muestra en TU zona aunque guarde UTC</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Regla práctica moderna: DATETIME para todo por defecto (rango amplio, comportamiento predecible); TIMESTAMP solo cuando necesites conversión automática de zona horaria multi-región — y consciente del límite 2038.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejemplo-integral">
+    <h2><i class="fa-solid fa-cubes-stacked"></i> Ejemplo integral: tabla bien tipada</h2>
+    <div class="doc-content">
+        <pre><code class="language-sql">CREATE TABLE empleados (
+    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    legajo          CHAR(8) NOT NULL UNIQUE,           -- código fijo
+    nombre          VARCHAR(80) NOT NULL,
+    email           VARCHAR(254) NOT NULL UNIQUE,
+    salario         DECIMAL(11,2) NOT NULL,            -- 💰 exacto
+    comision_pct    DECIMAL(4,2) NULL,                 -- 0.00–99.99
+    fecha_nac       DATE NOT NULL,
+    contratado_el   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    activo          TINYINT(1) NOT NULL DEFAULT 1,
+    notas           TEXT NULL,
+    perfil_json     JSON NULL,
+    CONSTRAINT chk_salario CHECK (salario &gt;= 0),
+    INDEX idx_nombre (nombre),
+    INDEX idx_contratado (contratado_el)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Decisión de diseño</th><th>Justificación</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>INT UNSIGNED para PK</td><td>No existen IDs negativos; duplica techo gratis</td></tr>
+                <tr><td>DECIMAL para salario/comisión</td><td>Dinero exacto, sin sorpresas FLOAT</td></tr>
+                <tr><td>VARCHAR dimensionado razonable</td><td>80/254 cubren casos reales sin despilfarrar índice</td></tr>
+                <tr><td>TINYINT(1) para booleano</td><td>MySQL no tiene bool nativo; convención universal</td></tr>
+                <tr><td>DATETIME + DEFAULT CURRENT_TIMESTAMP</td><td>Auditoría automática sin lógica app</td></tr>
+                <tr><td>utf8mb4 explícito</td><td>Nombres internacionales + emojis seguros</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>VARCHAR(255) por inercia NO es diseño: piensa el largo real (¿nombre de 255 caracteres?). Índices sobre VARCHAR gigantes desperdician memoria y velocidad. Dimensiona con criterio del dominio.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Consecuencia real</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>FLOAT/DOUBLE para dinero</td><td>Saldos descuadrados por centavos fantasma</td><td>DECIMAL(M,D)</td></tr>
+                <tr><td>charset utf8mb3/latin1</td><td>Emojis → ??? ; tildes rotas tras migración</td><td>utf8mb4 desde creación</td></tr>
+                <tr><td>VARCHAR(255) universal por inercia</td><td>Índices gordos lentos</td><td>Dimensionar según dominio real</td></tr>
+                <tr><td>Guardar fechas como VARCHAR</td><td>Imposible ordenar/filtrar rangos correctamente</td><td>DATE/DATETIME nativos</td></tr>
+                <tr><td>INT con signo para IDs</td><td>La mitad del rango desaprovechada</td><td>INT/BIGINT UNSIGNED</td></tr>
+                <tr><td>TIMESTAMP ignorando límite 2038</td><td>Sistemas longevos romperán fechas futuras</td><td>DATETIME salvo necesidad TZ real</td></tr>
+                <tr><td>TEXT para campos que caben en VARCHAR</td><td>Índices imposibles sin prefijo; performance peor</td><td>VARCHAR hasta ~4000 chars prácticos</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Tabla inventario perfecta</strong>: diseña tabla productos con todos los tipos vistos correctamente elegidos; justifica cada tipo en comentario SQL.</li>
+            <li><strong>Demostración de precisión</strong>: inserta 0.1+0.2 en columna DOUBLE y en DECIMAL(10,2); SELECT ambas y documenta la diferencia observada.</li>
+            <li><strong>Emojis test</strong>: crea tabla con utf8mb4 e intenta insertar "🎉"; luego crea otra en latin1 y observa el fallo/corrupción.</li>
+            <li><strong>Zona horaria viva</strong>: tabla TIMESTAMP; SET time_zone distinto dos veces y consulta mismo registro mostrando cómo cambia la presentación.</li>
+            <li><strong>JSON flexible</strong>: tabla eventos con columna JSON de atributos variables; inserta tres eventos con estructuras distintas y consulta con -&gt;&gt;'$...' extrayendo campos.</li>
+        </ol>
+    </div>
+</section>

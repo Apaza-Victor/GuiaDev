@@ -1,27 +1,147 @@
-<!-- 1. Introducción al Shell - Bash (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="tu-primer-script">
-    <h2>Tu primer script</h2>
+<!-- 2. Introducción al Shell - Bash (Lenguajes de Programación) -->
+<section id="que-es-el-shell">
+    <h2><i class="fa-solid fa-terminal"></i> ¿Qué es un shell y por qué Bash?</h2>
     <div class="doc-content">
-<pre><code class="language-bash">#!/bin/bash
-# hola.sh - mi primer script
+        <p>El <strong>shell</strong> es el intérprete que traduce tus comandos al sistema operativo. Cada vez que escribes algo en una terminal, un shell lo recibe, lo interpreta y ejecuta. <strong>Bash</strong> (Bourne Again Shell) es el estándar de facto en Linux y macOS — y la habilidad más rentable por hora invertida en toda la informática: automatizar tareas repetitivas con 20 líneas.</p>
 
-echo "Hola, GuiaDev!"
-echo "Fecha: $(date)"</code></pre>
-<pre><code class="language-bash">chmod +x hola.sh   # hacerlo ejecutable
-./hola.sh          # ejecutarlo
-bash hola.sh       # alternativa sin chmod</code></pre>
+        <h3>Aclarando los términos</h3>
+        <table>
+            <thead>
+                <tr><th>Término</th><th>Qué es exactamente</th><th>Ejemplos</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Terminal</strong></td><td>La VENTANA/emulador donde escribes</td><td>GNOME Terminal, iTerm2, Windows Terminal</td></tr>
+                <tr><td><strong>Shell</strong></td><td>El PROGRAMA intérprete corriendo dentro</td><td>bash, zsh, fish, sh, PowerShell</td></tr>
+                <tr><td><strong>Script</strong></td><td>Archivo de texto con comandos ejecutables</td><td>deploy.sh, backup.sh</td></tr>
+                <tr><td><strong>Shebang</strong></td><td>Primera línea que declara el intérprete</td><td>#!/bin/bash</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Dónde vive Bash en tu día a día</h3>
+        <ul>
+            <li><strong>Servidores Linux</strong>: el 90% de la nuebe mundial; sin scripts no administras nada.</li>
+            <li><strong>CI/CD pipelines</strong>: GitHub Actions, GitLab CI ejecutan pasos en bash.</li>
+            <li><strong>macOS</strong>: terminal nativa zsh, pero bash disponible y scripts portables.</li>
+            <li><strong>Docker</strong>: ENTRYPOINT/CMD suelen invocar scripts bash.</li>
+            <li><strong>Windows</strong>: vía WSL2, Git Bash o MSYS2 — cada vez más común.</li>
+        </ul>
+        <blockquote class="aside aside-tip">
+            <p>Comprueba tu shell actual con <code>echo $0</code> o <code>echo $SHELL</code>. En cualquier Linux moderno: <code>bash --version</code> te confirma la versión instalada.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="el-shebang">
-    <h2>El shebang</h2>
+<section id="el-shebang">
+    <h2><i class="fa-solid fa-hashtag"></i> El shebang: declarar el intérprete</h2>
     <div class="doc-content">
-<ul>
-<li><code>#!/bin/bash</code> indica qué intérprete ejecuta el script</li>
-<li>Sin ella, depende del shell del usuario</li>
-<li><code>#!/usr/bin/env bash</code> es más portable</li>
-</ul>
+        <p>El shebang (<code>#!</code>) en la primera línea le dice al sistema QUÉ programa debe interpretar el archivo. Sin él, dependes del shell del usuario — receta para bugs sutiles:</p>
+        <pre><code class="language-bash">#!/bin/bash
+# Todo script serio empieza así
+
+echo "Ejecutado por: $BASH_VERSION"</code></pre>
+        <table>
+            <thead>
+                <tr><th>Shebang</th><th>Cuándo usarlo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>#!/bin/bash</code></td><td>Estándar clásico; existe en todos los Linux/macOS</td></tr>
+                <tr><td><code>#!/usr/bin/env bash</code></td><td>Portable: encuentra bash en el PATH (macOS Homebrew, NixOS)</td></tr>
+                <tr><td><code>#!/bin/sh</code></td><td>POSIX puro ultra-portable pero SIN features de bash (arrays, [[ ]])</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p><code>/bin/sh</code> NO ES bash: en Debian/Ubuntu apunta a dash, que falla silenciosamente con sintaxis bash como arrays o dobles corchetes. Si usas features bash (y las usarás), declara #!/bin/bash explícitamente.</p>
+        </blockquote>
+
+        <h3>Hacer ejecutable y correr</h3>
+        <pre><code class="language-bash"># Crear y dar permisos de ejecución:
+chmod +x mi_script.sh
+
+# Las TRES formas de ejecutar:
+./mi_script.sh          # como PROGRAMA (requiere chmod + shebang correcto)
+bash mi_script.sh       # pasándolo al intérprete (no requiere permisos)
+source mi_script.sh     # EJECUTA EN TU SHELL ACTUAL (afecta variables/alias!)
+
+# Diferencia clave demostrada:
+#   ./script.sh  → subshell aparte: sus variables MUEREN al terminar
+#   source       → mismas variables: seteó PATH? ya está cambiado en tu sesión</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Si <code>./script.sh</code> da "Permission denied" → falta chmod +x. Si da "bad interpreter" → shebang mal escrito o finales de línea Windows (CRLF). Arregla CRLF con <code>dos2unix script.sh</code>.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="tu-primer-script">
+    <h2><i class="fa-solid fa-play"></i> Tu primer script real</h2>
+    <div class="doc-content">
+        <pre><code class="language-bash">#!/bin/bash
+# backup-simple.sh — copia una carpeta con fecha en el nombre
+
+ORIGEN="$HOME/proyectos"
+DESTINO="$HOME/backups"
+
+FECHA=$(date +%Y-%m-%d_%H%M)
+ARCHIVO="backup_$FECHA.tar.gz"
+
+mkdir -p "$DESTINO"
+tar -czf "$DESTINO/$ARCHIVO" "$ORIGEN"
+
+if [ $? -eq 0 ]; then
+    echo "✅ Backup creado: $DESTINO/$ARCHIVO"
+else
+    echo "❌ El backup falló" &gt;&amp;2
+    exit 1
+fi</code></pre>
+        <pre><code class="language-text">$ chmod +x backup-simple.sh
+$ ./backup-simple.sh
+✅ Backup creado: /home/ana/backups/backup_2026-08-23_1415.tar.gz
+
+$ crontab -e
+0 2 * * * /home/ana/backup-simple.sh    # cada noche a las 2 AM</code></pre>
+        <p>Diecinueve líneas útiles: fecha automática, carpeta creada si falta, verificación de éxito, código de salida correcto para cron/CI. Este patrón — comando + verificar resultado + mensaje claro — es EL ciclo mental del scripting.</p>
+
+        <h3>Anatomía de un comando</h3>
+        <pre><code class="language-text">tar    -czf    backup.tar.gz    ~/proyectos
+ ↑      ↑           ↑               ↑
+cmd  opciones    argumento       argumento</code></pre>
+        <blockquote class="aside aside-success">
+            <p>Los comentarios (#) en scripts no son decoración: dentro de 6 meses tú serás un desconocido para ti mismo. Documenta QUÉ hace el script, qué parámetros espera y qué produce. El futuro te lo agradecerá.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Solución</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Olvidar chmod +x</td><td>"Permission denied"</td><td>chmod +x script.sh</td></tr>
+                <tr><td>Finales de línea CRLF (editado en Windows)</td><td>"bad interpreter: /bin/bash^M"</td><td>dos2unix o configurar editor LF</td></tr>
+                <tr><td>Shebang #!/bin/sh usando features bash</td><td>"Unexpected operator" o fallos raros</td><td>Declarar #!/bin/bash</td></tr>
+                <tr><td>Probar script destructivo sin echo previo</td><td>Borraste lo que no debías</td><td>Simular primero: echo rm -rf "$DIR"</td></tr>
+                <tr><td>Editar crontab esperando variables de sesión</td><td>Script funciona manual, falla en cron</td><td>Rutas absolutas SIEMPRE en cron; PATH mínimo heredado</td></tr>
+                <tr><td>No verificar $? tras comandos críticos</td><td>Backup "exitoso" vacío</td><td>set -e global o checks manuales</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Hola script</strong>: crea saludo.sh con shebang, imprime tu nombre y la versión de bash; dale permisos y ejecútalo las tres formas (./, bash, source).</li>
+            <li><strong>Demostrador source vs ./</strong>: script que define SALUDO="hola"; ejecútalo con ./ e intenta echo $SALUDO (vacío); luego con source (aparece). Comenta por qué.</li>
+            <li><strong>Snapshot diario</strong>: adapta backup-simple.sh para comprimir tu carpeta Documentos con timestamp; verifica el tar creado con tar -tzf.</li>
+            <li><strong>Cazador CRLF</strong>: crea un script con finales Windows deliberadamente (o descarga uno), observa el error "bad interpreter", corrige con dos2unix.</li>
+            <li><strong>Info del sistema</strong>: script que imprima kernel (uname -r), disco libre (df -h /), memoria (free -h) y uptime, cada uno con título descriptivo.</li>
+        </ol>
+    </div>
+</section>

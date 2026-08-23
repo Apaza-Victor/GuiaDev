@@ -1,58 +1,198 @@
 <!-- 6. Consultas básicas (SELECT) - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="select-y-alias">
-    <h2>SELECT y alias</h2>
+<section id="select-y-alias">
+    <h2><i class="fa-solid fa-table-cells-large"></i> SELECT y alias</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT * FROM dbo.Productos;
-SELECT Nombre, Precio FROM dbo.Productos;
-SELECT Nombre AS Producto, Precio * 1.16 AS PrecioConIva
-FROM dbo.Productos;</code></pre>
-    </div>
-  </section>
+        <pre><code class="language-sql">-- Proyección con alias (AS opcional pero recomendado):
+SELECT
+    nombre          AS empleado,
+    salario         AS sueldo,
+    salario * 12    AS sueldo_anual,
+    FORMAT(salario, 'N2') AS formateado
+FROM dbo.Empleados;
 
-  <section id="top-el-limit-de-sql-server">
-    <h2>TOP: el LIMIT de SQL Server</h2>
+-- Alias con corchetes para espacios/caracteres raros:
+SELECT nombre AS [Nombre Completo], salario AS [€/mes]
+FROM dbo.Empleados;
+
+-- Concatenación T-SQL (+) y CONCAT (NULL-safe):
+SELECT nombre + ' ' + apellido AS nombre_completo,   -- NULL si algo es NULL ⚠️
+       CONCAT(nombre, ' ', apellido) AS seguro,      -- trata NULL como ''
+       CONCAT_WS(' ', nombre, apellido2, apellido) AS con_separador  -- 2017+
+FROM dbo.Empleados;</code></pre>
+        <blockquote class="aside aside-note">
+            <p>El orden lógico de evaluación es idéntico a MySQL: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. Por eso un alias de SELECT no existe aún en WHERE, pero sí en ORDER BY.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="top-el-limit-de-sql-server">
+    <h2><i class="fa-solid fa-arrow-up-short-wide"></i> TOP: el LIMIT de SQL Server</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT TOP 10 Nombre, Precio FROM dbo.Productos ORDER BY Precio DESC;
+        <pre><code class="language-sql">SELECT TOP 10 nombre, total FROM Pedidos ORDER BY total DESC;
 
--- Top 10 PORCENTAJE
-SELECT TOP 10 PERCENT Nombre FROM dbo.Productos ORDER BY Precio DESC;
+-- Con porcentaje:
+SELECT TOP 25 PERCENT nombre FROM Empleados ORDER BY salario DESC;
 
--- TOP con empates (incluye empatados en el último lugar)
-SELECT TOP 10 WITH TIES Nombre, Precio FROM dbo.Productos
-ORDER BY Precio DESC;</code></pre>
-<blockquote class="aside aside-tip">
-<p><code>TOP</code> sin <code>ORDER BY</code> devuelve filas arbitrarias: casi siempre deben ir juntos.</p>
-</blockquote>
+-- WITH TIES: empates incluidos (puede devolver MÁS de N filas):
+SELECT TOP 5 WITH TIES nombre, salario
+FROM Empleados ORDER BY salario DESC;
+
+-- TOP sin ORDER BY = filas ARBITRARIAS (bug clásico):
+SELECT TOP 10 * FROM Clientes;              -- ❌ ¿cuáles? nadie sabe
+SELECT TOP 10 * FROM Clientes ORDER BY id;  -- ✅ determinista
+
+-- Variables en TOP (no posible con OFFSET):
+DECLARE @n INT = 20;
+SELECT TOP (@n) * FROM Productos ORDER BY precio DESC;</code></pre>
+
+        <h3>TOP vs OFFSET-FETCH</h3>
+        <table>
+            <thead>
+                <tr><th>Caso</th><th>Herramienta</th><th>Ejemplo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>N primeros/últimos</td><td>TOP ✅ más directo</td><td><code>SELECT TOP 5 ...</code></td></tr>
+                <tr><td>Paginación real</td><td>OFFSET-FETCH ✅ único estándar aquí</td><td><code>ORDER BY ... OFFSET 40 ROWS FETCH NEXT 20</code></td></tr>
+                <tr><td>N dinámico por variable</td><td>TOP(@var)</td><td><code>SELECT TOP (@n)...</code></td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>TOP requiere ORDER BY para tener sentido de negocio. "Los 10 mejores" sin orden definido son simplemente 10 filas al azar según el plan del motor — un bug silencioso que aparece cuando el plan cambia.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="filtrar-con-where">
-    <h2>Filtrar con WHERE</h2>
+<section id="filtrar-con-where">
+    <h2><i class="fa-solid fa-filter"></i> WHERE: operadores T-SQL</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT * FROM dbo.Productos WHERE Precio &gt; 1000;
-SELECT * FROM dbo.Productos WHERE Precio BETWEEN 500 AND 1500;
-SELECT * FROM dbo.Productos WHERE CategoriaId IN (1, 3, 5);
-SELECT * FROM dbo.Productos WHERE Nombre LIKE N'%laptop%';
-SELECT * FROM dbo.Productos WHERE CategoriaId IS NULL;</code></pre>
-    </div>
-  </section>
+        <pre><code class="language-sql">SELECT * FROM Productos WHERE precio &gt;= 50;
+SELECT * FROM Productos WHERE precio BETWEEN 20 AND 100;
+SELECT * FROM Clientes WHERE pais IN ('ES','MX','AR');
+SELECT * FROM Productos WHERE sku LIKE 'ABC-%';
+SELECT * FROM Pedidos WHERE NOT (estado = 'cancelado');
 
-  <section id="paginacion-offset-fetch">
-    <h2>Paginación OFFSET-FETCH</h2>
-    <div class="doc-content">
-<pre><code class="language-sql">SELECT Nombre, Precio FROM dbo.Productos
-ORDER BY Precio DESC
-OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY;   -- página 3 de 10</code></pre>
-<blockquote class="aside aside-note">
-<p><code>OFFSET-FETCH</code> exige <code>ORDER BY</code>. Es el equivalente a <code>LIMIT/OFFSET</code> de MySQL.</p>
-</blockquote>
-    </div>
-  </section>
+-- Desigualdad estilo T-SQL (ambas válidas):
+WHERE activo != 1
+WHERE activo &lt;&gt; 1;
 
-  <section id="distinct">
-    <h2>DISTINCT</h2>
-    <div class="doc-content">
-<pre><code class="language-sql">SELECT DISTINCT CategoriaId FROM dbo.Productos ORDER BY CategoriaId;</code></pre>
+-- NULL: IS NULL / IS NOT NULL (nunca =):
+WHERE telefono IS NULL;
+WHERE telefono IS NOT NULL;
+
+-- Fechas SARGable:
+WHERE fecha_pedido &gt;= '2026-01-01' AND fecha_pedido &lt; '2026-02-01';
+
+-- CASE dentro de WHERE (filtros condicionales):
+WHERE CASE WHEN @solo_vip = 1 THEN vip ELSE 1 END = 1;</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>T-SQL tiene atajos propios potentes: <code>IIF(cond, si, no)</code>, <code>CHOOSE(n, v1, v2...)</code> y el operador <code>&amp;</code> bit a bit para flags. Úsalos donde simplifiquen, sin sacrificar portabilidad si tu código migrará algún día.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="paginacion-offset-fetch">
+    <h2><i class="fa-solid fa-pager"></i> Paginación: OFFSET-FETCH</h2>
+    <div class="doc-content">
+        <pre><code class="language-sql">-- Página 3, 20 filas por página (estándar ANSI desde 2012):
+SELECT id, nombre, precio
+FROM dbo.Productos
+ORDER BY precio DESC, id ASC          -- ORDER BY OBLIGATORIO para OFFSET
+OFFSET 40 ROWS                        -- saltar 2 páginas completas
+FETCH NEXT 20 ROWS ONLY;
+
+-- Sin FETCH = solo saltar filas:
+ORDER BY id OFFSET 100 ROWS;          -- todo menos los 100 primeros</code></pre>
+        <table>
+            <thead>
+                <tr><th>Técnica</th><th>Sintaxis</th><th>Rendimiento profundo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>OFFSET-FETCH</td><td>Limpia, ANSI</td><td>Se degrada con páginas altas (igual que LIMIT/OFFSET)</td></tr>
+                <tr><td>Keyset (seek method)</td><td>WHERE clave &gt; última vista + TOP</td><td>Constante ⚡ recomendada en tablas grandes</td></tr>
+                <tr><td>ROW_NUMBER() en CTE</td><td>Filtrando por número de fila</td><td>Clásica pre-2012; hoy OFFSET la reemplaza</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-note">
+            <p>OFFSET sin FETCH NEXT es legal y significa "salta N". Pero para paginar SIEMPRE acompaña FETCH NEXT n ROWS ONLY — y ORDER BY determinista con desempate por PK para páginas estables entre ejecuciones.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="distinct">
+    <h2><i class="fa-solid fa-clone"></i> DISTINCT y combinación UNION</h2>
+    <div class="doc-content">
+        <pre><code class="language-sql">SELECT DISTINCT ciudad FROM Clientes ORDER BY ciudad;
+SELECT DISTINCT ciudad, pais FROM Clientes;
+SELECT COUNT(DISTINCT pais) AS paises_atendidos FROM Clientes;
+
+-- UNION deduplica (sort interno caro):
+SELECT nombre, 'cliente' AS origen FROM Clientes WHERE pais='ES'
+UNION
+SELECT razon_social, 'proveedor' FROM Proveedores WHERE pais='ES';
+
+-- UNION ALL conserva duplicados y vuela:
+SELECT producto_id FROM Ventas_2025
+UNION ALL
+SELECT producto_id FROM Ventas_2026;
+
+-- EXCEPT e INTERSECT: exclusivos de T-SQL bien aprovechados:
+SELECT email FROM Marketing_Lista
+EXCEPT                                   -- en marketing pero NO clientes
+SELECT email FROM Clientes;
+
+SELECT sku FROM Catalogo_Web
+INTERSECT                                -- disponibles en ambos canales
+SELECT sku FROM Almacen_Central;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Operador</th><th>Duplicados</th><th>Uso estrella</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>UNION / UNION ALL</td><td>Elimina / conserva</td><td>Apilar resultados homogéneos</td></tr>
+                <tr><td>EXCEPT</td><td>Elimina duplicados del resultado</td><td>Diferencias entre conjuntos ("quiénes NO")</td></tr>
+                <tr><td>INTERSECT</td><td>Devuelve solo comunes únicos</td><td>Cruces de listas sin JOIN</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>EXCEPT e INTERSECT comparan TODAS las columnas del SELECT de cada lado y requieren mismo número/tipos. Para "filas de A sin match en B" suelen ser más claros y rápidos que LEFT JOIN + IS NULL.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>LIMIT escrito en T-SQL</td><td>"Incorrect syntax near 'LIMIT'"</td><td>TOP o OFFSET-FETCH</td></tr>
+                <tr><td>TOP sin ORDER BY</td><td>Filas arbitrarias cambiantes</td><td>Siempre ordenado</td></tr>
+                <tr><td>= NULL</td><td>Filas desaparecen</td><td>IS NULL / IS NOT NULL</td></tr>
+                <tr><td>Concatenar con + sobre NULLs</td><td>Resultado completo NULL</td><td>CONCAT() o ISNULL(col,'')</td></tr>
+                <tr><td>OFFSET sin ORDER BY</td><td>"The OFFSET clause is invalid..." error sintaxis</td><td>ORDER BY obligatorio antes de OFFSET</td></tr>
+                <tr><td>Páginas inestables sin desempate</td><td>Filas repetidas/saltadas entre páginas</td><td>ORDER BY valor + id secundario</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Top-N variados</strong>: top 5 productos caros, top 10% empleados mejor pagados, top 3 WITH TIES por salario — verifica empates incluidos.</li>
+            <li><strong>Paginador completo</strong>: implementa página 1-4 con OFFSET/FETCH sobre productos ordenados por precio+id; valida estabilidad insertando una fila nueva entre páginas.</li>
+            <li><strong>Cazador de NULLs</strong>: compara concatenación + vs CONCAT vs CONCAT_WS con apellidos NULL; documenta cada resultado.</li>
+            <li><strong>Analista de conjuntos</strong>: resuelve tres preguntas con EXCEPT (clientes no compradores), INTERSECT (productos vendidos online y tienda), UNION ALL (ventas por año).</li>
+            <li><strong>Migrante MySQL→T-SQL</strong>: traduce 5 queries con LIMIT/DISTINCT tuyas a TOP/OFFSET-FETCH equivalentes verificando mismos resultados.</li>
+        </ol>
+    </div>
+</section>

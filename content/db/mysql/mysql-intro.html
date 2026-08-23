@@ -1,57 +1,190 @@
 <!-- 1. Introducción a MySQL - MySQL (Base de Datos) -->
-<!-- Auto-generated from data.js - DO NOT EDIT MANUALLY -->
-  <section id="que-es-mysql">
-    <h2>¿Qué es MySQL?</h2>
+<section id="que-es-mysql">
+    <h2><i class="fa-solid fa-circle-info"></i> ¿Qué es MySQL?</h2>
     <div class="doc-content">
-<p>MySQL es un RDBMS open source desarrollado por Oracle Corporation. Es el sistema de bases de datos más utilizado en la web.</p>
+        <p>MySQL es un <strong>sistema gestor de bases de datos relacionales</strong> (RDBMS) open source, propiedad de Oracle desde 2010. Almacena datos en tablas compuestas por filas y columnas relacionadas entre sí, y se comunica mediante SQL (Structured Query Language). Es el motor detrás de WordPress, YouTube (históricamente), Shopify, Netflix (parte de su stack) y millones de aplicaciones web.</p>
 
-<ul>
-<li><strong>Open source</strong>: Gratuito y comunitario</li>
-<li><strong>Rápido</strong>: Optimizado para lecturas</li>
-<li><strong>Escalable</strong>: De aplicaciones pequeñas a grandes</li>
-<li><strong>Popular</strong>: Usado por WordPress, Facebook, Twitter</li>
-</ul>
-<pre><code class="language-sql">-- Conectar
-mysql -u root -p
+        <h3>Motor de almacenamiento: InnoDB</h3>
+        <table>
+            <thead>
+                <tr><th>Característica</th><th>InnoDB (default desde 5.5)</th><th>Motores legacy (MyISAM)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Transacciones ACID</td><td>Sí (COMMIT/ROLLBACK)</td><td>No</td></tr>
+                <tr><td>Foreign keys</td><td>Sí, aplicadas</td><td>Ignoradas</td></tr>
+                <tr><td>Bloqueo</td><td>A nivel de fila</td><td>A nivel de tabla</td></tr>
+                <tr><td>Crash recovery</td><td>Automática (redo logs)</td><td>Riesgo de corrupción</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-note">
+            <p>Casi nunca necesitas cambiar de motor hoy: InnoDB cubre todo caso serio. Si encuentras tutoriales antiguos mencionando MyISAM para "velocidad", están desactualizados — InnoDB moderno gana en la mayoría de cargas reales.</p>
+        </blockquote>
 
--- Crear base de datos
-CREATE DATABASE mi_app;
-USE mi_app;
-</code></pre>
+        <h3>Arquitectura cliente-servidor</h3>
+        <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d206261636b67726f756e64436f6c6f7220234644464446380a736b696e706172616d2064656661756c74466f6e7453697a652031310a736b696e706172616d20636f6d706f6e656e745374796c652072656374616e676c650a0a636f6d706f6e656e74202254752061706c6963616369c3b36e2220617320617070207b0a20205b504850202f204e6f6465202f20507974686f6e5d206173206c616e670a7d0a0a646174616261736520225365727669646f72204d7953514c2220617320737276207b0a2020666f6c6465722022436f6e6578696f6e65735c6e2870756572746f2033333036292220617320636f6e6e0a202073746f72616765202242617365206465206461746f735c6e7469656e646122206173206462207b0a2020202064617461626173652022636c69656e746573222061732074310a202020206461746162617365202270656469646f73222061732074320a202020206461746162617365202270726f647563746f73222061732074330a20207d0a7d0a0a6c616e67202d646f776e2d3e20636f6e6e203a20636f6e73756c7461732053514c0a636f6e6e202d646f776e2d3e2064620a7431203c2d72696768742d2074320a7432203c2d72696768742d2074330a0a6e6f746520626f74746f6d206f66207372760a2020456c207365727669646f722067657374696f6e6120c3ad6e64696365732c0a202063616368c3a920646520636f6e73756c746173207920646973636f2e0a20204c612061707020736f6c6f20656e76c3ad612053514c2e0a656e64206e6f74650a40656e64756d6c" alt="Arquitectura de MySQL" loading="lazy"  />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam backgroundColor #FDFDF8
+skinparam defaultFontSize 11
+skinparam componentStyle rectangle
+
+component "Tu aplicación" as app {
+  [PHP / Node / Python] as lang
+}
+
+database "Servidor MySQL" as srv {
+  folder "Conexiones\n(puerto 3306)" as conn
+  storage "Base de datos\ntienda" as db {
+    database "clientes" as t1
+    database "pedidos" as t2
+    database "productos" as t3
+  }
+}
+
+lang -down-&gt; conn : consultas SQL
+conn -down-&gt; db
+t1 &lt;-right- t2
+t2 &lt;-right- t3
+
+note bottom of srv
+  El servidor gestiona índices,
+  caché de consultas y disco.
+  La app solo envía SQL.
+end note
+@enduml</code></pre>
+  </details>
+</div>
+        <p>Tu aplicación (PHP, Python, Node…) nunca toca archivos directamente: abre una conexión TCP al puerto 3306, envía texto SQL y recibe resultados. Esta separación permite escalar, asegurar y monitorizar la base independientemente del código.</p>
+
+        <h3>MySQL vs alternativas</h3>
+        <table>
+            <thead>
+                <tr><th>Sistema</th><th>Fortaleza</th><th>Elige cuando…</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>MySQL</strong></td><td>Web clásica, hosting universal, simplicidad</td><td>LAMP stack, WordPress-like, hosting compartido</td></tr>
+                <tr><td><strong>PostgreSQL</strong></td><td>Estándar más estricto, tipos avanzados (JSONB, arrays)</td><td>Datos complejos, GIS, integridad máxima</td></tr>
+                <tr><td><strong>SQL Server</strong></td><td>Ecosistema Microsoft empresarial</td><td>.NET, AD integration, BI corporativo</td></tr>
+                <tr><td><strong>SQLite</strong></td><td>Embebido sin servidor, un archivo</td><td>Móviles, prototipos, herramientas locales</td></tr>
+                <tr><td><strong>MongoDB</strong></td><td>Documentos flexibles sin esquema fijo</td><td>Datos jerárquicos cambiantes (no relacional)</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Versiones relevantes</h3>
+        <ul>
+            <li><strong>MySQL 5.7</strong>: aún presente en servidores legacy — evita proyectos nuevos.</li>
+            <li><strong>MySQL 8.0</strong>: estándar actual — CTEs recursivas, window functions, roles, JSON mejorado.</li>
+            <li><strong>MariaDB</strong>: fork comunitario compatible; cuidado con features divergentes.</li>
+        </ul>
+        <blockquote class="aside aside-tip">
+            <p>Este curso asume MySQL 8.x. Las CTEs y window functions NO existen en 5.7: si tu hosting te obliga a 5.7, muchas técnicas modernas no estarán disponibles.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="instalacion">
-    <h2>Instalación</h2>
+<section id="instalacion">
+    <h2><i class="fa-solid fa-download"></i> Instalación y primer acceso</h2>
     <div class="doc-content">
-<strong>Windows:</strong> Descarga el instalador desde dev.mysql.com
+        <h3>Opciones según tu sistema</h3>
+        <table>
+            <thead>
+                <tr><th>Vía</th><th>Sistema</th><th>Comando clave</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Instalador oficial MSI/DMG</td><td>Windows/macOS</td><td>Asistente gráfico + configuración root</td></tr>
+                <tr><td>Docker (recomendado dev)</td><td>Cualquiera</td><td><code>docker run -e MYSQL_ROOT_PASSWORD=...</code></td></tr>
+                <tr><td>APT/DNF</td><td>Linux servidores</td><td><code>sudo apt install mysql-server</code></td></tr>
+                <tr><td>XAMPP/Laragon</td><td>Windows dev local</td><td>Todo el stack Apache+PHP+MySQL junto</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-bash"># Docker: entorno limpio en 30 segundos
+docker run --name mi-mysql \
+  -e MYSQL_ROOT_PASSWORD=secreto123 \
+  -e MYSQL_DATABASE=tienda \
+  -p 3306:3306 -d mysql:8.0
 
-<strong>macOS:</strong>
-<pre><code class="language-bash">brew install mysql
-brew services start mysql
-mysql -u root -p
-</code></pre>
+# Conectar desde el contenedor mismo:
+docker exec -it mi-mysql mysql -u root -p
 
-<strong>Linux (Ubuntu):</strong>
-<pre><code class="language-bash">sudo apt update
-sudo apt install mysql-server
-sudo mysql_secure_installation
-</code></pre>
+# O desde tu máquina si tienes cliente instalado:
+mysql -h 127.0.0.1 -P 3306 -u root -p</code></pre>
+
+        <h3>Primeros comandos dentro del cliente</h3>
+        <pre><code class="language-sql">SHOW DATABASES;                 -- listar bases existentes
+USE tienda;                     -- seleccionar base activa
+SELECT VERSION();               -- verificar versión
+STATUS;                         -- info completa de conexión
+HELP 'SELECT';                  -- ayuda integrada del servidor</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>En desarrollo local una contraseña root simple es aceptable, NUNCA en producción. Y jamás expongas el puerto 3306 a internet sin túnel SSH/firewall — es uno de los vectores de ataque más escaneados del mundo.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="mysql-workbench">
-    <h2>MySQL Workbench</h2>
+<section id="mysql-workbench">
+    <h2><i class="fa-solid fa-window-maximize"></i> MySQL Workbench y clientes</h2>
     <div class="doc-content">
-<p>MySQL Workbench es la herramienta visual oficial para MySQL:</p>
+        <p><strong>MySQL Workbench</strong> es el cliente visual oficial: editor de queries con autocompletado, modelado ER gráfico, administración de usuarios y export/import. Alternativas populares:</p>
+        <table>
+            <thead>
+                <tr><th>Herramienta</th><th>Precio</th><th>Punto fuerte</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>MySQL Workbench</td><td>Gratis oficial</td><td>Modelado ER, suite completa Oracle</td></tr>
+                <tr><td>DBeaver</td><td>Gratis (Community)</td><td>Multi-DB: MySQL+Postgres+SQL Server juntos</td></tr>
+                <tr><td>DataGrip</td><td>De pago (JetBrains)</td><td>Mejor editor SQL del mercado</td></tr>
+                <tr><td>HeidiSQL</td><td>Gratis</td><td>Liviano, Windows, muy rápido</td></tr>
+                <tr><td>phpMyAdmin</td><td>Gratis web</td><td>Hosting compartido clásico (con precauciones)</td></tr>
+            </tbody>
+        </table>
 
-<ul>
-<li>Editor SQL con syntax highlighting</li>
-<li>Visualizador de esquemas</li>
-<li>Administración de usuarios</li>
-<li>Diagramas ER</li>
-<li>Monitoreo de rendimiento</li>
-</ul>
-<p>Alternativas: DBeaver, HeidiSQL, phpMyAdmin, DataGrip.</p>
+        <h3>Flujo típico de trabajo en Workbench</h3>
+        <ol>
+            <li><strong>Conexión guardada</strong>: host localhost, puerto 3306, usuario root.</li>
+            <li><strong>Editor SQL</strong> (Ctrl+Enter ejecuta sentencia actual; rayo completo ejecuta script).</li>
+            <li><strong>Panel resultados</strong>: grid editable — doble click edita celda directa (genera UPDATE real).</li>
+            <li><strong>Schema navigator</strong>: explorar tablas, columnas, índices con click derecho → Table Inspector.</li>
+            <li><strong>Reverse engineer</strong>: genera diagrama ER automático desde una base existente — ideal para entender bases heredadas.</li>
+        </ol>
+        <blockquote class="aside aside-danger">
+            <p>El grid editable de Workbench aplica cambios SIN confirmación al presionar Apply. Si editas una celda de producción creyendo que era staging… ya está. Trabaja siempre con colores/distintos fondos por conexión (Workbench lo permite en Connection Settings).</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/síntoma</th><th>Solución</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Olvidar punto y coma final</td><td>Cliente espera con <code>-&gt;</code> infinitamente</td><td>Escribe <code>;</code> y Enter — o <code>\c</code> para cancelar</td></tr>
+                <tr><td>Acceder a tabla sin USE previo</td><td>"No database selected"</td><td>USE tienda; o calificar: tienda.clientes</td></tr>
+                <tr><td>Case-sensitivity de nombres confundida</td><td>"Table 'Tienda.Clientes' doesn't exist" en Linux pero sí en Windows</td><td>Nombres SIEMPRE minúsculas consistentes (lower_case_table_names)</td></tr>
+                <tr><td>Contraseña con caracteres especiales mal escapada en shell</td><td>Fallo de login raro</td><td>mysql -p SIN contraseña inline; pedirla por prompt</td></tr>
+                <tr><td>Confundir MariaDB con MySQL en hosting barato</td><td>Features 8.x ausentes</td><td>SELECT VERSION(); verifica qué corre realmente</td></tr>
+                <tr><td>Puerto ocupado al instalar segunda instancia</td><td>"Address already in use"</td><td>Cambiar port o apagar XAMPP/servicio previo</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Entorno Docker</strong>: levanta MySQL 8 en contenedor con base "practica_db"; conéctate desde el cliente CLI y desde DBeaver/Workbench simultáneamente.</li>
+            <li><strong>Explorador</strong>: ejecuta SHOW DATABASES, SELECT VERSION(), STATUS; documenta en comentarios qué información aporta cada uno.</li>
+            <li><strong>Comparador de motores</strong>: crea dos tablas idénticas, una InnoDB y otra MyISAM (ENGINE=MyISAM); intenta crear FK sobre ambas y observa la diferencia.</li>
+            <li><strong>Reverse engineering</strong>: usa Workbench → Database → Reverse Engineer sobre cualquier base de ejemplo (sakila); estudia el diagrama generado.</li>
+            <li><strong>Diagnóstico de conexión</strong>: provoca tres errores deliberados (contraseña mala, puerto equivocado, base inexistente tras USE) y registra mensaje exacto + causa de cada uno.</li>
+        </ol>
+    </div>
+</section>

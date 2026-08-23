@@ -2,31 +2,256 @@
 <!-- Contenido local del proyecto -->
 
   <section id="tipos-basicos">
-    <h2>Tipos básicos</h2>
+    <h2><i class="fa-solid fa-shapes"></i> Tipos básicos: todo es un objeto</h2>
     <div class="doc-content">
-<pre><code class="language-kotlin">val entero: Int = 42
-val largo: Long = 42L
-val decimal: Double = 3.14
-val flotante: Float = 3.14f
-val texto: String = "hola"
-val bandera: Boolean = true
+<p>Kotlin ofrece los tipos numéricos y lógicos habituales de cualquier lenguaje serio, pero con una decisión de diseño importante: <strong>no existen primitivos crudos</strong> como en Java (<code>int</code>, <code>double</code>). Todo en Kotlin es un objeto con métodos y propiedades, lo que permite escribir cosas como <code>5.coerceAtLeast(3)</code> o <code>1_000_000.countOneBits()</code>. ¿Y el rendimiento? El compilador genera primitivos JVM automáticamente cuando detecta que no hay nulos involucrados, así que obtienes la elegancia sin pagar peaje.</p>
+<table><thead><tr><th>Tipo</th><th>Tamaño</th><th>Ejemplo</th><th>Uso típico</th></tr></thead><tbody>
+<tr><td><strong>Int</strong></td><td>32 bits</td><td><code>val edad = 30</code></td><td>Enteros generales, índices, contadores</td></tr>
+<tr><td><strong>Long</strong></td><td>64 bits</td><td><code>val poblacion = 7_900_000_000L</code></td><td>Números grandes, marcas de tiempo</td></tr>
+<tr><td><strong>Double</strong></td><td>64 bits</td><td><code>val precio = 19.99</code></td><td>Decimales por defecto (el literal sin f)</td></tr>
+<tr><td><strong>Float</strong></td><td>32 bits</td><td><code>val peso = 72.5f</code></td><td>Decimales cuando ahorra memoria (sufijo f)</td></tr>
+<tr><td><strong>Boolean</strong></td><td>—</td><td><code>val activo = true</code></td><td>Banderas lógicas, condiciones</td></tr>
+<tr><td><strong>Char</strong></td><td>16 bits</td><td><code>val inicial = 'K'</code></td><td>Un solo carácter (comillas simples)</td></tr>
+<tr><td><strong>String</strong></td><td>—</td><td><code>val nombre = "Kotlin"</code></td><td>Texto inmutable, interpolable</td></tr>
+</tbody></table>
+<h3>Conversiones explícitas: nada de ensanchamiento silencioso</h3>
+<p>A diferencia de Java, Kotlin <strong>no convierte números implícitamente</strong>. Un <code>Int</code> nunca se vuelve <code>Long</code> por arte de magia; debes convertirlo con funciones como <code>toInt()</code>, <code>toDouble()</code> o <code>toString()</code>. Esto elimina bugs clásicos donde un valor pierde precisión sin que nadie lo note.</p>
+<pre><code class="language-kotlin">val entero = 42
+val largo: Long = entero.toLong()   // conversión explícita obligatoria
+// val largoMal: Long = entero      // ERROR: type mismatch
 
-val interpolado = "Valor: $entero, suma: ${entero + 8}"</code></pre>
+val texto = "123"
+val numero = texto.toInt()          // parsea cadenas: 123
+val decimal = "3.14".toDouble()     // 3.14
+val letra = 'A'
+val codigoAscii = letra.code        // 65 (antes era .toInt())
+
+// Conversión segura de String a número: devuelve null si falla
+val edadUsuario = "abc".toIntOrNull()       // null, ¡no excepción!
+val edadValida = "25".toIntOrNull() ?: 0    // 25</code></pre>
+<blockquote class="aside aside-tip"><p>Prefiere <code>toIntOrNull()</code> / <code>toDoubleOrNull()</code> sobre <code>toInt()</code> cuando el dato proviene del usuario o de archivos: convierte un posible crash inesperado en un caso manejable.</p></blockquote>
+    </div>
+  </section>
+
+  <section id="any-unit-nothing">
+    <h2><i class="fa-solid fa-circle-nodes"></i> Tipos especiales: Any, Unit y Nothing</h2>
+    <div class="doc-content">
+<p>Tres tipos ocupan posiciones extremas en la jerarquía de Kotlin y aparecen constantemente en firmas de funciones y documentación. Entenderlos evita confusiones al leer código ajeno.</p>
+<table><thead><tr><th>Tipo</th><th>Rol en la jerarquía</th><th>Análogo en Java</th><th>Cuándo aparece</th></tr></thead><tbody>
+<tr><td><strong>Any</strong></td><td>Supertipo de todos los tipos no nulos</td><td><code>Object</code></td><td>Contenedores genéricos heterogéneos, APIs reflexivas</td></tr>
+<tr><td><strong>Unit</strong></td><td>Tipo de toda función que no devuelve nada útil</td><td><code>void</code></td><td>Retorno por defecto; a diferencia de void, es un tipo real con único valor <code>Unit</code></td></tr>
+<tr><td><strong>Nothing</strong></td><td>Subtipo de todos los tipos; no tiene instancias</td><td>No existe</td><td>Funciones que siempre lanzan excepción o no terminan (<code>error()</code>, <code>TODO()</code>)</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">fun describir(objeto: Any): String =     // Any acepta cualquier valor no nulo
+    when (objeto) {
+        is Int -&gt; "Es un entero"
+        is String -&gt; "Es texto de ${objeto.length} caracteres"  // smart cast a String
+        else -&gt; "Algo más"
+    }
+
+fun registrar(mensaje: String): Unit {   // Unit es opcional de declarar
+    println("[LOG] $mensaje")
+}
+
+fun obtenerConfiguracion(clave: String): String =
+    error("La clave '$clave' no existe") // error() devuelve Nothing: compila sin else
+
+// Nothing hace útiles expresiones como esta:
+val puerto = System.getenv("PORT")?.toIntOrNull() ?: error("Define PORT")</code></pre>
+<blockquote class="aside aside-note"><p><code>Any</code> excluye <code>null</code>: si necesitas aceptar cualquier cosa incluyendo nulos, usa <code>Any?</code>. Esta distinción solo tiene sentido gracias al sistema de nulabilidad de Kotlin.</p></blockquote>
+    </div>
+  </section>
+
+  <section id="string-templates">
+    <h2><i class="fa-solid fa-quote-left"></i> String templates: interpolación elegante</h2>
+    <div class="doc-content">
+<p>Olvídate de concatenar con <code>+</code> o de <code>String.format()</code>: Kotlin interpola variables y expresiones directamente dentro de las cadenas con el símbolo <code>$</code>. Para valores simples usas <code>$variable</code>; para expresiones completas las encierras entre llaves <code>${expresion}</code>.</p>
+<pre><code class="language-kotlin">val usuario = "Ana"
+var puntos = 120
+
+println("Bienvenida, $usuario")                 // simple: $variable
+println("Puntos totales: ${puntos + 50}")       // expresión: ${...}
+println("Estado: ${if (puntos &gt;= 100) "VIP" else "estándar"}")
+
+// Con propiedades anidadas
+data class Pedido(val id: Int, val total: Double)
+val pedido = Pedido(101, 249.99)
+println("Pedido #${pedido.id} por €${pedido.total}")
+
+// Cuidado: sin llaves NO se evalúan propiedades complejas
+println("id: $pedido.id")        // imprime Pedido(id=101...) seguido de ".id" ❌
+println("id: ${'$'}{pedido.id}") // cómo escapar un $ literal si lo necesitas
+
+// Cadenas multilínea con trimIndent()
+val informe = """
+    |REPORTE DE VENTAS
+    |Cliente: $usuario
+    |Total: €${pedido.total}
+""".trimMargin()
+println(informe)</code></pre>
+<h3>Formateo de números dentro de plantillas</h3>
+<p>Las plantillas no formatean solas; combínalas con funciones de la librería estándar:</p>
+<pre><code class="language-kotlin">val ratio = 0.84723
+println("Éxito: ${"%.1f".format(ratio * 100)}%")   // Éxito: 84.7%
+
+val precio = 1234.5678
+println("€${precio.toBigDecimal().setScale(2, java.math.RoundingMode.HALF_UP)}")
+// €1234.57</code></pre>
+<blockquote class="aside aside-caution"><p>Error frecuente en Android: escribir <code>"$usuario.nombre"</code> esperando la propiedad. Sin llaves, Kotlin interpola solo <code>$usuario</code> e imprime <code>.nombre</code> como texto plano. Usa siempre <code>${objeto.propiedad}</code>.</p></blockquote>
     </div>
   </section>
 
   <section id="null-safety">
-    <h2>Null-safety</h2>
+    <h2><i class="fa-solid fa-shield-halved"></i> Tipos anulables y null-safety</h2>
     <div class="doc-content">
+<p>El error más famoso de la historia de la programación —según su propio creador, Tony Hoare— fue inventar <code>null</code> en 1965. Java heredó esa trampa: cualquier referencia puede ser <code>null</code> y el NullPointerException aparece en ejecución, muchas veces en producción. Kotlin ataca el problema desde el <strong>sistema de tipos</strong>: por defecto ningún tipo acepta <code>null</code>, y solo puedes asignarlo a tipos marcados con <code>?</code>. El compilador te obliga a tratar los posibles nulos antes de que lleguen a producción.</p>
 <pre><code class="language-kotlin">var nombre: String = "Ana"
-// nombre = null              // error: no nullable
+// nombre = null              // ERROR de compilación: String no admite null ✅
 
-var apodo: String? = null     // nullable con ?
+var apodo: String? = null     // el ? declara que PUEDE ser null
+apodo = "anita"
 
-apodo?.length                 // safe call: null si apodo es null
-apodo ?: "sin apodo"          // Elvis: valor por defecto
+// val longitud = apodo.length      // ERROR: debes verificar antes
+val longitudSegura = apodo?.length  // safe call: Int? — null si apodo es null
 
-// apodo!!.length             // NPE si es null: evitar!</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> El 90% de los NullPointerException desaparecen usando <code>?.</code> y <code>?:</code> en lugar de <code>!!</code>.</blockquote>
+// El operador !! fuerza el acceso: NPE garantizada si es null
+val longitudForzada = apodo!!.length   // funciona aquí… pero es apuesta arriesgada</code></pre>
+<h3>Los tres operadores frente al null</h3>
+<table><thead><tr><th>Operador</th><th>Nombre</th><th>Qué hace</th><th>Resultado</th></tr></thead><tbody>
+<tr><td><code>?.</code></td><td>Safe call</td><td>Llama al método/miembro solo si el receptor no es null</td><td>El tipo se vuelve anulable (<code>Int?</code>)</td></tr>
+<tr><td><code>?:</code></td><td>Elvis</td><td>Devuelve un valor alternativo si la izquierda es null</td><td>Elimina la nulabilidad del resultado</td></tr>
+<tr><td><code>!!</code></td><td>Non-null assertion</td><td>Afirma "confía en mí, no es null"</td><td>Valor directo… o KotlinNullPointerException</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">val entrada: String? = null
+
+// Encadenar safe calls: se detiene en el primer null
+val ciudad = pedido?.cliente?.direccion?.ciudad   // String?
+
+// Safe call combinada con Elvis: patrón estrella
+val longitudCiudad = pedido?.cliente?.direccion?.ciudad?.length ?: 0
+
+// let ejecuta el bloque SOLO si el valor no es null
+entrada?.let { valorNoNulo -&gt;
+    println("Procesando '$valorNoNulo' (${valorNoNulo.length} caracteres)")
+} // con entrada == null este bloque simplemente no corre</code></pre>
+<blockquote class="aside aside-danger"><p><strong>Evita <code>!!</code> en código de producción.</strong> Cada aparición es una promesa que puede romperse: si tu razonamiento falla, el crash ocurre en tiempo de ejecución exactamente como en Java. Si estás seguro del valor, demuéstralo con <code>requireNotNull(valor)</code> o maneja el caso nulo con Elvis.</p></blockquote>
+    </div>
+  </section>
+
+  <section id="elvis-en-detalle">
+    <h2><i class="fa-brands fa-github"></i> Elvis a fondo: patrones útiles</h2>
+    <div class="doc-content">
+<p>El operador Elvis recibe su nombre por su parecido con el peinado del rey del rock visto de perfil (<code>?:</code>). Su poder real va más allá de poner un cero por defecto: el lado derecho acepta cualquier expresión, incluidos <code>return</code>, <code>throw</code> o llamadas a funciones, lo que lo convierte en la herramienta ideal para validaciones tempranas.</p>
+<pre><code class="language-kotlin">// 1) Valor por defecto simple
+val volumen = config?.getInt("volumen") ?: 50
+
+// 2) Retorno anticipado (early return) en funciones
+fun procesarPago(idTransaccion: String?): Boolean {
+    val id = idTransaccion ?: return false   // sale limpiamente si es null
+    println("Cobrando transacción $id")
+    return true
+}
+
+// 3) Lanzar excepción cuando el null representa un estado inválido
+fun conectar(url: String?) {
+    val destino = url ?: throw IllegalArgumentException("URL requerida")
+    println("Conectando a $destino...")
+}
+
+// 4) Con requireNotNull/checkNotNull: mensajes descriptivos integrados
+fun abrirCuenta(titular: String?) {
+    val nombre = requireNotNull(titular) { "El titular es obligatorio" }
+    println("Abriendo cuenta para $nombre")
+}
+
+// 5) Elvis en cadena para fuentes alternativas
+val tema = preferenciasUsuario?.tema
+    ?: configuracionGlobal?.tema
+    ?: "claro"   // último recurso</code></pre>
+<blockquote class="aside aside-success"><p>Regla mental: cada vez que escribas <code>?:</code> estás convirtiendo un <em>quizá</em> en un <em>siempre</em> — el compilador deja de preocuparse por ese valor porque tú ya cubriste todos los casos.</p></blockquote>
+    </div>
+  </section>
+
+  <section id="smart-casts-y-platform-types">
+    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Smart casts y platform types</h2>
+    <div class="doc-content">
+<p>Verificar un tipo o la nulidad con <code>is</code> / <code>!= null</code> basta para que el compilador <strong>recuerde</strong> el resultado y trate el valor como su tipo concreto dentro del bloque: son los <em>smart casts</em>. No necesitas castear manualmente después de comprobar; Kotlin lo hizo por ti.</p>
+<pre><code class="language-kotlin">fun longitud(valor: Any): Int {
+    if (valor is String) {
+        return valor.length   // smart cast: aquí valor YA es String
+    }
+    return 0                  // fuera del if, valor sigue siendo Any
+}
+
+// También funciona tras verificar no-nulidad con var local
+fun saludar(nombre: String?) {
+    if (nombre != null) {
+        println("Hola, $nombre")   // smart cast a String no nulo
+    }
+}
+
+// Cast seguro con "as?" en lugar de "as" (que lanza ClassCastException)
+val numero = (valor as? Int) ?: -1   // -1 si valor no era Int
+
+// when con is combina verificación + smart cast
+fun area(forma: Any): Double = when (forma) {
+    is Circulo -&gt; Math.PI * forma.radio.pow(2)   // forma es Circulo aquí
+    is Rectangulo -&gt; forma.base * forma.altura   // forma es Rectangulo aquí
+    else -&gt; 0.0
+}</code></pre>
+<h3>Platform types: la zona gris al venir de Java</h3>
+<p>Cuando consumes código Java, el compilador no sabe qué métodos pueden devolver <code>null</code> (Java no lo declara). Esos valores reciben el tipo <strong>platform type</strong>, notado <code>String!</code>: Kotlin confía en ti y no exige verificación… hasta que explota. La solución es tratarlos como anulables desde el primer contacto.</p>
+<pre><code class="language-kotlin">// Método Java: public String buscarUsuario(String id) — puede retornar null
+val usuario = apiJava.buscarUsuario("42")   // tipo plataforma String!
+
+// val inicial = usuario.substring(0, 1)    // ⚠ compila, pero NPE si venía null
+val inicial = usuario?.substring(0, 1) ?: "?"  // defensa explícita ✅
+
+// Mejor aún: normalizar el valor apenas entra al mundo Kotlin
+val usuarioSeguro: String? = apiJava.buscarUsuario("42")
+val nombreFinal: String = usuarioSeguro ?: "invitado"</code></pre>
+<blockquote class="aside aside-caution"><p>Si controlas el código Java que consumen tus equipos Kotlin, anota sus APIs con <code>@Nullable</code> / <code>@NonNull</code> (JSR-305 o Jetbrains Annotations): Kotlin respetará esas anotaciones y los platform types desaparecerán.</p></blockquote>
+    </div>
+  </section>
+
+  <section id="errores-comunes-null-safety">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<p>Estos tropiezos aparecen en casi todo principiante de Kotlin (y algún veterano despistado). Reconocerlos acelera tu depuración.</p>
+<table><thead><tr><th>Error</th><th>Síntoma</th><th>Solución</th></tr></thead><tbody>
+<tr><td>Asignar <code>null</code> a un tipo no marcado</td><td><code>Null can not be a value of a non-null type</code></td><td>Marca el tipo con <code>?</code> solo si realmente puede estar vacío</td></tr>
+<tr><td>Usar <code>!!</code> "para que compile"</td><td>KotlinNullPointerException aleatorio en ejecución</td><td>Sustituir por <code>?.</code>, <code>?:</code> o <code>let</code></td></tr>
+<tr><td><code>"$objeto.propiedad"</code> sin llaves</td><td>Imprime el objeto completo + ".propiedad"</td><td>Interpolar con llaves: <code>"${objeto.propiedad}"</code></td></tr>
+<tr><td>Sumar Int y Long directamente</td><td><code>Type mismatch</code> en compilación</td><td>Convertir primero: <code>entero.toLong() + largo</code></td></tr>
+<tr><td>Smart cast fallido en propiedad de clase</td><td><code>Smart cast to 'String' is impossible</code></td><td>Copiar a variable local antes del <code>if</code>; otra hebra podría mutarla</td></tr>
+<tr><td>Confiar en platform types de Java</td><td>NPE en línea que parecía inocente</td><td>Tratar todo lo que viene de Java como anulable</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">// Caso clásico: smart cast imposible sobre propiedad mutable
+class Sesion(var usuario: String?)
+
+fun mostrarNombre() {
+    // if (this.usuario != null) {
+    //     println(this.usuario.length)   // ERROR: propiedad mutable de clase
+    // }
+    val actual = this.usuario           // copia local: el compilador la controla
+    if (actual != null) {
+        println(actual.length)          // smart cast OK ✅
+    }
+}</code></pre>
+<blockquote class="aside aside-note"><p>El mensaje "Smart cast is impossible" casi siempre indica que el valor podría cambiar entre la comprobación y el uso: guardar una copia local <code>val</code> lo resuelve en el 99% de los casos.</p></blockquote>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuélvelos en el playground oficial (play.kotlinlang.org). Todos pueden resolverse con lo visto en esta lección.</p>
+<ol>
+<li><strong>Conversor seguro:</strong> dado el <code>val bruto = listOf("10", "abc", "42", "3.7")</code>, imprime cada elemento convertido a Int usando <code>toIntOrNull()</code>, mostrando "inválido" cuando no se pueda convertir.</li>
+<li><strong>Ficha con plantillas:</strong> crea variables para producto, precio unitario y cantidad, e imprime una ficha multilínea (con cadena triple) cuyo total use una expresión interpolada redondeada a 2 decimales.</li>
+<li><strong>Clasificador con smart cast:</strong> escribe <code>fun clasificar(x: Any): String</code> que devuelva distinto texto según sea Int par/impar, String vacío/no vacío o Boolean true/false, aprovechando smart casts dentro de un <code>when</code>.</li>
+<li><strong>Cadena de safe calls:</strong> modela con data classes <code>Pedido(val cliente: Cliente?, ...)</code> → <code>Cliente(val direccion: Direccion?, ...)</code> → <code>Direccion(val ciudad: String?)</code> y obtén la ciudad con encadenado <code>?.</code> + Elvis, probando los cuatro escenarios de nulidad posibles.</li>
+<li><strong>Validador sin <code>!!</code>:</strong> implementa <code>fun registrar(correo: String?, edadTexto: String?): String</code> que valide ambos parámetros usando exclusivamente Elvis con <code>return</code> anticipado y <code>toIntOrNull()</code>, devolviendo "Registro OK: correo, edad" o el motivo del rechazo. Prohibido usar <code>!!</code>.</li>
+</ol>
     </div>
   </section>

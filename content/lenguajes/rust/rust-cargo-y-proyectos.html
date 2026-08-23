@@ -1,34 +1,182 @@
 <!-- 8. Cargo y Proyectos - Rust (Lenguajes de Programación) -->
 <!-- Contenido local del proyecto -->
 
-  <section id="cargo-toml">
-    <h2>Cargo.toml</h2>
+  <section id="que-es-cargo">
+    <h2><i class="fa-solid fa-box-open"></i> ¿Qué es Cargo?</h2>
     <div class="doc-content">
+<p><strong>Cargo</strong> es mucho más que un compilador con interfaz: es el sistema oficial de Rust que combina gestor de dependencias, sistema de build, corredor de pruebas y generador de documentación en una sola herramienta coherente. Si has sufrido configurando Makefiles en C++ o virtualenvs en Python, Cargo te parecerá un lujo: <em>todo proyecto Rust se compila igual en cualquier máquina</em> con un solo comando.</p>
+<p>Cargo resuelve tres problemas históricos del desarrollo nativo: la descarga automática de librerías desde <strong>crates.io</strong> (el registro central de paquetes), la resolución de versiones compatibles entre ellas y la orquestación del compilador <code>rustc</code> con los flags correctos para cada perfil.</p>
+<pre><code class="language-bash"># Crear un proyecto binario (aplicación ejecutable)
+cargo new mi_app
+cd mi_app
+
+# Crear una biblioteca reutilizable por otros proyectos
+cargo new --lib mi_libreria
+
+# Verificar que todo compila SIN generar binario (muy rápido)
+cargo check</code></pre>
+<h3>Estructura estándar de un proyecto</h3>
+<pre><code class="language-text">mi_app/
+├── Cargo.toml          # manifiesto: metadatos y dependencias
+├── Cargo.lock          # versiones exactas bloqueadas
+└── src/
+    ├── main.rs         # punto de entrada del BINARIO
+    └── lib.rs          # raíz de la LIBRERÍA (opcional)</code></pre>
+<p>Un proyecto puede tener binario y librería a la vez: la lógica reutilizable vive en <code>src/lib.rs</code> y <code>src/main.rs</code> solo orquesta. En proyectos medianos conviene dividir la librería en <strong>módulos por carpeta</strong>:</p>
+<pre><code class="language-rust">// src/lib.rs — declara los módulos; Cargo busca src/red/mod.rs o src/red.rs
+pub mod red;
+pub mod utilidades;
+
+// src/main.rs — consume lo exportado por la propia librería
+fn main() {
+    let estado = mi_app::red::conectar("localhost");
+    println!("Estado: {:?}", estado);
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Los <strong>workspaces</strong> agrupan varios crates en un repositorio compartiendo <code>Cargo.lock</code> y <code>target/</code>: basta un <code>Cargo.toml</code> raíz con <code>[workspace]</code> y <code>members = ["app", "nucleo"]</code>. Es el patrón de proyectos grandes como ripgrep.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cargo-toml">
+    <h2><i class="fa-solid fa-file-lines"></i> Cargo.toml y las dependencias</h2>
+    <div class="doc-content">
+<p>El manifiesto usa formato TOML. Las dos secciones esenciales son <code>[package]</code> (identidad del crate) y <code>[dependencies]</code> (lo que consumes de crates.io):</p>
 <pre><code class="language-toml">[package]
-name = "mi-app"
-version = "0.1.0"
-edition = "2021"
+name = "mi_app"        # nombre único del crate
+version = "0.1.0"      # versión semántica del PROYECTO
+edition = "2021"       # edición del lenguaje
 
 [dependencies]
-serde = { version = "1", features = ["derive"] }
-rand = "0.8"</code></pre>
+serde = { version = "1", features = ["derive"] }  # features opcionales
+rand = "0.8"           # forma corta: solo versión
+clap = "4"
+
+[dev-dependencies]     # solo para tests y benchmarks
+pretty_assertions = "1"</code></pre>
+<h3>Semver y el caret implícito</h3>
+<p>Escribir <code>rand = "0.8"</code> no pide esa versión exacta: Cargo interpreta un <strong>rango caret</strong> (<code>^0.8</code>). La regla cambia según el número mayor, y entenderla evita sorpresas:</p>
+<table><thead><tr><th>Especificador</th><th>Rango aceptado</th><th>Lectura práctica</th></tr></thead><tbody><tr><td><code>"0.8"</code></td><td>&gt;=0.8.0 &lt;0.9.0</td><td>En 0.x el menor actúa como mayor: solo parches seguros</td></tr><tr><td><code>"0.8.5"</code></td><td>&gt;=0.8.5 &lt;0.9.0</td><td>Mínimo 0.8.5 con techo 0.9.0</td></tr><tr><td><code>"1"</code> o <code>"1.2"</code></td><td>&gt;=1.0.0 &lt;2.0.0</td><td>Cualquier 1.x compatible hacia atrás</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Ojo con crates en <strong>0.x</strong>: su API puede romperse entre minor versions y muchos proyectos quedan atascados en versiones viejas por esto. El archivo <strong>Cargo.lock</strong> congela las versiones exactas para builds reproducibles: súbelo siempre al repositorio.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="comandos-cargo">
+    <h2><i class="fa-solid fa-terminal"></i> Comandos esenciales de Cargo</h2>
+    <div class="doc-content">
+<p>El flujo diario gira en torno a una docena de verbos. Esta tabla cubre el 95% de tu vida con Cargo:</p>
+<table><thead><tr><th>Comando</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>cargo new nombre</code></td><td>Crea un proyecto binario con Git inicializado</td></tr><tr><td><code>cargo new --lib nombre</code></td><td>Crea una biblioteca sin main</td></tr><tr><td><code>cargo run</code></td><td>Compila si hace falta y ejecuta</td></tr><tr><td><code>cargo build</code></td><td>Compila en modo dev hacia target/debug</td></tr><tr><td><code>cargo build --release</code></td><td>Compila optimizado hacia target/release</td></tr><tr><td><code>cargo check</code></td><td>Valida tipos y ownership sin generar binario</td></tr><tr><td><code>cargo test</code></td><td>Ejecuta todos los tests incluidos los doctests</td></tr><tr><td><code>cargo doc --open</code></td><td>Genera documentación HTML y la abre</td></tr><tr><td><code>cargo clippy</code></td><td>Linter con ~700 revisiones de idiomaticidad</td></tr><tr><td><code>cargo fmt</code></td><td>Formatea al estilo oficial automáticamente</td></tr><tr><td><code>cargo update</code></td><td>Actualiza dependencias dentro de su rango semver</td></tr><tr><td><code>cargo add rand</code></td><td>Añade dependencia editando el TOML por ti</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p>Integra <code>cargo fmt</code> y <code>cargo clippy</code> desde el primer día (o en CI). La comunidad los considera obligatorios: código sin pasar Clippy rara vez pasa revisión en proyectos serios.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="perfiles-dev-release">
+    <h2><i class="fa-solid fa-gauge-high"></i> Perfiles dev vs release</h2>
+    <div class="doc-content">
+<p>El perfil <strong>dev</strong> prioriza velocidad de compilación para iterar rápido; <strong>release</strong> activa las optimizaciones agresivas del backend LLVM priorizando la ejecución. La diferencia puede ser de <strong>5x a 50x</strong> en código numérico.</p>
+<table><thead><tr><th>Ajuste</th><th>dev (por defecto)</th><th>--release</th></tr></thead><tbody><tr><td>Optimización (<code>opt-level</code>)</td><td>0, sin optimizar</td><td>3, máxima</td></tr><tr><td>Info de depuración</td><td>Incluida (backtraces útiles)</td><td>No incluida</td></tr><tr><td>Overflow checks en enteros</td><td>Pánico al desbordar</td><td>Deshabilitados (wrap-around)</td></tr><tr><td>Tiempo de compilación</td><td>Segundos</td><td>Minutos en proyectos grandes</td></tr><tr><td>Artefacto en</td><td><code>target/debug/</code></td><td><code>target/release/</code></td></tr></tbody></table>
+<pre><code class="language-toml"># Personalización opcional en Cargo.toml
+[profile.release]
+opt-level = 3
+lto = true            # Link-Time Optimization: binarios más rápidos
+strip = true          # quita símbolos: binarios más pequeños</code></pre>
+<blockquote class="aside aside-danger"><p>Nunca juzgues el rendimiento de Rust en modo dev: un bucle de 800ms en debug puede bajar a 20ms en release. Mide SIEMPRE con <code>cargo run --release</code>.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="tests-y-build">
-    <h2>Tests y build</h2>
+    <h2><i class="fa-solid fa-vial-circle-check"></i> Tests integrados sin frameworks</h2>
     <div class="doc-content">
-<pre><code class="language-rust">#[cfg(test)]
+<p>Rust trae testing de primera clase sin dependencias externas: cualquier función anotada con <code>#[test]</code> se ejecuta con <code>cargo test</code>. La convención es agruparlas en un módulo <code>tests</code> al final del archivo, que solo se compila cuando pruebas:</p>
+<pre><code class="language-rust">fn suma(a: i32, b: i32) -&gt; i32 {
+    a + b
+}
+
+#[cfg(test)]                    // este módulo SOLO se compila con cargo test
 mod tests {
-    use super::*;
+    use super::*;               // importa todo lo del archivo padre
 
     #[test]
-    fn suma_correcta() {
+    fn suma_dos_numeros() {
         assert_eq!(suma(2, 3), 5);
     }
+
+    #[test]
+    fn suma_con_negativos() {
+        assert_eq!(suma(-2, -3), -5);
+    }
+
+    #[test]
+    #[should_panic]             // el test PASA si el código panea
+    fn dividir_por_cero_panea() {
+        let _ = dividir(10, 0); // supón que divide! hace panic con 0
+    }
 }</code></pre>
-<pre><code class="language-bash">cargo test
-cargo build --release   # binario optimizado en target/release/
-cargo clippy             # linter recomendado</code></pre>
+<p>Las macros de aserción más útiles son <code>assert_eq!</code>, <code>assert_ne!</code> y <code>assert!(condicion)</code>. Todas aceptan un mensaje personalizado como último argumento para fallar con contexto.</p>
+<blockquote class="aside aside-tip"><p>Ejecuta un único test durante el desarrollo con <code>cargo test nombre_del_test</code>: es mucho más rápido y muestra los valores reales obtenidos cuando falla.</p></blockquote>
+<p>---</p>
     </div>
   </section>
+
+  <section id="documentacion-doc-comments">
+    <h2><i class="fa-solid fa-book-open"></i> Documentación con /// y cargo doc</h2>
+    <div class="doc-content">
+<p>Rust distingue dos tipos de comentarios. Los normales (<code>//</code>) son para quien lee el código; los comentarios de documentación (<code>///</code>) generan páginas HTML profesionales con <code>cargo doc</code>, igual que las docs oficiales de la stdlib:</p>
+<pre><code class="language-rust">/// Calcula el área de un rectángulo.
+///
+/// # Ejemplos
+///
+/// ```
+/// let area = mi_app::area_rectangulo(2.0, 3.0);
+/// assert_eq!(area, 6.0);
+/// ```
+pub fn area_rectangulo(base: f64, alto: f64) -&gt; f64 {
+    base * alto
+}</code></pre>
+<h3>Doctests: ejemplos que nunca mienten</h3>
+<p>Fíjate en el bloque <code>```</code> dentro del comentario: no es decorativo. Cargo lo compila y ejecuta como un test real cada vez que corres <code>cargo test</code>. Si cambias la función y olvidas actualizar el ejemplo, la compilación lo detecta.</p>
+<pre><code class="language-bash">cargo doc --open     # genera target/doc/ y abre el navegador
+cargo test           # también ejecuta los doctests embebidos</code></pre>
+<table><thead><tr><th>Sintaxis</th><th>Alcance</th><th>Uso típico</th></tr></thead><tbody><tr><td><code>///</code></td><td>Documenta el ítem inmediatamente inferior</td><td>Funciones, structs, módulos públicos</td></tr><tr><td><code>//!</code></td><td>Documenta el archivo o módulo contenedor entero</td><td>Cabecera de lib.rs explicando la librería</td></tr><tr><td><code>//</code></td><td>Comentario normal, ignorado por rustdoc</td><td>Notas internas para desarrolladores</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>Los comentarios de doc soportan Markdown: encabezados como <strong># Panics</strong>, <strong># Errors</strong> y <strong># Examples</strong> son convenciones estándar reconocidas por rustdoc y por toda la comunidad.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas-cargo">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas con Cargo</h2>
+    <div class="doc-content">
+<p>Cargo te deja hacer casi todo, pero hay hábitos que separan proyectos amateurs de proyectos mantenibles:</p>
+<ul>
+<li><strong>Commitea Cargo.lock</strong> en binarios: garantiza builds reproducibles para todo tu equipo.</li>
+<li><strong>Ciclo interno rápido</strong>: alterna <code>cargo check</code> mientras escribes y reserva <code>cargo build</code>/<code>run</code> para probar.</li>
+<li><strong>fmt + clippy antes de cada commit</strong>: idealmente automatizado con hooks o CI.</li>
+<li><strong>Actualiza con criterio</strong>: <code>cargo update</code> respeta semver, pero revisa changelogs de crates 0.x.</li>
+<li><strong>Divide binario y librería</strong> (main.rs + lib.rs): permite tests unitarios sin arrancar la app.</li>
+<li><strong>Documenta lo público</strong>: si otra persona (o tú en 6 meses) lo va a usar, merece <code>///</code>.</li>
+<li><strong>Audit dependencias</strong>: <code>cargo audit</code> avisa de vulnerabilidades conocidas en tus crates.</li>
+</ul>
+<pre><code class="language-bash"># Rutina de calidad completa antes de subir código
+cargo fmt --check && cargo clippy -- -D warnings && cargo test</code></pre>
+<blockquote class="aside aside-caution"><p>No añadas dependencias "porque sí": cada crate suma tiempo de compilación y superficie de riesgo. Antes de elegir, mira descargas recientes, mantenimiento y versión mínima de Rust en crates.io.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Completa estos ejercicios en orden; cada uno construye sobre el anterior y consolida el flujo de trabajo con Cargo.</p>
+<ol>
+<li><strong>Proyecto desde cero</strong>: crea <code>saludador</code> con <code>cargo new</code>, inspecciona el árbol generado y ejecútalo con <code>cargo run</code>. Luego valida cuánto tarda <code>cargo check</code> frente a <code>cargo build</code>.</li>
+<li><strong>Dependencia externa</strong>: añade <code>rand</code> con <code>cargo add rand</code>, abre <code>Cargo.toml</code> e identifica qué rango semver quedó escrito. Genera e imprime un número aleatorio entre 1 y 100.</li>
+<li><strong>Librería + binario</strong>: crea <code>src/lib.rs</code> con una función pública <code>duplicar(n: i32) -&gt; i32</code> documentada con <code>///</code> y un doctest; llámala desde <code>main.rs</code>.</li>
+<li><strong>Suite de tests</strong>: añade al menos tres tests para <code>duplicar</code> (positivos, negativos, cero) usando <code>assert_eq!</code>; corre <code>cargo test</code> y luego un solo test por su nombre.</li>
+<li><strong>Pipeline de calidad</strong>: introduce deliberadamente dos problemas que Clippy detecte (por ejemplo, un <code>return</code> innecesario o variables prefijables), corrígelos guiándote por sus sugerencias, y termina dejando limpio el comando <code>cargo fmt &amp;&amp; cargo clippy &amp;&amp; cargo test</code>.</li>
+</ol>
+<p>Dominar Cargo temprano multiplica tu velocidad en todo lo demás: es la caja de herramientas que usarás todos los días.</p>
+    </div>
+  </section>
+

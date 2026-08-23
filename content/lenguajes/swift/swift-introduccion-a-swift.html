@@ -1,44 +1,191 @@
 <!-- 1. Introducción a Swift - Swift (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
 
   <section id="que-es-swift">
-    <h2>¿Qué es Swift?</h2>
+    <h2><i class="fa-solid fa-code"></i> ¿Qué es Swift?</h2>
     <div class="doc-content">
-<ul>
-<li>Lenguaje moderno de Apple para iOS, macOS, watchOS y tvOS</li>
-<li>Seguro, rápido y expresivo</li>
-<li>Playgrounds para aprender interactuando</li>
-<li>Open source también en Linux</li>
-</ul>
+<p><strong>Swift</strong> es el lenguaje de programación moderno creado por <strong>Apple</strong> y presentado en la WWDC de 2014 como sucesor de Objective-C. Los ingenieros de Apple se hicieron una pregunta ambiciosa: ¿cómo sería un lenguaje si pudiéramos aprender de décadas de historia de la programación? El resultado combina el rendimiento de los lenguajes compilados como C++ con una sintaxis clara que elimina por diseño las categorías de errores más frecuentes.</p>
+<p>Desde diciembre de 2015 Swift es <strong>código abierto</strong> (licencia Apache 2.0), lo que permitió que la comunidad contribuyera al propio lenguaje y que este trascendiera los dispositivos de Apple hacia servidores y otros sistemas operativos.</p>
+<h3>Ecosistemas donde vive Swift</h3>
+<table><thead><tr><th>Plataforma</th><th>Uso típico</th></tr></thead><tbody><tr><td><strong>iOS / iPadOS</strong></td><td>Apps de iPhone y iPad, el ecosistema más grande de Swift</td></tr><tr><td><strong>macOS</strong></td><td>Aplicaciones de escritorio para Mac</td></tr><tr><td><strong>watchOS / tvOS</strong></td><td>Apple Watch y Apple TV</td></tr><tr><td><strong>visionOS</strong></td><td>Apple Vision Pro (computación espacial)</td></tr><tr><td><strong>Servidores Linux</strong></td><td>Backends con frameworks como Vapor</td></tr><tr><td><strong>Windows</strong></td><td>Toolchain oficial disponible para scripts y servicios</td></tr></tbody></table>
+<h3>Características clave</h3>
+<table><thead><tr><th>Característica</th><th>Qué significa en la práctica</th></tr></thead><tbody><tr><td><strong>Seguridad</strong></td><td>Optionals, memoria gestionada automáticamente y sin punteros crudos por defecto</td></tr><tr><td><strong>Rendimiento</strong></td><td>Compila a código nativo con LLVM; velocidad comparable a C++</td></tr><tr><td><strong>Expresividad</strong></td><td>Inferencia de tipos, closures ligeros, genéricos y protocolos potentes</td></tr><tr><td><strong>Interoperabilidad</strong></td><td>Convive con Objective-C, C y C++ dentro del mismo proyecto</td></tr><tr><td><strong>UI declarativa</strong></td><td>Lenguaje nativo de <strong>SwiftUI</strong>, el framework moderno de interfaces de Apple</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Si vienes de Python o JavaScript te sentirás pronto en casa: Swift también infiere tipos y usa sintaxis ligera. Si vienes de Java o C#, reconocerás las llaves, las clases y el tipado estático.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="primer-programa">
-    <h2>Primer programa</h2>
+    <h2><i class="fa-solid fa-terminal"></i> Tu primer programa</h2>
     <div class="doc-content">
-<pre><code class="language-swift">print("Hola, GuiaDev!")
+<p>Como manda la tradición, empezamos saludando. Fíjate en dos detalles: no hace falta punto y coma ni función <code>main</code> visible, y cada valor se declara con <code>let</code> (constante, no puede cambiar) o <code>var</code> (variable, puede cambiar).</p>
+<pre><code class="language-swift">// El clásico primer programa
+print("Hola, GuiaDev!")
 
-let constante = 10        // inmutable
-var variable = 20         // mutable
+// let crea constantes: el compilador te avisará si intentas cambiarlas
+let constante = 10
+
+// var crea variables: su valor puede cambiar
+var variable = 20
 variable += 5
+print(variable)   // 25</code></pre>
+<h3>¿Por qué preferir <code>let</code> sobre <code>var</code>?</h3>
+<p>La filosofía de Swift es que <strong>todo lo que no deba cambiar debería ser inmutable</strong>. Declarar con <code>let</code> comunica intención ("esto nunca cambia"), evita modificaciones accidentales y ayuda al compilador a optimizar. La convención profesional es empezar siempre con <code>let</code> y cambiar a <code>var</code> solo cuando Xcode lo sugiera porque el valor realmente muta.</p>
+<h3>Anotación explícita de tipos</h3>
+<p>Normalmente Swift deduce el tipo solo, pero puedes escribirlo de forma explícita cuando quieras ser deliberado:</p>
+<pre><code class="language-swift">let pi: Double = 3.14159      // Double explícito
+let nombre: String = "Ana"    // String explícito
+let activo: Bool = true       // Bool explícito</code></pre>
+<h3>Compilar y ejecutar desde la terminal</h3>
+<p>Swift es un lenguaje compilado. Con la herramienta <code>swiftc</code> puedes generar un ejecutable nativo sin abrir ningún IDE:</p>
+<pre><code class="language-text">$ swiftc hola.swift -o hola
+$ ./hola
+Hola, GuiaDev!</code></pre>
+<p>---</p>
+    </div>
+  </section>
 
-let pi: Double = 3.14159  // anotación explícita
-let nombre = "Ana"        // inferencia: String</code></pre>
+  <section id="tipado-seguro">
+    <h2><i class="fa-solid fa-shield-halved"></i> Tipado seguro con inferencia</h2>
+    <div class="doc-content">
+<p>Swift es de <strong>tipado estático</strong>: el tipo de cada valor se conoce en tiempo de compilación. Pero a diferencia de Java o C#, casi nunca lo escribes: el compilador lo <strong>infiere</strong> del valor inicial. Obtienes lo mejor de ambos mundos: código breve como el de un lenguaje dinámico, con la seguridad de uno estático.</p>
+<pre><code class="language-swift">let edad = 30            // el compilador infiere Int
+let precio = 19.99       // infiere Double
+let nombre = "Luis"      // infiere String
+let esActivo = false     // infiere Bool
+
+print(type(of: edad))    // Int</code></pre>
+<h3>La seguridad actúa en tiempo de compilación</h3>
+<p>Mezclar tipos incompatibles no compila; el error aparece antes de ejecutar el programa, que es justo cuando corregirlo cuesta menos:</p>
+<pre><code class="language-swift">let numero: Int = 5
+// let suma = numero + 2.5
+// ❌ error: binary operator '+' cannot be applied
+//    to operands of type 'Int' and 'Double'
+
+// ✅ Conversión explícita obligatoria
+let suma = numero + Int(2.5)     // 7
+let decimal = Double(numero) + 2.5  // 7.5</code></pre>
+<blockquote class="aside aside-caution"><p>A diferencia de otros lenguajes, Swift no convierte números silenciosamente: <code>Int</code> y <code>Double</code> son mundos separados. Las conversiones (<code>Int(x)</code>, <code>Double(x)</code>) son siempre explícitas.</p></blockquote>
+<h3>Nombres descriptivos y convenciones</h3>
+<p>Swift usa <strong>camelCase</strong> para variables y funciones (<code>precioTotal</code>) y <strong>PascalCase</strong> para tipos (<code>ProductoFavorito</code>). Como el tipo ya está claro por inferencia, el nombre debe describir el <em>propósito</em>, no el tipo: prefiere <code>let segundosPorDia = 86_400</code> a <code>let n = 86400</code>. Por cierto, el guion bajo agrupa dígitos y mejora la legibilidad de números grandes.</p>
+<p>---</p>
     </div>
   </section>
 
   <section id="strings-e-interpolacion">
-    <h2>Strings e interpolación</h2>
+    <h2><i class="fa-solid fa-quote-right"></i> Strings e interpolación</h2>
     <div class="doc-content">
+<p>El tipo <code>String</code> de Swift es Unicode completo de forma nativa (los emojis cuentan como caracteres válidos) y ofrece una función estrella: la <strong>interpolación</strong>. Con <code>\(...)</code> insertas cualquier expresión dentro de un texto, algo mucho más legible que concatenar trozos con <code>+</code>.</p>
 <pre><code class="language-swift">let nombre = "Mundo"
-let saludo = "Hola, \(nombre)!"
+let saludo = "Hola, \(nombre)!"        // Hola, Mundo!
 
-let frase = """
-Texto multilínea
-con \(nombre) incluido
-"""
+// Dentro de \( ) cabe cualquier expresión válida
+let precio = 19.99
+let cantidad = 3
+let total = "Total: \(precio * cantidad) €"
 
-saludo.count
-saludo.uppercased()</code></pre>
+// Comparación directa y propiedades útiles
+saludo == "Hola, Mundo!"               // true
+saludo.count                           // 12 caracteres
+saludo.uppercased()                    // HOLA, MUNDO!</code></pre>
+<h3>Textos multilínea</h3>
+<p>Con tres comillas dobles puedes escribir bloques de texto largos sin concatenar ni escapar saltos de línea. Ideal para JSON, HTML o mensajes largos:</p>
+<pre><code class="language-swift">let factura = """
+Factura #1042
+Cliente: \(nombre)
+Importe: \(total)
+"""</code></pre>
+<h3>Cadenas vacías y comprobaciones rápidas</h3>
+<pre><code class="language-swift">var mensaje = ""
+mensaje.isEmpty                 // true
+mensaje += "Primer texto"
+
+let ruta = #"C:\Users\ana\"     // Raw string: sin escapes, \
+print(ruta)</code></pre>
+<blockquote class="aside aside-note"><p>Las cadenas en Swift son <strong>colecciones de caracteres</strong>: puedes recorrerlas con <code>for letra in saludo { }</code> igual que un array, gracias a que conforman el protocolo <code>Collection</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="herramientas-de-trabajo">
+    <h2><i class="fa-solid fa-toolbox"></i> Herramientas: Xcode, Playgrounds y REPL</h2>
+    <div class="doc-content">
+<p>Para trabajar con Swift tienes varias opciones según tu objetivo: crear apps completas, experimentar con ideas o automatizar tareas desde la línea de comandos.</p>
+<table><thead><tr><th>Herramienta</th><th>Para qué sirve</th><th>Ideal si…</th></tr></thead><tbody><tr><td><strong>Xcode</strong></td><td>IDE oficial gratuito: editor, simuladores, depurador y publicación en App Store</td><td>Desarrollas apps iOS/macOS</td></tr><tr><td><strong>Playgrounds</strong></td><td>Archivos que ejecutan el código al instante, línea a línea</td><td>Aprendes o pruebas fragmentos</td></tr><tr><td><strong>REPL (<code>swift</code>)</strong></td><td>Terminal interactiva que evalúa expresiones al vuelo</td><td>Haces pruebas rápidas sin archivos</td></tr><tr><td><strong>swiftc</strong></td><td>Compilador directo a binario nativo</td><td>Automatizas builds o scripts</td></tr><tr><td><strong>Swift Package Manager</strong></td><td>Gestor de dependencias y proyectos integrado</td><td>Creas librerías o apps multiplataforma</td></tr><tr><td><strong>VS Code + SourceKit-LSP</strong></td><td>Editor ligero con autocompletado de Swift en Windows/Linux/macOS</td><td>Programas server-side</td></tr></tbody></table>
+<h3>El REPL en acción</h3>
+<p>Abre una terminal y ejecuta <code>swift</code>; obtienes un entorno interactivo donde cada expresión se evalúa al instante y muestra su resultado:</p>
+<pre><code class="language-text">$ swift
+Welcome to Apple Swift version 5.9.
+  1&gt; let numeros = [3, 1, 4]
+numeros: [Int] = 3 values
+  2&gt; numeros.map { $0 * 2 }
+$R0: [Int] = [6, 2, 8]</code></pre>
+<h3>Un Playground mínimo</h3>
+<p>En Xcode: <em>File → New → Playground</em>. El panel derecho muestra el valor de cada línea en vivo mientras escribes:</p>
+<pre><code class="language-swift">var saldo = 100.0
+saldo += 250          // el resultado aparece al instante en el panel lateral
+saldo *= 1.05         // 367.5</code></pre>
+<blockquote class="aside aside-tip"><p>No necesitas un Mac para empezar: en Windows o Linux instala el toolchain desde <strong>swift.org</strong> y usa VS Code; en iPad, la app gratuita <em>Swift Playgrounds</em> enseña los fundamentos con lecciones interactivas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primer-vistazo-a-optionals">
+    <h2><i class="fa-solid fa-eye"></i> Primer vistazo a los optionals</h2>
+    <div class="doc-content">
+<p>Hay una situación que todo lenguaje debe resolver: ¿qué pasa cuando un valor <strong>puede no existir</strong>? Un campo que el usuario dejó vacío, un elemento que no está en un diccionario, una descarga que falló. Muchos lenguajes responden con <code>null</code> escondido en cualquier variable… y con los famosos errores de puntero nulo en producción.</p>
+<p>La respuesta de Swift es el <strong>optional</strong>: un tipo que declara honestamente que puede no haber valor. Se marca con <code>?</code> después del tipo:</p>
+<pre><code class="language-swift">var apodo: String? = nil        // aún no tiene valor
+apodo = "Toro"                  // ahora sí
+
+// Leerlo exige comprobar primero: el compilador te protege
+if let apodoReal = apodo {
+    print("Su apodo es \(apodoReal)")   // Su apodo es Toro
+}
+
+let edades = ["ana": 30]
+let edadAna = edades["ana"]     // Int? : podría no existir la clave</code></pre>
+<p>Fíjate en el último caso: buscar una clave en un diccionario devuelve <code>Int?</code>, no <code>Int</code>, porque la clave puede no estar. El sistema de tipos te obliga a decidir qué hacer si falta. Este pequeño cambio elimina de raíz una enorme familia de bugs.</p>
+<blockquote class="aside aside-success"><p>Dominar los optionals es <strong>el</strong> salto conceptual de esta unidad. En la próxima lección los disecaremos a fondo: qué son realmente, cómo desenvolverlos con seguridad y cuándo evitar la fuerza bruta.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes del principiante</h2>
+    <div class="doc-content">
+<h3>1. Usar <code>var</code> para todo</h3>
+<pre><code class="language-swift">// ❌ Innecesariamente mutable
+var nombre = "Ana"
+var pi = 3.14159
+
+// ✅ Constante por defecto
+let nombre = "Ana"
+let pi = 3.14159</code></pre>
+<h3>2. Olvidar que Int y Double no se mezclan solos</h3>
+<pre><code class="language-swift">let total: Double = 5          // ❌ error: cannot convert Int to Double
+let total: Double = 5.0        // ✅ o Double(5) si viene de un Int</code></pre>
+<h3>3. Nombrar variables sin significado</h3>
+<pre><code class="language-swift">let d = 3.5        // ❌ ¿días? ¿descuento? ¿distancia?
+let diasDeAlquiler = 3.5   // ✅ el nombre documenta el código</code></pre>
+<h3>4. Intentar forzar optionals sin entenderlos</h3>
+<pre><code class="language-swift">var entrada: String? = leerUsuario()
+// print(entrada!)        // 💥 crash si es nil
+if let entrada { print(entrada) }   // ✅ seguro y breve (Swift 5.7+)</code></pre>
+<blockquote class="aside aside-danger"><p>El error nº 1 de quien empieza es tratar Swift como su lenguaje anterior y pelear contra el compilador. Cuando Swift rechaza tu código casi siempre está <strong>previniendo un fallo futuro</strong>: lee el mensaje de error con calma; suelen ser sorprendentemente precisos y hasta proponen la corrección.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuelve estos ejercicios en un Playground o en el REPL para afianzar lo aprendido. Están ordenados de menor a mayor dificultad:</p>
+<ol>
+<li><strong>Tarjeta de presentación:</strong> declara constantes con tu nombre, ciudad y año actual, e imprime una frase interpolada que las combine, por ejemplo <code>"Soy Ana, de Madrid, en 2026"</code>.</li>
+<li><strong>Calculadora de compra:</strong> dados precio unitario <code>4.50</code> y cantidad <code>3</code>, calcula el total y muestra el mensaje <code>"3 unidades cuestan 13.5 €"</code> usando interpolación (recuerda: <code>Int</code> y <code>Double</code> requieren conversión explícita).</li>
+<li><strong>Texto formateado:</strong> crea un String multilínea con tres líneas de una factura (producto, cantidad, importe) usando interpolación, y muestra cuántos caracteres tiene con <code>count</code>.</li>
+<li><strong>Conversor de minutos:</strong> declara <code>let minutos = 135</code> y calcula horas y minutos restantes usando el operador módulo <code>%</code> y la división entera; imprime <code>"2 h 15 min"</code>.</li>
+<li><strong>Mini perfil opcional:</strong> crea <code>var email: String? = nil</code>, asígnale un valor y escríbelo con <code>if let</code> dentro de una frase; luego ponlo a <code>nil</code> y comprueba que el bloque <code>if let</code> ya no se ejecuta. (Adelanto de la próxima lección.)</li>
+</ol>
     </div>
   </section>

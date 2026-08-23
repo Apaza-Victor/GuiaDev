@@ -1,66 +1,177 @@
 <!-- 4. DDL: bases de datos y tablas - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="crear-y-eliminar-bases-de-datos">
-    <h2>Crear y eliminar bases de datos</h2>
+<section id="crear-y-eliminar-bases-de-datos">
+    <h2><i class="fa-solid fa-database"></i> CREATE/ALTER/DROP DATABASE</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE DATABASE Ventas;
-GO
+        <pre><code class="language-sql">-- Mínimo viable:
+CREATE DATABASE Tienda;
 
-ALTER DATABASE Ventas MODIFY NAME = Ventas2026;
-GO
-
-DROP DATABASE IF EXISTS Ventas2026;</code></pre>
-    </div>
-  </section>
-
-  <section id="esquemas-schemas">
-    <h2>Esquemas (schemas)</h2>
-    <div class="doc-content">
-<p>Un esquema es un contenedor lógico dentro de la base. El predeterminado es <code>dbo</code>. Sirven para organizar y dar permisos por áreas.</p>
-<pre><code class="language-sql">CREATE SCHEMA ventas AUTHORIZATION dbo;
-GO
-
-CREATE TABLE ventas.Facturas (
-  Id INT IDENTITY PRIMARY KEY,
-  Total DECIMAL(12,2) NOT NULL
-);</code></pre>
-    </div>
-  </section>
-
-  <section id="create-y-alter-table">
-    <h2>CREATE y ALTER TABLE</h2>
-    <div class="doc-content">
-<pre><code class="language-sql">CREATE TABLE dbo.Categorias (
-  Id INT IDENTITY(1,1) PRIMARY KEY,
-  Nombre NVARCHAR(50) NOT NULL
+-- Con ubicación explícita de archivos (producción):
+CREATE DATABASE Tienda ON PRIMARY (
+    NAME = Tienda_data,
+    FILENAME = 'D:\SQLData\Tienda.mdf',
+    SIZE = 100MB, MAXSIZE = 10GB, FILEGROWTH = 50MB
+) LOG ON (
+    NAME = Tienda_log,
+    FILENAME = 'E:\SQLLogs\Tienda.ldf',
+    SIZE = 50MB, MAXSIZE = UNLIMITED, FILEGROWTH = 25MB
 );
-GO
 
-CREATE TABLE dbo.Productos (
-  Id INT IDENTITY(1,1) PRIMARY KEY,
-  Nombre NVARCHAR(150) NOT NULL,
-  Precio DECIMAL(10,2) NOT NULL CONSTRAINT DF_Productos_Precio DEFAULT(0),
-  CategoriaId INT NULL
-);
-GO
+-- Modificar en caliente:
+ALTER DATABASE Tienda MODIFY NAME = Tienda2026;   -- o sp_renamedb
+ALTER DATABASE Tienda SET RECOVERY SIMPLE;         -- modelo recuperación
+ALTER DATABASE Tienda SET AUTO_SHRINK OFF;         -- casi siempre off
 
-ALTER TABLE dbo.Productos ADD Descripcion NVARCHAR(500) NULL;
-ALTER TABLE dbo.Productos ALTER COLUMN Nombre NVARCHAR(200) NOT NULL;
-ALTER TABLE dbo.Productos DROP COLUMN Descripcion;</code></pre>
-<blockquote class="aside aside-note">
-<p>Nombrar los constraints (ej. <code>DF_Productos_Precio</code>) facilita modificarlos después sin depender de nombres autogenerados.</p>
-</blockquote>
+-- Eliminar (¡irreversible!):
+DROP DATABASE IF EXISTS Tienda2026;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Archivo</th><th>Extensión</th><th>Contenido</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Data primario</td><td>.mdf</td><td>Datos + catálogo de la base</td></tr>
+                <tr><td>Data secundarios (opcional)</td><td>.ndf</td><td>Datos repartidos por discos/filegroups</td></tr>
+                <tr><td>Log transaccional</td><td>.ldf</td><td>TODA operación registrada: base del rollback/recovery</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>DROP DATABASE no pide confirmación ni va a la papelera: borra los .mdf/.ldf del disco al instante. En scripts productivos, IF EXISTS es tu único seguro — y backups previos el real.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="truncate-vs-delete-vs-drop">
-    <h2>TRUNCATE vs DELETE vs DROP</h2>
+<section id="esquemas-schemas">
+    <h2><i class="fa-solid fa-folder-tree"></i> Esquemas (schemas): namespaces internos</h2>
     <div class="doc-content">
-<pre><code class="language-sql">TRUNCATE TABLE dbo.Productos;   -- vacía rápido, reinicia IDENTITY
-DELETE FROM dbo.Productos;      -- fila por fila, permite WHERE
-DROP TABLE dbo.Productos;       -- elimina estructura</code></pre>
-<blockquote class="aside aside-caution">
-<p><code>TRUNCATE</code> no funciona si la tabla tiene llaves foráneas que le apuntan; en ese caso usa <code>DELETE</code>.</p>
-</blockquote>
+        <p>Dentro de una base, los esquemas agrupan objetos: <code>base.esquema.objeto</code>. Sirven para organizar dominios grandes y afinar permisos por rol:</p>
+        <pre><code class="language-sql">CREATE SCHEMA ventas AUTHORIZATION dbo;
+CREATE SCHEMA contabilidad;
+GO
+
+CREATE TABLE ventas.Pedidos (...);
+CREATE TABLE contabilidad.Asientos (...);
+
+SELECT * FROM ventas.Pedidos WHERE ...;   -- referencia completa
+
+-- Mover objeto entre esquemas:
+ALTER SCHEMA contabilidad TRANSFER ventas.FacturasAntiguas;
+
+-- Permisos por esquema (oro para seguridad):
+GRANT SELECT ON SCHEMA::ventas TO RolConsultas;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Sin esquemas</th><th>Con esquemas</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>300 tablas todas dbo.* mezcladas</td><td>Prefijos lógicos: ventas., rrhh., finanzas.</td></tr>
+                <tr><td>Permisos tabla a tabla tediosos</td><td>Un GRANT por esquema cubre todo su grupo</td></tr>
+                <tr><td>Refactorizar = renombrar tablas</td><td>Mover con ALTER SCHEMA TRANSFER</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-note">
+            <p>El esquema default es <code>dbo</code> (database owner). Si no calificas, SQL Server resuelve primero el esquema del usuario conectado, luego dbo — fuente clásica de "Invalid object name" cuando un usuario sin schema default toca tablas que "existen".</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="create-y-alter-table">
+    <h2><i class="fa-solid fa-table"></i> CREATE TABLE y ALTER TABLE</h2>
+    <div class="doc-content">
+        <pre><code class="language-sql">CREATE TABLE dbo.Productos (
+    id            INT IDENTITY(1,1) NOT NULL,
+    sku           VARCHAR(20)       NOT NULL,
+    nombre        NVARCHAR(100)     NOT NULL,
+    precio        DECIMAL(10,2)     NOT NULL CONSTRAINT DF_prod_precio DEFAULT 0,
+    activo        BIT               NOT NULL CONSTRAINT DF_prod_activo DEFAULT 1,
+    CONSTRAINT PK_Productos PRIMARY KEY CLUSTERED (id),
+    CONSTRAINT UQ_Productos_sku UNIQUE (sku)
+);
+
+-- Evolución segura (el 90% del trabajo real):
+ALTER TABLE Productos ADD descripcion NVARCHAR(500) NULL;          -- nueva columna
+ALTER TABLE Productos ADD stock INT NOT NULL CONSTRAINT DF_stock DEFAULT 0;  -- no-null necesita default
+ALTER TABLE Productos ALTER COLUMN precio DECIMAL(12,2) NOT NULL;  -- cambiar tipo
+EXEC sp_rename 'Productos.descripcion', 'detalle', 'COLUMN';       -- renombrar columna
+EXEC sp_rename 'Productos', 'Articulos';                           -- renombrar tabla
+ALTER TABLE Productos DROP COLUMN descripcion;                     -- eliminar
+
+-- Borrar columna CON su constraint (orden correcto):
+ALTER TABLE Productos DROP CONSTRAINT DF_prod_activo;
+ALTER TABLE Productos DROP COLUMN activo;</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>En producción NUNCA cambies tipos ni borres columnas directamente: añade columna nueva, migra datos, despliega código consumiéndola, y recién después elimina la vieja. ALTER COLUMN sobre columnas indexadas/FKs falla o bloquea tablas enormes.</p>
+        </blockquote>
+
+        <h3>Tablas temporales de sistema (2016+)</h3>
+        <pre><code class="language-sql">CREATE TABLE dbo.Salarios (
+    empleado_id INT NOT NULL PRIMARY KEY,
+    monto       DECIMAL(10,2) NOT NULL,
+    valido_desde DATETIME2 GENERATED ALWAYS AS ROW START NOT NULL,
+    valido_hasta DATETIME2 GENERATED ALWAYS AS ROW END   NOT NULL,
+    PERIOD FOR SYSTEM_TIME (valido_desde, valido_hasta)
+) WITH (SYSTEM_VERSIONING = ON);      -- historial automático consultable:
+SELECT * FROM Salarios FOR SYSTEM_TIME AS OF '2026-01-01';</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="truncate-vs-delete-vs-drop">
+    <h2><i class="fa-solid fa-eraser"></i> TRUNCATE vs DELETE vs DROP</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Aspecto</th><th>DELETE</th><th>TRUNCATE TABLE</th><th>DROP TABLE</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Qué hace</strong></td><td>Borra filas seleccionadas</td><td>Vacía TODAS las filas</td><td>Elimina tabla completa</td></tr>
+                <tr><td>Filtra con WHERE?</td><td>✅ Sí</td><td>❌ Nunca</td><td>❌ Nunca</td></tr>
+                <tr><td>Dispara triggers?</td><td>✅ DELETE triggers</td><td>❌ No</td><td>❌ No</td></tr>
+                <tr><td>Reinicia IDENTITY?</td><td>❌ No</td><td>✅ Sí (RESEED a seed)</td><td>N/A</td></tr>
+                <tr><td>Rinde log mínimo?</td><td>❌ Fila por fila</td><td>✅ Por páginas (mucho más rápido)</td><td>—</td></tr>
+                <tr><td>Permite ROLLBACK?</td><td>✅ Sí</td><td>✅ Sí (¡mito que dice que no!)</td><td>✅ Dentro transacción</td></tr>
+                <tr><td>Falla si hay FK apuntando?</td><td>Solo filas referenciadas</td><td>❌ Siempre falla</td><td>❌ Siempre falla</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">BEGIN TRAN;
+TRUNCATE TABLE staging_logs;    -- sí se puede revertir:
+ROLLBACK;                        -- filas de vuelta ✅</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>"TRUNCATE no se puede hacer ROLLBACK" es el mito #1 de entrevistas SQL Server. Es falso dentro de una transacción explícita. Lo que NO tiene vuelta atrás es ejecutarlo sin transacción: log mínimo significa menos capacidad de PITR (point-in-time recovery).</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>NOT NULL sin DEFAULT sobre tabla poblada</td><td>"Cannot insert the value NULL" en ALTER</td><td>Añadir WITH DEFAULT o en 3 pasos (null→fill→not null)</td></tr>
+                <tr><td>sp_rename rompe referencias</td><td>Procedures/vistas apuntando al nombre viejo</td><td>Renombres coordinados con migraciones completas</td></tr>
+                <tr><td>TRUNCATE esperado filtrable</td><td>Sintaxis inválida con WHERE</td><td>DELETE con WHERE, o borrar por lotes</td></tr>
+                <tr><td>ALTER COLUMN sobre columna con constraint/index</td><td>"dependent objects" error implícito</td><td>Drop constraints → alter → recrear constraints</td></tr>
+                <tr><td>Olvidar GO entre USE y operaciones batch-dependientes</td><td>Objetos creados en master</td><td>USE MiBase; GO siempre tras crear base</td></tr>
+                <tr><td>Confianza ciega en Object Explorer para DDL</td><td>Cambios irreproducibles sin script</td><td>Scriptear TODO cambio (Generate Scripts / Source Control)</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Base con arquitectura</strong>: crea AcademiaDB con esquemas docencia y admin; distribuye tablas (Alumnos en docencia, Facturas en admin) con referencias cruzadas.</li>
+            <li><strong>Evolución viva</strong>: parte de Productos simple y aplica 5 ALTERs progresivos documentados (columna, tipo, rename, drop con constraint, default).</li>
+            <li><strong>Laboratorio TRUNCATE vs DELETE</strong>: tabla 100k filas; cronometra DELETE completo vs TRUNCATE vs TRUNCATE+ROLLBACK; verifica mitos.</li>
+            <li><strong>Temporal playground</strong>: crea tabla temporal de sistema, actualiza precios varias veces y consulta el histórico con FOR SYSTEM_TIME AS OF.</li>
+            <li><strong>Cazador de dependencias</strong>: usa sp_help y sys.foreign_keys para listar qué bloquearía un DROP TABLE antes de intentarlo.</li>
+        </ol>
+    </div>
+</section>

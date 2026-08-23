@@ -2,31 +2,202 @@
 <!-- Contenido local del proyecto -->
 
   <section id="declaracion">
-    <h2>Declaración</h2>
+    <h2><i class="fa-solid fa-tag"></i> Declarar variables: var, := y const</h2>
     <div class="doc-content">
-<pre><code class="language-go">var nombre string = "Ana"
-var edad int              // zero value: 0
-activo := true            // declaración corta (solo dentro de funciones)
+<p>A diferencia de Python, donde una variable es una etiqueta que puede apuntar a cualquier cosa, en Go <strong>toda variable tiene un tipo fijo decidido en tiempo de compilación</strong>. Esto permite al compilador detectar errores antes de ejecutar el programa y generar binarios muy eficientes. Go ofrece tres formas de declarar, y elegir bien entre ellas comunica intención al resto del equipo:</p>
+<pre><code class="language-go">// Forma completa: var nombre tipo = valor
+var pais string = "España"
 
-const PI float64 = 3.1416
+// Con inferencia: el compilador deduce que es string
+var poblacion = 48000000
 
-// Zero values: 0, "", false, nil</code></pre>
+// Sin valor inicial: toma su zero value (seccion siguiente)
+var visitas int
+
+// Declaracion corta := : SOLO dentro de funciones
+ciudad := "Madrid"
+
+// Agrupadas en bloque (estilo habitual a nivel de paquete)
+var (
+	ancho  = 800
+	alto   = 600
+	titulo = "Panel de control"
+)
+
+// Constantes: valor fijo conocido en tiempo de compilacion
+const MaxIntentos = 3</code></pre>
+<h3>¿Cuándo usar cada forma?</h3>
+<table><thead><tr><th>Forma</th><th>Dónde funciona</th><th>Cuándo conviene</th></tr></thead><tbody><tr><td><code>var nombre T</code></td><td>En cualquier parte</td><td>Cuando quieres dejar claro que empieza con su zero value, o al declarar a nivel de paquete</td></tr><tr><td><code>nombre := valor</code></td><td>Solo dentro de funciones</td><td>El 90&nbsp;% del día a día: declara e infiere el tipo en una sola escritura</td></tr><tr><td><code>const nombre = valor</code></td><td>En cualquier parte</td><td>Valores fijos: límites, tasas, mensajes de configuración</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Convención extendida en la comunidad: <code>:=</code> dentro de funciones, <code>var</code> cuando quieras subrayar que la variable arranca vacía (<code>var buffer bytes.Buffer</code>) y <code>const</code> para todo lo que no deba cambiar jamás.</p></blockquote>
+<h3>Dos reglas que sorprenden al llegar de otros lenguajes</h3>
+<ul>
+<li><strong>Una variable local declarada y no usada es un error de compilación</strong>, no una advertencia: el compilador elimina el código muerto antes de que llegue a producción.</li>
+<li>No puedes redeclarar con <code>:=</code> en el mismo ámbito, pero sí en una asignación múltiple si al menos una variable es nueva: <code>nombre, err := pedirDatos()</code>.</li>
+</ul>
+<p>---</p>
     </div>
   </section>
 
   <section id="tipos-basicos">
-    <h2>Tipos básicos</h2>
+    <h2><i class="fa-solid fa-shapes"></i> Los tipos primitivos y sus tamaños</h2>
     <div class="doc-content">
-<pre><code class="language-go">var (
-	num    int     = 10
-	dec    float64 = 3.14
-	texto  string  = "hola"
-	bandera bool   = true
+<p>Los literales tienen un tipo por defecto: un número entero es <code>int</code>, un decimal es <code>float64</code> y una cadena es <code>string</code>. El especificador <code>%T</code> de <code>Printf</code> revela el tipo real de cualquier valor, ideal para aprender:</p>
+<pre><code class="language-go">entero := 42             // int
+decimal := 3.14          // float64
+texto := "hola"          // string
+bandera := true          // bool
+
+fmt.Printf("%T %T %T %T\n", entero, decimal, texto, bandera)
+// int float64 string bool</code></pre>
+<table><thead><tr><th>Tipo</th><th>Tamaño</th><th>Rango y uso típico</th></tr></thead><tbody><tr><td><code>int</code> / <code>uint</code></td><td>32 o 64 bits según plataforma</td><td>Enteros por defecto; úsalo salvo que tengas un motivo concreto</td></tr><tr><td><code>int8</code> <code>int16</code> <code>int32</code> <code>int64</code></td><td>8/16/32/64 bits con signo</td><td>Desde −128 hasta ±9,2·10¹⁸; formatos binarios y protocolos</td></tr><tr><td><code>uint8</code>..<code>uint64</code></td><td>Ídem, solo positivos</td><td>Cuando el negativo no tiene sentido: longitudes, máscaras</td></tr><tr><td><code>float32</code> / <code>float64</code></td><td>4 / 8 bytes (IEEE-754)</td><td>Decimales; <code>float64</code> es el valor por defecto y el recomendado</td></tr><tr><td><code>bool</code></td><td>1 byte</td><td>Solo <code>true</code> o <code>false</code>; no se convierte a número</td></tr><tr><td><code>string</code></td><td>Inmutable</td><td>Secuencia de bytes UTF-8 (ver sección de strings)</td></tr><tr><td><code>byte</code></td><td>Alias de <code>uint8</code></td><td>Datos binarios crudos: ficheros, red, cifrado</td></tr><tr><td><code>rune</code></td><td>Alias de <code>int32</code></td><td>Un punto Unicode: representa un carácter</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p><code>byte</code> y <code>rune</code> no son tipos nuevos sino <strong>alias</strong>: <code>type byte = uint8</code>. Existen para que el código exprese intención: lees bytes de un fichero, pero recorres un texto runa a runa.</p></blockquote>
+<pre><code class="language-go">var pequenio int8 = 127 // el maximo de int8
+pequenio++              // ¡sin error en compilacion!
+fmt.Println(pequenio)   // -128 : el desborde "da la vuelta"</code></pre>
+<blockquote class="aside aside-caution"><p>Go <strong>no detecta desbordes de enteros en ejecución</strong>: sumar 1 a un <code>int8</code> en su máximo produce −128 en silencio. Elige tipos grandes salvo que estés manipulando formatos binarios exactos.</p></blockquote>
+<blockquote class="aside aside-danger"><p>Nunca representes dinero con <code>float32</code> ni operes precios acumulados en coma flotante sin cuidado: los errores de redondeo se acumulan. La práctica profesional es usar centavos enteros (<code>int64</code>) o tipos decimales exactos de librerías especializadas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="zero-values">
+    <h2><i class="fa-solid fa-zero"></i> Zero values: aquí no existe undefined</h2>
+    <div class="doc-content">
+<p>En JavaScript una variable puede estar <code>undefined</code>; en Java un campo puede quedar a <code>null</code> por descuido. Go elimina esa categoría de bugs con una regla de oro: <strong>toda variable declarada recibe automáticamente un valor inicial válido llamado zero value</strong>. Nunca hay memoria basura ni estados indefinidos.</p>
+<table><thead><tr><th>Tipo</th><th>Zero value</th></tr></thead><tbody><tr><td>Numéricos (<code>int</code>, <code>float64</code>, ...)</td><td><code>0</code></td></tr><tr><td><code>string</code></td><td><code>""</code> (cadena vacía, no nil)</td></tr><tr><td><code>bool</code></td><td><code>false</code></td></tr><tr><td>Punteros, slices, maps, canales, funciones, interfaces</td><td><code>nil</code></td></tr><tr><td>Structs</td><td>Estructura con cada campo en su zero value</td></tr></tbody></table>
+<pre><code class="language-go">type Tarea struct {
+	Nombre    string
+	Prioridad int
+	Hecha     bool
+}
+
+var t Tarea // sin constructor, sin inicializar
+fmt.Println(t) // { 0 false}: perfectamente imprimible y utilizable</code></pre>
+<p>Este comportamiento habilita un patrón muy gozoso de Go: <strong>estructuras utilizables en su valor cero</strong>. Un <code>strings.Builder</code> recién declarado ya acepta escrituras, y un mapa declarado con <code>make</code> ya acepta inserciones, sin constructores de por medio.</p>
+<blockquote class="aside aside-success"><p>Fíjate en lo que desaparece: los errores de «variable sin inicializar» que en C leen basura de memoria, y los <code>NullPointerException</code> accidentales de campos olvidados. El zero value convierte el «no inicializado» en un estado diseñado.</p></blockquote>
+<blockquote class="aside aside-caution"><p><code>nil</code> en Go no es el <code>null</code> universal de otros lenguajes: solo pueden ser <code>nil</code> los tipos con referencia interna (punteros, slices, maps, canales, funciones, interfaces). Desreferenciar un puntero <code>nil</code> provoca un panic inmediato.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="conversion-explicita">
+    <h2><i class="fa-solid fa-right-left"></i> Conversión explícita: nada se convierte solo</h2>
+    <div class="doc-content">
+<p>Go no realiza <strong>ninguna coerción implícita</strong> entre tipos, ni siquiera entre <code>int</code> y <code>float64</code>, los tipos numéricos más comunes. La conversión siempre se escribe <code>T(valor)</code>. Parece burocracia, pero evita bugs históricos: pérdidas silenciosas de precisión y divisiones enteras por accidente.</p>
+<pre><code class="language-go">litros := 130
+viajes := 3
+
+mediaEntera := litros / viajes                    // 43: division ENTERA, trunca
+mediaReal := float64(litros) / float64(viajes)    // 43.333...
+
+// mala := litros + mediaReal // ERROR de compilacion: int + float64
+buena := litros + int(mediaReal) // conversion explicita obligatoria</code></pre>
+<h3>Tipos definidos frente a alias</h3>
+<p>Con <code>type</code> puedes crear dos cosas distintas: un <strong>tipo definido</strong> (nuevo, incompatible con el original aunque compartan representación) o un <strong>alias</strong> (otro nombre para el mismo tipo).</p>
+<pre><code class="language-go">type Metros float64       // tipo DEFINIDO: nuevo e independiente
+type Kilogramos = float64 // ALIAS: es exactamente float64
+
+var distancia Metros = 42.195
+peso := Kilogramos(72.5)  // sigue siendo un float64 corriente
+
+// velocidad := distancia / peso // ERROR: Metros y float64 no se mezclan
+fmt.Printf("%T %.3f\n", distancia, distancia) // main.Metros 42.195</code></pre>
+<blockquote class="aside aside-tip"><p>Crear tipos definidos para unidades (<code>Metros</code>, <code>Segundos</code>) o identificadores (<code>IDUsuario int</code>) aporta seguridad semántica gratuita: el compilador impedirá dividir metros entre kilogramos, el fallo que costó la misión Mars Climate Orbiter en 1999.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="constantes-e-iota">
+    <h2><i class="fa-solid fa-lock"></i> Constantes tipadas, no tipadas e iota</h2>
+    <div class="doc-content">
+<p>Las constantes se evalúan <strong>en tiempo de compilación</strong> con aritmética de precisión arbitraria. Las constantes <strong>no tipadas</strong> son especialmente flexibles: no tienen tipo propio hasta que se usan y se adaptan al contexto:</p>
+<pre><code class="language-go">const MaxConexiones = 500        // NO tipada: se adapta al destino
+const Pi float64 = 3.14159265    // TIPADA: solo opera con float64
+
+var puerto int16 = MaxConexiones // OK: la constante cabe en int16
+// var mal := int(Pi)            // Pi es float64; conversion necesaria
+
+// Precision arbitraria: esto no desborda en compilacion
+const NanosegundosPorHora = 60 * 60 * 1000000000</code></pre>
+<h3>iota: enumeraciones elegantes</h3>
+<p>El identificador <code>iota</code> vale <code>0</code> en la primera línea de un bloque <code>const</code> y avanza en uno por cada línea. Es la forma estándar de construir enumeraciones:</p>
+<pre><code class="language-go">type DiaSemana int
+
+const (
+	Lunes DiaSemana = iota // 0
+	Martes                 // 1: iota se propaga con la expresion repetida
+	Miercoles              // 2
+	Jueves
+	Viernes
+	Sabado
+	Domingo                // 6
 )
 
-// Conversión explícita (no hay coerción implícita)
-i := 42
-f := float64(i)
-u := uint(i)</code></pre>
+type NivelLog int
+
+const (
+	Debug NivelLog = iota
+	Info
+	Warn
+	Error
+	_               // guion bajo: salta una posicion
+	Fatal           // vale 5
+)</code></pre>
+<blockquote class="aside aside-note"><p><code>iota</code> admite expresiones: <code>Kilobyte = 1 &lt;&lt; (10 * iota)</code> genera 1, 1024, 1048576... en líneas sucesivas. Cada bloque <code>const</code> reinicia <code>iota</code> a cero.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="strings-utf8">
+    <h2><i class="fa-solid fa-font"></i> Strings UTF-8: bytes frente a runas</h2>
+    <div class="doc-content">
+<p>Un <code>string</code> en Go es una <strong>secuencia inmutable de bytes codificados en UTF-8</strong>. Esta decisión explica comportamientos que desconciertan a principiantes: <code>len()</code> cuenta <em>bytes</em>, no letras, y un carácter como <code>é</code> u un emoji ocupan varios bytes.</p>
+<pre><code class="language-go">saludo := "¡Olé!"
+// ¡ y O,l,e ocupan 1 byte; ó ocupa 2 bytes en UTF-8
+
+fmt.Println(len(saludo))                    // 6 BYTES (no 5 letras)
+fmt.Println(utf8.RuneCountInString(saludo)) // 5 caracteres
+
+// range decodifica runa a runa; el indice apunta al BYTE inicial
+for i, r := range saludo {
+	fmt.Printf("byte %d -&gt; %c\n", i, r)
+}
+
+runas := []rune(saludo)      // convertir a slice de runas
+fmt.Println(string(runas[3])) // é: ahora si es un solo elemento</code></pre>
+<table><thead><tr><th>Necesito...</th><th>Sobre bytes</th><th>Sobre runas (caracteres)</th></tr></thead><tbody><tr><td>Longitud</td><td><code>len(s)</code></td><td><code>utf8.RuneCountInString(s)</code></td></tr><tr><td>Acceso por posición</td><td><code>s[i]</code> devuelve un <code>byte</code></td><td><code>[]rune(s)[i]</code> devuelve una <code>rune</code></td></tr><tr><td>Recorrer</td><td><code>for i := 0; i &lt; len(s); i++</code></td><td><code>for _, r := range s</code></td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Cortar una cadena con <code>s[:4]</code> puede <strong>partir una runa por la mitad</strong> y producir caracteres corruptos (mojibake). Si vas a trocear texto con acentos o emojis, convierte primero a <code>[]rune</code> o usa paquetes como <code>strings</code> que respetan UTF-8.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<p>Estos tropiezos aparecen en casi todo desarrollador que llega a Go desde lenguajes dinámicos. Reconocerlos ahorra horas de depuración:</p>
+<table><thead><tr><th>Error típico</th><th>Síntoma</th><th>Solución</th></tr></thead><tbody><tr><td>Declarar y no usar una variable local</td><td><code>declared and not used</code>: no compila</td><td>Úsala o elimínala; usa <code>_</code> para descartar conscientemente</td></tr><tr><td>Importar un paquete sin usarlo</td><td><code>imported and not used</code></td><td>Borra el import; tu editor lo gestiona al guardar</td></tr><tr><td>Mezclar <code>int</code> y <code>float64</code> en una operación</td><td><code>invalid operation: mismatched types</code></td><td>Convierte explícitamente con <code>T(valor)</code></td></tr><tr><td>Creer que <code>len(s)</code> cuenta letras</td><td>Textos con acentos miden «demasiado»</td><td><code>utf8.RuneCountInString(s)</code> o <code>[]rune(s)</code></td></tr><tr><td>Desborde silencioso en enteros pequeños</td><td>Valores absurdos tras sumar/restar</td><td>Usa <code>int</code> por defecto; reserva los pequeños para binario</td></tr><tr><td><em>Shadowing</em>: <code>err</code> re-declarado dentro de un <code>if</code></td><td>El error exterior parece «desaparecer»</td><td>Reutiliza con <code>=</code> o renombra; vigila cada <code>:=</code> nuevo bloque</td></tr></tbody></table>
+<pre><code class="language-go">err := primerPaso()
+if err == nil {
+	datos, err := segundoPaso() // := crea OTRO err, solo visible aqui
+	_ = datos
+	_ = err
+}
+// fuera del if, err sigue siendo el de primerPaso: bug clasico</code></pre>
+<blockquote class="aside aside-tip"><p>Activa el análisis en tiempo real de VSCode (extensión oficial de Go) y ejecuta <code>go vet ./...</code> antes de cada commit: entre ambos cazan el shadowing sospechoso, los formatos incorrectos en <code>Printf</code> y conversiones dudosas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuélvelos en orden dentro de un módulo nuevo (<code>go mod init guidev/tipos</code>): cada ejercicio reutiliza el anterior.</p>
+<ol>
+<li><strong>Tres formas de decir lo mismo</strong>: declara la variable <code>version</code> (valor <code>3</code>) con <code>var</code> completa, <code>var</code> con inferencia y <code>:=</code>. Imprime su tipo con <code>fmt.Printf("%T\n", version)</code> y explica en un comentario por qué las tres compilan igual.</li>
+<li><strong>Conversor de temperaturas</strong>: crea los tipos definidos <code>Celsius</code> y <code>Fahrenheit</code> sobre <code>float64</code> y funciones que conviertan entre ellos con conversiones explícitas. Intenta a propósito sumar un <code>Celsius</code> con un <code>float64</code> sin convertir y lee el error del compilador.</li>
+<li><strong>Enumeración con iota</strong>: modela <code>EstadoPedido</code> con los estados Pendiente, Pagado, Enviado, Entregado y Cancelado. Imprime cada constante con su valor numérico usando <code>fmt.Println</code> y <code>%d</code>.</li>
+<li><strong>Analizador de cadenas</strong>: toma la frase <code>"¡Mañana será ñoño 🚀!"</code> y muestra lado a lado <code>len()</code>, <code>utf8.RuneCountInString()</code> y el recorrido con <code>range</code>. Escribe en comentarios cuántos bytes ocupa cada carácter especial.</li>
+<li><strong>Calculadora de factura</strong>: con constantes (<code>IVA = 0.21</code>, <code>DescuentoVolumen = 0.05</code>) y variables <code>float64</code>, calcula subtotal, descuento, impuestos y total de tres productos. Después intenta hacer el mismo cálculo con <code>int</code> y documenta en un comentario exactamente dónde aparecería el truncado y cuánto dinero «desaparecería».</li>
+</ol>
     </div>
   </section>

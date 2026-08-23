@@ -1,67 +1,236 @@
 <!-- 9. Vistas, procedimientos y triggers - MySQL (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="vistas-view">
-    <h2>Vistas (VIEW)</h2>
+<section id="vistas-view">
+    <h2><i class="fa-solid fa-eye"></i> Vistas (CREATE VIEW)</h2>
     <div class="doc-content">
-<p>Una vista es una consulta guardada que se usa como si fuera una tabla.</p>
-<pre><code class="language-sql">CREATE VIEW vw_productos_caros AS
-SELECT nombre, precio FROM productos WHERE precio &gt; 10000;
+        <p>Una <strong>vista</strong> es una consulta guardada con nombre que se comporta como tabla virtual. Encapsula JOINs complejos, estandariza reportes y simplifica permisos — sin duplicar datos:</p>
+        <pre><code class="language-sql">CREATE VIEW vista_pedidos_completos AS
+SELECT
+    p.pedido_id,
+    c.nombre          AS cliente,
+    c.email,
+    p.fecha,
+    COUNT(d.producto_id)  AS items,
+    SUM(d.cantidad * d.precio_unit) AS total
+FROM pedidos p
+JOIN clientes c ON c.id = p.cliente_id
+JOIN detalle d  ON d.pedido_id = p.pedido_id
+GROUP BY p.pedido_id, c.nombre, c.email, p.fecha;
 
-SELECT * FROM vw_productos_caros;
+-- Se consulta como una tabla normal:
+SELECT * FROM vista_pedidos_completos WHERE total &gt; 500 ORDER BY total DESC;
 
-DROP VIEW IF EXISTS vw_productos_caros;</code></pre>
+-- Modificar y eliminar:
+ALTER VIEW vista_pedidos_completos AS SELECT ...;
+DROP VIEW IF EXISTS vista_antigua;
+
+-- Ver su definición:
+SHOW CREATE VIEW vista_pedidos_completos\G</code></pre>
+
+        <h3>Tipos de vistas por comportamiento</h3>
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>INSERT/UPDATE posibles?</th><th>Notas</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Vista simple (1 tabla, sin agregados)</td><td>Sí, con restricciones</td><td>Se actualiza la tabla base subyacente</td></tr>
+                <tr><td>Vista compleja (JOINs, GROUP BY)</td><td>No (read-only)</td><td>El caso del 95% real</td></tr>
+                <tr><td>WITH CHECK OPTION</td><td>Inserts vía vista deben cumplir su WHERE</td><td>Evita "insertar fuera de la vista"</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>Una vista NO guarda resultados: cada consulta la RE-EJECUTA desde cero. Una vista sobre 5 tablas gigantes usada en cada request es un problema de rendimiento heredable e invisible. Para resultados pesados pre-calculados existen las materialized views — que MySQL NO tiene nativamente; se simulan con tablas + eventos.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="procedimientos-almacenados">
-    <h2>Procedimientos almacenados</h2>
+<section id="procedimientos-almacenados">
+    <h2><i class="fa-solid fa-gears"></i> Procedimientos almacenados</h2>
     <div class="doc-content">
-<pre><code class="language-sql">DELIMITER //
+        <p>Un procedimiento es un programa completo viviendo dentro del servidor: lógica multi-paso ejecutable con CALL. Reduce round-trips de red y encapsula operaciones transaccionales críticas:</p>
+        <pre><code class="language-sql">DELIMITER $$
 
-CREATE PROCEDURE sp_subir_precios(IN p_categoria INT, IN p_porcentaje DECIMAL(5,2))
+CREATE PROCEDURE registrar_pedido(
+    IN  p_cliente_id INT UNSIGNED,
+    IN  p_producto_id INT UNSIGNED,
+    IN  p_cantidad SMALLINT UNSIGNED,
+    OUT p_nuevo_pedido INT UNSIGNED
+)
 BEGIN
-  UPDATE productos
-  SET precio = precio * (1 + p_porcentaje / 100)
-  WHERE categoria_id = p_categoria;
-END //
+    DECLARE v_precio DECIMAL(10,2);
+    DECLARE v_stock INT DEFAULT 0;
+
+    START TRANSACTION;
+
+    -- Bloquear fila producto y validar stock:
+    SELECT precio, stock INTO v_precio, v_stock
+    FROM productos WHERE id = p_producto_id FOR UPDATE;
+
+    IF v_stock &lt; p_cantidad THEN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Stock insuficiente';
+    END IF;
+
+    INSERT INTO pedidos (cliente_id, total)
+    VALUES (p_cliente_id, v_precio * p_cantidad);
+    SET p_nuevo_pedido = LAST_INSERT_ID();
+
+    INSERT INTO detalle (pedido_id, producto_id, cantidad, precio_unit)
+    VALUES (p_nuevo_pedido, p_producto_id, p_cantidad, v_precio);
+
+    UPDATE productos SET stock = stock - p_cantidad WHERE id = p_producto_id;
+
+    COMMIT;
+END$$
 
 DELIMITER ;
 
-CALL sp_subir_precios(1, 10.00);   -- sube 10% a la categoría 1</code></pre>
-<p><code>DELIMITER //</code> cambia el separador temporalmente para que MySQL no interprete los <code>;</code> internos como fin del procedimiento.</p>
+-- Ejecutar:
+CALL registrar_pedido(5, 12, 3, @pedido);
+SELECT @pedido AS nuevo_id;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Pieza</th><th>Rol</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>IN / OUT / INOUT</code></td><td>Parámetros entrada / salida / ambos</td></tr>
+                <tr><td><code>DECLARE</code></td><td>Variables locales tipadas (al inicio del bloque)</td></tr>
+                <tr><td><code>SELECT ... INTO</code></td><td>Cargar resultado a variables</td></tr>
+                <tr><td><code>SIGNAL SQLSTATE '45000'</code></td><td>Lanzar error personalizado al llamador</td></tr>
+                <tr><td><code>DELIMITER $$</code></td><td>Solo para el CLIENTE: permite ; internos</td></tr>
+                <tr><td><code>FOR UPDATE</code></td><td>Lock pesimista: nadie más toca esa fila hasta COMMIT</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Los procedures brillan en operaciones transaccionales atómicas multi-tabla (como este pedido con stock). La contrapartida: versionado difícil, testing pobre y vendor lock-in. Regla moderna: lógica de negocio en app; procedures solo para hot paths transaccionales.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="funciones-almacenadas">
-    <h2>Funciones almacenadas</h2>
+<section id="funciones-almacenadas">
+    <h2><i class="fa-solid fa-square-root-variable"></i> Funciones almacenadas</h2>
     <div class="doc-content">
-<pre><code class="language-sql">DELIMITER //
-CREATE FUNCTION fn_iva(precio DECIMAL(10,2)) RETURNS DECIMAL(10,2)
+        <p>A diferencia del procedure, una función DEVUELVE UN VALOR y puede usarse dentro de queries como cualquier función nativa:</p>
+        <pre><code class="language-sql">DELIMITER $$
+CREATE FUNCTION calcular_iva(precio DECIMAL(10,2), tasa DECIMAL(4,2))
+RETURNS DECIMAL(10,2)
+READS SQL DATA                          -- determinismo declarado
+BEGIN
+    RETURN ROUND(precio * tasa, 2);
+END$$
+
+CREATE FUNCTION iniciales(nombre VARCHAR(80))
+RETURNS VARCHAR(10)
 DETERMINISTIC
 BEGIN
-  RETURN precio * 1.16;
-END //
+    RETURN CONCAT(LEFT(nombre, 1), '.');
+END$$
 DELIMITER ;
 
-SELECT nombre, fn_iva(precio) AS con_iva FROM productos;</code></pre>
+-- Uso inline:
+SELECT nombre, calcular_iva(precio, 0.21) AS iva,
+       precio + calcular_iva(precio, 0.21) AS pvp
+FROM productos;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Characteristic</th><th>Significa</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>DETERMINISTIC</td><td>Mismo input → mismo output siempre (permite cacheo/binlog STATEMENT)</td></tr>
+                <tr><td>NO SQL</td><td>No toca datos</td></tr>
+                <tr><td>READS SQL DATA</td><td>Lee pero no escribe</td></tr>
+                <tr><td>MODIFIES SQL DATA</td><td>Escribe datos</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>Una función llamada por cada FILA de una query grande (función escalar en SELECT sobre 100k filas) ejecuta 100k invocaciones interpretadas: rendimiento desastroso comparado con expresiones inline o joins calculados. Usa funciones escalares en filtros puntuales y reportes pequeños.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="triggers">
-    <h2>Triggers</h2>
+<section id="triggers">
+    <h2><i class="fa-solid fa-bolt"></i> Triggers: reacciones automáticas</h2>
     <div class="doc-content">
-<pre><code class="language-sql">DELIMITER //
-CREATE TRIGGER trg_descuenta_stock
-AFTER INSERT ON ventas
+        <p>Un trigger se dispara SOLO ante INSERT/UPDATE/DELETE de una tabla concreta — antes o después de la operación. Útil para auditoría e invariantes cruzadas:</p>
+        <pre><code class="language-sql">DELIMITER $$
+
+-- Auditoría de cambios de precio:
+CREATE TRIGGER trg_productos_audit
+AFTER UPDATE ON productos
 FOR EACH ROW
 BEGIN
-  UPDATE productos
-  SET stock = stock - NEW.cantidad
-  WHERE id = NEW.producto_id;
-END //
-DELIMITER ;</code></pre>
-<blockquote class="aside aside-caution">
-<p>Los triggers se ejecutan en cada fila afectada y pueden degradar el rendimiento en cargas masivas. Úsalos solo cuando la regla sea imprescindible.</p>
-</blockquote>
+    IF OLD.precio &lt;&gt; NEW.precio THEN
+        INSERT INTO historial_precios
+            (producto_id, precio_anterior, precio_nuevo, cambiado_el)
+        VALUES
+            (NEW.id, OLD.precio, NEW.precio, NOW());
+    END IF;
+END$$
+
+-- Mantener contador denormalizado consistente:
+CREATE TRIGGER trg_detalle_ai
+AFTER INSERT ON detalle
+FOR EACH ROW
+BEGIN
+    UPDATE pedidos
+    SET total = total + (NEW.cantidad * NEW.precio_unit)
+    WHERE pedido_id = NEW.pedido_id;
+END$$
+
+DELIMITER ;
+
+-- Ver triggers existentes:
+SHOW TRIGGERS LIKE 'productos'\G
+DROP TRIGGER IF EXISTS trg_productos_audit;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Momento/tipo</th><th>Cuándo dispara</th><th>Acceso a filas</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>BEFORE INSERT/UPDATE</td><td>Antes de escribir (puede MODIFICAR NEW)</td><td>Validar/transformar valores entrantes</td></tr>
+                <tr><td>AFTER INSERT/UPDATE/DELETE</td><td>Tras confirmar escritura</td><td>OLD.* y NEW.* solo lectura efectiva</td></tr>
+                <tr><td>OLD / NEW</td><td>—</td><td>OLD=valor previo, NEW=valor entrante (DELETE solo OLD, INSERT solo NEW)</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>Triggers invisibles = bugs invisibles: el dev que hace UPDATE directo no sabe que otro código corre detrás, multiplicando latencia silenciosamente. Documenta TODO trigger, evita cadenas trigger→tabla→trigger, y nunca lógica de negocio seria ahí dentro — auditoría sí, reglas complejas no.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Olvidar cambiar DELIMITER al crear rutinas</td><td>Error de sintaxis en el primer ; interno</td><td>DELIMITER $$ ... END$$ DELIMITER ;</td></tr>
+                <tr><td>Vista sobre tablas renombradas/borradas</td><td>Vista rota: "view references invalid table"</td><td>CHECK TABLE / recrear; migraciones coordinadas</td></tr>
+                <tr><td>Función escalar en query masivo</td><td>Minutos donde iban milisegundos</td><td>Expresión inline/join; funciones solo puntual</td></tr>
+                <tr><td>Trigger AFTER que actualiza SU misma tabla</td><td>"Can't update table in stored function/trigger"</td><td>BEFORE trigger modificando NEW directamente</td></tr>
+                <tr><td>Procedure sin manejo de errores/transacción</td><td>Datos a medias tras fallo intermedio</td><td>START TRANSACTION + SIGNAL + ROLLBACK diseñados</td></tr>
+                <tr><td>Confundir CALL proc() con SELECT func()</td><td>"PROCEDURE does not exist" / error sintaxis</td><td>CALL ejecuta procedure; función va en expresiones</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Vista de reporting</strong>: crea vista resumen mensual de ventas (mes, pedidos, facturado, ticket medio); consúmela con filtros y ordenaciones.</li>
+            <li><strong>Procedure transaccional</strong>: implementa registrar_pedido COMPLETO del ejemplo; prueba caso feliz, stock insuficiente (SIGNAL), y verificación de atomicidad forzando fallo intermedio.</li>
+            <li><strong>Función de negocio</strong>: calcula_descuento(vip, total) con reglas por tramos; úsala en SELECT y compara performance contra CASE inline en tabla grande.</li>
+            <li><strong>Auditoría con triggers</strong>: tabla log_cambios genérica + BEFORE/AFTER UPDATE en empleados registrando quién/cuándo/qué cambió (JSON de diffs).</li>
+            <li><strong>Cazador de triggers ocultos</strong>: instrumenta tu tabla con trigger contador a otra tabla métrica; haz updates masivos y mide el coste extra del trigger con profiling.</li>
+        </ol>
+    </div>
+</section>

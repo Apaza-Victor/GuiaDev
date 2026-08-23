@@ -1,31 +1,255 @@
 <!-- 4. Funciones y Closures - Swift (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
 
   <section id="funciones">
-    <h2>Funciones</h2>
+    <h2><i class="fa-solid fa-square-root-variable"></i> Funciones y etiquetas de argumento</h2>
     <div class="doc-content">
+<p>Una función empaqueta un bloque de lógica bajo un nombre para reutilizarlo sin duplicar. Pero en Swift van más lejos: están diseñadas para que la <strong>llamada se lea como una frase</strong>. El secreto son las <em>etiquetas de argumento</em>: cada parámetro puede tener un nombre externo (en la llamada) distinto del interno (dentro del cuerpo).</p>
 <pre><code class="language-swift">func saludar(a nombre: String, veces: Int = 1) -&gt; String {
-    return String(repeating: "Hola \(nombre)! ", count: veces)
+    String(repeating: "Hola \(nombre)! ", count: veces)
 }
 
-saludar(a: "Ana", veces: 2)
+// La llamada se lee: "saludar A Ana, VECES 2"
+let saludo = saludar(a: "Ana", veces: 2)
+print(saludo)   // Hola Ana! Hola Ana!</code></pre>
+<p>El objetivo es que quien lee el código de uso entienda el papel de cada valor sin abrir la definición. Compara <code>move(3.0, 4.0)</code> con <code>move(fromX: 3.0, toY: 4.0)</code>: solo una de las dos se explica sola.</p>
+<h3>Omitir etiquetas con _</h3>
+<p>Cuando la etiqueta no aporta nada (el nombre del método ya lo dice todo), se suprime con guion bajo. Es habitual en operadores matemáticos o APIs que imitan funciones globales:</p>
+<pre><code class="language-swift">func dividir(_ a: Double, _ b: Double) -&gt; Double {
+    a / b
+}
 
-func dividir(_ a: Double, _ b: Double) -&gt; (cociente: Double, resto: Double)? {
+// "dividir 10 entre 4": la frase ya fluye sin etiquetas
+print(dividir(10, 4))   // 2.5</code></pre>
+<table><thead><tr><th>Declaración</th><th>Llamada resultante</th><th>Cuándo usarlo</th></tr></thead><tbody><tr><td><code>func mover(de: String, hacia: String)</code></td><td><code>mover(de: "A", hacia: "B")</code></td><td>La relación entre argumentos importa</td></tr><tr><td><code>func sumar(_ x: Int, _ y: Int)</code></td><td><code>sumar(2, 3)</code></td><td>Etiquetas sobran; lectura matemática</td></tr><tr><td><code>func buscar(texto t: String)</code></td><td><code>buscar(texto: "swift")</code></td><td>Nombre externo e interno distintos</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>Los nombres de función también admiten caracteres Unicode y hasta emojis, pero la convención profesional es camelCase descriptivo en inglés o español consistente… con moderación creativa.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="parametros-avanzados">
+    <h2><i class="fa-solid fa-sliders"></i> Parámetros avanzados y retornos múltiples</h2>
+    <div class="doc-content">
+<h3>Valores por defecto</h3>
+<p>Un parámetro con valor por defecto vuelve opcional en la llamada: la API se simplifica sin perder flexibilidad. Por convención se colocan al final:</p>
+<pre><code class="language-swift">func conectar(host: String, puerto: Int = 443, seguro: Bool = true) {
+    print("\(host):\(puerto) (\(seguro ? "TLS" : "plain"))")
+}
+
+conectar(host: "api.guia.dev")                 // usa los dos defectos
+conectar(host: "localhost", puerto: 8080)      // solo uno personalizado</code></pre>
+<h3>Parámetros variádicos</h3>
+<p>Con tres puntos, un parámetro acepta cualquier número de valores y dentro de la función llega como array:</p>
+<pre><code class="language-swift">func promedio(_ notas: Double...) -&gt; Double {
+    guard !notas.isEmpty else { return 0 }
+    return notas.reduce(0, +) / Double(notas.count)
+}
+
+promedio(8, 9, 10)          // 9.0
+promedio(7.5)               // 7.5</code></pre>
+<h3>inout: modificar el original</h3>
+<p>Los parámetros son constantes por defecto y los valores se copian. Si una función necesita <em>cambiar</em> el valor recibido (patrón clásico: intercambiar dos variables), declara el parámetro <code>inout</code> y pasa la variable con <code>&amp;</code>, dejando visible en la llamada que algo puede mutar:</p>
+<pre><code class="language-swift">func intercambiar(_ a: inout Int, _ b: inout Int) {
+    let temporal = a
+    a = b
+    b = temporal
+}
+
+var x = 1, y = 2
+intercambiar(&amp;x, &amp;y)
+print(x, y)   // 2 1</code></pre>
+<h3>Varios valores de retorno con tuplas</h3>
+<p>Sin crear tipos nuevos, una tupla nombrada devuelve resultados compuestos. Si puede fallar, convierte toda la tupla en opcional:</p>
+<pre><code class="language-swift">func dividir(_ a: Double, _ b: Double) -&gt; (cociente: Double, resto: Double)? {
     guard b != 0 else { return nil }
     return (a / b, a.truncatingRemainder(dividingBy: b))
+}
+
+if let r = dividir(17, 5) {
+    print(r.cociente, r.resto)   // 3.4 2.0
 }</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ciudadanos-de-primera-clase">
+    <h2><i class="fa-solid fa-crown"></i> Funciones como ciudadanos de primera clase</h2>
+    <div class="doc-content">
+<p>En Swift una función es un <strong>valor</strong> más: tiene un tipo (<code>(Int, Int) -&gt; Int</code>), se guarda en constantes, se pasa como argumento y se devuelve desde otras funciones. Esto habilita la programación funcional y es la base conceptual de los closures.</p>
+<pre><code class="language-swift">func sumar(_ a: Int, _ b: Int) -&gt; Int { a + b }
+func multiplicar(_ a: Int, _ b: Int) -&gt; Int { a * b }
+
+// El tipo de ambas es (Int, Int) -> Int: cabe en una constante
+let operacion: (Int, Int) -&gt; Int = sumar
+print(operacion(3, 4))    // 7
+
+// Pasar funciones como argumentos
+func aplicar(_ op: (Int, Int) -&gt; Int, _ a: Int, _ b: Int) -&gt; Int {
+    op(a, b)
+}
+aplicar(multiplicar, 3, 4)   // 12
+
+// Devolver funciones: fábrica de operaciones
+func elegirOperador(_ simbolo: String) -&gt; (Int, Int) -&gt; Int {
+    simbolo == "+" ? sumar : multiplicar
+}
+elegirOperador("+")(10, 5)   // 15</code></pre>
+<blockquote class="aside aside-tip"><p>Piensa en las funciones como datos cuando necesites <em>decidir comportamiento en tiempo de ejecución</em>: estrategias de ordenación, validadores configurables o handlers de eventos son candidatos perfectos.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="closures">
-    <h2>Closures</h2>
+    <h2><i class="fa-solid fa-braille"></i> Closures: funciones sin nombre</h2>
     <div class="doc-content">
-<pre><code class="language-swift">let cuadrado = { (x: Int) -&gt; Int in x * x }
-cuadrado(4)   // 16
+<p>Un <strong>closure</strong> es un bloque de código ejecutable que puede capturar valores de su entorno. Su sintaxis usa llaves y la palabra <code>in</code> para separar parámetros y tipo del cuerpo. Lo mejor: el compilador va eliminando ceremonia cuando la infiere, así que una misma operación admite cuatro niveles de verbosidad:</p>
+<pre><code class="language-swift">let nombres = ["Carlos", "ana", "Bea"]
 
-let nums = [3, 1, 4, 1, 5]
-let ordenados = nums.sorted { $0 &gt; $1 }        // shorthand args
-let pares = nums.filter { $0 % 2 == 0 }
-let dobles = nums.map { $0 * 2 }</code></pre>
+// 1. Completo: tipos explícitos, return obligatorio
+let v1 = nombres.sorted(by: { (a: String, b: String) -&gt; Bool in
+    return a.lowercased() &lt; b.lowercased()
+})
+
+// 2. Tipos inferidos por el contexto (sorted sabe que compara Strings)
+let v2 = nombres.sorted(by: { a, b in a.lowercased() &lt; b.lowercased() })
+
+// 3. Return implícito si el cuerpo es una única expresión
+let v3 = nombres.sorted { a, b in a.lowercased() &lt; b.lowercased() }
+
+// 4. Argumentos abreviados $0, $1…
+let v4 = nombres.sorted { $0.lowercased() &lt; $1.lowercased() }
+// Todas producen: ["ana", "Bea", "Carlos"]</code></pre>
+<p>Los argumentos abreviados <code>$0</code>, <code>$1</code>, <code>$2</code> referencian los parámetros por posición. Convierten en instantáneas las transformaciones típicas de colecciones:</p>
+<pre><code class="language-swift">let nums = [3, 1, 4, 1, 5]
+
+nums.sorted { $0 &gt; $1 }        // descendente: [5, 4, 3, 1, 1]
+nums.filter { $0 % 2 == 0 }    // pares: [4]
+nums.map { $0 * 2 }            // dobles: [6, 2, 8, 2, 10]</code></pre>
+<h3>Closures como valores independientes</h3>
+<pre><code class="language-swift">// Almacenado con su tipo declarado
+let alCuadrado: (Int) -&gt; Int = { $0 * $0 }
+alCuadrado(4)                  // 16
+
+// () -&gt; Void: sin parámetros ni retorno, típico de botones y callbacks
+let celebrar: () -&gt; Void = { print("¡Golazo!") }</code></pre>
+<blockquote class="aside aside-caution"><p>Regla de legibilidad: usa <code>$0</code>/<code>$1</code> cuando el closure sea corto y obvio. Si necesita más de dos o tres líneas, nombra los parámetros (<code>{ pedido in … }</code>) o extrae una función con nombre.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="trailing-closures">
+    <h2><i class="fa-solid fa-outdent"></i> Trailing closures</h2>
+    <div class="doc-content">
+<p>Cuando el último argumento de una llamada es un closure, Swift permite sacarlo fuera de los paréntesis. El resultado parece una construcción del propio lenguaje, y es la razón estética detrás de APIs como SwiftUI o las animaciones de UIKit:</p>
+<pre><code class="language-swift">// Forma estándar
+let animar = UIView.animate(withDuration: 0.3, animations: {
+    vista.alpha = 0
+})
+
+// Trailing closure: mismo resultado, más limpio
+UIView.animate(withDuration: 0.3) {
+    vista.alpha = 0
+}
+
+// El patrón que verás por todas partes en SwiftUI
+Button("Guardar") {
+    guardarDocumento()
+}</code></pre>
+<h3>Múltiples trailing closures (Swift 5.3+)</h3>
+<p>Si la función recibe varios closures, el primero queda sin etiqueta y los siguientes conservan la suya. Así nacen llamadas que casi se leen como frases:</p>
+<pre><code class="language-swift">func descargar(imagen url: String,
+               alProgresar: (Double) -&gt; Void,
+               alTerminar: (Data?) -&gt; Void) {
+    alProgresar(0.5)
+    alTerminar(Data())
+}
+
+descargar(imagen: "logo.png") { progreso in
+    print("Barra: \(Int(progreso * 100))%")
+} alTerminar: { datos in
+    print("Listo: \(datos?.count ?? 0) bytes")
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Si diseñas tus propias APIs, pon siempre los closures al final de la lista de parámetros: habilitas trailing closures y tu API se sentirá nativa del lenguaje en lugar de importada.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="escaping-y-captura">
+    <h2><i class="fa-solid fa-hourglass-half"></i> Escaping, captura de valores y listas de captura</h2>
+    <div class="doc-content">
+<h3>@escaping: ¿el closure vive más allá de la llamada?</h3>
+<p>Por defecto, un closure pasado a una función es <strong>non-escaping</strong>: se ejecuta antes de que la función termine y luego desaparece. Si lo almacenas o lo lanzas en una cola asíncrona (seguirá vivo <em>después</em> del retorno), debes marcarlo <code>@escaping</code>:</p>
+<table><thead><tr><th>Característica</th><th>Non-escaping (por defecto)</th><th>@escaping</th></tr></thead><tbody><tr><td>Duración de vida</td><td>Muere al terminar la función</td><td>Puede sobrevivir a la llamada</td></tr><tr><td>Usos típicos</td><td><code>map</code>, <code>filter</code>, <code>sorted</code></td><td>Callbacks asíncronos, handlers guardados</td></tr><tr><td>Riesgo de ciclos de memoria</td><td>No</td><td>Sí, si captura objetos fuertemente</td></tr><tr><td>Optimización del compilador</td><td>Máxima (conoce su destino)</td><td>Limitada</td></tr></tbody></table>
+<pre><code class="language-swift">var manejadores: [() -&gt; Void] = []
+
+func registrar(alPulsar accion: @escaping () -&gt; Void) {
+    manejadores.append(accion)   // se guarda: necesita @escaping
+}
+
+registrar { print("Botón pulsado") }
+manejadores.forEach { $0() }     // se dispara después, ya fuera de registrar</code></pre>
+<h3>Captura: los closures recuerdan su entorno</h3>
+<p>A diferencia de muchas funciones anónimas de otros lenguajes, los closures de Swift capturan las variables <strong>por referencia</strong>: pueden leerlas y modificarlas entre llamadas. Eso permite patrones como contadores persistentes:</p>
+<pre><code class="language-swift">func crearContador() -&gt; () -&gt; Int {
+    var total = 0                    // capturado por referencia
+    return {
+        total += 1                   // sigue vivo tras retornar crearContador
+        return total
+    }
+}
+
+let contadorA = crearContador()
+contadorA(); contadorA()
+print(contadorA())                   // 3: 'total' sobrevivió a la función
+
+let contadorB = crearContador()
+print(contadorB())                   // 1: cada closure captura SU propia copia</code></pre>
+<h3>Listas de captura: congelar valores</h3>
+<p>Cuando quieres una <strong>fotografía</strong> del valor en el momento de crear el closure (no un enlace vivo), lo declaras en la lista de captura inicial:</p>
+<pre><code class="language-swift">var mensaje = "antes"
+let imprimir = { [mensaje] in print(mensaje) }
+
+mensaje = "después"
+imprimir()        // "antes" ← capturó la copia del momento
+// [weak self] hará el mismo papel con clases para evitar fugas de memoria</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas con funciones y closures</h2>
+    <div class="doc-content">
+<h3>1. Diseña llamadas legibles</h3>
+<pre><code class="language-swift">// ❌ ¿Qué es true? ¿Qué es 30?
+enviar(true, false, 30)
+
+// ✅ Etiquetas y tipos con sentido
+enviar(notificaciones: true, sonido: false, volumen: 30)</code></pre>
+<h3>2. Closures cortos, lógica compleja con nombre</h3>
+<pre><code class="language-swift">// ❌ Difícil de depurar y probar
+let validos = usuarios.filter { $0.edad &gt;= 18 && $0.email.contains("@") && !$0.baneado }
+
+// ✅ Extrae predicados con nombre: autodocumentados y reutilizables
+func esClienteActivo(_ u: Usuario) -&gt; Bool {
+    u.edad &gt;= 18 && u.email.contains("@") && !u.baneado
+}
+let activos = usuarios.filter(esClienteActivo)</code></pre>
+<h3>3. Deja que el compilador trabaje</h3>
+<p>No declares tipos en closures salvo ambigüedad real; usa <code>$0</code> en transformaciones de una línea y parámetros nombrados en las largas. Y recuerda: <code>@escaping</code> solo cuando el closure sobreviva a la función, porque cada escape innecesario abre la puerta a retenciones accidentales de memoria.</p>
+<blockquote class="aside aside-success"><p>Señal de que dominas esta lección: cuando lees <code>peliculas.filter { $0.año &gt;= 2000 }.map(\.titulo).sorted()</code>, la interpretas como una frase —"títulos de películas del siglo XXI, ordenados"— y no como símbolos raros. Esa fluidez se construye practicando los ejercicios de abajo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>De menor a mayor dificultad:</p>
+<ol>
+<li><strong>Saludador configurable:</strong> crea <code>saludo(nombre:veces:mayusculas:)</code> con valores por defecto (<code>veces = 1</code>, <code>mayusculas = false</code>) que devuelva el saludo repetido; llama a la función usando etiquetas de forma que la línea se lea como una frase.</li>
+<li><strong>Estadísticas variádicas:</strong> escribe <code>resumir(_ numeros: Double...) -&gt; (media: Double, maximo: Double, minimo: Double)?</code> que devuelva nil si no hay datos, y pruébala desempaquetando con <code>if let</code>.</li>
+<li><strong>Pipeline de calificaciones:</strong> dada una lista de notas, obtén en una sola expresión encadenada las aprobadas (&gt;= 5), elevadas a cuadrado y ordenadas descendentemente, usando closures abreviados <code>$0</code>.</li>
+<li><strong>Acumuladores independientes:</strong> implementa <code>crearSumador(base: Int) -&gt; (Int) -&gt; Int</code> cuyo closure capture el total; demuestra con dos instancias que sus estados no se mezclan y añade una lista de captura para verificar la diferencia entre captura por referencia y copia congelada.</li>
+<li><strong>Mini event bus:</strong> diseña <code>struct Bus</code> con <code>suscribir(evento: String, handler: @escaping (String) -&gt; Void)</code> y <code>publicar(evento: String)</code>; registra varios manejadores con múltiples trailing closures o closures cortos, publica dos eventos y comprueba que solo llegan a sus suscriptores correctos.</li>
+</ol>
     </div>
   </section>

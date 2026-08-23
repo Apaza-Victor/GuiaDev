@@ -1,59 +1,175 @@
 <!-- 7. JOINS - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="inner-join">
-    <h2>INNER JOIN</h2>
+<section id="inner-join">
+    <h2><i class="fa-solid fa-circle-nodes"></i> INNER JOIN</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT p.Nombre, c.Nombre AS Categoria, p.Precio
-FROM dbo.Productos p
-INNER JOIN dbo.Categorias c ON p.CategoriaId = c.Id;</code></pre>
-    </div>
-  </section>
+        <p>Devuelve únicamente filas con pareja en ambas tablas. Sintaxis idéntica a otros motores, con el matiz T-SQL de calificar esquema cuando importa:</p>
+        <pre><code class="language-sql">SELECT c.nombre, p.fecha, p.total
+FROM dbo.Clientes AS c
+INNER JOIN dbo.Pedidos AS p ON p.cliente_id = c.id;
 
-  <section id="left-right-full-outer">
-    <h2>LEFT / RIGHT / FULL OUTER</h2>
+-- Con filtro y orden:
+SELECT c.nombre, COUNT(p.pedido_id) AS pedidos, SUM(p.total) AS gastado
+FROM dbo.Clientes AS c
+JOIN dbo.Pedidos AS p ON p.cliente_id = c.id
+WHERE p.fecha &gt;= '2026-01-01'
+GROUP BY c.id, c.nombre
+HAVING SUM(p.total) &gt; 1000
+ORDER BY gastado DESC;</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>INNER es la keyword opcional: JOIN a secas = INNER JOIN. Pero escribirla explícita documenta intención frente al LEFT que sí exige su palabra. En equipos, convención: siempre INNER JOIN escrito completo.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="left-right-full-outer">
+    <h2><i class="fa-solid fa-arrows-left-right-to-line"></i> LEFT / RIGHT / FULL OUTER: los tres sabores</h2>
     <div class="doc-content">
-<pre><code class="language-sql">-- Todos los productos aunque no tengan venta
-SELECT p.Nombre, v.Fecha, v.Cantidad
-FROM dbo.Productos p
-LEFT JOIN dbo.Ventas v ON v.ProductoId = p.Id;
+        <p>SQL Server tiene algo que MySQL no ofrece nativamente: <strong>FULL OUTER JOIN</strong> — la unión completa de ambos lados con NULLs donde falte pareja:</p>
+        <pre><code class="language-sql">-- LEFT: todos los clientes aunque no compren:
+SELECT c.nombre, p.total
+FROM Clientes c
+LEFT JOIN Pedidos p ON p.cliente_id = c.id;
 
--- Productos jamás vendidos
-SELECT p.Nombre
-FROM dbo.Productos p
-LEFT JOIN dbo.Ventas v ON v.ProductoId = p.Id
-WHERE v.Id IS NULL;
+-- Anti-join: quiénes NO tienen pedido:
+SELECT c.nombre
+FROM Clientes c
+LEFT JOIN Pedidos p ON p.cliente_id = c.id
+WHERE p.pedido_id IS NULL;
 
--- FULL OUTER: todo de ambos lados
-SELECT p.Nombre, v.Fecha
-FROM dbo.Productos p
-FULL OUTER JOIN dbo.Ventas v ON v.ProductoId = p.Id;</code></pre>
-<blockquote class="aside aside-tip">
-<p>En un LEFT JOIN, filtros sobre la tabla derecha van mejor en el <code>ON</code>; ponerlos en el <code>WHERE</code> puede convertirlo en INNER.</p>
-</blockquote>
+-- RIGHT: espejo del LEFT (evítalo por legibilidad):
+SELECT c.nombre, p.total
+FROM Pedidos p
+RIGHT JOIN Clientes c ON c.id = p.cliente_id;
+-- == FROM Clientes c LEFT JOIN Pedidos p ...
+
+-- ✨ FULL OUTER JOIN (exclusivo aquí): TODO de ambos lados:
+SELECT ISNULL(c.email, r.email) AS email,
+       CASE WHEN c.email IS NULL THEN 'solo_repositorio' 
+            WHEN r.email IS NULL THEN 'solo_clientes'
+            ELSE 'en_ambos' END AS origen
+FROM Clientes c
+FULL OUTER JOIN Repositorio_Leads r ON r.email = c.email;</code></pre>
+
+        <h3>Matriz de resultados según parejas faltantes</h3>
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Solo izquierda sin match</th><th>Solo derecha sin match</th><th>Coincidentes</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>INNER</td><td>❌ fuera</td><td>❌ fuera</td><td>✅</td></tr>
+                <tr><td>LEFT OUTER</td><td>✅ con NULLs derecha</td><td>❌ fuera</td><td>✅</td></tr>
+                <tr><td>RIGHT OUTER</td><td>❌ fuera</td><td>✅ con NULLs izquierda</td><td>✅</td></tr>
+                <tr><td>FULL OUTER</td><td>✅ con NULLs derecha</td><td>✅ con NULLs izquierda</td><td>✅</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>El WHERE sobre columnas del lado derecho anula tu LEFT (los NULL fallan cualquier comparación normal). Para filtrar emparejamientos conservando solitarios: mueve la condición al ON. FULL OUTER + filtros WHERE es aún más traicionero: piensa en ISNULL/COALESCE para las claves antes de filtrar.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="cross-join-y-auto-join">
-    <h2>CROSS JOIN y auto-join</h2>
+<section id="cross-join-y-auto-join">
+    <h2><i class="fa-solid fa-shuffle"></i> CROSS JOIN y self join</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT e.Nombre, t.Horario
-FROM dbo.Empleados e CROSS JOIN dbo.Turnos t;
+        <pre><code class="language-sql">-- CROSS JOIN explícito: combinaciones totales:
+SELECT t.talla, c.color
+FROM Tallas t CROSS JOIN Colores c;      -- 5×8 = 40 variantes
 
--- Empleado y su jefe (misma tabla)
-SELECT e.Nombre AS Empleado, j.Nombre AS Jefe
-FROM dbo.Empleados e
-LEFT JOIN dbo.Empleados j ON e.JefeId = j.Id;</code></pre>
+-- Self join jerárquico:
+SELECT e.nombre AS empleado,
+       j.nombre AS jefe,
+       COALESCE(j.nombre, N'— CEO —') AS etiqueta_jefe
+FROM Empleados e
+LEFT JOIN Empleados j ON j.id = e.jefe_id;
+
+-- Comparación dentro de misma tabla (parejas):
+SELECT a.nombre, b.nombre
+FROM Empleados a
+JOIN Empleados b ON b.departamento_id = a.departamento_id
+                 AND b.id &gt; a.id        -- evita espejos A-B y B-A
+WHERE a.departamento_id = 3;</code></pre>
+        <blockquote class="aside aside-note">
+            <p>El truco <code>b.id &gt; a.id</code> en self joins genera cada par UNA sola vez (orden canónico). Esencial en consultas de parejas: comparaciones salariales, co-autores, rutas simétricas.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="varias-tablas-encadenadas">
-    <h2>Varias tablas encadenadas</h2>
+<section id="varias-tablas-encadenadas">
+    <h2><i class="fa-solid fa-diagram-project"></i> Encadenar más de dos tablas</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT c.Nombre AS Cliente, p.Id AS Pedido, pr.Nombre AS Producto
-FROM dbo.Pedidos p
-INNER JOIN dbo.Clientes c ON p.ClienteId = c.Id
-INNER JOIN dbo.DetallesPedido d ON d.PedidoId = p.Id
-INNER JOIN dbo.Productos pr ON d.ProductoId = pr.Id
-ORDER BY c.Nombre;</code></pre>
+        <pre><code class="language-sql">-- Ticket íntegro cruzando 5 tablas:
+SELECT
+    c.nombre                    AS cliente,
+    FORMAT(p.fecha, 'dd/MM/yyyy') AS fecha,
+    pr.nombre                   AS producto,
+    d.cantidad,
+    d.precio_unitario           AS precio,
+    d.cantidad * d.precio_unitario AS subtotal
+FROM dbo.Pedidos   AS p
+JOIN dbo.Detalle   AS d  ON d.pedido_id   = p.pedido_id
+JOIN dbo.Productos AS pr ON pr.producto_id = d.producto_id
+JOIN dbo.Clientes  AS c  ON c.cliente_id  = p.cliente_id
+LEFT JOIN dbo.Categorias AS cat ON cat.categoria_id = pr.categoria_id
+WHERE p.pedido_id = @id
+ORDER BY subtotal DESC;
+
+-- El mismo patrón agregado por cliente:
+SELECT c.nombre, SUM(d.cantidad * d.precio_unitario) AS total_gastado
+FROM dbo.Clientes c
+JOIN dbo.Pedidos  p ON p.cliente_id = c.cliente_id
+JOIN dbo.Detalle  d ON d.pedido_id  = p.pedido_id
+GROUP BY c.cliente_id, c.nombre
+ORDER BY total_gastado DESC;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Regla de oro</th><th>Motivo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Índice en toda columna de ON</td><td>Nested loops sin índice = producto cartesiano disfrazado</td></tr>
+                <tr><td>Cada LEFT justificado por negocio</td><td>Cada uno multiplica riesgo fan-out</td></tr>
+                <tr><td>Verificar conteos esperados tras cambios</td><td>Un join mal condicionado duplica silenciosamente</td></tr>
+                <tr><td>SET STATISTICS IO ON para medir lecturas</td><td>Detecta la tabla escaneada innecesariamente</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>Fan-out silencioso: unir pedidos→detalle→facturas donde ambas hijas multiplican filas infla SUMs al doble/triple. Solución profesional: pre-agregar una relación en subconsulta/CTE ANTES del join final.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>ON incompleto entre tablas relacionadas</td><td>Filas absurdas × millones (cartesiano)</td><td>Toda condición de vínculo en ON; EXPLAIN/plan revisa</td></tr>
+                <tr><td>WHERE sobre lado derecho del LEFT</td><td>Se vuelve INNER sin querer</td><td>Condición al ON</td></tr>
+                <tr><td>FULL OUTER + WHERE simple</td><td>Pierde justo las filas que quería conservar</td><td>Filtrar con ISNULL en claves o post-proceso</td></tr>
+                <tr><td>Ambigüedad de columnas comunes</td><td>"Ambiguous column name 'id'"</td><td>Alias calificados siempre</td></tr>
+                <tr><td>RIGHT JOIN por costumbre heredada</td><td>Lógica invertida ilegible</td><td>Reordenar FROM y usar LEFT</td></tr>
+                <tr><td>SUM inflado por fan-out 1:N:N</td><td>Totales imposibles vs sistema origen</td><td>Pre-agregar subconsulta intermedia</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Ticket real</strong>: reconstruye el query de 5 tablas sobre tu modelo tienda; imprime ticket completo formateado.</li>
+            <li><strong>Laboratorio FULL OUTER</strong>: compara listas de emails clientes vs leads; clasifica cada fila por origen con CASE + ISNULL.</li>
+            <li><strong>Anti-joins triple</strong>: clientes sin pedidos, productos sin ventas, empleados sin jefe — cada uno con LEFT+IS NULL y versión EXCEPT.</li>
+            <li><strong>Cazador del WHERE-vs-ON</strong>: ejecuta ambas variantes del LEFT filtrando estado; cuenta filas y explica diferencia exacta.</li>
+            <li><strong>Detector de fan-out</strong>: suma ingresos con join directo vs pre-agregado en CTE; documenta inflación detectada y corrección aplicada.</li>
+        </ol>
+    </div>
+</section>

@@ -1,30 +1,275 @@
 <!-- 8. Proyectos y Tests - Go (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="tests-nativos">
-    <h2>Tests nativos</h2>
+<section id="tests-nativos">
+    <h2><i class="fa-solid fa-vial-circle-check"></i> Tests nativos con el paquete testing</h2>
     <div class="doc-content">
-<pre><code class="language-go">// matematica_test.go (mismo paquete)
-func TestSuma(t *testing.T) {
-	got := Suma(2, 3)
-	want := 5
-	if got != want {
-		t.Errorf("Suma() = %d; want %d", got, want)
-	}
+        <p>Go incluye un framework de testing en la stdlib: sin dependencias, sin configuración, integrado en las herramientas. Las reglas son mínimas: archivos terminados en <code>_test.go</code>, funciones <code>TestXxx</code> que reciben <code>*testing.T</code>, y fallas con <code>t.Errorf</code>/<code>t.Fatal</code>:</p>
+
+        <h3>Primer test</h3>
+        <pre><code class="language-go">// matematicas.go
+package utilidades
+
+func Sumar(a, b int) int { return a + b }
+
+func Dividir(a, b float64) (float64, error) {
+    if b == 0 {
+        return 0, errors.New("división por cero")
+    }
+    return a / b, nil
 }</code></pre>
-<pre><code class="language-bash">go test ./...
-go test -v -run TestSuma</code></pre>
-    </div>
-  </section>
+        <pre><code class="language-go">// matematicas_test.go  ← MISMO paquete, archivo _test.go
+package utilidades
 
-  <section id="herramientas">
-    <h2>Herramientas</h2>
-    <div class="doc-content">
-<ul>
-<li><code>go fmt</code> formatea (estilo uniforme garantizado)</li>
-<li><code>go vet</code> detecta errores sospechosos</li>
-<li><code>go build</code> produce binario estático multiplataforma</li>
-<li><code>go doc</code> documenta paquetes</li>
-</ul>
+import "testing"
+
+func TestSumar(t *testing.T) {
+    resultado := Sumar(2, 3)
+    esperado := 5
+    if resultado != esperado {
+        t.Errorf("Sumar(2,3) = %d; esperado %d", resultado, esperado)
+    }
+}
+
+func TestDividirPorCero(t *testing.T) {
+    _, err := Dividir(10, 0)
+    if err == nil {
+        t.Fatal("se esperaba error al dividir por cero")
+    }
+}</code></pre>
+        <pre><code class="language-text">$ go test
+PASS
+ok      miapp/utilidades   0.012s
+
+$ go test -v          # verboso: cada test listado
+$ go test ./...       # TODO el proyecto recursivamente</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Diferencia entre helpers: <code>t.Error</code> marca fallo y CONTINUA el test; <code>t.Fatal</code> lo aborta ahí mismo (imprescindible cuando lo siguiente depende del paso previo, como usar una variable nil).</p>
+        </blockquote>
+
+        <h3>Table-driven tests: EL idiom de testing en Go</h3>
+        <p>En lugar de copiar-pegar un test por caso, defines una tabla de entradas/esperados y la recorres con subtests nombrados vía <code>t.Run</code>:</p>
+        <pre><code class="language-go">func TestDividir(t *testing.T) {
+    casos := []struct {
+        nombre     string
+        dividendo  float64
+        divisor    float64
+        esperado   float64
+        quiereErr  bool
+    }{
+        {"division exacta", 10, 2, 5, false},
+        {"con decimales", 7, 4, 1.75, false},
+        {"por cero", 5, 0, 0, true},
+        {"negativos", -9, 3, -3, false},
+    }
+
+    for _, tc := range casos {
+        t.Run(tc.nombre, func(t *testing.T) {
+            res, err := Dividir(tc.dividendo, tc.divisor)
+            if tc.quiereErr {
+                if err == nil {
+                    t.Fatalf("esperaba error, obtuve resultado %v", res)
+                }
+                return
+            }
+            if err != nil {
+                t.Fatalf("error inesperado: %v", err)
+            }
+            if res != tc.esperado {
+                t.Errorf("%v/%v = %v; esperado %v",
+                    tc.dividendo, tc.divisor, res, tc.esperado)
+            }
+        })
+    }
+}</code></pre>
+        <pre><code class="language-text">$ go test -v -run TestDividir/por_cero
+=== RUN   TestDividir
+=== RUN   TestDividir/por_cero
+--- PASS: TestDividir/por_cero (0.00s)</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Añadir un caso nuevo = añadir UNA línea a la tabla. El fallo reporta el NOMBRE del caso (<code>-run TestDividir/por_cero</code> lo ejecuta solo). Esta estructura escala de 4 a 400 casos sin duplicar lógica.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="benchmarks-y-cobertura">
+    <h2><i class="fa-solid fa-gauge-high"></i> Benchmarks y cobertura</h2>
+    <div class="doc-content">
+        <h3>Benchmarks: medir, no adivinar</h3>
+        <p>Las funciones <code>BenchmarkXxx(b *testing.B)</code> se ejecutan repetidamente hasta obtener mediciones estables. El framework decide cuántas iteraciones (<code>b.N</code>):</p>
+        <pre><code class="language-go">func BenchmarkConcatenar(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        s := ""
+        for j := 0; j &lt; 100; j++ {
+            s += "x" // O(n²): concatena copiando todo cada vez
+        }
+        _ = s
+    }
+}
+
+func BenchmarkBuilder(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        var sb strings.Builder // amortizado O(n)
+        for j := 0; j &lt; 100; j++ {
+            sb.WriteString("x")
+        }
+        _ = sb.String()
+    }
+}</code></pre>
+        <pre><code class="language-text">$ go test -bench=.
+BenchmarkConcatenar-8    21834    54812 ns/op
+BenchmarkBuilder-8      891244      1342 ns/op   ← 40x más rápido</code></pre>
+
+        <h3>Cobertura de código</h3>
+        <pre><code class="language-text">$ go test -cover
+coverage: 87.3% of statements
+
+$ go test -coverprofile=c.out &amp;&amp; go tool cover -html=c.out
+# abre el navegador coloreando líneas cubiertas/olvidadas</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>La cobertura mide EJECUCIÓN, no aserciones: una línea puede recorrerse mil veces sin verificar nada. Apunta a coberturas altas en lógica de negocio crítica, pero desconfía del número como meta en sí mismo.</p>
+        </blockquote>
+
+        <h3>Mocks con interfaces: la recompensa del diseño</h3>
+        <p>Como las interfaces se satisfacen implícitamente, simular dependencias es trivial: define la interfaz donde la CONSUMES y crea un fake para tests:</p>
+        <pre><code class="language-go">// Producción consume esta interfaz pequeña:
+type RepositorioUsuarios interface {
+    Obtener(id int) (*Usuario, error)
+}
+
+// Fake para tests: 5 líneas, sin frameworks de mocking
+type RepoFalso struct {
+    usuarios map[int]*Usuario
+}
+
+func (r *RepoFalso) Obtener(id int) (*Usuario, error) {
+    u, ok := r.usuarios[id]
+    if !ok {
+        return nil, fmt.Errorf("usuario %d: %w", id, os.ErrNotExist)
+    }
+    return u, nil
+}
+
+func TestServicioConRepoFalso(t *testing.T) {
+    svc := &amp;ServicioEmails{Repo: &amp;RepoFalso{
+        usuarios: map[int]*Usuario{1: {Nombre: "Ana"}},
+    }}
+    err := svc.EnviarBienvenida(1)
+    if err != nil {
+        t.Fatalf("envío falló: %v", err)
+    }
+}</code></pre>
+        <blockquote class="aside aside-success">
+            <p>No necesitas gomock ni testify para el 90% de los casos: un struct con mapas basta. Los frameworks de mocking brillan solo en interacciones complejas con verificación de llamadas.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="herramientas">
+    <h2><i class="fa-solid fa-toolbox"></i> Módulos y herramientas</h2>
+    <div class="doc-content">
+        <h3>go.mod y go.sum</h3>
+        <p>Cada proyecto Go es un <strong>módulo</strong> declarado en go.mod. Ahí viven su nombre (ruta de import), la versión de Go y sus dependencias directas:</p>
+        <pre><code class="language-text">$ go mod init github.com/tuusuario/miapp
+
+module github.com/tuusuario/miapp
+
+go 1.22
+
+require (
+    github.com/gin-gonic/gin v1.9.1
+    golang.org/x/text v0.14.0
+)</code></pre>
+        <table>
+            <thead>
+                <tr><th>Comando</th><th>Hace qué</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>go get ruta@v1.2.3</code></td><td>Añade/actualiza dependencia a versión concreta</td></tr>
+                <tr><td><code>go get -u ./...</code></td><td>Actualiza todas las dependencias a menores/patches</td></tr>
+                <tr><td><code>go mod tidy</code></td><td>Limpia no usadas y sincroniza go.sum — ejecútalo tras refactorear</td></tr>
+                <tr><td><code>go mod why paquete</code></td><td>Explica POR QUÉ está esa dependencia</td></tr>
+                <tr><td><code>go mod vendor</code></td><td>Snapshot local de deps para builds reproducibles offline</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-note">
+            <p><code>go.sum</code> guarda hashes criptográficos de cada módulo descargado: si alguien publica contenido distinto bajo misma versión, tu build falla en vez de ejecutar código alterado. Comítalo siempre.</p>
+        </blockquote>
+
+        <h3>Estructura estándar de proyecto</h3>
+        <pre><code class="language-text">miapp/
+├── go.mod              # definición del módulo + deps
+├── go.sum              # hashes de integridad
+├── cmd/
+│   └── servidor/
+│       └── main.go     # punto de entrada DELINADO: solo wiring
+├── internal/           # ¡compilador impide importarlo desde fuera!
+│   ├── api/
+│   │   ├── handlers.go
+│   │   └── handlers_test.go
+│   └── almacen/
+│       ├── db.go
+│       └── db_test.go
+├── pkg/                # código PÚBLICO pensado para otros proyectos
+│   └── validadores.go
+├── Makefile
+└── README.md</code></pre>
+        <ul>
+            <li><strong>cmd/nombre/main.go</strong>: cada binario tiene su carpeta; main solo conecta piezas.</li>
+            <li><strong>internal/</strong>: privacidad a nivel de MÓDULO — ni forks pueden importarlo.</li>
+            <li><strong>pkg/</strong>: opcional; úsala solo si otros módulos consumirán ese código.</li>
+            <li><strong>Tests junto al código</strong>: <code>db_test.go</code> vive al lado de <code>db.go</code>. Nunca carpeta /test separada salvo tests end-to-end.</li>
+        </ul>
+
+        <h3>Compilación cruzada trivial</h3>
+        <p>Go compila binarios nativos para cualquier plataforma desde tu laptop actual, sin toolchains extra:</p>
+        <table>
+            <thead>
+                <tr><th>Sistema destino</th><th>Comando</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Linux 64-bit</td><td><code>$env:GOOS="linux"; $env:GOARCH="amd64"; go build</code></td></tr>
+                <tr><td>Windows 64-bit</td><td><code>$env:GOOS="windows"; $env:GOARCH="amd64"; go build</code></td></tr>
+                <tr><td>macOS Apple Silicon</td><td><code>$env:GOOS="darwin"; $env:GOARCH="arm64"; go build</code></td></tr>
+                <tr><td>Raspberry Pi / ARM</td><td><code>$env:GOOS="linux"; $env:GOARCH="arm64"; go build</code></td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>El flujo completo de release de un proyecto Go típico cabe en tres comandos: <code>go vet ./... &amp;&amp; go test ./... &amp;&amp; go build ./cmd/servidor</code>. Sin Docker necesario, sin runtime a instalar en el servidor: el binario ES el deploy.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Qué pasa</th><th>Solución</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Archivo de test mal nombrado</td><td>go test lo ignora silenciosamente</td><td>Debe terminar EXACTAMENTE en <code>_test.go</code></td></tr>
+                <tr><td>Función <code>Test_sumar</code> o <code>Testsumar</code></td><td>No se ejecuta: patrón exige <code>TestXxx</code> con mayúscula tras Test</td><td><code>TestSumar</code></td></tr>
+                <tr><td>Usar log.Println en vez de t.Errorf</td><td>El test PASA aunque algo esté mal</td><td>Métodos del receptor t: Error/Errorf/Fatal/Fatalf</td></tr>
+                <tr><td>Editar go.mod a mano</td><td>go.sum desincronizado → builds rotos en CI</td><td>go get/go mod tidy siempre</td></tr>
+                <tr><td>Poner TODO en main.go</td><td>Intesteable: main no se importa</td><td>Lógica en paquetes internal/; main solo ensambla</td></tr>
+                <tr><td>Mocking con reflect/magia sobre structs concretos</td><td>Acoplamiento y fragilidad</td><td>Diseñar contra interfaces pequeñas desde el inicio</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Primera suite</strong>: crea módulo <code>calculadora</code> con funciones Sumar, Restar, Multiplicar y Dividir; escríbeles table-driven tests incluyendo casos borde (negativos, división por cero) y corre <code>go test -v</code>.</li>
+            <li><strong>Subtests quirúrgicos</strong>: añade un caso que falle a propósito y usa <code>-run</code> para ejecutarlo individualmente; luego arregla la función hasta verde.</li>
+            <li><strong>Duelo de benchmarks</strong>: compara búsqueda lineal vs binaria sobre 100.000 elementos ordenados; documenta los ns/op obtenidos en un comentario.</li>
+            <li><strong>Repositorio falso</strong>: diseña servicio de pedidos contra interfaz <code>RepositorioPedidos</code>; implementa versión real en memoria y fake para tests; prueba el flujo "crear pedido → calcular total" sin base de datos.</li>
+            <li><strong>Multiplataforma</strong>: compila tu binario para Windows, Linux y macOS ARM desde tu máquina; verifica con <code>file</code> (o tamaño/extensión) que generaste tres artefactos distintos.</li>
+        </ol>
+    </div>
+</section>

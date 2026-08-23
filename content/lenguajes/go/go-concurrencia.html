@@ -1,43 +1,291 @@
 <!-- 7. Concurrencia - Go (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="goroutines-y-channels">
-    <h2>Goroutines y channels</h2>
+<section id="goroutines-y-channels">
+    <h2><i class="fa-solid fa-arrows-turn-to-dots"></i> Goroutines y channels</h2>
     <div class="doc-content">
-<pre><code class="language-go">func worker(id int, ch chan&lt;- string) {
-	time.Sleep(time.Second)
-	ch &lt;- fmt.Sprintf("worker %d listo", id)
+        <p>La concurrencia no es un añadido en Go: está en el corazón del lenguaje. Una <strong>goroutine</strong> es una función que se ejecuta en paralelo con solo escribir <code>go</code> delante. No es un thread del sistema operativo (que cuesta ~1MB de stack): es un hilo verde gestionado por el runtime de Go, con un arranque de ~2KB y capacidad de mantener cientos de miles simultáneas en tu laptop.</p>
+
+        <h3>Lanzar goroutines</h3>
+        <pre><code class="language-go">func saludar(id int) {
+    fmt.Printf("Hola desde la goroutine %d\n", id)
 }
 
-ch := make(chan string)
-for i := 1; i &lt;= 3; i++ {
-	go worker(i, ch)      // ligero: miles son viables
-}
+func main() {
+    go saludar(1)          // se ejecuta EN PARALELO
+    go saludar(2)
 
-for i := 0; i &lt; 3; i++ {
-	fmt.Println(&lt;-ch)     // recibe cada resultado
+    time.Sleep(100 * time.Millisecond) // ¡necesario para este demo!
+    fmt.Println("main termina")
 }</code></pre>
-    </div>
-  </section>
+        <blockquote class="aside aside-caution">
+            <p><code>main</code> no espera a sus goroutines: cuando retorna, TODO el programa muere, dejando goroutines a medias. El Sleep de arriba es truco didáctico; en código real la coordinación se hace con WaitGroups o channels, nunca con sleeps.</p>
+        </blockquote>
 
-  <section id="select-y-waitgroup">
-    <h2>select y WaitGroup</h2>
+        <h3>Channels: tuberías tipadas entre goroutines</h3>
+        <p>Un channel transmite valores de un tipo concreto entre goroutines, sincronizando automáticamente emisor y receptor. La flecha <code>&lt;-</code> indica dirección:</p>
+        <pre><code class="language-go">resultados := make(chan string) // canal SIN buffer
+
+// Productor
+go func() {
+    resultados &lt;- "dato procesado" // BLOQUEA hasta alguien reciba
+    close(resultados)
+}()
+
+// Consumidor
+valor := &lt;-resultados // BLOQUEA hasta que llegue algo
+fmt.Println(valor)</code></pre>
+
+        <h3>Buffered vs sin buffer</h3>
+        <table>
+            <thead>
+                <tr><th>Característica</th><th>Sin buffer <code>make(chan T)</code></th><th>Con buffer <code>make(chan T, n)</code></th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Envío bloquea…</td><td>Hasta que alguien reciba</td><td>Solo si el buffer está lleno</td></tr>
+                <tr><td>Recepción bloquea…</td><td>Hasta que alguien envíe</td><td>Solo si el buffer está vacío</td></tr>
+                <tr><td>Sincronización</td><td>Estricta: encuentro garantizado (rendezvous)</td><td>Desacoplada hasta n elementos</td></tr>
+                <tr><td>Uso típico</td><td>Señales, transferencia segura de ownership</td><td>Colas de trabajo, amortiguar picos</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Cerrar canales y range</h3>
+        <p>El productor cierra el canal para anunciar "no habrá más datos". El consumidor puede iterar hasta el cierre con range — la forma más limpia de consumir una secuencia concurrente:</p>
+        <pre><code class="language-go">numeros := make(chan int)
+
+go func() {
+    defer close(numeros)
+    for i := 1; i &lt;= 5; i++ {
+        numeros &lt;- i * i
+    }
+}()
+
+for v := range numeros { // termina SOLO al cerrar el canal
+    fmt.Println(v)
+}
+// 1 4 9 16 25
+
+// Verificar cierre manualmente:
+v, abierta := &lt;-numeros // abierta == false si estaba cerrado</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>Enviar a un canal cerrado provoca <strong>panic</strong>. Regla de oro: <strong>solo el productor cierra</strong>, y solo si tiene sentido señalar fin. Cerrar dos veces también panica.</p>
+        </blockquote>
+
+        <h3>Anatomía de un pipeline productor → canal → workers</h3>
+        <pre><code class="language-text">                    ┌──────────┐
+   ┌── trabajo ────▶│ worker 1 │────┐
+   │                └──────────┘    │
+┌──┴──────┐        ┌──────────┐     ▼       ┌──────────┐
+│ trabajos│        │ worker 2 │──▶ resultados│  main   │
+│ (chan)  │◀───────│          │     ▲       │ (range) │
+└──────────┘       └──────────┘     │       └──────────┘
+   │               ┌──────────┐     │
+   └── trabajo ───▶│ worker N │─────┘
+                    └──────────┘</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="select-y-waitgroup">
+    <h2><i class="fa-solid fa-people-carry-box"></i> select y sync.WaitGroup</h2>
     <div class="doc-content">
-<pre><code class="language-go">select {
-case msg := &lt;-ch1:
-	fmt.Println(msg)
-case &lt;-time.After(time.Second):
-	fmt.Println("timeout")
+        <h3>WaitGroup: esperar a un equipo de goroutines</h3>
+        <p><code>sync.WaitGroup</code> es el contador de tareas más simple y usado: incrementas por cada tarea lanzada y cada goroutine se resta al terminar. <code>Wait()</code> bloquea hasta llegar a cero:</p>
+        <pre><code class="language-go">urls := []string{
+    "https://golang.org",
+    "https://go.dev",
+    "https://pkg.go.dev",
 }
 
 var wg sync.WaitGroup
-for i := 0; i &lt; 5; i++ {
-	wg.Add(1)
-	go func(n int) {
-		defer wg.Done()
-		procesar(n)
-	}(i)
+
+for _, url := range urls {
+    wg.Add(1) // +1 ANTES de lanzar
+    go func(u string) {
+        defer wg.Done() // -1 al terminar, SIEMPRE
+        resp, err := http.Get(u)
+        if err != nil {
+            fmt.Println(u, "ERROR:", err)
+            return
+        }
+        resp.Body.Close()
+        fmt.Println(u, "→", resp.Status)
+    }(url)
 }
-wg.Wait()</code></pre>
+
+wg.Wait() // bloquea hasta que todas terminen
+fmt.Println("Scrapeo completo")</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Desde Go 1.22 las variables de bucle son por-iteración, así que el parámetro <code>u string</code> ya no sería estrictamente necesario. En bases de código anteriores ES obligatorio capturarlo como parámetro o variable local — usar la variable de bucle directa era LA fuente #1 de bugs de concurrencia en Go.</p>
+        </blockquote>
+
+        <h3>select: esperar sobre múltiples canales</h3>
+        <p><code>select</code> es como un switch, pero para operaciones de canales: bloquea hasta que ALGUNO esté listo y ejecuta esa rama. Con varios listos, elige aleatoriamente (evita inanición):</p>
+        <pre><code class="language-go">canalA := make(chan string)
+canalB := make(chan string)
+
+go func() { time.Sleep(50 * time.Millisecond); canalA &lt;- "desde A" }()
+go func() { time.Sleep(10 * time.Millisecond); canalB &lt;- "desde B" }()
+
+for i := 0; i &lt; 2; i++ {
+    select {
+    case msg := &lt;-canalA:
+        fmt.Println(msg)
+    case msg := &lt;-canalB:
+        fmt.Println(msg)
+    }
+}</code></pre>
+
+        <h3>Timeouts: select + time.After</h3>
+        <p>El patrón más importante de programación de redes en Go: nunca confiar en que una operación responda:</p>
+        <pre><code class="language-go">select {
+case respuesta := &lt;-consultaServidor():
+    fmt.Println("OK:", respuesta)
+case &lt;-time.After(2 * time.Second):
+    fmt.Println("Timeout: el servidor no respondió")
+}</code></pre>
+
+        <h3>Mutex: cuando SÍ toca memoria compartida</h3>
+        <p>A veces un simple contador no merece un canal. <code>sync.Mutex</code> protege secciones críticas:</p>
+        <pre><code class="language-go">contador := struct {
+    sync.Mutex
+    valor int
+}{}
+
+var wg sync.WaitGroup
+for i := 0; i &lt; 1000; i++ {
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        contador.Lock()
+        contador.valor++
+        contador.Unlock()
+    }()
+}
+wg.Wait()
+fmt.Println(contador.valor) // 1000 garantizado (sin mutex: valor impredecible)</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Detecta carreras de datos con <code>go run -race main.go</code>. El race detector reporta accesos concurrentes desprotegidos con trazas exactas. Ejecútalo siempre antes de subir código concurrente a producción.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="worker-pool">
+    <h2><i class="fa-solid fa-industry"></i> Patrón worker pool completo</h2>
+    <div class="doc-content">
+        <p>El patrón estrella de concurrencia en Go: N workers consumen de una cola de trabajos compartida y publican resultados en otro canal. Controlas exactamente cuántos recursos usas independientemente de cuántos trabajos lleguen:</p>
+        <pre><code class="language-go">func main() {
+    const numWorkers = 3
+
+    trabajos := make(chan int, 100)
+    resultados := make(chan string, 100)
+
+    // Arrancar el pool: cada worker vive en su propio bucle infinito
+    var wg sync.WaitGroup
+    for w := 1; w &lt;= numWorkers; w++ {
+        wg.Add(1)
+        go worker(w, trabajos, resultados, &amp;wg)
+    }
+
+    // Enviar 9 trabajos
+    for t := 1; t &lt;= 9; t++ {
+        trabajos &lt;- t
+    }
+    close(trabajos) // señal: no hay más trabajo
+
+    wg.Wait()          // esperar a que los workers acaben
+    close(resultados)
+
+    for r := range resultados {
+        fmt.Println(r)
+    }
+}
+
+func worker(id int, trabajos &lt;-chan int, resultados chan&lt;- string, wg *sync.WaitGroup) {
+    defer wg.Done()
+    for t := range trabajos { // termina al cerrar 'trabajos'
+        time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
+        resultados &lt;- fmt.Sprintf("worker %d procesó trabajo %d", id, t)
+    }
+}</code></pre>
+        <p>Fíjate en los tipos de los parámetros: <code>&lt;-chan int</code> significa "solo puedo recibir" y <code>chan&lt;- string</code> "solo puedo enviar". El compilador impide que un worker publique en la cola de trabajos o robe de los resultados: <strong>las direcciones documentan la arquitectura</strong>.</p>
+        <blockquote class="aside aside-success">
+            <p>Este pool escala cambiando UN número: 3 workers para laptops modestas, 200 para servidores. La lógica no cambia. Es el mismo patrón detrás de scrapers masivos, procesadores de colas y pipelines de ETL escritos en Go.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="context-intro">
+    <h2><i class="fa-solid fa-circle-stop"></i> context.Context: cancelación cooperativa</h2>
+    <div class="doc-content">
+        <p>¿Cómo cancelas un trabajo en curso? No puedes matar una goroutine desde fuera (por diseño). La respuesta de Go es <strong>context.Context</strong>: un valor que viaja por toda la cadena de llamadas llevando plazos (deadline), cancelaciones y datos de petición:</p>
+        <pre><code class="language-go">func buscarDatos(ctx context.Context, query string) ([]byte, error) {
+    ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+    defer cancel() // libera recursos aunque todo salga bien
+
+    req, _ := http.NewRequestWithContext(ctx, http.MethodGet,
+        "https://api.ejemplo.com?q="+query, nil)
+
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil {
+        if errors.Is(err, context.DeadlineExceeded) {
+            return nil, fmt.Errorf("búsqueda '%s' excedió 3s: %w", query, err)
+        }
+        return nil, err
+    }
+    defer resp.Body.Close()
+    return io.ReadAll(resp.Body)
+}</code></pre>
+        <table>
+            <thead>
+                <tr><th>Constructor</th><th>Para qué</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>context.Background()</code></td><td>Raíz en servers/main</td></tr>
+                <tr><td><code>context.WithTimeout(parent, d)</code></td><td>Plazo máximo absoluto</td></tr>
+                <tr><td><code>context.WithCancel(parent)</code></td><td>Cancelar bajo demanda (ej: cliente desconectó)</td></tr>
+                <tr><td><code>context.WithValue(parent, k, v)</code></td><td>Datos de petición (request-id, usuario autenticado) — con moderación</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Convención universal: <strong>ctx es siempre el primer parámetro</strong>, llamado <code>ctx</code>. Si una función hace I/O y no acepta context, te estás privando de timeouts y cancelación limpia.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Lanzar goroutines y no esperarlas</td><td>Programa muere antes de que terminen</td><td>WaitGroup / channel de resultados / errgroup</td></tr>
+                <tr><td>Capturar la variable de bucle en closures (Go &lt;1.22)</td><td>Todas las goroutines ven el ÚLTIMO valor</td><td>Pasarla como parámetro de la closure</td></tr>
+                <tr><td>Fuga de goroutine: enviar sin receptor posible</td><td>Memoria crece eternamente</td><td>Canal con buffer + select con default/timeout, o contexto cancelable</td></tr>
+                <tr><td>Enviar a canal cerrado / doble close</td><td>panic: send on closed channel</td><td>Solo el productor cierra, una sola vez, con sync.Once si aplica</td></tr>
+                <tr><td>Olvidar wg.Done() en un camino con return temprano</td><td>Wait() cuelga para siempre</td><td><code>defer wg.Done()</code> inmediatamente tras Add</td></tr>
+                <tr><td>Compartir map entre goroutines sin lock</td><td>"fatal error: concurrent map writes" (crash duro)</td><td>sync.Mutex/RWMutex o sync.Map según acceso</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>El crash de mapa concurrente NO es recuperable con recover: mata el proceso entero. Es el error más caro de producción en equipos nuevos en Go — protégelo siempre que dos goroutines puedan tocar el mismo map.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Saludo ordenado</strong>: lanza 5 goroutines que impriman su índice y coordínalas con WaitGroup; luego modifica para que los resultados lleguen por un canal y main los imprima en orden recibido.</li>
+            <li><strong>Generador de cuadrados</strong>: implementa el pipeline generador → cuadrados → impresor usando DOS channels y range; verifica que cierras ambos canales correctamente.</li>
+            <li><strong>Búsqueda distribuida</strong>: dado un slice de 20 números, repártelos entre 4 workers que busquen un objetivo; el primero que lo encuentre publica en un canal y main cancela el resto con contexto.</li>
+            <li><strong>API con timeout</strong>: haz 3 peticiones HTTP reales (o simuladas con sleep) concurrentes aplicando timeout global de 1 segundo con select + time.After; imprime cuáles ganaron y cuáles expiraron.</li>
+            <li><strong>Contador seguro medido</strong>: incrementa un contador compartido 10.000 veces con 50 goroutines tres veces: sin protección, con Mutex y con canal atómico; compara resultados y explica las diferencias en comentarios.</li>
+        </ol>
+    </div>
+</section>

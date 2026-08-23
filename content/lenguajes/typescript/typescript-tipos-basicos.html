@@ -1,51 +1,260 @@
 <!-- 2. Tipos Básicos - TypeScript (Lenguajes de Programación) -->
 <!-- Contenido local del proyecto -->
 
-  <section id="primitivos-y-arreglos">
-    <h2>Primitivos y arreglos</h2>
+  <section id="anotaciones-e-inferencia">
+    <h2><i class="fa-solid fa-pen-nib"></i> Anotaciones de tipo e inferencia automática</h2>
     <div class="doc-content">
-<pre><code class="language-typescript">let edad: number = 25;
+<p>En TypeScript puedes declarar <em>explícitamente</em> el tipo de un valor con la sintaxis de dos puntos (<code>: tipo</code>) —una <strong>anotación</strong>— o dejar que el compilador lo deduzca solo mediante la <strong>inferencia</strong>. TypeScript es muy bueno adivinando: si inicializas una variable con un valor, su tipo queda inferido al instante y verificado para siempre.</p>
+<pre><code class="language-typescript">// Anotación explícita: tú declaras el contrato
+let edad: number = 25;
 let nombre: string = "Ana";
-let activo: boolean = true;
-let nulo: null = null;
-let indefinido: undefined = undefined;
 
-let numeros: number[] = [1, 2, 3];
-let pares: [string, number] = ["edad", 25]; // tupla
+// Inferencia: el compilador deduce los tipos sin que escribas nada
+let ciudad = "Madrid";        // tipo inferido: string
+let temperatura = 21;         // tipo inferido: number
+let activo = true;            // tipo inferido: boolean
 
-let id: number | string;    // tipo unión
-id = 10;
-id = "A10";</code></pre>
+ciudad = "Lima";              // ✅ sigue siendo string
+// ciudad = 42;
+// ❌ Type 'number' is not assignable to type 'string'</code></pre>
+<h3>¿Cuándo anotar y cuándo confiar en la inferencia?</h3>
+<table><thead><tr><th>Situación</th><th>Recomendación</th><th>Motivo</th></tr></thead><tbody><tr><td>Variable local con valor inicial</td><td><strong>No anotes</strong></td><td>La inferencia es exacta y el código queda más limpio</td></tr><tr><td>Parámetros de función</td><td><strong>Anota siempre</strong></td><td>El compilador no puede adivinar qué recibirá tu función</td></tr><tr><td>Retorno de funciones públicas</td><td><strong>Anota</strong></td><td>Documenta la API y detecta errores antes del <code>return</code></td></tr><tr><td>Variables sin inicializar</td><td><strong>Anota</strong></td><td>Sin anotación quedan como <code>any</code> implícito (prohibido en modo strict)</td></tr><tr><td>Límites con librerías o JSON externo</td><td><strong>Anota</strong></td><td>Es donde el compilador no tiene información previa</td></tr></tbody></table>
+<pre><code class="language-typescript">// Patrón profesional: anotar en la frontera, inferir en el interior
+function calcularIva(precioBase: number): number { // frontera tipada
+  const tasa = 0.21;                     // inferido: number
+  const total = precioBase * (1 + tasa); // inferido: number
+  return total;
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Anotar de más no es «más seguro», solo es más ruido. Regla de oro de la comunidad: <strong>anota parámetros y retornos públicos; deja que las variables locales se infieran</strong>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primitivos-y-arreglos">
+    <h2><i class="fa-solid fa-cubes"></i> Tipos primitivos, arreglos y tuplas</h2>
+    <div class="doc-content">
+<p>TypeScript ofrece los mismos primitivos que JavaScript, ahora verificables: <code>string</code>, <code>number</code>, <code>boolean</code>, <code>null</code> y <code>undefined</code>. Con <code>strictNullChecks</code> activo, <code>null</code> y <code>undefined</code> son tipos propios y no se cuelan dentro de <code>string</code> o <code>number</code>.</p>
+<pre><code class="language-typescript">const producto: string = "Teclado";
+const precio: number = 49.99;      // enteros y decimales: mismo tipo
+const disponible: boolean = true;
+
+// null y undefined también son tipos (con strictNullChecks)
+let descuento: null = null;        // solo acepta null
+let pendiente: undefined = undefined;</code></pre>
+<h3>Arreglos: dos sintaxis equivalentes</h3>
+<pre><code class="language-typescript">const numeros: number[] = [10, 20, 30];        // sintaxis preferida
+const nombres: Array&lt;string&gt; = ["Ana", "Luis"]; // equivalente genérico
+
+numeros.push(40);          // ✅ number
+// numeros.push("50");
+// ❌ Argument of type 'string' is not assignable to parameter of type 'number'
+
+// Arreglo mixto real: declara una unión de tipos (sección siguiente)
+const mixto: (string | number)[] = ["edad", 25, "altura", 180];</code></pre>
+<h3>Tuplas: longitud y tipos fijados por posición</h3>
+<p>Un arreglo normal crece libremente; una <strong>tupla</strong> fija cuántos elementos tiene y de qué tipo es cada posición. Es ideal para datos cortos donde la posición ES el significado:</p>
+<pre><code class="language-typescript">// [nombre, edad] — la posición define el tipo
+let persona: [string, number] = ["Ana", 25];
+
+persona[0].toUpperCase();  // ✅ TS sabe que la posición 0 es string
+persona[1] + 5;            // ✅ la posición 1 es number
+
+// persona = [25, "Ana"];
+// ❌ Type 'number' is not assignable to type 'string'
+
+// Casos clásicos: coordenadas, pares clave-valor, filas de CSV
+const puntoGPS: [number, number] = [40.4168, -3.7038];
+const filaCSV: [string, number, boolean] = ["Ana", 25, true];
+
+// Tupla de solo lectura con etiquetas (TypeScript moderno)
+const config: readonly [host: string, puerto?: number] = ["localhost", 3000];</code></pre>
+<blockquote class="aside aside-caution"><p>En una tupla, <code>tupla[0]</code> y <code>tupla[1]</code> tienen tipos distintos: el orden importa. Si los elementos pueden intercambiar posición o necesitas nombres claros, un objeto <code>{ nombre: string; edad: number }</code> comunica mejor.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="union-types-y-literales">
+    <h2><i class="fa-solid fa-code-branch"></i> Union types y literal types</h2>
+    <div class="doc-content">
+<p>Una <strong>unión</strong> (<code>a | b</code>) expresa «este valor puede ser A <em>o</em> B». Es la herramienta natural para identificadores que llegan como número o texto, configuraciones opcionales o respuestas que alternan entre formas. Al recibir una unión, TypeScript solo permite usar lo <em>común</em> a todos sus miembros… hasta que hagas <strong>narrowing</strong> comprobando cuál es realmente.</p>
+<pre><code class="language-typescript">let idUsuario: string | number;
+
+idUsuario = "A1024";   // ✅
+idUsuario = 1024;      // ✅
+
+// Mientras sea una unión, solo operaciones comunes a ambos:
+console.log(idUsuario.toString()); // ✅ ambos tipos tienen toString()
+// idUsuario.toUpperCase();
+// ❌ Property 'toUpperCase' does not exist on type 'number'</code></pre>
+<h3>Narrowing: reducir la unión con comprobaciones</h3>
+<pre><code class="language-typescript">function mostrarId(id: string | number): void {
+  if (typeof id === "string") {
+    // Dentro del if, TS sabe que id ES string
+    console.log(id.trim().toUpperCase());
+  } else {
+    // En el else, necesariamente es number
+    console.log(id.toFixed(2));
+  }
+}</code></pre>
+<h3>Literal types: valores concretos como tipos</h3>
+<p>TypeScript también permite tipos cuyo único valor posible es <strong>un literal concreto</strong>. Combinados con uniones forman «enumeraciones ligeras» sin necesidad de crear un <code>enum</code>:</p>
+<pre><code class="language-typescript">type Talla = "small" | "medium" | "large";
+type Direccion = "asc" | "desc";
+type EstadoPedido = "carrito" | "pagado" | "enviado" | "entregado";
+
+function elegirTalla(talla: Talla): void {
+  console.log(`Talla seleccionada: ${talla}`);
+}
+
+elegirTalla("medium");   // ✅
+// elegirTalla("gigante");
+// ❌ Argument of type '"gigante"' is not assignable to parameter of type 'Talla'
+//    ¡Los typos se detectan al compilar!</code></pre>
+<table><thead><tr><th>Herramienta</th><th>Ejemplo</th><th>Úsala cuando…</th></tr></thead><tbody><tr><td>Unión de tipos</td><td><code>number | string</code></td><td>El valor puede ser de varias familias de tipos</td></tr><tr><td>Literal simple</td><td><code>let modo: "lectura"</code></td><td>Solo existe un valor válido (raro, pero útil)</td></tr><tr><td>Unión de literales</td><td><code>"small" | "large"</code></td><td>Hay un conjunto cerrado de opciones válidas</td></tr><tr><td>Narrowing</td><td><code>if (typeof x === "string")</code></td><td>Necesitas operar sobre UN miembro de la unión</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p>Las uniones de literales convierten errores silenciosos («alguien escribió <code>meduim</code>») en errores de compilación inmediatos. Úsalas para estados, tamaños, direcciones y cualquier conjunto cerrado de valores.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="objetos-y-funciones">
-    <h2>Objetos y funciones</h2>
+    <h2><i class="fa-solid fa-braille"></i> Tipando objetos y funciones en línea</h2>
     <div class="doc-content">
-<pre><code class="language-typescript">let usuario: { nombre: string; edad: number } = {
+<p>Para objetos pequeños de uso puntual puedes describir su <strong>forma</strong> (shape) directamente en línea. Cuando la misma forma aparece más de dos veces en tu código, extrae la a una <code>interface</code> o <code>type</code> — tema central de la próxima lección.</p>
+<pre><code class="language-typescript">const usuario: { nombre: string; edad: number; premium: boolean } = {
   nombre: "Luis",
-  edad: 30
+  edad: 30,
+  premium: false,
 };
 
-const saludar = (nombre: string): string =&gt; `Hola ${nombre}`;</code></pre>
+// Propiedad opcional en línea: sufijo ?
+const config: { host: string; puerto?: number } = { host: "localhost" };
+console.log(config.puerto ?? 8080); // 8080: la propiedad puede no existir</code></pre>
+<h3>Funciones: retorno inferido vs retorno anotado</h3>
+<pre><code class="language-typescript">// Retorno anotado explícitamente
+const saludar = (nombre: string): string =&gt; `Hola ${nombre}`;
+
+// El retorno también se INFIERE: esta flecha devuelve string sin anotarlo
+const gritar = (texto: string) =&gt; texto.toUpperCase() + "!";
+
+// Función que retorna una UNIÓN: conviene anotar para documentar la intención
+function formatear(valor: number, moneda: "USD" | "EUR"): string | number {
+  return moneda === "USD" ? `$${valor}` : `${valor} €`;
+}
+
+formatear(99, "EUR");   // "99 €"
+formatear(99, "USD");   // "$99"</code></pre>
+<blockquote class="aside aside-note"><p>Cuando una función devuelve cosas distintas según la entrada (como <code>formatear</code>, que responde <code>string | number</code>), anota el retorno aunque TS lo infiera: la firma pública queda documentada y cualquier cambio accidental dispara un error.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="any-unknown-y-never">
-    <h2>any, unknown y never</h2>
+    <h2><i class="fa-solid fa-question"></i> any vs unknown vs void vs never</h2>
     <div class="doc-content">
-<ul>
-<li><strong>any:</strong> desactiva el chequeo; evítalo</li>
-<li><strong>unknown:</strong> seguro: obliga a validar antes de usar</li>
-<li><strong>never:</strong> valores que nunca ocurren (funciones que lanzan o infinitas)</li>
-</ul>
-<pre><code class="language-typescript">function procesar(x: unknown) {
-  if (typeof x === "string") console.log(x.toUpperCase());
+<p>Estos cuatro tipos describen la <strong>falta o imposibilidad de valores</strong>, y confundirlos es fuente clásica de bugs y de malas decisiones de diseño. La tabla siguiente es probablemente la más importante de toda la lección:</p>
+<table><thead><tr><th>Tipo</th><th>Significa</th><th>¿Se usa libremente?</th><th>Uso recomendado</th></tr></thead><tbody><tr><td><code>any</code></td><td>«No sé qué es»: desactiva TODO el chequeo</td><td>Sí, salta todas las verificaciones</td><td>Casi nunca; solo migraciones temporales marcadas con TODO</td></tr><tr><td><code>unknown</code></td><td>«No sé qué es, pero demuéstralo antes de usarlo»</td><td>No: exige validar o hacer narrowing primero</td><td>Datos externos: respuestas de API, <code>JSON.parse</code>, inputs de usuario</td></tr><tr><td><code>void</code></td><td>La función no devuelve nada significativo</td><td>Solo asignable a null/undefined</td><td>Funciones de efectos secundarios: loguear, renderizar, notificar</td></tr><tr><td><code>never</code></td><td>Nunca habrá un valor: siempre lanza, bucle infinito, caso imposible</td><td>Ningún tipo es asignable a never</td><td>Funciones que lanzan errores; exhaustividad en switches</td></tr></tbody></table>
+<h3>any y unknown frente al mismo problema</h3>
+<pre><code class="language-typescript">// ❌ any: la puerta abierta. Compila... y estalla en producción
+let dato: any = JSON.parse('{"nivel": 3}');
+dato.cualquierCosa.sinSentido(); // TS calla; JS lanza TypeError
+
+// ✅ unknown: la puerta con cerradura. Obliga a validar
+let seguro: unknown = JSON.parse('{"nivel": 3}');
+
+if (typeof seguro === "object" &amp;&amp; seguro !== null &amp;&amp; "nivel" in seguro) {
+  const nivel = (seguro as { nivel: number }).nivel;
+  console.log(`Nivel ${nivel}`); // ✅ validado antes de usar
+}
+// seguro.nivel;
+// ❌ Object is of type 'unknown' — el compilador te protege</code></pre>
+<h3>void y never en funciones</h3>
+<pre><code class="language-typescript">// void: hace trabajo pero no retorna nada útil
+function registrarEvento(mensaje: string): void {
+  console.log(`[LOG] ${mensaje}`);
+  // no hay return (o return; a secas)
 }
 
-function fallo(msg: string): never {
+// never: la ejecución NUNCA termina normalmente
+function falloCritico(msg: string): never {
   throw new Error(msg);
+}
+
+function bucleMonitoreo(): never {
+  while (true) { /* sondeo perpetuo del servidor */ }
 }</code></pre>
-<blockquote class="aside aside-caution"><strong>Cuidado:</strong> Usa <code>any</code> solo como último recurso: pierdes todos los beneficios del tipado.</blockquote>
+<blockquote class="aside aside-danger"><p><strong>any se contagia.</strong> Un valor <code>any</code> asignado a otra variable vuelve «infectado» de any a esa variable. Cada <code>any</code> es un agujero en el sistema de tipos por donde entran bugs que TypeScript jamás te avisará. Si no sabes el tipo, usa <code>unknown</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="type-assertions-y-strictnullchecks">
+    <h2><i class="fa-solid fa-lock-open"></i> Type assertions y manejo de null/undefined</h2>
+    <div class="doc-content">
+<p>Hay momentos en que TÚ sabes algo que el compilador no puede deducir —por ejemplo, qué elemento del DOM vas a encontrar—. Las <strong>type assertions</strong> (<code>valor as Tipo</code>) le dicen al compilador «confía en mí, trátalo como X». No convierten nada en runtime: solo cambian cómo el compilador lo mira.</p>
+<pre><code class="language-typescript">// El DOM devuelve HTMLElement | null, pero tú sabes cuál input buscas:
+const emailInput = document.querySelector("#email") as HTMLInputElement;
+console.log(emailInput.value); // ✅ ahora TS conoce .value y sus métodos
+
+// Sintaxis angle-bracket (&lt;string&gt;valor): válida, PERO prohibida en .tsx
+const largo = (&lt;string&gt;mensaje).length;
+
+// Doble aserción para casos límite: pasa por unknown antes de reconvertir
+const valorRaro = "42" as unknown as number; // ⚠️ legal pero sospechoso</code></pre>
+<blockquote class="aside aside-caution"><p>Cada <code>as</code> es una promesa sin verificación: si mientes («esto es HTMLInputElement» cuando no lo es), el error aparecerá en runtime igual que en JavaScript puro. Regla práctica: assertions solo en los bordes (DOM, librerías mal tipadas) y nunca dentro de la lógica de negocio.</p></blockquote>
+<h3>strictNullChecks: el null ya no se cuela</h3>
+<p>Con <code>"strictNullChecks": true</code>, <code>null</code> y <code>undefined</code> dejan de ser asignables a cualquier tipo. El compilador te obliga a demostrar que el valor existe ANTES de usarlo:</p>
+<pre><code class="language-typescript">function buscarUsuario(id: number): string | null {
+  return id === 1 ? "Ana" : null;
+}
+
+const nombre = buscarUsuario(7);
+
+// console.log(nombre.toUpperCase());
+// ❌ 'nombre' is possibly 'null' — el compilador exige comprobarlo
+
+// Forma 1: narrowing explícito
+if (nombre !== null) {
+  console.log(nombre.toUpperCase()); // ✅ aquí es string garantizado
+}
+
+// Forma 2: optional chaining + nullish coalescing
+const saludo = nombre?.toUpperCase() ?? "Invitado";</code></pre>
+<table><thead><tr><th>Herramienta</th><th>Sintaxis</th><th>Qué resuelve</th></tr></thead><tbody><tr><td>Narrowing con if</td><td><code>if (x !== null)</code></td><td>Demuestra al compilador que el valor existe</td></tr><tr><td>Optional chaining</td><td><code>usuario?.perfil?.email</code></td><td>Corta la cadena devolviendo undefined si algo falta</td></tr><tr><td>Nullish coalescing</td><td><code>x ?? valorPorDefecto</code></td><td>Fallback SOLO ante null/undefined (no ante 0 o "")</td></tr><tr><td>Aserción puntual</td><td><code>el!.</code> / <code>as Tipo</code></td><td>Último recurso cuando tú tienes certeza extra</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p><strong>strictNullChecks convierte el clásico «TypeError: Cannot read properties of null» en un error de compilación.</strong> Es la opción de tsconfig que más bugs ha prevenido en la historia de JavaScript; actívala siempre vía <code>"strict": true</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes con tipos básicos</h2>
+    <div class="doc-content">
+<table><thead><tr><th>Error típico</th><th>Por qué falla</th><th>Corrección recomendada</th></tr></thead><tbody><tr><td>Anotar cada variable local</td><td>Ruido innecesario; la inferencia ya lo hace</td><td>Inferir locales, anotar fronteras públicas</td></tr><tr><td><code>number[]</code> para datos posicionales</td><td>TS no distingue posición ni cantidad</td><td>Tuplas: <code>[number, number]</code></td></tr><tr><td>Usar <code>any</code> «temporal»</td><td>El temporal se vuelve eterno y contagia</td><td><code>unknown</code> + narrowing</td></tr><tr><td>Comparar uniones sin reducir</td><td>Métodos inexistentes en algún miembro</td><td>Narrowing con <code>typeof</code> / <code>in</code> antes de usar</td></tr><tr><td><code>||</code> como fallback</td><td>También dispara con <code>0</code>, <code>""</code> o <code>false</code></td><td><code>??</code> que solo actúa con null/undefined</td></tr></tbody></table>
+<pre><code class="language-typescript">// ❌ Fallback con ||: el 0 es un valor LEGÍTIMO aquí, pero se pierde
+const volumen = Number(entrada) || 50;
+
+// ✅ ?? respeta el 0 y solo sustituye ante null/undefined:
+const volumenCorrecto = entrada === null ? 50 : Number(entrada);
+
+// ❌ Aserción mentirosa: compila, rompe en runtime
+const edadRota = (respuestaAPI as { edad: string }).edad.toFixed();
+// ✅ Validar de verdad antes de afirmar el tipo
+const esPerfil = typeof respuestaAPI === "object" &amp;&amp; respuestaAPI !== null;</code></pre>
+<blockquote class="aside aside-tip"><p>Cuando dudes cómo tipar un dato, pregúntate: ¿son alternativas reales? entonces <strong>unión</strong>; ¿es un objeto con campos que a veces faltan? entonces <strong>propiedad opcional <code>?</code></strong>; ¿no tengo idea de qué llega? entonces <strong>unknown</strong>. La respuesta nunca debería ser any.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-list-check"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuélvelos en modo strict sobre el proyecto de la lección anterior:</p>
+<ol>
+<li><strong>Básico</strong>: Declara una constante de cada primitivo SIN anotar y verifica con el editor (hover) qué tipo infirió. Luego fuerza un error asignando otro tipo y lee el mensaje del compilador.</li>
+<li><strong>Tupla vs arreglo</strong>: Modela un punto GPS como tupla <code>[number, number]</code> y como objeto <code>{ lat: number; lng: number }</code>. Provoca un error intercambiando los valores de la tupla y explica por qué el objeto lo habría evitado.</li>
+<li><strong>Unión con narrowing</strong>: Escribe <code>formatearId(id: string | number): string</code> que devuelva el id en mayúsculas si es texto, o con ceros a la izquierda hasta 6 dígitos si es número. El narrowing es obligatorio.</li>
+<li><strong>Literales</strong>: Crea el tipo <code>Nivel = "básico" | "intermedio" | "avanzado"</code> y una función <code>recomendar(nivel: Nivel): string</code>. Demuestra con una captura del error que <code>recomendar("experto")</code> no compila.</li>
+<li><strong>Desafío</strong>: Recibe un <code>unknown</code> desde <code>JSON.parse</code> que representa <code>{ producto: string; precio: number }</code>. Valida su forma con comprobaciones de tipos y propiedades, y calcula el IVA solo si todo es correcto. Prohibido usar <code>any</code>: debe compilar en strict sin aserciones injustificadas.</li>
+</ol>
+<p>---</p>
     </div>
   </section>

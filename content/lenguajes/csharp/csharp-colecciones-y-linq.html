@@ -1,44 +1,221 @@
-<!-- 6. Colecciones y LINQ - C# (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="colecciones-principales">
-    <h2>Colecciones principales</h2>
+<!-- 7. Colecciones y LINQ - C# (Lenguajes de Programación) -->
+<section id="colecciones-principales">
+    <h2><i class="fa-solid fa-boxes-stacked"></i> Colecciones principales</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">List&lt;string&gt; nombres = new() { "Ana", "Luis", "María" };
-nombres.Add("Pedro");
+        <p>El namespace <code>System.Collections.Generic</code> ofrece estructuras probadas y genéricas. Elegir la correcta depende del patrón de acceso — igual que en cualquier lenguaje serio:</p>
 
-Dictionary&lt;string, int&gt; edades = new()
+        <h3>El cuarteto esencial</h3>
+        <table>
+            <thead>
+                <tr><th>Colección</th><th>Estructura</th><th>Búsqueda</th><th>Duplicados</th><th>Orden</th><th>Cuándo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>List&lt;T&gt;</code></td><td>Array dinámico</td><td>O(n)</td><td>Sí</td><td>Inserción</td><td>Default universal</td></tr>
+                <tr><td><code>Dictionary&lt;K,V&gt;</code></td><td>Tabla hash</td><td>O(1)</td><td>Claves únicas</td><td>No garantizado</td><td>Lookup por clave</td></tr>
+                <tr><td><code>HashSet&lt;T&gt;</code></td><td>Hash</td><td>O(1)</td><td>Nunca</td><td>No</td><td>Unicidad + pertenencia rápida</td></tr>
+                <tr><td><code>Queue&lt;T&gt;</code></td><td>FIFO</td><td>—</td><td>Sí</td><td>Llegada</td><td>Procesamiento en orden</td></tr>
+                <tr><td><code>Stack&lt;T&gt;</code></td><td>LIFO</td><td>—</td><td>Sí</td><td>Inverso</td><td>Undo, DFS, parsing</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-csharp">// List: el caballo de batalla
+var lenguajes = new List&lt;string&gt; { "C#", "Python" };
+lenguajes.Add("Go");
+lenguajes.Insert(0, "Rust");
+lenguajes.Remove("Python");
+bool tiene = lenguajes.Contains("Go");
+lenguajes.Sort();
+
+// Dictionary: clave → valor
+var edades = new Dictionary&lt;string, int&gt;
 {
     ["Ana"] = 30,
     ["Luis"] = 25
 };
+edades["Marta"] = 28;                       // añadir o actualizar
+if (edades.TryGetValue("Ana", out var edad))   // consulta SIN excepción
+    Console.WriteLine(edad);
 
-HashSet&lt;int&gt; unicos = new() { 1, 2, 2, 3 }; // {1, 2, 3}</code></pre>
+foreach (var (nombre, anios) in edades)     // desestructuración KeyValuePair
+    Console.WriteLine($"{nombre}: {anios}");
+
+// HashSet: unicidad automática
+var tags = new HashSet&lt;string&gt; { "csharp", "backend" };
+tags.Add("csharp");                          // ignorado silenciosamente
+Console.WriteLine(tags.Contains("backend")); // O(1)
+
+// Collection expressions (C# 12):
+int[] primos = [2, 3, 5, 7];
+List&lt;int&gt; lista = [1, 2, 3];</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>IEnumerable&lt;T&gt; es LA interfaz mínima recorrible: casi toda API moderna la acepta/devuelve. List para almacenar, IEnumerable para pasar datos entre métodos — máxima flexibilidad, cero copias innecesarias.</p>
+        </blockquote>
+
+        <h3>yield return: generadores perezosos</h3>
+        <pre><code class="language-csharp">static IEnumerable&lt;long&gt; Fibonacci()
+{
+    long a = 0, b = 1;
+    while (true)                    // secuencia INFINITA sin consumir memoria
+    {
+        yield return a;
+        (a, b) = (b, a + b);
+    }
+}
+
+// El consumidor decide cuántos tomar:
+foreach (var fib in Fibonacci().Take(10))
+    Console.Write(fib + " ");
+// 0 1 1 2 3 5 8 13 21 34</code></pre>
+        <blockquote class="aside aside-note">
+            <p>yield transforma un método en máquina de estados que produce elementos BAJO DEMANDA. Nada se computa hasta que alguien itera — la misma filosofía de ejecución diferida que domina LINQ.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="linq-basico">
-    <h2>LINQ básico</h2>
+<section id="linq-basico">
+    <h2><i class="fa-solid fa-filter"></i> LINQ: consultas integradas al lenguaje</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">using System.Linq;
+        <p>Language Integrated Query trae SQL-like querying a CUALQUIER colección (o base de datos, o XML...). Dos sintaxis equivalentes: métodos de extensión encadenados (dominante en código real) y query syntax:</p>
+        <pre><code class="language-csharp">using System.Linq;
 
-var numeros = new[] { 5, 2, 8, 1, 9 };
+var numeros = new[] { 5, 2, 8, 1, 9, 3 };
 
-var pares    = numeros.Where(n =&gt; n % 2 == 0);
-var dobles   = numeros.Select(n =&gt; n * 2);
-var ordenado = numeros.OrderBy(n =&gt; n);
-var maximo   = numeros.Max();
-var hayMayores = numeros.Any(n =&gt; n &gt; 8);   // true</code></pre>
+// Method syntax: el estándar de facto
+var paresAlCuadrado = numeros
+    .Where(n =&gt; n % 2 == 0)      // filtrar
+    .Select(n =&gt; n * n)          // proyectar/transformar
+    .OrderByDescending(n =&gt; n)   // ordenar
+    .ToList();                   // materializar: [64, 4]
+
+// Query syntax (azúcar compilable a lo mismo):
+var query = from n in numeros
+            where n % 2 == 0
+            orderby n descending
+            select n * n;
+
+// Operadores fundamentales:
+numeros.First();                  // primero (LANZA si vacío)
+numeros.FirstOrDefault(-1);       // primero o default seguro
+numeros.Single(n =&gt; n == 5);      // EXACTAMENTE uno (lanza si 0 o 2+)
+numeros.Any(n =&gt; n &gt; 8);          // ¿existe alguno? → true
+numeros.All(n =&gt; n &gt; 0);          // ¿todos cumplen? → true
+numeros.Count(n =&gt; n &gt; 2);        // cuenta condicional
+numeros.Sum();
+numeros.Average();
+numeros.Max() / Min();
+
+// Agrupación:
+var porParidad = numeros.GroupBy(n =&gt; n % 2);
+foreach (var grupo in porParidad)
+    Console.WriteLine($"Clave {grupo.Key}: [{string.Join(",", grupo)}]");</code></pre>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="linq-con-objetos">
-    <h2>LINQ con objetos</h2>
+<section id="linq-con-objetos">
+    <h2><i class="fa-solid fa-users-gear"></i> LINQ sobre objetos reales</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">var adultos = personas
-    .Where(p =&gt; p.Edad &gt;= 18)
-    .OrderBy(p =&gt; p.Nombre)
-    .Select(p =&gt; new { p.Nombre, p.Edad })
-    .ToList();</code></pre>
+        <pre><code class="language-csharp">public record Empleado(string Nombre, string Departamento, decimal Salario, int Edad);
+
+var plantilla = new List&lt;Empleado&gt;
+{
+    new("Ana",   "Dev",     45000m, 30),
+    new("Luis",  "Dev",     38000m, 24),
+    new("Marta", "RRHH",    35000m, 45),
+    new("Pedro", "Ventas",  40000m, 38),
+};
+
+// Pipeline completo de negocio:
+var reporte = plantilla
+    .Where(e =&gt; e.Edad &gt;= 25)
+    .GroupBy(e =&gt; e.Departamento)
+    .Select(g =&gt; new
+    {
+        Depto = g.Key,
+        Media = g.Average(x =&gt; x.Salario),
+        Nombres = string.Join(", ", g.Select(x =&gt; x.Nombre))
+    })
+    .OrderByDescending(r =&gt; r.Media)
+    .ToList();
+
+foreach (var r in reporte)
+    Console.WriteLine($"{r.Depto,-8} media {r.Media:C}: {r.Nombres}");
+
+// Joins:
+var departamentos = new Dictionary&lt;string, string&gt;
+{
+    ["Dev"] = "Tecnología",
+    ["RRHH"] = "Personas"
+};
+var conNombreDepto =
+    from e in plantilla
+    join d in departamentos on e.Departamento equals d.Key
+    select $"{e.Nombre} trabaja en {d.Value}";
+
+// Proyección anónima vs record tipada:
+var ligero = plantilla.Select(e =&gt; new { e.Nombre, e.Salario });  // anónimo local
+var tipado  = plantilla.Select(e =&gt; new Persona(e.Nombre, e.Edad)); // contrato formal</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>LA trampa de LINQ: ejecución DIFERIDA. Un Where/Select NO se ejecuta al escribirlo sino al ITERARLO — y cada iteración RE-EJECUTA todo el pipeline. Si iteras dos veces una consulta sobre fuente mutable (o DB), obtienes dos ejecuciones distintas. Materializa con ToList()/ToArray() cuando necesites snapshot.</p>
+        </blockquote>
+        <pre><code class="language-csharp">var filtroCaro = productos.Where(p =&gt; p.Precio &gt; 100);  // AÚN nada ejecutado
+productos.Add(productoNuevo);                            // mutamos fuente
+Console.WriteLine(filtroCaro.Count());                   // ¡INCLUYE el nuevo!</code></pre>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="buenas-practicas-linq">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Filtrar PRONTO (Where temprano)</td><td>Menos elementos arrastrados por Selects posteriores</td></tr>
+                <tr><td>ToList() explícito en fronteras de API</td><td>Evita re-ejecuciones sorpresa; comunica snapshot</td></tr>
+                <tr><td>FirstOrDefault sobre First salvo certeza total</td><td>Colección vacía no debe crashear tu pipeline</td></tr>
+                <tr><td>Any() en vez de Count() &gt; 0</td><td>Any corta en el primer elemento; Count los recorre todos</td></tr>
+                <tr><td>Select solo campos necesarios antes de ToList</td><td>Menos memoria; en EF Core genera SQL SELECT columnas exactas</td></tr>
+                <tr><td>Métodos encadenados multi-línea indentados</td><td>Pipeline legible como prosa vertical</td></tr>
+                <tr><td>Records + pattern matching para resultados complejos</td><td>Tipado fuerte en cada etapa del pipeline</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Iterar consulta diferida múltiples veces</td><td>Rendimiento multiplicado / resultados inconsistentes</td><td>ToList() una vez, luego opera sobre la lista</td></tr>
+                <tr><td>First() sobre posible vacío</td><td>InvalidOperationException en producción</td><td>FirstOrDefault + check null/default</td></tr>
+                <tr><td>Single esperando único pero hay duplicados</td><td>Excepción con datos reales sucios</td><td>SingleOrDefault o validar invariantes antes</td></tr>
+                <tr><td>Dictionary[clave] para consultar</td><td>KeyNotFoundException con claves ausentes</td><td>TryGetValue / ContainsKey</td></tr>
+                <tr><td>LINQ-to-Objects sobre millones con múltiples enumeraciones</td><td>CPU disparada</td><td>Materializar; considerar PLINQ (.AsParallel()) medido</td></tr>
+                <tr><td>Modificar colección dentro de foreach LINQ activo</td><td>InvalidOperationException</td><td>Materializar primero o RemoveAll</td></tr>
+                <tr><td>OrderBy sin comparador en strings sensibles a cultura</td><td>Ordenes sorprendentes internacionalmente</td><td>StringComparer.Ordinal/InvariantCulture explícito</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Análisis de notas</strong>: lista de estudiantes (nombre, nota); LINQ que devuelva aprobados ordenados, promedio general, y top-3 con Take(3).</li>
+            <li><strong>Agrupador de inventario</strong>: productos por categoría con GroupBy; imprime conteo y suma de precios por categoría usando desestructuración.</li>
+            <li><strong>Join de pedidos-clientes</strong>: dos listas relacionadas por ClienteId; proyección combinada con query syntax Y method syntax; compara legibilidad.</li>
+            <li><strong>Generador infinito controlado</strong>: Fibonacci con yield + Take While(n =&gt; n &lt; 1000); demuestra pereza imprimiendo contador de iteraciones generadas.</li>
+            <li><strong>Cazador de doble-ejecución</strong>: construye pipeline sobre List con log en el Where; itera dos veces observando logs duplicados; arregla con ToList() verificando log único.</li>
+        </ol>
+    </div>
+</section>

@@ -1,6 +1,6 @@
 <!-- 3. Jenkins - CI/CD (Control de Versiones) -->
 <section id="que-es-jenkins-y-cuando-usarlo">
-  <h2>¿Qué es Jenkins y cuándo usarlo?</h2>
+  <h2><i class="fa-solid fa-server"></i> ¿Qué es Jenkins y cuándo usarlo?</h2>
   <div class="doc-content">
     <p><strong>Jenkins</strong> es el servidor de automatización open source más veterano y extendido del mundo empresarial (Java, 2011). No es un hosting: lo instalas y administras tú. Su superpoder es el ecosistema de <strong>+1800 plugins</strong> que conecta con absolutamente todo.</p>
     <p>Úsalo cuando:</p>
@@ -10,11 +10,15 @@
       <li>Herencias infraestructura existente basada en Jenkins.</li>
     </ul>
     <p>Evítalo si buscas cero mantenimiento: un SaaS como GitHub Actions te ahorra actualizar servidor, plugins y backups.</p>
+    <blockquote class="aside aside-tip">
+      <p>El costo oculto de Jenkins no es la licencia (es gratis) sino el OPERADOR: alguien debe aplicar parches de seguridad, gestionar plugins incompatibles entre sí y vigilar disco/memoria. Presupuesta 10-20% de un ingeniero para una instancia corporativa mediana.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="instalacion-con-docker">
-  <h2>Instalación con Docker</h2>
+  <h2><i class="fa-brands fa-docker"></i> Instalación con Docker</h2>
   <div class="doc-content">
     <pre><code class="language-bash"># Jenkins LTS con persistencia
 docker run -d --name jenkins \
@@ -32,11 +36,15 @@ docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword</code></p
       <li>Elige "Install suggested plugins".</li>
       <li>Crea tu usuario admin — listo para usar.</li>
     </ol>
+    <blockquote class="aside aside-caution">
+      <p>El volumen <code>jenkins_home</code> es TODO tu Jenkins: jobs, configuración, credenciales. Sin backup de ese volumen, una actualización fallida borra años de configuración. Backup programado + Configuration as Code (plugin JCasC) para reconstruir.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="plugins-esenciales">
-  <h2>Plugins esenciales</h2>
+  <h2><i class="fa-solid fa-plug"></i> Plugins esenciales</h2>
   <div class="doc-content">
     <p>Se instalan desde <em>Manage Jenkins → Plugins</em>:</p>
     <table class="doc-table">
@@ -51,11 +59,15 @@ docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword</code></p
       </tbody>
     </table>
     <p>Regla de oro: menos plugins = menos problemas de actualización. Audita y elimina los que no uses.</p>
+    <blockquote class="aside aside-danger">
+      <p>Los plugins son la mayor superficie de ataque de Jenkins: vulnerabilidades CVE aparecen constantemente. Activa las actualizaciones automáticas del update center, revisa avisos de seguridad mensualmente y desconfía de plugins sin mantenimiento activo (última release &gt; 1 año).</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="jenkinsfile-pipeline-declarativo">
-  <h2>Jenkinsfile: pipeline declarativo</h2>
+  <h2><i class="fa-solid fa-file-code"></i> Jenkinsfile: pipeline declarativo</h2>
   <div class="doc-content">
     <p>El pipeline se define en un archivo <code>Jenkinsfile</code> versionado junto al código:</p>
     <pre><code class="language-groovy">// Jenkinsfile
@@ -93,11 +105,15 @@ pipeline {
     }
 }</code></pre>
     <p>Cada push dispara el pipeline; los resultados se ven como etapas coloreadas en la UI.</p>
+    <blockquote class="aside aside-note">
+      <p>Declarativo vs Scripted: el declarativo (pipeline { }) es estructurado, validable y el estándar recomendado. El scripted (node { }) es Groovy puro — máximo poder, mínimo control, historial de abusos. En Jenkinsfile nuevos: declarativo siempre; scripted solo dentro de steps puntuales si no queda alternativa.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="agentes-distribuidos">
-  <h2>Agentes distribuidos</h2>
+  <h2><i class="fa-solid fa-network-wired"></i> Agentes distribuidos</h2>
   <div class="doc-content">
     <p>El controlador (master) orquesta pero conviene no ejecutar builds en él. Los <strong>agentes</strong> hacen el trabajo pesado:</p>
     <ul>
@@ -110,5 +126,42 @@ pipeline {
     ...
 }</code></pre>
     <p>Etiqueta agentes (<code>linux, gpu, windows</code>) y asígnalas por job: <code>agent { label 'linux &amp;&amp; docker' }</code>. Con esto escala horizontalmente sin límite práctico.</p>
+    <blockquote class="aside aside-caution">
+      <p>Ejecutar builds en el controlador es la mala práctica #1 de Jenkins: un job con <code>sh 'rm -rf'</code> mal escrito o un script Groovy agresivo compromete TODA la instancia (credenciales incluidas). El master orquesta; los agentes ejecutan — siempre.</p>
+    </blockquote>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="errores-comunes">
+  <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Builds en el controlador</td><td>Master saturado / riesgo total ante jobs maliciosos</td><td>Agentes dedicados, executor=0 en master</td></tr>
+        <tr><td>Jenkinsfile fuera del repo</td><td>Pipeline no versionado, cambios invisibles</td><td>Jenkinsfile en la raíz + "Pipeline script from SCM"</td></tr>
+        <tr><td>Credenciales en el Jenkinsfile</td><td>Secrets visibles en git y logs</td><td>credentials() + Credentials Binding plugin</td></tr>
+        <tr><td>Plugins acumulados por años</td><td>Updates imposibles por incompatibilidades</td><td>Auditoría trimestral + JCasC para reproducibilidad</td></tr>
+        <tr><td>Workspace sin limpieza entre builds</td><td>"Funciona solo en segunda ejecución" 🤯</td><td>deleteDir() al inicio o workspaces efímeros (Docker)</td></tr>
+        <tr><td>Groovy arbitrario en pipelines de PR externos</td><td>Ejecución remota de código vía PR</td><td>No permitir scripts de forks; pipeline declarativo sandboxed</td></tr>
+      </tbody>
+    </table>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="ejercicios">
+  <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+  <div class="doc-content">
+    <ol>
+      <li><strong>Instalación viva</strong>: levanta Jenkins LTS con Docker, completa el wizard y protege el volumen con un backup exportado de jenkins_home.</li>
+      <li><strong>Primer Jenkinsfile</strong>: pipeline declarativo con stages Checkout/Install/Test/Deploy(when main) sobre tu repo Node; dispara con push y observa las etapas coloreadas.</li>
+      <li><strong>Agente Docker</strong>: convierte un stage a agent { docker { image 'node:20' } } y compara reproducibilidad instalando dependencias nativas (sharp/canvas) que fallan en host desnudo.</li>
+      <li><strong>Credenciales seguras</strong>: crea un secret en Credentials Binding, úsalo desde el Jenkinsfile e imprime logs verificando que NO aparece el valor.</li>
+      <li><strong>Simulacro de desastre</strong>: borra el contenedor Jenkins y reconstruye todo desde volumen backup + lista de plugins documentada; cronometra el recovery.</li>
+    </ol>
   </div>
 </section>

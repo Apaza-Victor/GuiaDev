@@ -2,45 +2,269 @@
 <!-- Contenido local del proyecto -->
 
   <section id="clases">
-    <h2>Clases</h2>
+    <h2><i class="fa-solid fa-cubes"></i> Clases: constructor primario, init y secundarios</h2>
     <div class="doc-content">
-<pre><code class="language-kotlin">class Usuario(val nombre: String, var edad: Int) {
-    fun cumplirAnios() { edad++ }
+<p>Kotlin condensa en una sola línea lo que Java reparte entre campos, constructor, getters y setters: el <strong>constructor primario</strong> se declara en la cabecera de la clase, y anteponer <code>val</code> o <code>var</code> a un parámetro lo convierte automáticamente en propiedad con sus accesores generados. Esta decisión elimina de raíz la ceremonia del <em>boilerplate</em>, pero también cambia la mentalidad: declaras <strong>qué es</strong> un objeto, no cómo ensamblarlo.</p>
+<pre><code class="language-kotlin">// Constructor primario: propiedades declaradas EN la firma
+class Persona(
+    val nombre: String,          // val → solo getter (inmutable tras crear)
+    var edad: Int                // var → getter + setter
+) {
+    fun cumplirAnios() { edad += 1 }
 }
 
-val u = Usuario("Ana", 30)
-u.cumplirAnios()
-println(u.edad)   // 31</code></pre>
+val p = Persona("Ana", 30)       // no existe "new" en Kotlin
+p.cumplirAnios()
+println("${p.nombre} tiene ${p.edad} años")   // Ana tiene 31 años
+
+// Parámetros con valores por defecto: adiós a constructores telescópicos
+class Servidor(val host: String, val puerto: Int = 8080, val ssl: Boolean = false)
+val local = Servidor("localhost")               // usa los defaults</code></pre>
+<h3>Bloques init: lógica al nacer el objeto</h3>
+<p>El constructor primario no admite código ejecutable, así que Kotlin ofrece bloques <code>init</code>: se ejecutan en orden de aparición, justo después de asignar las propiedades del constructor. Son el lugar natural para validaciones y derivaciones.</p>
+<pre><code class="language-kotlin">class Cuenta(val titular: String, saldoInicial: Double) {
+    // saldoInicial NO es propiedad (sin val/var): solo vive durante la construcción
+    val saldo = if (saldoInicial &gt;= 0) saldoInicial else 0.0
+    val historial = mutableListOf&lt;String&gt;()
+
+    init {
+        require(titular.isNotBlank()) { "El titular es obligatorio" }
+        println("Cuenta creada para $titular")
+    }
+
+    init {   // puede haber VARIOS; corren en orden de declaración
+        historial.add("Apertura con €$saldo")
+    }
+}</code></pre>
+<h3>Constructores secundarios</h3>
+<p>Cuando necesitas rutas de construcción alternativas (por ejemplo, desde un String), los declaras con <code>constructor</code>. La regla de oro: deben delegar directa o indirectamente en el primario usando <code>this(...)</code>.</p>
+<pre><code class="language-kotlin">class Articulo(val codigo: String, val precio: Double) {
+    val etiqueta: String
+
+    init {
+        etiqueta = "$codigo — €$precio"
+    }
+
+    // Secundario: parsea un texto y delega en el primario
+    constructor(descripcion: String) : this(
+        codigo = descripcion.substringBefore("-"),
+        precio = descripcion.substringAfter("-").toDouble()
+    )
+}
+
+val porCampos = Articulo("A-101", 29.99)
+val porTexto  = Articulo("A-102-45.50")     // misma clase, otra puerta de entrada</code></pre>
+<blockquote class="aside aside-note"><p>Antes de escribir un constructor secundario, pregúntate si una función factoría en el companion object (<code>Articulo.desdeTexto(...)</code>) no sería más idiomática: mantiene un único camino de construcción visible.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="propiedades-personalizadas">
+    <h2><i class="fa-solid fa-sliders-h"></i> Propiedades con getters/setters personalizados</h2>
+    <div class="doc-content">
+<p>Toda propiedad Kotlin ya genera accesores por ti, pero puedes intervenirlos. Un <strong>getter personalizado</strong> calcula el valor en cada lectura (propiedad computada); un <strong>setter personalizado</strong> intercepta las escrituras para validar o normalizar. Dentro de un accesor personalizado, la palabra clave <code>field</code> referencia el campo de respaldo (<em>backing field</em>): usar el nombre de la propiedad provocaría recursión infinita llamándose a sí misma.</p>
+<pre><code class="language-kotlin">class Temperatura(var celsius: Double) {
+    // Propiedad COMPUTADA: sin backing field, se recalcula en cada acceso
+    val fahrenheit: Double
+        get() = celsius * 9 / 5 + 32
+
+    // Setter con validación sobre el campo de respaldo
+    var escalaMaxima: Double = 100.0
+        set(value) {
+            field = if (value &lt; 0) 0.0 else value   // field ≠ this.escalaMaxima
+        }
+
+    // Getter que deriva estado: nunca almacenamos dos veces la verdad
+    val esCongelacion: Boolean
+        get() = celsius &lt;= 0
+}
+
+val t = Temperatura(25.0)
+println(t.fahrenheit)          // 77.0 — calculado al vuelo
+t.celsius = -5.0
+println(t.fahrenheit)          // 23.0 — siempre sincronizado con celsius
+
+// Con backing field explícito: caché perezosa manual
+class Informe(pesado: () -&gt; String) {
+    val contenido: String by lazy(pesado)   // alternativa moderna al patrón manual
+}</code></pre>
+<blockquote class="aside aside-caution"><p>Error clásico: escribir <code>get() = escalaMaxima</code> dentro del propio getter de <code>escalaMaxima</code>. Eso llama al getter otra vez… que llama al getter… StackOverflowError inmediato. Dentro del accesor, usa SIEMPRE <code>field</code>, nunca el nombre de la propiedad.</p></blockquote>
+<blockquote class="aside aside-tip"><p>Los setters personalizados son el lugar idóneo para invariantes ("el stock nunca negativo"): quien use la clase no puede olvidar la validación, porque vive dentro del propio tipo y no en cada punto de uso.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="visibilidad-modificadores">
+    <h2><i class="fa-solid fa-user-shield"></i> Visibilidad: public, private, internal y protected</h2>
+    <div class="doc-content">
+<p>Kotlin hereda de Java los modificadores de acceso pero con dos giros importantes: todo es <strong><code>public</code> por defecto</strong> (no hace falta escribirlo), y aparece un modificador nuevo pensado para arquitectura de módulos: <code>internal</code>. Además, desaparece el <em>package-private</em> de Java: si algo debe verse solo dentro de tu módulo, esa es exactamente la palabra que buscas.</p>
+<table><thead><tr><th>Modificador</th><th>Visible desde…</th><th>Uso típico</th></tr></thead><tbody>
+<tr><td><code>public</code></td><td>Cualquier código que vea la clase (por defecto)</td><td>APIs públicas deliberadas</td></tr>
+<tr><td><code>private</code></td><td>Dentro de la clase; en top-level, solo el archivo</td><td>Estado interno, helpers de implementación</td></tr>
+<tr><td><code>protected</code></td><td>La clase y sus subclases (no existe en top-level)</td><td>Ganchos para jerarquías de herencia</td></tr>
+<tr><td><code>internal</code></td><td>Solo dentro del mismo módulo compilado</td><td>APIs compartidas en el proyecto, ocultas a consumidores externos</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">class Billetera {
+    private var saldo: Double = 0.0            // nadie externo toca el dinero directamente
+
+    fun depositar(monto: Double) {
+        require(monto &gt; 0) { "El depósito debe ser positivo" }
+        saldo += monto
+    }
+
+    fun consultar(): Double = saldo            // lectura controlada por método propio
+}
+
+internal class MotorReportes {                 // utilería interna del módulo
+    fun generar(): String = "...reporte..."
+}
+
+abstract class Animal(protected val nombre: String) {   // visible SOLO para subclases
+    abstract fun hablar(): String
+}
+
+class Perro(nombre: String) : Animal(nombre) {
+    override fun hablar() = "$nombre dice guau"   // puede usar 'nombre' protegido
+}</code></pre>
+<blockquote class="aside aside-danger"><p>Que sea <code>public</code> por defecto no significa que deba serlo: cada miembro público es un compromiso de mantenimiento eterno. Antes de publicar una librería, recorre tus clases convirtiendo en <code>internal</code>/<code>private</code> todo lo que no sea contrato.</p></blockquote>
+<blockquote class="aside aside-note"><p>Bajo el capó, <code>internal</code> compila como público Java con el nombre "mutilado" (<code>MotorReportes$modulo</code>), impidiendo su uso accidental desde otros módulos aunque el bytecode técnicamente lo permitiera.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="data-classes">
-    <h2>Data classes</h2>
+    <h2><i class="fa-solid fa-copy"></i> Data classes: datos con superpoderes automáticos</h2>
     <div class="doc-content">
+<p>Marcando una clase con <code>data</code>, el compilador genera por ti el paquete completo de métodos que toda "clase de datos" merece: <code>equals()</code> y <code>hashCode()</code> comparando por VALOR, un <code>toString()</code> legible, la función <code>copy()</code> para clonar con cambios, y las funciones <code>componentN()</code> que habilitan la destructuración. Es la respuesta de Kotlin al interminable POJO de Java.</p>
+<table><thead><tr><th>Miembro generado</th><th>Qué aporta</th></tr></thead><tbody>
+<tr><td><code>equals() / hashCode()</code></td><td>Dos instancias con los mismos valores son "iguales": ideal para comparar y usar como clave en Map/Set</td></tr>
+<tr><td><code>toString()</code></td><td><code>Punto(x=1, y=2)</code>: depuración instantánea sin concatenaciones</td></tr>
+<tr><td><code>copy()</code></td><td>Nueva instancia con algunos atributos cambiados: actualización inmutable funcional</td></tr>
+<tr><td><code>component1(), component2()…</code></td><td>Destructuring: <code>val (x, y) = punto</code></td></tr>
+</tbody></table>
 <pre><code class="language-kotlin">data class Punto(val x: Int, val y: Int)
 
 val a = Punto(1, 2)
-val b = a.copy(x = 10)
-a == Punto(1, 2)   // true: equals generado
-println(a)          // Punto(x=1, y=2): toString generado</code></pre>
+val b = Punto(1, 2)
+
+// EQUALS estructural: compara CONTENIDO, no identidad de objeto
+println(a == b)              // true  (usa equals generado)
+println(a === b)             // false (=== compara referencias de memoria)
+
+// COPY: clona cambiando solo lo necesario — la base del estilo inmutable
+val movido = a.copy(x = 10)
+println(a)                   // Punto(x=1, y=2) — original intacto
+println(movido)              // Punto(x=10, y=2)
+
+// DESTRUCTURING: extrae componentes por posición
+fun distanciaAlOrigen(punto: Punto): Double {
+    val (x, y) = punto                       // component1() y component2()
+    return Math.sqrt((x * x + y * y).toDouble())
+}
+
+// Útil también al iterar mapas (Pair ES una data class de la librería)
+val edades = mapOf("Ana" to 30, "Luis" to 25)
+for ((nombre, edad) in edades) println("$nombre → $edad")</code></pre>
+<blockquote class="aside aside-tip"><p>Patrón estrella en apps reales: estados inmutables + <code>copy()</code>. Cada cambio produce una NUEVA data class en lugar de mutar la anterior, lo que hace trivial comparar "¿algo cambió?" antes de repintar una pantalla.</p></blockquote>
+<blockquote class="aside aside-danger"><p>Evita propiedades <code>var</code> en data classes usadas como claves de HashMap/HashSet: si mutas el objeto después de insertarlo, su hashCode cambia y queda "perdido" dentro de la tabla. Regla práctica: <strong>data class ⇒ propiedades <code>val</code></strong>.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="sealed-y-object">
-    <h2>Sealed y object</h2>
+    <h2><i class="fa-solid fa-diagram-project"></i> Sealed classes, object singleton y companion</h2>
     <div class="doc-content">
-<pre><code class="language-kotlin">sealed class Estado {
-    object Cargando : Estado()
-    data class Exito(val datos: List&lt;String&gt;) : Estado()
-    data class Error(val mensaje: String) : Estado()
+<h3>Sealed: jerarquías cerradas y when exhaustivos</h3>
+<p>Una clase <code>sealed</code> define una jerarquía <strong>cerrada</strong>: todas sus subclases deben vivir en el mismo paquete y módulo. El compilador conoce el árbol completo, así que un <code>when</code> que cubra todas las ramas es exhaustivo sin necesidad de <code>else</code> — y si mañana añades un caso nuevo, cada <code>when</code> olvidado deja de compilar. Es EL patrón para modelar estados de UI y resultados de operaciones.</p>
+<pre><code class="language-kotlin">sealed interface Resultado&lt;out T&gt; {
+    data class Exito&lt;T&gt;(val datos: T) : Resultado&lt;T&gt;
+    data class Error(val mensaje: String, val codigo: Int) : Resultado&lt;Nothing&gt;
+    object Cargando : Resultado&lt;Nothing&gt;
 }
 
-when (estado) {
-    is Estado.Cargando -&gt; mostrarSpinner()
-    is Estado.Exito -&gt; pintar(estado.datos)
-    is Estado.Error -&gt; avisar(estado.mensaje)
+fun renderizar(resultado: Resultado&lt;String&gt;): String = when (resultado) {
+    is Resultado.Exito  -&gt; "Datos: ${resultado.datos}"      // smart cast incluido
+    is Resultado.Error  -&gt; "Fallo ${resultado.codigo}: ${resultado.mensaje}"
+    Resultado.Cargando  -&gt; "Espera un momento…"
+}   // ✅ SIN else: el compilador verifica que ningún caso falte</code></pre>
+<h3>object: el singleton integrado en el lenguaje</h3>
+<p>La declaración <code>object</code> crea una única instancia, inicializada de forma perezosa y thread-safe en su primer uso. Adiós a los singletons manuales con constructores privados y dobles chequeos.</p>
+<pre><code class="language-kotlin">object ConfiguracionGlobal {
+    var tema: String = "claro"
+    val cargadaEn: Long = System.currentTimeMillis()
 }
 
-object Contador { var total = 0 }   // singleton</code></pre>
+ConfiguracionGlobal.tema = "oscuro"      // siempre LA misma instancia
+
+// También existen objetos ANÓNIMOS (expresiones object), equivalentes
+// a las clases internas anónimas de Java:
+val saludo = object {
+    val texto = "Hola"
+    fun gritar() = texto.uppercase()
+}
+println(saludo.gritar())</code></pre>
+<h3>companion object: miembros "estáticos" con nombre</h3>
+<p>Kotlin no tiene <code>static</code>. Su equivalente idiomático es el <code>companion object</code>: un único objeto vinculado a la clase, perfecto para constantes y funciones factoría. Desde Java se accede vía <code>MiClase.Companion.miembro()</code> (la anotación <code>@JvmStatic</code>, que verás en la lección de interoperabilidad, lo convierte en estático real).</p>
+<pre><code class="language-kotlin">class Usuario private constructor(val email: String) {   // constructor PRIVADO
+    companion object {
+        const val MAX_INTENTOS = 3                        // constante de clase
+
+        // Funciones factoría con nombres expresivos
+        fun desdeEmail(email: String): Usuario {
+            require(email.contains("@")) { "Email inválido" }
+            return Usuario(email)
+        }
+        fun invitado(): Usuario = Usuario("invitado@guiadev.dev")
+    }
+}
+
+val u1 = Usuario.desdeEmail("ana@correo.com")   // sin "new", con intención legible
+val u2 = Usuario.invitado()</code></pre>
+<blockquote class="aside aside-tip"><p>¿Enum o sealed? Si todas las variantes son fijas y sin datos propios (días de la semana), enum. Si las variantes llevan DATOS distintos (Exito trae datos, Error trae mensaje y código), sealed class/interface gana por goleada.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas-clases">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+<p>Estas decisiones de diseño separan el Kotlin maduro del código "Java traducido". Todas nacen de características vistas en esta lección.</p>
+<table><thead><tr><th>Práctica</th><th>Razón</th></tr></thead><tbody>
+<tr><td>Inmutabilidad primero: <code>val</code> en propiedades</td><td>Objetos que no cambian son fáciles de compartir, testear y cachear</td></tr>
+<tr><td>Data class para portadores de datos, nada más</td><td>Su valor está en equals/copy; meterles lógica compleja diluye su propósito</td></tr>
+<tr><td>Sealed para estados finitos con datos distintos</td><td>When exhaustivo = el compilador te avisa cuando agregas casos</td></tr>
+<tr><td>Ojo: las clases son FINAL por defecto</td><td>Heredar exige <code>open</code> consciente; favorece composición antes que herencia</td></tr>
+<tr><td>Valida en init y setters, nunca confíes en el llamante</td><td>El objeto protege SUS invariantes; nadie recuerda validar fuera</td></tr>
+<tr><td>Factorías nombradas en companion (<code>desdeEmail</code>, <code>invitado</code>)</td><td>Comunican intención mejor que sobrecargar constructores</td></tr>
+<tr><td><code>private</code> por defecto; sube visibilidad solo si hay consumidor real</td><td>Superficie pública mínima = menos acoplamiento y refactors baratos</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">// ❌ Clase "Java disfrazada": mutable, expuesta, sin garantías
+class CarritoCompra {
+    var items = mutableListOf&lt;String&gt;()   // público Y mutable: cualquiera lo rompe
+    var total: Double = 0.0                // puede desincronizarse de items
+}
+
+// ✅ Encapsulada e inmutable donde importa
+class CarritoCompraSeguro(private val items: List&lt;String&gt; = emptyList()) {
+    val total: Double get() = items.sumOf { it.length * 0.5 }   // derivado, jamás desincroniza
+
+    fun agregar(item: String) = CarritoCompraSeguro(items + item)  // devuelve NUEVO carrito
+}</code></pre>
+<blockquote class="aside aside-success"><p>Señal de diseño sano: puedes cambiar la implementación interna completa de tu clase (cambiar la lista por un Set, renombrar campos privados) sin romper ni una línea de código cliente. Esa libertad solo existe cuando la superficie pública es mínima.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuélvelos en orden: cada uno apila un concepto nuevo sobre el anterior. Todos caben en un archivo del playground oficial.</p>
+<ol>
+<li><strong>Ficha de producto:</strong> crea la clase <code>Producto(codigo, precioBase)</code> con constructor primario, un bloque <code>init</code> que valide precio positivo mediante <code>require</code>, y una propiedad computada <code>precioConIva</code> (IVA 21%). Instancia tres productos y prueba que un precio inválido lanza el error esperado.</li>
+<li><strong>Setter guardián:</strong> añade a Producto una propiedad <code>var stock</code> cuyo setter rechace valores negativos normalizándolos a cero, y un contador interno privado de "intentos inválidos" que se incremente en el setter. Demuestra su comportamiento desde un <code>main</code>.</li>
+<li><strong>Catálogo con visibilidad:</strong> modela <code>Catalogo</code> con lista interna <code>private</code>, métodos públicos <code>agregar</code>/<code>buscar</code>, y marca la clase auxiliar <code>CriterioOrden</code> como <code>internal</code>. Explica en comentario qué pasaría si otro módulo intentara usarla.</li>
+<li><strong>Estado de pedido:</strong> implementa el sealed interface <code>EstadoPedido</code> con variantes <code>Pendiente</code>, <code>EnTransito(repartidor, etaMinutos)</code> y <code>Entregado(firma)</code>; escribe la función <code>mensaje(estado)</code> con when exhaustivo SIN <code>else</code>. Añade una variante nueva y comprueba cómo el compilador señala todos los when incompletos.</li>
+<li><strong>Registro global tipado:</strong> combina todo: un <code>object RegistroAuditoria</code> con historial privado y método <code>registrar(evento: String)</code>, un data class <code>Evento(tipo, detalle, timestamp)</code> usado como entrada, funciones factoría <code>Evento.login(usuario)</code> / <code>Evento.error(mensaje)</code> en su companion, y destructuring al imprimir el último evento registrado. El flujo completo debe demostrar encapsulación, inmutabilidad, singleton y factory pattern juntos.</li>
+</ol>
     </div>
   </section>

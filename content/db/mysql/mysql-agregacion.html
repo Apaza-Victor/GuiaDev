@@ -1,52 +1,183 @@
 <!-- 8. Agregación y agrupamiento - MySQL (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="funciones-de-agregacion">
-    <h2>Funciones de agregación</h2>
+<section id="funciones-de-agregacion">
+    <h2><i class="fa-solid fa-calculator"></i> Funciones de agregación</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT COUNT(*) AS total_productos FROM productos;
-SELECT AVG(precio) AS precio_promedio FROM productos;
-SELECT MIN(precio) AS mas_barato, MAX(precio) AS mas_caro FROM productos;
-SELECT SUM(stock) AS unidades_totales FROM productos;</code></pre>
-<blockquote class="aside aside-note">
-<p><code>COUNT(*)</code> cuenta filas (incluye nulos); <code>COUNT(columna)</code> ignora los <code>NULL</code> de esa columna.</p>
-</blockquote>
-    </div>
-  </section>
+        <p>Las funciones de agregación colapsan muchas filas en UN solo valor resumen. Son la base de todo reporting: totales, medias, conteos, extremos:</p>
+        <pre><code class="language-sql">SELECT
+    COUNT(*)                    AS total_pedidos,      -- cuenta FILAS
+    COUNT(enviado_el)           AS pedidos_enviados,   -- ignora NULLs ⚠️
+    SUM(total)                  AS facturado,
+    AVG(total)                  AS ticket_medio,
+    MIN(total)                  AS pedido_min,
+    MAX(total)                  AS pedido_max,
+    ROUND(AVG(total), 2)        AS ticket_redondeado
+FROM pedidos
+WHERE fecha &gt;= '2026-01-01';</code></pre>
+        <table>
+            <thead>
+                <tr><th>Función</th><th>Con NULLs…</th><th>Sobre conjunto vacío…</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>COUNT(*)</code></td><td>Cuenta todas las filas</td><td>0</td></tr>
+                <tr><td><code>COUNT(col)</code></td><td>Salta los NULL</td><td>0</td></tr>
+                <tr><td><code>SUM/AVG</code></td><td>Los salta</td><td>NULL (no 0)</td></tr>
+                <tr><td><code>MIN/MAX</code></td><td>Los salta</td><td>NULL</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>La distinción COUNT(*) vs COUNT(columna) es una pregunta de entrevista clásica y un bug real: "pedidos sin enviar" se calcula con COUNT(*) - COUNT(enviado_el), no con COUNT sobre columnas que crees que están vacías.</p>
+        </blockquote>
 
-  <section id="group-by">
-    <h2>GROUP BY</h2>
+        <h3>Agregaciones condicionales: SUM(CASE)</h3>
+        <pre><code class="language-sql">-- Varios KPIs en UN solo escaneo:
+SELECT
+    COUNT(*)                                        AS total,
+    SUM(estado = 'pagado')                          AS pagados,       -- truco booleano MySQL
+    SUM(estado = 'pendiente')                       AS pendientes,
+    SUM(total)                                      AS ingresos_totales,
+    SUM(IF(estado = 'pagado', total, 0))            AS ingresos_cobrados,
+    ROUND(AVG(IF(estado='pagado', total, NULL)),2)  AS ticket_pagado  -- NULL excluye del AVG
+FROM pedidos;</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="group-by">
+    <h2><i class="fa-solid fa-layer-group"></i> GROUP BY: agrupar por dimensiones</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT categoria_id, COUNT(*) AS cantidad, ROUND(AVG(precio),2) AS promedio
-FROM productos
-GROUP BY categoria_id;</code></pre>
-    </div>
-  </section>
+        <pre><code class="language-sql">-- Ventas por categoría:
+SELECT c.nombre AS categoria,
+       COUNT(*) AS num_ventas,
+       SUM(d.cantidad * d.precio_unit) AS ingreso
+FROM detalle d
+JOIN productos p ON p.id = d.producto_id
+JOIN categorias c ON c.id = p.categoria_id
+GROUP BY c.id, c.nombre          -- agrupar por PK + nombre (seguro)
+ORDER BY ingreso DESC;
 
-  <section id="having-vs-where">
-    <h2>HAVING vs WHERE</h2>
+-- Múltiples dimensiones (año × mes):
+SELECT YEAR(fecha) AS anio, MONTH(fecha) AS mes,
+       COUNT(*) AS pedidos, SUM(total) AS facturado
+FROM pedidos
+GROUP BY anio, mes               -- MySQL permite alias en GROUP BY
+ORDER BY anio, mes;
+
+-- Agrupar por expresión:
+SELECT LENGTH(email) AS largo_email, COUNT(*) AS cuantos
+FROM clientes
+GROUP BY largo_email;</code></pre>
+
+        <h3>ONLY_FULL_GROUP_BY: la regla que salva datos</h3>
+        <blockquote class="aside aside-danger">
+            <p>Toda columna en SELECT debe estar en GROUP BY o dentro de un agregado. El modo ONLY_FULL_GROUP_BY (default en 5.7+) lo impone; desactivarlo para "que funcione" produce filas con valores ARBITRARIOS de grupos — bugs de reportes imposibles de rastrear. Si necesitas otra columna del grupo, usa ANY_VALUE() explícito o mejor diseño.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="having-vs-where">
+    <h2><i class="fa-solid fa-code-compare"></i> HAVING vs WHERE</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT categoria_id, COUNT(*) AS total
-FROM productos
-WHERE precio &gt; 100          -- filtra FILAS antes de agrupar
-GROUP BY categoria_id
-HAVING COUNT(*) &gt;= 3        -- filtra GRUPOS después de agrupar
-ORDER BY total DESC;</code></pre>
-<blockquote class="aside aside-tip">
-<p><code>WHERE</code> no puede usar funciones de agregación; para eso existe <code>HAVING</code>.</p>
-</blockquote>
-    </div>
-  </section>
+        <table>
+            <thead>
+                <tr><th>Aspecto</th><th>WHERE</th><th>HAVING</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Filtra…</td><td>Filas individuales ANTES de agrupar</td><td>Grupos DESPUÉS de agregación</td></tr>
+                <tr><td>Puede usar agregados</td><td>No</td><td>Sí (COUNT, SUM...)</td></tr>
+                <tr><td>Usa índices</td><td>Sí</td><td>No (post-procesamiento)</td></tr>
+                <tr><td>Ejemplo</td><td><code>WHERE pais='ES'</code></td><td><code>HAVING COUNT(*) &gt; 5</code></td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">-- Ambos juntos: filtrar filas temprano (barato) y grupos tarde:
+SELECT ciudad, COUNT(*) AS clientes, AVG(edad) AS edad_media
+FROM clientes
+WHERE activo = 1                        -- filtra FILAS primero
+GROUP BY ciudad
+HAVING COUNT(*) &gt;= 10                   -- filtra GRUPOS después
+   AND AVG(edad) BETWEEN 25 AND 60
+ORDER BY clientes DESC;
 
-  <section id="group-concat-y-with-rollup">
-    <h2>GROUP_CONCAT y WITH ROLLUP</h2>
+-- ❌ error clásico: WHERE COUNT(*) &gt; 1 → sintaxis inválida
+-- ✅ siempre HAVING para condiciones agregadas</code></pre>
+
+        <h3>Window functions vs GROUP BY (MySQL 8+)</h3>
+        <pre><code class="language-sql">-- GROUP BY colapsa; OVER() mantiene el detalle fila a fila:
+SELECT nombre, departamento, salario,
+       AVG(salario) OVER (PARTITION BY departamento) AS media_depto,
+       RANK() OVER (PARTITION BY departamento ORDER BY salario DESC) AS puesto
+FROM empleados;
+-- Cada empleado conserva su fila + contexto de su grupo ✨</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Regla práctica: reporte resumido → GROUP BY. Ranking o comparación contra su grupo conservando detalle → window functions. Las ventanas NO reemplazan GROUP BY: resuelven otro problema.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="group-concat-y-with-rollup">
+    <h2><i class="fa-solid fa-list-ol"></i> GROUP_CONCAT y WITH ROLLUP</h2>
     <div class="doc-content">
-<pre><code class="language-sql">-- Unir valores de un grupo en una sola cadena
-SELECT categoria_id, GROUP_CONCAT(nombre SEPARATOR ', ') AS productos
-FROM productos GROUP BY categoria_id;
+        <pre><code class="language-sql">-- Concatenar valores del grupo en una lista:
+SELECT c.nombre,
+       GROUP_CONCAT(p.nombre ORDER BY p.nombre SEPARATOR ', ') AS productos_comprados
+FROM clientes c
+JOIN pedidos pd ON pd.cliente_id = c.id
+JOIN detalle d ON d.pedido_id = pd.pedido_id
+JOIN productos p ON p.id = d.producto_id
+GROUP BY c.id, c.nombre;
+-- Ana | Teclado, Monitor, Ratón
 
--- Subtotales automáticos por grupo
-SELECT categoria_id, COUNT(*) AS total
-FROM productos
-GROUP BY categoria_id WITH ROLLUP;</code></pre>
+-- Subtotales jerárquicos automáticos:
+SELECT YEAR(fecha) AS anio, estado, COUNT(*) AS pedidos, SUM(total) AS monto
+FROM pedidos
+GROUP BY anio, estado WITH ROLLUP;
+-- filas por (año,estado)... + subtotal por año (estado=NULL) + TOTAL GENERAL</code></pre>
+        <table>
+            <thead>
+                <tr><th>Herramienta</th><th>Riesgo/límite</th><th>Mitigación</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>GROUP_CONCAT</td><td>Trunca por defecto (1024 bytes)</td><td>SET SESSION group_concat_max_len = 1000000</td></tr>
+                <tr><td>WITH ROLLUP</td><td>No combina con ORDER BY ni window functions</td><td>Ordenar en app o envolver en subconsulta</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>Las filas de subtotal de ROLLUP muestran NULL en las dimensiones colapsadas — confundibles con NULLs reales de datos. En app, detecta GROUPING()/NULL de dimensión y etiqueta como "TOTAL" antes de mostrar.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Columna no agregada fuera de GROUP BY</td><td>Error 1055 (only_full_group_by)</td><td>Agregarla al GROUP BY o envolverla en agregado/ANY_VALUE</td></tr>
+                <tr><td>WHERE con agregado</td><td>"Invalid use of group function"</td><td>HAVING</td></tr>
+                <tr><td>AVG ignorando que quiere promediar ceros como NULL</td><td>Media inflada/deflada según semántica</td><td>Decidir: IF(cond, valor, NULL) vs 0 consciente</td></tr>
+                <tr><td>GROUP_CONCAT truncada en producción</td><td>Listas cortadas misteriosamente</td><td>Subir group_concat_max_len en sesión</td></tr>
+                <tr><td>GROUP BY alias inexistente o ambiguo</td><td>Error o agrupación equivocada</td><td>Group by columnas base o alias claros únicos</td></tr>
+                <tr><td>Contar grupos con COUNT(*) tras DISTINCT mal aplicado</td><td>Números que no cuadran con negocio</td><td>COUNT(DISTINCT col) cuando la unidad es entidad única</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Dashboard mensual</strong>: ventas por año×mes con total, ticket medio y % crecimiento vs mes anterior (window LAG).</li>
+            <li><strong>Ranking de vendedores</strong>: RANK() OVER por departamento y global simultáneamente en una sola query.</li>
+            <li><strong>KPIs condicionales</strong>: una query con pagados/pendientes/cancelados, ingresos cobrados vs proyectados, todo vía SUM(CASE).</li>
+            <li><strong>Carritos legibles</strong>: GROUP_CONCAT de productos por pedido con cantidades formateadas ("Teclado x2, Monitor x1").</li>
+            <li><strong>Reporte con subtotales</strong>: GROUP BY país→ciudad WITH ROLLUP interpretando NULLs como subtotales/totales etiquetados.</li>
+        </ol>
+    </div>
+</section>

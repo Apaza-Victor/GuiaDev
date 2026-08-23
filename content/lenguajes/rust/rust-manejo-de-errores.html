@@ -1,33 +1,208 @@
 <!-- 6. Manejo de Errores - Rust (Lenguajes de Programación) -->
 <!-- Contenido local del proyecto -->
 
-  <section id="result-t-e">
-    <h2>Result<T, E></h2>
+  <section id="dos-tipos-de-errores">
+    <h2><i class="fa-solid fa-bomb"></i> Dos clases de fallos: panic! y Result</h2>
     <div class="doc-content">
+<p>Rust separa los problemas en dos categorías con mecanismos distintos. Los errores <strong>irrecuperables</strong> son bugs: violaciones de invariantes tras las cuales no tiene sentido continuar (índice fuera de rango, configuración corrupta). Para ellos existe <code>panic!</code>, que detiene la ejecución desenrollando el stack. Los errores <strong>recuperables</strong> son situaciones esperables: un archivo inexistente, entrada mal formateada, red caída. Para ellos existe <code>Result</code>, que convierte el fallo en un valor normal del lenguaje:</p>
+<table><thead><tr><th>Criterio</th><th>panic!</th><th>Result&lt;T, E&gt;</th></tr></thead><tbody><tr><td>Naturaleza</td><td>Bug o invariante rota</td><td>Situación esperable y manejable</td></tr><tr><td>Quién decide qué hacer</td><td>Nadie: se detiene todo</td><td>El llamante con match o ?</td></tr><tr><td>Ejemplos típicos</td><td>Bug lógico, assert fallido</td><td>Archivo faltante, JSON malformado</td></tr><tr><td>Frecuencia esperada</td><td>Nunca en producción</td><td>Rutinaria, todos los días</td></tr><tr><td>Aparece en la firma</td><td>No: invisible para el llamante</td><td>Sí: el tipo documenta el riesgo</td></tr></tbody></table>
+<pre><code class="language-rust">fn main() {
+    let config_ok = false;
+    if !config_ok {
+        panic!("configuración corrupta: no puedo arrancar");   // aborta TODO
+    }
+}</code></pre>
+<blockquote class="aside aside-danger"><p>Nunca uses <code>panic!</code> para validar entrada de usuario: un dato incorrecto es por definición un error recuperable. Resérvalo para condiciones que evidencian un bug tuyo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="result-t-e">
+    <h2><i class="fa-solid fa-circle-check"></i> Result&lt;T, E&gt;: errores como valores</h2>
+    <div class="doc-content">
+<p><code>Result&lt;T, E&gt;</code> es simplemente un enum: <code>Ok(valor)</code> cuando todo fue bien, <code>Err(error)</code> cuando no. El éxito y el fracaso quedan tipados en cada firma — quien llama SABE que la operación puede fallar:</p>
 <pre><code class="language-rust">use std::num::ParseIntError;
 
-fn parsear(s: &amp;str) -&gt; Result&lt;i32, ParseIntError&gt; {
-    s.parse::&lt;i32&gt;()
+fn parsear_edad(texto: &amp;str) -&gt; Result&lt;i32, ParseIntError&gt; {
+    texto.trim().parse::&lt;i32&gt;()     // parse devuelve Result: lo devolvemos tal cual
 }
 
-match parsear("42") {
-    Ok(n) =&gt; println!("Número: {}", n),
-    Err(e) =&gt; println!("Error: {}", e),
+fn main() {
+    match parsear_edad("42") {
+        Ok(n) =&gt; println!("Edad registrada: {}", n),
+        Err(e) =&gt; eprintln!("Entrada inválida: {}", e),   // stderr, no stdout
+    }
 }</code></pre>
+<h3>unwrap y expect: prototipar sí, producción no</h3>
+<p>Para avanzar rápido existen atajos que extraen el valor interior o paniquean si hay Err. Legítimos en tests, ejemplos y prototipos; peligrosos en código real:</p>
+<pre><code class="language-rust">fn main() {
+    // unwrap(): panica si hay Err, sin contexto
+    let n = "99".parse::&lt;i32&gt;().unwrap();
+
+    // expect(): igual pero TU mensaje acompaña al panic — siempre mejor
+    let home = std::env::var("HOME").expect("HOME debe existir aquí");
+
+    println!("{} {}", n, home);
+}</code></pre>
+<blockquote class="aside aside-caution"><p>Cada <code>unwrap()</code> es una bomba de tiempo: funciona en tu máquina y revienta en producción con el primer dato raro. Regla profesional: tests pueden usarlo; código de producto maneja el Err con match, combinators como <code>unwrap_or</code>, o propaga con el operador ?.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="el-operador">
-    <h2>El operador ?</h2>
+    <h2><i class="fa-solid fa-question"></i> El operador ?: propagación encadenada</h2>
     <div class="doc-content">
+<p>Cuando tu función no sabe resolver un error, lo correcto es pasarlo hacia arriba. Sin azúcar sintáctica cada paso exige su propio <code>match</code> con <code>Err(e) =&gt; return Err(e)</code>; el operador <code>?</code> condensa todo eso:</p>
 <pre><code class="language-rust">use std::fs::File;
 use std::io::{self, Read};
 
 fn leer_config() -&gt; Result&lt;String, io::Error&gt; {
-    let mut s = String::new();
-    File::open("config.txt")?.read_to_string(&amp;mut s)?;
-    Ok(s)   // ? propaga el error hacia arriba automáticamente
+    let mut archivo = File::open("config.txt")?;      // si Err → return automático
+    let mut contenido = String::new();
+    archivo.read_to_string(&amp;mut contenido)?;          // encadena tantos ? como pasos
+    Ok(contenido)
 }</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> Usa <code>panic!</code> solo para errores irrecuperables (bugs); para todo lo demás devuelve <code>Result</code>.</blockquote>
+<h3>Cómo funciona ? bajo el capó</h3>
+<p>Aplicado a un Result: si es <code>Ok(v)</code>, evalúa a <code>v</code> y continúa; si es <code>Err(e)</code>, ejecuta <code>return Err(From::from(e))</code> al instante. Esa conversión vía <code>From</code> permite incluso traducir tipos de error distintos hacia el que declara tu función — la base de la sección siguiente.</p>
+<blockquote class="aside aside-success"><p>? solo puede usarse en funciones que devuelven Result u Option. Si intentas usarlo donde no procede, el compilador te sugiere cambiar la firma: otra señal del sistema de tipos trabajando a tu favor.</p></blockquote>
+<p>---</p>
     </div>
   </section>
+
+  <section id="errores-personalizados">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> Errores personalizados con enum propio</h2>
+    <div class="doc-content">
+<p>Usar String como tipo de error pierde información y complica los match. La solución profesional modela tus fallos como un <strong>enum propio</strong> —una variante por causa— e implementa tres piezas estándar:</p>
+<pre><code class="language-rust">use std::fmt;
+
+#[derive(Debug)]                    // Debug lo exige el ecosistema de errores
+enum ErrorApp {
+    EdadInvalida(i32),
+    NombreVacio,
+}
+
+// Pieza 1: Display — mensaje humano para logs y usuarios
+impl fmt::Display for ErrorApp {
+    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {
+        match self {
+            ErrorApp::EdadInvalida(n) =&gt; write!(f, "edad {} fuera de rango", n),
+            ErrorApp::NombreVacio =&gt; write!(f, "nombre vacío"),
+        }
+    }
+}
+
+// Pieza 2: Error — trait marcador que integra con toda la stdlib
+impl std::error::Error for ErrorApp {}
+
+fn validar(nombre: &amp;str, edad: i32) -&gt; Result&lt;String, ErrorApp&gt; {
+    if edad &lt; 0 || edad &gt; 130 { return Err(ErrorApp::EdadInvalida(edad)); }
+    if nombre.trim().is_empty() { return Err(ErrorApp::NombreVacio); }
+    Ok(format!("{} ({})", nombre.trim(), edad))
+}
+
+fn main() {
+    match validar("", 300) {
+        Ok(resumen) =&gt; println!("Válido: {}", resumen),
+        Err(e) =&gt; eprintln!("Rechazado: {}", e),   // usa nuestro Display
+    }
+}</code></pre>
+<blockquote class="aside aside-note"><p>Tres piezas, un patrón: enum con variantes por causa + impl Display (mensaje humano) + impl Error (integración). Con eso tus errores son inspeccionables con match y compatibles con cualquier librería Rust.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="conversion-from">
+    <h2><i class="fa-solid fa-right-left"></i> From: conversión automática para el ?</h2>
+    <div class="doc-content">
+<p>Problema clásico: tu función abre archivos Y parsea números; cada operación devuelve un tipo de error distinto. ¿Qué E pones en la firma? Implementas <code>From</code> de cada error externo hacia el tuyo, y el operador <code>?</code> traduce solo:</p>
+<pre><code class="language-rust">#[derive(Debug)]
+enum ErrorApp {
+    Archivo(std::io::Error),
+    Numero(std::num::ParseIntError),
+}
+
+impl From&lt;std::io::Error&gt; for ErrorApp {          // puente 1
+    fn from(e: std::io::Error) -&gt; Self { ErrorApp::Archivo(e) }
+}
+
+impl From&lt;std::num::ParseIntError&gt; for ErrorApp { // puente 2
+    fn from(e: std::num::ParseIntError) -&gt; Self { ErrorApp::Numero(e) }
+}
+
+fn procesar(ruta: &amp;str) -&gt; Result&lt;i32, ErrorApp&gt; {
+    let contenido = std::fs::read_to_string(ruta)?;   // io::Error → ErrorApp::Archivo
+    let numero: i32 = contenido.trim().parse()?;      // ParseIntError → ErrorApp::Numero
+    Ok(numero * 2)
+}
+// Dos tipos de error distintos, UNA firma limpia, cero map_err manuales.</code></pre>
+<blockquote class="aside aside-tip"><p>Antes de escribir un <code>.map_err(...)</code> manual, pregúntate si falta un <code>impl From</code>. Una vez escrito, todos los <code>?</code> de tu codebase se benefician gratis.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="main-result">
+    <h2><i class="fa-solid fa-door-open"></i> main() -&gt; Result y Box&lt;dyn Error&gt;</h2>
+    <div class="doc-content">
+<p>Incluso <code>main</code> puede devolver un Result: si llega un Err, Rust imprime el error y termina con código de salida distinto de 0 — perfecto para scripts y CLIs. Para no definir un enum propio en cada proyecto, existe el comodín <strong><code>Box&lt;dyn Error&gt;</code></strong>: un puntero a CUALQUIER valor que implemente el trait Error:</p>
+<pre><code class="language-rust">use std::error::Error;
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn Error&gt;&gt; {
+    let config = std::fs::read_to_string("app.toml")?;  // io::Error encaja aquí
+
+    let puerto: i32 = config
+        .lines().next().ok_or("archivo vacío")?         // &amp;str → error dinámico
+        .split('=').nth(1).ok_or("falta el puerto")?
+        .trim().parse()?;                                // ParseIntError también
+
+    println!("Servidor escuchando en el puerto {}", puerto);
+    Ok(())
+}</code></pre>
+<table><thead><tr><th>Tipo de error</th><th>Cuándo elegirlo</th><th>Coste</th></tr></thead><tbody><tr><td><code>Box&lt;dyn Error&gt;</code></td><td>Apps, scripts, prototipos rápidos</td><td>Alocación + dispatch dinámico</td></tr><tr><td>Enum propio</td><td>Librerías y código serio</td><td>Cero: todo estático</td></tr><tr><td><code>String</code></td><td>Nunca en producción</td><td>Imposible de matchear bien</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Box&lt;dyn Error&gt; sacrifica la posibilidad de hacer match por variante (solo puedes inspeccionar el mensaje o bajar el tipo con downcast). En librerías públicas usa siempre enums propios.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ecosistema-thiserror-anyhow">
+    <h2><i class="fa-solid fa-boxes-stacked"></i> El ecosistema: thiserror y anyhow</h2>
+    <div class="doc-content">
+<p>Escribir Display + From a mano es educativo pero repetitivo. El ecosistema estandarizó dos crates que automatizan cada mitad del problema (se añaden a Cargo.toml con <code>cargo add</code>):</p>
+<ul>
+<li><strong>thiserror</strong> — para LIBRERÍAS: genera Display, source() e impl Error desde atributos.</li>
+<li><strong>anyhow</strong> — para APLICACIONES: un Box&lt;dyn Error&gt; mejorado con contexto y backtrace (<code>.context("mensaje")?</code> añade información al propagar).</li>
+</ul>
+<table><thead><tr><th>Situación</th><th>Herramienta recomendada</th><th>Razón</th></tr></thead><tbody><tr><td>Librería publicada en crates.io</td><td>enum propio (+ thiserror)</td><td>El consumidor necesita matchear variantes</td></tr><tr><td>Aplicación / CLI / binario</td><td>anyhow::Result</td><td>Flexibilidad y contexto sin ceremonia</td></tr><tr><td>Aprendizaje / prototipo</td><td>stdlib pura</td><td>Entender qué automatizan las crates</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas-errores">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas de manejo de errores</h2>
+    <div class="doc-content">
+<ul>
+<li><strong>No tragues errores</strong>: un <code>let _ = resultado;</code> descarta silenciosamente fallos que volverán como bugs misteriosos.</li>
+<li><strong>Propaga con ? y añade contexto</strong> cuando subas niveles (<code>.context(...)</code> con anyhow o mensajes propios).</li>
+<li><strong>Panic solo para bugs</strong>: asserts internos e invariantes imposibles; nunca entrada externa.</li>
+<li><strong>Errores específicos en librerías</strong>, genéricos (Box/anyhow) en binarios.</li>
+<li><strong>Implementa Display legible</strong>: tus errores acabarán en logs que personas leerán a las 3 AM.</li>
+</ul>
+<blockquote class="aside aside-success"><p>Buena noticia final: gracias a Result y ?, el "manejo de errores" deja de ser try/catch disperso y se convierte en parte del flujo normal de tipos. Tus funciones declaran sus modos de fallo y el compilador impide ignorarlos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Réslolos en orden; cada uno introduce una pieza nueva del sistema de errores.</p>
+<ol>
+<li><strong>Detecta el pánico</strong>: escribe una función <code>dividir(a: i32, b: i32)</code> que haga panic! si b == 0, pruébala, y luego reescríbela devolviendo <code>Result&lt;i32, String&gt;</code>; consume ambas versiones con match.</li>
+<li><strong>Parseo robusto</strong>: lee una edad desde un string fijo ("treinta"), intenta parsearla con <code>unwrap()</code> y observa el panic; corrígelo con match mostrando un mensaje amable.</li>
+<li><strong>Cadena de ?</strong>: implementa <code>leer_y_sumar(ruta) -&gt; Result&lt;i32, io::Error&gt;</code> que lea un archivo con dos números separados por salto de línea y devuelva su suma usando el operador ? en cada paso fallible.</li>
+<li><strong>Error propio completo</strong>: crea el enum <code>ErrorInventario</code> con variantes StockInsuficiente(String) y ProductoInexistente(u32); implementa Display + Error y úsalo en una función <code>vender(codigo, cantidad) -&gt; Result&lt;f64, ErrorInventario&gt;</code>.</li>
+<li><strong>Main tolerante</strong>: convierte un programa simple en <code>main() -&gt; Result&lt;(), Box&lt;dyn Error&gt;&gt;</code> que lea dos archivos y sume sus primeras líneas parseadas; haz que falle borrando uno y verifica el código de salida con <code>$LASTEXITCODE</code>.</li>
+</ol>
+    </div>
+  </section>
+
+

@@ -2,25 +2,282 @@
 <!-- Contenido local del proyecto -->
 
   <section id="interop-directo">
-    <h2>Interop directo</h2>
+    <h2><i class="fa-solid fa-handshake"></i> Llamadas mutuas: Kotlin habla con Java y viceversa</h2>
     <div class="doc-content">
-<pre><code class="language-kotlin">// Usar clases Java desde Kotlin
-val lista = java.util.ArrayList&lt;String&gt;()
-lista.add("desde Kotlin")
+<p>La interoperabilidad fue la decisión de diseño fundacional de Kotlin: compila al <strong>mismo bytecode</strong> que Java, usa las <strong>mismas colecciones</strong> (<code>java.util</code>) y las mismas excepciones. No existen adaptadores ni capas puente: una lista creada en Kotlin ES una <code>java.util.List</code>, y una clase Java se instancia en Kotlin como si fuera nativa. Esta simbiosis bidireccional explica por qué adoptar Kotlin nunca exige "gran rewrit": convives archivo a archivo.</p>
+<pre><code class="language-kotlin">// KOTLIN consumiendo clases 100% JAVA, sin fricción alguna
+import java.time.LocalDate
+import java.util.ArrayList
 
-val fecha = java.time.LocalDate.now()
-println(fecha.year)</code></pre>
+fun main() {
+    val hoy: LocalDate = LocalDate.now()            // API de fechas de Java
+    val nombres = ArrayList&lt;String&gt;()               // colección clásica de Java
+    nombres.add("Kotlin")
+    nombres.add("habla")
+    nombres.add("con Java")
+
+    val texto = StringBuilder().apply {             // StringBuilder también es Java
+        append("Hoy es ").append(hoy.dayOfWeek)
+    }
+    println("${texto} — ${nombres.joinToString(" ")}")
+}</code></pre>
+<p>En dirección contraria, el código Java consume clases Kotlin casi sin enterarse. Los detalles finos (dónde aparece <code>Companion</code>, qué pasa con los valores por defecto) se controlan con anotaciones que verás en esta lección:</p>
+<pre><code class="language-java">// utilidades.kt contiene: fun saludar(nombre: String) = "Hola, $nombre"
+//                          class Contador { companion object { const val LIMITE = 100 } }
+
+import UtilidadesKt;              // las funciones TOP-LEVEL viven en la clase "NombreArchivoKt"
+
+public class App {
+    public static void main(String[] args) {
+        System.out.println(UtilidadesKt.saludar("Ana"));   // Hola, Ana
+
+        int limite = Contador.LIMITE;                      // const val → constante real de Java
+        System.out.println("Límite: " + limite);
+    }
+}</code></pre>
+<blockquote class="aside aside-note"><p>En un proyecto Gradle/Maven los archivos <code>.kt</code> y <code>.java</code> compilan juntos en el mismo módulo: puedes referenciarlos entre sí libremente incluso dentro del mismo paquete. IntelliJ además incluye el convertidor automático J2K (Ctrl+Alt+Shift+J) para migrar archivos completos.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="donde-se-usa-kotlin">
-    <h2>Dónde se usa Kotlin</h2>
+    <h2><i class="fa-solid fa-map-location-dot"></i> Dónde conviven Kotlin y Java en proyectos reales</h2>
     <div class="doc-content">
-<ul>
-<li><strong>Android:</strong> lenguaje recomendado oficialmente</li>
-<li><strong>Backend:</strong> Ktor y Spring Boot soportan Kotlin</li>
-<li><strong>Multipataforma:</strong> Kotlin Multiplatform comparte lógica entre iOS/Android</li>
-<li><strong>Scripts:</strong> Gradle usa Kotlin DSL</li>
-</ul>
+<p>La convivencia no es teórica: es el estado natural de la mayoría de proyectos profesionales donde existe Kotlin. Entender estos escenarios te prepara para lo que encontrarás laboralmente.</p>
+<table><thead><tr><th>Ecosistema</th><th>Convivencia típica</th><th>Herramienta clave</th></tr></thead><tbody>
+<tr><td><strong>Android</strong></td><td>Apps heredadas en Java migrando pantalla a pantalla hacia Kotlin</td><td>Convertidor J2K, anotaciones de nulidad del SDK</td></tr>
+<tr><td><strong>Backend Spring Boot</strong></td><td>Servicios nuevos en Kotlin sobre librerías y entidades Java existentes</td><td>Soporte oficial Spring + extensiones <code>spring-kotlin</code></td></tr>
+<tr><td><strong>Herramientas de build</strong></td><td><code>build.gradle.kts</code> (Kotlin DSL) configurando plugins escritos en Java</td><td>Gradle Kotlin DSL</td></tr>
+<tr><td><strong>Kotlin Multiplatform</strong></td><td>Lógica compartida que consume librerías JVM de Java en el target backend</td><td>KMP con expect/actual</td></tr>
+<tr><td><strong>Testing</strong></td><td>Código de producción Java probado con tests expresivos en Kotlin</td><td>JUnit 5 + MockK/Mockito</td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>Estrategia de adopción probada en la industria: empieza por tests unitarios en Kotlin (cero riesgo), continúa con clases utilitarias nuevas, y migra entidades antiguas al ritmo del mantenimiento normal. Nunca necesitas un "big bang".</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="propiedades-y-platform-types">
+    <h2><i class="fa-solid fa-door-closed"></i> Propiedades mapeadas y platform types</h2>
+    <div class="doc-content">
+<h3>Getters/setters de Java son propiedades para Kotlin</h3>
+<p>Cuando Kotlin encuentra un par <code>getX()</code>/<code>setX()</code> en código Java, los presenta sintácticamente como una sola <strong>propiedad</strong>. Es puro azúcar de compilador: por debajo sigue llamando a los métodos. En sentido inverso, tus propiedades Kotlin generan getters/setters estándar que Java consume con total naturalidad.</p>
+<pre><code class="language-kotlin">// Clase Java: class Persona { private String nombre; getNombre(); setNombre(); boolean isActivo(); }
+val persona = Persona()
+
+persona.nombre = "Ana"           // invoca setNombre("Ana")
+println(persona.nombre)          // invoca getNombre()
+if (persona.activo) { }          // isActivo() se lee como propiedad booleana
+
+// Propiedad Kotlin vista desde Java:
+class Producto(val sku: String, var stock: Int)
+//   → Java ve: getSku() (solo getter), getStock()/setStock(int)</code></pre>
+<h3>Platform types: <code>String!</code>, la zona gris</h3>
+<p>Java no distingue tipos anulables en su sistema de tipos. Cuando Kotlin consume un método Java cuyo retorno podría ser <code>null</code>, recibe un <strong>platform type</strong> (notado <code>String!</code>): el compilador <em>confía</em> y no te obliga a verificar… pero si el valor era nulo, obtienes el mismo NPE de siempre. La defensa es tratar todo lo que viene de Java como sospechoso hasta anotarlo o normalizarlo.</p>
+<pre><code class="language-kotlin">// Método Java: public String buscarUsuario(String id)  ← puede devolver null
+val usuario = apiLegada.buscarUsuario("42")      // tipo plataforma: String!
+
+// val inicial = usuario.substring(0, 1)         // ⚠ compila… NPE si venía null
+val inicial = usuario?.substring(0, 1) ?: "?"    // ✅ defensa explícita
+
+// Mejor aún: normalizar EN LA FRONTERA, apenas entra al mundo Kotlin
+val seguro: String? = apiLegada.buscarUsuario("42")
+val nombreFinal: String = seguro ?: "invitado"</code></pre>
+<blockquote class="aside aside-caution"><p>Si el equipo dueño del código Java puede colaborar, la solución definitiva es anotar sus APIs con <code>@Nullable</code>/<code>@NonNull</code> (JSR-305, JetBrains Annotations o las de Android). Kotlin respeta esas anotaciones y los platform types desaparecen del mapa.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="anotaciones-jvm">
+    <h2><i class="fa-solid fa-tags"></i> Anotaciones JVM: afinando el puente</h2>
+    <div class="doc-content">
+<p>Las características puramente Kotlin (defaults, companion, propiedades privadas) necesitan traducción al hablar con Java. Las anotaciones <code>@Jvm*</code> son esa capa de control fino: le dicen al compilador qué firmas generar en el bytecode para que el lado Java quede tan cómodo como el lado Kotlin.</p>
+<table><thead><tr><th>Anotación</th><th>Qué resuelve</th><th>Resultado visible en Java</th></tr></thead><tbody>
+<tr><td><code>@JvmStatic</code></td><td>Miembros de <code>companion object</code>/object como estáticos reales</td><td><code>Util.formato(x)</code> en vez de <code>Util.Companion.formato(x)</code></td></tr>
+<tr><td><code>@JvmOverloads</code></td><td>Genera sobrecargas para cada combinación de defaults</td><td>Puede omitir argumentos: <code>new Usuario("Ana")</code></td></tr>
+<tr><td><code>@JvmField</code></td><td>Expone la propiedad como campo público directo</td><td><code>config.timeout</code> sin getter/setter</td></tr>
+<tr><td><code>@JvmName</code></td><td>Renamea funciones/clases compiladas (o evita colisiones)</td><td><code>Utilidades.saludar(...)</code> en vez de <code>UtilidadesKt.…</code></td></tr>
+<tr><td><code>@Throws</code></td><td>Declara excepciones chequeadas en la firma</td><td>Java puede hacer <code>catch (IOException e)</code> sin advertencias</td></tr>
+<tr><td><code>const val</code></td><td>Constantes de tiempo de compilación</td><td><code>Config.MAX_REINTENTOS</code> inline en el bytecode</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">class Formateador {
+    companion object {
+        const val SEPARADOR: String = ";"              // constante Java real
+
+        @JvmStatic                                     // ← sin esto: Formateador.Companion.aplicar(...)
+        fun aplicar(texto: String): String =
+            texto.trim().replace(" ", "_").uppercase()
+    }
+}
+
+data class Usuario @JvmOverloads constructor(          // genera 3 constructores Java
+    val nombre: String,
+    val rol: String = "editor",
+    val activo: Boolean = true
+)
+
+class Config {
+    @JvmField                                          // acceso directo sin getters
+    var timeoutSegundos: Int = 30
+}
+
+@JvmName("validarCorreo")                              // renombra la función compilada
+fun validar(email: String): Boolean = "@" in email
+
+// A nivel de ARCHIVO: todas las top-level van a una clase con nombre amable
+// @file:JvmName("Validaciones")   ← primera línea del archivo</code></pre>
+<pre><code class="language-java">// Cómo queda todo desde Java tras las anotaciones:
+String limpio = Formateador.aplicar("  ana lopez ");  // ANA_LOPEZ — sin Companion ✨
+Usuario u = new Usuario("Luis");                       // gracias a @JvmOverloads
+int t = new Config().timeoutSegundos;                  // gracias a @JvmField
+boolean ok = Validaciones.validarCorreo("a@b.com");    // gracias a @JvmName</code></pre>
+<blockquote class="aside aside-tip"><p>Duda frecuente: ¿cuándo <code>@JvmStatic</code>? Regla práctica: si el consumidor Java esperaría un método <code>static</code> tradicional (factorías, utilidades matemáticas), anótalo. Si es lógica interna de estado compartido, déjalo en <code>Companion</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="sam-colecciones-y-excepciones">
+    <h2><i class="fa-solid fa-plug-circle-bolt"></i> SAM conversion, colecciones compartidas y @Throws</h2>
+    <div class="doc-content">
+<h3>SAM conversion: lambdas donde Java espera interfaces</h3>
+<p>Toda la API antigua de Java (listeners, comparators, runnables) se basa en <strong>interfaces funcionales</strong>: interfaces con UN único método abstracto (Single Abstract Method). Kotlin convierte automáticamente una lambda en ese tipo, eliminando las clases anónimas verbosas de Java.</p>
+<pre><code class="language-kotlin">import javax.swing.JButton
+import java.awt.event.ActionListener
+
+val boton = JButton("Guardar")
+
+// ❌ Estilo Java: clase anónima de 4 líneas
+// boton.addActionListener(object : ActionListener {
+//     override fun actionPerformed(e: ActionEvent) { guardar() }
+// })
+
+// ✅ Kotlin: SAM conversion — la lambda SE CONVIERTE en ActionListener
+boton.addActionListener { guardar() }
+
+// También funciona con interfaces funcionales DEFINIDAS en Kotlin,
+// marcándolas explícitamente con "fun interface"
+fun interface Filtro { fun cumple(valor: Int): Boolean }
+
+val filtroPositivos = Filtro { it &gt; 0 }        // lambda → implementación
+println(filtroPositivos.cumple(7))             // true</code></pre>
+<h3>Colecciones: mismas clases, distinta promesa</h3>
+<p>Kotlin no tiene colecciones propias: <code>List&lt;T&gt;</code> en Kotlin ES <code>java.util.List</code>. La diferencia vive en el compilador Kotlin (que bloquea <code>add()</code> sobre tipos solo lectura), pero <strong>el runtime de Java no sabe nada de esa promesa</strong>: si tu API Kotlin devuelve una <code>List</code> inmutable y Java llama <code>.add()</code>, recibirá <code>UnsupportedOperationException</code> en ejecución.</p>
+<pre><code class="language-kotlin">fun obtenerNombres(): List&lt;String&gt; = listOf("Ana", "Luis")   // promesa: solo lectura
+
+// Desde Java alguien podría intentar: obtenerNombres().add("intruso");
+// → UnsupportedOperationException. Devuelve defensivamente cuando importe:
+fun obtenerNombresDefensivo(): List&lt;String&gt; = listOf("Ana", "Luis").toList()</code></pre>
+<h3>Excepciones chequeadas: el puente @Throws</h3>
+<p>Kotlin elimina las checked exceptions: ninguna función declara <code>throws</code>. Pero Java SÍ las exige: sin ayuda, un método Kotlin que lanza <code>IOException</code> aparecería ante Java como si nunca pudiera fallar, impidiendo capturarla específicamente. La anotación <code>@Throws</code> restaura esa información en la firma compilada.</p>
+<pre><code class="language-kotlin">import java.io.File
+import java.io.IOException
+
+class Repositorio {
+    @Throws(IOException::class)                        // ← Java verá "throws IOException"
+    fun cargar(ruta: String): List&lt;String&gt; = File(ruta).readLines()
+}</code></pre>
+<pre><code class="language-java">// El consumidor Java ahora PUEDE y DEBE manejar la excepción chequeada:
+try {
+    List&lt;String&gt; lineas = new Repositorio().cargar("datos.csv");
+} catch (IOException e) {
+    log.error("Fallo leyendo el archivo", e);
+}</code></pre>
+<blockquote class="aside aside-danger"><p>Sin <code>@Throws</code>, javac rechazará el <code>catch (IOException e)</code> con "exception is never thrown", obligando a capturar <code>Exception</code> genérico: pierdes precisión y claridad justo en la frontera donde más se necesita.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="data-class-desde-java">
+    <h2><i class="fa-solid fa-clone"></i> Data classes vistas desde Java</h2>
+    <div class="doc-content">
+<p>Una data class Kotlin genera automáticamente todo el ceremonial que en Java se escribe a mano (o se autogeneraba en el IDE): constructores sobrecargados, getters/setters, <code>equals/hashCode</code>, <code>toString</code> y las funciones de desestructuración. Esta tabla resume qué recibe exactamente el lado Java:</p>
+<table><thead><tr><th>Miembro en Kotlin</th><th>Lo que ve Java</th><th>Observaciones</th></tr></thead><tbody>
+<tr><td><code>data class Punto(val x: Int, val y: Int)</code></td><td>Constructor <code>Punto(int x, int y)</code></td><td>Con <code>@JvmOverloads</code>: versiones con menos argumentos</td></tr>
+<tr><td><code>val x</code></td><td><code>getX()</code></td><td>Solo lectura: no hay setter</td></tr>
+<tr><td><code>var y</code></td><td><code>getY()</code> + <code>setY(int)</code></td><td>Par completo getter/setter</td></tr>
+<tr><td><code>equals()</code>/<code>hashCode()</code>/<code>toString()</code></td><td>Iguales a los de Java</td><td>Comparación estructural automática</td></tr>
+<tr><td><code>copy(x = 10)</code></td><td><code>copy(int x, int y)</code></td><td>⚠ Sin defaults en Java: hay que pasar TODOS los parámetros</td></tr>
+<tr><td>Destructuring <code>val (a, b)</code></td><td><code>component1()</code>, <code>component2()</code></td><td>Útiles para Kotlin; en Java casi nunca se usan</td></tr>
+<tr><td>Propiedades en el cuerpo de clase</td><td>Getters/setters normales</td><td>No participan del constructor ni de <code>copy</code></td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">data class Articulo(
+    val codigo: String,
+    var precio: Double,
+    val etiquetas: List&lt;String&gt; = emptyList()
+)
+
+fun demo() {
+    val original = Articulo("A-101", 29.99, listOf("oferta"))
+    val actualizado = original.copy(precio = 24.99)      // inmutabilidad funcional
+    println(original)                                    // Articulo(codigo=A-101, ...)
+    println(actualizado == Articulo("A-101", 24.99))     // true: equals estructural
+}</code></pre>
+<pre><code class="language-java">// El MISMO data class consumido desde Java:
+Articulo a = new Articulo("A-101", 29.99, List.of("oferta"));
+
+System.out.println(a.getCodigo());                     // getter del val
+a.setPrecio(27.50);                                    // setter del var
+
+// copy() sin defaults: obligatorio pasar TODO, en orden
+Articulo barato = a.copy(a.getCodigo(), 19.99, a.getEtiquetas());
+
+// equals/hashCode/toString funcionan igual que en cualquier POJO Java
+System.out.println(a.equals(new Articulo("A-101", 27.50, List.of("oferta"))));</code></pre>
+<blockquote class="aside aside-note"><p>Por eso muchas guías recomiendan que los data classes compartidos entre ambos lenguajes usen <code>@JvmOverloads</code> y propiedades <code>var</code> solo cuando el dominio lo justifique: minimiza la fricción de quien trabaja en el otro idioma.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas-interop">
+    <h2><i class="fa-solid fa-list-check"></i> Errores comunes y buenas prácticas</h2>
+    <div class="doc-content">
+<p>Los problemas de interop casi nunca son técnicos sino de <em>expectativas cruzadas</em>: cada lenguaje asume cosas que el otro desconoce. Esta tabla condensa los choques más frecuentes y su remedio.</p>
+<table><thead><tr><th>Error común</th><th>Síntoma</th><th>Buena práctica</th></tr></thead><tbody>
+<tr><td>Confiar en platform types (<code>String!</code>)</td><td>NPE en línea que "compilaba bien"</td><td>Tratar todo retorno Java como anulable; anotar APIs fuente con <code>@Nullable/@NonNull</code></td></tr>
+<tr><td>Esperar defaults desde Java sin <code>@JvmOverloads</code></td><td>Error de compilación en Java por faltar argumentos</td><td>Anotar constructores/funciones públicas compartidas</td></tr>
+<tr><td>Java muta una lista "inmutable" de Kotlin</td><td><code>UnsupportedOperationException</code> en runtime</td><td>Devolver copias defensivas o documentar el contrato</td></tr>
+<tr><td>Olvidar <code>@JvmStatic</code> en utilidades</td><td>Firmas feas: <code>Util.Companion.metodo()</code></td><td>Anotar lo que Java espera como estático</td></tr>
+<tr><td>Lanzar excepciones chequeadas sin <code>@Throws</code></td><td>javac impide el catch específico</td><td>Declarar siempre <code>@Throws</code> en APIs consumidas desde Java</td></tr>
+<tr><td>Nombres generados (<code>MainKt</code>, <code>Companion</code>)</td><td>Código Java ilegible</td><td><code>@file:JvmName</code> y <code>@JvmStatic</code> desde el diseño</td></tr>
+<tr><td>Data classes con muchos <code>var</code></td><td>Estado mutable cruzando fronteras</td><td>Prefiere <code>val</code>; mutación explícita vía <code>copy</code></td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">// ✅ Plantilla de API Kotlin "amigable para Java": todo pensado para el puente
+@file:JvmName("PagosApi")
+
+package com.guiadev.pagos
+
+import java.io.IOException
+
+data class Cobro @JvmOverloads constructor(
+    val id: String,
+    val monto: Double,
+    val moneda: String = "EUR"
+)
+
+object Procesador {
+    const val VERSION = "2.1"
+
+    @JvmStatic
+    @Throws(IOException::class)
+    fun procesar(cobro: Cobro): Boolean {
+        require(cobro.monto &gt; 0) { "Monto inválido" }
+        return true   // aquí iría la llamada real al gateway
+    }
+}</code></pre>
+<blockquote class="aside aside-success"><p>Prueba del nueve para APIs mixtas: escríbela en Kotlin y luego intenta usarla desde un pequeño <code>Main.java</code>. Si las llamadas quedan naturales sin anotaciones extrañas, tu diseño de interop ya está maduro.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Los ejercicios 1–3 pueden resolverse íntegramente en el playground de Kotlin (que permite mezclar Java y Kotlin en el mismo proyecto). El 4 y el 5 se plantean como diseño reflexivo.</p>
+<ol>
+<li><strong>Consumidor prudente:</strong> declara una función Java simulada (comenta su firma: <code>public String getConfig(String key)</code> que devuelve <code>null</code> si no existe) y consúmela desde Kotlin tratándola como platform type: primero demuestra la versión ingenua que rompería, luego la segura con <code>?.</code> + Elvis y normalización en variable local anotada <code>String?</code>.</li>
+<li><strong>Puente de propiedades:</strong> crea en Kotlin una clase <code>Inventario(var capacidad: Int, private var ocupado: Int)</code> y documenta (en comentarios con formato Java) exactamente qué getters/setters generará para Java. Luego añade un <code>@JvmField</code> donde tenga sentido y justifica la elección.</li>
+<li><strong>Traductor de listeners:</strong> define una interfaz funcional propia <code>fun interface Validador { fun validar(texto: String): Boolean }</code>, implementa tres validadores distintos mediante lambdas (email no vacío, longitud ≥ 8, solo dígitos) y úsalos filtrando una lista de textos fijos.</li>
+<li><strong>Contrato bidireccional:</strong> diseña un data class <code>Pedido(id, total, urgente=false, notas="" )</code> destinado a ser usado por equipos Java. Escribe en comentario la clase <code>Main.java</code> COMPLETA que lo consuma usando constructor reducido (@JvmOverloads), setters de las propiedades var, <code>copy()</code> completo y una llamada estática a un companion con <code>@JvmStatic</code>. Verifica mentalmente cada anotación necesaria.</li>
+<li><strong>Auditoría de frontera:</strong> toma este escenario: una librería Kotlin expone <code>fun leerClientes(ruta: String): List&lt;Cliente&gt;</code> que lanza <code>IOException</code>, devuelve lista solo lectura y usa defaults en <code>Cliente(nombre, pais="ES")</code>. Enumera TODAS las fricciones que encontrará un cliente Java y corrige el código aplicando <code>@Throws</code>, <code>@JvmOverloads</code>, <code>@file:JvmName</code> y estrategia de copia defensiva, explicando en un comentario por qué cada cambio importa.</li>
+</ol>
     </div>
   </section>

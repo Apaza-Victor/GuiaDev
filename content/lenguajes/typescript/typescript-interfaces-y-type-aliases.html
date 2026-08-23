@@ -2,43 +2,272 @@
 <!-- Contenido local del proyecto -->
 
   <section id="interfaces">
-    <h2>Interfaces</h2>
+    <h2><i class="fa-solid fa-file-signature"></i> La interfaz como contrato de forma</h2>
     <div class="doc-content">
+<p>Una <strong>interface</strong> describe la <strong>forma</strong> (shape) de un objeto: qué propiedades existen, de qué tipo son y cuáles son obligatorias. No genera código en runtime —es pura compilación—, pero actúa como un <strong>contrato</strong>: cualquier valor que declare cumplirla debe tener exactamente esas propiedades, ni faltarle ni sobrarle tipos incorrectos.</p>
+<p>El beneficio es doble: el compilador verifica cada uso y tu editor convierte la interfaz en autocompletado, documentación flotante y detección temprana de errores.</p>
 <pre><code class="language-typescript">interface Usuario {
-  readonly id: number;      // no modificable
+  readonly id: number;      // solo lectura: no puede reasignarse tras crearlo
   nombre: string;
-  email?: string;           // propiedad opcional
-  saludar(): void;
+  email?: string;           // propiedad OPCIONAL: puede no venir
 }
 
 const u: Usuario = {
   id: 1,
   nombre: "María",
-  saludar() { console.log(`Hola ${this.nombre}`); }
-};</code></pre>
+  // email no es obligatorio: el objeto sigue siendo válido sin él
+};
+
+// u.id = 99;
+// ❌ Cannot assign to 'id' because it is a read-only property
+
+u.email = "maria@dev.io";  // ✅ asignar está permitido; REASIGNAR id, no</code></pre>
+<h3>Opcional con ? y lectura defensiva</h3>
+<pre><code class="language-typescript">function saludar(usuario: Usuario): string {
+  // email puede ser undefined: hay que contemplarlo
+  return usuario.email
+    ? `Hola ${usuario.nombre}, te escribimos a ${usuario.email}`
+    : `Hola ${usuario.nombre}, no tenemos tu email`;
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Nombra las interfaces en <strong>PascalCase singular</strong> (<code>Usuario</code>, no <code>IUsuario</code> ni <code>Usuarios</code>): es la convención dominante en la comunidad TypeScript moderna.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
-  <section id="type-aliases-y-uniones">
-    <h2>Type aliases y uniones</h2>
+  <section id="metodos-e-index-signatures">
+    <h2><i class="fa-solid fa-key"></i> Métodos, propiedades función e index signatures</h2>
     <div class="doc-content">
-<pre><code class="language-typescript">type ID = number | string;
-type Estado = "activo" | "inactivo" | "pendiente";
+<p>Dentro de una interfaz hay dos sintaxis para declarar algo invocable: como <strong>método</strong> (<code>saludar(): void</code>) o como <strong>propiedad función</strong> (<code>saludar: () =&gt; void</code>). A efectos prácticos casi son equivalentes; la diferencia fina es que la forma de método permite declarar sobrecargas y es ligeramente más permisiva al extender. Elige una y sé consistente en todo el proyecto:</p>
+<table><thead><tr><th>Sintaxis</th><th>Ejemplo</th><th>Matices</th></tr></thead><tbody><tr><td>Método</td><td><code>saludar(): void;</code></td><td>Idiomática para clases; admite declarar sobrecargas</td></tr><tr><td>Propiedad función</td><td><code>saludar: () =&gt; void;</code></td><td>Deja claro que la propiedad es un VALOR reemplazable</td></tr></tbody></table>
+<pre><code class="language-typescript">interface Reloj {
+  horaActual: Date;
+  notificar: () =&gt; void;   // propiedad que guarda una función
+  sincronizar(): void;     // método clásico
+}</code></pre>
+<h3>Index signatures: objetos con claves dinámicas</h3>
+<p>Cuando no sabes los nombres de las propiedades de antemano (diccionarios, configuraciones, resultados agrupados por clave), una <strong>index signature</strong> declara «cualquier clave de tipo X tendrá valores de tipo Y»:</p>
+<pre><code class="language-typescript">interface DiccionarioIdiomas {
+  [clave: string]: string;   // cualquier clave string → valor string
+}
 
-type Punto = { x: number; y: number };
+const saludos: DiccionarioIdiomas = {
+  es: "Hola",
+  en: "Hello",
+  qu: "Allillanchu",
+};
 
-let estado: Estado = "activo";
-// estado = "borrado"; // Error: no está en la unión</code></pre>
+saludos.fr = "Bonjour";          // ✅ cualquier clave nueva es válida
+// const mal: number = saludos.es;
+// ❌ Type 'string' is not assignable to type 'number'
+
+// Mezcla de claves fijas y dinámicas: las fijas deben respetar el tipo base
+interface Inventario {
+  [sku: string]: number;   // cada SKU apunta a una cantidad
+  totalArticulos: number;  // también number: compatible con la firma índice
+}</code></pre>
+<blockquote class="aside aside-caution"><p>Las index signatures son generosas: aceptan <em>cualquier</em> clave, incluso las escritas con typo. Si conoces el conjunto cerrado de claves, prefiere un objeto con propiedades explícitas o claves literales unidas (<code>"es" | "en"</code>) para conservar el chequeo.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="extension-e-interseccion">
-    <h2>Extensión e intersección</h2>
+    <h2><i class="fa-solid fa-sitemap"></i> Herencia con extends e intersecciones con &amp;</h2>
     <div class="doc-content">
-<pre><code class="language-typescript">interface Animal { nombre: string }
-interface Perro extends Animal { ladrar(): void }
+<p>Las interfaces se extienden con <code>extends</code>, heredando todas las propiedades del padre. A diferencia de las clases, una interfaz puede extender <strong>varias a la vez</strong>, componiendo contratos grandes desde piezas pequeñas — el principio de composición aplicado a tipos:</p>
+<pre><code class="language-typescript">interface Entidad {
+  id: number;
+  creadoEn: Date;
+}
 
-type Admin = Usuario &amp; { permisos: string[] }; // intersección</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> Las interfaces se pueden extender y fusionar; los types permiten uniones. Usa interface para objetos públicos y type para uniones/utilidades.</blockquote>
+interface Nombrable {
+  nombre: string;
+}
+
+interface Etiquetable {
+  etiquetas: string[];
+}
+
+// Una interfaz extendiendo VARIAS: hereda todo
+interface Articulo extends Entidad, Nombrable, Etiquetable {
+  precio: number;
+}
+
+const post: Articulo = {
+  id: 1,
+  creadoEn: new Date(),
+  nombre: "TypeScript para equipos",
+  etiquetas: ["typescript", "web"],
+  precio: 29.99,
+};</code></pre>
+<h3>Intersecciones con type: combinar formas existentes</h3>
+<p>Los type aliases logran lo mismo con el operador <strong>&amp;</strong> (intersección): el resultado tiene TODAS las propiedades de cada miembro. Es la herramienta natural cuando quieres añadir campos a un tipo ya definido sin tocar su declaración original:</p>
+<pre><code class="language-typescript">type ConPermiso = { permisos: string[] };
+type Admin = Usuario &amp; ConPermiso;   // Usuario + permisos
+
+const admin: Admin = {
+  id: 2,
+  nombre: "Root",
+  permisos: ["borrar-usuarios", "ver-auditoria"],
+};</code></pre>
+<h3>Teaser: implementar interfaces en clases</h3>
+<pre><code class="language-typescript">// Las clases pueden firmar un contrato con implements (lección de POO):
+class RepositorioUsuarios implements Entidad {
+  constructor(public id: number, public creadoEn: Date) {}
+}
+// Si falta una propiedad o cambia el tipo, el compilador lo marca al instante</code></pre>
+<blockquote class="aside aside-note"><p>Diferencia sutil pero importante: si dos interfaces extendidas declaran la misma propiedad con tipos <em>incompatibles</em>, obtienes un error claro. Si dos miembros de una intersección chocan igual, el resultado se vuelve silenciosamente <code>never</code> para esa propiedad — los errores de intersección son más difíciles de leer.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="type-aliases-y-uniones">
+    <h2><i class="fa-solid fa-shapes"></i> Type aliases: uniones, tuplas y más allá de los objetos</h2>
+    <div class="doc-content">
+<p>Un <strong>type alias</strong> crea un NOMBRE para cualquier tipo existente, no solo para objetos. Es la única herramienta capaz de nombrar uniones, tuplas, primitivos personalizados y patrones avanzados — cosas donde las interfaces simplemente no llegan:</p>
+<pre><code class="language-typescript">// Alias de primitivo: da semántica a un tipo genérico
+type DNI = string;
+type AnioNacimiento = number;
+
+// Alias de UNIÓN: imposible de expresar con interface
+type Estado = "activo" | "inactivo" | "pendiente";
+type ID = number | string;
+
+// Alias de TUPLA: tampoco existe interface para esto
+type Coordenada = [lat: number, lng: number];
+const oficina: Coordenada = [-12.046, -77.043];
+
+// Alias de forma de objeto (equivalente a interface)
+type Punto = { x: number; y: number };
+
+let estado: Estado = "activo";
+// estado = "borrado";
+// ❌ Type '"borrado"' is not assignable to type 'Estado'</code></pre>
+<h3>Call signatures: nombrar la firma de una función</h3>
+<p>Con un alias también puedes describir <strong>cómo se llama a una función</strong> (su firma completa: parámetros y retorno). Esto permite declarar variables, parámetros y retornos «de tipo función» reutilizables:</p>
+<pre><code class="language-typescript">// Firma: recibe dos números, devuelve uno
+type Operacion = (a: number, b: number) =&gt; number;
+
+const suma: Operacion = (a, b) =&gt; a + b;      // parámetros inferidos del alias
+const resta: Operacion = (a, b) =&gt; a - b;
+
+function calcular(op: Operacion, x: number, y: number): number {
+  return op(x, y);
+}
+
+calcular(suma, 4, 2);   // 6
+calcular(resta, 4, 2);  // 2
+
+// Sintaxis equivalente dentro de interface (útil para librerías):
+interface Comparador {
+  (a: string, b: string): number;
+}</code></pre>
+<blockquote class="aside aside-success"><p>Nombrar firmas de función (<code>Operacion</code>, <code>ManejadorDeEvento</code>, <code>Validador</code>) hace que las APIs de tus módulos se lean como frases y evita repetir la misma flecha anónima veinte veces por archivo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="interface-vs-type-alias">
+    <h2><i class="fa-solid fa-code-compare"></i> Interface vs type alias: ¿cuál usar?</h2>
+    <div class="doc-content">
+<p>Llegados aquí, ambas herramientas parecen intercambiables para objetos… y de hecho lo son en el 90% de los casos. Pero tienen diferencias estructurales reales que conviene conocer para elegir con criterio y no por costumbre:</p>
+<table><thead><tr><th>Capacidad</th><th><code>interface</code></th><th><code>type</code></th></tr></thead><tbody><tr><td>Describir forma de objeto</td><td>Sí</td><td>Sí</td></tr><tr><td>Extender / heredar otras formas</td><td><code>extends</code> (varias a la vez)</td><td><code>&amp;</code> intersecciones</td></tr><tr><td>Union types</td><td>❌ No soporta</td><td>✅ Su terreno natural</td></tr><tr><td>Tuplas y mapeos avanzados</td><td>❌ No</td><td>✅ Sí</td></tr><tr><td>Primitivos con semántica</td><td>❌ No</td><td>✅ <code>type DNI = string</code></td></tr><tr><td>Declaration merging (fusionarse con otra del mismo nombre)</td><td>✅ Sí: las declaraciones se combinan automáticamente</td><td>❌ Error por nombre duplicado</td></tr><tr><td>Errores del compilador al fallar</td><td>Más claros («is not assignable to interface X»)</td><td>A veces crípticos en intersecciones largas</td></tr><tr><td>Rendimiento de compilación</td><td>Ligeramente mejor en proyectos enormes</td><td>Comparable</td></tr></tbody></table>
+<h3>Declaration merging: la superpotencia (y peligro) de interface</h3>
+<pre><code class="language-typescript">interface VentanaConfig {
+  ancho: number;
+}
+interface VentanaConfig {
+  alto: number;
+}
+// ¡Ambas declaraciones SE FUSIONAN en una sola interfaz!
+const config: VentanaConfig = { ancho: 800, alto: 600 };
+
+// Con type sería error duplicado:
+// type VentanaConfig = { ... } // ❌ Duplicate identifier 'VentanaConfig'</code></pre>
+<blockquote class="aside aside-tip"><p>Regla práctica adoptada por la mayoría de equipos: <strong><code>interface</code> para formas de objeto públicas</strong> (extensibles, fusionables, errores claros) y <strong><code>type</code> para todo lo demás</strong>: uniones, tuplas, utilidades y composiciones. Lo importante es no mezclar criterios dentro del mismo proyecto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="api-response-en-el-mundo-real">
+    <h2><i class="fa-solid fa-globe"></i> Caso real: tipar una respuesta de API</h2>
+    <div class="doc-content">
+<p>Aquí es donde todo lo anterior se vuelve rentable. El flujo típico de una app moderna consume endpoints REST que devuelven JSON: sin tipos, cada <code>respuesta.data.usuario.direccion.ciudad</code> es un acto de fe. Con interfaces, la estructura del contrato externo queda documentada y verificada en todos los puntos donde se usa.</p>
+<pre><code class="language-typescript">// 1) Modela el contrato del endpoint tal como responde el backend
+interface Direccion {
+  ciudad: string;
+  pais: string;
+}
+
+interface UsuarioAPI {
+  id: number;
+  nombre: string;
+  email: string;
+  direccion?: Direccion;      // el backend no siempre la incluye
+  roles: string[];
+}
+
+// 2) La respuesta envuelta: patrón habitual en APIs paginadas
+interface RespuestaPaginada&lt;T&gt; {
+  datos: T[];
+  pagina: number;
+  total: number;
+}
+
+// 3) Función de acceso con retorno tipado
+async function obtenerUsuarios(pagina: number): Promise&lt;RespuestaPaginada&lt;UsuarioAPI&gt;&gt; {
+  const respuesta = await fetch(`/api/usuarios?pagina=${pagina}`);
+  if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+  return (await respuesta.json()) as RespuestaPaginada&lt;UsuarioAPI&gt;;
+}</code></pre>
+<h3>Consumo: autocompletado y verificación gratis</h3>
+<pre><code class="language-typescript">const { datos, total } = await obtenerUsuarios(1);
+
+for (const usuario of datos) {
+  console.log(`#${usuario.id} ${usuario.nombre}`);        // ✅ autocompletado real
+  console.log(usuario.direccion?.ciudad ?? "Sin ciudad"); // ✅ opcional contemplado
+
+  // console.log(usuario.nombres);
+  // ❌ Property 'nombres' does not exist on type 'UsuarioAPI'
+  //    ¿Backend cambió el campo? Lo sabes AL COMPILAR, no en producción
+}</code></pre>
+<blockquote class="aside aside-caution"><p>El <code>as</code> final confía en que el backend cumple su parte. Para APIs críticas o de terceros, combina los tipos con validación runtime (Zod, Valibot): las interfaces describen lo <em>esperado</em>, el validador garantiza lo <em>recibido</em>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas">
+    <h2><i class="fa-solid fa-circle-check"></i> Buenas prácticas con interfaces y types</h2>
+    <div class="doc-content">
+<table><thead><tr><th>Práctica</th><th>Razón</th></tr></thead><tbody><tr><td>Extraer a <code>interface</code>/<code>type</code> cualquier forma usada más de dos veces</td><td>Fuente única de verdad; un cambio actualiza todo el proyecto</td></tr><tr><td>Nombrar por dominio, no por técnica</td><td><code>FacturaPendiente</code> comunica más que <code>TipoObjeto2</code></td></tr><tr><td>Marcar <code>readonly</code> lo que no debe mutarse</td><td>El compilador protege tus invariantes sin costo</td></tr><tr><td>Opcional <code>?</code> solo si REALMENTE puede faltar</td><td>Cada opcional obliga a todos los consumidores a defenderse</td></tr><tr><td>Componer contratos pequeños con extends/&amp;</td><td>Mejor diez piezas claras que una interfaz-monstruo de 30 campos</td></tr><tr><td>No duplicar formas «parecidas pero distintas»</td><td>Si dos tipos difieren en un campo, extiende o interseca</td></tr></tbody></table>
+<pre><code class="language-typescript">// ❌ Interfaz-monolito difícil de mantener
+interface UsuarioCompleto {
+  id: number; nombre: string; email: string; calle: string; ciudad: string;
+  pais: string; rolAdmin: boolean; rolEditor: boolean; fechaAlta: Date;
+}
+
+// ✅ Composición desde piezas reutilizables
+interface Identidad { id: number; nombre: string; email: string }
+interface Ubicacion { calle: string; ciudad: string; pais: string }
+interface Rol { permisos: string[] }
+
+type Usuario = Identidad &amp; Partial&lt;Ubicacion&gt;;   // teaser de utility types
+type Administrador = Usuario &amp; Rol;</code></pre>
+<blockquote class="aside aside-danger"><p>Evita exportar tipos «por si acaso» con campos opcionales para todo: terminas construyendo sistemas defensivos donde nada es confiable. Modela primero el caso feliz estricto y relaja SOLO donde el dominio realmente permite ausencia.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-list-check"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Sigue en modo strict; guarda los avances en archivos separados dentro de tu proyecto:</p>
+<ol>
+<li><strong>Básico</strong>: Declara la interfaz <code>Libro</code> con <code>isbn</code> readonly, <code>titulo</code>, <code>paginas</code> y <code>subtitulo?</code>. Crea dos objetos: uno completo y otro sin subtítulo. Intenta reasignar el isbn y documenta el error.</li>
+<li><strong>Diccionario</strong>: Crea la interfaz <code>Bolsa</code> con index signature <code>[clave: string]: number</code> y agrupa cantidades de frutas. Añade tres claves dinámicamente y calcula el total recorriendo <code>Object.values</code>.</li>
+<li><strong>Herencia</strong>: Construye <code>Vehiculo</code> (marca, anio), extiéndela con <code>Auto</code> (puertas) y <code>Moto</code> (cilindrada), y crea <code>Camioneta extends Auto</code> que añada <code>capacidadCargaKg</code>. Instancia las tres.</li>
+<li><strong>Type alias + firma</strong>: Define <code>Validador&lt;T&gt; = (valor: T) =&gt; string | null</code>. Escribe tres validadores para email, teléfono y edad, guárdalos en un arreglo tipado y ejecútalos contra varios valores.</li>
+<li><strong>Desafío integral</strong>: Modela la respuesta de una API de tienda: <code>Producto</code> (con <code>categoria</code> como unión de literales), respuesta paginada genérica y una función <code>obtenerProductos(pagina)</code> con retorno <code>Promise&lt;...&gt;</code>. Simula los datos con un objeto local y consume todo mostrando un reporte formateado. Cero errores en strict.</li>
+</ol>
+<p>---</p>
     </div>
   </section>

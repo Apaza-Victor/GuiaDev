@@ -1,12 +1,88 @@
 <!-- 6. Protocolos y Extensiones - Swift (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
 
   <section id="protocolos">
-    <h2>Protocolos</h2>
+    <h2><i class="fa-solid fa-file-signature"></i> Protocolos: contratos de capacidades</h2>
     <div class="doc-content">
+<p>Un <strong>protocolo</strong> define <em>qué</em> debe saber hacer un tipo, sin decir <em>cómo</em>. Es un contrato: "si firmas aquí, te comprometes a ofrecer estas propiedades y métodos". A diferencia de la herencia clásica, cualquier tipo puede firmar muchos contratos a la vez —structs, clases y enums—, lo que abre el polimorfismo sin jerarquías rígidas.</p>
+<pre><code class="language-swift">protocol Vehiculo {
+    var velocidadMaxima: Int { get }        // al menos legible
+    var encendido: Bool { get set }         // legible y escribible
+    func arrancar() -&gt; String               // método obligatorio
+}
+
+struct Coche: Vehiculo {
+    var encendido = false
+    let velocidadMaxima = 180
+
+    func arrancar() -&gt; String {
+        encendido ? "¡Vroom!" : "Gira la llave primero"
+    }
+}
+
+enum Patinete: Vehiculo {
+    case electrica, clasica
+
+    var velocidadMaxima: Int { self == .electrica ? 25 : 15 }
+    var encendido: Bool { get { true } set { } }
+    func arrancar() -&gt; String { "Patada inicial" }
+}</code></pre>
+<h3>Anatomía de los requisitos</h3>
+<table><thead><tr><th>Requisito</th><th>Sintaxis en el protocolo</th><th>Significa</th></tr></thead><tbody><tr><td>Propiedad consultable</td><td><code>var x: Int { get }</code></td><td>Debe poder leerse (almacenada o computada)</td></tr><tr><td>Propiedad modificable</td><td><code>var x: Int { get set }</code></td><td>Lectura y escritura obligatorias</td></tr><tr><td>Método</td><td><code>func mover(distancia: Double)</code></td><td>Firma exacta, cuerpo lo pone cada tipo</td></tr><tr><td>Inicializador</td><td><code>init(nombre: String)</code></td><td>Todos los conformantes saben construirse así</td></tr><tr><td>Mutador (para structs)</td><td><code>mutating func reiniciar()</code></td><td>Puede alterar el valor receptor</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>Cuando el requisito es un <code>init</code>, las structs deben marcar su implementación como <code>required init(...)</code> si son finales no hace falta, pero en clases sí: garantiza que las subclases también lo cumplan.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="extensiones">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> Extensiones: ampliar tipos existentes</h2>
+    <div class="doc-content">
+<p>Una <strong>extensión</strong> añade métodos, propiedades computadas e inicializadores a cualquier tipo —incluso los que no escribiste tú, como <code>Int</code>, <code>String</code> o <code>Date</code>—. Es la herramienta perfecta para dotar de superpoderes a la librería estándar:</p>
+<pre><code class="language-swift">extension Int {
+    func veces(_ tarea: () -&gt; Void) {
+        for _ in 0..&lt;self { tarea() }
+    }
+
+    var enDolares: String { "$\(self)" }
+}
+
+3.veces { print("hola") }     // hola × 3
+print(250.enDolares)          // $250
+
+extension String {
+    var iniciales: String {
+        split(separator: " ").compactMap { $0.first }.map(String.init).joined()
+    }
+}
+"Lenguaje de Programación Swift".iniciales   // "LPS"</code></pre>
+<h3>Conformancia retroactiva</h3>
+<p>La combinación letal: extensión + protocolo permite que tipos ya existentes firmen tus contratos, aunque su código fuente sea intocable:</p>
 <pre><code class="language-swift">protocol Describible {
     var descripcion: String { get }
-    func describir() -&gt; String
+}
+
+// Int y Double ahora cumplen MI protocolo, sin tocar la librería estándar
+extension Int: Describible {
+    var descripcion: String { "El número entero \(self)" }
+}
+
+extension Double: Describible {
+    var descripcion: String { "El decimal \(self)" }
+}
+
+print(7.descripcion)       // El número entero 7
+print(3.14.descripcion)    // El decimal 3.14</code></pre>
+<blockquote class="aside aside-caution"><p>Límite importante: las extensiones <strong>no pueden añadir propiedades almacenadas</strong> (solo computadas). Tampoco pueden sobrescribir métodos existentes, únicamente añadir nombres nuevos.</p></blockquote>
+<blockquote class="aside aside-tip"><p>Usa extensiones para organizar: agrupa en una <code>extension</code> todo lo relativo a cada protocolo que conforme tu tipo. Los archivos grandes se vuelven índices navegables.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="implementaciones-por-defecto">
+    <h2><i class="fa-solid fa-gift"></i> Implementaciones por defecto y polimorfismo</h2>
+    <div class="doc-content">
+<p>Una extensión sobre el propio protocolo puede ofrecer implementaciones por defecto para sus requisitos. El efecto es espectacular: el método deja de ser obligatorio para quien conforme, pero sigue estando disponible para quien llame. Cada tipo decide si acepta el regalo o aporta su propia versión:</p>
+<pre><code class="language-swift">protocol Describible {
+    var descripcion: String { get }
 }
 
 extension Describible {
@@ -18,19 +94,142 @@ extension Describible {
 struct Libro: Describible {
     let titulo: String
     var descripcion: String { "Libro: \(titulo)" }
+    // hereda describir() tal cual
+}
+
+struct EdicionLujo: Describible {
+    let titulo: String
+    var descripcion: String { "Edición de lujo: \(titulo)" }
+
+    func describir() -&gt; String {   // sobrescribe el defecto
+        "✨ \(descripcion) ✨"
+    }
 }</code></pre>
+<h3>Polimorfismo real vía protocolos</h3>
+<p>Un array del tipo del protocolo mezcla instancias dispares; cada llamada ejecuta la versión correcta sin conocer las clases concretas. Esto es polimorfismo sin herencia:</p>
+<pre><code class="language-swift">let biblioteca: [any Describible] = [
+    Libro(titulo: "Swift 101"),
+    EdicionLujo(titulo: "Algoritmos"),
+    42            // ¡recuerda: Int también es Describible!
+]
+
+for item in biblioteca {
+    print(item.describir())
+}
+// Libro: Swift 101
+// ✨ Edición de lujo: Algoritmos ✨
+// El número entero 42</code></pre>
+<p>---</p>
     </div>
   </section>
 
-  <section id="extensiones">
-    <h2>Extensiones</h2>
+  <section id="patron-delegate">
+    <h2><i class="fa-solid fa-user-tie"></i> El patrón delegate</h2>
     <div class="doc-content">
-<pre><code class="language-swift">extension Int {
-    func veces(_ tarea: () -&gt; Void) {
-        for _ in 0..&lt;self { tarea() }
+<p>El patrón más famoso de Apple: un objeto (<em>sujeto</em>) necesita avisar de eventos o pedir decisiones, pero no quiere acoplarse a quién escucha. Le basta con exigir que su <strong>delegado</strong> cumpla un protocolo. UIKit entero funciona así: tablas, botones, campos de texto…</p>
+<pre><code class="language-swift">protocol ReproduccionDelegate: AnyObject {
+    func reproductor(_ r: Reproductor, cambioA cancion: String)
+    func reproductorTermino(_ r: Reproductor)
+}
+
+class Reproductor {
+    weak var delegado: ReproduccionDelegate?   // weak: evita ciclos de retención
+
+    func reproducir(_ cancion: String) {
+        print("Sonando: \(cancion)")
+        delegado?.reproductor(self, cambioA: cancion)
     }
 }
 
-3.veces { print("hola") }</code></pre>
+class PantallaPrincipal: ReproduccionDelegate {
+    func reproductor(_ r: Reproductor, cambioA cancion: String) {
+        print("[UI] Actualizando portada de \(cancion)")
+    }
+    func reproductorTermino(_ r: Reproductor) {
+        print("[UI] Mostrando lista siguiente")
+    }
+}
+
+let pantalla = PantallaPrincipal()
+let player = Reproductor()
+player.delegado = pantalla
+player.reproducir("Bohemian Rhapsody")
+// Sonando: Bohemian Rhapsody
+// [UI] Actualizando portada de Bohemian Rhapsody</code></pre>
+<h3>¿Por qué weak es imprescindible?</h3>
+<p>El delegado casi siempre es un objeto de larga vida (una pantalla, un controlador). Si el sujeto lo reteniera fuertemente, ambos se sostienen mutuamente y ARC nunca libera ninguno: el ciclo de retención que viste en la lección anterior. Con <code>weak</code>, cuando la pantalla muere, el reproductor ve <code>delegado == nil</code> y sigue funcionando —por eso el opcional—.</p>
+<blockquote class="aside aside-danger"><p>Sin <code>weak</code> este patrón fuga memoria silenciosamente. La regla mnemotécnica de la plataforma: <em>delegate siempre weak</em>, y el protocolo debe declararse <code>: AnyObject</code> porque solo las clases pueden participar en ciclos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pop-vs-oop">
+    <h2><i class="fa-solid fa-compass-drafting"></i> POP frente a OOP</h2>
+    <div class="doc-content">
+<p>Durante décadas la reutilización se resolvió con herencia: una clase base y subclases especializadas. La experiencia enseñó sus costes: jerarquías frágiles donde cambiar la base rompe a todos los hijos, imposibilidad de heredar de dos padres y exclusión de los value types. La respuesta de Swift es la <strong>programación orientada a protocolos</strong> (POP): capacidades pequeñas componibles en lugar de árboles genealógicos.</p>
+<table><thead><tr><th>Criterio</th><th>OOP con herencia</th><th>POP con protocolos</th></tr></thead><tbody><tr><td>Reutilización</td><td>Código heredado verticalmente</td><td>Implementaciones default componibles</td></tr><tr><td>Cantidad de "padres"</td><td>Uno solo</td><td>Los protocolos que quieras</td></tr><tr><td>Funciona con struct/enum</td><td>No</td><td>Sí (y son el estándar recomendado)</td></tr><tr><td>Riesgo típico</td><td>Clase base frágil, efectos sorpresa</td><td>Protocolos inflados si no se disciplina</td></tr><tr><td>Testabilidad</td><td>Mocks por subclasificación</td><td>Tipos test dobles conformando el mismo protocolo</td></tr></tbody></table>
+<h3>Asociatedtype: el adelanto genérico</h3>
+<p>Los protocolos también pueden hablar de "algún tipo, aún sin decidir", mediante <code>associatedtype</code>. Así define la librería estándar <code>Collection</code>, y por eso arrays, strings y sets comparten APIs idénticas sin compartir ancestro:</p>
+<pre><code class="language-swift">protocol Contenedor {
+    associatedtype Elemento
+    mutating func agregar(_ elemento: Elemento)
+    var cantidad: Int { get }
+}
+
+struct Pila&lt;T&gt;: Contenedor {
+    private var items: [T] = []
+    mutating func agregar(_ elemento: T) { items.append(elemento) }
+    var cantidad: Int { items.count }
+}
+
+var pila = Pila&lt;String&gt;()
+pila.agregar("swift")     // el compilador fijó Elemento = String solo
+print(pila.cantidad)      // 1</code></pre>
+<blockquote class="aside aside-success"><p>No necesitas elegir bando: usa structs + protocolos para modelar capacidades y reserva clases para identidad compartida. Esa mezcla pragmática es exactamente el estilo del código moderno de Apple.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas con protocolos</h2>
+    <div class="doc-content">
+<h3>1. Protocolos pequeños y enfocados</h3>
+<pre><code class="language-swift">// ❌ Un contrato gigante obliga a implementarlo todo aunque no aplique
+protocol Gestionable {
+    func guardar(); func borrar(); func imprimir(); func exportarPDF()
+}
+
+// ✅ Capacidades atómicas que se combinan según necesidad
+protocol Guardable { func guardar() }
+protocol Exportable { func exportarPDF() }
+struct Factura: Guardable, Exportable { /* solo lo que toca */ }</code></pre>
+<h3>2. Nombres que revelan intención</h3>
+<p>Convenciones de la plataforma: capacidades terminan en <em>-able/-ible</em> (<code>Codificable</code>, <code>Comparable</code>) y los roles de comunicación son sustantivos (<code>Delegate</code>, <code>DataSource</code>). Un nombre bien elegido elimina la necesidad de documentación.</p>
+<h3>3. Añadir requisitos rompe; añadir métodos en extensión, no</h3>
+<pre><code class="language-swift">// ⚠️ Añadir esto al protocolo obliga a actualizar TODOS los conformantes
+protocol Guardable {
+    func guardar(en nube: Bool)      // breaking change para la librería ajena
+}
+
+// ✅ Nuevo comportamiento como método de extensión: nadie se rompe
+extension Guardable {
+    func guardarEnNube() { guardar() }
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Antes de crear un protocolo nuevo pregúntate: ¿tendré al menos dos tipos distintos que lo cumplan? Si la respuesta es no, quizá solo necesitas un struct bien diseñado. Los protocolos valen por la variedad que habilitan.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>De menor a mayor dificultad:</p>
+<ol>
+<li><strong>Voladores:</strong> define el protocolo <code>Volador</code> con <code>volar() -&gt; String</code> y haz que dos structs (<code>Pajaro</code>, <code>Dron</code>) lo cumplan con mensajes distintos; recorre un array de <code>[any Volador]</code> imprimiendo cada despegue.</li>
+<li><strong>Superpoderes numéricos:</strong> extiende <code>Double</code> con <code>kilometrosAMillas()</code> y <code>millasAKilometros()</code>; después crea el protocolo <code>Medible</code> y logra conformancia retroactiva de <code>Double</code>.</li>
+<li><strong>Galería describible:</strong> parte del ejemplo <code>Describible</code> y añade una tercera estructura propia; genera un array heterogéneo (incluye un Int) ordenado por longitud de descripción usando <code>sorted { … }</code>.</li>
+<li><strong>Temporizador delegado:</strong> implementa <code>class Temporizador</code> con <code>weak var delegado</code> que notifique cada tick simulado; crea una clase <code>Alarma</code> conforme que cuente los ticks y avise al llegar a cinco; comprueba imprimiendo direcciones o usando <code>===</code> que el delegado es el esperado.</li>
+<li><strong>Contenedores genéricos:</strong> usando <code>associatedtype</code>, completa un protocolo <code>Contenedor</code> con <code>agregar</code>, <code>extraer</code> y <code>cantidad</code>; implementa <code>Pila</code> (LIFO) y <code>Cola</code> (FIFO) como structs genéricos y demuestra su comportamiento con Strings e Ints.</li>
+</ol>
     </div>
   </section>

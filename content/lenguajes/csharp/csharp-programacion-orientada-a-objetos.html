@@ -1,47 +1,261 @@
-<!-- 5. Programación Orientada a Objetos - C# (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="clases-y-propiedades">
-    <h2>Clases y propiedades</h2>
+<!-- 6. Programación Orientada a Objetos - C# (Lenguajes de Programación) -->
+<section id="clases-y-propiedades">
+    <h2><i class="fa-solid fa-cube"></i> Clases y propiedades</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">class Producto
+        <p>C# eleva el encapsulamiento a nivel de lenguaje con las <strong>propiedades</strong>: campos que parecen variables pero ejecutan código al leerse/escribirse. Son la forma idiomática de exponer estado — nunca campos públicos crudos.</p>
+
+        <h3>Propiedades: getters/setters civilizados</h3>
+        <pre><code class="language-csharp">public class CuentaBancaria
 {
-    public string Nombre { get; set; }
-    public decimal Precio { get; set; }
+    // Auto-propiedad: el compilador genera campo oculto + acceso
+    public string Titular { get; set; }
 
-    public decimal PrecioConIva =&gt; Precio * 1.16m;  // propiedad calculada
+    // Solo lectura desde fuera (set privado):
+    public decimal Saldo { get; private set; }
 
-    public override string ToString() =&gt; $"{Nombre}: {Precio:C}";
+    // init: solo asignable EN CONSTRUCCIÓN, luego inmutable (C# 9)
+    public string NumeroCuenta { get; init; }
+
+    // Propiedad calculada: no almacena, computa
+    public bool EstaVacia =&gt; Saldo == 0;
+
+    // Validación en setter: lógica de negocio protegida
+    private int _edad;
+    public int Edad
+    {
+        get =&gt; _edad;
+        set =&gt; _edad = value &gt;= 0 &amp;&amp; value &lt;= 150
+            ? value
+            : throw new ArgumentOutOfRangeException(nameof(value));
+    }
+
+    public CuentaBancaria(string titular, string numero)
+    {
+        Titular = titular;
+        NumeroCuenta = numero;
+    }
 }</code></pre>
-    </div>
-  </section>
+        <table>
+            <thead>
+                <tr><th>Forma</th><th>Mutabilidad externa</th><th>Uso</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>{ get; set; }</code></td><td>Total</td><td>DTOs simples, entidades EF</td></tr>
+                <tr><td><code>{ get; }</code> o <code>=&gt;</code></td><td>Ninguna</td><td>Datos derivados/calculados</td></tr>
+                <tr><td><code>{ get; private set; }</code></td><td>Solo la clase</td><td>Invariantes controladas internamente</td></tr>
+                <tr><td><code>{ get; init; }</code></td><td>Solo constructor/inicializador</td><td>Objetos inmutables modernos</td></tr>
+                <tr><td><code>required</code> (C# 11)</td><td>Obliga a inicializarla</td><td>Contrato de construcción sin constructor largo</td></tr>
+            </tbody>
+        </table>
 
-  <section id="herencia-e-interfaces">
-    <h2>Herencia e interfaces</h2>
-    <div class="doc-content">
-<pre><code class="language-csharp">interface IAnimal
+        <h3>Constructores y primary constructors</h3>
+        <pre><code class="language-csharp">public class Producto
 {
-    string Hablar();
+    public string Nombre { get; }
+    public decimal Precio { get; }
+
+    // Constructor clásico:
+    public Producto(string nombre, decimal precio)
+    {
+        if (precio &lt; 0) throw new ArgumentException("Precio negativo");
+        Nombre = nombre;
+        Precio = precio;
+    }
+
+    // Delegación entre constructores con : this(...)
+    public Producto(string nombre) : this(nombre, 0m) { }
 }
 
-class AnimalBase
+// Primary constructor (C# 12): parámetros viven en toda la clase
+public class Cliente(string nombre, string email)
 {
-    public virtual string Hablar() =&gt; "...";
+    public string Nombre =&gt; nombre;
+    public string Email =&gt; email;
+    public void Saludar() =&gt; Console.WriteLine($"Hola {nombre} ({email})");
+}</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>Los primary constructors son azúcar de captura, no propiedades: los parámetros son campos invisibles compartibles. Para APIs públicas donde el contrato importa (serialización, validación), mantén propiedades explícitas.</p>
+        </blockquote>
+
+        <h3>static: miembros de clase</h3>
+        <pre><code class="language-csharp">public static class Matematicas   // clase estática: solo miembros static
+{
+    public const double Pi = 3.14159;
+    public static double AreaCirculo(double r) =&gt; Pi * r * r;
 }
 
-class Perro : AnimalBase, IAnimal
+Matematicas.AreaCirculo(5);   // sin instanciar nada
+
+// Contador de instancias:
+public class Sesion
 {
-    public override string Hablar() =&gt; "Guau!";
+    private static int _total;
+    public static int Total =&gt; _total;
+    public Sesion() =&gt; _total++;
 }</code></pre>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="polimorfismo">
-    <h2>Polimorfismo</h2>
+<section id="herencia-e-interfaces">
+    <h2><i class="fa-solid fa-sitemap"></i> Herencia e interfaces</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">List&lt;IAnimal&gt; animales = new() { new Perro(), new Gato() };
+        <pre><code class="language-csharp">public abstract class Animal          // ABSTRACTA: no instanciable
+{
+    public string Nombre { get; }
 
-foreach (IAnimal a in animales)
-    Console.WriteLine(a.Hablar());  // cada uno responde distinto</code></pre>
+    protected Animal(string nombre) =&gt; Nombre = nombre;
+
+    public virtual string Sonido() =&gt; "...";      // virtual: sobrescribible
+    public void Presentarse() =&gt;                  // concreto: heredado tal cual
+        Console.WriteLine($"{Nombre} dice {Sonido()}");
+}
+
+public sealed class Perro : Animal     // sealed: nadie hereda más de aquí
+{
+    public Perro(string nombre) : base(nombre) { }   // llamar constructor base
+
+    public override string Sonido() =&gt; "¡guau!";
+}
+
+public interface IVolador              // CONTRATO puro sin implementación
+{
+    double AlturaMaxima { get; }
+    void Vol();
+}
+
+public class Pato : Animal, IVolador   // una clase base + N interfaces
+{
+    public Pato(string n) : base(n) { }
+    public override string Sonido() =&gt; "cuac";
+    public double AlturaMaxima =&gt; 1000.0;
+    public void Vol() =&gt; Console.WriteLine("Aleteando");
+}</code></pre>
+        <table>
+            <thead>
+                <tr><th>Herramienta</th><th>Qué garantiza</th><th>Cuándo elegirla</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>abstract class</code></td><td>Base común CON estado y código compartido</td><td>Jerarquías con lógica heredada real (Plantilla Método)</td></tr>
+                <tr><td><code>interface</code></td><td>Capacidad/contrato sin acoplar implementación</td><td>Polimorfismo desacoplado, testeo con mocks, DI</td></tr>
+                <tr><td><code>virtual/override</code></td><td>Punto de extensión opcional</td><td>Framework que permite especializar pasos</td></tr>
+                <tr><td><code>sealed</code></td><td>Cierre definitivo</td><td>Clases de seguridad/performance; JIT optimiza mejor</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Ecosistema .NET moderno: interfaces por todas partes (ILogger, IEnumerable&lt;T&gt;, IDisposable). Inyecta dependencias como interfaces — tu código queda testeable sustituyendo implementación real por mocks sin tocar producción.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="polimorfismo-y-records">
+    <h2><i class="fa-solid fa-shapes"></i> Polimorfismo, records y structs vs classes</h2>
+    <div class="doc-content">
+        <h3>Polimorfismo en acción</h3>
+        <pre><code class="language-csharp">List&lt;Animal&gt; zoologico = [new Perro("Rex"), new Pato("Donald")];
+
+foreach (Animal a in zoologico)
+    a.Presentarse();       // cada uno usa SU Sonido() real:
+                           // Rex dice ¡guau!
+                           // Donald dice cuac
+
+// is-pattern para especializar cuando toca:
+if (a is Pato patoVolador)
+    patoVolador.Vol();</code></pre>
+
+        <h3>Records: datos inmutables con semántica de valor (C# 9)</h3>
+        <pre><code class="language-csharp">// Una línea genera: constructor, props init, Equals/GetHashCode por VALOR,
+// ToString() legible, y with-expressions:
+public record Persona(string Nombre, int Edad);
+
+var ana  = new Persona("Ana", 30);
+var ana2 = new Persona("Ana", 30);
+Console.WriteLine(ana == ana2);        // TRUE: compara CONTENIDO (class daría false)
+Console.WriteLine(ana);                // Persona { Nombre = Ana, Edad = 30 }
+
+// Non-destructive mutation con with:
+var cumpleanos = ana with { Edad = 31 };
+Console.WriteLine(cumpleanos);         // Persona { Nombre = Ana, Edad = 31 }
+
+// Posicional patterns encajan perfecto con records:
+string etapa = ana switch
+{
+    { Edad: &lt; 13 }  =&gt; "niñez",
+    { Edad: &lt; 18 }  =&gt; "adolescencia",
+    { Edad: &lt; 65 }  =&gt; "adultez",
+    _               =&gt; "vejez"
+};</code></pre>
+
+        <h3>¿record, struct o class?</h3>
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Ideal para</th><th>Ejemplo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>record class</code></td><td>Datos inmutables pasados por referencia, comparables por valor</td><td>DTOs, mensajes, eventos de dominio</td></tr>
+                <tr><td><code>struct</code></td><td>Valores pequeños (&lt;16 bytes aprox.) tipo número</td><td>Punto, Color, Money simple</td></tr>
+                <tr><td><code>record struct</code></td><td>Valores pequeños inmutables comparables</td><td>Rango, Coordenada</td></tr>
+                <tr><td><code>class</code></td><td>Entidades CON identidad e identidad mutable</td><td>Servicios, repositorios, entidades con ciclo de vida</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-success">
+            <p>Regla moderna del ecosistema: modela DATOS con records (inmutables, thread-friendly, predecibles); reserva classes para comportamiento con identidad. La inmutabilidad elimina categorías enteras de bugs concurrentes.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="buenas-practicas-poo">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón concreta</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Propiedades nunca campos públicos</td><td>Data-binding, validación futura sin romper API</td></tr>
+                <tr><td>Preferir composición + interfaces a herencia profunda</td><td>Herencia acopla para siempre; interfaces se intercambian</td></tr>
+                <tr><td>Clases abstractas solo con código REAL compartido</td><td>Si es todo abstracto, es una interfaz mal vestida</td></tr>
+                <tr><td>Records para DTOs y resultados</td><td>Equals correcto gratis; with-expressions elegantes</td></tr>
+                <tr><td>sealed por defecto en librerías estables</td><td>Permite optimizaciones JIT y diseño honesto</td></tr>
+                <tr><td>Inyección de dependencias vía interfaces</td><td>Testeable; estándar absoluto en ASP.NET Core</td></tr>
+                <tr><td>Validación en constructores/setters</td><td>Imposible crear objeto inválido (fail-fast)</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Olvidar override y usar new en método</td><td>Polimorfismo NO funciona: llama versión según TIPO de variable</td><td>override siempre que sobrescribas virtual</td></tr>
+                <tr><td>Llamar método virtual desde constructor</td><td>Ejecuta override de derivada CON ESTADO SIN INICIALIZAR</td><td>Nunca virtuales en constructores</td></tr>
+                <tr><td>struct grande pasado por valor en loops calientes</td><td>Copias masivas matan performance silenciosamente</td><td>in T / ref readonly, o directamente class</td></tr>
+                <tr><td>Mutar record esperando mutar "copia"</td><td>with crea NUEVO objeto; original intacto (¡esa es la gracia!)</td><td>Aceptar modelo inmutable: reasignar resultado de with</td></tr>
+                <tr><td>Interfaces gordas de 15 métodos</td><td>Mocks gigantes; violación ISP</td><td>Segregar en interfaces pequeñas por capacidad</td></tr>
+                <tr><td>Comparar clases con == buscando contenido</td><td>false aunque datos iguales (compara referencia)</td><td>records o Equals sobrescrito</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Banco encapsulado</strong>: CuentaBancaria con Saldo get/private set, métodos Depositar/Retirar validando fondos; demuestra intento de saldo negativo lanzando excepción.</li>
+            <li><strong>Zoológico polimórfico</strong>: Animal abstracta + Perro/Gato/Pato con overrides; lista polimórfica + pattern is para capacidades extra (IVolador).</li>
+            <li><strong>Records de dominio</strong>: modela Pedido con items; usa with para "modificar" cantidad sin tocar original; verifica igualdad por valor entre dos pedidos idénticos.</li>
+            <li><strong>DI manual</strong>: interfaz INotificador con EmailNotifier y SmsNotifier; servicio que las recibe por constructor; cambia implementación sin tocar servicio.</li>
+            <li><strong>Struct vs class medido</strong>: benchmark básico (Stopwatch) creando 1M de puntos como struct vs class; documenta diferencia de memoria/tiempo observada.</li>
+        </ol>
+    </div>
+</section>

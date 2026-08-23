@@ -1,6 +1,6 @@
 <!-- 2. GitHub Actions - CI/CD (Control de Versiones) -->
 <section id="conceptos-workflow-job-y-step">
-  <h2>Conceptos: workflow, job y step</h2>
+  <h2><i class="fa-solid fa-sitemap"></i> Conceptos: workflow, job y step</h2>
   <div class="doc-content">
     <p>La jerarquía de GitHub Actions:</p>
     <ul>
@@ -15,11 +15,15 @@
 └── job: test     (paralelo a lint)
     ├── step: checkout
     └── step: npm test</code></pre>
+    <blockquote class="aside aside-note">
+      <p>Dos detalles que confunden a todos: los jobs NO comparten archivos (cada uno arranca en una VM limpia — por eso checkout se repite), y el paralelismo por defecto significa que "test" puede terminar antes que "lint". Para ordenar: <code>needs: lint</code> en el job dependiente.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="el-directorio-github-workflows">
-  <h2>El directorio .github/workflows</h2>
+  <h2><i class="fa-solid fa-folder-open"></i> El directorio .github/workflows</h2>
   <div class="doc-content">
     <p>Primer workflow completo — CI de un proyecto Node:</p>
     <pre><code class="language-yaml"># .github/workflows/ci.yml
@@ -45,11 +49,15 @@ jobs:
       - run: npm ci
       - run: npm test</code></pre>
     <p><code>uses:</code> invoca acciones reutilizables del marketplace; <code>run:</code> ejecuta comandos shell. Guarda el archivo, haz push, y verás el workflow en la pestaña <strong>Actions</strong> del repo.</p>
+    <blockquote class="aside aside-caution">
+      <p>El nombre del archivo YAML es libre (ci.yml, build.yml), pero la UBICACIÓN es sagrada: exactamente <code>.github/workflows/</code>. Un espacio de más en el nombre de carpeta y GitHub lo ignora silenciosamente — el workflow simplemente nunca aparece.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="triggers-y-matriz-de-versiones">
-  <h2>Triggers y matriz de versiones</h2>
+  <h2><i class="fa-solid fa-table-cells"></i> Triggers y matriz de versiones</h2>
   <div class="doc-content">
     <p>La <strong>matriz</strong> ejecuta el mismo job contra combinaciones de versiones/sistemas — perfecto para librerías multiplataforma:</p>
     <pre><code class="language-yaml">jobs:
@@ -68,11 +76,15 @@ jobs:
       - run: npm ci &amp;&amp; npm test
 # = 6 ejecuciones en paralelo (2 SO × 3 versiones)</code></pre>
     <p>Otros triggers útiles: <code>workflow_dispatch</code> (botón manual), <code>schedule</code> (cron), <code>release</code>, <code>issues</code>.</p>
+    <blockquote class="aside aside-tip">
+      <p><code>fail-fast: false</code> en la estrategia es clave durante desarrollo: sin él, el primer fallo cancela las otras 5 ejecuciones de la matriz y pierdes la información de qué combinaciones rompen. Actívalo true solo para ahorrar minutos cuando ya sabes que está verde.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="secrets-y-variables-de-entorno">
-  <h2>Secrets y variables de entorno</h2>
+  <h2><i class="fa-solid fa-key"></i> Secrets y variables de entorno</h2>
   <div class="doc-content">
     <p>Los secretos se guardan cifrados en <em>Settings → Secrets and variables → Actions</em> y nunca aparecen en logs:</p>
     <pre><code class="language-yaml">steps:
@@ -87,11 +99,15 @@ jobs:
       <li>Los secrets de <strong>Environments</strong> (production) pueden exigir revisores humanos.</li>
       <li>Regla de seguridad: jamás imprimas secretos ni los metas en el código.</li>
     </ul>
+    <blockquote class="aside aside-danger">
+      <p>El enmascaramiento de secrets en logs NO protege todo: si un secreto se usa para construir OTRO valor (base64, concatenación), el resultado derivado sí puede imprimirse. Y en PRs de forks, los secrets no están disponibles por diseño — nunca los habilites para repos públicos externos.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="marketplace-y-actions-reutilizables">
-  <h2>Marketplace y actions reutilizables</h2>
+  <h2><i class="fa-solid fa-store"></i> Marketplace y actions reutilizables</h2>
   <div class="doc-content">
     <p>El <a href="#" onclick="return false;">Marketplace</a> ofrece miles de acciones listas: despliegues (Vercel, AWS, Firebase), seguridad (CodeQL), notificaciones (Slack)... Las más usadas son oficiales de GitHub: <code>checkout</code>, <code>setup-node</code>, <code>upload-artifact</code>.</p>
     <p>También puedes crear tus propias actions (Docker o JavaScript) o reutilizar workflows completos entre repos:</p>
@@ -102,5 +118,39 @@ jobs:
       entorno: produccion
     secrets: inherit</code></pre>
     <p>Buenas prácticas finales: fija versiones por tag (<code>@v4</code> o mejor <code>@v4.1.2</code>/SHA), mantén workflows pequeños, usa cachés y falla rápido ordenando steps de lo barato a lo caro.</p>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="errores-comunes">
+  <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>YAML inválido (tabs, indentación)</td><td>"Bad configuration" o workflow invisible</td><td>Espacios solo; validador del editor / actionlint</td></tr>
+        <tr><td>npm install en vez de npm ci</td><td>Builds no reproducibles entre runs</td><td>npm ci respeta lockfile exacto</td></tr>
+        <tr><td>@main en actions de terceros</td><td>Cambios ajenos rompen tu pipeline un martes</td><td>Fijar tag/SHA de cada uses:</td></tr>
+        <tr><td>Esperar artefactos entre jobs sin upload/download</td><td>"File not found" en job siguiente</td><td>actions/upload-artifact + download-artifact</td></tr>
+        <tr><td>Secrets en variables env visibles en PRs de fork</td><td>Riesgo de exfiltración</td><td>Mantener default: forks no acceden secrets</td></tr>
+        <tr><td>Workflow gigante monolítico</td><td>Cualquier cambio invalida todo el cache/historia</td><td>Workflows pequeños por propósito + reusable workflows</td></tr>
+      </tbody>
+    </table>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="ejercicios">
+  <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+  <div class="doc-content">
+    <ol>
+      <li><strong>Primer workflow</strong>: crea ci.yml con jobs lint y test paralelos sobre un repo Node tuyo; observa la pestaña Actions y el paralelismo real.</li>
+      <li><strong>Orden forzado</strong>: añade <code>needs:</code> para que deploy corra tras lint+test exitosos; rompe tests deliberadamente y verifica que deploy nunca arranca.</li>
+      <li><strong>Matriz viva</strong>: matriz OS×Node (2×3); con fail-fast true y false, compara qué información obtienes cuando una combinación falla.</li>
+      <li><strong>Secret seguro</strong>: guarda un API_KEY fake, úsalo en un step que lo imprima indirectamente (echo "key=$API_KEY") y verifica el enmascaramiento en logs.</li>
+      <li><strong>Action versionada</strong>: cambia una dependencia de @v4 a SHA completo del release; documenta cómo auditarías ese cambio ante el equipo.</li>
+    </ol>
   </div>
 </section>

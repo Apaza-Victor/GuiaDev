@@ -1,36 +1,245 @@
 <!-- 5. Programación Orientada a Objetos - C++ (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="clases">
-    <h2>Clases</h2>
+<section id="clases">
+    <h2><i class="fa-solid fa-cube"></i> Clases, constructores y la regla de cinco</h2>
     <div class="doc-content">
-<pre><code class="language-cpp">class Cuenta {
+        <p>Una clase agrupa <strong>datos + comportamiento</strong> y controla quién accede a qué mediante visibilidad. En C++ existe también <code>struct</code>, y la única diferencia técnica es mínima pero reveladora:</p>
+        <table>
+            <thead>
+                <tr><th>Aspecto</th><th><code>struct</code></th><th><code>class</code></th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Visibilidad por defecto</td><td><strong>public</strong></td><td><strong>private</strong></td></tr>
+                <tr><td>Herencia por defecto</td><td>public</td><td>private</td></tr>
+                <tr><td>Convención comunitaria</td><td>Agregados de datos pasivos</td><td>Tipos con invariantes y encapsulación</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Anatomía de una clase completa</h3>
+        <pre><code class="language-cpp">class CuentaBancaria {
+public:
+    // Constructor con lista de inicialización (preferible a asignar en el cuerpo)
+    explicit CuentaBancaria(std::string titular, double saldoInicial = 0)
+        : titular_{std::move(titular)}, saldo_{saldoInicial} {
+        if (saldo_ &lt; 0) throw std::invalid_argument{"saldo negativo"};
+    }
+
+    // Métodos consultores: const = prometen NO modificar
+    [[nodiscard]] double saldo() const { return saldo_; }
+    [[nodiscard]] const std::string&amp; titular() const { return titular_; }
+
+    bool depositar(double monto) {
+        if (monto &lt;= 0) return false;
+        saldo_ += monto;             // invariante protegida aquí
+        return true;
+    }
+
 private:
-    double saldo_ = 0.0;
-public:
-    Cuenta(double inicial) : saldo_(inicial) {}   // lista de inicialización
-
-    void depositar(double m) { saldo_ += m; }
-    double saldo() const { return saldo_; }       // método const
-};</code></pre>
-    </div>
-  </section>
-
-  <section id="herencia-y-polimorfismo">
-    <h2>Herencia y polimorfismo</h2>
-    <div class="doc-content">
-<pre><code class="language-cpp">class Figura {
-public:
-    virtual double area() const { return 0; }
-    virtual ~Figura() = default;                  // destructor virtual!
+    std::string titular_;   // datos privados: nadie los corrompe desde fuera
+    double saldo_;
 };
 
-class Circulo : public Figura {
-    double r_;
+CuentaBancaria c{"Ada", 1000};
+c.depositar(500);
+std::cout &lt;&lt; c.saldo();      // 1500
+// c.saldo_ = -9999;         ❌ no compila: privado</code></pre>
+        <blockquote class="aside aside-tip">
+            <p><code>: titular_{...}, saldo_{...}</code> es la <strong>lista de inicialización</strong>: inicializa directamente (una construcción), mientras que asignar en el cuerpo construye Y luego copia. Además el orden de ejecución sigue el orden DECLARACIÓN de miembros, no el del constructor — mezclar ambos estilos genera bugs sutiles.</p>
+        </blockquote>
+
+        <h3>La regla de cinco</h3>
+        <p>Cinco operaciones especiales define el compilador automáticamente… hasta que tú declaras cualquiera. Entonces debes decidir las cinco conscientemente:</p>
+        <table>
+            <thead>
+                <tr><th>Operación</th><th>Sintaxis</th><th>Cuándo importa</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Destructor</td><td><code>~T()</code></td><td>Recursos RAII que liberar</td></tr>
+                <tr><td>Constructor de copia</td><td><code>T(const T&amp;)</code></td><td>Duplicar objetos</td></tr>
+                <tr><td>Asignación por copia</td><td><code>T&amp; operator=(const T&amp;)</code></td><td>a = b;</td></tr>
+                <tr><td>Constructor de movimiento</td><td><code>T(T&amp;&amp;) noexcept</code></td><td>Robar recursos de temporales</td></tr>
+                <tr><td>Asignación por movimiento</td><td><code>T&amp; operator=(T&amp;&amp;) noexcept</code></td><td>a = std::move(b);</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-cpp">class Buffer {
 public:
-    explicit Circulo(double r) : r_(r) {}
-    double area() const override { return 3.14159 * r_ * r_; }
+    explicit Buffer(size_t n) : tam_{n}, datos_{new int[n]{}} {}
+    ~Buffer() { delete[] datos_; }                    // 1
+
+    // Copia PROFUNDA: cada objeto dueño de SU memoria
+    Buffer(const Buffer&amp; o) : tam_{o.tam_}, datos_{new int[o.tam_]} {  // 2
+        std::copy(o.datos_, o.datos_ + tam_, datos_);
+    }
+    Buffer&amp; operator=(const Buffer&amp; o) {              // 3 (copy-and-swap idiom)
+        Buffer tmp{o};                                // copia segura
+        std::swap(tam_, tmp.tam_);
+        std::swap(datos_, tmp.datos_);
+        return *this;                                 // tmp muere liberando lo viejo
+    }
+
+    // Movimiento: ROBAR en O(1) y dejar al origen vacío
+    Buffer(Buffer&amp;&amp; o) noexcept                       // 4
+        : tam_{std::exchange(o.tam_, 0)}, datos_{std::exchange(o.datos_, nullptr)} {}
+    Buffer&amp; operator=(Buffer&amp;&amp; o) noexcept {          // 5
+        std::swap(tam_, o.tam_);
+        std::swap(datos_, o.datos_);
+        return *this;
+    }
+private:
+    size_t tam_;
+    int* datos_;
 };</code></pre>
-<blockquote class="aside aside-caution"><strong>Cuidado:</strong> Si una clase va a heredarse, declara su destructor <code>virtual</code>; si no, eliminar vía puntero base es comportamiento indefinido.</blockquote>
+        <blockquote class="aside aside-caution">
+            <p>Si tu clase solo agrega otros objetos RAII (strings, vectors, smart pointers): declara <strong>NADA</strong> y deja los defaults — serán correctos. La regla de cinco aplica cuando gestionas recursos crudos directamente. Regla de CERO &gt; regla de cinco.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="herencia-y-polimorfismo">
+    <h2><i class="fa-solid fa-sitemap"></i> Herencia, virtual y polimorfismo</h2>
+    <div class="doc-content">
+        <h3>La palabra clave virtual: despacho dinámico</h3>
+        <p>Sin <code>virtual</code>, las llamadas se resuelven por el TIPO ESTÁTICO en compilación. Con virtual, se resuelve por el tipo REAL en ejecución — eso es polimorfismo real:</p>
+        <pre><code class="language-cpp">class Animal {
+public:
+    explicit Animal(std::string nombre) : nombre_{std::move(nombre)} {}
+    virtual ~Animal() = default;              // ¡DESTRUCTOR VIRTUAL OBLIGATORIO!
+
+    [[nodiscard]] virtual std::string sonido() const { return "..."; }
+    void presentarse() const {                 // método NO virtual: compartido
+        std::cout &lt;&lt; nombre_ &lt;&lt; " dice: " &lt;&lt; sonido() &lt;&lt; '\n';
+    }                                          // ...pero LLAMA a la virtual ✨
+
+protected:
+    std::string nombre_;    // visible para derivadas, oculto para el mundo
+};
+
+class Perro : public Animal {
+public:
+    using Animal::Animal;                     // hereda constructores
+    [[nodiscard]] std::string sonido() const override { return "¡guau!"; }
+};
+
+class Gato : public Animal {
+public:
+    using Animal::Animal;
+    [[nodiscard]] std::string sonido() const override { return "miau"; }
+};
+
+void hacerHablar(Animal&amp; a) {     // acepta Animal Y cualquier derivada
+    a.presentarse();               // llama al sonido() REAL del objeto
+}
+
+Perro p{"Rex"};
+Gato g{"Michi"};
+hacerHablar(p);   // Rex dice: ¡guau!
+hacerHablar(g);   // Michi dice: miau   ← decidido EN EJECUCIÓN</code></pre>
+
+        <h3>override, final y clases abstractas</h3>
+        <table>
+            <thead>
+                <tr><th>Herramienta</th><th>Efecto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>override</code></td><td>El compilador VERIFICA que realmente sobrescribes algo (firma exacta). Sin él, un typo crea método nuevo silenciosamente</td></tr>
+                <tr><td><code>final</code></td><td>Prohibe seguir sobrescribiendo (método) o heredar (clase)</td></tr>
+                <tr><td><code>= 0</code> (virtual pura)</td><td>Método SIN implementación → clase ABSTRACTA: no instanciable, contrato puro</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-cpp">class Forma {                              // ABSTRACTA
+public:
+    virtual ~Forma() = default;
+    [[nodiscard]] virtual double area() const = 0;          // sin cuerpo
+    [[nodiscard]] virtual double perimetro() const = 0;
+    virtual std::string nombre() const final { return "forma"; } // congela este
+};
+
+class Circulo final : public Forma {
+public:
+    explicit Circulo(double r) : r_{r} {}
+    [[nodiscard]] double area() const override { return M_PI * r_ * r_; }
+    [[nodiscard]] double perimetro() const override { return 2 * M_PI * r_; }
+private:
+    double r_;
+};
+
+// Forma f;                     ❌ abstracta: no instanciable
+auto formas = std::vector&lt;std::unique_ptr&lt;Forma&gt;&gt;{};
+formas.push_back(std::make_unique&lt;Circulo&gt;(5));
+for (const auto&amp; f : formas) std::cout &lt;&lt; f-&gt;area();  // polimorfismo vía puntero</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>El destructor virtual en clases base polimórficas NO ES OPCIONAL: <code>delete basePtr</code> sobre derivada sin destructor virtual es comportamiento indefinido (solo corre el destructor de la base — fugas garantizadas). Regla: ¿algún virtual? → destructor virtual.</p>
+        </blockquote>
+
+        <h3>Composición sobre herencia</h3>
+        <p>Como en Go y casi todo lenguaje moderno, la sabiduría acumulada dice: jerarquías profundas = fragilidad. Prefiere componer comportamientos:</p>
+        <pre><code class="language-cpp">// ❌ Jerarquía frágil: PatoVoladorNadadorConSonidoCuac...
+// ✅ Composición de capacidades:
+class Volador { public: virtual ~Volador() = default; virtual void volar() = 0; };
+class Nadador { public: virtual ~Nadador() = default; virtual void nadar() = 0; };
+
+class Pato : public Volador, public Nadador {
+public:
+    void volar() override { std::cout &lt;&lt; "batir alas\n"; }
+    void nadar() override { std::cout &lt;&lt; "remar\n"; }
+};
+// Un RobotVolador reutiliza Volador SIN tocar Pato ni jerarquía alguna.</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="buenas-practicas-poo">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Miembros privados por defecto; exponer métodos mínimos</td><td>Invariantes protegidas: imposible estado inválido externo</td></tr>
+                <tr><td>Lista de inicialización siempre</td><td>Una construcción en vez de construir+asignar; obligatorio para const/referencias</td></tr>
+                <tr><td>override en TODA sobrescritura</td><td>El compilador atrapa typos y cambios de firma upstream</td></tr>
+                <tr><td>Destructor virtual si hay métodos virtuales</td><td>Delete polimórfico seguro</td></tr>
+                <tr><td>Regla de CERO: miembros RAII, nada manual</td><td>Defaults correctos; menos código = menos bugs</td></tr>
+                <tr><td>explicit en constructores de un argumento</td><td>Evita conversiones implícitas sorpresivas (int→Objeto mágicamente)</td></tr>
+                <tr><td>Composición e interfaces pequeñas antes que herencia</td><td>Acoplamiento bajo; jerarquías planas mantenibles</td></tr>
+                <tr><td>[[nodiscard]] en getters y funciones puras</td><td>El compilador avisa si ignoras un resultado importante</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Qué ocurre</th><th>Solución</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Olvidar override</td><td>Typo en firma = método NUEVO, nunca llamado polimórficamente</td><td>override SIEMPRE</td></tr>
+                <tr><td>Base sin destructor virtual + delete por puntero base</td><td>UB: destructores derivados no ejecutados</td><td>virtual ~Base() = default</td></tr>
+                <tr><td>Copia superficial con punteros crudos (default)</td><td>Doble delete al destruir ambas copias</td><td>Copia profunda, o smart pointers (regla de cero)</td></tr>
+                <tr><td>Llamar métodos virtuales DESDE el constructor</td><td>Se ejecuta la versión de LA CLASE EN CONSTRUCCIÓN, no la derivada final</td><td>No diseñes constructores que requieran overrides</td></tr>
+                <tr><td>Orden de inicialización asumido según lista</td><td>Se inicializa por orden de DECLARACIÓN: warnings -Wreorder</td><td>Declarar miembros en el mismo orden de la lista</td></tr>
+                <tr><td>Herencia múltiple diamante sin virtual</td><td>Duplicación de subobjeto base ambigua</td><td>Herencia virtual o mejor: rediseñar con composición</td></tr>
+                <tr><td>Getters/setters para TODO miembro</td><td>Encapsulación cosmética: igual de acoplado que public</td><td>Exponer solo operaciones CON sentido de dominio</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Banco encapsulado</strong>: implementa CuentaBancaria completa (constructor validador, depositar/retirar, getters const [[nodiscard]]); intenta corromper el saldo desde main y verifica que no compila.</li>
+            <li><strong>Zoológico polimórfico</strong>: clase abstracta Animal con sonido()/patas() puras; deriva Perro, Gato, Serpiente; recorre vector&lt;unique_ptr&lt;Animal&gt;&gt; imprimiendo fichas; añade un override con typo SIN override y observa el error del compilador al agregarlo.</li>
+            <li><strong>Buffer con regla de cinco</strong>: completa la clase Buffer de la lección; demuestra copia profunda (modificar copia no afecta original) y movimiento (el origen queda vacío).</li>
+            <li><strong>Composición de habilidades</strong>: modela Personaje de RPG componiendo interfaces Atacante, Defensor, Curandero; crea tres combinaciones distintas sin duplicar lógica.</li>
+            <li><strong>Ciclo de vida instrumentado</strong>: clase con prints en constructor/destructor/copia/movimiento; crea, copia y mueve en distintos escenarios y predice el orden de mensajes ANTES de ejecutar.</li>
+        </ol>
+    </div>
+</section>

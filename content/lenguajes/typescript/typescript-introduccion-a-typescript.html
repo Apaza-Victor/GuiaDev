@@ -2,49 +2,204 @@
 <!-- Contenido local del proyecto -->
 
   <section id="que-es-typescript">
-    <h2>¿Qué es TypeScript?</h2>
+    <h2><i class="fa-solid fa-code"></i> ¿Qué es TypeScript?</h2>
     <div class="doc-content">
-<p><strong>TypeScript</strong> es un superconjunto tipado de JavaScript creado por Microsoft. Todo JavaScript válido es TypeScript válido, pero además añade <strong>tipos estáticos</strong> que se verifican al compilar.</p>
-<ul>
-<li>Detecta errores antes de ejecutar el código</li>
-<li>Autocompletado y documentación en el editor</li>
-<li>Facilita el mantenimiento de proyectos grandes</li>
-<li>Compila a JavaScript estándar para cualquier navegador</li>
-</ul>
+<p><strong>TypeScript</strong> es un lenguaje de programación creado por <strong>Microsoft</strong> y presentado en octubre de 2012, liderado por <strong>Anders Hejlsberg</strong>, el mismo ingeniero que creó Turbo Pascal y C#. Su idea central es simple pero poderosa: tomar JavaScript —el lenguaje más ejecutado del planeta— y añadirle un sistema de <strong>tipos estáticos</strong> que detecta errores <em>antes</em> de correr el código, no después de que el usuario los sufra.</p>
+<p>Técnicamente hablando, TypeScript es un <strong>superconjunto tipado de JavaScript</strong>: todo código JavaScript válido es también código TypeScript válido. Esto significa que puedes renombrar un archivo <code>.js</code> a <code>.ts</code> y seguirá funcionando, e ir agregando tipos de forma <strong>gradual</strong>, sin reescribir tu proyecto desde cero.</p>
+<h3>JavaScript vs TypeScript</h3>
+<table><thead><tr><th>Aspecto</th><th>JavaScript</th><th>TypeScript</th></tr></thead><tbody><tr><td><strong>Tipado</strong></td><td>Dinámico: los tipos existen solo en tiempo de ejecución</td><td>Estático gradual: los tipos se declaran y verifican al compilar</td></tr><tr><td><strong>Detección de errores</strong></td><td>Cuando el código ya corre (a veces en producción)</td><td>En el editor y en tiempo de compilación</td></tr><tr><td><strong>Autocompletado</strong></td><td>Limitado, basado en heurísticas del editor</td><td>Preciso: el editor conoce la forma exacta de cada objeto</td></tr><tr><td><strong>Refactorización</strong></td><td>Arriesgada: cambiar una función puede romper llamadas invisibles</td><td>Segura: el compilador señala todos los puntos afectados</td></tr><tr><td><strong>Paso de build</strong></td><td>No requiere compilación</td><td>Requiere transpilar (<code>tsc</code>) a JavaScript</td></tr><tr><td><strong>Ideal para</strong></td><td>Scripts pequeños, prototipos rápidos</td><td>Equipos grandes, código que vivirá meses o años</td></tr></tbody></table>
+<h3>Ejemplo: el mismo bug, dos momentos distintos</h3>
+<pre><code class="language-typescript">// JavaScript: este error solo estalla cuando alguien ejecuta la página
+function calcularTotal(precio, cantidad) {
+  return precio * cantudad; // ❌ typo: ReferenceError en producción
+}
+
+// TypeScript: el compilador marca la línea ANTES de que exista el navegador de por medio
+function calcularTotalSeguro(precio: number, cantidad: number): number {
+  return precio * cantidad; // ✅ verificado en tiempo de compilación
+}</code></pre>
+<blockquote class="aside aside-note"><p>El nombre lo resume: <strong>Type</strong> + <strong>Script</strong>. No es un lenguaje exótico: sigues escribiendo JavaScript, pero con un asistente incansable que revisa cada línea mientras tecleas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipos-en-tiempo-de-compilacion">
+    <h2><i class="fa-solid fa-eraser"></i> Los tipos viven solo en tiempo de compilación</h2>
+    <div class="doc-content">
+<p>Este es <strong>el concepto más importante de toda la lección</strong>: TypeScript no agrega ninguna verificación de tipos cuando tu programa corre. Las anotaciones se usan durante la compilación y luego <strong>desaparecen por completo</strong> — proceso conocido como <em>type erasure</em> (borrado de tipos).</p>
+<p>El resultado es JavaScript limpio y sin rastros de tipos, ejecutable en cualquier navegador o versión de Node.js:</p>
+<pre><code class="language-typescript">// saludo.ts (lo que tú escribes)
+const nombre: string = "GuiaDev";
+const version: number = 5;
+
+function saludar(quien: string): string {
+  return `Hola desde ${quien}`;
+}
+
+console.log(saludar(nombre));</code></pre>
+<pre><code class="language-typescript">// saludo.js (lo que genera el compilador: JavaScript puro)
+const nombre = "GuiaDev";
+const version = 5;
+function saludar(quien) {
+    return `Hola desde ${quien}`;
+}
+console.log(saludar(nombre));</code></pre>
+<p>Fíjate: <code>: string</code>, <code>: number</code> y <code>: string</code> en el retorno simplemente no existen en la salida. Por eso TypeScript <strong>nunca ralentiza tu aplicación en runtime</strong>: toda la inversión en tipos se paga una sola vez, durante el desarrollo.</p>
+<h3>Consecuencia directa: TS no valida datos externos</h3>
+<pre><code class="language-typescript">interface UsuarioAPI {
+  edad: number;
+}
+
+// El compilador te cree... pero la API puede responder otra cosa
+const respuesta = await fetch("/api/usuario");
+const datos = (await respuesta.json()) as UsuarioAPI;
+
+// Si la API envió edad: "treinta", esto falla AQUÍ, en runtime:
+console.log(datos.edad.toFixed(0)); // 💥 TypeError: toFixed is not a function</code></pre>
+<blockquote class="aside aside-danger"><p><strong>Nunca confundas tipo con garantía de runtime.</strong> Un <code>as</code> o una interfaz son una promesa que TÚ haces al compilador sobre datos que vienen de fuera. Valida entradas externas (formularios, APIs, JSON de terceros) con validadores como Zod antes de confiar en ellas.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="instalacion-y-primer-programa">
-    <h2>Instalación y primer programa</h2>
+    <h2><i class="fa-solid fa-download"></i> Instalación y primer programa</h2>
     <div class="doc-content">
-<p>Instala el compilador globalmente y compila tu primer archivo:</p>
-<pre><code class="language-bash">npm install -g typescript
+<p>La forma recomendada hoy es instalar TypeScript como <strong>dependencia de desarrollo</strong> dentro de tu proyecto, no globalmente. Así cada miembro del equipo y el servidor de CI usan exactamente la misma versión del compilador.</p>
+<pre><code class="language-bash"># 1. Crear el proyecto (si aún no existe package.json)
+npm init -y
 
-tsc --version
+# 2. Instalar TypeScript como dependencia de desarrollo
+npm install -D typescript
 
-# Crear saludo.ts
-let nombre: string = "GuiaDev";
-console.log(`Hola desde ${nombre}`);
+# 3. Verificar la versión instalada
+npx tsc --version
+# Salida: Version 5.5.4 (o superior)
 
-tsc saludo.ts   # genera saludo.js
+# 4. Generar un tsconfig.json con configuración base
+npx tsc --init</code></pre>
+<h3>Tu primer archivo .ts, de principio a fin</h3>
+<pre><code class="language-typescript">// saludo.ts
+function construirSaludo(nombre: string, entusiasmo: number): string {
+  const signos: string = "!".repeat(entusiasmo);
+  return `¡Hola, ${nombre}${signos}`;
+}
+
+const mensaje: string = construirSaludo("GuiaDev", 3);
+console.log(mensaje);</code></pre>
+<pre><code class="language-bash"># Compilar: genera saludo.js junto al .ts
+npx tsc saludo.ts
+
+# Ejecutar el resultado con Node.js
 node saludo.js</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> Usa <code>tsc --init</code> para generar un archivo tsconfig.json con la configuración recomendada.</blockquote>
+<pre><code class="language-text">¡Hola, GuiaDev!!!</code></pre>
+<h3>¿Qué pasa si violamos el contrato?</h3>
+<pre><code class="language-typescript">// Pasamos un texto donde se esperaba un número:
+construirSaludo("GuiaDev", "mucho");
+// ❌ Argument of type 'string' is not assignable to parameter of type 'number'.</code></pre>
+<pre><code class="language-text">saludo.ts:9:31 - error TS2345: Argument of type 'string' is not assignable
+to parameter of type 'number'.</code></pre>
+<blockquote class="aside aside-tip"><p>Con <code>npm install -D typescript</code> el compilador vive dentro de <code>node_modules</code> y se invoca con <code>npx tsc</code>. La instalación global (<code>npm i -g typescript</code>) es cómoda para pruebas rápidas, pero provoca el clásico «en mi máquina sí compila» cuando las versiones difieren entre el equipo y la CI.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="el-cli-de-tsc">
+    <h2><i class="fa-solid fa-terminal"></i> El CLI de tsc: compile, watch y check</h2>
+    <div class="doc-content">
+<p>El comando <code>tsc</code> (TypeScript Compiler) es toda la herramienta de build que necesitas para empezar. Estas son sus banderas más usadas en el día a día:</p>
+<table><thead><tr><th>Comando</th><th>Qué hace</th><th>Cuándo usarlo</th></tr></thead><tbody><tr><td><code>tsc</code></td><td>Compila según el <code>tsconfig.json</code> del proyecto</td><td>Build local y en CI</td></tr><tr><td><code>tsc archivo.ts</code></td><td>Compila un archivo suelto, ignorando el tsconfig</td><td>Experimentos rápidos</td></tr><tr><td><code>tsc --watch</code></td><td>Vigila los archivos y recompila al guardar</td><td>Mientras desarrollas</td></tr><tr><td><code>tsc --noEmit</code></td><td>Solo verifica tipos, sin generar archivos</td><td>Chequeo rápido o paso de calidad en CI</td></tr><tr><td><code>tsc --init</code></td><td>Crea un <code>tsconfig.json</code> comentado</td><td>Al iniciar un proyecto</td></tr><tr><td><code>tsc --project ./config</code></td><td>Usa otro archivo de configuración</td><td>Monorepos con varios tsconfig</td></tr></tbody></table>
+<h3>Scripts recomendados en package.json</h3>
+<pre><code class="language-json">{
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "check": "tsc --noEmit"
+  }
+}</code></pre>
+<pre><code class="language-bash">npm run check   # ¿Hay errores de tipos? No genera nada, solo informa
+npm run dev     # Recompila cada vez que guardas un archivo
+npm run build   # Compila todo el proyecto a la carpeta final</code></pre>
+<blockquote class="aside aside-caution"><p><code>tsc --watch</code> recompila aunque haya errores (emite el JavaScript igualmente, salvo que actives <code>noEmitOnError</code>). Acostúmbrate a leer los mensajes rojos del watch: describen el archivo, la línea y el motivo exacto del problema.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="de-javascript-a-typescript">
-    <h2>De JavaScript a TypeScript</h2>
+    <h2><i class="fa-solid fa-arrow-right-arrow-left"></i> De JavaScript a TypeScript: adopción gradual</h2>
     <div class="doc-content">
-<p>El mismo código JS funciona en TS; los tipos son anotaciones opcionales que agregas progresivamente:</p>
-<pre><code class="language-typescript">// JavaScript válido en TypeScript
-function sumar(a, b) { return a + b; }
-
-// Versión tipada
-function sumarTipada(a: number, b: number): number {
-  return a + b;
+<p>Migrar no es un evento, es un proceso. Como los tipos son <strong>opcionales y graduales</strong>, la estrategia habitual es: renombrar archivos, dejar que el compilador infiera lo que pueda, y tipar primero las zonas más críticas (funciones compartidas, límites con APIs, modelos de datos).</p>
+<pre><code class="language-typescript">// PASO 1: JavaScript tal cual, renombrado a .ts (compila sin cambios)
+function aplicarDescuento(precio, porcentaje) {
+  return precio - precio * (porcentaje / 100);
 }
 
-sumarTipada(2, 3);      // OK
-// sumarTipada("2", 3); // Error de compilación</code></pre>
+// PASO 2: tipamos la frontera pública de la función
+function aplicarDescuentoV2(precio: number, porcentaje: number): number {
+  return precio - precio * (porcentaje / 100);
+}
+
+// PASO 3: ahora el compilador nos protege de usos incorrectos
+aplicarDescuentoV2(100, 15);   // ✅ 85
+// aplicarDescuentoV2(100, "quince");
+// ❌ Argument of type 'string' is not assignable to parameter of type 'number'</code></pre>
+<p>Cuando el código heredado todavía no está listo para ser tipado por completo, la opción <code>allowJs</code> del <code>tsconfig.json</code> permite conviva JavaScript plano durante la transición:</p>
+<pre><code class="language-json">{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "strict": true
+  },
+  "include": ["src/**/*"]
+}</code></pre>
+<blockquote class="aside aside-success"><p><strong>La migración típica dura días, no meses.</strong> Empieza activando <code>strict</code> solo en los archivos nuevos, corrige los errores más baratos primero (parámetros y retornos de funciones públicas) y deja los <code>any</code> temporales documentados con un comentario <code>// TODO: tipar</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="adopcion-en-la-industria">
+    <h2><i class="fa-solid fa-building"></i> Por qué la industria lo adoptó</h2>
+    <div class="doc-content">
+<p>Los lenguajes no triunfan por moda, sino por resolver dolores reales. En equipos grandes de JavaScript aparecieron tres problemas crónicos: bugs de tipos que solo se descubrían en producción, miedo a refactorizar y código cuya intención había que adivinar leyendo implementaciones. TypeScript ataca los tres de raíz.</p>
+<table><thead><tr><th>Proyecto / Empresa</th><th>Rol de TypeScript</th></tr></thead><tbody><tr><td><strong>Angular</strong></td><td>Se escribe en TypeScript desde su origen; los componentes son clases tipadas</td></tr><tr><td><strong>Visual Studio Code</strong></td><td>Editores enteros construidos con TS: miles de módulos bajo control de tipos</td></tr><tr><td><strong>Vue 3</strong></td><td>Reescrito internamente en TypeScript para ofrecer tipado de primera clase</td></tr><tr><td><strong>Slack, Airbnb, Asana</strong></td><td>Migraron bases de código masivas reportando caídas significativas de bugs post-deploy</td></tr><tr><td><strong>Deno, Bun, Node.js</strong></td><td>Runtimes modernos con soporte o herramientas nativas para TS</td></tr><tr><td><strong>Librerías (React, Express...)</strong></td><td>Publiquian definiciones de tipos junto al paquete: la documentación vive en tu autocompletado</td></tr></tbody></table>
+<h3>Beneficios que explican la adopción</h3>
+<ul>
+<li><strong>Los tipos son documentación ejecutable</strong>: la firma <code>(usuario: Usuario) =&gt; boolean</code> explica más que tres párrafos de comentarios que pueden quedar desactualizados.</li>
+<li><strong>Refactorizar deja de dar miedo</strong>: renombra una propiedad y el compilador lista todas las líneas rotas, en segundos.</li>
+<li><strong>Onboarding acelerado</strong>: quien llega nuevo explora el dominio navegando los tipos, sin leer todo el código.</li>
+<li><strong>El editor se vuelve proactivo</strong>: autocompletado contextual, detección temprana y «ir a definición» fiables.</li>
+</ul>
+<blockquote class="aside aside-note"><p>En encuestas anuales de desarrolladores (Stack Overflow, State of JS), TypeScript aparece sistemáticamente entre los lenguajes <strong>más queridos y más demandados</strong> en ofertas de empleo front-end y Node.js. Aprenderlo es prácticamente un requisito del mercado actual.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes del principiante</h2>
+    <div class="doc-content">
+<table><thead><tr><th>Error</th><th>Síntoma</th><th>Solución</th></tr></thead><tbody><tr><td>Creer que TS valida en runtime</td><td>Confías ciegamente en datos de una API tipados con <code>as</code></td><td>Validar entradas externas (Zod, comprobaciones manuales)</td></tr><tr><td>Abusar de <code>any</code></td><td>«Lo puse en <code>any</code> y dejó de quejarse»</td><td>Tipar bien o usar <code>unknown</code> + narrowing</td></tr><tr><td>Iniciar sin <code>strict</code></td><td>Proyecto que acumula <code>null</code> sorpresivos</td><td><code>"strict": true</code> desde el día uno</td></tr><tr><td>Instalar solo globalmente</td><td>CI con otra versión falla donde local pasaba</td><td>Dependencia de desarrollo por proyecto</td></tr><tr><td>Ignorar errores «porque igual compila»</td><td>Deuda técnica invisible acumulándose</td><td><code>--noEmit</code> como puerta de calidad en CI</td></tr></tbody></table>
+<pre><code class="language-typescript">// ❌ Silenciar al compilador no arregla el problema, solo apaga la alarma
+const datos: any = JSON.parse(texto);
+console.log(datos.usaurio.nombre); // typo que TS jamás detectará en any
+
+// ✅ Mantener el tipo y dejar que el compilador trabaje
+const datosTipados: { usuario: { nombre: string } } = JSON.parse(texto);
+// TS avisa: Property 'usaurio' does not exist on type '{ usuario: ... }'</code></pre>
+<blockquote class="aside aside-danger"><p>Por defecto <code>tsc</code> emite JavaScript <strong>aunque haya errores de tipos</strong>. Un build verde no significa un proyecto sano: haz que tu pipeline ejecute <code>tsc --noEmit</code> y falle ante cualquier error.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-list-check"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica lo aprendido creando un proyecto nuevo con <code>npm install -D typescript</code> y <code>npx tsc --init</code>:</p>
+<ol>
+<li><strong>Básico</strong>: Crea un archivo <code>presentacion.ts</code> con una función <code>presentar(nombre: string, edad: number): string</code> que devuelva un mensaje usando template literals. Compílala con <code>npx tsc</code> y ejecútala con Node.</li>
+<li><strong>Explorar el borrado de tipos</strong>: Abre el <code>.js</code> generado y verifica que no queda ninguna anotación de tipo. Añade un comentario en el <code>.ts</code> y confirma que sí viaja a la salida.</li>
+<li><strong>Cazar un error</strong>: Provoca deliberadamente tres errores de compilación (tipo equivocado, argumento faltante, argumento de más). Anota el código TS de cada error y qué mensaje muestra el compilador.</li>
+<li><strong>Automatizar</strong>: Configura los scripts <code>build</code>, <code>dev</code> y <code>check</code> en <code>package.json</code>. Prueba <code>npm run dev</code> editando el archivo en vivo y observa la recompilación automática.</li>
+<li><strong>Desafío</strong>: Toma cualquier función JavaScript que hayas escrito antes, pásala a TypeScript con parámetros y retorno tipados, y documenta con un comentario qué error concreto te habría ahorrado el tipado. Compila con <code>--noEmit</code> hasta lograr cero errores.</li>
+</ol>
+<p>---</p>
     </div>
   </section>

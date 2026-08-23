@@ -1,6 +1,6 @@
 <!-- 1. Conventional Commits - Calidad de Commits (Control de Versiones) -->
 <section id="por-que-estandarizar-los-commits">
-  <h2>¿Por qué estandarizar los commits?</h2>
+  <h2><i class="fa-solid fa-question"></i> ¿Por qué estandarizar los commits?</h2>
   <div class="doc-content">
     <p>Mensajes como <code>"arreglos"</code>, <code>"cambios varios"</code> o <code>"asdf"</code> hacen imposible entender el historial. <strong>Conventional Commits</strong> es una especificación ligera que da estructura a los mensajes, y esa estructura se vuelve <em>procesable por máquinas</em>:</p>
     <ul>
@@ -9,11 +9,18 @@
       <li>Comunicación clara de la naturaleza del cambio a todo el equipo.</li>
       <li>Disparo de pipelines según el tipo de cambio.</li>
     </ul>
+    <blockquote class="aside aside-note">
+      <p>El valor real no es estética: un historial convencional permite que HERRAMIENTAS decidan versiones y changelogs sin intervención humana. "fix" sube 2.3.0→2.3.1, "feat" →2.4.0, "feat!"/BREAKING CHANGE →3.0.0. El semver deja de ser opinión.</p>
+    </blockquote>
+    <blockquote class="aside aside-tip">
+      <p>Ejecuta <code>git log --oneline -20</code> en tu repo actual. Si la mitad son "cambios", "fixes" o typos, acabas de encontrar tu motivación para adoptar la spec.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="la-especificacion-tipo-scope-y-descripcion">
-  <h2>La especificación: tipo, scope y descripción</h2>
+  <h2><i class="fa-solid fa-code"></i> La especificación: tipo, scope y descripción</h2>
   <div class="doc-content">
     <pre><code class="language-text">&lt;tipo&gt;[scope opcional]: &lt;descripción&gt;
 
@@ -27,7 +34,21 @@ docs: actualizar guía de instalación
 feat(api)!: rompe compatibilidad en endpoint /users
 
 BREAKING CHANGE: el campo email ahora es obligatorio</code></pre>
+    <table class="doc-table">
+      <thead><tr><th>Pieza</th><th>Regla</th><th>Ejemplo</th></tr></thead>
+      <tbody>
+        <tr><td>Tipo</td><td>Obligatorio, minúscula, de la lista canónica</td><td><code>feat</code>, <code>fix</code></td></tr>
+        <tr><td>Scope</td><td>Opcional: módulo afectado</td><td><code>(auth)</code>, <code>(carrito)</code></td></tr>
+        <tr><td>Descripción</td><td>Imperativo, minúscula, sin punto final, ≤72 chars</td><td><code>corregir expiración de tokens</code></td></tr>
+        <tr><td>Cuerpo</td><td>Opcional: el POR QUÉ de la decisión</td><td>párrafo tras línea en blanco</td></tr>
+        <tr><td>Footer</td><td>Tokens especiales</td><td><code>BREAKING CHANGE:</code>, <code>Closes #42</code></td></tr>
+      </tbody>
+    </table>
     <p>Reglas de oro: descripción en minúsculas e imperativo ("agregar", no "agregué"), sin punto final, máximo ~72 caracteres para el título.</p>
+    <blockquote class="aside aside-caution">
+      <p>El cuerpo debe explicar el POR QUÉ, no listar archivos tocados — eso lo muestra <code>git show</code>. "Se modificó auth.js y login.ts" es ruido; "elegimos tokens cortos por requisito de auditoría X" es historia valiosa.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
@@ -49,11 +70,14 @@ BREAKING CHANGE: el campo email ahora es obligatorio</code></pre>
         <tr><td><code>chore</code></td><td>Tareas de mantenimiento</td><td>—</td></tr>
       </tbody>
     </table>
+    <blockquote class="aside aside-note">
+      <p>Dudas clásicas resueltas: ¿bug que solo existía en una rama nunca publicada? → feat o refactor, NO fix (nada "se rompió" en producción). ¿Refactor que acelera de paso? → perf si el objetivo era velocidad. ¿Actualizar dependencia? → build si afecta compilación, chore si rutinaria, fix si cerraba una vulnerabilidad.</p>
+    </blockquote>
   </div>
 </section>
 
 <section id="breaking-changes-y-footers">
-  <h2>Breaking changes y footers</h2>
+  <h2><i class="fa-solid fa-triangle-exclamation"></i> Breaking changes y footers</h2>
   <div class="doc-content">
     <p>Un cambio que rompe compatibilidad se marca de dos formas (ambas válidas):</p>
     <pre><code class="language-text"># Forma 1: signo ! después del tipo/scope
@@ -69,7 +93,7 @@ Migración: usar response.data.items.</code></pre>
 </section>
 
 <section id="herramientas-que-lo-aprovechan">
-  <h2>Herramientas que lo aprovechan</h2>
+  <h2><i class="fa-solid fa-screwdriver-wrench"></i> Herramientas que lo aprovechan</h2>
   <div class="doc-content">
     <ul>
       <li><strong>commitlint:</strong> valida que cada mensaje cumpla la spec (lección siguiente).</li>
@@ -81,5 +105,42 @@ Migración: usar response.data.items.</code></pre>
 git commit -m "feat(carrito): cupones de descuento"
 # → semantic-release detecta feat → publica v2.3.0
 # → changelog actualizado con la entrada nueva</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>Adopción gradual realista: 1) convence al equipo con la chuleta de tipos; 2) automatiza la escritura con Commitizen; 3) bloquea incumplimientos con commitlint+husky; 4) recién entonces automatiza releases. Imponer las cuatro cosas un lunes es la receta del sabotaje.</p>
+    </blockquote>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="errores-comunes">
+  <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Error típico</th><th>Consecuencia</th><th>Correcto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>"fix:" para cualquier cambio</td><td>Patch versions infladas, changelog inútil</td><td>feat vs fix según impacto REAL en usuarios</td></tr>
+        <tr><td>Olvidar ! / BREAKING CHANGE</td><td>Consumidores actualizan y TODO se rompe</td><td>Marcarlo siempre; semver MAJOR depende de ello</td></tr>
+        <tr><td>Título &gt;72 caracteres</td><td>Se corta en logs, GitHub y git log --oneline</td><td>Resumen corto + detalles al cuerpo</td></tr>
+        <tr><td>Scope inventado sin criterio</td><td>(cosas), (misc), (varios) — ruido</td><td>Lista cerrada de scopes acordada por el equipo</td></tr>
+        <tr><td>Mayúscula inicial o punto final</td><td>commitlint rechaza; estilo inconsistente</td><td>minúscula imperativa sin punto</td></tr>
+        <tr><td>Varios cambios lógicos en un commit</td><td>Imposible etiquetar tipo ni revertir selectivamente</td><td>Un commit = una intención</td></tr>
+      </tbody>
+    </table>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="ejercicios">
+  <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+  <div class="doc-content">
+    <ol>
+      <li><strong>Auditoría retrospectiva</strong>: lista tus últimos 30 commits (<code>git log --oneline -30</code>) y reclasifícalos mentalmente a tipos convencionales; calcula cuántos eran "inclasificables".</li>
+      <li><strong>Rewrite guiado</strong>: toma 5 mensajes malos y reescríbelos completos: tipo, scope, descripción ≤72 chars, cuerpo explicando el porqué cuando aplique.</li>
+      <li><strong>Laboratorio breaking</strong>: documenta un cambio incompatible ficticio de tu API en ambas formas (! y footer BREAKING CHANGE con migración).</li>
+      <li><strong>Changelog manual</strong>: agrupa 10 commits convencionales tuyos en un mini CHANGELOG por categorías Features/Fixes/Otros — simula lo que haría git-cliff.</li>
+      <li><strong>Semver detective</strong>: dada una serie de commits mezclados (feats, fixes, un breaking), determina la versión siguiente correcta partiendo de v1.2.3.</li>
+    </ol>
   </div>
 </section>

@@ -1,6 +1,6 @@
 <!-- 7. Flujo básico - GitHub (Control de Versiones) -->
 <section id="el-ciclo-de-trabajo-diario">
-  <h2>El ciclo de trabajo diario</h2>
+  <h2><i class="fa-solid fa-arrows-spin"></i> El ciclo de trabajo diario</h2>
   <div class="doc-content">
     <p>El 90% de tu vida con Git se resume en un ciclo de cuatro pasos que repetirás miles de veces:</p>
     <pre><code class="language-text">┌──────────┐   add    ┌─────────┐   commit   ┌──────────┐   push   ┌────────┐
@@ -15,11 +15,26 @@
       <li><strong>Confirmas</strong> con <code>git commit</code> (foto del proyecto).</li>
       <li><strong>Sincronizas</strong> con <code>git pull</code> antes y <code>git push</code> después.</li>
     </ol>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Zona</th><th>Qué contiene</th><th>Cómo inspeccionarla</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Working Directory</td><td>Tus archivos editados, aún sin preparar</td><td><code>git diff</code></td></tr>
+        <tr><td>Staging Area</td><td>Cambios seleccionados para el próximo commit</td><td><code>git diff --staged</code></td></tr>
+        <tr><td>Repositorio local</td><td>Historial de commits confirmados</td><td><code>git log</code></td></tr>
+        <tr><td>Remoto (GitHub)</td><td>La copia compartida del proyecto</td><td><code>git fetch &amp;&amp; git log HEAD..origin/main</code></td></tr>
+      </tbody>
+    </table>
+    <blockquote class="aside aside-note">
+      <p>Entender las CUATRO zonas —no dos— explica casi todos los misterios de Git: ¿por qué tu commit no aparece en GitHub? (faltó push), ¿por qué el archivo "desapareció"? (estaba solo en staging). Cada comando mueve cambios ENTRE zonas específicas.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="add-commit-push-paso-a-paso">
-  <h2>Add → Commit → Push paso a paso</h2>
+  <h2><i class="fa-solid fa-list-check"></i> Add → Commit → Push paso a paso</h2>
   <div class="doc-content">
     <pre><code class="language-bash"># Ver qué cambió antes de hacer nada
 git status
@@ -41,11 +56,18 @@ git push origin main</code></pre>
       <li><strong>Mensajes descriptivos:</strong> en imperativo y explicando el qué; tu yo del futuro (y tus compañeros) leerán ese historial.</li>
       <li><strong>Revisa siempre <code>git status</code></strong> antes de añadir: evita subir archivos temporales o secretos.</li>
     </ul>
+    <blockquote class="aside aside-tip">
+      <p><code>git diff --staged</code> justo antes del commit es la revisión de código más barata que existe: te sorprenderá cuántas veces descubres un console.log olvidado o un cambio no relacionado a punto de colarse.</p>
+    </blockquote>
+    <blockquote class="aside aside-caution">
+      <p><code>git add .</code> añade TODO lo modificado, incluida basura: .env con credenciales, logs, node_modules si falta .gitignore. El hábito profesional: <code>git status</code> → decidir archivo por archivo → <code>git add</code> explícito.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="actualizar-tu-copia-local">
-  <h2>Actualizar tu copia local</h2>
+  <h2><i class="fa-solid fa-cloud-arrow-down"></i> Actualizar tu copia local</h2>
   <div class="doc-content">
     <p>Antes de empezar a trabajar y antes de publicar, sincroniza con el remoto:</p>
     <pre><code class="language-bash"># Descarga cambios y los integra a tu rama actual
@@ -53,18 +75,31 @@ git pull origin main
 
 # Alternativa más segura: descargar sin integrar primero
 git fetch origin
-git log HEAD..origin/main --oneline   # ver que hay nuevo
+git log HEAD..origin/main --oneline   # ver qué hay nuevo
 git merge origin/main                  # integrar cuando decidas</code></pre>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Comando</th><th>Hace fetch?</th><th>Integra?</th><th>Riesgo</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>pull</code></td><td>Sí</td><td>Sí (merge automático)</td><td>Conflictos sorpresa a mitad de tu trabajo</td></tr>
+        <tr><td><code>fetch + merge</code></td><td>Sí</td><td>Cuando tú decides</td><td>Ninguno — control total ✅</td></tr>
+      </tbody>
+    </table>
     <ul>
       <li><strong><code>pull</code></strong> = <code>fetch</code> + <code>merge</code> automático; cómodo pero puede sorprenderte con conflictos.</li>
       <li><strong><code>fetch</code></strong> solo descarga; te deja decidir cuándo y cómo integrar.</li>
-      <li>Si <code>pull</code> reporta conflictos: no entres en pánico — edita los archivos marcados con <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, elige el contenido final y confirma el merge.</li>
+      <li>Si aparece conflictos: no entres en pánico — edita los archivos marcados con <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, elige el contenido final y confirma el merge.</li>
     </ul>
+    <blockquote class="aside aside-tip">
+      <p>Configura <code>git config --global pull.rebase true</code> para que pull rebase tus commits locales encima de los remotos: historial lineal sin "Merge branch 'main' of github.com..." cada dos por tres.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="flujo-con-ramas-resumido">
-  <h2>Flujo con ramas resumido</h2>
+  <h2><i class="fa-solid fa-code-branch"></i> Flujo con ramas resumido</h2>
   <div class="doc-content">
     <p>Incluso trabajando solo, la variante profesional del ciclo usa una rama por tarea:</p>
     <pre><code class="language-bash"># 1. Rama nueva desde main actualizado
@@ -86,11 +121,15 @@ git branch -d feature/login</code></pre>
     <blockquote class="aside aside-tip">
       <p>Nunca hagas push directamente a <code>main</code> en proyectos compartidos: la rama protegida + pull request es el mínimo de seguridad colaborativa.</p>
     </blockquote>
+    <blockquote class="aside aside-note">
+      <p>El flag <code>-u</code> (upstream) conecta tu rama local con la remota UNA sola vez: después basta <code>git push</code> y <code>git pull</code> a secas desde esa rama.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="chuleta-de-comandos-diarios">
-  <h2>Chuleta de comandos diarios</h2>
+  <h2><i class="fa-solid fa-scroll"></i> Chuleta de comandos diarios</h2>
   <div class="doc-content">
     <table class="doc-table">
       <thead>
@@ -107,6 +146,39 @@ git branch -d feature/login</code></pre>
         <tr><td><code>git restore archivo</code></td><td>Deshacer cambios NO confirmados</td></tr>
       </tbody>
     </table>
-    <p>Ejercicio propuesto: durante una semana completa, prohibete usar <code>git add .</code>. Añade archivos uno por uno tras revisar <code>git status</code> y observa cómo mejora la calidad de tus commits.</p>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="errores-comunes">
+  <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Error típico</th><th>Mensaje/causa</th><th>Correcto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Push rechazado</td><td>"failed to push... fetch first"</td><td>git pull → resolver → volver a push</td></tr>
+        <tr><td>Commit con archivos olvidados</td><td>"OOPS, me faltó el css" en el siguiente</td><td>git add faltante + git commit --amend si aún no hay push</td></tr>
+        <tr><td>Commit de basura/secretos</td><td>.env publicado al repo</td><td>.gitignore ANTES del primer add; revisar staged</td></tr>
+        <tr><td>Mensajes vacíos tipo "cambios"</td><td>Historial ilegible e inservible</td><td>Imperativo + qué cambia: "fix: valida email en registro"</td></tr>
+        <tr><td>Trabajar días sin pull</td><td>Mega conflicto acumulado</td><td>Pull/fetch diario, idealmente al empezar la sesión</td></tr>
+        <tr><td>restore sobre cambios importantes</td><td>Trabajo NO confirmado perdido para siempre</td><td>Stash o commit temporal antes de descartar nada</td></tr>
+      </tbody>
+    </table>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="ejercicios">
+  <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+  <div class="doc-content">
+    <ol>
+      <li><strong>Ciclo completo ×5</strong>: repo propio; repite el ciclo status→diff→add selectivo→commit→push cinco veces con mensajes convencionales.</li>
+      <li><strong>Cazador de zonas</strong>: modifica 3 archivos; deja uno en working, otro en staging y commitea el tercero; identifica cada estado con los comandos de inspección.</li>
+      <li><strong>Fetch vs pull real</strong>: genera cambios remotos (desde web GitHub); practica primero fetch+log+merge, luego pull puro; compara experiencia.</li>
+      <li><strong>Rama por tarea</strong>: implementa una mini-feature completa con el flujo de ramas resumido, incluyendo PR y limpieza final.</li>
+      <li><strong>Diario de Git</strong>: durante una semana registra cada comando Git que uses; al final clasifícalos y detecta hábitos a mejorar.</li>
+    </ol>
   </div>
 </section>

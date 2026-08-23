@@ -1,31 +1,201 @@
 <!-- 7. Plantillas - C++ (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="plantillas-de-funcion">
-    <h2>Plantillas de función</h2>
+<section id="plantillas-de-funcion">
+    <h2><i class="fa-solid fa-clone"></i> Plantillas de función</h2>
     <div class="doc-content">
-<pre><code class="language-cpp">template &lt;typename T&gt;
+        <p>Una plantilla es un <strong>molde que el compilador instancia</strong>: escribes el algoritmo UNA vez con tipos como parámetros, y el compilador genera la versión concreta para cada tipo usado. No hay coste en runtime — el código generado es idéntico al que habrías escrito a mano, pero sin duplicación en tu fuente.</p>
+
+        <h3>Tu primera plantilla</h3>
+        <pre><code class="language-cpp">template &lt;typename T&gt;          // "para todo tipo T..."
 T maximo(const T&amp; a, const T&amp; b) {
     return (a &gt; b) ? a : b;
 }
 
-maximo(3, 7);        // int
-maximo(2.5, 1.8);    // double</code></pre>
-    </div>
-  </section>
+int     i = maximo(3, 9);       // T = int      → genera versión int
+double  d = maximo(2.5, 1.8);   // T = double   → otra versión
+std::string s = maximo(std::string{"pera"}, std::string{"manzana"});
+// tres funciones reales, generadas automáticamente</code></pre>
+        <blockquote class="aside aside-tip">
+            <p><code>typename</code> y <code>class</code> en el parámetro son intercambiables (<code>template &lt;class T&gt;</code>). Convención moderna: typename para tipos cualquiera; class cuando exiges un concepto/clase.</p>
+        </blockquote>
 
-  <section id="plantillas-de-clase">
-    <h2>Plantillas de clase</h2>
+        <h3>Múltiples parámetros y deducción mixta</h3>
+        <pre><code class="language-cpp">template &lt;typename T, typename U&gt;
+auto sumar(const T&amp; a, const U&amp; b) -&gt; decltype(a + b) {
+    return a + b;               // decltype deduce el tipo RESULTANTE de a+b
+}
+
+auto x = sumar(3, 4.5);         // double: int + double promociona
+
+// Forzar tipo común explícito:
+template &lt;typename T&gt;
+T promedio(const std::vector&lt;T&gt;&amp; v) {
+    static_assert(!v.empty() || true);   // verificaciones en compilación
+    return std::accumulate(v.begin(), v.end(), T{}) / static_cast&lt;T&gt;(v.size());
+}</code></pre>
+
+        <h3>Parámetros NO-tipo</h3>
+        <p>Las plantillas aceptan también valores de compilación — tamaños, flags — convirtiéndose en configuración cero-coste:</p>
+        <pre><code class="language-cpp">template &lt;typename T, size_t N&gt;
+constexpr size_t longitud(const T (&amp;)[N]) { return N; }   // N deducido del array
+
+int datos[42];
+static_assert(longitud(datos) == 42);
+
+template &lt;bool CON_LOG&gt;
+void procesar(int x) {
+    if constexpr (CON_LOG) {              // if constexpr: rama MUERTA eliminada
+        std::cout &lt;&lt; "procesando " &lt;&lt; x &lt;&lt; '\n';
+    }
+}
+procesar&lt;true&gt;(5);    // con log
+procesar&lt;false&gt;(5);   // compilado SIN ninguna instrucción de logging</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>Las plantillas viven en HEADERS por definición: el compilador necesita su cuerpo completo para instanciarlas en cada unidad de traducción. Separarlas en .cpp rompe el link ("undefined reference") salvo especializaciones explícitas.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="plantillas-de-clase-y-concepts">
+    <h2><i class="fa-solid fa-shapes"></i> Plantillas de clase, CTAD y concepts</h2>
     <div class="doc-content">
-<pre><code class="language-cpp">template &lt;typename T&gt;
-class Caja {
-    T valor_;
+        <h3>Clases genéricas: contenedores propios</h3>
+        <pre><code class="language-cpp">template &lt;typename T&gt;
+class Pila {
 public:
-    void set(const T&amp; v) { valor_ = v; }
-    T get() const { return valor_; }
+    void push(const T&amp; valor) { datos_.push_back(valor); }
+    void pop()                { datos_.pop_back(); }          // ¡vacía = UB! ver abajo
+    [[nodiscard]] const T&amp; top() const { return datos_.back(); }
+    [[nodiscard]] bool empty() const { return datos_.empty(); }
+    [[nodiscard]] size_t size() const { return datos_.size(); }
+
+private:
+    std::vector&lt;T&gt; datos_;     // composición: la STL hace el trabajo duro
 };
 
-Caja&lt;std::string&gt; caja;
-caja.set("contenido");</code></pre>
+Pila&lt;int&gt;    pi;             // pila de enteros
+Pila&lt;std::string&gt; ps;        // ...de strings
+pi.push(42);
+ps.push("hola");</code></pre>
+
+        <h3>CTAD: deducción del template de CLASE (C++17)</h3>
+        <pre><code class="language-cpp">std::pair p{1, 2.5};            // pair&lt;int,double&gt; — sin &lt;&gt;
+std::vector v{1, 2, 3};         // vector&lt;int&gt;
+std::lock_guard lg(mtx);        // lock_guard&lt;mutex&gt;
+
+// Con guía propia:
+template &lt;typename T&gt;
+struct Caja { T valor; explicit Caja(T v) : valor{std::move(v)} {} };
+Caja c{42};                     // Caja&lt;int&gt; deducida ✅</code></pre>
+
+        <h3>Concepts: requisitos EXPLÍCITOS (C++20)</h3>
+        <p>El problema histórico: una plantilla compila… hasta que alguien le pasa un tipo sin las operaciones necesarias, y el error ocupa 200 líneas. Los concepts declaran los REQUISITOS formalmente:</p>
+        <pre><code class="language-cpp">#include &lt;concepts&gt;
+
+// Concept propio: "T sabe sumarse consigo mismo"
+template &lt;typename T&gt;
+concept Sumable = requires(T a, T b) {
+    { a + b } -&gt; std::convertible_to&lt;T&gt;;
+};
+
+// Usar el concept: error claro SI el tipo no cumple
+template &lt;Sumable T&gt;                       // restricción directa
+T acumular(const std::vector&lt;T&gt;&amp; v) {
+    T total{};
+    for (const auto&amp; x : v) total += x;
+    return total;
+}
+
+// O con requires-clause:
+template &lt;typename T&gt;
+requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;
+T doble(T x) { return x * 2; }
+
+doble(21);        // ✅ integral
+doble(3.14);      // ✅ floating_point
+// doble(std::string{}); ❌ ERROR LEGIBLE: string no es integral ni FP
+// Concepts predefinidos: same_as, derived_from, movable, equality_comparable...</code></pre>
+
+        <h3>Especialización: casos particulares</h3>
+        <pre><code class="language-cpp">// Genérica:
+template &lt;typename T&gt;
+struct Serializador {
+    static std::string serializar(const T&amp; v) { return "&lt;" + std::to_string(v) + "&gt;"; }
+};
+
+// ESPECIALIZACIÓN TOTAL para bool:
+template &lt;&gt;
+struct Serializador&lt;bool&gt; {
+    static std::string serializar(bool v) { return v ? "sí" : "no"; }
+};
+
+Serializador&lt;int&gt;::serializar(42);    // "&lt;42&gt;"
+Serializador&lt;bool&gt;::serializar(true); // "sí" — ruta especial</code></pre>
+
+        <h3>Variádicas: número libre de argumentos</h3>
+        <pre><code class="language-cpp">template &lt;typename... Args&gt;                 // pack de parámetros
+auto contarYSumar(Args... args) {
+    return ((args + 0) + ...);              // fold expression C++17: suma todos
+}
+
+contarYSumar(1, 2, 3);            // 6
+contarYSumar(1.5, 2.0, 3.5, 4.0); // 11.0 — cualquier cantidad, cualquier mezcla
+// Así funciona internamente make_unique&lt;T&gt;(args...) pasando constructores</code></pre>
+        <blockquote class="aside aside-success">
+            <p>Todo el ecosistema STL ES templates: vector&lt;T&gt;, function&lt;R(Args...)&gt;, unique_ptr&lt;T&gt;. Entender plantillas no es tema avanzado opcional — es leer la firma de lo que ya usas todos los días.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="buenas-practicas-templates">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>C++20: añade concept a toda plantilla pública</td><td>Errores legibles + autodocumentación de requisitos</td></tr>
+                <tr><td>if constexpr para ramas dependientes del tipo</td><td>Rama muerta descartada en compilación; adiós SFINAE oscuro</td></tr>
+                <tr><td>Plantillas solo donde haya ≥2 usos reales</td><td>Generalización especulativa = complejidad gratis que nadie paga</td></tr>
+                <tr><td>static_assert dentro de plantillas</td><td>Valida invariantes del tipo en cada instanciación</td></tr>
+                <tr><td>CTAD con guías donde ayude (C++17+)</td><td>Pila&lt;int&gt; p; → Pila p{...}; menos ruido visual</td></tr>
+                <tr><td>Nombrar concepts con sustantivos (Sumable, Comparable)</td><td>La firma se lee como especificación</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Qué pasa realmente</th><th>Solución</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Definir template en .cpp y usarlo desde otro .cpp</td><td>"undefined reference" al linkear</td><td>Definir en header (o especialización explícita declarada)</td></tr>
+                <tr><td>Instanciar con tipo que no soporta las operaciones</td><td>Muro de errores de 200 líneas pre-C++20</td><td>Concepts restringiendo desde la firma</td></tr>
+                <tr><td>Confundir especialización con sobrecarga</td><td>Semántica sorprendente en resolución</td><td>Sobrecarga de funciones preferible; especializar clases</td></tr>
+                <tr><td>pop()/top() sobre contenedor vacío propio</td><td>UB silencioso</td><td>Aserciones o devolver optional&lt;T&gt;</td></tr>
+                <tr><td>Tiempo de compilación explosivo con templates masivos</td><td>Builds de minutos; binarios hinchados</td><td>Reducir instanciaciones; extern template; PCH</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>min/max/abs genéricos</strong>: implementa los tres como templates con concept Number (integral | floating_point) y pruébalos con int, double y char.</li>
+            <li><strong>Pila acotada</strong>: extiende Pila&lt;T, size_t Capacidad&gt; con parámetro NO-tipo que lance/rechace push cuando esté llena; static_assert de capacidad positiva.</li>
+            <li><strong>Serializador con especializaciones</strong>: template base + especializaciones para std::string, bool y std::vector&lt;T&gt; recursivo (usa la plantilla dentro de la especialización).</li>
+            <li><strong>Fold expressions</strong>: implementa imprimirTodos(args...) que imprima cada argumento separado por comas, y sumaCuadrados(args...).</li>
+            <li><strong>Cazador de errores pre-C++20 vs C++20</strong>: llama doble(std::string{}) sin concept (guarda el muro de errores) y luego con concept; compara ambos mensajes en comentario.</li>
+        </ol>
+    </div>
+</section>

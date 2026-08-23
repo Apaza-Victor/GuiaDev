@@ -1,30 +1,235 @@
 <!-- 7. Colecciones - Swift (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
 
   <section id="las-tres-colecciones">
-    <h2>Las tres colecciones</h2>
+    <h2><i class="fa-solid fa-layer-group"></i> Las tres colecciones</h2>
     <div class="doc-content">
-<pre><code class="language-swift">var lista = [1, 2, 3]
-lista.append(4)
-lista[0] = 10
+<p>Casi todo programa vive de agrupar datos: una lista de tareas, un inventario sin repetidos, un catálogo que mapea códigos a productos. Swift ofrece tres herramientas nativas para cada necesidad: <strong>Array</strong> (lista ordenada), <strong>Set</strong> (elementos únicos sin orden garantizado) y <strong>Dictionary</strong> (pares clave-valor). Elegir la correcta no es estética: define qué operaciones serán naturales y cuáles costosas.</p>
+<pre><code class="language-swift">var lista = ["café", "té"]              // Array&lt;String&gt;
+var conjunto: Set&lt;String&gt; = ["café", "té"]   // Set&lt;String&gt;
+var inventario = ["café": 12, "té": 30] // Dictionary&lt;String, Int&gt;
 
-var conjunto: Set = [1, 2, 2, 3]   // {1, 2, 3}
-conjunto.insert(4)
+// La mutabilidad NO depende del tipo, sino de let/var
+let fija = [1, 2, 3]
+// fija.append(4)   ❌ error: 'fija' es inmutable
+var mutable = [1, 2, 3]
+mutable.append(4)      // ✅ [1, 2, 3, 4]</code></pre>
+<h3>Operaciones básicas de cada colección</h3>
+<pre><code class="language-swift">// ARRAY: el índice empieza en 0 y el orden se conserva
+var lista = [10, 20, 30]
+lista.append(40)            // añade al final
+lista.insert(5, at: 0)      // inserta en posición concreta
+lista[1] = 15               // el subscript también escribe
+lista.remove(at: 0)         // elimina por índice y lo devuelve
+lista.removeLast()          // elimina y devuelve el último
 
-var diccionario = ["ana": 30, "luis": 25]
-diccionario["maría"] = 28
-let edad = diccionario["ana"] ?? 0  // siempre optional al leer</code></pre>
+// SET: los duplicados desaparecen solos
+var etiquetas: Set = ["swift", "ios"]
+etiquetas.insert("swift")   // ya estaba: la colección sigue igual
+print(etiquetas.count)      // 2
+
+// DICTIONARY: escribir crea o actualiza; leer SIEMPRE da opcional
+var edades = ["ana": 30]
+edades["luis"] = 25         // agrega nueva clave
+edades["ana"] = 31          // actualiza la existente
+let edadAna = edades["ana"]     // Int? — podría no existir
+let segura = edades["ana"] ?? 0 // Int garantizado con respaldo</code></pre>
+<blockquote class="aside aside-note"><p>A diferencia de otros lenguajes, no hay clases separadas tipo <code>NSMutableArray</code>: la mutabilidad la decide <code>let</code>/<code>var</code>. Menos tipos que memorizar y más seguridad en tiempo de compilación.</p></blockquote>
+<h3>¿Qué colección elegir?</h3>
+<table><thead><tr><th>Colección</th><th>Orden</th><th>Duplicados</th><th>Punto fuerte</th></tr></thead><tbody><tr><td><strong>Array</strong></td><td>Sí, estable</td><td>Permitidos</td><td>Acceso por posición, recorrer en secuencia</td></tr><tr><td><strong>Set</strong></td><td>No definido</td><td>Prohibidos</td><td>Unicidad automática y búsquedas instantáneas (<code>contains</code>)</td></tr><tr><td><strong>Dictionary</strong></td><td>No definido</td><td>Claves únicas</td><td>Localizar valores por clave sin recorrer nada</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="semantica-de-valor">
+    <h2><i class="fa-solid fa-clone"></i> Semántica de valor</h2>
+    <div class="doc-content">
+<p>Arrays, Sets y Dictionarys son <strong>tipos por valor</strong>: al asignarlos o pasarlos a una función se copian. Dos variables nunca comparten silenciosamente la misma colección, así que modificar una no sorprende a nadie más:</p>
+<pre><code class="language-swift">var originales = [1, 2, 3]
+var copia = originales       // copia independiente
+
+copia.append(99)
+print(originales.count)      // 3  ← intacta
+print(copia.count)           // 4
+
+// Igual ocurre dentro de funciones: recibes tu propia copia
+func vaciar(_ numeros: [Int]) {
+    var numeros = numeros
+    numeros.removeAll()
+}
+vaciar(originales)
+print(originales)            // [1, 2, 3] — la función no pudo tocarla</code></pre>
+<p>Esta decisión de diseño tiene dos consecuencias enormes. Primera: razonas sobre el código localmente, sin temer efectos secundarios desde otras partes del programa. Segunda: el código es naturalmente seguro en contextos concurrentes, porque nadie puede mutar "el mismo" array desde dos hilos.</p>
+<blockquote class="aside aside-tip"><p>"¿Copiar no es caro?" En la práctica no: la librería estándar usa <strong>copy-on-write</strong>; la copia real solo ocurre si alguien modifica. Obtienes la seguridad de los valores con el costo de las referencias.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="indices-y-rangos">
+    <h2><i class="fa-solid fa-list-ol"></i> Índices y rangos seguros</h2>
+    <div class="doc-content">
+<p>El subscript <code>lista[i]</code> es cómodo pero implacable: un índice fuera de rango detiene el programa al instante. Swift prefiere ese fallo honesto antes que devolver basura en silencio, aunque casi nunca necesitas arriesgarte: existen alternativas seguras para cada caso.</p>
+<pre><code class="language-swift">let dias = ["lun", "mar", "mié", "jue", "vie"]
+
+dias[2]                 // "mié" ✅
+// dias[10]             // 💥 Fatal error: Index out of range
+
+// Acceso seguro: first y last son optionals
+if let primero = dias.first { print(primero) }
+let ultimo = dias.last ?? "(sin días)"
+
+// Recorrer SIN manejar índices manualmente (la vía idiomática)
+for dia in dias { print(dia) }
+
+// ¿Necesitas el índice? enumerated() entrega pares
+for (posicion, dia) in dias.enumerated() {
+    print("\(posicion + 1). \(dia)")
+}</code></pre>
+<h3>Rangos para recortar colecciones</h3>
+<table><thead><tr><th>Operador</th><th>Nombre</th><th>Incluye el final</th></tr></thead><tbody><tr><td><code>a...b</code></td><td>Rango cerrado</td><td>Sí (a, a+1, …, b)</td></tr><tr><td><code>a..&lt;b</code></td><td>Rango medio abierto</td><td>No (útil con índices y <code>count</code>)</td></tr><tr><td><code>...b</code> / <code>..&lt;b</code></td><td>Rango parcial</td><td>Desde el inicio hasta b</td></tr><tr><td><code>a...</code></td><td>Rango parcial</td><td>Desde a hasta el final</td></tr></tbody></table>
+<pre><code class="language-swift">let semana = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"]
+let laborales = semana[0..&lt;5]        // ArraySlice: vista, no copia
+let finDeSemana = Array(semana[5...]) // convierte a Array normal
+
+semana.prefix(3)      // primeros tres
+semana.suffix(2)      // últimos dos
+semana.dropFirst()    // todos menos el primero</code></pre>
+<blockquote class="aside aside-caution"><p><code>dropFirst</code>, <code>prefix</code> y el subscript con rangos devuelven un <strong>ArraySlice</strong>, una vista eficiente que conserva los índices originales: tras <code>dropFirst()</code>, su primer elemento está en el índice 1, ¡no en el 0! Si vas a indexarlo después, envuélvelo en <code>Array(...)</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ordenamiento-y-busqueda">
+    <h2><i class="fa-solid fa-magnifying-glass"></i> Ordenamiento y búsqueda</h2>
+    <div class="doc-content">
+<p>Buscar y ordenar son operaciones diarias, y la librería estándar trae versiones listas para usar. El matiz importante: existe una versión que <em>devuelve</em> una colección nueva (<code>sorted()</code>) y otra que muta <em>en el sitio</em> (<code>sort()</code>). Con tus reglas de <code>let</code>/<code>var</code> ya sabes cuándo compila cada una:</p>
+<pre><code class="language-swift">let puntajes = [72, 95, 88, 60]
+
+puntajes.sorted()                  // [60, 72, 88, 95] ascendente
+puntajes.sorted(by: &gt;)             // [95, 88, 72, 60] descendente
+puntajes.reversed()                // invierte el orden (vista perezosa)
+
+// sort() muta en sitio: exige var
+var pendientes = ["b", "a", "c"]
+pendientes.sort()
+
+// min/max también devuelven optionals: ¿y si está vacía?
+let mejor = puntajes.max() ?? 0</code></pre>
+<h3>Búsqueda: contains y firstIndex</h3>
+<p><code>firstIndex(of:)</code> devuelve un <code>Int?</code> porque el elemento puede no estar; conecta directamente con lo aprendido sobre optionals:</p>
+<pre><code class="language-swift">let nombres = ["Ana", "Luis", "Marta"]
+
+nombres.contains("Luis")               // true
+nombres.contains { $0.hasPrefix("M") } // true, con condición personalizada
+
+if let i = nombres.firstIndex(of: "Luis") {
+    print("Luis está en la posición \(i)")   // 1
+}
+let indice = nombres.firstIndex(of: "Zoe") ?? -1  // -1 como "no encontrado"</code></pre>
+<p>---</p>
     </div>
   </section>
 
   <section id="higher-order-functions">
-    <h2>Higher-order functions</h2>
+    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Transformaciones: map, filter, reduce…</h2>
     <div class="doc-content">
+<p>Aquí brilla el lado funcional de Swift. Las funciones de orden superior describen <strong>qué transformación quieres</strong>, no cómo construirla bucle a bucle: menos variables auxiliares, menos índices que equivocar, intenciones explícitas.</p>
 <pre><code class="language-swift">let nums = [1, 2, 3, 4, 5]
 
-nums.map { $0 * $0 }                // [1, 4, 9, 16, 25]
-nums.filter { $0 &gt; 2 }              // [3, 4, 5]
-nums.reduce(0, +)                   // 15
-nums.compactMap { $0 % 2 == 0 ? $0 : nil }  // [2, 4]</code></pre>
+nums.map { $0 * $0 }          // [1, 4, 9, 16, 25]  transforma cada uno
+nums.filter { $0 % 2 == 0 }   // [2, 4]             conserva los que cumplen
+nums.reduce(0, +)             // 15                 acumula en un único valor
+
+// compactMap: transforma Y descarta los nil resultantes
+let textos = ["1", "hola", "3"]
+let numeros = textos.compactMap { Int($0) }   // [1, 3]
+
+// flatMap: aplana colecciones anidadas
+let grupos = [[1, 2], [3], [4, 5]]
+grupos.flatMap { $0 }         // [1, 2, 3, 4, 5]</code></pre>
+<h3>Encadenar transformaciones: el pipeline</h3>
+<p>Cada función recibe y devuelve colecciones, así que se encadenan como una línea de producción legible de izquierda a derecha:</p>
+<pre><code class="language-swift">struct Producto {
+    let nombre: String
+    let precio: Double
+}
+
+let catalogo = [
+    Producto(nombre: "Teclado", precio: 45),
+    Producto(nombre: "Cable", precio: 8),
+    Producto(nombre: "Monitor", precio: 180)
+]
+
+let baratosOrdenados = catalogo
+    .filter { $0.precio &lt; 50 }            // descarta los caros
+    .sorted { $0.precio &lt; $1.precio }     // ordena por precio
+    .map { "\($0.nombre): \($0.precio)€" } // convierte a texto
+// ["Cable: 8.0€", "Teclado: 45.0€"]</code></pre>
+<h3>zip: recorrer dos colecciones en paralelo</h3>
+<pre><code class="language-swift">let nombres = ["Ana", "Luis"]
+let notas = [9.5, 7.0]
+
+for (nombre, nota) in zip(nombres, notas) {
+    print("\(nombre): \(nota)")
+}
+// zip corta con la más corta: sobrantes se ignoran</code></pre>
+<blockquote class="aside aside-tip"><p>Para acumular en una colección dentro de <code>reduce</code>, usa la variante <code>reduce(into:)</code>: evita copiar el acumulador en cada paso y es la forma recomendada de construir diccionarios (por ejemplo, contadores de frecuencias).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="rendimiento-y-complejidad">
+    <h2><i class="fa-solid fa-gauge-high"></i> Rendimiento y complejidad</h2>
+    <div class="doc-content">
+<p>No todas las operaciones cuestan lo mismo en cada colección. La notación O grande resume cómo crece el costo cuando crecen los datos, y explica por qué elegir bien la estructura importa más que cualquier microoptimización posterior:</p>
+<table><thead><tr><th>Operación</th><th>Array</th><th>Set</th><th>Dictionary</th></tr></thead><tbody><tr><td>Acceso por índice/clave</td><td>O(1)</td><td>—</td><td>O(1) promedio</td></tr><tr><td>Añadir al final / insertar</td><td>O(1)* amortizado / O(n) al inicio</td><td>O(1) promedio</td><td>O(1) promedio</td></tr><tr><td>Búsqueda (<code>contains</code>)</td><td>O(n)</td><td>O(1) promedio</td><td>O(1) promedio por clave</td></tr><tr><td>Eliminar por índice/clave</td><td>O(n)</td><td>O(1) promedio</td><td>O(1) promedio</td></tr></tbody></table>
+<h3>La lección práctica</h3>
+<p>Con mil elementos casi todo vuela; con millones, la diferencia entre <code>array.contains(x)</code> en un bucle (O(n·m)) y una consulta a un <code>Set</code> previamente creado con <code>Set(bloqueados)</code> (O(1) por consulta) son segundos frente a milisegundos. Regla rápida: muchas preguntas "¿está aquí X?" → <strong>Set</strong>; localizar por identificador → <strong>Dictionary</strong>; orden y posiciones → <strong>Array</strong>.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes con colecciones</h2>
+    <div class="doc-content">
+<h3>1. Índices fuera de rango</h3>
+<pre><code class="language-swift">let fila: [String] = []
+// print(fila[0])                    // 💥 crash: colección vacía
+if let primera = fila.first { print(primera) }   // ✅ seguro</code></pre>
+<h3>2. Mutar mientras se itera</h3>
+<pre><code class="language-swift">var nums = [1, 2, 3, 4]
+// for n in nums where n % 2 == 0 {
+//     nums.removeAll { $0 == n }    // 💥 crash: mutación durante iteración
+// }
+nums.removeAll { $0 % 2 == 0 }       // ✅ método pensado para esto → [1, 3]</code></pre>
+<h3>3. Olvidar que leer un Dictionary devuelve opcional</h3>
+<pre><code class="language-swift">let stock = ["café": 12]
+// let unidades = stock["té"] + 5    ❌ error: Int? + Int no compila
+let unidades = (stock["té"] ?? 0) + 5   // ✅ decide qué pasa si falta</code></pre>
+<h3>4. Suponer orden en Set y Dictionary</h3>
+<pre><code class="language-swift">let letras: Set = ["c", "a", "b"]
+// print(letras.first!)   ⚠️ "primero" según SU orden interno, no el de inserción
+print(letras.sorted())   // ✅ ["a", "b", "c"]: tú decides el criterio</code></pre>
+<h3>5. Indexar una rebanada como si fuera un Array nuevo</h3>
+<pre><code class="language-swift">let todo = [10, 20, 30, 40]
+let cola = todo.dropFirst()
+// cola[0]        💥 crash: sus índices conservan los originales (empieza en 1)
+print(cola[1])    // ✅ 20
+print(Array(cola)[0])  // ✅ 10, tras convertir a Array propio</code></pre>
+<blockquote class="aside aside-success"><p>Antídoto universal: piensa en optionals cuando <em>leas</em>, en <code>let/var</code> cuando <em>declares</em> y en el tipo de colección cuando <em>diseñes</em>. Con esos tres reflejos, la mayoría de crashes con colecciones desaparecen antes de nacer.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Progresa en orden; cada ejercicio reutiliza el anterior:</p>
+<ol>
+<li><strong>Lista de compras:</strong> crea un array con cinco productos, imprime el segundo con acceso seguro (<code>first</code>/subscript comprobado), añade uno al principio con <code>insert(_:at:)</code> y muestra el total de caracteres de la lista con <code>map</code> + <code>reduce</code>.</li>
+<li><strong>Amigos en común:</strong> dados dos arrays de nombres con repetidos, obtén con <code>Set</code> los amigos presentes en ambas listas y cuántos son, imprimiendo el resultado ordenado alfabéticamente.</li>
+<li><strong>Notas aprobadas:</strong> con el diccionario <code>["ana": 9.5, "luis": 4.0, "marta": 6.75]</code>, genera un nuevo diccionario solo con aprobados usando <code>filter</code> + <code>reduce(into:)</code>, y calcula su media.</li>
+<li><strong>Analizador de texto:</strong> dada una frase, cuenta con un Dictionary cuántas veces aparece cada palabra (pista: <code>split(separator: " ")</code> y <code>reduce(into:)</code>) e imprime las tres palabras más frecuentes.</li>
+<li><strong>Inventario inteligente:</strong> representa el almacén como <code>[String: Int]</code>; procesa una lista de pedidos retirando stock de forma segura (ignora productos inexistentes o sin unidades), reporta los pedidos rechazados y devuelve el inventario final ordenado por nombre.</li>
+</ol>
     </div>
   </section>

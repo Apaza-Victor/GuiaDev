@@ -1,23 +1,89 @@
 <!-- 1. Introducción a C++ - C++ (Lenguajes de Programación) -->
 <!-- Contenido local del proyecto -->
 
-  <section id="compilar-y-ejecutar">
-    <h2>Compilar y ejecutar</h2>
+  <section id="que-es-cpp">
+    <h2><i class="fa-solid fa-code"></i> 1.1 ¿Qué es C++ y por qué sigue siendo relevante?</h2>
     <div class="doc-content">
-<pre><code class="language-bash">g++ hola.cpp -o hola
-./hola</code></pre>
-<pre><code class="language-cpp">#include &lt;iostream&gt;
-
-int main() {
-    std::cout &lt;&lt; "Hola, GuiaDev!" &lt;&lt; std::endl;
-    return 0;
-}</code></pre>
+<h3>Un lenguaje nacido del pragmatismo</h3>
+<p><strong>C++</strong> fue creado por el informático danés <strong>Bjarne Stroustrup</strong> en los laboratorios Bell a partir de <strong>1979</strong>. Su primer nombre fue "C con clases": Stroustrup quería las abstracciones de lenguajes como Simula (clases, herencia) sin renunciar a la velocidad ni al control cercano al hardware que ofrecía C. En <strong>1985</strong>, con la publicación de su libro <em>The C++ Programming Language</em>, el lenguaje adoptó su nombre definitivo, un guiño al operador <code>++</code>: "el siguiente paso de C".</p>
+<p>La idea que definió a C++ sigue siendo su sello distintivo más de cuarenta años después: <strong>no deberías pagar por lo que no usas</strong>. Puedes escribir abstracciones de alto nivel (objetos, plantillas, contenedores de la STL) y obtener código máquina tan eficiente como el que escribirías manualmente en C.</p>
+<h3>Rasgos que definen al lenguaje</h3>
+<table><thead><tr><th>Característica</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Compilado</strong></td><td>Se traduce directamente a código máquina: rendimiento máximo sin intérprete ni máquina virtual</td></tr><tr><td><strong>Multiparadigma</strong></td><td>Soporta programación imperativa, orientada a objetos, genérica (plantillas) y funcional</td></tr><tr><td><strong>Tipado estático y fuerte</strong></td><td>Los tipos se comprueban en compilación; muchos errores nunca llegan a ejecutarse</td></tr><tr><td><strong>Gestión manual de memoria</strong></td><td>Tú controlas cuándo nace y muere cada objeto (con la ayuda del RAII y los smart pointers)</td></tr><tr><td><strong>Cero sobrecoste</strong></td><td>Las abstracciones no penalizan el rendimiento si no las usas</td></tr><tr><td><strong>Estándar ISO vivo</strong></td><td>Nuevas versiones cada 3 años: C++11, 14, 17, 20, 23… el lenguaje evoluciona constantemente</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>C++ no es "C mejorado": es un lenguaje propio y enorme, aunque mantiene compatibilidad casi total con C. Todo lo que sabes de C te sirve, pero C++ te ofrece herramientas mucho más seguras y expresivas.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
-  <section id="entrada-del-usuario">
-    <h2>Entrada del usuario</h2>
+  <section id="donde-domina-cpp">
+    <h2><i class="fa-solid fa-earth-americas"></i> 1.2 Dónde domina C++: los dominios del rendimiento</h2>
     <div class="doc-content">
+<p>C++ reina allí donde cada milisegundo o cada byte importan. Cuando un motor de juego debe dibujar millones de polígonos por segundo, cuando un servidor de trading decide en microsegundos si comprar o vender, o cuando un microcontrolador solo tiene 64 KB de memoria, C++ es (casi siempre) la respuesta de la industria.</p>
+<h3>Dominios principales</h3>
+<table><thead><tr><th>Dominio</th><th>Ejemplos reales</th><th>¿Por qué C++?</th></tr></thead><tbody><tr><td><strong>Videojuegos y motores</strong></td><td>Unreal Engine, CryEngine, id Tech</td><td>Control total de memoria y CPU por frame</td></tr><tr><td><strong>Sistemas operativos</strong></td><td>Windows, macOS, drivers, partes de Linux</td><td>Acceso al hardware con abstracciones seguras</td></tr><tr><td><strong>Sistemas embebidos</strong></td><td>Automóviles, IoT, aviónica, dispositivos médicos</td><td>Predicibilidad y huella mínima de memoria</td></tr><tr><td><strong>Trading de alta frecuencia (HFT)</strong></td><td>Motores de órdenes en bolsas</td><td>Latencias de microsegundos, cero garbage collector</td></tr><tr><td><strong>Navegadores</strong></td><td>Chrome, Firefox, Safari (WebKit)</td><td>Renderizado rápido de páginas complejas</td></tr><tr><td><strong>Bases de datos</strong></td><td>MySQL, MongoDB, Redis (módulos)</td><td>I/O y consultas de altísimo rendimiento</td></tr><tr><td><strong>IA y cómputo científico</strong></td><td>Backends de PyTorch, TensorFlow</td><td>Kernels numéricos optimizados al máximo</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Aprender C++ te hace comprender cómo funciona realmente una computadora: memoria, punteros, coste de cada abstracción. Ese conocimiento te mejora como programador incluso si luego trabajas en Python o JavaScript.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="proceso-de-compilacion">
+    <h2><i class="fa-solid fa-diagram-project"></i> 1.3 El proceso de compilación paso a paso</h2>
+    <div class="doc-content">
+<p>A diferencia de Python, tu código C++ no se ejecuta tal cual lo escribes: primero debe <strong>compilarse</strong>. Entender las cuatro fases de este proceso te ahorrará horas de confusión cuando aparezcan errores extraños.</p>
+<pre><code class="language-text"> hola.cpp ──► [Preprocesador] ──► [Compilador] ──► [Ensamblador] ──► [Enlazador] ──► hola.exe
+   texto          hola.i             hola.s           hola.o         librerías
+              (#include,#define)  (C++ → ensamblador) (código objeto)  (.o + .a/.lib)</code></pre>
+<table><thead><tr><th>Fase</th><th>Qué hace</th><th>Entrada → Salida</th></tr></thead><tbody><tr><td><strong>1. Preprocesador</strong></td><td>Resuelve <code>#include</code>, expande macros y condicionales <code>#ifdef</code>; produce un único archivo de texto "plano"</td><td>.cpp → .i</td></tr><tr><td><strong>2. Compilador</strong></td><td>Analiza sintaxis y tipos, optimiza y genera ensamblador para tu CPU</td><td>.i → .s</td></tr><tr><td><strong>3. Ensamblador</strong></td><td>Convierte el ensamblador en código objeto binario (aún con huecos por resolver)</td><td>.s → .o / .obj</td></tr><tr><td><strong>4. Enlazador (linker)</strong></td><td>Une tus .o con las librerías y resuelve todas las referencias cruzadas</td><td>.o + libs → ejecutable</td></tr></tbody></table>
+<h3>Verlo con tus propios ojos</h3>
+<p>Puedes detener el proceso en cualquier fase con las banderas adecuadas:</p>
+<pre><code class="language-bash"># Fase 1: solo preprocesar (ver el resultado de #include &lt;iostream&gt;)
+g++ -E hola.cpp -o hola.i
+
+# Fase 2: compilar hasta ensamblador
+g++ -S hola.cpp -o hola.s
+
+# Fase 3: compilar hasta código objeto (sin enlazar)
+g++ -c hola.cpp -o hola.o
+
+# Proceso completo: compilar Y enlazar de una vez
+g++ hola.cpp -o hola</code></pre>
+<blockquote class="aside aside-caution"><p>El error clásico <em>"undefined reference to..."</em> viene del <strong>enlazador</strong>, no del compilador: significa que declaraste una función pero nunca definiste (o no enlazaste) su código. Saber en qué fase falló algo te dice qué tipo de problema buscas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="compilar-y-ejecutar">
+    <h2><i class="fa-solid fa-gears"></i> 1.4 Compiladores y banderas: g++, clang++, MSVC</h2>
+    <div class="doc-content">
+<p>Existen tres grandes familias de compiladores C++. Todos entienden el mismo estándar, aunque difieren en plataformas, mensajes de error y diagnóstico.</p>
+<table><thead><tr><th>Compilador</th><th>Comando</th><th>Plataformas típicas</th><th>Punto fuerte</th></tr></thead><tbody><tr><td><strong>GCC</strong></td><td><code>g++</code></td><td>Linux (nativo), Windows vía MinGW-w64</td><td>El estándar de facto, omnipresente</td></tr><tr><td><strong>Clang/LLVM</strong></td><td><code>clang++</code></td><td>macOS (Xcode), Linux, Windows</td><td>Mensajes de error muy claros, modular</td></tr><tr><td><strong>MSVC</strong></td><td><code>cl</code></td><td>Windows (Visual Studio)</td><td>Integración perfecta con Windows SDK</td></tr></tbody></table>
+<h3>La línea de comandos que deberías usar desde el día uno</h3>
+<pre><code class="language-bash">g++ -std=c++17 -Wall -Wextra -O2 main.cpp -o main
+
+# Desglose de cada bandera:
+#   -std=c++17   usa el estándar C++17 (base de esta guía)
+#   -Wall        activa advertencias comunes (warnings)
+#   -Wextra      activa advertencias adicionales
+#   -O2          optimización estándar para release
+#   -g           incluye símbolos de depuración (úsala mientras desarrollas)
+
+./main</code></pre>
+<blockquote class="aside aside-danger"><p>Nunca compiles sin <code>-Wall -Wextra</code>. Los warnings no detienen la compilación, pero casi siempre señalan bugs reales. Trátalos como errores y tu código nacerá mucho más sano.</p></blockquote>
+<blockquote class="aside aside-note"><p>En C++20 puedes usar <code>-std=c++20</code> para acceder a concepts, ranges y modules. En esta guía usamos C++17 como base e indicamos las novedades de C++20 donde corresponde.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="hola-mundo-linea-a-linea">
+    <h2><i class="fa-solid fa-terminal"></i> 1.5 Tu primer programa explicado línea a línea</h2>
+    <div class="doc-content">
+<pre><code class="language-cpp">#include &lt;iostream&gt;          // 1
+
+int main() {                  // 2
+    std::cout &lt;&lt; "Hola, GuiaDev!" &lt;&lt; std::endl;   // 3
+    return 0;                 // 4
+}                             // 5</code></pre>
+<table><thead><tr><th>Línea</th><th>Explicación</th></tr></thead><tbody><tr><td><code>#include &lt;iostream&gt;</code></td><td>El preprocesador copia aquí la declaración de la librería de entrada/salida. Sin ella, <code>std::cout</code> no existe</td></tr><tr><td><code>int main()</code></td><td>Punto de entrada obligatorio: el sistema operativo llama a esta función para arrancar tu programa. Devuelve un <code>int</code></td></tr><tr><td><code>std::cout &lt;&lt; ...</code></td><td>Envía texto a la salida estándar. <code>std::</code> es el espacio de nombres de la librería estándar; <code>&lt;&lt;</code> inserta datos en el flujo</td></tr><tr><td><code>return 0</code></td><td>Código de salida: 0 = éxito. Si omites esta línea en <code>main</code>, el compilador moderno devuelve 0 por ti</td></tr><tr><td><code>}</code></td><td>Cierra el bloque de <code>main</code>. Las llaves delimitan bloques de código</td></tr></tbody></table>
+<h3>Leer datos del usuario: cin y getline</h3>
 <pre><code class="language-cpp">#include &lt;iostream&gt;
 #include &lt;string&gt;
 
@@ -26,12 +92,74 @@ int main() {
     int edad;
 
     std::cout &lt;&lt; "Nombre: ";
-    std::getline(std::cin, nombre);
+    std::getline(std::cin, nombre);   // lee la LÍNEA completa (admite espacios)
 
     std::cout &lt;&lt; "Edad: ";
-    std::cin &gt;&gt; edad;
+    std::cin &gt;&gt; edad;                 // lee un número (se detiene en espacios)
 
     std::cout &lt;&lt; nombre &lt;&lt; " tiene " &lt;&lt; edad &lt;&lt; " años\n";
 }</code></pre>
+<blockquote class="aside aside-tip"><p>Usa <code>'\n'</code> en lugar de <code>std::endl</code> cuando no necesites vaciar el búfer inmediatamente: <code>endl</code> fuerza un vaciado (flush) en cada uso y puede ralentizar bucles de escritura intensiva.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="entrada-del-usuario">
+    <h2><i class="fa-solid fa-clock-rotate-left"></i> 1.6 Evolución del estándar: de C++98 a C++23</h2>
+    <div class="doc-content">
+<p>C++ se estandarizó por primera vez en <strong>1998</strong> (ISO). Desde 2011, el comité publica una nueva versión cada tres años, y cada versión ha cambiado la forma de escribir el lenguaje. Conocer este mapa te ayudará a leer código antiguo y a escribir código moderno.</p>
+<table><thead><tr><th>Estándar</th><th>Apodo</th><th>Aportes clave</th></tr></thead><tbody><tr><td><strong>C++98/03</strong></td><td>"C++ clásico"</td><td>Primera norma ISO, STL, <code>std::string</code>, streams, plantillas básicas</td></tr><tr><td><strong>C++11</strong></td><td>"Modern C++" (revolución)</td><td><code>auto</code>, lambdas, move semantics, smart pointers, hilos, range-for, <code>nullptr</code></td></tr><tr><td><strong>C++14</strong></td><td>Refinamiento</td><td>Lambdas genéricas, <code>make_unique</code>, deducción de retorno en funciones</td></tr><tr><td><strong>C++17</strong></td><td>Productividad</td><td><em>Structured bindings</em>, <code>if constexpr</code>, <code>optional</code>/<code>variant</code>, <code>string_view</code>, if/switch con inicializador</td></tr><tr><td><strong>C++20</strong></td><td>El gran salto</td><td>Concepts, ranges, coroutines, modules, <code>std::format</code>, operador nave espacial <code>&lt;=&gt;</code></td></tr><tr><td><strong>C++23</strong></td><td>Pulido</td><td><code>std::print</code>, <code>expected</code>, más comodidades de librería</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p>Si dominas el trío <strong>C++11 + C++14 + C++17</strong>, ya escribes C++ moderno profesional. C++20 añade herramientas poderosas (concepts, ranges) que verás mencionadas a lo largo de esta guía.</p></blockquote>
+<pre><code class="language-cpp">#include &lt;map&gt;
+#include &lt;string&gt;
+
+// C++17 en acción: structured bindings descomponen un par en variables
+std::map&lt;std::string, int&gt; edades{{"Ana", 30}, {"Luis", 25}};
+
+for (const auto&amp; [nombre, edad] : edades) {
+    // 'nombre' y 'edad' nacen aquí, listos para usar
+    // (antes de C++17 necesitarías it->first e it-&gt;second)
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes-del-principiante">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> 1.7 Errores comunes del principiante</h2>
+    <div class="doc-content">
+<p>Todo programador C++ comete estos errores durante sus primeras semanas. Reconocerlos temprano acelera muchísimo el aprendizaje.</p>
+<table><thead><tr><th>Error</th><th>Síntoma</th><th>Solución</th></tr></thead><tbody><tr><td>Olvidar el punto y coma <code>;</code></td><td><code>error: expected ';'</code> (a veces en la línea SIGUIENTE)</td><td>Revisa la línea anterior al primer error reportado</td></tr><tr><td>Confundir <code>=</code> con <code>==</code></td><td>Una condición siempre verdadera tras asignar</td><td>Lee los warnings: <code>-Wall</code> los detecta</td></tr><tr><td>Escribir <code>cout</code> sin <code>std::</code></td><td><code>error: 'cout' was not declared</code></td><td>Usa <code>std::cout</code> (evita <code>using namespace std;</code> global)</td></tr><tr><td>Leer cadena con espacios usando <code>cin &gt;&gt;</code></td><td>Solo se captura la primera palabra</td><td>Usa <code>std::getline(std::cin, variable)</code></td></tr><tr><td>Mezclar <code>cin &gt;&gt;</code> y <code>getline</code> sin cuidado</td><td><code>getline</code> "salta" una lectura</td><td>Vacía el búfer o unifica la estrategia de lectura</td></tr><tr><td>Ignorar warnings</td><td>Bugs silenciosos en producción</td><td>Compila siempre con <code>-Wall -Wextra</code></td></tr></tbody></table>
+<pre><code class="language-cpp">// ❌ Código problemático
+#include &lt;iostream&gt;
+using namespace std;         // contamina TODO el espacio de nombres global
+int main() {
+    string nombre;
+    cin &gt;&gt; nombre;            // pierde todo lo que venga después de un espacio
+    cout &lt;&lt; "Hola " &lt;&lt; nombre
+}                             // falta ';' antes de '}'
+
+// ✅ Versión corregida
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+
+int main() {
+    std::string nombre;
+    std::getline(std::cin, nombre);       // captura "Ana García López" completa
+    std::cout &lt;&lt; "Hola " &lt;&lt; nombre &lt;&lt; '\n';
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<ol>
+<li><strong>Prepara tu taller</strong>: instala un compilador (g++, clang++ o MSVC) y verifica la instalación mostrando su versión. Compila un programa mínimo que imprima tu nombre completo.</li>
+<li><strong>Compila con disciplina</strong>: toma el programa anterior y compílalo con <code>-std=c++17 -Wall -Wextra</code>. Introduce deliberadamente un warning (por ejemplo, usar una variable sin inicializar) y observa cómo el compilador te lo señala.</li>
+<li><strong>Explora las fases</strong>: usa <code>-E</code>, <code>-S</code> y <code>-c</code> sobre tu programa y abre los archivos intermedios (.i, .s, .o). ¿Cuántas líneas tiene tu .i solo por <code>#include &lt;iostream&gt;</code>? ¿Qué contiene el .o?</li>
+<li><strong>Mini calculadora conversacional</strong>: pide dos números decimales al usuario y muestra su suma, resta, multiplicación y división. Controla el caso de división entre cero imprimiendo un mensaje adecuado.</li>
+<li><strong>Detectivo de estándares</strong>: investiga en cppreference tres características de C++17 (por ejemplo <code>std::optional</code>, <code>structured bindings</code>, <code>std::string_view</code>) y escribe en un comentario de tu programa qué problema resuelve cada una y un ejemplo mínimo de uso.</li>
+</ol>
     </div>
   </section>

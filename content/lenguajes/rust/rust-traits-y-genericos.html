@@ -2,36 +2,240 @@
 <!-- Contenido local del proyecto -->
 
   <section id="traits">
-    <h2>Traits</h2>
+    <h2><i class="fa-solid fa-file-contract"></i> Traits: contratos de comportamiento compartido</h2>
     <div class="doc-content">
+<p>Un <strong>trait</strong> define qué puede hacer un tipo, sin dictar cómo. Es el equivalente funcional a las interfaces de otros lenguajes — pero con superpoderes: métodos con implementación por defecto, implementación condicional y generics integrados. Donde la herencia encadena clases frágilmente, los traits componen comportamientos:</p>
 <pre><code class="language-rust">trait Resumen {
-    fn autor(&amp;self) -&gt; String;
+    fn autor(&amp;self) -&gt; String;              // OBLIGATORIO: cada tipo lo define
 
-    fn preview(&amp;self) -&gt; String {       // método con implementación
-        format!("por {}", self.autor())
+    fn preview(&amp;self) -&gt; String {           // OPCIONAL: implementación por defecto
+        format!("Artículo por {}", self.autor())
     }
 }
 
 struct Articulo { titulo: String }
+struct Podcast { episodio: u32 }
 
 impl Resumen for Articulo {
-    fn autor(&amp;self) -&gt; String { String::from("Equipo GuiaDev") }
+    fn autor(&amp;self) -&gt; String {
+        format!("Equipo GuiaDev ({})", self.titulo)
+    }
+    // preview() heredado tal cual del trait
+}
+
+impl Resumen for Podcast {
+    fn autor(&amp;self) -&gt; String {
+        format!("Episodio #{}", self.episodio)
+    }
+    fn preview(&amp;self) -&gt; String {          // lo SOBREESCRIBIMOS
+        format!("🎧 Escucha el episodio {}", self.episodio)
+    }
 }</code></pre>
+<blockquote class="aside aside-note"><p>Los métodos por defecto pueden llamar a los obligatorios (como <code>preview</code> usa <code>autor</code>): así defines plantillas de comportamiento que cada tipo especializa al mínimo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="traits-de-la-stdlib">
+    <h2><i class="fa-solid fa-book"></i> Los traits imprescindibles de la stdlib</h2>
+    <div class="doc-content">
+<p>Antes de crear los tuyos, domina los que ya vienen incluidos. Algunos se obtienen gratis con <code>#[derive]</code>; otros exigen implementación manual porque dependen de decisiones de diseño:</p>
+<table><thead><tr><th>Trait</th><th>Para qué sirve</th><th>Cómo obtenerlo</th></tr></thead><tbody><tr><td><code>Debug</code></td><td>Imprimir con <code>{:?}</code>/<code>{:#?}</code></td><td><code>#[derive(Debug)]</code></td></tr><tr><td><code>Clone</code></td><td>Copia profunda explícita (.clone())</td><td><code>#[derive(Clone)]</code></td></tr><tr><td><code>Copy</code></td><td>Duplicación implícita barata</td><td><code>#[derive(Copy, Clone)]</code> (solo campos Copy)</td></tr><tr><td><code>Default</code></td><td>Valor neutro (<code>Tipo::default()</code>)</td><td><code>#[derive(Default)]</code></td></tr><tr><td><code>PartialEq</code>/Eq</td><td>Comparar con == y !=</td><td><code>#[derive(PartialEq)]</code></td></tr><tr><td><code>Display</code></td><td>Impresión bonita para usuarios con {}</td><td>MANUAL: es una decisión de formato</td></tr></tbody></table>
+<pre><code class="language-rust">use std::fmt;
+
+#[derive(Debug, Clone, PartialEq, Default)]
+struct Punto {
+    x: i32,
+    y: i32,
+}
+
+// Display NO es derivable: TÚ decides cómo se ve para humanos
+impl fmt::Display for Punto {
+    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
+}
+
+fn main() {
+    let p = Punto { x: 3, y: -2 };
+    let q = p.clone();
+
+    println!("Debug:   {:?}", p);
+    println!("Display: {}", p);              // usa nuestro impl Display
+    println!("¿Iguales? {}", p == q);       // PartialEq derivado
+    println!("Default: {:?}", Punto::default());   // (0, 0)
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Hábito ganador: deriva <code>Debug</code> siempre, más <code>Clone</code>/<code>PartialEq</code>/<code>Default</code> cuando tengan sentido. Implementa Display solo cuando ese struct vaya a mostrarse a usuarios finales.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="genericos-con-bounds">
-    <h2>Genéricos con bounds</h2>
+    <h2><i class="fa-solid fa-sliders"></i> Genéricos con trait bounds: funciones para muchos tipos</h2>
     <div class="doc-content">
-<pre><code class="language-rust">fn mayor&lt;T: PartialOrd&gt;(a: T, b: T) -&gt; T {
+<p>Sin genéricos duplicarías funciones por cada tipo; sin restricciones, el compilador no sabría qué puedes hacer con T. La solución son los <strong>trait bounds</strong>: exigir que T implemente ciertos traits:</p>
+<pre><code class="language-rust">// T debe saber compararse: PartialOrd es el bound mínimo necesario
+fn mayor&lt;T: PartialOrd&gt;(a: T, b: T) -&gt; T {
     if a &gt; b { a } else { b }
 }
 
-fn imprimir&lt;T: std::fmt::Display&gt;(item: T) {
-    println!("{}", item);
+// where: legible cuando las restricciones crecen
+fn combinar&lt;T, U&gt;(t: T, u: U) -&gt; String
+where
+    T: std::fmt::Display + Clone,
+    U: std::fmt::Display,
+{
+    format!("{} y {}", t, u)
 }
 
-mayor(3, 7);
-imprimir("texto");</code></pre>
+fn main() {
+    println!("{}", mayor(7, 3));            // i32 implementa PartialOrd ✅
+    println!("{}", mayor("peras", "manzanas")); // &amp;str también ✅
+    // mayor(5, 3.5);                        // ❌ tipos distintos: no compila
+    println!("{}", combinar(42, "respuestas"));
+}</code></pre>
+<h3>Structs genéricas</h3>
+<p>Los mismos bounds aplican a tus propios tipos contenedores:</p>
+<pre><code class="language-rust">struct Contenedor&lt;T&gt; {
+    valor: T,
+}
+
+impl&lt;T: std::fmt::Display&gt; Contenedor&lt;T&gt; {
+    fn nuevo(valor: T) -&gt; Self {
+        Self { valor }                       // abreviatura campo=variable
+    }
+
+    fn mostrar(&amp;self) {
+        println!("Contengo: {}", self.valor);
+    }
+}
+
+fn main() {
+    Contenedor::nuevo(10).mostrar();
+    Contenedor::nuevo("texto").mostrar();
+}</code></pre>
+<blockquote class="aside aside-note"><p>Rust hace <em>monomorfización</em>: genera una copia especializada de cada combinación de tipos usada. Los genéricos tienen coste cero en ejecución — a diferencia de Java, donde hay boxing y borrado de tipos.</p></blockquote>
+<p>---</p>
     </div>
   </section>
+
+  <section id="impl-trait">
+    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> impl Trait: genéricos sin nombres</h2>
+    <div class="doc-content">
+<p>Cuando solo necesitas decir "algún tipo que implementa X", la sintaxis <code>impl Trait</code> ahorra declarar un parámetro genérico completo. Es azúcar legible para casos simples:</p>
+<pre><code class="language-rust">use std::fmt::Display;
+
+// En PARÁMETROS: equivale a fn gritar&lt;T: Display&gt;(x: T)
+fn gritar(x: impl Display) {
+    println!("¡{}!", x.to_string().to_uppercase());
+}
+
+// En RETORNO: "devuelvo ALGÚN tipo concreto que implementa este trait"
+fn numero_favorito() -&gt; impl Iterator&lt;Item = i32&gt; {
+    [42, 7, 2026].into_iter().filter(|n| n % 7 == 0)
+}
+
+fn main() {
+    gritar("rust");
+    gritar(99);
+
+    for n in numero_favorito() {
+        println!("múltiplo: {}", n);
+    }
+}</code></pre>
+<blockquote class="aside aside-caution"><p><code>-&gt; impl Trait</code> promete UN tipo concreto fijo elegido dentro de la función: no puedes devolver en un branch un <code>EnteroIterador</code> y en otro un <code>ParIterador</code>. Si necesitas alternar tipos reales en runtime, esa es la señal para pasar a dyn Trait.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="dispatch-estatico-vs-dinamico">
+    <h2><i class="fa-solid fa-shuffle"></i> dyn Trait vs impl Trait: dos formas de polimorfismo</h2>
+    <div class="doc-content">
+<p>Rust ofrece dos estrategias de polimorfismo. El <strong>static dispatch</strong> (genéricos/impl Trait) resuelve el tipo en compilación generando código especializado. El <strong>dynamic dispatch</strong> (<code>dyn Trait</code>) resuelve en runtime mediante una tabla de funciones (vtable), a cambio de flexibilidad:</p>
+<table><thead><tr><th>Aspecto</th><th>impl Trait / genéricos</th><th>dyn Trait</th></tr></thead><tbody><tr><td>Resolución</td><td>Tiempo de compilación (monomorfización)</td><td>Tiempo de ejecución (vtable)</td></tr><tr><td>Rendimiento</td><td>Cero coste; permite inline</td><td>Salto indirecto por llamada</td></tr><tr><td>Colecciones heterogéneas</td><td>Imposibles (todas del mismo T)</td><td>Sí: <code>Vec&lt;Box&lt;dyn Trait&gt;&gt;</code></td></tr><tr><td>Cuándo usar</td><td>Bibliotecas y hot paths</td><td>Plugins, UIs, listas mixtas</td></tr></tbody></table>
+<pre><code class="language-rust">trait Dibujable {
+    fn dibujar(&amp;self) -&gt; String;
+}
+
+struct Circulo { radio: f64 }
+struct Cuadrado { lado: f64 }
+
+impl Dibujable for Circulo {
+    fn dibujar(&amp;self) -&gt; String { format!("● r={}", self.radio) }
+}
+impl Dibujable for Cuadrado {
+    fn dibujar(&amp;self) -&gt; String { format!("■ l={}", self.lado) }
+}
+
+fn main() {
+    // dyn Trait: mezcla tipos DISTINTOS bajo una misma interfaz
+    let lienzo: Vec&lt;Box&lt;dyn Dibujable&gt;&gt; = vec![
+        Box::new(Circulo { radio: 2.0 }),
+        Box::new(Cuadrado { lado: 5.0 }),
+    ];
+
+    for forma in &amp;lienzo {
+        println!("{}", forma.dibujar());   // dispatch dinámico por vtable
+    }
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Regla de decisión: usa genéricos por defecto (gratis); recurre a <code>dyn Trait</code> cuando necesites mezclar tipos concretos en una colección o quieras reducir la explosión de monomorfización en binarios grandes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="supertraits-y-condicionales">
+    <h2><i class="fa-solid fa-link"></i> Supertraits e implementación condicional</h2>
+    <div class="doc-content">
+<h3>Supertraits: exigir otra habilidad previa</h3>
+<p>Un trait puede declarar que quien quiera implementarlo, primero debe implementar otro. <code>Jugador: Display</code> significa "todo jugador es imprimible":</p>
+<pre><code class="language-rust">use std::fmt::{self, Display};
+
+trait Jugador: Display {                 // Display es SUPERTRAIT
+    fn puntuacion(&amp;self) -&gt; u32;
+
+    fn tarjeta(&amp;self) -&gt; String {        // default que YA puede usar {}
+        format!("{} → {} pts", self, self.puntuacion())
+    }
+}
+
+struct Humano { nombre: String, puntos: u32 }
+
+impl Display for Humano {
+    fn fmt(&amp;self, f: &amp;mut fmt::Formatter) -&gt; fmt::Result {
+        write!(f, "{}", self.nombre)
+    }
+}
+
+impl Jugador for Humano {
+    fn puntuacion(&amp;self) -&gt; u32 { self.puntos }
+}</code></pre>
+<h3>Implementación condicional (blanket impls)</h3>
+<p>Puedes implementar un trait SOLO cuando los genéricos cumplen ciertas condiciones — así funciona toda la stdlib: <code>impl&lt;T: Clone&gt; Clone for Vec&lt;T&gt;</code> significa que un Vec es clonable exactamente cuando sus elementos lo son. La composición de capacidades fluye automáticamente.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes-traits">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes con traits y genéricos</h2>
+    <div class="doc-content">
+<table><thead><tr><th>Error / síntoma</th><th>Causa</th><th>Solución</th></tr></thead><tbody><tr><td><code>E0277</code>: the trait bound is not satisfied</td><td>Falta implementar el trait pedido o ampliar el bound</td><td>Impl el trait o relaja/revisa la restricción</td></tr><tr><td><code>E0117</code>: orphan rule violation</td><td>Impl de trait externo para tipo externo</td><td>Envuelve el tipo en tu propio newtype</td></tr><tr><td>Método no encontrado pese a existir</td><td>El trait no está importado al scope</td><td>Añade <code>use Trait;</code> (clásico con iteradores)</td></tr><tr><td>Dos branches devuelven tipos distintos con impl Trait</td><td>impl Trait exige UN solo tipo concreto</td><td>Usa <code>Box&lt;dyn Trait&gt;</code> o unifica el tipo</td></tr><tr><td><code>expected T, found U</code> en función genérica</td><td>Llamas con dos tipos distintos donde se exigía uno</td><td>Unifica argumentos o añade dos parámetros genéricos</td></tr><tr><td>derive(Clone) falla</td><td>Algún campo no implementa Clone</td><td>Clona el campo o deriva Clone también ahí</td></tr></tbody></table>
+<blockquote class="aside aside-danger"><p>No conviertas todo en <code>dyn Trait</code> para "arreglar" errores de genéricos: pierdes rendimiento y seguridad de tipos. Primero intenta simplificar los bounds; dyn es la herramienta de último recurso consciente. Y recuerda la <em>orphan rule</em>: solo puedes implementar un trait si el trait o el tipo son tuyos; para tipos ajenos, envuélvelos en un newtype propio.</p></blockquote>
+<blockquote class="aside aside-success"><p>Los traits son la clave de lectura de toda documentación Rust: cuando veas <code>fn foo(x: impl Into&lt;String&gt;)</code>, ya sabes qué acepta y qué garantiza sin leer el cuerpo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Réslolos en orden creciente; los últimos combinan traits, genéricos y dispatch.</p>
+<ol>
+<li><strong>Tu primer trait</strong>: crea el trait <code>Vehiculo</code> con método obligatorio <code>ruedas(&amp;self) -&gt; u8</code> y método default <code>describir(&amp;self)</code>; impleméntalo para structs Coche y Moto y llama ambos métodos desde main.</li>
+<li><strong>Stdlib aplicada</strong>: define struct <code>Temporizador</code> con #[derive(Debug, Default, PartialEq)]; implementa Display manualmente para mostrar "00:30" estilo reloj y compara dos instancias con ==.</li>
+<li><strong>Genéricos con bounds</strong>: escribe <code>fn maximo&lt;T: PartialOrd + Copy&gt;(lista: &amp;[T]) -&gt; Option&lt;T&gt;</code> que devuelva None si la lista está vacía; pruébala con i32, f64 y char.</li>
+<li><strong>Colección heterogénea</strong>: con el trait <code>Dibujable</code> del ejemplo, añade una tercera figura Triángulo y construye un <code>Vec&lt;Box&lt;dyn Dibujable&gt;&gt;</code> con las tres; itera dibujando cada una.</li>
+<li><strong>Proyecto integrador</strong>: diseña trait <code>Exportable</code> con supertrait Debug, una struct genérica <code>Reporte&lt;T: Exportable + Display&gt;</code> y una función que acepte <code>impl Iterator</code> de reportes; decide y JUSTIFICA en comentarios dónde usaste static vs dynamic dispatch.</li>
+</ol>
+    </div>
+  </section>
+

@@ -1,58 +1,204 @@
 <!-- 12. Procedimientos almacenados y triggers - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="procedimiento-basico">
-    <h2>Procedimiento básico</h2>
+<section id="procedimiento-basico">
+    <h2><i class="fa-solid fa-gears"></i> Procedimientos: CREATE PROCEDURE</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE PROCEDURE dbo.sp_ObtenerCaros
-  @minPrecio DECIMAL(10,2)
+        <pre><code class="language-sql">CREATE OR ALTER PROCEDURE dbo.sp_RegistrarPedido   -- OR ALTER = idempotente
+    @cliente_id INT,
+    @producto_id INT,
+    @cantidad   INT
 AS
 BEGIN
-  SET NOCOUNT ON;   -- evita mensajes extra al cliente
-  SELECT Nombre, Precio
-  FROM dbo.Productos
-  WHERE Precio &gt; @minPrecio;
+    SET NOCOUNT ON;                 -- evita "n rows affected" extra al cliente
+    SET XACT_ABORT ON;              -- error ⇒ rollback automático total
+
+    DECLARE @precio DECIMAL(10,2), @stock INT;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        SELECT @precio = precio, @stock = stock
+        FROM dbo.Productos WITH (UPDLOCK)      -- lock de actualización
+        WHERE producto_id = @producto_id;
+
+        IF @stock &lt; @cantidad
+            THROW 50001, 'Stock insuficiente', 1;
+
+        INSERT INTO Pedidos (cliente_id, producto_id, cantidad, total)
+        VALUES (@cliente_id, @producto_id, @cantidad, @precio * @cantidad);
+
+        UPDATE Productos SET stock -= @cantidad
+        WHERE producto_id = @producto_id;
+
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT &gt; 0 ROLLBACK;
+        THROW;                       -- re-lanza el error original
+    END CATCH
 END;
 GO
 
-EXEC dbo.sp_ObtenerCaros @minPrecio = 5000;</code></pre>
+EXEC sp_RegistrarPedido @cliente_id=5, @producto_id=12, @cantidad=3;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Setting del procedure</th><th>Por qué es sagrado</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>SET NOCOUNT ON</code></td><td>Silencia DONE_IN_PROC: menos red, drivers felices</td></tr>
+                <tr><td><code>SET XACT_ABORT ON</code></td><td>Cualquier error runtime aborta y revierte TODO sin excepciones parciales</td></tr>
+                <tr><td>TRY/CATCH + THROW re-lanzado</td><td>Rollback controlado SIN tragarse el error: la app sigue enterándose</td></tr>
+                <tr><td><code>CREATE OR ALTER</code></td><td>Mismo script re-ejecutable en todos los entornos ✅</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Nunca nombres tus procedures sp_Algo: ese prefijo pertenece AL SISTEMA. SQL Server busca primero en master los sp_*, generando lookups extra y comportamientos raros. Convenciones vivas: usp_, proc_ o nada.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="parametros-output-y-logica">
-    <h2>Parámetros OUTPUT y lógica</h2>
+<section id="parametros-output-y-logica">
+    <h2><i class="fa-solid fa-right-left"></i> Parámetros OUTPUT y lógica interna</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE PROCEDURE dbo.sp_ContarPorCategoria
-  @categoriaId INT,
-  @total INT OUTPUT
+        <pre><code class="language-sql">CREATE OR ALTER PROCEDURE sp_ProcesarPago
+    @pedido_id     INT,
+    @monto         DECIMAL(12,2),
+    @aprobado      BIT          OUTPUT,      -- salida
+    @codigo_error  INT          OUTPUT
 AS
 BEGIN
-  SELECT @total = COUNT(*) FROM dbo.Productos WHERE CategoriaId = @categoriaId;
+    SET NOCOUNT ON;
+    DECLARE @saldo DECIMAL(12,2);
+
+    SELECT @saldo = saldo FROM Clientes c
+    JOIN Pedidos p ON p.cliente_id = c.cliente_id
+    WHERE p.pedido_id = @pedido_id;
+
+    IF @saldo IS NULL
+    BEGIN
+        SET @aprobado = 0; SET @codigo_error = 404;
+        RETURN;
+    END
+
+    IF @saldo &lt; @monto
+    BEGIN
+        SET @aprobado = 0; SET @codigo_error = 501;
+        RETURN;
+    END
+
+    UPDATE ... ;   -- aplicar cargo
+    SET @aprobado = 1; SET @codigo_error = 0;
 END;
 GO
 
-DECLARE @n INT;
-EXEC dbo.sp_ContarPorCategoria @categoriaId = 1, @total = @n OUTPUT;
-PRINT CONCAT(N'Total: ', @n);</code></pre>
-<p>Dentro de T-SQL dispones de <code>IF/ELSE</code>, <code>WHILE</code>, <code>CASE</code> y variables con <code>DECLARE</code>/<code>SET</code>.</p>
-    </div>
-  </section>
+-- Consumirlo:
+DECLARE @ok BIT, @err INT;
+EXEC sp_ProcesarPago @pedido_id=42, @monto=99.90,
+                     @aprobado=@ok OUTPUT, @codigo_error=@err OUTPUT;
+SELECT @ok AS aprobado, @err AS codigo;
 
-  <section id="triggers-dml">
-    <h2>Triggers DML</h2>
+-- Parámetros opcionales con default + NULL como comodín:
+@pais NVARCHAR(2) = NULL       -- si no llega: filtra solo si viene:
+WHERE (@pais IS NULL OR pais = @pais)   -- patrón "catch-all query" clásico</code></pre>
+
+        <h3>Lógica disponible dentro de T-SQL</h3>
+        <table>
+            <thead>
+                <tr><th>Constructo</th><th>Ejemplo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Condicional</td><td><code>IF / ELSE / EXISTS (SELECT...)</code></td></tr>
+                <tr><td>Bucle</td><td><code>WHILE @@ROWCOUNT &gt; 0 BEGIN ... END</code></td></tr>
+                <tr><td>Case</td><td><code>CASE WHEN ... THEN ... END</code> (expresión)</td></tr>
+                <tr><td>Cursor</td><td><code>DECLARE cur CURSOR FOR...</code> — último recurso ⚠️</td></tr>
+                <tr><td>Error custom</td><td><code>THROW 50001, 'mensaje', 1;</code></td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>Cuando sientas necesidad de un cursor o WHILE fila a fila, pregúntate primero "¿esto no es un UPDATE/JOIN set-based?". El 95% de loops T-SQL son joins mal escritos. Los cursores legítimos: mantenimiento administrativo, llamadas a procedures por elemento.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="triggers-dml">
+    <h2><i class="fa-solid fa-bolt"></i> Triggers DML: inserted y deleted</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE TRIGGER dbo.trg_DescuentaStock
-ON dbo.Ventas
-AFTER INSERT
+        <pre><code class="language-sql">-- Auditoría automática de cambios salariales:
+CREATE OR ALTER TRIGGER trg_Empleados_Auditoria
+ON Empleados
+AFTER UPDATE
 AS
 BEGIN
-  SET NOCOUNT ON;
-  UPDATE p SET p.Stock = p.Stock - i.Cantidad
-  FROM dbo.Productos p
-  INNER JOIN inserted i ON i.ProductoId = p.Id;
-END;</code></pre>
-<p>Las tablas virtuales <code>inserted</code> y <code>deleted</code> contienen las filas afectadas (en UPDATE, <code>deleted</code> trae los valores viejos y <code>inserted</code> los nuevos).</p>
-<blockquote class="aside aside-caution">
-<p>Un trigger dispara por LOTE, no por fila: escribe siempre pensando en múltiples filas, como en el ejemplo.</p>
-</blockquote>
+    SET NOCOUNT ON;
+    -- PSEUDO-TABLAS: inserted=nuevos valores, deleted=anteriores:
+    INSERT INTO Auditoria_Salarios (empleado_id, salario_anterior, salario_nuevo, cuando)
+    SELECT d.empleado_id, d.salario, i.salario, SYSDATETIME()
+    FROM inserted i
+    JOIN deleted d ON d.empleado_id = i.empleado_id
+    WHERE i.salario &lt;&gt; d.salario;
+END;
+GO
+
+-- INSTEAD OF: REEMPLAZA la operación (típico en vistas no actualizables):
+CREATE TRIGGER trg_vwClientes_IOI
+ON vw_ClientesConDetalle
+INSTEAD OF INSERT
+AS
+BEGIN
+    INSERT INTO Clientes (nombre, email) SELECT nombre, email FROM inserted;
+    -- lógica custom para las columnas derivadas...
+END;
+
+-- Deshabilitar/eliminar:
+DISABLE TRIGGER trg_Empleados_Auditoria ON Empleados;
+DROP TRIGGER IF EXISTS trg_Empleados_Auditoria;</code></pre>
+
+        <table>
+            <thead>
+                <tr><th>Pseudo-tabla</th><th>INSERT</th><th>UPDATE</th><th>DELETE</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>inserted</strong></td><td>Filas nuevas</td><td>Valores post-update</td><td>— vacía</td></tr>
+                <tr><td><strong>deleted</strong></td><td>— vacía</td><td>Valores pre-update</td><td>Filas eliminadas</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>Los triggers DML disparan POR SENTENCIA, no por fila: una UPDATE masiva de 50k filas entrega inserted/deleted con 50k filas. Un trigger escrito pensando "por fila" (variables escalares) se corrompe silenciosamente ante batch updates. SIEMPRE piensa set-based dentro del trigger.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Procedure nombrado sp_*</td><td>Lookups a master + colisiones futuras</td><td>usp_/proc_/sin prefijo</td></tr>
+                <tr><td>XACT_ABORT off + error intermedio</td><td>Transacción huérfana abierta (@@TRANCOUNT&gt;0)</td><td>SET XACT_ABORT ON + TRY/CATCH completo</td></tr>
+                <tr><td>Trigger pensado por-fila ante batch</td><td>Datos auditados incompletos/incorrectos</td><td>Lógica set-based sobre inserted/deleted completas</td></tr>
+                <tr><td>Cursor para lo que era un JOIN</td><td>Rendimiento 100x peor</td><td>Reescribir set-based antes de aceptar cursor</td></tr>
+                <tr><td>CATCH que traga el error sin THROW</td><td>App cree que todo fue bien</td><td>THROW re-lanzar tras rollback</td></tr>
+                <tr><td>Trigger→misma tabla recursivo</td><td>Loops inesperados</td><td>RECURSIVE_TRIGGERS OFF (default) verificado / diseño alternativo</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Procedure transaccional</strong>: implementa sp_RegistrarPedido completo; prueba stock insuficiente (THROW), fallo forzado intermedio y atomicidad verificada.</li>
+            <li><strong>API con OUTPUT</strong>: sp_TransferirSaldo(cuenta_origen, destino, monto) devolviendo @exito/@saldo_restante; cubre saldo insuficiente y cuenta inexistente.</li>
+            <li><strong>Auditoría set-based</strong>: trigger AFTER UPDATE que registre TODOS los cambios de una update masiva multi-fila correctamente; demuéstralo con batch de 10k.</li>
+            <li><strong>Anti-cursor</strong>: escribe la misma tarea con cursor y con UPDATE...FROM join; cronometra ambas sobre 100k filas.</li>
+            <li><strong>INSTEAD OF real</strong>: vista compleja + trigger INSTEAD OF INSERT que reparta datos a dos tablas base; inserta vía vista y valida integridad cruzada.</li>
+        </ol>
+    </div>
+</section>

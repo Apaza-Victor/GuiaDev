@@ -1,56 +1,200 @@
 <!-- 7. JOINS en MySQL - MySQL (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="inner-join">
-    <h2>INNER JOIN</h2>
+<section id="inner-join">
+    <h2><i class="fa-solid fa-circle-nodes"></i> INNER JOIN: la intersección</h2>
     <div class="doc-content">
-<p>Devuelve solo las filas que tienen coincidencia en ambas tablas.</p>
-<pre><code class="language-sql">SELECT p.nombre, c.nombre AS categoria, p.precio
-FROM productos p
-INNER JOIN categorias c ON p.categoria_id = c.id;</code></pre>
+        <p>Un JOIN combina filas de dos tablas según una condición. El <strong>INNER JOIN</strong> devuelve solo las filas que tienen pareja en AMBAS tablas — la intersección:</p>
+
+        <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d206261636b67726f756e64436f6c6f7220234644464446380a736b696e706172616d2064656661756c74466f6e7453697a652031310a0a7469746c6520526573756c7461646f20736567c3ba6e207469706f206465204a4f494e0a0a706172746974696f6e2022494e4e4552204a4f494e22207b0a2020636172642022536f6c6f2066696c617320636f6e20706172656a615c6e656e20616d626173207461626c61732220617320696e6e657220234436454146380a7d0a0a706172746974696f6e20224c454654204a4f494e22207b0a2020636172642022544f444153206c6173206465206c6120697a717569657264615c6e2b20706172656a6173206465206c6120646572656368615c6e284e554c4c207369206e6f206861792922206173206c6566746a20234435463545330a7d0a0a706172746974696f6e20225249474854204a4f494e22207b0a2020636172642022544f444153206c6173206465206c6120646572656368615c6e2b20706172656a6173206465206c6120697a717569657264615c6e284e554c4c207369206e6f2068617929222061732072696768746a20234643463343460a7d0a0a706172746974696f6e202243524f5353204a4f494e22207b0a202063617264202250726f647563746f2063617274657369616e6f3a5c6e544f44415320636f6e20544f4441535c6e286ec3976d2066696c617329222061732063726f737320234641444244380a7d0a40656e64756d6c" alt="Tipos de JOIN visualizados" loading="lazy"  />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam backgroundColor #FDFDF8
+skinparam defaultFontSize 11
+
+title Resultado según tipo de JOIN
+
+partition "INNER JOIN" {
+  card "Solo filas con pareja\nen ambas tablas" as inner #D6EAF8
+}
+
+partition "LEFT JOIN" {
+  card "TODAS las de la izquierda\n+ parejas de la derecha\n(NULL si no hay)" as leftj #D5F5E3
+}
+
+partition "RIGHT JOIN" {
+  card "TODAS las de la derecha\n+ parejas de la izquierda\n(NULL si no hay)" as rightj #FCF3CF
+}
+
+partition "CROSS JOIN" {
+  card "Producto cartesiano:\nTODAS con TODAS\n(n×m filas)" as cross #FADBD8
+}
+@enduml</code></pre>
+  </details>
+</div>
+
+        <pre><code class="language-sql">-- Sintaxis moderna (explícita):
+SELECT c.nombre, p.fecha, p.total
+FROM clientes c
+INNER JOIN pedidos p ON p.cliente_id = c.id;
+
+-- Equivalente antiguo implícito (evitar: mezcla filtros y joins):
+SELECT c.nombre, p.fecha, p.total
+FROM clientes c, pedidos p
+WHERE p.cliente_id = c.id;</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Siempre alias cortos de tabla (c, p). En consultas con 4-5 tablas los nombres completos convierten cada línea en un párrafo ilegible. Y califica TODAS las columnas ambiguas: id sin prefijo en join de 3 tablas es error garantizado.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="left-y-right-join">
-    <h2>LEFT y RIGHT JOIN</h2>
+<section id="left-y-right-join">
+    <h2><i class="fa-solid fa-arrows-left-right"></i> LEFT/RIGHT JOIN: incluir sin pareja</h2>
     <div class="doc-content">
-<pre><code class="language-sql">-- Todos los productos, con o sin venta asociada
-SELECT p.nombre, v.fecha, v.cantidad
-FROM productos p
-LEFT JOIN ventas v ON v.producto_id = p.id;
+        <p><strong>LEFT JOIN</strong> conserva TODAS las filas de la tabla izquierda; donde no hay pareja en la derecha, rellena con NULL. Es EL join para preguntas del tipo "¿quiénes NO tienen...?":</p>
+        <pre><code class="language-sql">-- Todos los clientes, con pedidos si existen:
+SELECT c.nombre, COUNT(p.pedido_id) AS num_pedidos
+FROM clientes c
+LEFT JOIN pedidos p ON p.cliente_id = c.id
+GROUP BY c.id, c.nombre;
 
--- Productos que NUNCA se han vendido
-SELECT p.nombre
-FROM productos p
-LEFT JOIN ventas v ON v.producto_id = p.id
-WHERE v.id IS NULL;</code></pre>
-<blockquote class="aside aside-tip">
-<p>El patrón <code>LEFT JOIN ... WHERE t2.id IS NULL</code> es la forma clásica de encontrar registros sin relación.</p>
-</blockquote>
+-- ANTI-JOIN: clientes SIN ningún pedido (el patrón estrella):
+SELECT c.nombre
+FROM clientes c
+LEFT JOIN pedidos p ON p.cliente_id = c.id
+WHERE p.pedido_id IS NULL;
+
+-- RIGHT JOIN: espejo exacto — raramente necesario (reordena y usa LEFT):
+SELECT c.nombre, p.total
+FROM pedidos p
+RIGHT JOIN clientes c ON c.id = p.cliente_id;
+-- == mismo resultado que FROM clientes c LEFT JOIN pedidos p ...</code></pre>
+        <table>
+            <thead>
+                <tr><th>Pregunta de negocio</th><th>Join correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>"Pedidos con su cliente"</td><td>INNER</td></tr>
+                <tr><td>"Clientes y sus pedidos, incluso quienes no han comprado"</td><td>LEFT desde clientes</td></tr>
+                <tr><td>"¿Quiénes nunca han comprado?"</td><td>LEFT + WHERE derecho IS NULL</td></tr>
+                <tr><td>"Todos los productos aunque nadie los haya vendido"</td><td>LEFT desde productos</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>Un WHERE sobre columnas de la tabla DERECHA (ej: WHERE p.estado='pagado') CONVIERTE tu LEFT JOIN en INNER de facto: los NULL fallan el filtro y desaparecen. Si necesitas filtrar lo emparejado pero conservar los solitarios, mueve el filtro al ON.</p>
+        </blockquote>
+        <pre><code class="language-sql">-- ❌ pierde clientes sin pedidos pagados:
+SELECT ... FROM clientes c LEFT JOIN pedidos p ON ...
+WHERE p.estado = 'pagado';
+
+-- ✅ conserva todos; solo filtra las parejas:
+SELECT ... FROM clientes c
+LEFT JOIN pedidos p ON p.cliente_id = c.id AND p.estado = 'pagado';</code></pre>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="cross-join-y-auto-join">
-    <h2>CROSS JOIN y auto-join</h2>
+<section id="cross-join-y-auto-join">
+    <h2><i class="fa-solid fa-shuffle"></i> CROSS JOIN y self join</h2>
     <div class="doc-content">
-<pre><code class="language-sql">-- Producto cartesiano: cada empleado con cada turno
-SELECT e.nombre, t.horario
-FROM empleados e CROSS JOIN turnos t;
+        <pre><code class="language-sql">-- CROSS JOIN: producto cartesiano (todas × todas):
+SELECT t.talla, c.color
+FROM tallas t CROSS JOIN colores c;      -- 6×4 = 24 combinaciones
 
--- Auto-join: empleado y su jefe
+-- Útil para matrices: precios por talla×color:
+INSERT INTO matriz_precios (talla, color)
+SELECT t.codigo, c.codigo FROM tallas t CROSS JOIN colores c;
+
+-- SELF JOIN: tabla contra sí misma (jerarquías):
+CREATE TABLE empleados (
+    id INT UNSIGNED PRIMARY KEY,
+    nombre VARCHAR(80),
+    jefe_id INT UNSIGNED NULL,
+    FOREIGN KEY (jefe_id) REFERENCES empleados(id)
+);
+
 SELECT e.nombre AS empleado, j.nombre AS jefe
 FROM empleados e
-LEFT JOIN empleados j ON e.jefe_id = j.id;</code></pre>
+LEFT JOIN empleados j ON j.id = e.jefe_id;   -- LEFT incluye al CEO (sin jefe)</code></pre>
+        <blockquote class="aside aside-note">
+            <p>El self join es la herramienta estándar para jerarquías almacenadas como lista de adyacencia: empleados-jefe, categorías-categoría padre, páginas-página madre. Para árboles profundos considera CTE recursiva (lección agregación avanzada / SQL moderno).</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="mas-de-dos-tablas">
-    <h2>Más de dos tablas</h2>
+<section id="mas-de-dos-tablas">
+    <h2><i class="fa-solid fa-project-diagram"></i> Joins encadenados: más de dos tablas</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT c.nombre AS cliente, p.id AS pedido, pr.nombre AS producto
-FROM pedidos p
-INNER JOIN clientes c ON p.cliente_id = c.id
-INNER JOIN detalles_pedido d ON d.pedido_id = p.id
-INNER JOIN productos pr ON d.producto_id = pr.id
-ORDER BY c.nombre;</code></pre>
+        <pre><code class="language-sql">-- Ticket completo: pedido → cliente → detalle → producto → categoría:
+SELECT
+    c.nombre          AS cliente,
+    p.fecha           AS fecha,
+    pr.nombre         AS producto,
+    cat.nombre        AS categoria,
+    d.cantidad,
+    d.precio_unit     AS precio,
+    d.cantidad * d.precio_unit AS subtotal
+FROM pedidos      p
+JOIN clientes     c   ON c.id = p.cliente_id
+JOIN detalle      d   ON d.pedido_id = p.pedido_id
+JOIN productos    pr  ON pr.id = d.producto_id
+LEFT JOIN categorias cat ON cat.id = pr.categoria_id
+WHERE p.pedido_id = 1042
+ORDER BY subtotal DESC;
+
+-- Agregación sobre el encadenado:
+SELECT c.nombre, SUM(d.cantidad * d.precio_unit) AS gastado_total
+FROM clientes c
+JOIN pedidos   p ON p.cliente_id = c.id
+JOIN detalle   d ON d.pedido_id = p.pedido_id
+GROUP BY c.id, c.nombre
+HAVING gastado_total &gt; 1000
+ORDER BY gastado_total DESC;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Buena práctica en joins múltiples</th><th>Razón</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Cada JOIN parte de la tabla anterior lógicamente</td><td>El planificador optimiza mejor caminos lineales claros</td></tr>
+                <tr><td>LEFT solo donde el vacío es legítimo</td><td>Cada LEFT innecesario multiplica riesgo fan-out</td></tr>
+                <tr><td>Índice en TODA columna usada en ON/WHERE de join</td><td>Nested loops sin índice = n² escaneos</td></tr>
+                <tr><td>EXPLAIN antes de llevar a producción</td><td>Detecta full scans y joins mal ordenados</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>ON incompleto o condición olvidada</td><td>CROSS JOIN accidental: millones de filas</td><td>Siempre ON explícito; EXPLAIN verifica</td></tr>
+                <tr><td>Fan-out duplicando filas (1:N tras 1:N)</td><td>SUMs inflados absurdamente</td><td>Agregar por niveles o subconsultas derivadas</td></tr>
+                <tr><td>WHERE sobre tabla derecha en LEFT JOIN</td><td>Se convierte en INNER sin darte cuenta</td><td>Mover filtro al ON</td></tr>
+                <tr><td>Columna ambigua id</td><td>"Column 'id' is ambiguous"</td><td>Calificar siempre c.id, p.id...</td></tr>
+                <tr><td>Comparar con columna NULL del lado derecho</td><td>Parejas "desaparecen"</td><td>Entender three-valued logic; IS NULL para anti-join</td></tr>
+                <tr><td>RIGHT JOIN innecesarios ilegibles</td><td>Lógica invertida difícil de mantener</td><td>Reescribir como LEFT reordenando FROM</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Ticket completo</strong>: reconstruye el query de pedido→cliente→detalle→producto sobre tu base tienda; imprime ticket real formateado.</li>
+            <li><strong>Cazadores de huérfanos</strong>: tres anti-joins: productos sin ventas, clientes sin pedidos, categorías vacías.</li>
+            <li><strong>Laboratorio del WHERE-vs-ON</strong>: ejecuta ambas versiones del LEFT JOIN con filtro de estado; compara conteo de filas y explica diferencia.</li>
+            <li><strong>Jerarquía organizacional</strong>: con tabla empleados self-joined, lista empleado→jefe incluyendo CEO, y luego cuántos reportes directos tiene cada jefe.</li>
+            <li><strong>Cazador de fan-out</strong>: suma totales con join directo pedidos→detalle vs subconsulta pre-agregada; documenta la inflación observada y la corrección.</li>
+        </ol>
+    </div>
+</section>

@@ -1,43 +1,219 @@
-<!-- 3. Control de Flujo - C# (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="if-else">
-    <h2>if / else</h2>
+<!-- 4. Control de Flujo - C# (Lenguajes de Programación) -->
+<section id="if-else">
+    <h2><i class="fa-solid fa-code-branch"></i> Condicionales: if/else y operadores modernos</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">int nota = 85;
+        <p>La estructura condicional básica funciona como en C/Java, pero C# moderno añade azúcares potentes: patrones relacionales, combinadores lógicos y expresiones condicionales compactas.</p>
 
-if (nota &gt;= 90)      Console.WriteLine("Excelente");
-else if (nota &gt;= 70) Console.WriteLine("Aprobado");
-else                 Console.WriteLine("Reprobado");
+        <h3>if clásico con mejoras de patrón (C# 9)</h3>
+        <pre><code class="language-csharp">int temperatura = 35;
 
-string resultado = nota &gt;= 70 ? "Aprobado" : "Reprobado"; // ternario</code></pre>
+// Patrones RELACIONALES: comparación declarativa
+if (temperatura is &gt;= 30) {
+    Console.WriteLine("Calor extremo");
+} else if (temperatura is &gt; 15 and &lt; 30) {   // combinador 'and' sin &&amp;&amp;
+    Console.WriteLine("Agradable");
+} else {
+    Console.WriteLine("Frío");
+}
+
+// Verificar rango con patrones:
+bool enHorario = horaActual is &gt;= 8 and &lt; 18;
+
+// Null-check idiomático:
+string? nombre = null;
+if (nombre is not null) {           // preferible a != null
+    Console.WriteLine(nombre.Length);
+}</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Los operadores cortocircuito <code>&amp;&amp;</code> y <code>||</code> no evalúan el segundo término si el primero decide — protege accesos: <code>if (lista != null &amp;&amp; lista.Count &gt; 0)</code> nunca lanza NRE porque la segunda parte solo se evalúa si la primera fue true. En C# moderno: <code>lista?.Count &gt; 0</code>.</p>
+        </blockquote>
+
+        <h3>Ternario y null-coalescing</h3>
+        <table>
+            <thead>
+                <tr><th>Operador</th><th>Sintaxis</th><th>Lectura mental</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Ternario <code>? :</code></td><td><code>var x = cond ? a : b;</code></td><td>"si cond entonces a sino b" — EXPRESIÓN, devuelve valor</td></tr>
+                <tr><td>Null-coalescing <code>??</code></td><td><code>nombre ?? "anónimo"</code></td><td>"si es null usa esto otro"</td></tr>
+                <tr><td>Null-coalescing asignación <code>??=</code></td><td><code>cache ??= CargarCaro();</code></td><td>"si null, inicializa perezosamente"</td></tr>
+                <tr><td>Navegación segura <code>?.</code></td><td><code>cliente?.Direccion?.Ciudad</code></td><td>cadena que se corta devolviendo null ante cualquier eslabón nulo</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-csharp">string saludo = nombre != null ? $"Hola {nombre}" : "Hola invitado";
+string alias = nombre ?? "sin-nombre";
+
+List&lt;int&gt;? resultados = null;
+int cantidad = resultados?.Count ?? 0;      // 0 sin crash
+
+// ??= para lazy initialization:
+private List&lt;string&gt;? _logs;
+public IReadOnlyList&lt;string&gt; Logs =&gt; _logs ??= new List&lt;string&gt;();</code></pre>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="switch-expression-moderno">
-    <h2>Switch expression (moderno)</h2>
+<section id="switch-expression-moderno">
+    <h2><i class="fa-solid fa-shuffle"></i> Switch expressions: el switch renacido</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">string nivel = nota switch
-{
-    &gt;= 90 =&gt; "Excelente",
-    &gt;= 80 =&gt; "Muy bueno",
-    &gt;= 70 =&gt; "Aprobado",
-    _     =&gt; "Reprobado"
-};</code></pre>
-    </div>
-  </section>
+        <p>C# 8 transformó el switch: ahora es una <strong>expresión que devuelve un valor</strong>, con sintaxis flecha y pattern matching exhaustivo comprobable por el compilador:</p>
 
-  <section id="bucles">
-    <h2>Bucles</h2>
+        <h3>Switch expression básico</h3>
+        <pre><code class="language-csharp">// El clásico switch-statement (aún válido):
+switch (codigo) {
+    case 200: Console.WriteLine("OK"); break;
+    case 404: Console.WriteLine("No encontrado"); break;
+    default: Console.WriteLine("Otro"); break;
+}
+
+// Switch EXPRESSION moderno: compacto, valor-retornante
+string descripcion = codigo switch {
+    200 =&gt; "OK",
+    301 or 302 =&gt; "Redirección",           // múltiples valores con 'or'
+    &gt;= 400 and &lt; 500 =&gt; "Error del cliente", // patrones relacionales
+    _ =&gt; "Desconocido"                      // discard _: el default
+};
+Console.WriteLine(descripcion);</code></pre>
+
+        <h3>Pattern matching sobre objetos y propiedades</h3>
+        <p>Aquí el switch expression brilla: desestructura objetos y decide por SU CONTENIDO:</p>
+        <pre><code class="language-csharp">public record Pedido(decimal Total, bool EsVip, int AniosFidelidad);
+
+decimal calcularDescuento(Pedido p) =&gt; p switch {
+    { Total: &gt; 1000 }                     =&gt; 0.15m,   // property pattern
+    { EsVip: true, AniosFidelidad: &gt;= 5 } =&gt; 0.10m,
+    { EsVip: true }                       =&gt; 0.05m,
+    _                                     =&gt; 0m
+};
+
+// Posicional + when: condiciones adicionales
+static string clasificar(int edad, bool licencia) =&gt;
+    (edad, licencia) switch {                    // tuple pattern
+        (&lt; 16, _)             =&gt; "Menor: sin conducir",
+        (&lt; 18, false)         =&gt; "Sin licencia aún",
+        (&lt; 18, true)          =&gt; "Con permiso especial",
+        (_, true) when edad &gt; 80 =&gt; "Renovación médica requerida",
+        (_, true)             =&gt; "Conductor pleno",
+        _                     =&gt; "Sin licencia"
+    };</code></pre>
+        <blockquote class="aside aside-success">
+            <p>Si todas las ramas cubren todos los casos posibles de una enum o de los patrones definidos, el compilador AVISA si falta alguno al añadir nuevos valores — bugs de exhaustividad atrapados antes de ejecutar. Esto era imposible con el switch statement clásico.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="bucles">
+    <h2><i class="fa-solid fa-rotate"></i> Bucles: for, foreach, while</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">for (int i = 0; i &lt; 5; i++) Console.Write(i);
+        <table>
+            <thead>
+                <tr><th>Bucle</th><th>Cuándo usarlo</th><th>Ejemplo canónico</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>foreach</code></td><td>Recorrer colecciones (95% de casos)</td><td>foreach (var x in lista)</td></tr>
+                <tr><td><code>for</code></td><td>Necesitas índice o pasos controlados</td><td>Tablas, matrices, saltos</td></tr>
+                <tr><td><code>while</code></td><td>Condición dinámica pre-evaluada</td><td>Leer hasta EOF/sentinelas</td></tr>
+                <tr><td><code>do-while</code></td><td>Ejecutar AL MENOS una vez</td><td>Menús, validación de input</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-csharp">var frutas = new List&lt;string&gt; {"manzana", "pera", "uva"};
 
-int[] nums = { 1, 2, 3 };
-foreach (int n in nums) Console.Write(n);
+// foreach: simple, seguro, imposible off-by-one
+foreach (var fruta in frutas) {
+    Console.WriteLine(fruta);
+}
 
-int j = 0;
-while (j &lt; 3) { Console.Write(j); j++; }
+// Con índice cuando lo necesitas:
+for (int i = 0; i &lt; frutas.Count; i++) {
+    Console.WriteLine($"{i}: {frutas[i]}");
+}
 
-do { Console.Write("una vez"); } while (false);</code></pre>
+// do-while: menú que se muestra mínimo una vez
+string opcion;
+do {
+    Console.WriteLine("[1] Sumar [2] Restar [0] Salir");
+    opcion = Console.ReadLine();
+} while (opcion != "0");
+
+// break / continue / goto-less control:
+foreach (var n in new[] {1, 7, -3, 9}) {
+    if (n &lt; 0) continue;              // saltar este elemento
+    if (n == 9) break;                // terminar todo el bucle
+    Console.WriteLine(n);             // 1, 7
+}
+
+// Rango infinito con for vacío + condición central:
+for (;;) {
+    var linea = Console.ReadLine();
+    if (linea == "salir") break;
+    Console.WriteLine($"Eco: {linea}");
+}</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>NUNCA modifiques (Add/Remove) la colección DENTRO de su propio foreach: InvalidOperationException garantizada ("Collection was modified"). Si necesitas filtrar mientras recorres: itera sobre ToList() (copia) o usa RemoveAll() fuera del bucle.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="buenas-practicas-flujo">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Switch expressions para mapeos valor→valor</td><td>Declarativo, exhaustivo, testeable como función pura</td></tr>
+                <tr><td>Patrones is not null en vez de != null</td><td>Mismo resultado; estilo moderno uniforme del ecosistema</td></tr>
+                <tr><td>?. y ?? en vez de pirámides de null-checks</td><td>Flujo plano legible de izquierda a derecha</td></tr>
+                <tr><td>foreach por defecto; for solo con índice real</td><td>Elimina errores off-by-one estructuralmente</td></tr>
+                <tr><td>Extraer ramas complejas a métodos descriptivos</td><td>if (EsElegibleParaPrestamo(cliente)) se lee solo</td></tr>
+                <tr><td>Cláusulas de guarda temprana vs anidamiento profundo</td><td>return/bail-out temprano mantiene indentación plana</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-csharp">// Guard clauses: valida y sale; el caso feliz queda plano:
+public Resultado Procesar(Pedido? pedido) {
+    if (pedido is null) return Resultado.Error("Pedido nulo");
+    if (pedido.Total &lt;= 0) return Resultado.Error("Total inválido");
+    if (!Inventario.HayStock(pedido)) return Resultado.Error("Sin stock");
+
+    // ...lógica principal SIN indentar en cascada...
+    return Resultado.Ok();
+}</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Falta break en switch statement</td><td>No compila en C# (¡bien!) pero confunde a migrantes de C</td><td>break/return obligatorio, o migrar a switch expression</td></tr>
+                <tr><td>Modificar colección durante foreach</td><td>InvalidOperationException en runtime</td><td>ToList() para iterar copia / RemoveAll()</td></tr>
+                <tr><td>= en vez de == dentro de condición</td><td>CS0029 (no compila salvo bool vars): menos común que en C gracias a tipado estricto</td><td>El compilador te salva; mantén alerta igualmente</td></tr>
+                <tr><td>Ternarios anidados ilegibles</td><td>a ? b ? c : d : e — nadie entiende nada</td><td>Switch expression o extraer método</td></tr>
+                <tr><td>while(true) sin break alcanzable</td><td>Bucle eterno cuelga hilo/UI</td><td>Garantizar condición de salida verificada</td></tr>
+                <tr><td>Off-by-one con &lt;= en for sobre Count</td><td>IndexOutOfRangeException</td><td>&lt; Count, o directamente foreach</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Calculadora de tarifas</strong>: switch expression que clasifique edad (niño/joven/adulto/senior) y aplique descuentos combinando tuple patterns con when.</li>
+            <li><strong>Menú robusto</strong>: do-while con menú de 4 opciones usando switch expression; valida entrada inválida sin romper el ciclo.</li>
+            <li><strong>Clasificador HTTP</strong>: recibe códigos int y devuelve categoría con patrones relacionales (1xx info, 2xx ok, 3xx redirect, 4xx cliente, 5xx servidor).</li>
+            <li><strong>FizzBuzz patterns</strong>: resuelve con switch expression usando tupla de booleanos ((n%3==0, n%5==0)) y compara con versión if tradicional en comentario.</li>
+            <li><strong>Guard-clause refactor</strong>: toma una función con 4 niveles de anidamiento (escríbela primero así) y reescríbela con guard clauses; compara líneas e indentación.</li>
+        </ol>
+    </div>
+</section>

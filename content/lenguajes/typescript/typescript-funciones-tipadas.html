@@ -2,41 +2,239 @@
 <!-- Contenido local del proyecto -->
 
   <section id="parametros-y-retorno">
-    <h2>Parámetros y retorno</h2>
+    <h2><i class="fa-solid fa-right-left"></i> Parámetros tipados y retorno: inferido vs anotado</h2>
     <div class="doc-content">
-<pre><code class="language-typescript">function enviar(mensaje: string, veces: number = 1): void {
-  for (let i = 0; i &lt; veces; i++) console.log(mensaje);
+<p>Las funciones son donde el tipado rinde más: los parámetros son la <strong>frontera de entrada</strong> de tu lógica y el retorno su <strong>compromiso de salida</strong>. Anotarlos convierte cada llamada incorrecta en un error de compilación, no en un bug descubierto por un usuario.</p>
+<pre><code class="language-typescript">// Parámetros anotados (obligatorio) + retorno anotado (recomendado)
+function areaRectangulo(base: number, altura: number): number {
+  return base * altura;
 }
 
-function total(...nums: number[]): number {
-  return nums.reduce((a, b) =&gt; a + b, 0);
+// El retorno también se infiere: TS deduce number sin que lo escribas
+const duplicar = (n: number) =&gt; n * 2;
+
+// ¿Por qué anotar el retorno si se infiere? Porque protege la implementación:
+function esPar(n: number): boolean {
+  // return n % 2;      // ❌ Type 'number' is not assignable to type 'boolean'
+  return n % 2 === 0;   // ✅ el error salta DENTRO de la función, no donde la consumes
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Anota el retorno de toda función exportada o pública: si mañana cambia la implementación y el tipo varía, el compilador avisa en el lugar correcto en vez de romper silenciosamente a veinte consumidores.</p></blockquote>
+<h3>Retornos explícitos para uniones</h3>
+<pre><code class="language-typescript">function clasificarEdad(edad: number): "niño" | "adolescente" | "adulto" {
+  if (edad &lt; 13) return "niño";
+  if (edad &lt; 18) return "adolescente";
+  return "adulto";
+}
+// La firma documenta los valores posibles SIN leer el cuerpo</code></pre>
+<h3>Funciones asíncronas: siempre Promise&lt;T&gt;</h3>
+<p>Toda función <code>async</code> devuelve una promesa; TypeScript la modela con el genérico <code>Promise&lt;T&gt;</code>, donde T es el valor resuelto (profundizaremos en la lección de genéricos):</p>
+<pre><code class="language-typescript">async function cargarTasaDelDia(): Promise&lt;number&gt; {
+  const respuesta = await fetch("/api/tasa");
+  const datos = (await respuesta.json()) as { valor: number };
+  return datos.valor;
 }
 
-enviar("Hola", 2);   // imprime 2 veces
-total(1, 2, 3);      // 6</code></pre>
+// Al consumirla con await, el resultado ES number:
+const tasa = await cargarTasaDelDia();
+console.log((tasa * 100).toFixed(2));</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="opcionales-default-y-rest">
+    <h2><i class="fa-solid fa-list-ol"></i> Parámetros opcionales, por defecto y rest</h2>
+    <div class="doc-content">
+<p>TypeScript modela las tres formas en que JavaScript recibe argumentos flexibles: parámetros que pueden faltar (<code>?</code>), parámetros con valor por defecto (<code>= valor</code>) y colecciones abiertas de argumentos (<code>...rest</code>). Regla estructural: <strong>los obligatorios van primero</strong>; opcionales, con defecto y rest, al final.</p>
+<pre><code class="language-typescript">// Opcional con ?: quien llama decide si lo pasa
+function saludar(nombre: string, titulo?: string): string {
+  return titulo ? `${titulo} ${nombre}` : `Hola ${nombre}`;
+}
+saludar("Ana");            // "Hola Ana"
+saludar("Ana", "Dra.");    // "Dra. Ana"
+
+// Con valor por defecto: implícitamente opcional Y tipado por el literal
+function conectar(host: string, puerto: number = 8080): string {
+  return `Conectando a ${host}:${puerto}`;
+}
+conectar("localhost");        // usa 8080
+conectar("localhost", 3000);  // usa 3000
+
+// Rest: N argumentos agrupados en un arreglo tipado
+function total(...importes: number[]): number {
+  return importes.reduce((acumulado, actual) =&gt; acumulado + actual, 0);
+}
+total(10, 20);          // 30
+total(5, 5, 5, 5, 5);   // 25
+
+// Combinando todo (orden correcto: obligatorios → defecto → rest)
+function registrarEvento(usuario: string, nivel: string = "info",
+                         ...etiquetas: string[]): void {
+  console.log(`[${nivel}] ${usuario}`, etiquetas);
+}
+registrarEvento("ana", "warn", "seguridad", "login");</code></pre>
+<blockquote class="aside aside-caution"><p>Un parámetro opcional (<code>x?: string</code>) tiene tipo real <code>string | undefined</code>: dentro de la función DEBES contemplar la ausencia antes de usarlo. Si eso molesta, probablemente necesites un valor por defecto en lugar de un opcional.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="firmas-de-funcion">
-    <h2>Firmas de función</h2>
+    <h2><i class="fa-solid fa-signature"></i> Firmas de función y contextual typing</h2>
     <div class="doc-content">
-<pre><code class="language-typescript">type Operacion = (a: number, b: number) =&gt; number;
+<p>Una <strong>firma de función</strong> describe solo su interfaz invocable —tipos de parámetros y de retorno— sin el cuerpo. Declararla como alias permite tipar variables, propiedades de objeto, parámetros de orden superior y callbacks:</p>
+<pre><code class="language-typescript">// Alias de firma: recibe string, devuelve void
+type Manejador = (mensaje: string) =&gt; void;
 
-const suma: Operacion = (a, b) =&gt; a + b;
-const resta: Operacion = (a, b) =&gt; a - b;</code></pre>
+let registro: Manejador;
+
+registro = (msg) =&gt; console.log(msg);   // ✅ compatible
+registro = (msg) =&gt; console.warn(msg);  // ✅ otra implementación válida
+// registro = (msg) =&gt; msg.length;
+// ❌ Type 'number' is not assignable to type 'void'</code></pre>
+<h3>Contextual typing: el compilador lee el contexto</h3>
+<p>Cuando asignas una función a un destino ya tipado, NO necesitas re-anotar los parámetros: TypeScript los <strong>infiere desde el contexto</strong>. Esto hace que los callbacks de <code>map</code>, <code>filter</code> o <code>addEventListener</code> funcionen sin una sola anotación:</p>
+<pre><code class="language-typescript">const nombres = ["ana", "luis", "marta"];
+
+// 'nombre' ya SABE que es string: viene del contexto del arreglo
+const enMayusculas = nombres.map((nombre) =&gt; nombre.toUpperCase());
+
+// Sin contexto habría que anotar a mano:
+const sola: (n: string) =&gt; string = (n) =&gt; n.toUpperCase();</code></pre>
+<h3>Todas las formas de declarar una firma</h3>
+<table><thead><tr><th>Forma</th><th>Sintaxis</th><th>Ideal para</th></tr></thead><tbody><tr><td>Declaración anotada</td><td><code>function f(a: string): void {}</code></td><td>Funciones normales, hoisting, this clásico</td></tr><tr><td>Flecha con retorno anotado</td><td><code>const f = (a: string): void =&gt; {}</code></td><td>Callbacks y estilo moderno</td></tr><tr><td>Type alias de firma</td><td><code>type F = (a: string) =&gt; void</code></td><td>Reutilizar la misma firma en varios sitios</td></tr><tr><td>Interface call signature</td><td><code>interface F { (a: string): void }</code></td><td>Firmas documentables y fusionables</td></tr><tr><td>Sobrecargas</td><td>Varias firmas + 1 implementación</td><td>Múltiples formas de llamar a la misma función</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>Elige UNA forma dominante por proyecto. Las flechas + alias de firma son hoy el estándar de facto; las declaraciones <code>function</code> siguen siendo perfectamente válidas para funciones públicas de módulo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="callbacks-tipados">
+    <h2><i class="fa-solid fa-phone-volume"></i> Callbacks tipados y el matiz del retorno void</h2>
+    <div class="doc-content">
+<p>Los callbacks son funciones que pasamos como argumento para que «alguien más» las ejecute después. Tiparlas define el contrato exacto: qué recibirá tu función y qué se espera que devuelva.</p>
+<pre><code class="language-typescript">type CallbackProgreso = (porcentaje: number, etapa: string) =&gt; void;
+
+function descargar(url: string, alProgresar: CallbackProgreso): void {
+  let avance = 0;
+  const temporizador = setInterval(() =&gt; {
+    avance += 25;
+    alProgresar(avance, url);     // ejecutamos el contrato
+    if (avance &gt;= 100) clearInterval(temporizador);
+  }, 400);
+}
+
+descargar("informe.pdf", (pct, fuente) =&gt; {
+  console.log(`${fuente}: ${pct}%`);   // parámetros inferidos por contexto
+});</code></pre>
+<h3>El detalle fino: retorno void en callbacks ES especial</h3>
+<p>Un retorno <code>void</code> significa «a quien invoca no le importa lo que devuelvas». Por eso, curiosamente, una implementación que devuelve algo <strong>sí es asignable</strong> a una firma que declara <code>void</code>:</p>
+<pre><code class="language-typescript">// map espera (valor, indice, arreglo) =&gt; desconocido... USA el retorno.
+// forEach espera (valor, indice, arreglo) =&gt; void... IGNORA el retorno.
+
+const numeros = [1, 2, 3];
+const duplicados = numeros.map((n) =&gt; n * 2);    // [2, 4, 6] ✅
+
+numeros.forEach((n) =&gt; n * 2);                   // ⚠️ compila: void descarta todo
+numeros.forEach((n) =&gt; { console.log(n * 2); }); // ✅ intención clara</code></pre>
+<blockquote class="aside aside-danger"><p>Ese «privilegio» de void explica bugs clásicos: usar <code>map</code> donde iba <code>forEach</code> compila igual… pero descarta los resultados. Cuando diseñes tus propias APIs con callbacks, declara <code>void</code> como retorno para comunicar: «devolver algo aquí no sirve de nada».</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="sobrecarga">
-    <h2>Sobrecarga</h2>
+    <h2><i class="fa-solid fa-layer-group"></i> Sobrecarga: varias firmas, una implementación</h2>
     <div class="doc-content">
-<pre><code class="language-typescript">function convertir(valor: string): number | undefined;
-function convertir(valor: number): string;
-function convertir(valor: any): any {
-  return typeof valor === "string" ? parseInt(valor) : String(valor);
+<p>A veces una misma función acepta formas de llamada distintas y devuelve tipos distintos según la entrada. Las <strong>overloads</strong> declaran todas las firmas públicas válidas y luego UNA implementación compatible con todas. Quien consume la función ve solo las sobrecargas; la implementación queda oculta:</p>
+<pre><code class="language-typescript">// FIRMAS PÚBLICAS (lo que ve el consumidor)
+function crearElemento(selector: string): HTMLElement;
+function crearElemento(indice: number, texto: string): HTMLLIElement;
+
+// IMPLEMENTACIÓN ÚNICA (compatible con ambas; NO es llamable directamente)
+function crearElemento(a: string | number, b?: string): HTMLElement {
+  if (typeof a === "string") {
+    return document.querySelector(a) as HTMLElement;
+  }
+  const li = document.createElement("li");
+  li.textContent = b ?? "";
+  li.dataset.indice = String(a);
+  return li;
 }
 
-convertir("42"); // number | undefined
-convertir(42);   // string</code></pre>
+// El consumo ahora es preciso según cómo llames:
+const modal = crearElemento("#modal");      // HTMLElement
+const item = crearElemento(3, "Tercero");   // HTMLLIElement
+item.textContent = "editable";              // ✅ sabe que es un &lt;li&gt; concreto
+
+// crearElemento(true);
+// ❌ No overload matches this call.</code></pre>
+<h3>Reglas de oro de la sobrecarga</h3>
+<ul>
+<li>Las firmas se evalúan <strong>de arriba hacia abajo</strong>: ordena de la más específica a la más general.</li>
+<li>Solo la última firma lleva cuerpo; las anteriores terminan en <code>;</code>.</li>
+<li>La implementación debe ser <strong>compatible con todas</strong> las firmas declaradas.</li>
+<li>La implementación NO es llamable desde fuera: solo cuentan las firmas públicas.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>No abuses: cada overload es una promesa más que mantener. Antes de sobrecargar pregúntate si dos funciones con nombres distintos serían más claras, o si un parámetro de unión con narrowing resuelve el caso con menos maquinaria.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="never-y-exhaustividad">
+    <h2><i class="fa-solid fa-shield-halved"></i> never y chequeos de exhaustividad</h2>
+    <div class="doc-content">
+<p>Cuando haces <strong>narrowing</strong> sobre una unión con un <code>switch</code>, TypeScript va reduciendo el tipo en cada rama. Si al final del switch el valor quedó de tipo <code>never</code>, significa que TODOS los casos están cubiertos. Ese hecho permite construir un guardián que rompe la compilación cuando alguien añade un caso nuevo y olvida atenderlo:</p>
+<pre><code class="language-typescript">type Forma = "circulo" | "rectangulo" | "triangulo";
+
+function descripcion(forma: Forma): string {
+  switch (forma) {
+    case "circulo":    return "Figura redonda";
+    case "rectangulo": return "Cuatro lados rectos";
+    case "triangulo":  return "Tres lados";
+    default: {
+      // Si llegamos aquí, a forma ya no le queda ningún tipo posible:
+      const imposible: never = forma;
+      throw new Error(`Forma no atendida: ${imposible}`);
+    }
+  }
+}</code></pre>
+<pre><code class="language-typescript">// Ahora añadimos una forma nueva a la unión…
+type Forma = "circulo" | "rectangulo" | "triangulo" | "hexagono";
+
+// …y SIN tocar la función, el compilador GRITA:
+// ❌ Type '"hexagono"' is not assignable to type 'never'
+// La compilación falla hasta que atiendas el caso nuevo. ¡Ese es el objetivo!</code></pre>
+<blockquote class="aside aside-success"><p>Este patrón convierte el <code>switch</code> en un contrato autodefensovo: agregar un miembro a la unión genera errores de compilación en cada switch incompleto del proyecto. Exhaustividad verificada por máquina, no por disciplina humana.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes con funciones tipadas</h2>
+    <div class="doc-content">
+<table><thead><tr><th>Error típico</th><th>Por qué falla</th><th>Corrección recomendada</th></tr></thead><tbody><tr><td>No anotar parámetros «para ahorrar tiempo»</td><td>Sin contexto quedan como any implícito (error en strict)</td><td>Anotar siempre los parámetros</td></tr><tr><td>Confundir opcional con valor por defecto</td><td><code>x?: string</code> sigue siendo undefined dentro</td><td>Usar defecto cuando el fallback es fijo</td></tr><tr><td>Callbacks con retorno útil donde se espera void</td><td>El resultado se descarta silenciosamente</td><td>Revisar si el método es map o forEach</td></tr><tr><td>Sobrecargar lo que es un parámetro de unión</td><td>Mantenimiento doble por el mismo comportamiento</td><td>Unir tipos y hacer narrowing interno</td></tr><tr><td>Olvidar el guardián never en switches de uniones</td><td>Nuevos casos pasan desapercibidos en runtime</td><td>Añadir el default con asignación a never</td></tr></tbody></table>
+<pre><code class="language-typescript">// ❌ Opcional mal gestionado: titulo puede ser undefined
+function etiqueta(nombre: string, titulo?: string): string {
+  return `${titulo.toUpperCase()} ${nombre}`;   // 💥 posiblemente undefined
+}
+
+// ✅ Contemplar la ausencia o dar valor por defecto:
+function etiquetaSegura(nombre: string, titulo: string = "Sr/Sra"): string {
+  return `${titulo} ${nombre}`;
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Prueba de fuego para tus firmas: léelas en voz alta. Si <code>(usuario: Usuario, opciones?: OpcionesEnvio) =&gt; Promise&lt;Recibo&gt;</code> se entiende sin ver el cuerpo, la firma está bien diseñada.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-list-check"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Compila cada ejercicio con <code>tsc --noEmit</code> hasta lograr cero errores en strict:</p>
+<ol>
+<li><strong>Básico</strong>: Escribe <code>pagoTotal(importe: number, propina?: number): number</code> donde la propina por defecto sea el 10%. Verifica ambos caminos de llamada.</li>
+<li><strong>Rest + firma</strong>: Crea el alias <code>Promedio = (...valores: number[]) =&gt; number</code>, implementa dos versiones (aritmética y ponderado) y pásalas como argumento a una función <code>informar(calcular: Promedio, datos: number[])</code>.</li>
+<li><strong>Callback void</strong>: Implementa <code>cuentaAtras(segundos: number, alTerminar: () =&gt; void)</code> usando setInterval. Demuestra el matiz de void devolviendo accidentalmente un número desde el callback y explica por qué compila.</li>
+<li><strong>Sobrecarga</strong>: Diseña <code>formatearFecha(input: Date): string</code> y <code>formatearFecha(iso: string, formato: "corto" | "largo"): string</code> con overloads y una única implementación.</li>
+<li><strong>Desafío exhaustividad</strong>: Modela <code>EstadoPedido = "carrito" | "pagado" | "enviado" | "entregado"</code>. Escribe <code>siguienteEstado(actual)</code> con switch + guardián never que devuelva el estado siguiente (o null en entregado). Añade el estado "devuelto" y verifica que la compilación falla hasta atenderlo.</li>
+</ol>
+<p>---</p>
     </div>
   </section>

@@ -2,34 +2,272 @@
 <!-- Contenido local del proyecto -->
 
   <section id="if-expresion-y-when">
-    <h2>if expresión y when</h2>
+    <h2><i class="fa-solid fa-code-branch"></i> if como expresión: decisiones que devuelven valores</h2>
     <div class="doc-content">
-<pre><code class="language-kotlin">val resultado = if (nota &gt;= 70) "Aprobado" else "Reprobado"
+<p>En la mayoría de lenguajes, un <code>if</code> es una <em>sentencia</em>: ejecuta código pero no produce resultado. Kotlin da un paso más y lo convierte en una <strong>expresión</strong>, es decir, algo que se evalúa y devuelve un valor. Esta idea —que el control de flujo produce datos en lugar de solo moverlos— cambia la forma de escribir programas: desaparece la necesidad del operador ternario (<code>cond ? a : b</code>) y se eliminan variables temporales inicializadas "por defecto" que luego se sobrescriben.</p>
+<pre><code class="language-kotlin">val nota = 78
 
-val nivel = when {
-    nota &gt;= 90 -&gt; "Excelente"
-    nota &gt;= 70 -&gt; "Aprobado"
-    else -&gt; "Reprobado"
+// El if completo devuelve un valor asignable
+val calificacion = if (nota &gt;= 90) "Sobresaliente" else "Aprobado"
+
+// Con varias ramas, cada rama evalúa su expresión
+val etiqueta = if (nota &gt;= 90) {
+    "Excelente"
+} else if (nota &gt;= 70) {
+    "Aprobado"
+} else {
+    "Reprobado"
 }
 
-when (dia) {
-    6, 7 -&gt; println("finde")
-    in 1..5 -&gt; println("entre semana")
-    else -&gt; println("inválido")
+// Con bloques { }, el valor devuelto es la ÚLTIMA expresión del bloque
+val mensaje = if (nota &gt;= 70) {
+    println("Registrando aprobado...")   // efecto secundario permitido
+    "Nota final: $nota"                  // esta línea es lo que se devuelve
+} else {
+    "Debes repetir el curso"</code></pre>
+<blockquote class="aside aside-caution"><p>Cuando usas <code>if</code> como expresión, la rama <code>else</code> es <strong>obligatoria</strong>. Sin ella el compilador no puede garantizar que siempre haya un valor, y fallará con <em>"missing return statement"</em>. Si solo necesitas efectos secundarios, usa el if tradicional sin asignarlo.</p></blockquote>
+<h3>Todas las ramas deben devolver el mismo tipo</h3>
+<p>El tipo resultante de la expresión es el supertipo común de todas sus ramas. Si mezclas tipos incompatibles, el compilador te avisará antes de ejecutar nada.</p>
+<pre><code class="language-kotlin">// ✅ Ambas ramas devuelven String
+val estado = if (stock &gt; 0) "disponible" else "agotado"
+
+// ❌ Error: Int y String no comparten un supertipo útil
+// val confuso = if (activo) 1 else "no"
+
+// Si realmente necesitas tipos distintos, declara el tipo común explícito:
+val valor: Any = if (activo) 1 else "no"</code></pre>
+<blockquote class="aside aside-tip"><p>Hábito idiomático: si un <code>if/else if/else</code> encadenado empieza a crecer (más de 3 ramas), migra a <code>when</code>: es más plano, más legible y permite condiciones por rangos o tipos sin repetir el sujeto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="when-con-sujeto">
+    <h2><i class="fa-solid fa-sitemap"></i> when con sujeto: ramificación expresiva</h2>
+    <div class="doc-content">
+<p><code>when</code> es el reemplazo moderno del <code>switch</code> clásico, pero comparado con él es otro planeta: no necesita <code>break</code> (no existe el temido <em>fall-through</em>), cada rama puede ser un valor, varios valores agrupados, un rango, un tipo o cualquier expresión booleana. El <strong>sujeto</strong> es el valor entre paréntesis contra el que se compara cada rama.</p>
+<pre><code class="language-kotlin">fun clasificarDia(dia: Int): String = when (dia) {
+    6, 7 -&gt; "Fin de semana"              // valores AGRUPADOS con coma
+    in 1..5 -&gt; "Entre semana"            // rango con el operador in
+    else -&gt; "Día inválido"               // equivalente al default
+}
+
+fun describir(valor: Any): String = when (valor) {
+    is Int -&gt; "Entero positivo: $valor"        // verifica TIPO...
+    is String -&gt; "Texto de ${valor.length} letras"  // ...y hace smart cast
+    is Boolean -&gt; if (valor) "Verdadero" else "Falso"
+    else -&gt; "Tipo desconocido"
+}
+
+// Las ramas pueden combinar condiciones arbitrarias
+fun riesgoEdad(edad: Int): String = when (edad) {
+    in 0..12 -&gt; "Niñez"
+    in 13..17 -&gt; "Adolescencia"
+    18, 19, 20 -&gt; "Juventud temprana"
+    in 21..65 -&gt; "Adultez"
+    else -&gt; "Tercera edad"
 }</code></pre>
+<h3>Formas que puede tomar una rama</h3>
+<table><thead><tr><th>Forma de rama</th><th>Ejemplo</th><th>Cuándo usarla</th></tr></thead><tbody>
+<tr><td>Valor literal</td><td><code>"es" -&gt;</code></td><td>Casos exactos y discretos (códigos, menús)</td></tr>
+<tr><td>Valores agrupados</td><td><code>6, 7 -&gt;</code></td><td>Varios casos comparten la misma respuesta</td></tr>
+<tr><td>Rango (<code>in</code>)</td><td><code>in 1..5 -&gt;</code></td><td>Intervalos numéricos o alfabéticos</td></tr>
+<tr><td>Tipo (<code>is</code>)</td><td><code>is String -&gt;</code></td><td>Polimorfismo manual sobre <code>Any</code> o jerarquías</td></tr>
+<tr><td>Expresión booleana</td><td><code>x % 2 == 0 -&gt;</code></td><td>Solo en <code>when</code> SIN sujeto</td></tr>
+<tr><td>Colección (<code>in</code>)</td><td><code>in listaPermitidos -&gt;</code></td><td>Pertenencia a un conjunto dinámico</td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>Con <code>is</code>, el compilador aplica <strong>smart cast</strong>: dentro de la rama puedes usar los miembros del tipo concreto sin castear. En el ejemplo anterior, <code>valor.length</code> funciona porque ya sabes que es <code>String</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="when-sin-sujeto">
+    <h2><i class="fa-solid fa-list-check"></i> when sin sujeto y exhaustividad</h2>
+    <div class="doc-content">
+<p>Cuando omites el sujeto, cada rama se evalúa como una condición booleana independiente de arriba hacia abajo: es la alternativa elegante a las cadenas largas de <code>if / else if</code>, especialmente cuando hay muchas condiciones cruzadas.</p>
+<pre><code class="language-kotlin">fun recomendarRopa(temperatura: Int, lluvia: Boolean): String = when {
+    temperatura &lt;= 0 &amp;&amp; lluvia -&gt; "Abrigo impermeable"
+    temperatura &lt;= 0               -&gt; "Abrigo grueso"
+    temperatura in 1..15           -&gt; "Chaqueta ligera"
+    temperatura in 16..25          -&gt; "Camiseta y sudadera por si acaso"
+    else                           -&gt; "Camiseta y protector solar"
+}</code></pre>
+<h3>Exhaustividad: el compilador cuenta los casos</h3>
+<p>Cuando el sujeto es un <code>enum</code> o una clase <code>sealed</code> (que verás en profundidad en la lección de clases), el compilador <strong>sabe todos los valores posibles</strong> y exige cubrirlos: si usas <code>when</code> como expresión sin <code>else</code> y falta un caso, el programa ni compila. Esto convierte un bug silencioso en un error visible.</p>
+<pre><code class="language-kotlin">enum class EstadoPedido { PENDIENTE, ENVIADO, ENTREGADO }
+
+// ✅ Exhaustivo: cubre TODOS los estados, no necesita else
+fun descripcion(estado: EstadoPedido): String = when (estado) {
+    EstadoPedido.PENDIENTE -&gt; "Esperando confirmación de pago"
+    EstadoPedido.ENVIADO   -&gt; "En camino al destino"
+    EstadoPedido.ENTREGADO -&gt; "Completado satisfactoriamente"
+}
+
+// ⚠ Si mañana añades CANCELADO al enum, ESTE when deja de compilar:
+// el compilador te obliga a decidir qué hacer con el nuevo caso.
+// Eso protege producción: ningún caso nuevo queda sin manejar.</code></pre>
+<blockquote class="aside aside-danger"><p>Añadir <code>else -&gt;</code> "para callar al compilador" en un <code>when</code> sobre enums o sealed classes anula esa red de seguridad: si agregas un nuevo valor, el <code>else</code> lo absorberá en silencio. Prefiere el <code>when</code> exhaustivo sin <code>else</code>.</p></blockquote>
+<blockquote class="aside aside-note"><p>Desde Kotlin 1.7 el compilador advierte incluso en <code>when</code>-sentencia no exhaustivos sobre enum/sealed, así que la recomendación oficial es tratarlos siempre como completos.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="bucles-y-ranges">
-    <h2>Bucles y ranges</h2>
+    <h2><i class="fa-solid fa-arrows-spin"></i> Bucles for y rangos</h2>
     <div class="doc-content">
-<pre><code class="language-kotlin">for (i in 1..5) print(i)          // 12345
-for (i in 1 until 5) print(i)     // 1234
-for (i in 5 downTo 1 step 2) print(i)  // 531
+<p>El <code>for</code> de Kotlin no existe en su forma "clásica" de C (<code>for(i = 0; i &lt; n; i++)</code>): itera directamente sobre elementos de algo iterable. Para secuencias numéricas, el trabajo lo hacen los <strong>rangos</strong>, objetos de primera clase que también sirven para validaciones (<code>in 1..100</code>) y comparaciones.</p>
+<table><thead><tr><th>Operador</th><th>Ejemplo</th><th>Valores generados</th></tr></thead><tbody>
+<tr><td><code>..</code></td><td><code>1..5</code></td><td>1, 2, 3, 4, 5 (incluye el extremo final)</td></tr>
+<tr><td><code>until</code></td><td><code>1 until 5</code></td><td>1, 2, 3, 4 (excluye el extremo final)</td></tr>
+<tr><td><code>downTo</code></td><td><code>5 downTo 1</code></td><td>5, 4, 3, 2, 1 (descendente inclusivo)</td></tr>
+<tr><td><code>step</code></td><td><code>1..10 step 3</code></td><td>1, 4, 7, 10 (salta de N en N)</td></tr>
+<tr><td><code>'a'..'e'</code></td><td>CharRange</td><td>a, b, c, d, e (¡también funciona con letras!)</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">for (i in 1..5) print("$i ")          // 1 2 3 4 5
+for (i in 0 until 5) print("$i ")     // 0 1 2 3 4  (típico para índices)
+for (i in 10 downTo 1 step 2) print("$i ")  // 10 8 6 4 2
+for (letra in 'a'..'e') print("$letra")     // abcde
 
-val lista = listOf("a", "b", "c")
-for ((indice, valor) in lista.withIndex()) {
-    println("$indice: $valor")
+// Iterar una colección directamente: la forma preferida
+val lenguajes = listOf("Kotlin", "Java", "Scala")
+for (lenguaje in lenguajes) println(lenguaje)
+
+// ¿Necesitas la POSICIÓN? .indices genera solo índices válidos
+for (i in lenguajes.indices) println("[$i] ${lenguajes[i]}")
+
+// ¿Índice Y elemento a la vez? withIndex + destructuración
+for ((indice, valor) in lenguajes.withIndex()) {
+    println("$indice -&gt; $valor")
+}
+
+// Iterar un Mapa desestructura clave y valor automáticamente
+val poblaciones = mapOf("Madrid" to 3_300_000, "Lima" to 9_700_000)
+for ((ciudad, habitantes) in poblaciones) {
+    println("$ciudad tiene $habitantes habitantes")
 }</code></pre>
+<blockquote class="aside aside-tip"><p>Prefiere iterar elementos (<code>for (x in lista)</code>) antes que índices (<code>lista[i]</code>). Los índices invitan a errores <em>off-by-one</em>; úsalos solo cuando la posición sea parte del problema (por ejemplo, comparar vecinos).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="while-do-while-y-etiquetas">
+    <h2><i class="fa-solid fa-repeat"></i> while, do-while y saltos con etiquetas</h2>
+    <div class="doc-content">
+<p>Cuando el número de repeticiones depende de una condición que cambia durante la ejecución (esperar entrada del usuario, procesar hasta agotar una cola), los bucles <code>while</code> y <code>do-while</code> son la herramienta correcta. La diferencia entre ambos es cuándo se comprueba la condición: <code>while</code> la revisa <em>antes</em> de cada vuelta (puede ejecutarse cero veces); <code>do-while</code> la revisa <em>después</em> (garantiza al menos una ejecución).</p>
+<pre><code class="language-kotlin">// while: condición primero — puede no ejecutarse nunca
+var intentos = 0
+while (intentos &lt; 3 &amp;&amp; !conexionEstablecida()) {
+    intentos++
+}
+
+// do-while: cuerpo primero — ideal para menús interactivos
+do {
+    mostrarMenu()
+    opcion = leerOpcion()
+    procesar(opcion)
+} while (opcion != SALIR)</code></pre>
+<h3>break, continue y etiquetas</h3>
+<p><code>break</code> aborta el bucle actual y <code>continue</code> salta a la siguiente iteración. En bucles anidados, a veces necesitas salir de <strong>ambos</strong> a la vez: para eso existen las <strong>etiquetas</strong>, que nombran un bucle concreto con el formato <code>nombre@</code>.</p>
+<pre><code class="language-kotlin">// Buscar la primera pareja cuyo producto supere un umbral
+exterior@ for (fila in matriz) {
+    for (valor in fila) {
+        if (valor &lt; 0) continue          // ignora negativos, sigue con el siguiente
+        if (valor &gt; 900) break@exterior  // corta AMBOS bucles de golpe
+        println("Procesando $valor")
+    }
+}
+
+// Etiqueta con continue: salta directamente a la siguiente vuelta del bucle EXTERIOR
+busqueda@ for (usuario in usuarios) {
+    for (permiso in usuario.permisos) {
+        if (permiso == "admin") continue@busqueda  // este usuario no nos sirve
+        auditar(usuario, permiso)
+    }
+}</code></pre>
+<blockquote class="aside aside-caution"><p>Las etiquetas son potentes pero poco frecuentes en código profesional: cuando aparecen demasiado, suelen indicar que la lógica merece extraerse a una función donde un simple <code>return</code> resuelve lo mismo con más claridad.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="try-catch-como-expresion">
+    <h2><i class="fa-solid fa-shield-heart"></i> try/catch como expresión</h2>
+    <div class="doc-content">
+<p>Coherente con su filosofía, Kotlin también trata <code>try/catch/finally</code> como una expresión: el bloque devuelve el valor de su última línea. El patrón estrella es convertir operaciones propensas a fallo (parsear texto, dividir) en valores por defecto sin variables auxiliares.</p>
+<pre><code class="language-kotlin">val entrada = "42x"
+
+// try devuelve un valor: parsea si puede, si no, usa el respaldo
+val numero = try {
+    entrada.toInt()
+} catch (e: NumberFormatException) {
+    0                                  // valor por defecto ante texto inválido
+}
+println(numero)                        // 0
+
+// Varias capturas especializadas, ordenadas de más concreta a más general
+fun dividir(a: Int, b: Int): Int = try {
+    a / b                              // puede lanzar ArithmeticException
+} catch (e: ArithmeticException) {
+    println("División entre cero detectada")
+    0
+} catch (e: Exception) {
+    println("Error inesperado: ${e.message}")
+    -1
+} finally {
+    println("Operación finalizada")    // SIEMPRE corre: limpieza, cierre de recursos
+}
+
+// Patrón realista: lectura de configuración tolerante
+val puerto = try {
+    System.getenv("PORT")?.toInt() ?: 8080
+} catch (e: NumberFormatException) {
+    8080
+}</code></pre>
+<blockquote class="aside aside-danger"><p>Evita <code>catch (e: Exception)</code> genérico como primer recurso: atrapa también bugs de programación (como <code>NullPointerException</code>) que deberían verse durante el desarrollo. Captura las excepciones concretas que sabes manejar.</p></blockquote>
+<blockquote class="aside aside-success"><p>Kotlin no distingue excepciones chequeadas (<em>checked exceptions</em>) como Java: ninguna firma lleva <code>throws</code>. Esto simplifica enormemente los <code>try/catch</code>; verás la contrapartida al interoperar con Java en la última lección.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes-control-flujo">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<p>Estos tropiezos aparecen una y otra vez en quienes migran desde otros lenguajes. Reconocerlos te ahorrará sesiones de depuración frustrantes.</p>
+<table><thead><tr><th>Error</th><th>Síntoma</th><th>Solución</th></tr></thead><tbody>
+<tr><td><code>if</code>-expresión sin <code>else</code></td><td><code>missing return statement</code></td><td>Añade la rama <code>else</code> o usa el if como sentencia</td></tr>
+<tr><td><code>..</code> vs <code>until</code> confundidos</td><td>Una iteración de más/menos (off-by-one)</td><td><code>..</code> incluye el final; <code>until</code> lo excluye</td></tr>
+<tr><td><code>when</code> con ramas imposibles tras un caso amplio</td><td>Advertencia <code>is always successful</code></td><td>Ordena las ramas de la más específica a la más general</td></tr>
+<tr><td>Falta <code>else</code> en <code>when</code> sobre tipos abiertos</td><td><code>non-exhaustive when</code></td><td>Cubre todos los casos o añade <code>else</code> conscientemente</td></tr>
+<tr><td>Bucle infinito por condición mal actualizada</td><td>Programa colgado consumiendo CPU</td><td>Verifica que la variable de control muta DENTRO del bucle</td></tr>
+<tr><td><code>break</code> que solo sale del bucle interno</td><td>Lógica que sigue iterando sin querer</td><td>Usa etiquetas (<code>break@etiqueta</code>) o extrae a función con <code>return</code></td></tr>
+<tr><td>Asignación dentro de la condición</td><td><code>assignments are not expressions</code></td><td>Kotlin prohíbe <code>=</code> en condiciones: separa la asignación</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">// ❌ Rama imposible: "in 1..100" absorbe todo antes de llegar al caso específico
+when (puntos) {
+    in 1..100 -&gt; nivelBajo()
+    95 -&gt; nivelAlto()      // ¡nunca se ejecuta! 95 está dentro de 1..100
+    else -&gt; fueraDeRango()
+}
+
+// ✅ Orden correcto: específico primero, general después
+when (puntos) {
+    95 -&gt; nivelAlto()
+    in 1..100 -&gt; nivelBajo()
+    else -&gt; fueraDeRango()
+}</code></pre>
+<blockquote class="aside aside-note"><p>IntelliJ IDEA marca en gris las ramas inalcanzables de un <code>when</code> antes de compilar. Acostúmbrate a mirar esas advertencias: son bugs futuros detectados gratis.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuélvelos en orden: cada uno incorpora un concepto de la lección sobre el anterior. Verifica tus resultados en el playground de Kotlin.</p>
+<ol>
+<li><strong>Calificador con if-expresión:</strong> dado un <code>val nota = 0..100</code> leído como entero fijo, usa una única expresión <code>if/else if/else</code> para producir la cadena "Suspenso" (&lt;60), "Aprobado" (60–79), "Notable" (80–89) u "Óptimo" (90+), e imprímela.</li>
+<li><strong>Traductor de estaciones:</strong> escribe <code>fun estacion(mes: Int): String</code> con un <code>when</code> CON sujeto usando valores agrupados (12, 1, 2 → "Invierno", etc.) y rangos donde aplique; devuelve "Mes inválido" para números fuera de 1..12.</li>
+<li><strong>FizzBuzz con when sin sujeto:</strong> para los números del 1 al 100 imprime "FizzBuzz" (múltiplo de 3 y 5), "Fizz" (de 3), "Buzz" (de 5) o el número. Debe resolverse con un único <code>when {}</code> sin sujeto dentro de un <code>for</code>.</li>
+<li><strong>Tabla de multiplicar invertida:</strong> pide un número N (decláralo como constante) y muestra su tabla del 10 al 1 usando <code>downTo</code> y <code>step</code>; formatea cada línea con <code>withIndex()</code> para numerar las filas ("fila 1: 10 × N = …").</li>
+<li><strong>Calculadora resistente:</strong> implementa un mini-calculador con <code>try</code> como expresión: dados dos textos fijos (por ejemplo "12" y "abc") y un operador, conviértelos con <code>toInt()</code> dentro del <code>try</code>, aplica un <code>when</code> según el operador (+, -, *, /) y devuelve 0 ante <code>NumberFormatException</code> o división entre cero, informando qué ocurrió. Prohibido usar <code>!!</code> ni dejar pasar la excepción sin capturar.</li>
+</ol>
     </div>
   </section>

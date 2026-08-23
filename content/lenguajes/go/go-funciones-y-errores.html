@@ -1,38 +1,236 @@
 <!-- 4. Funciones y Errores - Go (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="multiples-retornos-y-error">
-    <h2>Múltiples retornos y error</h2>
+<section id="multiples-retornos-y-error">
+    <h2><i class="fa-solid fa-right-left"></i> Múltiples retornos y el patrón error</h2>
     <div class="doc-content">
-<pre><code class="language-go">func dividir(a, b float64) (float64, error) {
-	if b == 0 {
-		return 0, fmt.Errorf("división por cero")
-	}
-	return a / b, nil
+        <p>Go no tiene excepciones en el flujo normal del lenguaje. En su lugar, las funciones pueden <strong>devolver varios valores</strong>, y la convención universal es devolver el resultado junto a un valor de tipo <code>error</code>. Esta decisión hace que los fallos sean parte visible de cada firma: imposible ignorar lo que el compilador te muestra en la cara.</p>
+
+        <h3>El retorno múltiple</h3>
+        <p>Una función puede devolver dos, tres o más valores. El más común es el par <code>(resultado, error)</code>:</p>
+        <pre><code class="language-go">func dividir(a, b float64) (float64, error) {
+    if b == 0 {
+        return 0, errors.New("división por cero")
+    }
+    return a / b, nil // nil = sin error
 }
 
-res, err := dividir(10, 2)
+resultado, err := dividir(10, 2)
 if err != nil {
-	log.Fatal(err)
+    fmt.Println("Fallo:", err)
+    return
 }
-fmt.Println(res)</code></pre>
-    </div>
-  </section>
+fmt.Println("Resultado:", resultado) // 5</code></pre>
+        <blockquote class="aside aside-note">
+            <p><code>nil</code> representa "nada" en Go (punteros, interfaces, maps, slices, channels vacíos). Un <code>error == nil</code> significa éxito. No existe undefined ni null-checks encadenados: el cero válido de cada tipo cubre ese rol.</p>
+        </blockquote>
 
-  <section id="defer-y-variadicas">
-    <h2>defer y variádicas</h2>
+        <h3>Nombrando retornos: documentación viva</h3>
+        <p>Puedes nombrar los valores de retorno en la firma. Mejora la autodocumentación y permite retornos "desnudos", aunque estos deben usarse con moderación:</p>
+        <pre><code class="language-go">func minMax(numeros []int) (minimo, maximo int) {
+    if len(numeros) == 0 {
+        return 0, 0
+    }
+    minimo, maximo = numeros[0], numeros[0]
+    for _, n := range numeros[1:] {
+        if n &lt; minimo { minimo = n }
+        if n &gt; maximo { maximo = n }
+    }
+    return // retorna mínimo y máximo ya asignados
+}</code></pre>
+
+        <h3>Closures y funciones como valores</h3>
+        <p>Las funciones son ciudadanos de primera clase: se asignan a variables, se pasan como argumentos y capturan su entorno:</p>
+        <pre><code class="language-go">func contador() func() int {
+    cuenta := 0
+    // La closure captura 'cuenta' entre llamadas
+    return func() int {
+        cuenta++
+        return cuenta
+    }
+}
+
+siguiente := contador()
+fmt.Println(siguiente(), siguiente(), siguiente()) // 1 2 3</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="defer-y-variadicas">
+    <h2><i class="fa-solid fa-clock-rotate-left"></i> defer, variádicas y utilidades</h2>
     <div class="doc-content">
-<pre><code class="language-go">func ejemplo() {
-	defer fmt.Println("se ejecuta al final")   // LIFO
-	fmt.Println("primero")
+        <h3>defer: ejecutar al salir, pase lo que pase</h3>
+        <p><code>defer</code> programa una llamada para el momento en que la función termina — retorne por donde retorne, incluso con panic. Es EL mecanismo para liberar recursos (cerrar archivos, conexiones, mutex): colocas el cierre justo al lado de la apertura y nunca olvidas ninguno de los múltiples caminos de salida.</p>
+        <pre><code class="language-go">func leerConfig(ruta string) error {
+    archivo, err := os.Open(ruta)
+    if err != nil {
+        return err
+    }
+    defer archivo.Close() // se ejecutará SIEMPRE al salir
+
+    datos, err := io.ReadAll(archivo)
+    if err != nil {
+        return err // Close() corre igualmente
+    }
+    fmt.Println("Config leída:", len(datos), "bytes")
+    return nil // Close() corre también aquí
+}</code></pre>
+        <p>Los defers se ejecutan en <strong>orden LIFO</strong> (el último registrado, primero en ejecutarse), como una pila:</p>
+        <pre><code class="language-go">defer fmt.Println("primero registrado, último en correr")
+defer fmt.Println("segundo")
+// Salida al terminar:
+//   segundo
+//   primero registrado, último en correr</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Los argumentos de un defer se <strong>evalúan en el momento del registro</strong>, no al ejecutarse: <code>defer log.Println("procesados:", n)</code> imprimirá el valor que tenía <code>n</code> cuando se registró la línea, no el final. Si necesitas el valor final, pasa un puntero o hazlo dentro de una closure.</p>
+        </blockquote>
+
+        <h3>Funciones variádicas</h3>
+        <p>Un parámetro final con <code>...</code> acepta cualquier número de argumentos, recibidos como slice. Así funcionan <code>fmt.Println</code>, <code>append</code> o <code>errors.Join</code>:</p>
+        <pre><code class="language-go">func sumar(numeros ...int) int {
+    total := 0
+    for _, n := range numeros {
+        total += n
+    }
+    return total
 }
 
-func total(nums ...int) int {
-	t := 0
-	for _, n := range nums { t += n }
-	return t
-}
+fmt.Println(sumar(1, 2))          // 3
+fmt.Println(sumar(1, 2, 3, 4))    // 10
 
-total(1, 2, 3)</code></pre>
+valores := []int{5, 10, 15}
+fmt.Println(sumar(valores...))    // spread: expandir el slice</code></pre>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-como-valores">
+    <h2><i class="fa-solid fa-bug-slash"></i> Errores como valores: crear, envolver, inspeccionar</h2>
+    <div class="doc-content">
+        <p><code>error</code> es solo una interfaz diminuta: <code>Error() string</code>. Cualquier tipo que implemente ese método ES un error. Esta simplicidad permite componer errores, envolverlos con contexto y compararlos programáticamente.</p>
+
+        <h3>Crear errores simples</h3>
+        <pre><code class="language-go">// Estáticos
+var ErrVacio = errors.New("la lista no puede estar vacía")
+
+// Dinámicos con formato
+func validarEdad(edad int) error {
+    if edad &lt; 0 {
+        return fmt.Errorf("edad inválida: %d años", edad)
+    }
+    return nil
+}</code></pre>
+
+        <h3>Envolver errores con %w: contexto sin perder el original</h3>
+        <p>Desde Go 1.13, <code>fmt.Errorf</code> con el verbo <code>%w</code> crea un error que CONTIENE al original. Cada capa añade contexto (qué estaba haciendo el código) conservando la causa raíz consultable:</p>
+        <pre><code class="language-go">func cargarUsuario(id int) (*Usuario, error) {
+    fila, err := db.Query("SELECT * FROM usuarios WHERE id = ?", id)
+    if err != nil {
+        // %w ENVUELVE err: conserva la causa para quien inspeccione
+        return nil, fmt.Errorf("cargando usuario %d: %w", id, err)
+    }
+    defer fila.Close()
+    // ...
+    return u, nil
+}</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Añade contexto al envolver respondiendo "¿qué intentabas hacer?", no "¿qué pasó?" (eso ya lo dice el error interno). Compara: <em>"cargando usuario 42: conexión rechazada"</em> frente al inútil <em>"conexión rechazada"</em> flotando en los logs.</p>
+        </blockquote>
+
+        <h3>errors.Is y errors.As: inspección robusta</h3>
+        <table>
+            <thead>
+                <tr><th>Función</th><th>Pregunta que responde</th><th>Ejemplo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>errors.Is(err, objetivo)</code></td><td>¿Este error ES (o envuelve a) el error X?</td><td><code>errors.Is(err, os.ErrNotExist)</code></td></tr>
+                <tr><td><code>errors.As(err, &amp;tipo)</code></td><td>¿En la cadena hay un error del TIPO T?</td><td><code>errors.As(err, &amp;pathError)</code></td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-go">datos, err := os.ReadFile("config.yaml")
+if err != nil {
+    if errors.Is(err, os.ErrNotExist) {
+        fmt.Println("Sin config: usando valores por defecto")
+        return defaults(), nil
+    }
+    return nil, fmt.Errorf("leyendo config: %w", err)
+}
+
+// Con tipos personalizados:
+var errSaldo *SaldoInsuficienteError
+if errors.As(err, &amp;errSaldo) {
+    fmt.Printf("Faltan %.2f\n", errSaldo.Faltante)
+}</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>Comparar con <code>==</code> (<code>if err == ErrVacio</code>) falla si el error fue envuelto alguna vez. Usa siempre <code>errors.Is/As</code>: recorren toda la cadena de wrapping.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="panic-recover">
+    <h2><i class="fa-solid fa-skull-crossbones"></i> panic y recover: la válvula de emergencia</h2>
+    <div class="doc-content">
+        <p><code>panic</code> detiene el flujo inmediatamente y deshace la pila ejecutando los defers pendientes; <code>recover</code> detiene esa desestructuración SOLO dentro de un defer. Su uso legítimo es estrecho:</p>
+        <table>
+            <thead>
+                <tr><th>Situación</th><th>¿panic?</th><th>Alternativa correcta</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Entrada de usuario inválida</td><td>No</td><td>Devolver error</td></tr>
+                <tr><td>Recurso no disponible / red caída</td><td>No</td><td>Devolver error + reintentar</td></tr>
+                <tr><td>Bug de programador (índice fuera de rango)</td><td>Panic implícito OK</td><td>Corregir el bug</td></tr>
+                <tr><td>Inicialización global imposible de completar</td><td>Sí (arranque)</td><td><code>log.Fatal</code> / panic en init</td></tr>
+                <tr><td>Evitar que un panic en un worker tumbe el servidor</td><td>—</td><td>recover en el wrapper de goroutine</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-go">// Patrón real: proteger un servidor HTTP de panics en handlers
+func safeHandler(fn http.HandlerFunc) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        defer func() {
+            if rec := recover(); rec != nil {
+                log.Printf("PANIC recuperado: %v\n%s", rec, debug.Stack())
+                http.Error(w, "Error interno", http.StatusInternalServerError)
+            }
+        }()
+        fn(w, r)
+    }
+}</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>Si te encuentras usando <code>panic</code> para errores esperables ("archivo no encontrado", "JSON inválido"), estás rompiendo la filosofía del lenguaje. Los errores son valores: trátalos como tales.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Consecuencia</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Ignorar el error devuelto: <code>fichero.Close()</code> sin revisar</td><td>Fallos silenciosos de escritura</td><td>Comprueba o documenta explícitamente con <code>_ =</code></td></tr>
+                <tr><td><code>if err == nil { ... } else { ... }</code> anidado</td><td>Indentación piramidal ilegible</td><td><code>if err != nil { return ... }</code> y continúa plano</td></tr>
+                <tr><td>Envolver sin <code>%w</code> (usar <code>%v</code>)</td><td><code>errors.Is/As</code> dejan de encontrar la causa</td><td>Usa <code>%w</code> siempre que quieras preservar la cadena</td></tr>
+                <tr><td>Mensajes capitalizados: <code>"No se pudo abrir..."</code></td><td>Logs imposibles de encadenar: <code>No se pudo...: open x.txt...</code></td><td>Minúscula inicial y sin puntuación final: <code>"abriendo config: %w"</code></td></tr>
+                <tr><td>Duplicar mensajes: <code>fmt.Errorf("fallo abriendo: %w", err)</code> donde err ya dice "open failed:"</td><td>Ruido redundante</td><td>Contexto nuevo solamente</td></tr>
+                <tr><td>Defer en bucle sobre recursos</td><td>Acumulación hasta fin de FUNCIÓN: miles de archivos abiertos</td><td>Extraer cuerpo del bucle a otra función, o cerrar manualmente</td></tr>
+                <tr><td>recover fuera de un defer</td><td>No hace nada</td><td>Siempre <code>defer func(){ recover() }()</code></td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Calculadora robusta</strong>: implementa <code>calcular(a float64, op string, b float64) (float64, error)</code> que soporte +, -, *, / y valide división por cero y operadores desconocidos con <code>fmt.Errorf</code>.</li>
+            <li><strong>Errores personalizados</strong>: define <code>type EdadInvalidaError struct{ Edad int }</code> con método <code>Error() string</code>; haz que <code>validarEdad</code> lo devuelva y demuestra <code>errors.As</code> desde otro paquete/función.</li>
+            <li><strong>Wrapping en cadena</strong>: construye tres funciones anidadas (leerArchivo → parsear → procesar) donde cada una envuelva con contexto distinto usando %w; imprime la cadena completa con <code>fmt.Println(err)</code> y luego extrae la causa con <code>errors.Is</code>.</li>
+            <li><strong>LIFO demostrado</strong>: escribe una función con cinco defers que imprimen números; predice la salida en un comentario ANTES de ejecutar y verifica.</li>
+            <li><strong>Suma variádica segura</strong>: crea <code>sumarSeguro(nums ...int) (int, error)</code> que devuelva error si algún número es negativo, y pruébala tanto con argumentos sueltos como expandiendo un slice con <code>...</code>.</li>
+        </ol>
+    </div>
+</section>

@@ -1,6 +1,6 @@
 <!-- 2. Husky: Git hooks modernos - Calidad de Commits (Control de Versiones) -->
 <section id="que-son-los-git-hooks">
-  <h2>¿Qué son los Git hooks?</h2>
+  <h2><i class="fa-solid fa-anchor"></i> ¿Qué son los Git hooks?</h2>
   <div class="doc-content">
     <p>Los <strong>Git hooks</strong> son scripts que Git ejecuta automáticamente en momentos clave del flujo: antes de un commit, después de un push, al reescribir historia... Viven en la carpeta oculta <code>.git/hooks/</code>.</p>
     <pre><code class="language-text">.git/hooks/
@@ -9,11 +9,15 @@
 ├── pre-push.sample      ← se ejecuta ANTES de pushear
 └── ...</code></pre>
     <p>El problema: <code>.git/</code> no se versiona ni comparte. Si configuras hooks ahí, tus compañeros no los reciben con el clone. Ahí entra <strong>Husky</strong>: gestiona hooks dentro de una carpeta versionada (<code>.husky/</code>) y los instala automáticamente para todo el equipo.</p>
+    <blockquote class="aside aside-note">
+      <p>El hook más olvidado y valioso: pre-push para tests. Pre-commit protege TU historial; pre-push protege el REMOTO. Validaciones caras (suite completa, builds Docker) van mejor en pre-push: no penalizan cada commit local pero sí la puerta al equipo.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="instalacion-y-configuracion-de-husky">
-  <h2>Instalación y configuración de Husky</h2>
+  <h2><i class="fa-solid fa-download"></i> Instalación y configuración de Husky</h2>
   <div class="doc-content">
     <p>Husky v9+ (proyecto Node.js):</p>
     <pre><code class="language-bash"># 1. Instalar como dependencia de desarrollo
@@ -29,11 +33,15 @@ npx husky init
 echo "npm test" &gt; .husky/pre-push
 git add .husky
 # ¡Listo! Ahora npm test corre antes de cada push</code></pre>
+    <blockquote class="aside aside-caution">
+      <p>Versión de Husky importa: los tutoriales antiguos usan <code>husky install</code> y archivos con shebang — sintaxis v8. En v9+ el init genera scripts planos ("npm test" sin shebang). Mezclar ambas generaciones produce hooks silenciosamente muertos.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="hooks-pre-commit-y-pre-push">
-  <h2>Hooks pre-commit y pre-push</h2>
+  <h2><i class="fa-solid fa-door-closed"></i> Hooks pre-commit y pre-push</h2>
   <div class="doc-content">
     <p><strong>.husky/pre-commit</strong> — última línea de defensa antes de ensuciar el historial:</p>
     <pre><code class="language-bash">#!/usr/bin/env sh
@@ -44,11 +52,26 @@ npm run typecheck   # errores de tipos</code></pre>
     <p><strong>.husky/pre-push</strong> — validaciones más costosas, solo al compartir código:</p>
     <pre><code class="language-bash">npm test            # suite completa de tests</code></pre>
     <p>Si cualquier comando falla (exit code ≠ 0), Git cancela la operación. Para saltarlo en emergencias: <code>git commit --no-verify</code> — úsalo con criterio.</p>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Hook</th><th>Cuándo dispara</th><th>Candidatos a incluir</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>pre-commit</code></td><td>Antes de cada commit local</td><td>lint-staged, formateo, typecheck rápido</td></tr>
+        <tr><td><code>commit-msg</code></td><td>Tras escribir el mensaje</td><td>commitlint (valida Conventional Commits)</td></tr>
+        <tr><td><code>pre-push</code></td><td>Antes de enviar al remoto</td><td>Suite de tests completa, build</td></tr>
+        <tr><td><code>pre-rebase</code></td><td>Antes de reescribir historia</td><td>Bloquear rebase de ramas compartidas</td></tr>
+      </tbody>
+    </table>
+    <blockquote class="aside aside-danger">
+      <p>--no-verify es una válvula de escape, no un estilo de vida. Si tu equipo lo usa semanalmente, los hooks son demasiado lentos o ruidosos: arréglalos (más lint-staged, menos suites completas en pre-commit) en lugar de normalizar el salto de controles.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="combinar-con-lint-staged">
-  <h2>Combinar con lint-staged</h2>
+  <h2><i class="fa-solid fa-broom"></i> Combinar con lint-staged</h2>
   <div class="doc-content">
     <p>Ejecutar ESLint sobre TODO el proyecto en cada commit es lento. <strong>lint-staged</strong> aplica herramientas solo a los archivos staged:</p>
     <pre><code class="language-bash">npm install --save-dev lint-staged</code></pre>
@@ -66,7 +89,7 @@ npx lint-staged</code></pre>
 </section>
 
 <section id="ejemplo-completo-de-setup">
-  <h2>Ejemplo completo de setup</h2>
+  <h2><i class="fa-solid fa-box-open"></i> Ejemplo completo de setup</h2>
   <div class="doc-content">
     <pre><code class="language-bash"># Setup desde cero en 6 comandos:
 npm install --save-dev husky lint-staged eslint prettier
@@ -80,5 +103,39 @@ git add . &amp;&amp; git commit -m "chore: husky + lint-staged"</code></pre>
 git commit → lint-staged corrige/stagea → si hay error grave, aborta
 git push   → tests completos → si fallan, no sale nada roto</code></pre>
     <p>Alternativas multi-lenguaje fuera de Node: <strong>pre-commit framework</strong> (Python) y <strong>Lefthook</strong> (Go, muy rápido).</p>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="errores-comunes">
+  <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Configurar hooks solo en .git/hooks/</td><td>Tus compañeros no reciben nada al clonar</td><td>Husky / Lefthook con carpeta versionada</td></tr>
+        <tr><td>Hooks lentos en pre-commit</td><td>Equipo normaliza --no-verify</td><td>lint-staged (solo staged), suites completas a pre-push/CI</td></tr>
+        <tr><td>Olvidar script "prepare"</td><td>npx husky init hecho pero hooks muertos tras clone</td><td>"prepare": "husky" en package.json versionado</td></tr>
+        <tr><td>Mixing sintaxis v8/v9</td><td>Hooks silenciosamente no ejecutan</td><td>Alinear versión + regenerar .husky con init actual</td></tr>
+        <tr><td>Formateo sin re-staging</td><td>Prettier corrige pero el commit sale SIN los arreglos</td><td>lint-staged gestiona git add automáticamente</td></tr>
+        <tr><td>Depender de hooks como única defensa</td><td>--no-verify o CI saltado = nada protege</td><td>Hooks = primera línea; CI = autoridad final</td></tr>
+      </tbody>
+    </table>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="ejercicios">
+  <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+  <div class="doc-content">
+    <ol>
+      <li><strong>Setup desde cero</strong>: repo Node nuevo con Husky v9; crea pre-commit (lint-staged con prettier) y pre-push (npm test); verifica ambos bloqueando deliberadamente.</li>
+      <li><strong>Cronómetro de hooks</strong>: mide duración del pre-commit con eslint global vs lint-staged sobre 200 archivos; documenta la diferencia.</li>
+      <li><strong>Simulador de equipo</strong>: clona tu repo en otra carpeta, npm install y confirma que los hooks quedaron activos sin pasos manuales.</li>
+      <li><strong>Válvula de escape controlada</strong>: usa --no-verify una vez para un hotfix real de emergencia y documenta el follow-up que limpió lo que se coló.</li>
+      <li><strong>Migración cross-language</strong>: investiga Lefthook o pre-commit framework y traduce tu setup de husky a uno de ellos; compara configuración resultante.</li>
+    </ol>
   </div>
 </section>

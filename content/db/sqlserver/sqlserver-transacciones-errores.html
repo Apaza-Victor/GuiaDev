@@ -1,53 +1,179 @@
 <!-- 13. Transacciones y manejo de errores - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="transaccion-basica">
-    <h2>Transacción básica</h2>
+<section id="transaccion-basica">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> Transacciones: ACID en acción</h2>
     <div class="doc-content">
-<pre><code class="language-sql">BEGIN TRANSACTION;
+        <pre><code class="language-sql">BEGIN TRAN;                          -- BEGIN TRANSACTION abreviado
 
-UPDATE dbo.Cuentas SET Saldo = Saldo - 500 WHERE Id = 1;
-UPDATE dbo.Cuentas SET Saldo = Saldo + 500 WHERE Id = 2;
+    UPDATE Cuentas SET saldo -= 100 WHERE cuenta_id = 1;
+    UPDATE Cuentas SET saldo += 100 WHERE cuenta_id = 2;
 
-COMMIT TRANSACTION;     -- confirma
--- ROLLBACK TRANSACTION; -- deshace todo si algo falló</code></pre>
-<p>Las cuatro propiedades ACID garantizan que ambas actualizaciones ocurran o ninguna: el dinero nunca desaparece.</p>
+COMMIT;                              -- todo o nada ✅
+-- ROLLBACK;                         -- deshace TODO desde el BEGIN
+
+-- Verificación defensiva profesional:
+BEGIN TRAN;
+UPDATE ...;
+IF @@ROWCOUNT &lt;&gt; @esperadas          -- ¿tocó lo previsto?
+BEGIN
+    ROLLBACK;
+    THROW 50002, 'Filas afectadas inesperadas', 1;
+END
+COMMIT;</code></pre>
+
+        <h3>Niveles de aislamiento: qué protege cada uno</h3>
+        <table>
+            <thead>
+                <tr><th>Nivel</th><th>Lecturas sucias</th><th>No repetible</th><th>Fantasmas</th><th>Coste</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>READ UNCOMMITTED</code></td><td>Sí ⚠️</td><td>Sí</td><td>Sí</td><td>Mínimo</td></tr>
+                <tr><td><strong>READ COMMITTED (default)</strong></td><td>No</td><td>Sí</td><td>Sí</td><td>Bajo</td></tr>
+                <tr><td><code>REPEATABLE READ</code></td><td>No</td><td>No</td><td>Sí</td><td>Medio</td></tr>
+                <tr><td><code>SERIALIZABLE</code></td><td>No</td><td>No</td><td>No</td><td>Alto (rangos lockeados)</td></tr>
+                <tr><td><code>SNAPSHOT / RCSI</code></td><td>No</td><td>No*</td><td>No*</td><td>Versionado en tempdb</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>NOLOCK (=READ UNCOMMITTED) es el "optimizador" favorito de los desesperados: gana velocidad leyendo datos que quizá nunca existieron o están a medias. En reportes financieros, inventarios o pagos es una bomba silenciosa. Si el lock real duele, habilita READ_COMMITTED_SNAPSHOT en la base — consistencia SIN bloqueo lector.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="try-catch">
-    <h2>TRY...CATCH</h2>
+<section id="try-catch">
+    <h2><i class="fa-solid fa-bug-slash"></i> TRY/CATCH con ERROR_* functions</h2>
     <div class="doc-content">
-<pre><code class="language-sql">BEGIN TRY
-  BEGIN TRANSACTION;
+        <pre><code class="language-sql">BEGIN TRY
+    BEGIN TRAN;
 
-  UPDATE dbo.Cuentas SET Saldo = Saldo - 500 WHERE Id = 1;
-  UPDATE dbo.Cuentas SET Saldo = Saldo + 500 WHERE Id = 2;
+    INSERT INTO Facturas (...) VALUES (...);
+    UPDATE Stock SET cantidad -= @n WHERE producto_id = @id;
 
-  COMMIT TRANSACTION;
+    COMMIT;
+    PRINT 'Operación completada';
 END TRY
 BEGIN CATCH
-  IF @@TRANCOUNT &gt; 0 ROLLBACK TRANSACTION;
-  SELECT
-    ERROR_NUMBER()  AS Numero,
-    ERROR_SEVERITY() AS Severidad,
-    ERROR_STATE()   AS Estado,
-    ERROR_LINE()    AS Linea,
-    ERROR_MESSAGE() AS Mensaje;
+    IF @@TRANCOUNT &gt; 0 ROLLBACK;
+
+    SELECT
+        ERROR_NUMBER()    AS numero,      -- 2627 = dup key, 547 = FK...
+        ERROR_SEVERITY()  AS severidad,
+        ERROR_STATE()     AS estado,
+        ERROR_PROCEDURE() AS procedimiento,
+        ERROR_LINE()      AS linea,
+        ERROR_MESSAGE()   AS mensaje;
+
+    THROW;                                -- re-lanzar al llamador (2012+)
 END CATCH;</code></pre>
-    </div>
-  </section>
 
-  <section id="xact-abort-y-verificacion">
-    <h2>XACT_ABORT y verificación</h2>
+        <table>
+            <thead>
+                <tr><th>Herramienta de error</th><th>Época</th><th>Cuándo usarla</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>THROW n, 'msg', estado</code></td><td>2012+</td><td>Default moderno ✅ respeta severidad, re-lanza limpio</td></tr>
+                <tr><td><code>RAISERROR</code></td><td>Legacy</td><td>Solo por formato %s/%d dinámico heredado</td></tr>
+                <tr><td><code>ERROR_*()</code> functions</td><td>2005+</td><td>Dentro de CATCH para log/auditoría del error</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Rango 50000+ reservado para errores de usuario con THROW. Numéralos semánticamente (50001=stock insuficiente, 50002=saldo...) y centralízalos en documentación compartida entre DBA y app.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="xact-abort-y-verificacion">
+    <h2><i class="fa-solid fa-shield-halved"></i> XACT_ABORT, @@TRANCOUNT y deadlocks</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SET XACT_ABORT ON;  -- cualquier error deshace TODO automáticamente
-BEGIN TRANSACTION;
-  -- sentencias...
-COMMIT TRANSACTION;
+        <pre><code class="language-sql">-- El patrón transaccional BULLETPROOF completo:
+SET XACT_ABORT ON;              -- cualquier error ⇒ rollback TOTAL automático
+BEGIN TRY
+    BEGIN TRAN;
 
-SELECT @@TRANCOUNT AS TransaccionesAbiertas;</code></pre>
-<blockquote class="aside aside-tip">
-<p><code>SET XACT_ABORT ON</code> al inicio de procedimientos con transacciones evita transacciones zombis ante errores abortantes.</p>
-</blockquote>
+    /* operaciones... */
+
+    COMMIT TRAN;
+END TRY
+BEGIN CATCH
+    IF XACT_STATE() = -1        -- transacción "doomed": SOLO rollback posible
+        ROLLBACK TRAN;
+    ELSE IF XACT_STATE() = 1    -- aún commiteable (errores no abortivos)
+        ROLLBACK TRAN;          -- decidimos revertir igualmente
+
+    -- Log persistente del error (fuera de la tran ya muerta):
+    INSERT INTO ErrorLog (numero, mensaje, procedimiento, cuando)
+    VALUES (ERROR_NUMBER(), ERROR_MESSAGE(), ERROR_PROCEDURE(), SYSDATETIME());
+
+    THROW;
+END CATCH
+
+-- Deadlock retry pattern (los deadlocks SON normales):
+DECLARE @intentos INT = 3;
+WHILE @intentos &gt; 0
+BEGIN
+    BEGIN TRY
+        EXEC sp_Transferencia ...;   -- tu lógica completa
+        BREAK;                        -- éxito → salir
+    END TRY
+    BEGIN CATCH
+        IF ERROR_NUMBER() IN (1205, 1222)   -- deadlock / lock timeout
+        BEGIN
+            SET @intentos -= 1;
+            WAITFOR DELAY '00:00:00.200';    -- backoff corto
+            CONTINUE;
+        END
+        THROW;                                -- otro error: propagar
+    END CATCH
+END</code></pre>
+
+        <h3>Los tres estados de XACT_STATE()</h3>
+        <table>
+            <thead>
+                <tr><th>Valor</th><th>Significado</th><th>Acción válida</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>1</code></td><td>Activa y commiteable</td><td>COMMIT o ROLLBACK a elección</td></tr>
+                <tr><td><code>-1</code></td><td>Doomed (con XACT_ABORT tras error)</td><td>SOLO ROLLBACK — COMMIT lanza error</td></tr>
+                <tr><td><code>0</code></td><td>No hay transacción activa</td><td>Nada que gestionar</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>Deadlock víctima vs proceso: SQL Server ELIGE una sesión y la mata con error 1205. No es bug tuyo: es el motor resolviendo un ciclo de locks. La respuesta correcta NO es NOLOCK everywhere sino: transacciones cortas, mismo orden de acceso a tablas en todo el código, índices adecuados (menos locks tomados) y retry automático.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>ROLLBACK sin @@TRANCOUNT check en CATCH</td><td>"The ROLLBACK has no corresponding BEGIN"</td><td>IF @@TRANCOUNT &gt; 0 ROLLBACK</td></tr>
+                <tr><td>Error no-abortivo dejando tran abierta</td><td>"Transaction count after EXECUTE..." al salir</td><td>XACT_ABORT ON + verificación XACT_STATE()</td></tr>
+                <tr><td>CATCH traga errores silenciosamente</td><td>App asume éxito fantasma</td><td>THROW final siempre</td></tr>
+                <tr><td>Transacción larga esperando input humano</td><td>Locks eternos, bloqueos masivos</td><td>Validar ANTES, transacción corta solo para escribir</td></tr>
+                <tr><td>Tratar deadlock como bug de código</td><td>Alertas nocturnas innecesarias</td><td>Retry con backoff + diseño de orden de acceso</td></tr>
+                <tr><td>NOLOCK en datos críticos</td><td>Totales imposibles, filas fantasma</td><td>RCSI/SNAPSHOT si el locking real duele</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Transferencia atómica</strong>: implementar sp_TransferirSaldo bulletproof (XACT_ABORT+TRY/CATCH+THROW); forzar fallo intermedio y verificar atomicidad total.</li>
+            <li><strong>Laboratorio @@ROWCOUNT</strong>: update esperando N filas exactas; rompe expectativa deliberadamente y valida el THROW defensivo.</li>
+            <li><strong>Generador de deadlocks</strong>: dos sesiones actualizando mismas cuentas en orden inverso; provoca 1205, luego reordena acceso y verifica desaparición.</li>
+            <li><strong>ErrorLog profesional</strong>: CATCH que persista ERROR_* completo a tabla log antes de re-lanzar; consulta historial posterior.</li>
+            <li><strong>Retry engine</strong>: envuelve transferencia con patrón de 3 reintentos + backoff; simula deadlocks recurrentes y mide tasa de éxito final.</li>
+        </ol>
+    </div>
+</section>

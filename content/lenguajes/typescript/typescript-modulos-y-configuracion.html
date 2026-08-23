@@ -2,31 +2,233 @@
 <!-- Contenido local del proyecto -->
 
   <section id="import-export">
-    <h2>Import / Export</h2>
+    <h2><i class="fa-solid fa-box-open"></i> Módulos ES: import y export</h2>
     <div class="doc-content">
-<pre><code class="language-typescript">// matematica.ts
+<p>Desde ES2015, JavaScript estandarizó sus módulos con <code>import</code>/<code>export</code>, y TypeScript los adopta tal cual añadiendo tipos a la ecuación. Cada archivo con al menos un <code>import</code> o <code>export</code> es un <strong>módulo</strong>: su contenido queda encapsulado y solo lo visible mediante exportaciones se comparte.</p>
+<pre><code class="language-typescript">// 📄 matematica.ts — exportaciones nombradas y por defecto
 export function duplicar(n: number): number { return n * 2; }
 export const PI = 3.1416;
-export default class Calculadora { /* ... */ }
 
-// app.ts
-import Calculadora, { duplicar, PI } from "./matematica";</code></pre>
+export default class Calculadora {
+  sumar(a: number, b: number): number { return a + b; }
+}</code></pre>
+<pre><code class="language-typescript">// 📄 app.ts — consumo de las exportaciones
+import Calculadora, { duplicar, PI } from "./matematica";
+//     ↑ default      ↑ llaves: nombradas (el nombre DEBE coincidir)
+
+const calc = new Calculadora();
+console.log(calc.sumar(duplicar(2), PI)); // 7.1416
+
+// Renombrar al importar para evitar colisiones:
+import { duplicar as doblar } from "./matematica";</code></pre>
+<h3>Import type-only: importar tipos sin código</h3>
+<p>Cuando solo necesitas el TIPO de otro módulo (no sus valores), la sintaxis <code>import type</code> lo deja explícito. El compilador elimina esa importación en la salida: cero código viaja al runtime:</p>
+<pre><code class="language-typescript">// 📄 tipos.ts
+export interface Usuario { nombre: string; edad: number }
+export function crearUsuario(): Usuario { /* ... */ }</code></pre>
+<pre><code class="language-typescript">// 📄 app.ts
+import type { Usuario } from "./tipos";        // SOLO el tipo (borrado al compilar)
+import { crearUsuario } from "./tipos";        // el valor real
+
+// También en línea dentro de una importación mixta:
+import { crearUsuario, type Usuario } from "./tipos";
+
+function imprimir(u: Usuario): void {          // ✅ tipo disponible
+  console.log(`${u.nombre} (${u.edad})`);
+}
+imprimir(crearUsuario());</code></pre>
+<blockquote class="aside aside-tip"><p>Con la opción <code>"verbatimModuleSyntax"</code> (o el clásico <code>"isolatedModules"</code>) activas, TypeScript te OBLIGA a marcar las importaciones puramente tipadas: evita que bundlers modernos se confundan sobre qué líneas deben sobrevivir al build.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="barrels-y-resolucion">
+    <h2><i class="fa-solid fa-folder-tree"></i> Barrels (index.ts), re-export y resolución de módulos</h2>
+    <div class="doc-content">
+<p>A medida que el proyecto crece, las rutas de importación se vuelven largas (<code>../../servicios/usuario/servicio-usuario</code>). El patrón <strong>barrel</strong> centraliza las exportaciones de una carpeta en un único <code>index.ts</code>, que actúa como puerta de entrada del paquete:</p>
+<pre><code class="language-typescript">// 📄 modelos/index.ts — barrel: re-exporta todo lo público de la carpeta
+export { Usuario, type Perfil } from "./usuario";
+export { Producto } from "./producto";
+export * from "./factura";            // re-exporta TODO el módulo factura
+
+// 📄 app.ts — imports limpios, sin rutas internas frágiles
+import { Usuario, Producto, Factura } from "./modelos";   // resuelve a modelos/index.ts</code></pre>
+<h3>Cómo resuelve TypeScript las rutas</h3>
+<table><thead><tr><th>Ruta escrita</th><th>Significado</th></tr></thead><tbody><tr><td><code>"./utilidades"</code></td><td>Ruta RELATIVA al archivo actual: obligatoria en tu código de aplicación</td></tr><tr><td><code>"lodash"</code></td><td>Módulo de node_modules: busca su package.json y sus definiciones de tipos</td></tr><tr><td><code>"@modelos/usuario"</code></td><td>Alias configurado en tsconfig (<code>paths</code>) o en el bundler</td></tr></tbody></table>
+<p>La opción <code>moduleResolution</code> define el ALGORITMO de búsqueda: <code>"bundler"</code> es el recomendado hoy si tu código pasa por Vite/webpack/esbuild; <code>"node10"</code>/<code>"classic"</code> son herencias históricas que conviene evitar en proyectos nuevos.</p>
+<blockquote class="aside aside-note"><p>Los barrels mejoran la ergonomía pero pueden inflar el bundle si el empaquetador no hace tree-shaking bien. Regla práctica: barrels por carpeta de dominio sí; un barrel gigante para todo el proyecto, no.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="tsconfig-json-esencial">
-    <h2>tsconfig.json esencial</h2>
+    <h2><i class="fa-solid fa-gears"></i> tsconfig.json: las opciones clave explicadas</h2>
     <div class="doc-content">
+<p>El archivo <code>tsconfig.json</code> (generado con <code>npx tsc --init</code>) es el cerebro del compilador: define A QUÉ JavaScript transpila, DÓNDE vive tu código y QUÉ tan estricto será el chequeo. Estas son las opciones que debes dominar antes que ninguna otra:</p>
+<table><thead><tr><th>Opción</th><th>Qué controla</th><th>Valor típico moderno</th></tr></thead><tbody><tr><td><code>target</code></td><td>Versión de JS generada (sintaxis final)</td><td><code>ES2020</code> o superior</td></tr><tr><td><code>lib</code></td><td>APIs disponibles para el chequeo (DOM, ES2023...)</td><td><code>["ES2022", "DOM"]</code></td></tr><tr><td><code>module</code></td><td>Sistema de módulos de la SALIDA</td><td><code>ESNext</code> (bundler) / <code>NodeNext</code> (Node)</td></tr><tr><td><code>moduleResolution</code></td><td>Algoritmo para encontrar módulos</td><td><code>bundler</code> / <code>NodeNext</code></td></tr><tr><td><code>rootDir</code></td><td>Carpeta raíz de tus fuentes</td><td><code>./src</code></td></tr><tr><td><code>outDir</code></td><td>Carpeta donde cae el JS compilado</td><td><code>./dist</code></td></tr></tbody></table>
+<h3>tsconfig mínimo profesional, comentado</h3>
 <pre><code class="language-json">{
+  "compilerOptions": {
+    // ¿Qué JavaScript producimos? ES2020 trae optional chaining nativo
+    "target": "ES2020",
+
+    // Sistema de módulos de la salida: ESNext para bundlers modernos
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+
+    // APIs que el compilador debe conocer (navegador + estándar ES2022)
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+
+    // Estructura del proyecto: src → dist
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    // Calidad máxima desde el día uno
+    "strict": true,
+
+    // Interoperabilidad con CommonJS y velocidad de chequeo
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+
+    // Mapas .map para depurar el TS original en el navegador
+    "sourceMap": true
+  },
+  // Qué archivos compila este proyecto
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}</code></pre>
+<h3>target vs lib: dos decisiones distintas</h3>
+<p>Es un error clásico confundirlas. <code>target</code> decide cómo se ESCRIBE el JavaScript de salida (¿usa <code>??</code> nativo o lo reescribe?). <code>lib</code> decide qué APIs CONOCE el compilador al verificar (¿existe <code>Array.at()</code>? ¿existe <code>window</code>?). Puedes compilar hacia ES2020 y aun así verificar contra las APIs de ES2022.</p>
+<blockquote class="aside aside-caution"><p>No pongas <code>target: "ES5"</code> «por compatibilidad» sin necesidad: multiplica el peso del bundle (downleveling de async/await y clases) y te obliga a arrastrar polyfills. Consulta la cobertura real de tu audiencia en caniuse antes de decidir.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="modo-strict-y-opciones-de-calidad">
+    <h2><i class="fa-solid fa-shield"></i> Modo strict y opciones de calidad</h2>
+    <div class="doc-content">
+<p><code>"strict": true</code> no es UNA opción sino un <strong>paquete</strong> de verificaciones que juntas transforman al compilador en un revisor exigente. Son las banderas que más bugs han eliminado en la historia de TypeScript:</p>
+<table><thead><tr><th>Bandera incluida en strict</th><th>Qué previene</th></tr></thead><tbody><tr><td><code>noImplicitAny</code></td><td>Valores «sin tipo» que quedan como any silencioso</td></tr><tr><td><code>strictNullChecks</code></td><td>Acceder a algo que puede ser null/undefined sin comprobarlo</td></tr><tr><td><code>strictFunctionTypes</code></td><td>Asignar funciones con parámetros incompatibles</td></tr><tr><td><code>strictBindCallApply</code></td><td>Usos incorrectos de bind/call/apply</td></tr><tr><td><code>strictPropertyInitialization</code></td><td>Propiedades de clase declaradas pero nunca inicializadas</td></tr><tr><td><code>noImplicitThis</code></td><td>this ambiguo dentro de funciones</td></tr><tr><td><code>useUnknownInCatchVariables</code></td><td>Asumir que todo error lanzado es Error</td></tr></tbody></table>
+<pre><code class="language-json">{
+  "compilerOptions": {
+    // El paquete completo de rigor:
+    "strict": true,
+    // Equivalente a activarlas una a una:
+    // "noImplicitAny": true,
+    // "strictNullChecks": true,
+    // "strictFunctionTypes": true,
+    // ... etc.
+
+    // Compatibilidad con paquetes antiguos escritos en CommonJS:
+    "esModuleInterop": true,
+
+    // NO re-chequear el código de node_modules (velocidad ×10):
+    "skipLibCheck": true,
+
+    // Genera .map junto a cada .js para depurar el TypeScript original:
+    "sourceMap": true,
+
+    // Extras muy recomendados fuera del paquete strict:
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  }
+}</code></pre>
+<blockquote class="aside aside-danger"><p><code>skipLibCheck: true</code> acelera mucho la compilación porque ignora errores DENTRO de las definiciones de terceros… pero no desactiva el chequeo de TU código contra esas librerías. Es un compromiso de velocidad estándar y seguro.</p></blockquote>
+<blockquote class="aside aside-success"><p>Iniciar cualquier proyecto nuevo con <code>"strict": true</code> es la decisión de mayor retorno de toda la configuración: activarlo DESPUÉS, sobre miles de líneas, puede generar cientos de errores de golpe.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="modos-de-ejecucion">
+    <h2><i class="fa-solid fa-play"></i> Formas de ejecutar TypeScript: tsc, bundlers y ts-node/tsx</h2>
+    <div class="doc-content">
+<p>El navegador y Node no entienden TypeScript: SIEMPRE hace falta un paso que lo convierta a JavaScript. Hay tres arquitecturas posibles, y elegir bien desde el inicio evita reconfigurar todo el proyecto después:</p>
+<h3>1) Compilador puro: tsc</h3>
+<pre><code class="language-bash"># Compila todo el proyecto según tsconfig.json (src → dist)
+npx tsc
+
+# Modo watch: recompila al guardar (ideal para Node.js en desarrollo)
+npx tsc --watch
+
+# Ejecutar la salida con Node
+node dist/index.js</code></pre>
+<h3>2) Bundler: Vite / webpack / esbuild</h3>
+<pre><code class="language-bash">npm install -D vite
+
+# Desarrollo: servidor con HMR que transpila TS al vuelo (sin tsc)
+npx vite
+
+# Producción: bundle optimizado listo para desplegar
+npx vite build</code></pre>
+<p>El bundler transpila pero NO verifica tipos. La práctica estándar es combinar: <strong>Vite para velocidad + <code>tsc --noEmit</code> como control de calidad</strong> (en el script <code>build</code> de muchos scaffolds aparece literalmente <code>tsc &amp;&amp; vite build</code>).</p>
+<h3>3) Ejecución directa: ts-node / tsx</h3>
+<pre><code class="language-bash">npm install -D tsx
+
+# Corre el .ts directamente: transpila en memoria al vuelo
+npx tsx src/index.ts
+
+# Perfecto para scripts, prototipos y herramientas de línea de comando
+npx tsx src/scripts/migrar-datos.ts --seco</code></pre>
+<h3>Project references: teaser de monorepos</h3>
+<p>Cuando un repositorio aloja varios paquetes (<code>@app/api</code>, <code>@app/web</code>, <code>@app/comun</code>), los <strong>project references</strong> permiten compilar cada parte por separado declarando dependencias entre proyectos (<code>"references": [{"path": "../comun"}]</code>), con builds incrementales que solo recompilan lo cambiado.</p>
+<blockquote class="aside aside-tip"><p>Regla rápida de elección: <strong>frontend → bundler (Vite)</strong>; <strong>API/librería Node → tsc (+ watch)</strong>; <strong>scripts y prototipos → tsx</strong>. Y siempre <code>tsc --noEmit</code> en CI como juez final de tipos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="escenarios-recomendados">
+    <h2><i class="fa-solid fa-map-location-dot"></i> Escenarios y configuración recomendada</h2>
+    <div class="doc-content">
+<p>No existe «el» tsconfig universal: la configuración correcta depende del destino del código. Esta tabla resume setups probados para los cuatro escenarios más comunes:</p>
+<table><thead><tr><th>Escenario</th><th>module / resolution</th><th>Herramienta de build</th><th>Notas clave</th></tr></thead><tbody><tr><td><strong>App frontend (SPA)</strong></td><td><code>ESNext</code> / <code>bundler</code></td><td>Vite o webpack</td><td><code>lib</code> con DOM; <code>tsc --noEmit</code> antes de empaquetar</td></tr><tr><td><strong>API / backend Node</strong></td><td><code>NodeNext</code> / <code>NodeNext</code></td><td>tsc + <code>--watch</code> (o tsx en dev)</td><td>Sin DOM en <code>lib</code>; <code>sourceMap</code> para depurar</td></tr><tr><td><strong>Librería npm</strong></td><td><code>ESNext</code> + tipos .d.ts generados (<code>declaration: true</code>)</td><td>tsc (o bundler + dts)</td><td>Publicar JS + .d.ts; NO publicar el .ts crudo</td></tr><tr><td><strong>Script / CLI pequeño</strong></td><td><code>ESNext</code> / <code>bundler</code></td><td>tsx directo</td><td>tsconfig mínimo; strict igualmente</td></tr></tbody></table>
+<pre><code class="language-json">// Ejemplo: librería npm lista para publicar
+{
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
+    "moduleResolution": "bundler",
     "strict": true,
+    "declaration": true,        // genera los .d.ts que consumirá quien instale tu paquete
     "outDir": "./dist",
-    "rootDir": "./src"
+    "skipLibCheck": true
   },
-  "include": ["src/**/*"]
+  "include": ["src"]
 }</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> "strict": true habilita todas las verificaciones estrictas: úsalo siempre en proyectos nuevos.</blockquote>
+<blockquote class="aside aside-note"><p>Para librerías, añade en package.json <code>"types": "./dist/index.d.ts"</code>: así los consumidores obtienen autocompletado completo sin configurar nada extra.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas">
+    <h2><i class="fa-solid fa-circle-check"></i> Buenas prácticas de módulos y configuración</h2>
+    <div class="doc-content">
+<table><thead><tr><th>Práctica</th><th>Razón</th></tr></thead><tbody><tr><td><code>"strict": true</code> desde el primer commit</td><td>Retroactivamente duele; preventivamente ahorra</td></tr><tr><td>Compilador versionado en devDependencies</td><td>Misma versión local/CI: adiós «en mi máquina compila»</td></tr><tr><td><code>tsc --noEmit</code> como paso obligatorio de CI</td><td>Bloquear merges con errores de tipo</td></tr><tr><td>Un módulo = una responsabilidad</td><td>Archivos pequeños y cohesivos se importan mejor y testean mejor</td></tr><tr><td><code>import type</code> explícito para tipos</td><td>Salida limpia y compatibilidad con bundlers modernos</td></tr><tr><td>Barrels por dominio, no globales</td><td>Ergonomía sin sacrificar tree-shaking</td></tr></tbody></table>
+<pre><code class="language-json">// Script de package.json que protege tu proyecto:
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "check": "tsc --noEmit",
+    "watch": "tsc --watch"
+  }
+}</code></pre>
+<blockquote class="aside aside-caution"><p>Cuida qué exportas: cada símbolo público de un módulo es una promesa de mantenimiento. Si algo solo existe para uso interno de la carpeta, NO lo re-exportes en el barrel — el encapsulamiento también aplica a los tipos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-list-check"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Trabaja sobre un proyecto nuevo inicializado con <code>npx tsc --init</code>:</p>
+<ol>
+<li><strong>Básico</strong>: Crea dos módulos (<code>operaciones.ts</code> y <code>app.ts</code>). Exporta tres funciones nombradas y una clase por defecto; impórtalas todas y ejecuta con <code>tsx</code>.</li>
+<li><strong>Type-only</strong>: En un módulo <code>modelos.ts</code>, exporta una interfaz <code>Tarea</code> y una función fábrica. En otro archivo impórtala con <code>import type</code> y comprueba en el <code>.js</code> compilado que esa línea desapareció.</li>
+<li><strong>Barrel</strong>: Organiza tres modelos en una carpeta <code>modelos/</code> con su <code>index.ts</code>. Refactoriza los imports de <code>app.ts</code> para consumirlos solo vía barrel.</li>
+<li><strong>Configuración</strong>: Partiendo del tsconfig mínimo profesional, cambia <code>target</code> a ES5 y compara tamaño y contenido del <code>.js</code> generado (async/await y clases). Devuélvelo a ES2020 y documenta la diferencia.</li>
+<li><strong>Desafío integral</strong>: Monta el flujo completo: estructura <code>src/</code> → <code>dist/</code>, scripts <code>dev</code>/<code>check</code>/<code>build</code> en package.json, un módulo de dominio con tipos importados type-only y un barrel. Haz fallar <code>npm run check</code> introduciendo un error de tipo a propósito y corrígelo hasta compilar limpio en strict.</li>
+</ol>
+<p>---</p>
     </div>
   </section>

@@ -2,36 +2,217 @@
 <!-- Contenido local del proyecto -->
 
   <section id="enums-con-datos">
-    <h2>Enums con datos</h2>
+    <h2><i class="fa-solid fa-layer-group"></i> Enums con datos: mucho más que constantes</h2>
     <div class="doc-content">
+<p>Si vienes de C o Java, olvida los enums numéricos. Un <code>enum</code> de Rust es un tipo <strong>suma</strong>: el valor es exactamente UNA de sus variantes, y cada variante puede llevar <strong>datos propios distintos</strong>. Es la herramienta de modelado más poderosa del lenguaje:</p>
 <pre><code class="language-rust">enum Forma {
-    Circulo(f64),
-    Rectangulo(f64, f64),
+    Circulo(f64),                    // variante con un dato: radio
+    Rectangulo(f64, f64),            // variante con dos: base, altura
+    Triangulo { base: f64, altura: f64 }, // variante estilo struct
 }
 
 fn area(f: &amp;Forma) -&gt; f64 {
     match f {
-        Forma::Circulo(r) =&gt; 3.14159 * r * r,
+        Forma::Circulo(r) =&gt; std::f64::consts::PI * r * r,
         Forma::Rectangulo(a, b) =&gt; a * b,
+        Forma::Triangulo { base, altura } =&gt; base * altura / 2.0,
+    }
+}
+
+fn main() {
+    let formas = [Forma::Circulo(1.0), Forma::Rectangulo(2.0, 3.0)];
+    for f in &amp;formas {
+        println!("Área: {:.2}", area(f));
     }
 }</code></pre>
+<p>Los tipos que ya conoces están construidos así: <code>Option</code> y <code>Result</code> son enums de la stdlib con genéricos. No hay magia especial:</p>
+<pre><code class="language-rust">// Así están definidos en la biblioteca estándar:
+enum Option&lt;T&gt; {
+    Some(T),
+    None,
+}
+
+enum Result&lt;T, E&gt; {
+    Ok(T),
+    Err(E),
+}</code></pre>
+<blockquote class="aside aside-note"><p>Cuando modelas estados ("cargando", "listo", "error con mensaje"), un enum obliga a representar SOLO combinaciones válidas. Los bugs de estado imposible desaparecen por diseño.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="option-sin-null">
-    <h2>Option: sin null</h2>
+    <h2><i class="fa-solid fa-circle-question"></i> Option&lt;T&gt;: Rust no tiene null (y por qué)</h2>
     <div class="doc-content">
-<pre><code class="language-rust">fn buscar(id: u32) -&gt; Option&lt;String&gt; {
-    if id == 1 { Some(String::from("Ana")) } else { None }
+<p>Tony Hoare inventó null en 1965 y lo llamó después "mi error de los mil millones de dólares": referencias nulas que revientan en ejecución. Rust eliminó el problema de raíz: no existe null. En su lugar, "quizás hay un valor" se representa con <strong><code>Option&lt;T&gt;</code></strong>, y el compilador te OBLIGA a considerar ambos casos:</p>
+<pre><code class="language-rust">fn buscar_usuario(id: u32) -&gt; Option&lt;String&gt; {
+    if id == 1 {
+        Some(String::from("Ana"))     // hay valor
+    } else {
+        None                          // no hay valor: explícito y tipado
+    }
 }
 
-match buscar(1) {
-    Some(nombre) =&gt; println!("Encontrado: {}", nombre),
-    None =&gt; println!("No existe"),
-}
+fn main() {
+    let resultado = buscar_usuario(1);
 
-// Atajos comunes
-let nombre = buscar(2).unwrap_or(String::from("anónimo"));</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> <code>Option&lt;T&gt;</code> reemplaza al null: el compilador te obliga a manejar el caso vacío antes de usar el valor.</blockquote>
+    // El compilador RECHAZA usar el String sin desenvolverlo antes:
+    // println!("{}", resultado.len());  // ❌ error: Option no tiene .len()
+
+    match resultado {
+        Some(nombre) =&gt; println!("Encontrada: {}", nombre),
+        None =&gt; println!("Usuario inexistente"),
+    }
+
+    // Atajos para casos simples:
+    let nombre = buscar_usuario(99).unwrap_or(String::from("anónimo"));
+    println!("Hola, {}", nombre);
+}</code></pre>
+<table><thead><tr><th>Lenguaje con null</th><th>Rust con Option&lt;T&gt;</th></tr></thead><tbody><tr><td>Cualquier variable puede ser null sorpresivamente</td><td>El tipo declara si puede faltar: <code>Option&lt;String&gt;</code> vs <code>String</code></td></tr><tr><td>Error en RUNTIME (NullPointerException)</td><td>Obligación de manejar None verificada en COMPILACIÓN</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p>Option convierte una categoría entera de crashes en errores de compilación. Cuando veas <code>Option&lt;T&gt;</code> en una firma, sabes SIN leer el cuerpo que puede no haber valor.</p></blockquote>
+<p>---</p>
     </div>
   </section>
+
+  <section id="match-exhaustivo">
+    <h2><i class="fa-solid fa-code-branch"></i> Match: exhaustivo y como expresión</h2>
+    <div class="doc-content">
+<p><code>match</code> compara un valor contra patrones y ejecuta el brazo correspondiente. Dos superpoderes lo distinguen del switch tradicional: es <strong>exhaustivo</strong> (el compilador rechaza variantes sin cubrir) y es una <strong>expresión</strong> que devuelve un valor:</p>
+<pre><code class="language-rust">enum EstadoEnvio {
+    Pedido,
+    EnCamino(u32),          // días estimados restantes
+    Entregado,
+    Perdido(String),        // motivo
+}
+
+fn describir(estado: EstadoEnvio) -&gt; String {
+    // Cada brazo devuelve un String: el MATCH completo ES ese valor
+    match estado {
+        EstadoEnvio::Pedido =&gt; String::from("Esperando recojo"),
+        EstadoEnvio::EnCamino(dias) =&gt; format!("Llega en {} días", dias),
+        EstadoEnvio::Entregado =&gt; String::from("¡Recibido!"),
+        EstadoEnvio::Perdido(motivo) =&gt; format!("Perdido: {}", motivo),
+    }   // ← quita cualquier brazo y verás error[E0004]: non-exhaustive patterns
+}
+</code></pre>
+<h3>Bindings: extraer datos dentro del patrón</h3>
+<p>Fíjate cómo <code>EnCamino(dias)</code> no solo compara: <em>captura</em> el dato interno en la variable <code>dias</code>. Eso es un binding, y funciona anidado a cualquier profundidad:</p>
+<pre><code class="language-rust">match respuesta_http {
+    Some((200, cuerpo)) =&gt; procesar(&amp;cuerpo),      // tupla anidada desestructurada
+    Some((404, _)) =&gt; println!("No encontrado"),
+    Some((codigo, _)) if codigo &gt;= 500 =&gt; println!("Error del servidor"),
+    Some(_) =&gt; println!("Respuesta inesperada"),
+    None =&gt; println!("Sin conexión"),
+}</code></pre>
+<p>Los <strong>guards</strong> (<code>if codigo &gt;= 500</code>) añaden condiciones extra al patrón cuando la estructura sola no basta.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="patrones-avanzados">
+    <h2><i class="fa-solid fa-filter"></i> Patrones avanzados: _, |, rangos y @</h2>
+    <div class="doc-content">
+<p>El pattern matching de Rust es un mini-lenguaje propio. Estos son los patrones que usarás a diario:</p>
+<pre><code class="language-rust">fn clasificar(n: i32) -&gt; &amp;'static str {
+    match n {
+        0 =&gt; "cero",
+        1 | 2 | 3 =&gt; "pequeño",           // OR-patterns: varias opciones, un brazo
+        4..=9 =&gt; "mediano",               // rango inclusivo
+        negativo if negativo &lt; 0 =&gt; "negativo",  // guard condicional
+        _ =&gt; "grande",                    // comodín: todo lo demás
+    }
+}
+
+fn main() {
+    // Desestructuración profunda de structs y tuplas:
+    struct Punto { x: i32, y: i32 }
+    let p = Punto { x: 0, y: 7 };
+    match p {
+        Punto { x: 0, y } =&gt; println!("Sobre el eje Y en {}", y),
+        Punto { x, y: 0 } =&gt; println!("Sobre el eje X en {}", x),
+        Punto { x, y } =&gt; println!("Punto libre ({}, {})", x, y),
+    }
+}</code></pre>
+<table><thead><tr><th>Patrón</th><th>Ejemplo</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>_</code></td><td><code>_ =&gt; ...</code></td><td>Comodín que NO bindea (sin warnings de unused)</td></tr><tr><td><code>|</code></td><td><code>"sí" | "y" | "s"</code></td><td>Alternativas dentro del mismo brazo</td></tr><tr><td><code>a..=b</code></td><td><code>18..=65</code></td><td>Rango inclusivo de valores</td></tr><tr><td><code>n @ rango</code></td><td><code>n @ 13..=19</code></td><td>Bindea el valor si cae en el patrón</td></tr><tr><td><code>condición if</code></td><td><code>x if x % 2 == 0</code></td><td>Guard: condición adicional al patrón</td></tr><tr><td>struct/tupla</td><td><code>Punto { x, y }</code></td><td>Desestructura campos en variables</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="if-let-y-while-let">
+    <h2><i class="fa-solid fa-door-open"></i> if let y while let: azúcar para un solo caso</h2>
+    <div class="doc-content">
+<p>Cuando un match completo es demasiado para lo que necesitas —solo te importa UNA variante—, <code>if let</code> expresa la intención con menos ruido:</p>
+<pre><code class="language-rust">fn main() {
+    let config: Option&lt;&amp;str&gt; = Some("produccion.toml");
+
+    // Con match: verboso para un solo caso real
+    match config {
+        Some(ruta) =&gt; println!("Cargando {}", ruta),
+        _ =&gt; (),                       // brazo obligatorio aunque no haga nada
+    }
+
+    // Con if let: directo y legible (y admite else para el caso contrario)
+    if let Some(ruta) = config {
+        println!("Cargando {}", ruta);
+    } else {
+        println!("Usando valores por defecto");
+    }
+}
+}</code></pre>
+<h3>while let: consumir hasta agotar</h3>
+<p>Su caso estrella es drenar una colección mientras quede algo que extraer:</p>
+<pre><code class="language-rust">fn main() {
+    let mut pila = vec![3, 2, 1];
+
+    while let Some(tope) = pila.pop() {   // itera MIENTRAS haya elementos
+        println!("Procesando {}", tope);
+    }
+    // pop() devuelve None al vaciar: el bucle termina limpiamente
+}</code></pre>
+<blockquote class="aside aside-caution"><p>No abuses de <code>if let</code> para silenciar casos: si tu lógica debe reaccionar ante TODAS las variantes, <code>match</code> exhaustivo te protege de olvidos cuando el enum crezca. Regla rápida: un caso relevante → <code>if let</code>; todos relevantes → <code>match</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="metodos-de-option">
+    <h2><i class="fa-solid fa-toolbox"></i> Métodos esenciales de Option</h2>
+    <div class="doc-content">
+<p>Escribir match para cada <code>Option</code> sería agotador. La stdlib trae una batería de métodos combinables que cubren casi todos los escenarios:</p>
+<table><thead><tr><th>Método</th><th>Comportamiento</th><th>Ideal para</th></tr></thead><tbody><tr><td><code>unwrap()</code></td><td>Devuelve el valor o PANICA si es None</td><td>Solo prototipos y tests</td></tr><tr><td><code>expect("msg")</code></td><td>Como unwrap pero con tu mensaje en el panic</td><td>Invariantes "imposibles" documentadas</td></tr><tr><td><code>unwrap_or(def)</code></td><td>Valor o un default calculado ya</td><td>Valores por defecto inmediatos</td></tr><tr><td><code>unwrap_or_else(|| ...)</code></td><td>Valor o default perezoso (closure)</td><td>Defaults caros de calcular</td></tr><tr><td><code>map(|x| ...)</code></td><td>Transforma el interior: Some→Some, None→None</td><td>Conversión sin tocar el caso vacío</td></tr><tr><td><code>and_then(|x| ...)</code></td><td>Encadena otra operación que devuelve Option</td><td>Cadenas de pasos fallibles</td></tr><tr><td><code>is_some() / is_none()</code></td><td>Pregunta booleana sin extraer</td><td>Validaciones simples</td></tr><tr><td><code>ok_or(err)</code></td><td>Convierte a Result: None pasa a Err(err)</td><td>Puente hacia manejo de errores</td></tr></tbody></table>
+<pre><code class="language-rust">fn main() {
+    let entrada = "  30 ";                       // edad tecleada por usuario
+
+    let edad: Option&lt;u32&gt; = entrada.trim().parse().ok(); // Err → None
+    let mayor = edad.map(|e| e &gt;= 18);           // Some(true) — sin unwrap
+
+    println!("¿Mayor de edad? {:?}", mayor);
+}</code></pre>
+<blockquote class="aside aside-tip"><p>El estilo idiomático encadena <code>map</code>/<code>and_then</code>/<code>filter</code> y deja un único punto final donde decides qué hacer con el None. Tu código queda plano, sin pirámides de match anidados.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes-match">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes con enums y matching</h2>
+    <div class="doc-content">
+<p>El compilador te protege mucho aquí, pero estos tropiezos aparecen en cuanto dejas de leer sus mensajes:</p>
+<table><thead><tr><th>Error / síntoma</th><th>Causa</th><th>Solución</th></tr></thead><tbody><tr><td><code>E0004</code>: non-exhaustive patterns</td><td>Falta cubrir una variante del enum</td><td>Añade el brazo (o <code>_</code> consciente)</td></tr><tr><td><code>panic: called unwrap() on None</code></td><td>unwrap sobre un None real en ejecución</td><td><code>unwrap_or</code>, <code>if let</code> o propagar</td></tr><tr><td>Brazos de match devuelven tipos distintos</td><td><code>match</code> es expresión: todos los brazos deben coincidir</td><td>Unifica el tipo (p. ej. todos String)</td></tr><tr><td><code>expected T, found Option&lt;T&gt;</code></td><td>Usar el interior sin desenvolver</td><td>match / if let / combinators antes de usarlo</td></tr><tr><td>Warning <code>unused variable</code> en un binding</td><td>Capturaste un dato que no usas</td><td>Cambia a <code>_</code> o nombra <code>_variable</code></td></tr></tbody></table>
+<blockquote class="aside aside-danger"><p>Un <code>unwrap()</code> olvidado sobre <code>None</code> derriba todo el proceso. Regla profesional: <code>unwrap()</code>/​<code>expect()</code> solo en tests, ejemplos o cuando la invariante esté demostrada dos líneas arriba.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Réslolos en orden; cada uno sube el nivel de modelado exigido.</p>
+<ol>
+<li><strong>Semáforo</strong>: crea el enum <code>Semaforo { Rojo, Amarillo, Verde }</code> con método <code>segundos(&amp;self) -&gt; u32</code> vía match, y un bucle for que recorra las tres fases imprimiendo su duración.</li>
+<li><strong>Figuras geométricas</strong>: define <code>enum Figura</code> con variantes <code>Circulo(f64)</code>, <code>Rectangulo(f64, f64)</code> y <code>TrianguloEquilatero(f64)</code>; implementa <code>area(&amp;self) -&gt; f64</code> como match-expresión y pruébala con un array de figuras.</li>
+<li><strong>Option seguro</strong>: escribe <code>fn dividir(a: f64, b: f64) -&gt; Option&lt;f64&gt;</code> y consúmela tres veces: con <code>match</code>, con <code>if let</code> y con <code>map</code>+<code>unwrap_or</code>. Compara legibilidad en tus comentarios.</li>
+<li><strong>Parser de comandos</strong>: dada la entrada "add 5 3" / "mul 4 2", usa <code>split_whitespace()</code> + <code>collect::&lt;Vec&lt;_&gt;&gt;()</code> + match con patrones <code>[op, x, y]</code> y guards para implementar una mini-calculadora textual.</li>
+<li><strong>Máquina expendedora</strong>: modela estados (<code>Esperando</code>, <code>MonedaInsertada(u32)</code>, <code>ProductoServido(String)</code>) con un enum, procesa una cola de eventos con <code>while let</code> sobre un Vec y usa bindings <code>@</code> con rangos para validar montos.</li>
+</ol>
+    </div>
+  </section>
+

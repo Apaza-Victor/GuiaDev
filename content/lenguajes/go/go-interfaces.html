@@ -1,33 +1,215 @@
 <!-- 6. Interfaces - Go (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="implementacion-implicita">
-    <h2>Implementación implícita</h2>
+<section id="implementacion-implicita">
+    <h2><i class="fa-solid fa-handshake"></i> Implementación implícita: sin implements</h2>
     <div class="doc-content">
-<pre><code class="language-go">type Saluda interface {
-	Saludar() string
+        <p>Una interfaz en Go declara <strong>un conjunto de métodos</strong>. Cualquier tipo que tenga esos métodos satisface la interfaz — automáticamente, sin declararlo. No existe la palabra <code>implements</code>. Esta decisión, llamada <em>tipado estructural</em>, tiene una consecuencia revolucionaria: puedes hacer que un tipo definido por OTRO (incluso de la stdlib) satisfaga TU interfaz, algo imposible con herencia clásica.</p>
+
+        <h3>Declaración y satisfacción</h3>
+        <pre><code class="language-go">// La interfaz: SOLO comportamientos
+type Figura interface {
+    Area() float64
+    Perimetro() float64
 }
 
-// Usuario ya implementa Saluda sin declararlo
-func presentarse(s Saluda) {
-	fmt.Println(s.Saludar())
+// Dos tipos independientes...
+type Circulo struct{ Radio float64 }
+func (c Circulo) Area() float64     { return math.Pi * c.Radio * c.Radio }
+func (c Circulo) Perimetro() float64 { return 2 * math.Pi * c.Radio }
+
+type Rectangulo struct{ Base, Altura float64 }
+func (r Rectangulo) Area() float64     { return r.Base * r.Altura }
+func (r Rectangulo) Perimetro() float64 { return 2 * (r.Base + r.Altura) }
+
+// ...y UNA función que acepta a ambos sin saberlo
+func describir(f Figura) {
+    fmt.Printf("Área: %.2f | Perímetro: %.2f\n", f.Area(), f.Perimetro())
 }
 
-presentarse(u)  // cualquier tipo con Saludar() sirve</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> En Go las interfaces se satisfacen implícitamente: no hace falta "implements". Esto permite desacoplar paquetes fácilmente.</blockquote>
-    </div>
-  </section>
+describir(Circulo{Radio: 5})
+describir(Rectangulo{Base: 4, Altura: 6})</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Ni <code>Circulo</code> ni <code>Rectangulo</code> mencionan a <code>Figura</code> en ninguna parte. La relación nace del comportamiento. Puedes definir mañana una interfaz <code>Dibujable</code> sobre ellos sin tocar sus archivos: eso es imposible en Java o C#.</p>
+        </blockquote>
 
-  <section id="interfaces-estandar">
-    <h2>Interfaces estándar</h2>
+        <h3>El lema de Go: acepta interfaces, devuelve structs</h3>
+        <table>
+            <thead>
+                <tr><th>Regla</th><th>Razón</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Acepta interfaces en parámetros</td><td>Tu función funciona con cualquier implementación presente y FUTURA; quien llama decide el detalle</td></tr>
+                <tr><td>Devuelve tipos concretos</td><td>Quien recibe ve TODO lo que puede hacer con el valor, no solo tu subconjunto; las interfaces se definen donde se CONSUMEN</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>En Go las interfaces suelen ser PEQUEÑAS: uno o dos métodos. Si diseñas una interfaz de diez métodos "por si acaso", estás pensando en Java. Define la interfaz en el paquete consumidor, con exactamente los métodos que ese consumidor necesita.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="interfaces-estandar">
+    <h2><i class="fa-solid fa-box-open"></i> Interfaces de la stdlib que usarás siempre</h2>
     <div class="doc-content">
-<pre><code class="language-go">// error es una interfaz de un método:
-// type error interface { Error() string }
+        <h3>fmt.Stringer: tu toString personalizado</h3>
+        <pre><code class="language-go">type Color struct{ R, G, B uint8 }
 
-type MiError struct{ Msg string }
-func (e MiError) Error() string { return e.Msg }
+// Al implementar String(), fmt.Println/Printf(%v/%s) lo usan solos
+func (c Color) String() string {
+    return fmt.Sprintf("#%02X%02X%02X", c.R, c.G, c.B)
+}
 
-// fmt.Stringer controla cómo se imprime un tipo
-func (u Usuario) String() string { return u.Nombre }</code></pre>
+rojo := Color{255, 0, 0}
+fmt.Println(rojo) // #FF0000 — sin llamar a nada especial</code></pre>
+
+        <h3>error: la interfaz más famosa del lenguaje</h3>
+        <pre><code class="language-go">type error interface {
+    Error() string
+}</code></pre>
+        <p>Ese es su código fuente completo. Cualquier tipo con método <code>Error() string</code> es un error válido — por eso crear errores personalizados son tres líneas.</p>
+
+        <h3>io.Reader e io.Writer: el sistema circulatorio de Go</h3>
+        <table>
+            <thead>
+                <tr><th>Interfaz</th><th>Método</th><th>Implementada por</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>io.Reader</code></td><td><code>Read(p []byte) (n int, err error)</code></td><td>archivos, respuestas HTTP, buffers, strings (strings.Reader), compresión gzip…</td></tr>
+                <tr><td><code>io.Writer</code></td><td><code>Write(p []byte) (n int, err error)</code></td><td>stdout, archivos, buffers, respuestas HTTP, hashes…</td></tr>
+            </tbody>
+        </table>
+        <p>La magia: funciones como <code>io.Copy(dst Writer, src Reader)</code> funcionan entre CUALQUIER par de implementaciones. Copiar un archivo comprimido descargado por HTTP a un hash SHA-256 son cuatro piezas intercambiables:</p>
+        <pre><code class="language-go">respuesta, _ := http.Get(url)
+defer respuesta.Body.Close() // Body implementa io.Reader
+
+hash := sha256.New()          // hash.Writer implementa io.Writer
+io.Copy(hash, respuesta.Body) // pega cualquier Reader a cualquier Writer
+fmt.Printf("%x\n", hash.Sum(nil))</code></pre>
+
+        <h3>Composición de interfaces</h3>
+        <p>Las interfaces se componen entre sí formando contratos mayores:</p>
+        <pre><code class="language-go">type ReadWriter interface {
+    Reader
+    Writer
+}
+
+type ReadWriteCloser interface {
+    Reader
+    Writer
+    Closer
+}
+
+// Un *os.File ya satisface ReadWriteCloser: tiene los 3 métodos</code></pre>
+        <blockquote class="aside aside-success">
+            <p>Este estilo composicional explica por qué el ecosistema Go encaja tan bien entre sí: todos hablan de Readers, Writers y Closers estándar, no de clases base compartidas.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="interfaz-vacia-y-type-assertion">
+    <h2><i class="fa-solid fa-magnifying-glass"></i> Interfaz vacía, assertions y type switches</h2>
+    <div class="doc-content">
+        <h3>interface{} / any: el comodín</h3>
+        <p>La interfaz vacía no exige ningún método, así que TODOS los tipos la satisfacen. Desde Go 1.18 tiene alias: <code>any</code>. Es el tipo de <code>fmt.Println</code>, de JSON dinámico y de contenedores heterogéneos — pero también pierde toda comprobación de tipos:</p>
+        <pre><code class="language-go">var caja any = 42
+caja = "ahora texto"
+caja = []float64{1.5, 2.5} // todo cabe</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>Cada uso de <code>any</code> traslada el descubrimiento de errores del tiempo de compilación al runtime. En Go moderno, usa genéricos cuando puedas y reserva <code>any</code> para fronteras genuinamente dinámicas (JSON, plugins, logging).</p>
+        </blockquote>
+
+        <h3>Type assertion: extraer el concreto</h3>
+        <pre><code class="language-go">var v any = "hola mundo"
+
+// Forma arriesgada: PANIC si v no es string
+s := v.(string)
+
+// Forma idiomática con ok: nunca panic
+s, ok := v.(string)
+if ok {
+    fmt.Println("Longitud:", len(s))
+} else {
+    fmt.Println("No era un string")
+}</code></pre>
+
+        <h3>Type switch: múltiples tipos, máxima claridad</h3>
+        <pre><code class="language-go">func imprimir(v any) {
+    switch x := v.(type) {
+    case nil:
+        fmt.Println("nulo")
+    case int, int64:
+        fmt.Printf("entero: %d\n", x)
+    case string:
+        fmt.Printf("texto (%d caracteres)\n", len(x))
+    case []any:
+        fmt.Printf("lista de %d elementos\n", len(x))
+    default:
+        fmt.Printf("tipo %T\n", x)
+    }
+}</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="valor-nil-y-detalles">
+    <h2><i class="fa-solid fa-circle-question"></i> Detalles finos: nil, valores vs punteros</h2>
+    <div class="doc-content">
+        <h3>¿Qué entra exactamente en una interfaz?</h3>
+        <p>Internamente, un valor de interfaz guarda dos cosas: <strong>(tipo concreto, valor)</strong>. Esta pareja explica los casos más confusos del lenguaje:</p>
+        <pre><code class="language-go">var w io.Writer
+
+w = os.Stdout      // ( *os.File , descriptor ) → w != nil
+w = nil            // (nil, nil)              → w == nil
+
+// LA TRAMPA CLÁSICA:
+var f *os.File = nil
+w = f              // (*os.File, nil): TIPO presente, VALOR nil
+fmt.Println(w != nil) // ¡true! aunque el puntero interno sea nil</code></pre>
+        <table>
+            <thead>
+                <tr><th>Situación</th><th>Tipo dinámico</th><th>Valor dinámico</th><th>w == nil?</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Interfaz cero (<code>var w io.Writer</code>)</td><td>nil</td><td>nil</td><td>true</td></tr>
+                <tr><td>Puntero nil asignado (<code>w = (*os.File)(nil)</code>)</td><td>*os.File</td><td>nil</td><td><strong>false</strong></td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>Esta trampa causa bugs reales: funciones que devuelven <code>(*MiError)(nil)</code> tipadas como interfaz hacen que <code>err != nil</code> sea true con un error "fantasma". Regla práctica: devuelve <code>nil</code> literal para indicar ausencia de error, nunca un puntero nil tipado.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Causa real</th><th>Solución</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>"T does not implement I (method X has pointer receiver)"</td><td>El método está en <code>*T</code>, guardaste un valor <code>T</code></td><td>Guarda el puntero: <code>var i I = &amp;t</code></td></tr>
+                <tr><td>Interfaces gigantes de 8+ métodos</td><td>Mentalidad herencia clásica</td><td>Divide en pequeñas; compón donde haga falta</td></tr>
+                <tr><td>Definir interfaces antes de tener consumidores</td><td>Abstracción especulativa</td><td>Crea la interfaz cuando exista el SEGUNDO caso de uso</td></tr>
+                <tr><td><code>v.(string)</code> directo sobre datos externos</td><td>Panic en producción con input inesperado</td><td>Forma con <code>ok</code>: <code>s, ok := v.(string)</code></td></tr>
+                <tr><td>Comparar interfaz con nil esperando inspeccionar el valor</td><td>Pareja (tipo, valor) engaña al ==</td><td>Haz type assertion y verifica el valor interno</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Figuras geométricas</strong>: define interfaz <code>Figura</code> (Area, Perimetro); implementa Círculo, Rectángulo y Triángulo; escribe función que reciba un slice de Figuras y devuelva la de mayor área.</li>
+            <li><strong>Stringer real</strong>: crea tipo <code>Duracion</code> (segundos int64) cuyo String() muestre "2h 05m 30s" y úsalo desde fmt.Println sin castings.</li>
+            <li><strong>Pipeline de Writers</strong>: implementa un <code>Mayusculizador</code> que satisfaga io.Writer transformando a mayúsculas lo recibido, y encadénalo: datos → Mayusculizador → bytes.Buffer.</li>
+            <li><strong>Errores con superpoderes</strong>: crea <code>ErrorValidacion</code> con campo Campos []string; haz que una función de registro devuelva este tipo envuelto y demuestra errors.As extrayendo la lista de campos fallidos.</li>
+            <li><strong>Cazador de la trampa nil</strong>: reproduce el bug de la sección "Detalles finos" (interfaz conteniendo puntero nil), verifica que != nil da true, y corrígelo devolviendo nil literal.</li>
+        </ol>
+    </div>
+</section>

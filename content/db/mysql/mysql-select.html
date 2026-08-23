@@ -1,47 +1,186 @@
 <!-- 6. Consultas SELECT - MySQL (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="select-basico-y-alias">
-    <h2>SELECT básico y alias</h2>
+<section id="select-basico-y-alias">
+    <h2><i class="fa-solid fa-table-cells"></i> SELECT básico, alias y proyección</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT * FROM productos;                       -- todas las columnas
-SELECT nombre, precio FROM productos;          -- columnas específicas
-SELECT nombre AS producto, precio * 1.16 AS precio_con_iva FROM productos;</code></pre>
+        <p>SELECT es el verbo que usarás el 90% del tiempo: proyecta columnas de una tabla aplicando filtros, orden y formato. Dominar su orden de evaluación interna evita la mitad de los errores de sintaxis:</p>
+
+        <h3>Orden lógico de ejecución</h3>
+        <pre><code class="language-text">SELECT    [5. columnas/distinct]     ← lo último conceptualmente
+FROM      [1. tabla(s)]
+WHERE     [2. filtra FILAS]
+GROUP BY  [3. agrupa]
+HAVING    [4. filtra GRUPOS]
+ORDER BY  [6. ordena]
+LIMIT     [7. recorta]</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Por eso un alias definido en SELECT no puede usarse en WHERE (aún no se evaluó), pero sí en ORDER BY (ya se evaluó). MySQL permite algunos atajos, pero el estándar y otros motores no: escribe pensando en este orden.</p>
+        </blockquote>
+        <pre><code class="language-sql">-- Proyección con alias:
+SELECT
+    nombre AS empleado,
+    salario AS sueldo_mensual,
+    salario * 12 AS sueldo_anual,
+    CONCAT(nombre, ' &lt;', email, '&gt;') AS contacto
+FROM empleados;
+
+-- Columnas calculadas + funciones:
+SELECT nombre,
+       UPPER(email),
+       YEAR(contratado_el) AS anio_ingreso,
+       TIMESTAMPDIFF(YEAR, fecha_nac, CURDATE()) AS edad
+FROM clientes;</code></pre>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="filtrar-con-where">
-    <h2>Filtrar con WHERE</h2>
+<section id="filtrar-con-where">
+    <h2><i class="fa-solid fa-filter"></i> WHERE: operadores y nulos</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT * FROM productos WHERE precio &gt; 1000;
-SELECT * FROM productos WHERE precio BETWEEN 500 AND 1500;
-SELECT * FROM productos WHERE categoria_id IN (1, 3, 5);
-SELECT * FROM productos WHERE nombre LIKE '%laptop%';   -- contiene
-SELECT * FROM productos WHERE nombre LIKE 'L%';         -- empieza con L
-SELECT * FROM productos WHERE categoria_id IS NULL;     -- sin categoría</code></pre>
-<blockquote class="aside aside-note">
-<p><code>LIKE</code>: <code>%</code> reemplaza cualquier cadena, <code>_</code> un solo carácter. Para buscar <code>NULL</code> nunca uses <code>= NULL</code>, usa <code>IS NULL</code>.</p>
-</blockquote>
+        <pre><code class="language-sql">-- Operadores completos:
+SELECT * FROM productos WHERE precio &gt;= 50;
+SELECT * FROM productos WHERE precio BETWEEN 20 AND 100;   -- inclusive ambos
+SELECT * FROM clientes WHERE ciudad IN ('Madrid', 'Lima', 'Bogotá');
+SELECT * FROM productos WHERE nombre LIKE '%pro%';         -- % cualquier cosa, _ un char
+SELECT * FROM pedidos WHERE total NOT BETWEEN 10 AND 500;
+
+-- Combinación booleana:
+SELECT * FROM pedidos
+WHERE (estado = 'pendiente' OR estado = 'procesando')
+  AND total &gt; 100;
+
+-- NULL: JAMÁS con = (NULL = NULL devuelve NULL, ni true ni false):
+SELECT * FROM clientes WHERE telefono = NULL;        -- ❌ siempre vacío
+SELECT * FROM clientes WHERE telefono IS NULL;       -- ✅
+SELECT * FROM clientes WHERE telefono IS NOT NULL;
+
+-- Regex nativa:
+SELECT * FROM productos WHERE sku REGEXP '^ABC-[0-9]{4}$';</code></pre>
+        <table>
+            <thead>
+                <tr><th>Operador LIKE</th><th>Coincide con…</th><th>Ejemplo match</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>'A%'</code></td><td>Empieza por A</td><td>Ana, Adidas</td></tr>
+                <tr><td><code>'%ez'</code></td><td>Termina en ez</td><td>Pérez, Martínez</td></tr>
+                <tr><td><code>'_a%'</code></td><td>Segunda letra a</td><td>Marta, Salas</td></tr>
+                <tr><td><code>'%ana%'</code></td><td>Contiene ana</td><td>Hernández, Anaya</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>LIKE '%texto%' NO puede usar índices B-tree normales (búsqueda al inicio libre): sobre tablas grandes se convierte en full scan. Búsqueda textual seria → FULLTEXT index o motor de búsqueda dedicado.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="ordenar-y-paginar">
-    <h2>Ordenar y paginar</h2>
+<section id="ordenar-y-paginar">
+    <h2><i class="fa-solid fa-arrow-down-a-z"></i> ORDER BY y paginación LIMIT/OFFSET</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT nombre, precio FROM productos
-ORDER BY precio DESC, nombre ASC
-LIMIT 10 OFFSET 20;   -- página 3, de 10 en 10</code></pre>
-<p><code>LIMIT n OFFSET m</code> es la base de toda paginación: <code>OFFSET</code> = (página − 1) × tamaño_de_página.</p>
-    </div>
-  </section>
+        <pre><code class="language-sql">-- Orden simple y múltiple:
+SELECT nombre, precio FROM productos ORDER BY precio ASC;          -- default ASC
+SELECT ciudad, apellido, nombre FROM clientes
+ORDER BY ciudad ASC, apellido ASC, nombre ASC;
 
-  <section id="distinct-y-combinaciones">
-    <h2>DISTINCT y combinaciones</h2>
-    <div class="doc-content">
-<pre><code class="language-sql">SELECT DISTINCT categoria_id FROM productos;
+-- Expresiones y posiciones:
+SELECT nombre, salario*12 AS anual FROM empleados ORDER BY anual DESC;
+SELECT nombre, salario FROM empleados ORDER BY 2 DESC;             -- por columna 2 (frágil)
 
--- Condiciones compuestas: AND / OR / NOT
+-- Paginación clásica (página 3, 20 por página):
 SELECT * FROM productos
-WHERE (precio &gt; 1000 AND stock &gt; 0)
-   OR categoria_id IS NULL;</code></pre>
+ORDER BY id
+LIMIT 20 OFFSET 40;              -- o abreviado LIMIT 40, 20
+
+-- El patrón "top N":
+SELECT nombre, total FROM pedidos ORDER BY total DESC LIMIT 10;</code></pre>
+
+        <h3>Paginación profunda: OFFSET mata rendimiento</h3>
+        <table>
+            <thead>
+                <tr><th>Técnica</th><th>Página 1</th><th>Página 10.000</th><th>Nota</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>LIMIT 20 OFFSET N</td><td>Rápida ⚡</td><td>Lentísima 🐌 (lee y descarta N filas)</td><td>Sencilla; OK hasta ~10k filas</td></tr>
+                <tr><td>Keyset/cursor (seek)</td><td>Rápida ⚡</td><td>Igual de rápida ⚡</td><td>Necesita columna ordenable única</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">-- Keyset: "siguiente página desde la última vista":
+SELECT * FROM productos
+WHERE (precio, id) &lt; (29.99, 84512)   -- última fila de página anterior
+ORDER BY precio DESC, id DESC
+LIMIT 20;</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Infinite scroll y "cargar más" modernos usan keyset pagination: guardan el último id/valor visto y consultan "desde ahí". OFFSET solo para paginadores numerados pequeños.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="distinct-y-combinaciones">
+    <h2><i class="fa-solid fa-clone"></i> DISTINCT y combinación de resultados</h2>
+    <div class="doc-content">
+        <pre><code class="language-sql">-- Valores únicos de una columna:
+SELECT DISTINCT ciudad FROM clientes ORDER BY ciudad;
+
+-- Único por COMBINACIÓN completa:
+SELECT DISTINCT ciudad, pais FROM clientes;
+
+-- DISTINCT con agregación cuenta combinaciones únicas:
+SELECT COUNT(DISTINCT pais) AS paises_con_clientes FROM clientes;
+
+-- UNION: apila resultados eliminando duplicados (caro):
+SELECT nombre AS dato, 'cliente' AS tipo FROM clientes WHERE pais='ES'
+UNION
+SELECT nombre, 'proveedor' FROM proveedores WHERE pais='ES';
+
+-- UNION ALL: conserva duplicados, mucho más rápido:
+SELECT producto_id FROM pedidos_2023
+UNION ALL
+SELECT producto_id FROM pedidos_2024;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Operador</th><th>Duplicados</th><th>Coste</th><th>Uso</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>UNION</td><td>Elimina (sort/hash interno)</td><td>Alto</td><td>Listados únicos cruzados</td></tr>
+                <tr><td>UNION ALL</td><td>Conserva</td><td>Mínimo</td><td>Apilar particiones/años/reportes</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>Si sabes que las ramas jamás comparten filas (particiones por año), UNION ALL siempre: UNION paga un dedupe innecesario. Y las columnas de todas las ramas deben coincidir en número y tipos compatibles — los nombres finales salen de la PRIMERA rama.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>= NULL / != NULL</td><td>Filas desaparecen misteriosamente</td><td>IS NULL / IS NOT NULL únicamente</td></tr>
+                <tr><td>Alias usado en WHERE</td><td>"Unknown column" pese a verse correcto</td><td>Repetir expresión o subconsulta/HAVING según caso</td></tr>
+                <tr><td>LIMIT sin ORDER BY</td><td>Filas "aleatorias" entre ejecuciones</td><td>ORDER BY determinista SIEMPRE con LIMIT</td></tr>
+                <tr><td>OFFSET gigante en tablas grandes</td><td>Páginas tardan segundos</td><td>Keyset pagination</td></tr>
+                <tr><td>UNION esperando conservar orden de cada rama</td><td>Orden impredecible</td><td>ORDER BY final global o columna sort_key artificial</td></tr>
+                <tr><td>DISTINCT como parche de JOIN mal hecho</td><td>Enmascara fan-out real duplicando coste</td><td>Arreglar el JOIN/GROUP BY de raíz</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Catálogo filtrable</strong>: escribe 6 queries progresivas sobre productos: por rango de precio, por patrón de nombre, múltiples ciudades IN, combinadas AND/OR con paréntesis.</li>
+            <li><strong>Buscador de nulos</strong>: encuentra registros con teléfono NULL vs vacío '' y documenta por qué son distintos y cómo tratarlos.</li>
+            <li><strong>Paginador completo</strong>: implementa páginas 1-3 con LIMIT/OFFSET y luego versión keyset equivalente; EXPLAIN ambas comparando rows examined.</li>
+            <li><strong>Directorio unificado</strong>: UNION de clientes y proveedores con columna tipo, ordenado alfabético global; luego UNION ALL versionado por año.</li>
+            <li><strong>Cazador del LIMIT sin order</strong>: corre LIMIT 5 tres veces sobre tabla sin índice claro; observa variaciones si hay; añade ORDER BY y estabiliza.</li>
+        </ol>
+    </div>
+</section>

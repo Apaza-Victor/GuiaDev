@@ -2,35 +2,264 @@
 <!-- Contenido local del proyecto -->
 
   <section id="colecciones">
-    <h2>Colecciones</h2>
+    <h2><i class="fa-solid fa-cubes-stacked"></i> List, Set y Map: solo lectura vs mutables</h2>
     <div class="doc-content">
-<pre><code class="language-kotlin">val lista = listOf(1, 2, 3)          // inmutable
-val mut = mutableListOf(1, 2)
-mut.add(3)
+<p>Kotlin divide cada colección en dos interfaces: una <strong>solo lectura</strong> (<code>List</code>, <code>Set</code>, <code>Map</code>) que garantiza que tú no la modificarás, y su versión <strong>mutable</strong> (<code>MutableList</code>, <code>MutableSet</code>, <code>MutableMap</code>) que añade operaciones de escritura (<code>add</code>, <code>remove</code>). Esta separación en el sistema de tipos —no una simple convención— elimina de raíz los bugs donde una función "solo consulta" termina alterando datos ajenos.</p>
+<table><thead><tr><th>Tipo</th><th>Solo lectura</th><th>Mutable</th><th>Regla interna</th></tr></thead><tbody>
+<tr><td><strong>Lista</strong></td><td><code>List&lt;T&gt;</code></td><td><code>MutableList&lt;T&gt;</code></td><td>Ordenada, admite duplicados, acceso por índice</td></tr>
+<tr><td><strong>Conjunto</strong></td><td><code>Set&lt;T&gt;</code></td><td><code>MutableSet&lt;T&gt;</code></td><td>Sin duplicados, orden no garantizado (LinkedHashSet conserva inserción)</td></tr>
+<tr><td><strong>Mapa</strong></td><td><code>Map&lt;K, V&gt;</code></td><td><code>MutableMap&lt;K, V&gt;</code></td><td>Pares clave→valor; claves únicas</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">// CREACIÓN solo lectura: listOf, setOf, mapOf (+ operador infix "to" para pares)
+val frutas = listOf("pera", "kiwi", "pera")        // List&lt;String&gt;, sí admite repetidos
+val unicos = setOf("pera", "kiwi", "pera")         // Set: {pera, kiwi}
+val edades = mapOf("Ana" to 30, "Luis" to 25)      // Map&lt;String, Int&gt;
 
-val set = setOf(1, 2, 2, 3)           // {1, 2, 3}
-val mapa = mapOf("ana" to 30, "luis" to 25)
-println(mapa["ana"])</code></pre>
+// CREACIÓN mutable: mutableListOf, mutableSetOf, mutableMapOf
+val inventario = mutableListOf("teclado", "ratón")
+inventario.add("monitor")          // ✅ permitido: el tipo ES mutable
+
+// Solo lectura: leer OK, escribir ERROR DE COMPILACIÓN
+println(frutas[0])                 // pera
+// frutas.add("sandía")            // ❌ Unresolved reference: add no existe aquí
+
+// Matiz importante: readOnly ≠ inmutable profundo
+val listaVal = listOf(mutableListOf(1))
+listaVal[0].add(2)                 // ✅ la LISTA exterior no cambia,
+                                   // pero su ELEMENTO interno sí puede mutar
+
+// CONVERSIONES entre mundos: copias baratas y explícitas
+val soloLectura: List&lt;String&gt; = inventario.toList()      // instantánea congelada
+val otraVezMutable = soloLectura.toMutableList()          // reabre la escritura
+otraVezMutable.add("webcam")
+
+// Casos límite bien resueltos por la librería
+val vacia = emptyList&lt;Int&gt;()             // lista vacía tipada, sin nulls raros
+val unitaria = listOf("único")           // más expresivo que arrayListOf(x)</code></pre>
+<blockquote class="aside aside-tip"><p>Firma tus funciones con tipos solo lectura (<code>fun procesar(datos: List&lt;Int&gt;</code>): quien te llame sabe que sus datos no serán tocados. Devuelve listas inmutables salvo que documentes lo contrario.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="acceso-seguro-colecciones">
+    <h2><i class="fa-solid fa-hand-pointer"></i> Acceso seguro: adiós a IndexOutOfBounds</h2>
+    <div class="doc-content">
+<p>El acceso clásico por corchetes lanza excepción si el índice no existe. Como ya sabes tratar los nulos (lección 2), la librería estándar prefiere devolver <code>null</code> o un valor alternativo antes que romper el programa: así el acceso a colecciones se integra limpiamente con <code>?.</code>, <code>?:</code> y compañía.</p>
+<pre><code class="language-kotlin">val dias = listOf("lun", "mar", "mié")
+
+// Corchetes: rápido pero LANZA IndexOutOfBoundsException si te pasas
+// println(dias[7])                       // 💥 crash en ejecución
+
+// getOrNull: null en lugar de excepción → se combina con Elvis
+val dia7: String? = dias.getOrNull(7)             // null, sin drama
+println(dias.getOrNull(7) ?: "(sin dato)")        // (sin dato)
+
+// getOrElse: valor calculado como respaldo
+println(dias.getOrElse(7) { "día $it inválido" }) // día 7 inválido
+// dentro del lambda, "it" es el índice fallido
+
+// En MAPAS la nulidad ya viene de serie: clave ausente devuelve null
+val edades = mapOf("Ana" to 30, "Luis" to 25)
+println(edades["Marta"])                          // null
+println(edades["Marta"] ?: 0)                     // 0
+println(edades.getOrDefault("Marta", -1))         // -1
+println(edades.getValue("Marta"))                 // 💥 NoSuchElementException: cuando AUSENCIA = BUG
+
+// contains / in funcionan igual en las tres familias
+if ("Ana" in edades) println("Ana está registrada")</code></pre>
+<blockquote class="aside aside-danger"><p>Distingue "ausencia normal" de "ausencia imposible": para datos que DEBEN existir usa <code>getValue()</code> (falla fuerte y pronto); para consultas opcionales usa <code>[] ?: defecto</code>. Elegir mal entre ambos oculta errores de datos detrás de valores por defecto silenciosos.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="operaciones-funcionales">
-    <h2>Operaciones funcionales</h2>
+    <h2><i class="fa-solid fa-diagram-project"></i> Transformaciones: map, filter, groupBy y amigos</h2>
     <div class="doc-content">
-<pre><code class="language-kotlin">data class Persona(val nombre: String, val edad: Int)
+<p>Aquí brilla la inversión de Kotlin en funciones de orden superior: en lugar de bucles manuales, encadenas transformaciones declarativas donde cada eslabón dice QUÉ quiere lograr, no CÓMO recorrer los datos. Todas estas operaciones devuelven colecciones nuevas; la original nunca se modifica.</p>
+<pre><code class="language-kotlin">data class Persona(val nombre: String, val ciudad: String, val edad: Int)
 
 val personas = listOf(
-    Persona("Ana", 30),
-    Persona("Luis", 17),
-    Persona("María", 25)
+    Persona("Ana", "Madrid", 34),
+    Persona("Luis", "Lima", 17),
+    Persona("María", "Madrid", 28),
+    Persona("Carlos", "Bogotá", 45)
 )
 
-personas.filter { it.edad &gt;= 18 }
-        .sortedBy { it.nombre }
-        .map { it.nombre }
-        .forEach(::println)
+// MAP: transforma cada elemento (mismo tamaño a la salida)
+val nombres = personas.map { it.nombre }
 
-val totalEdad = personas.sumOf { it.edad }
-val hayMenores = personas.any { it.edad &lt; 18 }</code></pre>
+// FILTER: conserva los que cumplen la condición (subconjunto)
+val adultos = personas.filter { it.edad &gt;= 18 }
+
+// GROUPBY: agrupa en Map&lt;Clave, List&lt;Elemento&gt;&gt;
+val porCiudad: Map&lt;String, List&lt;Persona&gt;&gt; = personas.groupBy { it.ciudad }
+println(porCiudad["Madrid"]?.map { it.nombre })   // [Ana, María]
+
+// ASSOCIATEBY: Map&lt;Clave, Elemento completo&gt; — indexación rápida
+val porNombre = personas.associateBy { it.nombre }
+println(porNombre["Carlos"]?.edad)                // 45
+
+// PARTITION: divide en dos listas según un predicado (par de pares/impar)
+val (mayores, menores) = personas.partition { it.edad &gt;= 18 }
+println("Mayores: ${mayores.size}, Menores: ${menores.size}")
+
+// ZIP: empareja dos listas elemento a elemento
+val telefonos = listOf("600-111", "600-222", "600-333", "600-444")
+val contactos = personas.zip(telefonos) { p, tel -&gt; "${p.nombre}: $tel" }
+
+// FLATMAP: aplana colecciones anidadas tras mapearlas
+val pedidosPorCliente = mapOf(
+    "Ana" to listOf("libro", "lámpara"),
+    "Luis" to listOf("teclado")
+)
+val todosLosProductos = pedidosPorCliente.flatMap { it.value }  // sin listas internas
+
+// COMPLEMENTOS que completan el kit diario
+val porEdad = personas.sortedByDescending { it.edad }     // ordena sin mutar original
+val ciudadesUnicas = personas.map { it.ciudad }.distinct() // deduplica
+val tresPrimeros = personas.take(2).map { it.nombre }      // [Ana, Luis]
+val sinUltimo = personas.dropLast(1)                       // recorta por el final
+val correos = listOf("ana@x.com", null, "luis@y.com")
+    .mapNotNull { it?.uppercase() }                        // transforma Y limpia nulls</code></pre>
+<h3>Chuleta de transformaciones</h3>
+<table><thead><tr><th>Operación</th><th>Entrada → salida</th><th>Caso típico</th></tr></thead><tbody>
+<tr><td><code>map</code></td><td>N elementos → N transformados</td><td>Extraer campos, formatear textos</td></tr>
+<tr><td><code>filter</code></td><td>N elementos → ≤ N</td><td>Búsquedas, validaciones de conjunto</td></tr>
+<tr><td><code>groupBy</code></td><td>Lista → Map&lt;K, Lista&gt;</td><td>Agrupar por categoría o fecha</td></tr>
+<tr><td><code>associateBy</code></td><td>Lista → Map&lt;K, V&gt;</td><td>Índice de búsqueda por clave única</td></tr>
+<tr><td><code>partition</code></td><td>Lista → Par de listas</td><td>Separar válidos/inválidos en un pase</td></tr>
+<tr><td><code>zip</code></td><td>Dos listas → Lista de pares</td><td>Combinar fuentes paralelas</td></tr>
+<tr><td><code>flatMap</code></td><td>Listas anidadas → Lista plana</td><td>Unir subcolecciones dispersas</td></tr>
+</tbody></table>
+<blockquote class="aside aside-note"><p><code>mapNotNull</code> merece mención honorífica: aplica la transformación Y descarta los null resultantes de golpe. Ideal cuando el campo opcional de algunos elementos no siempre existe.</p></blockquote>
+<h3>Un pipeline real: todo junto</h3>
+<pre><code class="language-kotlin">// Reporte de adultos de Madrid, ordenados y formateados en una sola cadena
+val reporte = personas.asSequence()                    // perezoso desde el origen
+    .filter { it.ciudad == "Madrid" &amp;&amp; it.edad &gt;= 18 }
+    .sortedBy { it.edad }
+    .map { "${it.nombre} (${it.edad})" }
+    .joinToString(", ")
+println(reporte)   // María (28), Ana (34)</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="agregaciones-y-reduccion">
+    <h2><i class="fa-solid fa-compress"></i> Agregaciones: sum, count, maxBy, fold y reduce</h2>
+    <div class="doc-content">
+<p>Reducir muchos datos a uno solo es la otra mitad del modelo funcional. Kotlin ofrece atajos directos (<code>sum</code>, <code>count</code>) y la máquina general <code>fold/reduce</code>, capaz de construir cualquier agregación personalizada: promedios ponderados, concatenaciones con formato, acumuladores de estado.</p>
+<pre><code class="language-kotlin">val ventas = listOf(120.0, 340.5, 89.9, 500.0)
+
+// AGREGADOS DIRECTOS
+println(ventas.sum())                        // 1050.4
+println(ventas.count { it &gt; 100 })           // 3
+println(ventas.maxOrNull())                  // 500.0 (null si la lista está vacía)
+
+// MAXBYORNULL: el ELEMENTO cuyo atributo gana (no el valor)
+data class Vendedor(val nombre: String, val total: Double)
+val equipo = listOf(
+    Vendedor("Ana", 15_000.0),
+    Vendedor("Luis", 22_500.0),
+    Vendedor("María", 19_800.0)
+)
+val campeona = equipo.maxByOrNull { it.total }
+println(campeona?.nombre)                    // Luis
+
+// REDUCE: acumula con el propio tipo de la colección (¡falla con lista vacía!)
+val sumaTotal = ventas.reduce { acumulado, venta -&gt; acumulado + venta }
+
+// FOLD: igual que reduce, pero define VALOR INICIAL y puede cambiar de tipo
+val ticket = ventas.fold("VENTAS:") { texto, v -&gt; "$texto €$v" }
+println(ticket)                              // VENTAS: €120.0 €340.5 €89.9 €500.0
+
+// FOLD práctico: media ponderada en una sola pasada
+val pesos = listOf(1.0, 2.0, 1.0, 2.0)
+val numerador = ventas.zip(pesos).fold(0.0) { acc, (venta, peso) -&gt; acc + venta * peso }
+println(numerador / pesos.sum())
+
+// JOINTOSTRING: la agregación para humanos
+println(equipo.joinToString(" | ") { "${it.nombre} (${it.total.toInt()}€)" })</code></pre>
+<blockquote class="aside aside-caution"><p><code>reduce</code> sobre una colección vacía lanza <code>UnsupportedOperationException</code>. Si la entrada puede estar vacía, usa <code>fold</code> con neutro (0, "", lista vacía) o <code>reduceOrNull()</code>.</p></blockquote>
+<blockquote class="aside aside-success"><p>Desde Kotlin 1.4 existen variantes seguras de casi todo: <code>maxByOrNull</code>, <code>reduceOrNull</code>, <code>sumOf</code>… La convención <em>*OrNull</em> es tu aliada contra crashes en producción.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="sequences-lazy-vs-eager">
+    <h2><i class="fa-solid fa-hourglass-half"></i> Sequences: evaluación perezosa vs ansiosa</h2>
+    <div class="doc-content">
+<p>Cada operación sobre una colección crea una <strong>lista intermedia completa</strong>: en <code>lista.map{...}.filter{...}.take(3)</code>, Kotlin mapea TODOS los elementos, luego filtra TODOS, y solo entonces toma tres. Con millones de registros eso es memoria y CPU desperdiciadas. Las <code>Sequence</code> cambian el modelo: las operaciones se construyen diferidas y cada elemento atraviesa toda la cadena individualmente, deteniéndose tan pronto como hay resultado.</p>
+<pre><code class="language-kotlin">// COLECCIÓN (eager): ejecuta TODO por paso
+val cuadradosPares = (1..1_000_000).toList()
+    .map { it * it }              // crea lista de 1.000.000 cuadrados
+    .filter { it % 2 == 0 }       // crea OTRA lista filtrada completa
+    .take(3)                      // ...para usar solo 3 elementos 😬
+
+// SEQUENCE (lazy): nada corre hasta el elemento terminal take()
+val eficiente = generateSequence(1) { it + 1 }     // potencialmente infinita
+    .map { it * it }
+    .filter { it % 2 == 0 }
+    .take(3)
+    .toList()                     // ← aquí SÍ se evalúa: solo 3 elementos atraviesan todo
+
+// Convertir una lista existente con asSequence
+val nombresLargos = personas.asSequence()
+    .filter { it.edad &gt;= 18 }
+    .map { it.nombre.uppercase() }
+    .toList()</code></pre>
+<pre><code class="language-kotlin">// SECUENCIAS INFINITAS: imposibles con colecciones
+val fibonacci = generateSequence(0 to 1) { (a, b) -&gt; b to (a + b) }
+    .map { it.first }                 // 0, 1, 1, 2, 3, 5, 8...
+    .takeWhile { it &lt;= 100 }
+    .toList()
+println(fibonacci)                    // [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]</code></pre>
+<table><thead><tr><th>Criterio</th><th>Colecciones (eager)</th><th>Sequence (lazy)</th></tr></thead><tbody>
+<tr><td>Evaluación</td><td>Inmediata, paso a paso</td><td>Diferida hasta el terminal (<code>toList</code>, <code>first</code>, <code>sum</code>)</td></tr>
+<tr><td>Memoria</td><td>Lista intermedia por operación</td><td>Un elemento a la vez</td></tr>
+<tr><td>Ideal para…</td><td>Listas pequeñas/medianas, reutilización del resultado</td><td>Cadenas largas, datos grandes o infinitos, cortocircuito con <code>first/take</code></td></tr>
+<tr><td>Multirecorrido</td><td>Sí: la lista se reitera gratis</td><td>No: la mayoría solo se consumen una vez</td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>Regla práctica: cadenas de más de 2–3 operaciones sobre miles de elementos → <code>asSequence()</code>; cualquier duda en código cotidiano → colecciones normales, que son más fáciles de depurar porque cada línea deja un resultado inspeccionable.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas-colecciones">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+<p>La diferencia entre código funcional legible y espagueti funcional está en estos detalles. Son pequeñas inversiones de disciplina con retorno enorme en mantenimiento.</p>
+<table><thead><tr><th>Práctica</th><th>Razón</th></tr></thead><tbody>
+<tr><td>Expón <code>List</code>, guarda <code>MutableList</code></td><td><code>private val _items = mutableListOf(...)</code>; expones <code>items: List&lt;T&gt;</code> y controlas quién muta</td></tr>
+<tr><td>Devuelve colecciones nuevas, no modifiques parámetros</td><td>Efectos sorpresa son la fuente nº1 de bugs entre módulos</td></tr>
+<tr><td>Nombra las variables de resultados complejos</td><td><code>val adultosDeMadrid</code> explica la cadena mejor que comentarios</td></tr>
+<tr><td>Usa <code>sumOf {}</code>/<code>count {}</code> en vez de fold trivial</td><td>Intención explícita, menos código que mantener</td></tr>
+<tr><td>Firmas reciben <code>List&lt;T&gt;</code>, nunca <code>MutableList&lt;T&gt;</code></td><td><code>fun procesar(datos: List&lt;Int&gt;)</code> promete que no tocará los datos del llamador</td></tr>
+<tr><td>Evita índices manuales salvo necesidad real</td><td><code>forEach</code>/<code>withIndex</code> eliminan off-by-one</td></tr>
+<tr><td><code>associateBy</code> exige claves ÚNICAS</td><td>Duplicados sobrescriben en silencio: valida antes</td></tr>
+<tr><td>Cadenas largas + volumen grande → Sequence</td><td>Evita listas intermedias gigantes</td></tr>
+</tbody></table>
+<pre><code class="language-kotlin">// ❌ Cadena opaca: ¿qué hace? hay que descifrarla línea a línea
+val x = datos.filter { it.a }.map { it.b }.groupBy { it.c }.mapValues { it.value.size }
+
+// ✅ Misma lógica, pasos nombrados que cuentan la historia
+val activos      = datos.filter { it.activo }
+val etiquetas    = activos.map { it.etiqueta }
+val conteoEtiquetas = etiquetas.groupBy { it }.mapValues { (_, v) -&gt; v.size }</code></pre>
+<blockquote class="aside aside-note"><p>Patrón muy usado en Android/VueMVVM: <code>_tareas</code> (mutable, privada) junto a <code>tareas</code> (solo lectura, pública). El guion bajo comunica "estado interno manipulable con cuidado".</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuélvelos en orden creciente de dificultad usando exclusivamente la librería estándar de colecciones. Declara los datos de prueba como constantes al inicio de cada ejercicio.</p>
+<ol>
+<li><strong>Inventario básico:</strong> crea una <code>MutableList</code> de productos (Strings), añade tres, elimina uno e imprime tamaño y contenido. Luego intenta hacer <code>add</code> sobre una <code>listOf</code> equivalente y anota el error exacto que produce el compilador.</li>
+<li><strong>Búsqueda tolerante:</strong> dada una lista de 5 palabras fijas, imprime la palabra en posición 10 usando <code>getOrElse</code> con mensaje personalizado, y repite con <code>getOrNull</code> + Elvis mostrando "(vacío)". Explica en un comentario cuándo preferirías cada variante.</li>
+<li><strong>Analizador de texto:</strong> dada una frase fija, cuenta con colecciones cuántas palabras tienen más de 4 letras (<code>count</code>), obtén la más larga (<code>maxByOrNull</code>) y genera un resumen "X palabras, la más larga: Y" con <code>joinToString</code>.</li>
+<li><strong>Reporte por departamentos:</strong> con una lista de empleados (data class nombre/departamento/salario), produce un <code>Map&lt;String, Double&gt;</code> con el salario MEDIO por departamento combinando <code>groupBy</code> + <code>mapValues</code> + <code>sumOf</code>/size, e imprime el departamento mejor pagado con <code>maxByOrNull</code> sobre el mapa.</li>
+<li><strong>Pipeline perezoso:</strong> genera números con <code>generateSequence</code> desde 1, filtra múltiplos de 7, eleva al cuadrado y toma los primeros 5 (<code>take(5)</code>). Mide mentalmente cuántos elementos atravesaron la cadena y justifica en comentario por qué la misma cadena sin Sequence sería inaceptable si el origen fuera infinito. Extra: reimplementa con <code>fold</code> el cálculo de la suma de esos 5 resultados.</li>
+</ol>
     </div>
   </section>

@@ -1,44 +1,176 @@
-<!-- 3. Condicionales - Bash (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="if-elif-else">
-    <h2>if / elif / else</h2>
+<!-- 4. Condicionales - Bash (Lenguajes de Programación) -->
+<section id="if-elif-else">
+    <h2><i class="fa-solid fa-code-branch"></i> if/elif/else y los tests</h2>
     <div class="doc-content">
-<pre><code class="language-bash">edad=20
+        <p>En bash, el "if" no evalúa expresiones booleanas como otros lenguajes: ejecuta un <strong>comando</strong> y decide según su código de salida (0 = éxito = true). Los corchetes son en realidad el comando <code>test</code> disfrazado — entender esto aclara toda la sintaxis extraña:</p>
 
-if [ $edad -ge 18 ]; then
-    echo "Adulto"
-elif [ $edad -ge 13 ]; then
+        <h3>Estructura con espacios sagrados</h3>
+        <pre><code class="language-bash">if [ "$edad" -ge 18 ]; then
+    echo "Mayor de edad"
+elif [ "$edad" -ge 13 ]; then
     echo "Adolescente"
 else
     echo "Niño"
 fi
 
-# Forma moderna preferida
-if [[ "$nombre" == "Ana" ]]; then echo "hola Ana"; fi</code></pre>
-    </div>
-  </section>
+# Los espacios alrededor de [ ] SON obligatorios:
+# [ "$x" = "y" ]   ✅
+# ["$x" = "y"]     ❌ ["$x": command not found</code></pre>
 
-  <section id="operadores-utiles">
-    <h2>Operadores útiles</h2>
-    <div class="doc-content">
-<ul>
-<li>Numéricos: <code>-eq -ne -gt -lt -ge -le</code></li>
-<li>Strings: <code>= != -z</code> (vacío) <code>-n</code> (no vacío)</li>
-<li>Archivos: <code>-f</code> existe archivo, <code>-d</code> existe dir, <code>-r -w -x</code> permisos</li>
-<li>Lógicos: <code>&amp;&amp; || !</code></li>
-</ul>
-    </div>
-  </section>
+        <h3>[[ ]]: la versión moderna (bash/zsh)</h3>
+        <table>
+            <thead>
+                <tr><th>Característica</th><td><code>[ ]</code> (POSIX)</td><td><code>[[ ]]</code> (bash)</td></tr>
+            </thead>
+            <tbody>
+                <tr><td>Comparar strings con patrones</td><td>No</td><td><code>[[ $f == *.txt ]]</code></td></tr>
+                <tr><td>Regex completo</td><td>No</td><td><code>[[ $mail =~ ^.+@.+$ ]]</code></td></tr>
+                <tr><td>&amp;&amp; / || dentro</td><td>No (-a/-o arcaicos)</td><td>Sí</td></tr>
+                <tr><td>&lt; &gt; lexicográfico directo</td><td>Requiere escapes</td><td>Sí</td></tr>
+                <tr><td>Variables vacías sin comillas</td><td>Rompe</td><td>Tolera</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-bash">if [[ "$archivo" == *.log &amp;&amp; -s "$archivo" ]]; then
+    echo "Log existente Y no vacío"
+fi
 
-  <section id="case">
-    <h2>case</h2>
-    <div class="doc-content">
-<pre><code class="language-bash">case "$1" in
-    start)   echo "iniciando..." ;;
-    stop)    echo "deteniendo..." ;;
-    restart) echo "reiniciando..." ;;
-    *)       echo "uso: $0 {start|stop|restart}" ;;
-esac</code></pre>
+if [[ "$email" =~ ^[a-z]+@[a-z]+\.[a-z]{2,}$ ]]; then
+    echo "Email válido"
+fi</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Aunque [[ ]] tolera variables sin comillas, comillas igualmente: es hábito que te salva cuando copias líneas a contextos POSIX (sh, test de CI minimalistas).</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="operadores-utiles">
+    <h2><i class="fa-solid fa-scale-balanced"></i> Operadores: números, strings y archivos</h2>
+    <div class="doc-content">
+        <h3>Números vs Strings: NO se mezclan</h3>
+        <table>
+            <thead>
+                <tr><th>Comparación</th><th>Números</th><th>Strings</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Igual</td><td><code>-eq</code></td><td><code>=</code> o <code>==</code></td></tr>
+                <tr><td>Diferente</td><td><code>-ne</code></td><td><code>!=</code></td></tr>
+                <tr><td>Mayor que</td><td><code>-gt</code></td><td><code>&gt;</code> (en [[ ]] o sort)</td></tr>
+                <tr><td>Menor que</td><td><code>-lt</code></td><td><code>&lt;</code></td></tr>
+                <tr><td>Mayor/menor o igual</td><td><code>-ge</code> / <code>-le</code></td><td>—</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>El error #1 de novatos: comparar NÚMEROS con = o STRINGS con -eq. <code>[ "5" = 05 ]</code> es false (strings distintos); <code>[ 5 -eq 05 ]</code> es true (mismo valor). Elegir mal produce condiciones siempre-false silenciosas.</p>
+        </blockquote>
+
+        <h3>Tests de archivos: el superpoder del sysadmin</h3>
+        <table>
+            <thead>
+                <tr><th>Operador</th><th>Verdadero si…</th><th>Uso típico</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>-e</code></td><td>Existe (cualquier tipo)</td><td>Checkear config antes de leer</td></tr>
+                <tr><td><code>-f</code></td><td>Existe y es archivo regular</td><td>Validar input</td></tr>
+                <tr><td><code>-d</code></td><td>Existe y es directorio</td><td>mkdir solo si falta</td></tr>
+                <tr><td><code>-s</code></td><td>Existe y tamaño &gt; 0</td><td>Detectar logs vacíos/corruptos</td></tr>
+                <tr><td><code>-r</code> / <code>-w</code> / <code>-x</code></td><td>Legible / escribible / ejecutable</td><td>Pre-vuelo de permisos</td></tr>
+                <tr><td><code>-nt</code> / <code>-ot</code></td><td>Más nuevo / más viejo que…</td><td>Rebuild si fuente cambió</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-bash">CONFIG="/etc/miapp/config.yaml"
+
+if [ ! -f "$CONFIG" ]; then
+    echo "Config ausente: creando desde plantilla..." &gt;&amp;2
+    cp "$CONFIG.example" "$CONFIG"
+fi
+
+# Rebuild inteligente:
+if [ "fuente.c" -nt "programa" ]; then
+    make
+fi
+
+# Lógicos entre comandos (short-circuit real):
+mkdir -p logs &amp;&amp; echo "Listo" || echo "Fallo mkdir"
+[ -w /backup ] || { echo "Sin permisos de escritura" &gt;&amp;2; exit 1; }</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="case">
+    <h2><i class="fa-solid fa-list-ul"></i> case: múltiples caminos limpios</h2>
+    <div class="doc-content">
+        <p>Cuando comparas UNA variable contra muchos valores literales, case es más legible que cadenas if/elif — y soporta glob patterns nativamente:</p>
+        <pre><code class="language-bash">#!/bin/bash
+read -rp "Entorno (dev/staging/prod): " entorno
+
+case "$entorno" in
+    dev|development)
+        URL="http://localhost:3000"
+        ;;
+    staging)
+        URL="https://staging.miapp.com"
+        ;;
+    prod|production)
+        URL="https://miapp.com"
+        read -rp "¿Confirmas PRODUCCIÓN? (si/no) " ok
+        [ "$ok" = "si" ] || exit 1
+        ;;
+    *)
+        echo "Entorno desconocido: $entorno" &gt;&amp;2
+        exit 1
+        ;;
+esac
+
+echo "Desplegando a $URL"</code></pre>
+        <table>
+            <thead>
+                <tr><th>Pieza</th><th>Rol</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>patron1|patron2)</code></td><td>OR de patrones con glob (*.txt, ?)</td></tr>
+                <tr><td><code>;;</code></td><td>Fin de rama — OBLIGATORIO (no existe fallthrough accidental)</td></tr>
+                <tr><td><code>*)</code></td><td>Default (el discard)</td></tr>
+                <tr><td><code>esac</code></td><td>Cierre (if→fi, case→esac)</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-success">
+            <p>Buenas noticias frente a C: case de bash NO cae al siguiente caso si olvidas ;; — cada patrón termina su rama explícitamente. Un bug clásico de lenguajes ancestro eliminado por diseño.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>[ sin espacios: <code>[$x = y]</code></td><td>"command not found"</td><td>[ "$x" = "y" ]</td></tr>
+                <tr><td>= para números: <code>[ $n = 10 ]</code></td><td>"010" ≠ "10" como strings</td><td>-eq para numéricos</td></tr>
+                <tr><td>Falta then tras if [ ... ]</td><td>Error de sintaxis críptico</td><td>if [ ... ]; then</td></tr>
+                <tr><td>Olvidar fi / esac / done</td><td>"unexpected end of file"</td><td>Indentación + editor con matching brackets</td></tr>
+                <tr><td>Variable vacía rompe [ ]: <code>[ $x = y ]</code> x=""</td><td>"unary operator expected"</td><td>"$x" entre comillas SIEMPRE</td></tr>
+                <tr><td>Usar -a/-o dentro de [ ]</td><td>Arcaico, ambiguos con nombres de archivo</td><td>[[ ]] con &amp;&amp;/|| o ifs separados</td></tr>
+                <tr><td>test -eq sobre strings no numéricos</td><td>"integer expression expected"</td><td>Validar antes: [[ $x =~ ^[0-9]+$ ]]</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Clasificador de edad</strong>: lee edad con read; valida que sea número con regex [[ =~ ]]; clasifica en rangos con elif; mensaje por categoría.</li>
+            <li><strong>Health-check de archivos</strong>: recibe ruta por argumento; reporta si no existe, es dir, es archivo vacío (-s), o legible/escribible; exit codes diferenciados.</li>
+            <li><strong>Selector de servidor</strong>: script con case que mapee alias (web/db/cache) a IPs y haga ssh simulado (echo); default con error y uso.</li>
+            <li><strong>Rebuild condicional</strong>: compara timestamps fuente vs binario con -nt; reconstruye solo si toca; loguea decisión tomada.</li>
+            <li><strong>Cazador del unary operator</strong>: reproduce el crash con variable vacía sin comillas; corrige; luego prueba la misma línea en [ ] vs [[ ]] documentando diferencias.</li>
+        </ol>
+    </div>
+</section>

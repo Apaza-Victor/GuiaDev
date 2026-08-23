@@ -1,68 +1,178 @@
 <!-- 3. Creación y modificación de tablas (DDL) - MySQL (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="crear-base-de-datos">
-    <h2>Crear base de datos</h2>
+<section id="crear-base-de-datos">
+    <h2><i class="fa-solid fa-database"></i> Bases de datos: CREATE, ALTER, DROP</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE DATABASE tienda CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-SHOW DATABASES;
-USE tienda;</code></pre>
-<blockquote class="aside aside-tip">
-<p><code>utf8mb4</code> soporta emojis y todos los caracteres Unicode. Es el estándar recomendado hoy en día.</p>
-</blockquote>
-    </div>
-  </section>
+        <p>El DDL (Data Definition Language) estructura el esqueleto: bases, tablas, columnas. A diferencia del DML, sus sentencias suelen ser <strong>implícitamente commit</strong>: no hay rollback fácil tras un DROP — la precaución es tu única red.</p>
+        <pre><code class="language-sql">-- Crear con charset explícito (buena práctica):
+CREATE DATABASE tienda
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
 
-  <section id="create-table">
-    <h2>CREATE TABLE</h2>
+-- Evitar error si ya existe (scripts idempotentes):
+CREATE DATABASE IF NOT EXISTS tienda;
+
+-- Ver definición completa:
+SHOW CREATE DATABASE tienda;
+
+-- Modificar charset global de la base:
+ALTER DATABASE tienda CHARACTER SET utf8mb4;
+
+-- Eliminar (¡destructivo, sin confirmación!):
+DROP DATABASE IF EXISTS tienda;</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Los scripts de migración profesionales usan siempre IF NOT EXISTS / IF EXISTS para poder re-ejecutarse sin romper. Un script que falla a mitad porque "ya existe" detiene deployments enteros.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="create-table">
+    <h2><i class="fa-solid fa-table"></i> CREATE TABLE completo</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE TABLE categorias (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  nombre VARCHAR(50) NOT NULL
-);
+        <pre><code class="language-sql">CREATE TABLE categorias (
+    id       INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre   VARCHAR(60) NOT NULL UNIQUE,
+    activa   TINYINT(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE productos (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  nombre VARCHAR(100) NOT NULL,
-  precio DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-  stock INT UNSIGNED DEFAULT 0,
-  categoria_id INT,
-  creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (categoria_id) REFERENCES categorias(id)
-);
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    categoria_id INT UNSIGNED NULL,                 -- FK opcional
+    sku          CHAR(12) NOT NULL,
+    nombre       VARCHAR(120) NOT NULL,
+    descripcion  TEXT NULL,
+    precio       DECIMAL(10,2) NOT NULL,
+    stock        INT UNSIGNED NOT NULL DEFAULT 0,
+    creado_en    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-SHOW TABLES;
-DESCRIBE productos;   -- estructura de la tabla</code></pre>
+    -- Constraints nombrados (fáciles de referenciar después):
+    CONSTRAINT fk_prod_categoria
+        FOREIGN KEY (categoria_id) REFERENCES categorias(id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT chk_precio_positivo CHECK (precio &gt;= 0),
+    UNIQUE KEY uq_sku (sku),
+    INDEX idx_categoria (categoria_id),
+    INDEX idx_nombre (nombre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;</code></pre>
+
+        <h3>Copiar estructuras y datos</h3>
+        <pre><code class="language-sql">-- Clonar estructura EXACTA (sin índices ni FKs):
+CREATE TABLE productos_backup LIKE productos;
+
+-- Crear desde consulta (con datos, SIN constraints):
+CREATE TABLE productos_caros AS
+SELECT id, nombre, precio FROM productos WHERE precio &gt; 1000;
+
+-- Tabla temporal de sesión (desaparece al desconectar):
+CREATE TEMPORARY TABLE tmp_calculos (
+    valor DECIMAL(10,2)
+);</code></pre>
+        <blockquote class="aside aside-caution">
+            <p><code>CREATE TABLE ... AS SELECT</code> NO copia índices, PKs ni FKs: produce tabla "plana". Para backups de estructura fiel usa <code>LIKE</code>; para snapshots completos usa mysqldump.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="alter-table">
-    <h2>ALTER TABLE</h2>
+<section id="alter-table">
+    <h2><i class="fa-solid fa-pen-ruler"></i> ALTER TABLE: evolucionar sin romper</h2>
     <div class="doc-content">
-<pre><code class="language-sql">-- Agregar columna
-ALTER TABLE productos ADD COLUMN descripcion TEXT AFTER nombre;
+        <pre><code class="language-sql">-- Añadir columna:
+ALTER TABLE productos
+    ADD COLUMN peso_kg DECIMAL(6,3) NULL AFTER stock;
 
--- Modificar tipo
-ALTER TABLE productos MODIFY COLUMN nombre VARCHAR(150) NOT NULL;
+-- Añadir varias + default inteligente:
+ALTER TABLE productos
+    ADD COLUMN descuento_pct TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    ADD COLUMN actualizado_en DATETIME NULL ON UPDATE CURRENT_TIMESTAMP;
 
--- Renombrar columna (MySQL 8+)
-ALTER TABLE productos RENAME COLUMN descripcion TO detalle;
+-- Modificar tipo (¡cuidado con pérdida si reduce!):
+ALTER TABLE productos MODIFY nombre VARCHAR(200) NOT NULL;
+ALTER TABLE productos CHANGE peso_kg peso DECIMAL(7,3);  -- rename + tipo
 
--- Eliminar columna
-ALTER TABLE productos DROP COLUMN detalle;
+-- Eliminar columna (destructivo):
+ALTER TABLE productos DROP COLUMN descripcion;
 
--- Renombrar tabla
-RENAME TABLE productos TO articulos;</code></pre>
+-- Índices y constraints post-creación:
+ALTER TABLE productos ADD INDEX idx_precio (precio);
+ALTER TABLE productos ADD UNIQUE KEY uq_sku (sku);
+ALTER TABLE productos ADD FOREIGN KEY (categoria_id)
+    REFERENCES categorias(id);
+ALTER TABLE productos DROP INDEX idx_precio;
+
+-- Renombrar tabla:
+RENAME TABLE productos TO articulos;      -- o ALTER TABLE productos RENAME TO...</code></pre>
+
+        <h3>ALTER en producción: el elefante en la sala</h3>
+        <table>
+            <thead>
+                <tr><th>Tipo de cambio</th><th>Bloquea tabla?</th><th>Estrategia segura</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Añadir columna NULL al final</td><td>Instantáneo (8.0 INSTANT)</td><td>Directo</td></tr>
+                <tr><td>Modificar tipo VARCHAR→TEXT</td><td>Rebuild COMPLETO (lock largo)</td><td>pt-online-schema-change / gh-ost</td></tr>
+                <tr><td>Añadir índice tabla grande</td><td>Online DDL pero I/O intenso</td><td>Ventana baja o ALGORITHM=INPLACE monitoreado</td></tr>
+                <tr><td>DROP COLUMN</td><td>Rápido meta (8.0), espacio se recupera luego</td><td>Planificar OPTIMIZE posterior</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>Un ALTER sobre tabla de 50 millones de filas puede bloquear writes durante HORAS según el motor/versión. En producción seria los cambios grandes corren con herramientas online (gh-ost, pt-osc) que clonan la tabla sincronizadamente. Nunca "pruebo en prod y ya veremos".</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="vaciar-y-eliminar">
-    <h2>Vaciar y eliminar</h2>
+<section id="vaciar-y-eliminar">
+    <h2><i class="fa-solid fa-trash-can"></i> TRUNCATE vs DELETE vs DROP</h2>
     <div class="doc-content">
-<pre><code class="language-sql">TRUNCATE TABLE articulos;   -- borra TODAS las filas rápido, reinicia el AUTO_INCREMENT
-DROP TABLE articulos;       -- elimina también la estructura
-DROP DATABASE IF EXISTS prueba;</code></pre>
-<blockquote class="aside aside-caution">
-<p><code>DROP</code> es irreversible. <code>TRUNCATE</code> no dispara triggers ni respeta <code>WHERE</code>: si necesitas condiciones, usa <code>DELETE</code>.</p>
-</blockquote>
+        <table>
+            <thead>
+                <tr><th>Sentencia</th><th>Qué hace</th><th>WHERE posible?</th><th>Resetea AUTO_INCREMENT</th><th>Velocidad</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>DELETE FROM t</code></td><td>Borra filas (loggeadas una a una)</td><td>Sí</td><td>No</td><td>Lenta en tablas grandes</td></tr>
+                <tr><td><code>TRUNCATE TABLE t</code></td><td>Vacía TODO (drop+recreate interno)</td><td>No</td><td>Sí → reinicia en 1</td><td>Instantánea</td></tr>
+                <tr><td><code>DROP TABLE t</code></td><td>Elimina tabla COMPLETA (estructura incluida)</td><td>—</td><td>—</td><td>Instantánea</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">TRUNCATE TABLE logs_acceso;     -- reset total rápido (dev/testing)
+DROP TABLE IF EXISTS temporal_;  -- limpieza condicional de migraciones</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>TRUNCATE no dispara triggers ni respeta FKs que apunten a la tabla (fallará si hay hijas). Y no existe "UNDO": en autocommit ya es historia. Ante dudas en producción: DELETE transaccional o backup previo.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/consecuencia</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>DROP DATABASE sin backup</td><td>Pérdida TOTAL instantánea e irreversible</td><td>mysqldump previo SIEMPRE; IF EXISTS en scripts</td></tr>
+                <tr><td>MODIFY reduciendo VARCHAR con datos largos</td><td>Truncamiento silencioso o error strict mode</td><td>Verificar MAX(LENGTH(col)) antes</td></tr>
+                <tr><td>FK hacia tabla sin índice en columna padre</td><td>Error 1215 "cannot add foreign key"</td><td>La columna referenciada debe estar indexada (PK/UNIQUE)</td></tr>
+                <tr><td>AUTO_INCREMENT manual chocando con existentes</td><td>Duplicate entry en inserts futuros</td><td>Dejar que el motor asigne; ALTER AUTO_INCREMENT solo consciente</td></tr>
+                <tr><td>ALTER masivo en horario pico</td><td>Locks, timeouts app, cola de conexiones</td><td>Ventana nocturna u online schema change</td></tr>
+                <tr><td>Charset mezclado entre tablas relacionadas</td><td>"Illegal mix of collations" en JOINs</td><td>utf8mb4 uniforme en TODA la base</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Base biblioteca</strong>: crea base con tablas autores/libros/editoriales bien relacionadas (FKs nombradas, checks, índices); documenta cada decisión.</li>
+            <li><strong>Evolución realista</strong>: añade columna ISBN único a libros, renombra una columna, agrega índice compuesto — todo vía ALTER encadenados.</li>
+            <li><strong>Snapshot seguro</strong>: LIKE para clonar estructura, INSERT INTO...SELECT para copiar datos, compara SHOW CREATE TABLE original vs clone.</li>
+            <li><strong>Truncate vs delete medido</strong>: inserta 100k filas rápidas (procedure o loop); mide tiempo de DELETE full vs TRUNCATE con profiling.</li>
+            <li><strong>Cazador del 1215</strong>: intenta crear FK hacia columna sin índice; lee el error; corrige indexando; documenta el proceso completo.</li>
+        </ol>
+    </div>
+</section>

@@ -1,44 +1,166 @@
-<!-- 1. Introducción a C# - C# (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="que-es-c">
-    <h2>¿Qué es C#?</h2>
+<!-- 2. Introducción a C# - C# (Lenguajes de Programación) -->
+<section id="que-es-c">
+    <h2><i class="fa-solid fa-circle-info"></i> ¿Qué es C# y .NET?</h2>
     <div class="doc-content">
-<p><strong>C#</strong> (pronunciado "C sharp") es el lenguaje principal de la plataforma <strong>.NET</strong>: moderno, tipado y orientado a objetos. Se usa en web (ASP.NET), escritorio, juegos (Unity) y nube.</p>
-<ul>
-<li>Tipado fuerte con inferencia (var)</li>
-<li>Multiplataforma: Windows, Linux y macOS</li>
-<li>Gran ecosistema: NuGet, ASP.NET Core, Entity Framework</li>
-</ul>
+        <p>C# (pronunciado "C sharp") es un lenguaje moderno de tipado fuerte creado por Microsoft en 2000, hoy dirigido por la fundación .NET Foundation con desarrollo abierto. Desde 2016 vive una segunda juventud: <strong>.NET es multiplataforma</strong> (Windows, Linux, macOS), open source, y su rendimiento compite cabeza a cabeza con Java y Go en benchmarks reales.</p>
+
+        <h3>El ecosistema .NET hoy</h3>
+        <table>
+            <thead>
+                <tr><th>Pieza</th><th>Qué es</th><th>Ejemplos de uso</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>C#</strong></td><td>El lenguaje principal</td><td>Tu código fuente (.cs)</td></tr>
+                <tr><td><strong>.NET Runtime</strong></td><td>Máquina virtual + JIT que ejecuta tu código</td><td>Gestión de memoria, GC, seguridad de tipos</td></tr>
+                <tr><td><strong>BCL</strong></td><td>Base Class Library: la librería estándar gigante</td><td>Colecciones, IO, HTTP, JSON, criptografía…</td></tr>
+                <tr><td><strong>ASP.NET Core</strong></td><td>Framework web/APIs de alto rendimiento</td><td>Servidores REST, SignalR, gRPC, Blazor</td></tr>
+                <tr><td><strong>MAUI / Unity / Godot</strong></td><td>Móviles y videojuegos</td><td>Apps iOS/Android; Unity corre sobre C#</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Línea temporal de versiones clave</h3>
+        <table>
+            <thead>
+                <tr><th>Versión</th><th>Año</th><th>Features que cambian cómo programas</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>C# 7.x / .NET Core 2</td><td>2017-18</td><td>Tuples, pattern matching básico, out var</td></tr>
+                <tr><td>C# 8</td><td>2019</td><td>Nullable reference types, switch expressions, async streams</td></tr>
+                <tr><td>C# 9 / .NET 5</td><td>2020</td><td>records, init-only, top-level statements</td></tr>
+                <tr><td>C# 10 / .NET 6 LTS</td><td>2021</td><td>global usings, file-scoped namespaces, record structs</td></tr>
+                <tr><td>C# 11 / .NET 7</td><td>2022</td><td>required members, raw string literals, generic math</td></tr>
+                <tr><td>C# 12 / .NET 8 LTS</td><td>2023</td><td>primary constructors, collection expressions [1,2,3]</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-note">
+            <p>Las versiones LTS (Long Term Support: .NET 6, 8, 10…) reciben soporte 3 años; las STI intermedias, 18 meses. Para producción empresarial el estándar es apuntar siempre al último LTS disponible.</p>
+        </blockquote>
+
+        <h3>Compilación: de código a IL a nativo</h3>
+        <p>C# no se interpreta ni se compila directo a máquina: compila a <strong>IL (Intermediate Language)</strong>, que el runtime convierte a instrucciones nativas justo-en-tiempo (JIT) al ejecutar. Además existe AOT (Ahead-Of-Time) para binarios nativos sin runtime instalable — arranque en milisegundos ideal para contenedores.</p>
+        <pre><code class="language-text">TuCódigo.cs → compilador Roslyn → Ensamblado (.dll con IL + metadatos)
+                                        ↓
+                            .NET Runtime (JIT → x64/ARM nativo)</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Los ensamblados .dll/.exe de .NET contienen metadatos completos: cualquier IDE muestra autocompletado perfecto de librerías sin código fuente. Es también la base del reflection — inspección dinámica de tipos en runtime que hace posible ORMs como Entity Framework.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="primer-programa">
-    <h2>Primer programa</h2>
+<section id="primer-programa">
+    <h2><i class="fa-solid fa-terminal"></i> Tu primer programa</h2>
     <div class="doc-content">
-<pre><code class="language-bash">dotnet new console -o HolaApp
-cd HolaApp
-dotnet run</code></pre>
-<pre><code class="language-csharp">using System;
+        <h3>Top-level statements: C# sin ceremonia (C# 9+)</h3>
+        <pre><code class="language-csharp">Console.WriteLine("¡Hola desde C#!");
 
-class Program
+int suma = 2 + 2;
+Console.WriteLine($"2 + 2 = {suma}");</code></pre>
+        <p>Eso ES un programa completo ejecutable. El compilador genera la clase Main por ti. La forma tradicional explícita — aún común en bases de código grandes — es:</p>
+        <pre><code class="language-csharp">using System;                          // importar espacios de nombres
+
+namespace MiApp                        // agrupador lógico de tipos
 {
-    static void Main()
+    public class Program               // clase contenedora
     {
-        Console.WriteLine("Hola, GuiaDev!");
+        public static void Main()      // punto de entrada
+        {
+            Console.WriteLine("Hola tradicional");
+        }
     }
 }</code></pre>
+        <table>
+            <thead>
+                <tr><th>Elemento</th><th>Rol</th><th>Analogía</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>using</code></td><td>Importar namespaces (como import de Python)</td><td>Python: from X import *</td></tr>
+                <tr><td><code>namespace</code></td><td>Agrupar tipos evitando colisiones de nombres</td><td>Carpetas lógicas de clases</td></tr>
+                <tr><td><code>class</code></td><td>Todo código vive dentro de un tipo</td><td>Obligatorio (salvo top-level)</td></tr>
+                <tr><td><code>Main</code></td><td>Entry point reconocido por el runtime</td><td>C/C++/Java: main()</td></tr>
+                <tr><td><code>//</code> y <code>///</code></td><td>Comentario línea / doc XML generable</td><td>/// alimenta IntelliSense</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-note">
+            <p>C# distingue MAYÚSCULAS: <code>Console</code> ≠ <code>console</code>. Convención universal del ecosistema: <strong>PascalCase</strong> para tipos/métodos/propiedades públicas, <strong>camelCase</strong> para variables locales y parámetros, <strong>_camelCase</strong> para campos privados.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="la-cli-de-dotnet">
-    <h2>La CLI de dotnet</h2>
+<section id="la-cli-de-dotnet">
+    <h2><i class="fa-solid fa-screwdriver"></i> La CLI de dotnet: tu navaja suiza</h2>
     <div class="doc-content">
-<ul>
-<li><code>dotnet new</code> crea proyectos</li>
-<li><code>dotnet build</code> compila</li>
-<li><code>dotnet run</code> ejecuta</li>
-<li><code>dotnet add package</code> instala librerías NuGet</li>
-</ul>
+        <p>Todo el ciclo de desarrollo .NET fluye por un único comando: <code>dotnet</code>. Instalado el SDK (desde dotnet.microsoft.com o winget/apt/brew), ya tienes compilador, gestor de paquetes, test runner y más:</p>
+        <pre><code class="language-text"># Crear proyectos desde plantillas oficiales
+dotnet new console -o MiApp          # aplicación consola
+dotnet new webapi   -o MiApi         # API REST con ASP.NET Core
+dotnet new mstest   -o MiApp.Tests   # proyecto de tests
+
+# Ejecutar y construir
+dotnet run                           # compila Y ejecuta (con hot reload)
+dotnet watch                         # recarga automática al guardar ⚡
+dotnet build -c Release              # binario optimizado
+
+# Dependencias (NuGet = npm de .NET)
+dotnet add package Newtonsoft.Json
+dotnet add package Serilog.AspNetCore
+dotnet remove package Newtonsoft.Json
+
+# Tests y calidad
+dotnet test                          # ejecuta todos los tests
+dotnet format                        # formatea según .editorconfig
+
+# Publicar distribuciones
+dotnet publish -c Release -r linux-x64 --self-contained
+# → binario standalone: corre SIN .NET instalado en destino</code></pre>
+        <table>
+            <thead>
+                <tr><th>Comando</th><th>Equivalente mental en otros ecosistemas</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>dotnet new</code></td><td>npx create-react-app / cargo init</td></tr>
+                <tr><td><code>dotnet add package</code></td><td>npm install / pip install</td></tr>
+                <tr><td><code>dotnet run</code></td><td>npm start / python main.py</td></tr>
+                <tr><td><code>dotnet test</code></td><td>pytest / cargo test</td></tr>
+                <tr><td><code>dotnet publish</code></td><td>docker export + setup.exe en uno</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-success">
+            <p><code>dotnet watch</code> incluye Hot Reload real: modificas código mientras la app corre y ves cambios al instante sin reiniciar proceso ni perder estado. Productividad de scripting con rendimiento de lenguaje compilado.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/síntoma</th><th>Solución</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>No tener el SDK correcto</td><td>"You must install or update .NET to run this application"</td><td><code>dotnet --list-sdks</code>; instalar versión requerida del project.json (csproj)</td></tr>
+                <tr><td>Confundir .NET Framework (viejo, solo Windows) con .NET moderno</td><td>Proyectos legacy incompatibles</td><td>.NET 5+ = la plataforma actual; Framework 4.x = legado Windows-only</td></tr>
+                <tr><td>Ejecutar <code>dotnet run</code> fuera de la carpeta del proyecto</td><td>"Could not find any project"</td><td>cd a la carpeta con el .csproj o usar --project ruta</td></tr>
+                <tr><td>Mayúsculas/minúsculas inconsistentes</td><td>CS0103: The name 'console' does not exist</td><td>Respetar PascalCase del BCL</td></tr>
+                <tr><td>Editar csproj a mano rompiendo XML</td><td>Build errors crípticos</td><td>Usar CLI/dotnet add; validar XML tras ediciones</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Hola mundo completo</strong>: crea proyecto console con la CLI, escribe top-level statements que impriman tu nombre y la fecha actual, ejecuta con dotnet run.</li>
+            <li><strong>Explorador de plantillas</strong>: lista todas las disponibles (<code>dotnet new --list</code>) y crea una webapi mínima; arráncala y visita el endpoint de weatherforecast.</li>
+            <li><strong>NuGet básico</strong>: añade el paquete Humanizer y usa <code>DateTime.UtcNow.AddHours(-3).Humanize()</code> para ver humanización de fechas.</li>
+            <li><strong>Hot reload demostrado</strong>: lanza <code>dotnet watch</code>, modifica el mensaje impreso y verifica el recargue instantáneo sin reiniciar manualmente.</li>
+            <li><strong>Publicación cruzada</strong>: publica tu consola self-contained para win-x64 y linux-x64; compara tamaños de carpeta y documenta por qué difieren.</li>
+        </ol>
+    </div>
+</section>

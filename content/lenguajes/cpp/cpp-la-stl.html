@@ -1,33 +1,207 @@
 <!-- 6. La STL - C++ (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="contenedores">
-    <h2>Contenedores</h2>
+<section id="contenedores">
+    <h2><i class="fa-solid fa-boxes-stacked"></i> Contenedores: elegir el correcto</h2>
     <div class="doc-content">
-<pre><code class="language-cpp">#include &lt;vector&gt;
-#include &lt;map&gt;
-#include &lt;set&gt;
+        <p>La STL (Standard Template Library) ofrece contenedores genéricos listos para producción. La pregunta diaria no es "¿cómo hago una lista?", sino <strong>"¿cuál contenedor encaja en mi patrón de acceso?"</strong> — porque cada uno tiene complejidades radicalmente distintas.</p>
 
-std::vector&lt;int&gt; v = {3, 1, 4};
-v.push_back(1);
-v[0] = 9;
+        <h3>Secuenciales: orden por posición</h3>
+        <table>
+            <thead>
+                <tr><th>Contenedor</th><th>Memoria</th><th>Acceso i</th><th>Insertar/eliminar al final</th><th>En medio</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>vector&lt;T&gt;</code></td><td>Contigua</td><td>O(1) ⚡</td><td>O(1) amortizado</td><td>O(n)</td></tr>
+                <tr><td><code>array&lt;T,N&gt;</code></td><td>Contigua (stack)</td><td>O(1) ⚡</td><td>N/A (tamaño fijo)</td><td>N/A</td></tr>
+                <tr><td><code>deque&lt;T&gt;</code></td><td>Bloques</td><td>O(1)</td><td>O(1) ambos extremos</td><td>O(n)</td></tr>
+                <tr><td><code>list&lt;T&gt;</code></td><td>Nodos dispersos</td><td>O(n) 🐌</td><td>O(1)</td><td>O(1)* (con iterador)</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>La respuesta por defecto del C++ moderno es <strong>std::vector, el 90% de las veces</strong>. La memoria contigua hace que el caché del procesador trabaje a tu favor: un vector de 10.000 ints suele RECORRERSE más rápido que una list de 100, pese al O(n) teórico. Empieza con vector; migra solo con evidencia de perfilado.</p>
+        </blockquote>
+        <pre><code class="language-cpp">#include &lt;vector&gt;
+#include &lt;array&gt;
 
-std::map&lt;std::string, int&gt; edades{{"Ana", 30}};
-edades["Luis"] = 25;
+std::vector&lt;int&gt; v{3, 1, 4};
+v.push_back(1);              // {3,1,4,1} — crece sola
+v[0] = 99;                   // sin chequeo
+v.at(0);                     // lanza si fuera de rango
 
-std::set&lt;int&gt; unicos{1, 2, 2, 3};   // {1, 2, 3}</code></pre>
+std::cout &lt;&lt; v.size() &lt;&lt; ' ' &lt;&lt; v.capacity();  // tamaño vs espacio reservado
+v.reserve(1000);             // evita realojos si sabes cuánto crecerá
+v.erase(v.begin() + 2);      // elimina el tercero — O(n), desplaza
+for (const auto&amp; x : v) std::cout &lt;&lt; x &lt;&lt; ' ';
+
+std::array&lt;double, 3&gt; punto{1.0, 2.5, 3.7};   // stack, tamaño FIJO, sin heap</code></pre>
+
+        <h3>Asociativos: orden por clave</h3>
+        <table>
+            <thead>
+                <tr><th>Contenedor</th><th>Estructura interna</th><th>Búsqueda</th><th>Mantiene orden</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>map&lt;K,V&gt;</code></td><td>Árbol rojo-negro</td><td>O(log n)</td><td>Sí, ordenado por clave</td></tr>
+                <tr><td><code>unordered_map&lt;K,V&gt;</code></td><td>Tabla hash</td><td>O(1) promedio ⚡</td><td>No</td></tr>
+                <tr><td><code>set&lt;K&gt;</code></td><td>Árbol</td><td>O(log n)</td><td>Sí</td></tr>
+                <tr><td><code>unordered_set&lt;K&gt;</code></td><td>Hash</td><td>O(1) promedio</td><td>No</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-cpp">#include &lt;map&gt;
+#include &lt;unordered_map&gt;
+
+// map: claves SIEMPRE ordenadas — ideal para reportes
+std::map&lt;std::string, int&gt; inventario{{"teclado", 12}, {"mouse", 30}};
+inventario["monitor"] += 5;          // inserta o actualiza
+inventario["webcam"]++;              // ¡crea con 0 y luego suma!
+
+if (auto it = inventario.find("mouse"); it != inventario.end()) {
+    std::cout &lt;&lt; it-&gt;second &lt;&lt; " unidades\n";
+}
+for (const auto&amp; [producto, cantidad] : inventario) {
+    std::cout &lt;&lt; producto &lt;&lt; ": " &lt;&lt; cantidad &lt;&lt; '\n';  // alfabético ✅
+}
+
+// unordered_map: máxima velocidad cuando el orden no importa
+std::unordered_map&lt;int, std::string&gt; codigosHTTP;
+codigosHTTP[200] = "OK";
+codigosHTTP[404] = "Not Found";      // búsqueda O(1) promedio</code></pre>
+        <blockquote class="aside aside-caution">
+            <p><code>mapa[clave]</code> INSERTA la clave con valor por defecto si no existía — usarlo solo para CONSULTAR infla silenciosamente tu mapa. Para consultar sin efectos usa <code>find()</code> o <code>.contains(clave)</code> (C++20).</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="algoritmos">
-    <h2>Algoritmos</h2>
+<section id="iteradores-y-algoritmos">
+    <h2><i class="fa-solid fa-diagram-project"></i> Iteradores y algoritmos</h2>
     <div class="doc-content">
-<pre><code class="language-cpp">#include &lt;algorithm&gt;
+        <h3>Iteradores: el pegamento universal</h3>
+        <p>Todo contenedor expone iteradores — objetos tipo "puntero generalizado" que recorren elementos. Los algoritmos operan sobre RANGOS [primero, último) de iteradores: por eso funcionan igual sobre vector, deque, list o arrays crudos:</p>
+        <pre><code class="language-cpp">std::vector&lt;int&gt; v{5, 2, 8};
 
-std::sort(v.begin(), v.end());
-auto it = std::find(v.begin(), v.end(), 4);
-int cuenta = std::count_if(v.begin(), v.end(),
-                           [](int n){ return n % 2 == 0; });
-int total = std::accumulate(v.begin(), v.end(), 0);</code></pre>
+auto it = v.begin();     // apunta al primero
+*it = 10;                // escribir vía iterador
+++it;                    // avanzar
+it == v.end();           // end() = PASADO el último (sentinela)
+
+// Rango clásico de algoritmo: [begin, end)
+std::sort(v.begin(), v.end());</code></pre>
+
+        <h3>Los algoritmos que usarás cada semana</h3>
+        <pre><code class="language-cpp">#include &lt;algorithm&gt;
+#include &lt;numeric&gt;
+
+std::vector&lt;int&gt; datos{8, 3, 15, 6, 9};
+
+// Buscar
+bool hayPar = std::any_of(datos.begin(), datos.end(),
+                          [](int x) { return x % 2 == 0; });
+
+auto minIt = std::min_element(datos.begin(), datos.end());   // → 3
+auto pos   = std::find(datos.begin(), datos.end(), 15);
+if (pos != datos.end()) std::cout &lt;&lt; "15 en índice " &lt;&lt; (pos - datos.begin());
+
+// Contar con condición
+int grandes = std::count_if(datos.begin(), datos.end(),
+                            [](int x) { return x &gt; 7; });     // 3
+
+// Transformar IN-PLACE con lambda
+std::transform(datos.begin(), datos.end(), datos.begin(),
+               [](int x) { return x * 2; });
+// {16, 6, 30, 12, 18}
+
+// Reducir a un valor
+long total = std::accumulate(datos.begin(), datos.end(), 0L);
+
+// Ordenar con criterio propio
+struct Empleado { std::string nombre; double sueldo; };
+std::vector&lt;Empleado&gt; plantilla{{"Ana", 3000}, {"Luis", 2500}};
+std::sort(plantilla.begin(), plantilla.end(),
+          [](const Empleado&amp; a, const Empleado&amp; b) {
+              return a.sueldo &gt; b.sueldo;       // mayor sueldo primero
+          });
+
+// Eliminar-compactar idiomático (erase-remove):
+datos.erase(std::remove_if(datos.begin(), datos.end(),
+                           [](int x) { return x % 4 == 0; }),
+            datos.end());</code></pre>
+        <blockquote class="aside aside-note">
+            <p>C++20 añade los mismos algoritmos como versión sintáctica directa: <code>std::ranges::sort(v)</code>, <code>std::ranges::count_if(v, pred)</code> — sin begin/end repetidos. Si tu compilador soporta C++20, úsalos.</p>
+        </blockquote>
+
+        <h3>Guía rápida de selección</h3>
+        <table>
+            <thead>
+                <tr><th>Necesito…</th><th>Contenedor + algoritmo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Colección dinámica simple</td><td><code>vector</code></td></tr>
+                <tr><td>Pares clave→valor ordenados / reportes</td><td><code>map</code></td></tr>
+                <tr><td>Lookup ultrarrápido sin orden</td><td><code>unordered_map</code></td></tr>
+                <tr><td>Unicidad (sin duplicados)</td><td><code>set</code> / <code>unordered_set</code></td></tr>
+                <tr><td>Cola doble-ended</td><td><code>deque</code></td></tr>
+                <tr><td>Fila de espera FIFO</td><td><code>queue</code></td></tr>
+                <tr><td>Pila LIFO</td><td><code>stack</code></td></tr>
+                <tr><td>Prioridades (top-K, schedulers)</td><td><code>priority_queue</code></td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="buenas-practicas-stl">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón concreta</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>vector por defecto; alternativas solo con perfilado</td><td>Localidad de caché gana casi siempre en hardware real</td></tr>
+                <tr><td>reserve() antes de push_back masivo</td><td>Evita N realojos+copias durante el crecimiento</td></tr>
+                <tr><td>find()/contains() en vez de mapa[] para consultas</td><td>[] inserta silenciosamente claves inexistentes</td></tr>
+                <tr><td>Algoritmos estándar antes que bucles manuales</td><td>Probados, expresivos, paralelizables (execución policy C++17)</td></tr>
+                <tr><td>Lambdas pequeñas junto al algoritmo</td><td>El criterio vive donde se lee: cero contexto mental extra</td></tr>
+                <tr><td>erase-remove (o std::erase_if, C++20) para filtrar</td><td>Eliminar dentro de ranged-for invalida iteradores = UB</td></tr>
+                <tr><td>structured bindings al recorrer mapas</td><td>[clave, valor] es auto-documentado</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>NUNCA agregues o elimines elementos de un contenedor mientras lo recorres con ranged-for: los iteradores quedan invalidados y el comportamiento es indefinido. Filtra con erase-if ANTES o DESPUÉS del recorrido.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Qué pasa realmente</th><th>Solución</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>mapa[clave] para verificar existencia</td><td>Inserta entrada fantasma con valor cero</td><td>contains()/find()</td></tr>
+                <tr><td>list "porque inserto mucho"</td><td>Cada nodo = allocación heap + saltos de memoria: MÁS lento que vector en la práctica</td><td>Medir primero; vector suele ganar</td></tr>
+                <tr><td>Iterar y borrar simultáneamente</td><td>Iteradores invalidados: crash o corrupción</td><td>std::erase_if / erase-remove</td></tr>
+                <tr><td>Comparar it != nullptr en vez de end()</td><td>Lógica rota silenciosamente</td><td>Comparar contra container.end()</td></tr>
+                <tr><td>Olvidar reserve en loops calientes</td><td>Reallocaciones invisibles dominan el perfil</td><td>reserve(tamaño estimado)</td></tr>
+                <tr><td>unordered_map con clave sin hash propia</td><td>No compila</td><td>Especializar std::hash o usar map (operator&lt;)</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Inventario interactivo</strong>: map&lt;string,int&gt; de productos; menú en bucle para agregar/vender/listar ordenado; usa structured bindings y contains().</li>
+            <li><strong>Análisis de texto</strong>: dado un párrafo, cuenta frecuencias con unordered_map, muestra top-5 con partial_sort y filtra palabras cortas con erase_if.</li>
+            <li><strong>Duelo vector vs list</strong>: benchmark simple (chrono) de inserción al final y recorrido completo de 100k elementos; documenta resultados reales en comentario.</li>
+            <li><strong>Top-K eficiente</strong>: priority_queue que mantenga los 3 números mayores de un stream infinito de enteros.</li>
+            <li><strong>Pipeline de empleados</strong>: vector&lt;Empleado&gt; → sort por sueldo → count_if sobre umbral → accumulate de nómina total → transform aplicando aumento del 5% — todo con algoritmos STL, sin un solo for manual.</li>
+        </ol>
+    </div>
+</section>

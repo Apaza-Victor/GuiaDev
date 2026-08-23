@@ -1,6 +1,6 @@
 <!-- 1. Introducción a GitLab - GitLab (Control de Versiones) -->
 <section id="que-es-gitlab">
-  <h2>¿Qué es GitLab?</h2>
+  <h2><i class="fa-solid fa-fox"></i> ¿Qué es GitLab?</h2>
   <div class="doc-content">
     <p><strong>GitLab</strong> es una plataforma DevOps completa que va mucho más allá del hospedaje de repositorios Git: incluye integración continua, despliegue, registro de contenedores, gestión de paquetes, wikis y seguimiento de trabajo en una única aplicación.</p>
     <p>Su gran diferencia frente a GitHub es que el CI/CD viene integrado de fábrica: no dependes de servicios externos para compilar, probar y desplegar tu aplicación.</p>
@@ -12,11 +12,15 @@
       <li><strong>GitLab.com (SaaS):</strong> servicio administrado, gratis con límites de minutos de CI.</li>
       <li><strong>Self-hosted (CE/EE):</strong> instalas GitLab en tu propio servidor; la Community Edition es open source.</li>
     </ul>
+    <blockquote class="aside aside-note">
+      <p>"Una sola aplicación" no es marketing: el MR sabe qué pipeline lo valida, el pipeline publica la imagen al registro integrado, el despliegue registra el entorno y los issues se cierran con el merge. En GitHub eso son 4 productos que integrar; aquí es un grafo coherente.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="gitlab-vs-github">
-  <h2>GitLab vs GitHub</h2>
+  <h2><i class="fa-solid fa-code-compare"></i> GitLab vs GitHub</h2>
   <div class="doc-content">
     <p>Ambos son excelentes; la elección depende del contexto del equipo:</p>
     <table class="doc-table">
@@ -31,11 +35,15 @@
       </tbody>
     </table>
     <p>En resumen: para proyectos open source orientados a comunidad, GitHub suele ser la opción natural; para equipos de empresa que quieren un flujo DevOps completo y controlado, GitLab destaca.</p>
+    <blockquote class="aside aside-tip">
+      <p>Pregunta decisiva para tu contexto: ¿necesitas self-hosted GRATIS? Si sí, la conversación termina: GitLab CE es la única opción completa sin costo de licencia. GitHub Enterprise Server requiere suscripciones caras.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="saas-y-self-hosted">
-  <h2>SaaS y self-hosted</h2>
+  <h2><i class="fa-solid fa-building-shield"></i> SaaS y self-hosted</h2>
   <div class="doc-content">
     <p>Los niveles principales de GitLab.com son <strong>Free</strong>, <strong>Premium</strong> y <strong>Ultimate</strong>. El plan Free ya incluye pipelines con 400 minutos mensuales de CI en runners compartidos, suficiente para aprender y proyectos pequeños.</p>
     <p>Si tu empresa necesita datos en su propia infraestructura, la <strong>Community Edition</strong> se instala en un servidor Linux con Docker o paquetes Omnibus:</p>
@@ -49,11 +57,15 @@ docker run --detach \
   --volume $GITLAB_HOME/logs:/var/log/gitlab \
   --volume $GITLAB_HOME/data:/var/opt/gitlab \
   gitlab/gitlab-ce:latest</code></pre>
+    <blockquote class="aside aside-caution">
+      <p>GitLab self-hosted NO es ligero: recomienda mínimo 4 GB de RAM + swap (8 GB cómodos) y arranca consumiendo varios GB. En un VPS pequeño será inutilizable; en tu laptop para pruebas, cierra todo lo demás o usa la versión mínima con ajustes de puma/sidekiq.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="crear-cuenta-y-primer-proyecto">
-  <h2>Crear cuenta y primer proyecto</h2>
+  <h2><i class="fa-solid fa-user-plus"></i> Crear cuenta y primer proyecto</h2>
   <div class="doc-content">
     <ol>
       <li>Entra a <code>gitlab.com/users/sign_up</code> y regístrate con correo o SSO.</li>
@@ -70,11 +82,12 @@ git add README.md
 git commit -m "feat: primer commit"
 git push origin main</code></pre>
     <p>Todos los comandos Git que ya conoces funcionan sin cambios: solo cambia la URL del remoto.</p>
+    <p>---</p>
   </div>
 </section>
 
 <section id="tour-por-la-interfaz">
-  <h2>Tour por la interfaz</h2>
+  <h2><i class="fa-solid fa-map"></i> Tour por la interfaz</h2>
   <div class="doc-content">
     <p>Dentro de un proyecto encontrarás estas zonas clave en el menú lateral:</p>
     <ul>
@@ -85,5 +98,42 @@ git push origin main</code></pre>
       <li><strong>Secure:</strong> escaneo de dependencias y vulnerabilidades.</li>
       <li><strong>Settings:</strong> membresías, webhooks, variables CI/CD y ramas protegidas.</li>
     </ul>
+    <blockquote class="aside aside-note">
+      <p>El menú cambia según tu ROL en el proyecto: un Guest no ve Build ni Deploy. Si "te falta" una sección, antes de buscar bugs revisa tus permisos: GitLab oculta por completo lo que no puedes usar.</p>
+    </blockquote>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="errores-comunes">
+  <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>HTTPS clone sin Personal Access Token</td><td>Contraseña de web rechazada siempre</td><td>Crear PAT con scope read/write_repository; esa es la "contraseña"</td></tr>
+        <tr><td>Instalar CE en servidor con 2 GB RAM</td><td>OOM kills, contenedor en crash loop</td><td>Mínimo realista 4-8 GB + swap configurado</td></tr>
+        <tr><td>Confundir grupo con proyecto</td><td>Estructura plana imposible de gobernar</td><td>Grupos para organizaciones, proyectos dentro</td></tr>
+        <tr><td>Puerto SSH 22 ocupado al self-hostear</td><td>Clones SSH fallan contra la instancia</td><td>Mapear 2222:22 o mover sshd del host</td></tr>
+        <tr><td>Esperar minutos ilimitados gratis</td><td>"Pipeline pending: quota exceeded" a fin de mes</td><td>400 min/mes Free; runners propios = ilimitado</td></tr>
+        <tr><td>Visibilidad Internal en instancia pública</td><td>Código visible para cualquier cuenta registrada</td><td>Private salvo decisión explícita documentada</td></tr>
+      </tbody>
+    </table>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="ejercicios">
+  <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+  <div class="doc-content">
+    <ol>
+      <li><strong>Onboarding completo</strong>: crea cuenta GitLab.com, primer proyecto con README y clónalo por HTTPS usando PAT — documenta cada paso y tropiezo.</li>
+      <li><strong>SSH configurado</strong>: genera clave, regístrala en GitLab, clona por SSH y verifica push sin pedir credenciales.</li>
+      <li><strong>Tour guiado propio</strong>: visita las 6 zonas del menú lateral de tu proyecto y anota qué harías desde cada una en un flujo real.</li>
+      <li><strong>Laboratorio CE (opcional)</strong>: levanta gitlab-ce en Docker si tienes 8 GB RAM; cronometra arranque inicial y consumo final de memoria.</li>
+      <li><strong>Migrante GitHub→GitLab</strong>: importa un repo tuyo de GitHub con el asistente; verifica issues/ramas/historial y compara experiencia de MR vs PR.</li>
+    </ol>
   </div>
 </section>

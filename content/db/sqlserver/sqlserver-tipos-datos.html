@@ -1,62 +1,170 @@
 <!-- 3. Tipos de datos - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="numericos-exactos">
-    <h2>Numéricos exactos</h2>
+<section id="numericos-exactos">
+    <h2><i class="fa-solid fa-coins"></i> Numéricos exactos: DECIMAL es el rey del dinero</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE TABLE dbo.EjemploNumerico (
-  Edad TINYINT,                    -- 0 a 255
-  Contador INT,                    -- entero estándar (~2.147 millones)
-  Poblacion BIGINT,                -- enteros gigantes
-  Precio DECIMAL(10,2),            -- EXACTO: dinero
-  Salario MONEY                    -- alias empresarial de decimal(19,4)
-);</code></pre>
-<blockquote class="aside aside-tip">
-<p><code>DECIMAL(p,s)</code>: p = total de dígitos, s = decimales. Para dinero, siempre exacto; nunca FLOAT.</p>
-</blockquote>
-    </div>
-  </section>
+        <p>La regla de oro que separa juniors de seniors: <strong>dinero NUNCA en FLOAT/REAL</strong>. Son binarios de aproximación: 0.1+0.2 ≠ 0.3. Todo lo que se suma, factura o audita usa tipos exactos:</p>
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Rango / precisión</th><th>Bytes</th><th>Uso correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>TINYINT</code></td><td>0 a 255</td><td>1</td><td>Flags numéricos, edades, cantidades pequeñas</td></tr>
+                <tr><td><code>SMALLINT</code></td><td>-32.768 a 32.767</td><td>2</td><td>Años, códigos cortos</td></tr>
+                <tr><td><code>INT</code></td><td>±2.100 millones</td><td>4</td><td>IDs estándar, contadores ✅ default razonable</td></tr>
+                <tr><td><code>BIGINT</code></td><td>±9×10¹⁸</td><td>8</td><td>IDs globales, logs masivos, tokens</td></tr>
+                <tr><td><code>DECIMAL(10,2)</code></td><td>Exacto: p dígitos, s decimales</td><td>5-17</td><td>Dinero, tasas, medidas críticas 💰</td></tr>
+                <tr><td><code>FLOAT/REAL</code></td><td>Aproximado IEEE754</td><td>4-8</td><td>Científicos, ML, coordenadas — NO dinero ⚠️</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">DECLARE @precio DECIMAL(10,2) = 12345678.91;   -- total: 10 dígitos, 2 decimales
+DECLARE @f     FLOAT = 0.1 + 0.2;
+SELECT @f, IIF(@f = 0.3, 'igual', '¡DIFERENTE!');   -- ¡DIFERENTE!
 
-  <section id="cadenas-char-varchar-y-nvarchar">
-    <h2>Cadenas: CHAR, VARCHAR y NVARCHAR</h2>
-    <div class="doc-content">
-<pre><code class="language-sql">CREATE TABLE dbo.EjemploTexto (
-  Codigo CHAR(3),                  -- longitud fija ('MXN')
-  Nombre VARCHAR(100),             -- variable, no unicode
-  Descripcion NVARCHAR(200),       -- variable UNICODE (acentos garantizados)
-  Contrato NVARCHAR(MAX)           -- textos enormes
-);</code></pre>
-<p><code>N</code> de National: almacena UTF-16 y garantiza acentos y ñ sin problemas de collation. Prefiere <code>NVARCHAR</code> para datos de usuarios.</p>
+-- Overflow silencioso clásico:
+SELECT 2147483647 + 1;          -- Arithmetic overflow error
+SELECT CAST(2147483647 AS BIGINT) + 1;   -- ✅ 2147483648</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Para porcentajes/tasas: DECIMAL(5,4) guarda 0.0000–9.9999 perfecto para "21%". Para división entera sorpresa: 5/2 = 2 en SQL Server; CAST uno de los operandos a DECIMAL si esperas 2.5.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="fecha-y-hora">
-    <h2>Fecha y hora</h2>
+<section id="cadenas-char-varchar-y-nvarchar">
+    <h2><i class="fa-solid fa-font"></i> Cadenas: CHAR vs VARCHAR vs NVARCHAR</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE TABLE dbo.EjemploFechas (
-  FechaNacimiento DATE,                       -- solo fecha
-  HoraEntrada TIME(7),                        -- solo hora
-  RegistradoEn DATETIME2 DEFAULT SYSDATETIME(), -- fecha+hora precisa
-  ConZona DATETIMEOFFSET                      -- incluye huso horario
-);</code></pre>
-<blockquote class="aside aside-caution">
-<p>Evita <code>DATETIME</code> y <code>SMALLDATETIME</code> en proyectos nuevos: <code>DATETIME2</code> es más preciso y compatible.</p>
-</blockquote>
-    </div>
-  </section>
-
-  <section id="otros-tipos-utiles">
-    <h2>Otros tipos útiles</h2>
-    <div class="doc-content">
-<pre><code class="language-sql">CREATE TABLE dbo.EjemploOtros (
-  Activo BIT,                          -- 1/0 (booleano)
-  Guid UNIQUEIDENTIFIER DEFAULT NEWID(), -- identificador global
-  Foto VARBINARY(MAX),                 -- binarios/archivos
-  XMLDatos XML                         -- documentos XML validados
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Almacenamiento</th><th>Ejemplo 'Ana'</th><th>Cuándo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>CHAR(n)</code></td><td>Fijo SIEMPRE n bytes (rellena espacios)</td><td>'Ana' + 2 espacios</td><td>Códigos fijos: CP '28001', ISO 'ES', DNI</td></tr>
+                <tr><td><code>VARCHAR(n)</code></td><td>Variable, 1 byte/char (ASCII/collation)</td><td>3 bytes</td><td>Solo si GARANTIZAS sin Unicode</td></tr>
+                <tr><td><code>NVARCHAR(n)</code></td><td>Variable, 2 bytes/char UTF-16</td><td>6 bytes</td><td>Nombres, direcciones, TODO texto usuario ✅</td></tr>
+                <tr><td><code>VARCHAR(MAX)/NVARCHAR(MAX)</code></td><td>Hasta 2 GB</td><td>—</td><td>Textos largos, JSON crudo — con coste rendimiento</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">CREATE TABLE Clientes (
+    nombre      NVARCHAR(80)  NOT NULL,
+    pais_iso    CHAR(2)       NOT NULL,          -- 'ES', 'MX'
+    biografia   NVARCHAR(MAX) NULL,
+    email       VARCHAR(120)  NOT NULL           -- emails son ASCII seguros
 );
 
--- IDENTITY: autoincremento estilo SQL Server
-CREATE TABLE dbo.Clientes (
-  Id INT IDENTITY(1000,5) PRIMARY KEY   -- inicia en 1000, incrementa de 5
-);</code></pre>
+-- Truncamientos silenciosos según configuración:
+SET ANSI_WARNINGS OFF;   -- ❌ 'Muy largo...' entra TRUNCADO sin avisar
+SET ANSI_WARNINGS ON;    -- ✅ error "String or binary data would be truncated"
+
+-- Longitud en BYTES vs CARACTERES:
+SELECT LEN(N'ñandú') AS chars, DATALENGTH(N'ñandú') AS bytes;  -- 5, 10</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>Error histórico #1 de apps SQL Server: VARCHAR para nombres → "José" se guarda bien pero "李明" o emojis se rompen. NVARCHAR cuesta el doble de espacio y salva integridad de datos reales. Default NVARCHAR salvo evidencia contraria.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="fecha-y-hora">
+    <h2><i class="fa-solid fa-calendar-days"></i> Fecha y hora: DATETIME2 y DATE son los ganadores</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Precisión</th><th>Rango</th><th>Veredicto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>DATE</code></td><td>Día exacto</td><td>0001-9999</td><td>Cumpleaños, fechas puras ✅ 3 bytes</td></tr>
+                <tr><td><code>TIME(p)</code></td><td>Hasta 100ns</td><td>Hora del día</td><td>Horarios de atención</td></tr>
+                <tr><td><code>DATETIME2(p)</code></td><td>Hasta 100ns</td><td>0001-9999</td><td>Timestamps modernos ✅ sucesor oficial</td></tr>
+                <tr><td><code>DATETIMEOFFSET</code></td><td>+ zona horaria</td><td>—</td><td>Apps multi-zona serias</td></tr>
+                <tr><td><code>DATETIME</code></td><td>3.33 ms (redondo)</td><td>1753-9999</td><td>Legacy: solo compatibilidad ⚠️</td></tr>
+                <tr><td><code>SMALLDATETIME</code></td><td>Minutos</td><td>1900-2079</td><td>Legacy compacto</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">DECLARE @ahora DATETIME2(3) = SYSDATETIME();
+SELECT
+    GETDATE()          AS legacy_ahora,
+    SYSDATETIME()      AS moderno_ahora,
+    SYSUTCDATETIME()   AS utc_recomendado_para_servidores,
+    DATEADD(day, -7, @ahora)                    AS hace_una_semana,
+    DATEDIFF(day, '2026-01-01', @ahora)         AS dias_del_anio,
+    FORMAT(@ahora, 'yyyy-MM-dd HH:mm')          AS formateado;
+
+-- Comparaciones seguras por rango (SARGable):
+WHERE creado_el &gt;= '2026-01-01' AND creado_el &lt; '2026-02-01';
+-- ❌ WHERE YEAR(creado_el) = 2026  → mata índices (función sobre columna)</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Guarda timestamps de servidor en UTC (SYSUTCDATETIME()) y convierte a zona local SOLO al presentar. Mezclar horas locales de usuarios con DST es un infierno de datos imposible de auditar después.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="otros-tipos-utiles">
+    <h2><i class="fa-solid fa-shapes"></i> Otros tipos útiles</h2>
+    <div class="doc-content">
+        <pre><code class="language-sql">CREATE TABLE Ejemplos (
+    id            UNIQUEIDENTIFIER DEFAULT NEWID(),   -- GUID aleatorio
+    activo        BIT             NOT NULL DEFAULT 1, -- true/false compacto (8 por byte)
+    etiquetas     XML             NULL,               -- documentos XML validables
+    config        NVARCHAR(MAX)   NULL,               -- JSON via ISJSON()/JSON_VALUE()
+    foto          VARBINARY(MAX)  NULL,               -- blobs pequeños
+    saldo_inicial MONEY           NOT NULL,           -- moneda (4 decimales fijos)
+    direccion     GEOGRAPHY       NULL                -- espacial: lat/lng consultable
+);
+
+-- JSON moderno (2016+) sobre NVARCHAR:
+INSERT INTO Ejemplos (config) VALUES ('{"tema":"oscuro","idioma":"es"}');
+SELECT JSON_VALUE(config, '$.idioma') FROM Ejemplos WHERE ISJSON(config) = 1;
+
+-- SEQUENCE: números compartidos entre tablas:
+CREATE SEQUENCE seq_factura START WITH 1000 INCREMENT BY 1;
+SELECT NEXT VALUE FOR seq_factura;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Trampa conocida</th><th>Consejo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>UNIQUEIDENTIFIER</td><td>NEWID() aleatorio fragmenta índices clustered</td><td>NEWSEQUENTIALID() como default en tablas grandes</td></tr>
+                <tr><td>BIT</td><td>No acepta otros valores que 0/1/NULL</td><td>Perfecto para flags; no lo uses como TINYINT pequeño</td></tr>
+                <tr><td>MONEY</td><td>División/computo con redondeos peculiares</td><td>DECIMAL(19,4) suele preferirse hoy</td></tr>
+                <tr><td>VARBINARY(MAX)</td><td>Filas enormes matan buffer pool</td><td>Archivos grandes → FILESTREAM o storage externo</td></tr>
+                <tr><td>XML/JSON</td><td>Consultar constantemente = parseo constante</td><td>Columnas computadas persistidas para paths calientes</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Dinero en FLOAT</td><td>Totales con 0.30000000004</td><td>DECIMAL siempre</td></tr>
+                <tr><td>Nombre de usuarios en VARCHAR</td><td>Nombres internacionales corruptos</td><td>NVARCHAR + literales N''</td></tr>
+                <tr><td>Funciones sobre columnas filtradas</td><td>YEAR(col)=2026 ignora el índice</td><td>Rangos SARGables col &gt;= x AND col &lt; y</td></tr>
+                <tr><td>DATETIME legacy en proyecto nuevo</td><td>Precisión 3.33ms, bugs de igualdad</td><td>DATETIME2</td></tr>
+                <tr><td>CHAR(n) para datos variables</td><td>Espacios fantasma en comparaciones/TRIMs infinitos</td><td>CHAR solo longitudes fijas garantizadas</td></tr>
+                <tr><td>División INT esperando decimal</td><td>5/2 = 2</td><td>CAST a DECIMAL antes de dividir</td></tr>
+                <tr><td>MAX en todo por comodidad</td><td>Estadísticas pobres, planes lentos</td><td>Tamaños realistas: NVARCHAR(80) no MAX</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Banco anti-FLOAT</strong>: tabla Cuentas con saldo FLOAT; acumula 100 depósitos de 0.10; compara contra DECIMAL(12,2). Documenta la divergencia.</li>
+            <li><strong>Laboratorio Unicode</strong>: inserta 'Ñoño 李明 😀' en VARCHAR y NVARCHAR; observa corrupción; explica DATALENGTH.</li>
+            <li><strong>Rango vs función</strong>: crea tabla 1M fechas; EXPLAIN ambas formas de filtrar año 2026 (YEAR() vs rango); compara lecturas lógicas.</li>
+            <li><strong>Calculadora temporal</strong>: con variables DATETIME2 calcula edad exacta, próximo cumpleaños, días hasta fin de trimestre — sin funciones de formato innecesarias.</li>
+            <li><strong>Diseñador de tipos</strong>: define la tabla Facturas completa eligiendo tipo justificado para cada columna (totales, IVA, número legal, fecha emisión, estado) y defiende cada elección.</li>
+        </ol>
+    </div>
+</section>

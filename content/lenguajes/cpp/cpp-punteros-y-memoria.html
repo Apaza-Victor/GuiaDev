@@ -1,33 +1,244 @@
 <!-- 4. Punteros y Memoria - C++ (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="punteros-basicos">
-    <h2>Punteros básicos</h2>
+<section id="punteros-basicos">
+    <h2><i class="fa-solid fa-location-crosshairs"></i> Punteros: la dirección importa</h2>
     <div class="doc-content">
-<pre><code class="language-cpp">int x = 10;
-int* p = &amp;x;        // p guarda la dirección de x
+        <p>Un <strong>puntero</strong> es una variable cuyo valor es una dirección de memoria. Es el concepto que más asusta a los recién llegados de Python o JavaScript, pero su lógica es simple: si una variable normal guarda un dato, el puntero guarda DÓNDE vive ese dato. Con él puedes leer, escribir y compartir objetos sin copiarlos.</p>
 
-*p = 20;            // modifica x indirectamente
-std::cout &lt;&lt; x;     // 20
+        <h3>Dirección (&amp;) e indirección (*)</h3>
+        <pre><code class="language-cpp">int edad = 42;
 
-int arr[3] = {1, 2, 3};
-int* q = arr;       // apunta al primer elemento
-q++;                // avanza un elemento</code></pre>
+int* ptr = &amp;edad;   // ptr GUARDA la dirección donde vive 'edad'
+                    // &amp; = "dirección de"
+
+std::cout &lt;&lt; ptr   &lt;&lt; "\n"; // 0x7ffd3b2a — la dirección
+std::cout &lt;&lt; *ptr  &lt;&lt; "\n"; // 42 — "lo APUNTADO" (desreferenciar)
+std::cout &lt;&lt; &amp;ptr  &lt;&lt; "\n"; // otra dirección: la del propio puntero
+
+*ptr = 100;         // escribir A TRAVÉS del puntero
+std::cout &lt;&lt; edad;  // 100 — ¡es la misma memoria!</code></pre>
+        <table>
+            <thead>
+                <tr><th>Símbolo</th><th>Contexto</th><th>Lectura mental</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>T*</code></td><td>Declaración</td><td>"puntero a T"</td></tr>
+                <tr><td><code>&amp;x</code></td><td>Expresión</td><td>"la dirección de x"</td></tr>
+                <tr><td><code>*p</code></td><td>Expresión</td><td>"el objeto apuntado por p"</td></tr>
+            </tbody>
+        </table>
+
+        <h3>nullptr: la ausencia honesta</h3>
+        <pre><code class="language-cpp">int* p = nullptr;      // C++11: cero tipado para punteros
+
+if (p != nullptr) {    // o simplemente if (p)
+    std::cout &lt;&lt; *p;
+} else {
+    std::cout &lt;&lt; "no apunta a nada\n";
+}
+
+// Desreferenciar nullptr = CRASH inmediato (segfault):
+// std::cout &lt;&lt; *p;    // ¡no lo hagas!</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>Nunca uses NULL ni 0 en código moderno: nullptr es tipado y evita ambigüedades en sobrecargas (<code>f(NULL)</code> podía llamar a la versión int!). Y verifica SIEMPRE antes de desreferenciar punteros cuya procedencia no controlas.</p>
+        </blockquote>
+
+        <h3>Aritmética de punteros y arrays</h3>
+        <pre><code class="language-cpp">int datos[5] = {10, 20, 30, 40, 50};
+int* p = datos;          // arrays decaen a puntero al primer elemento
+
+std::cout &lt;&lt; *p       &lt;&lt; "\n"; // 10
+std::cout &lt;&lt; *(p + 2) &lt;&lt; "\n"; // 30 — avanza 2 ELEMENTOS (8 bytes de int)
+std::cout &lt;&lt; p[3]     &lt;&lt; "\n"; // 40 — ¡v[i] ES *(v+i)!
+
+// Recorrer con puntero:
+for (int* q = datos; q != datos + 5; ++q) {
+    std::cout &lt;&lt; *q &lt;&lt; ' ';
+}</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>La aritmética fuera de rango (<code>p + 99</code>) es comportamiento indefinido: puede "funcionar" hoy y corromper memoria mañana con otro compilador. En aplicación moderna usa std::array/std::vector con ranged-for y deja los punteros crudos para interoperar con APIs C.</p>
+        </blockquote>
+
+        <h3>Punteros vs referencias: ¿cuál cuándo?</h3>
+        <table>
+            <thead>
+                <tr><th>Aspecto</th><th>Referencia <code>T&amp;</code></th><th>Puntero <code>T*</code></th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Puede ser "nada"</td><td>No — siempre refiere algo válido</td><td>Sí (nullptr)</td></tr>
+                <tr><td>Reasignable a otro objeto</td><td>No — ligada para siempre</td><td>Sí</td></tr>
+                <tr><td>Sintaxis de uso</td><td>Transparente (como valor)</td><td>* y -&gt; explícitos</td></tr>
+                <tr><td>Aritmética</td><td>No existe</td><td>Sí</td></tr>
+                <tr><td>Cuándo usarla</td><td>"Siempre hay un objeto y no cambia de blanco"</td><td>"Puede no haber nada / cambiará de blanco / API C"</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="dinamica-y-smart-pointers">
-    <h2>Dinámica y smart pointers</h2>
+<section id="stack-y-heap">
+    <h2><i class="fa-solid fa-memory"></i> Stack vs Heap: dónde vive tu objeto</h2>
     <div class="doc-content">
-<pre><code class="language-cpp">#include &lt;memory&gt;
-
-// Manual (evitar en código moderno)
-int* viejo = new int(5);
-delete viejo;
-
-// Smart pointers (preferir)
-auto unico  = std::make_unique&lt;int&gt;(42);        // dueño único
-auto compartido = std::make_shared&lt;int&gt;(42);     // conteo de referencias</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> Regla moderna: usa <code>unique_ptr</code> por defecto y <code>shared_ptr</code> solo si realmente compartes propiedad. Nunca uses <code>new/delete</code> crudos.</blockquote>
+        <pre><code class="language-text">        STACK (automático)              HEAP (dinámico)
+┌─────────────────────────┐     ┌──────────────────────────┐
+│ main()                  │     │                          │
+│  ┌───────────────────┐  │     │    ┌──────────────────┐  │
+│  │ int x = 42        │  │────▶│    │ objeto grande    │  │
+│  ├───────────────────┤  │     │    │ (gestionado por  │  │
+│  │ vector v          │  │     │    │  new/delete)     │  │
+│  │  [datos internos]─┼──┼────▶│    └──────────────────┘  │
+│  ├───────────────────┤  │     │                          │
+│  │ f() llamada       │  │     │  Crece hacia abajo →     │
+│  │  se libera al salir│ │     │  tú pides y devuelves    │
+│  └───────────────────┘  │     │                          │
+│  LIFO automático ⚡rápido│     │  Flexible pero manual 🐢 │
+└─────────────────────────┘     └──────────────────────────┘</code></pre>
+        <table>
+            <thead>
+                <tr><th>Característica</th><th>Stack</th><th>Heap</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Asignación/liberación</td><td>Automática al entrar/salir del scope</td><td>Manual (new/delete) o via contenedores/smart pointers</td></tr>
+                <tr><td>Velocidad</td><td>Ultra rápida (mover un puntero)</td><td>Más lenta (buscar bloque adecuado)</td></tr>
+                <tr><td>Tamaño</td><td>Limitado (~1-8 MB típico)</td><td>Toda la RAM disponible</td></tr>
+                <tr><td>Vida útil</td><td>Atada al scope</td><td>La que TÚ decidas</td></tr>
+                <tr><td>Riesgos</td><td>Stack overflow (recursión profunda)</td><td>Fugas, use-after-free, doble free</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Regla de oro del C++ moderno: <strong>vive en el stack siempre que puedas</strong>. El heap solo para tamaños desconocidos en compilación, objetos enormes, o vida útil que cruza scopes — y entonces, casi siempre detrás de un smart pointer.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="dinamica-y-smart-pointers">
+    <h2><i class="fa-solid fa-robot"></i> Memoria dinámica y smart pointers</h2>
+    <div class="doc-content">
+        <h3>El modelo manual: new/delete y sus peligros</h3>
+        <pre><code class="language-cpp">int* p = new int(42);      // reservar E inicializar
+delete p;                  // liberar EXACTAMENTE UNA vez
+
+auto* arr = new int[100];
+delete[] arr;              // arrays usan delete[]
+
+// Los tres caballos de Apocalipsis del heap:
+// 1) FUGA: olvidar delete → memoria perdida hasta fin de proceso
+// 2) DOBLE DELETE: dos deletes → corrupción del heap
+// 3) USE-AFTER-FREE: usar tras delete → UB, exploits reales
+
+void fuga() {
+    int* datos = new int[1'000'000];
+    if (error_ocurrido) {
+        return;            // 💥 4MB fugados: delete nunca alcanzado
+    }
+    delete[] datos;
+}</code></pre>
+
+        <h3>RAII: la idea que salva al C++</h3>
+        <p><strong>Resource Acquisition Is Initialization</strong>: envuelve cada recurso (memoria, archivo, mutex, socket) en un objeto cuyo destructor lo libera. Como C++ destruye locales AUTOMÁTICAMENTE al salir del scope — incluso con exceptions — las fugas se vuelven estructuralmente imposibles:</p>
+        <pre><code class="language-cpp">class ArchivoSeguro {
+public:
+    explicit ArchivoSeguro(const std::string&amp; ruta) : f_(ruta) {}
+    ~ArchivoSeguro() { f_.close(); }          // SE EJECUTA SIEMPRE
+    ArchivoSeguro(const ArchivoSeguro&amp;) = delete;             // sin copias
+    ArchivoSeguro&amp; operator=(const ArchivoSeguro&amp;) = delete;
+
+    std::fstream&amp; get() { return f_; }
+private:
+    std::fstream f_;
+};
+
+void procesar() {
+    ArchivoSeguro log("app.log");   // adquirido
+    if (algo_falla()) throw std::runtime_error("boom");
+                                    // destructor cierra IGUALMENTE ✅
+}</code></pre>
+
+        <h3>Smart pointers: RAII empaquetado</h3>
+        <p>Los punteros inteligentes aplican RAII a la memoria dinámica. Son punteros que destruyen automáticamente lo que poseen:</p>
+        <table>
+            <thead>
+                <tr><th>Smart pointer</th><th>Propiedad</th><th>Coste</th><th>Úsalo cuando</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>std::unique_ptr&lt;T&gt;</code></td><td>Exclusiva: uno solo dueño</td><td>Cero overhead vs puntero crudo</td><td>SIEMPRE que haya UN dueño claro (90% de casos)</td></tr>
+                <tr><td><code>std::shared_ptr&lt;T&gt;</code></td><td>Compartida: contador de referencias</td><td>Bloque de control + atómicos (~doble)</td><td>Varios dueños reales con vidas impredecibles</td></tr>
+                <tr><td><code>std::weak_ptr&lt;T&gt;</code></td><td>Ninguna: observa sin retener</td><td>Mínimo</td><td>Romper ciclos shared_ptr; cachés</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-cpp">#include &lt;memory&gt;
+
+// unique_ptr: creación moderna (C++14)
+auto perro = std::make_unique&lt;Perro&gt;("Rex");
+perro-&gt;ladrar();
+// auto copia = perro;             ❌ NO compila: propiedad exclusiva
+auto robado = std::move(perro);    // ✅ transferencia EXPLÍCITA
+// perro ahora es nullptr — quedó documentado en el código
+
+// Al salir del scope, make_unique hace delete AUTOMÁTICAMENTE.
+// La función fuga() de arriba, arreglada:
+void sinFuga() {
+    auto datos = std::make_unique&lt;int[]&gt;(1'000'000);
+    if (error_ocurrido) return;     // liberado igualmente ✅
+}
+
+// shared_ptr: cuenta referencias
+auto compartido = std::make_shared&lt;Perro&gt;("Luna");
+std::cout &lt;&lt; compartido.use_count(); // 1
+auto otro = compartido;              // count = 2
+otro.reset();                        // count = 1
+// El último shared_ptr en morir borra el Perro.</code></pre>
+
+        <h3>El ciclo clásico y weak_ptr</h3>
+        <pre><code class="language-cpp">struct Nodo {
+    std::shared_ptr&lt;Nodo&gt; siguiente;   // ⚠️ A→B y B→A = NUNCA se liberan
+    std::weak_ptr&lt;Nodo&gt;   padre;       // ✅ referencia que NO retiene
+};
+
+// Usar un weak_ptr exige verificar que siga vivo:
+if (auto vivo = nodo-&gt;padre.lock(); vivo) {
+    vivo-&gt;marcar();    // seguro: lock() devuelve shared_ptr temporal
+}</code></pre>
+        <blockquote class="aside aside-success">
+            <p>Firmas modernas que comunican propiedad: <code>unique_ptr&lt;T&gt;</code> retornado = "tú eres dueño"; <code>unique_ptr&lt;T&gt;&amp;</code> param = "uso tu objeto"; <code>T*</code> param = "solo miro, no gestiono vida"; <code>shared_ptr&lt;T&gt;</code> param = "me quedo una copia". El tipo DOCUMENTA la arquitectura.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Consecuencia real</th><th>Prevención</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Desreferenciar nullptr o puntero colgante</td><td>Sigsegv / corrupción silenciosa</td><td>Checkear; preferir referencias/optional</td></tr>
+                <tr><td>new sin delete correspondiente (early return, throw)</td><td>Fuga acumulativa; OOM en servidores</td><td>make_unique/make_shared SIEMPRE</td></tr>
+                <tr><td>delete sobre new[] (o viceversa)</td><td>Corrupción del heap indefinida</td><td>Evitar new[] crudo: std::vector</td></tr>
+                <tr><td>Usar objeto tras move (unique_ptr)</td><td>Dereferencia de nullptr</td><td>Tras mover, el original es nullptr: reasignar antes de usar</td></tr>
+                <tr><td>Ciclo de shared_ptr mutuos</td><td>Fuga invisible: contadores nunca llegan a 0</td><td>Un lado weak_ptr</td></tr>
+                <tr><td>Retornar puntero/referencia a local del stack</td><td>Dangling: memoria muerta reutilizada</td><td>Retornar por valor (move barato) o smart pointer</td></tr>
+                <tr><td>get() del unique_ptr guardado en otro lugar</td><td>Doble gestión: delete externo + destructor interno</td><td>get() SOLO para pasar a APIs C que no retienen</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-note">
+            <p>Ejecuta tus tests con sanitizers: <code>-fsanitize=address</code> detecta fugas y use-after-free EN EL MOMENTO exacto, señalando línea y archivo. Es como tener valgrind integrado en el compilador.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Explorador de direcciones</strong>: imprime valores y direcciones de tres variables y sus punteros; modifica a través de punteros y verifica los cambios; comenta qué dirección pertenece a stack.</li>
+            <li><strong>Cazador de fugas</strong>: escribe una función con fuga deliberada (early return tras new), compila con <code>-fsanitize=address</code>, observa el reporte y corrígela con make_unique.</li>
+            <li><strong>Transferencia de propiedad</strong>: modela una "caja fuerte" con unique_ptr que pasa entre tres funciones mediante move; imprime use/validity en cada etapa.</li>
+            <li><strong>Árbol sin fugas</strong>: implementa nodo de árbol binario con unique_ptr hijos y weak_ptr padre; inserta, recorre y verifica con ASan que todo se libera al destruir la raíz.</li>
+            <li><strong>RAII casero</strong>: crea clase TempGuard que imprima "adquirido"/"liberado" en constructor/destructor; lánzala dentro de funciones con throws tempranos y demuestra que libera SIEMPRE.</li>
+        </ol>
+    </div>
+</section>

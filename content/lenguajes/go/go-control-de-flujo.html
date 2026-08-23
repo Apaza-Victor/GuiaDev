@@ -1,42 +1,336 @@
-<!-- 3. Control de Flujo - Go (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="if-y-for">
-    <h2>if y for</h2>
+<!-- 3. Control de flujo - Go (Lenguajes de Programación) -->
+<section id="if-y-for">
+    <h2><i class="fa-solid fa-arrows-split-up-and-left"></i> if y el único bucle: for</h2>
     <div class="doc-content">
-<pre><code class="language-go">if n := len("hola"); n &gt; 3 {
-	fmt.Println("largo:", n)
-}
+        <p>Go toma una decisión de diseño radical respecto a otros lenguajes: <strong>solo existe una palabra clave para los bucles</strong>, <code>for</code>. No hay <code>while</code>, ni <code>do-while</code>, ni <code>until</code>. A cambio, esa única estructura cubre todos los casos, reduce la superficie que debes memorizar y elimina de raíz la pregunta "¿cuál de los cuatro bucles uso aquí?". El <code>if</code> también se simplifica: sin paréntesis obligatorios y con llaves siempre exigidas.</p>
 
-for i := 0; i &lt; 5; i++ { fmt.Print(i) }
+        <h3>La sentencia if: sin paréntesis, con llaves obligatorias</h3>
+        <p>A diferencia de C, Java o JavaScript, en Go <strong>no escribes paréntesis alrededor de la condición</strong> y <strong>las llaves son obligatorias</strong> incluso con una sola instrucción. Esto evita bugs históricos como el famoso caso de Apple <em>#gotofail</em>, donde una instrucción quedó fuera de su <code>if</code> por la falta de llaves.</p>
+        <pre><code class="language-go">temperatura := 31
 
-nums := []int{1, 2, 3}
-for idx, val := range nums { fmt.Println(idx, val) }
-
-// Go NO tiene while: for sin condición lo reemplaza
-suma := 0
-for suma &lt; 10 { suma++ }</code></pre>
-    </div>
-  </section>
-
-  <section id="switch">
-    <h2>switch</h2>
-    <div class="doc-content">
-<pre><code class="language-go">switch dia {
-case "sab", "dom":
-	fmt.Println("finde")
-default:
-	fmt.Println("entre semana")
-}
-
-// switch sin condición (como cadena de if)
-switch {
-case hora &lt; 12:
-	fmt.Println("mañana")
-case hora &lt; 19:
-	fmt.Println("tarde")
-default:
-	fmt.Println("noche")
+// Sin paréntesis, llaves SIEMPRE
+if temperatura &gt; 30 {
+    fmt.Println("Hace calor")
+} else if temperatura &lt; 10 {
+    fmt.Println("Hace frío")
+} else {
+    fmt.Println("Temperatura agradable")
 }</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>El compilador te obligará a abrir la llave en la misma línea (<code>) {</code>). Si la pones abajo, obtendrás un error de sintaxis: así impone Go el estilo uniforme en todo el ecosistema.</p>
+        </blockquote>
+
+        <h3>Init statement: variables que viven solo dentro del if</h3>
+        <p>El <code>if</code> admite una <strong>sentencia de inicialización</strong> antes de la condición, separada por punto y coma. La variable creada ahí <strong>solo existe dentro del bloque if/else</strong>: es la forma idiomática de limitar el alcance y evitar contaminar la función con variables temporales.</p>
+        <pre><code class="language-go">archivo, err := os.Open("datos.txt")
+
+// err vive SOLO dentro de este if/else
+if err != nil {
+    fmt.Println("Error:", err)
+} else {
+    defer archivo.Close()
+    fmt.Println("Archivo abierto:", archivo.Name())
+}
+// Aquí 'err' ya no está disponible si usó esta variante</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Este patrón aparece constantemente en código Go profesional: inicializar, comprobar el error y salir temprano. Acostúmbrate a leerlo como <em>"consigue X; si falla, actúa; si no, continúa"</em>.</p>
+        </blockquote>
+
+        <h3>Las cuatro caras del mismo for</h3>
+        <p>Toda iteración posible en Go se expresa con <code>for</code>. Solo cambia qué partes incluyes entre paréntesis:</p>
+        <table>
+            <thead>
+                <tr><th>Forma</th><th>Sintaxis</th><th>Equivale a</th><th>Uso típico</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Clásico</strong></td><td><code>for i := 0; i &lt; n; i++ { }</code></td><td>for de C/Java</td><td>Índices numéricos, conteos</td></tr>
+                <tr><td><strong>While</strong></td><td><code>for condicion { }</code></td><td>while</td><td>Repetir hasta cumplir condición</td></tr>
+                <tr><td><strong>Infinito</strong></td><td><code>for { }</code></td><td>while(true)</td><td>Servidores, loops de eventos, workers</td></tr>
+                <tr><td><strong>Range</strong></td><td><code>for i, v := range coleccion { }</code></td><td>foreach</td><td>Recorrer slices, maps, strings, channels</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-go">// 1. Clásico: conoces cuántas vueltas
+suma := 0
+for i := 1; i &lt;= 100; i++ {
+    suma += i
+}
+
+// 2. Estilo while: no sabes cuántas vueltas
+potencia := 1
+for potencia &lt; 1000 {
+    potencia *= 2
+}
+
+// 3. Infinito: servidores y workers (con salida controlada)
+contador := 0
+for {
+    contador++
+    if contador == 3 {
+        break // la única forma de salir
+    }
+}
+
+// 4. Range: la forma idiomática de recorrer colecciones
+lenguajes := []string{"Go", "Rust", "Kotlin"}
+for indice, valor := range lenguajes {
+    fmt.Printf("%d: %s\n", indice, valor)
+}</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Con <code>range</code>, si solo necesitas el índice omite el segundo valor (<code>for i := range s</code>); si solo necesitas el valor, usa el guion bajo (<code>for _, v := range s</code>). Go rechaza compilar variables declaradas y no usadas, así que <code>_</code> es obligatorio, no estético.</p>
+        </blockquote>
+
+        <h3>Qué devuelve range según el tipo</h3>
+        <table>
+            <thead>
+                <tr><th>Colección</th><th>Primer valor</th><th>Segundo valor</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>[]int</code> (slice/array)</td><td>Índice</td><td>Copia del elemento</td></tr>
+                <tr><td><code>map[string]int</code></td><td>Clave</td><td>Valor asociado</td></tr>
+                <tr><td><code>string</code></td><td>Índice de byte</td><td>Rune (carácter Unicode)</td></tr>
+                <tr><td><code>&lt;-chan T</code></td><td>Valor recibido</td><td>(opcional) si el canal sigue abierto</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>Ojo con range en strings: el primer valor es la <strong>posición en bytes</strong>, no la posición del carácter. En textos con acentos o emojis, un carácter puede ocupar varios bytes y los índices saltarán de 2 en 2 o más.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="switch">
+    <h2><i class="fa-solid fa-shuffle"></i> switch: el rey de la legibilidad en Go</h2>
+    <div class="doc-content">
+        <p>El <code>switch</code> de Go corrige las dos quejas históricas del switch de C: <strong>no hay caída accidental entre casos</strong> (no necesitas <code>break</code>; cada caso termina solo) y <strong>puede funcionar sin expresión</strong>, sustituyendo cadenas largas de <code>else if</code> con mucha más claridad.</p>
+
+        <h3>Switch básico con agrupación de valores</h3>
+        <pre><code class="language-go">dia := "sábado"
+
+switch dia {
+case "sábado", "domingo": // varios valores separados por coma
+    fmt.Println("¡Fin de semana!")
+case "lunes":
+    fmt.Println("Inicio de semana")
+default:
+    fmt.Println("Día laborable")
+}
+// No hace falta break: cada case termina automáticamente</code></pre>
+
+        <h3>Switch con init statement</h3>
+        <p>Igual que <code>if</code>, el switch acepta una inicialización previa. La variable queda limitada al ámbito del switch:</p>
+        <pre><code class="language-go">switch hora := time.Now().Hour(); {
+case hora &lt; 12:
+    fmt.Println("Buenos días")
+case hora &lt; 19:
+    fmt.Println("Buenas tardes")
+default:
+    fmt.Println("Buenas noches")
+}</code></pre>
+
+        <h3>Switch sin expresión: el reemplazo del else-if</h3>
+        <p>Cuando omites la expresión, cada <code>case</code> es simplemente una condición booleana evaluada en orden. Es la forma preferida en Go para decisiones multi-rama complejas:</p>
+        <pre><code class="language-go">edad, tieneLicencia := 17, true
+
+switch {
+case edad &lt; 16:
+    fmt.Println("No puede conducir")
+case edad &lt; 18 &amp;&amp; !tieneLicencia:
+    fmt.Println("Necesita permiso de aprendiz")
+case edad &lt; 18:
+    fmt.Println("Puede conducir acompañado")
+default:
+    fmt.Println("Puede conducir solo")
+}</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Un <code>switch { }</code> con condiciones ordenadas de lo más específico a lo más general es mucho más fácil de leer y modificar que una torre de <code>else if</code>. Úsalo siempre que tengas 3+ ramas.</p>
+        </blockquote>
+
+        <h3>Type switch: descubrir el tipo dinámico</h3>
+        <p>Cuando trabajas con interfaces (por ejemplo, <code>interface{}</code>/any), el type switch permite ejecutar una rama por cada tipo concreto. Es una pieza central del código Go genérico:</p>
+        <pre><code class="language-go">func describir(v any) string {
+    switch t := v.(type) { // type switch
+    case int:
+        return fmt.Sprintf("Entero: %d", t*2)
+    case string:
+        return fmt.Sprintf("Texto de %d caracteres", len(t))
+    case bool:
+        if t {
+            return "Verdadero"
+        }
+        return "Falso"
+    case nil:
+        return "Valor nulo"
+    default:
+        return fmt.Sprintf("Tipo desconocido: %T", t)
+    }
+}</code></pre>
+
+        <h3>fallthrough: el caso excepcional</h3>
+        <p>Si de verdad quieres reproducir el comportamiento de C (entrar al siguiente case sin evaluar su condición), existe <code>fallthrough</code>. Su uso es tan raro que cuando alguien lo lee en revisión de código, sospecha un bug:</p>
+        <pre><code class="language-go">nivel := 1
+switch nivel {
+case 1:
+    fmt.Println("Cargando nivel base")
+    fallthrough // entra SIEMPRE al siguiente case
+case 2:
+    fmt.Println("Aplicando texturas")
+case 3:
+    fmt.Println("Cargando enemigos")
+}
+// Imprime ambas líneas: "nivel base" Y "texturas"</code></pre>
+
+        <h3>Comparación con el switch de otros lenguajes</h3>
+        <table>
+            <thead>
+                <tr><th>Característica</th><th>Go</th><th>C / Java / JS (clásicos)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Cae al siguiente case</td><td>No (salvo <code>fallthrough</code>)</td><td>Sí, salvo <code>break</code></td></tr>
+                <tr><td>Puede evaluar condiciones booleanas</td><td>Sí (switch sin expresión)</td><td>No (solo igualdad)</td></tr>
+                <tr><td>Varios valores por case</td><td>Sí, con comas</td><td>Solo con cases vacíos apilados</td></tr>
+                <tr><td>Type switch</td><td>Nativo con <code>v.(type)</code></td><td>No existe</td></tr>
+                <tr><td>Init statement</td><td>Sí</td><td>No</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="etiquetas-y-saltos">
+    <h2><i class="fa-solid fa-tags"></i> Etiquetas: break y continue dirigidos</h2>
+    <div class="doc-content">
+        <p>En bucles anidados, <code>break</code> y <code>continue</code> solo afectan al bucle interior. Para salir (o continuar) desde un bucle exterior, Go usa <strong>etiquetas</strong>: nombres seguidos de dos puntos colocados justo antes del bucle objetivo. Es la alternativa estructurada y legible al <code>goto</code>.</p>
+        <pre><code class="language-go">matriz := [][]int{
+    {4, 8, 15},
+    {16, 23, 42},
+}
+
+buscado := 23
+encontrado := false
+
+// La etiqueta apunta AL BUCLE EXTERIOR
+externo:
+for i, fila := range matriz {
+    for j, valor := range fila {
+        if valor == buscado {
+            fmt.Printf("Hallado en [%d][%d]\n", i, j)
+            encontrado = true
+            break externo // sale de AMBOS bucles
+        }
+    }
+}
+
+if !encontrado {
+    fmt.Println("No está en la matriz")
+}</code></pre>
+        <p>Con <code>continue externo</code>, en cambio, no sales: saltas directamente a la siguiente vuelta del bucle exterior. Resulta útil para filtrar combinaciones completas:</p>
+        <pre><code class="language-go">// Pares (a, b) donde a*b sea múltiplo de 10,
+// descartando toda la fila cuando a sea múltiplo de 5
+externo:
+for a := 1; a &lt;= 6; a++ {
+    for b := 1; b &lt;= 6; b++ {
+        if a%5 == 0 {
+            continue externo // siguiente valor de 'a'
+        }
+        if (a * b)%10 == 0 {
+            fmt.Printf("%d x %d = %d\n", a, b, a*b)
+        }
+    }
+}</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Go conserva <code>goto</code> pero casi nadie lo usa: las etiquetas cubren el caso legítimo (romper bucles anidados) sin los males del salto libre. Si te ves escribiendo <code>goto</code>, casi seguro refactorizarías mejor extrayendo una función.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="patrones-idiomaticos">
+    <h2><i class="fa-solid fa-lightbulb"></i> Patrones idiomáticos de control</h2>
+    <div class="doc-content">
+        <p>Más allá de la sintaxis, el código Go profesional reconoce ciertos patrones recurrentes de control de flujo. Adoptarlos temprano hará que tu código parezca escrito por alguien de la comunidad, no por un traductor de otro lenguaje.</p>
+
+        <h3>Cláusulas guard: retorna temprano</h3>
+        <p>En lugar de anidar validaciones, valida primero y retorna en cuanto algo falle. El "camino feliz" queda al nivel principal, sin indentación profunda:</p>
+        <pre><code class="language-go">func procesarPedido(usuario string, total float64, cupon bool) error {
+    // Guards: casos inválidos fuera cuanto antes
+    if usuario == "" {
+        return errors.New("usuario requerido")
+    }
+    if total &lt;= 0 {
+        return errors.New("total debe ser positivo")
+    }
+
+    // Camino feliz, plano y legible
+    if cupon {
+        total *= 0.9
+    }
+    fmt.Printf("Pedido OK para %s: %.2f\n", usuario, total)
+    return nil
+}</code></pre>
+
+        <h3>El patrón "consigue, comprueba, continúa"</h3>
+        <p>La secuencia <code>x, err := f()</code> seguida de <code>if err != nil</code> representa cerca del 40% del flujo de control en programas Go reales. Verás variantes en todas las APIs de la stdlib:</p>
+        <pre><code class="language-go">respuesta, err := http.Get("https://api.ejemplo.com/datos")
+if err != nil {
+    log.Fatal(err) // corta el programa registrando el error
+}
+defer respuesta.Body.Close()
+
+cuerpo, err := io.ReadAll(respuesta.Body)
+if err != nil {
+    return fmt.Errorf("leyendo respuesta: %w", err)
+}</code></pre>
+        <blockquote class="aside aside-success">
+            <p>Aunque parezca verboso frente a excepciones, este estilo hace visible TODO el flujo de errores: nada falla "mágicamente" entre dos líneas. Los equipos grandes valoran enormemente esa previsibilidad.</p>
+        </blockquote>
+
+        <h3>Bucle infinito bien construido</h3>
+        <p>Los servidores Go viven en <code>for { }</code>. La clave es que la salida esté explícita y controlada, nunca perdida:</p>
+        <pre><code class="language-go">cola := make(chan string, 10)
+
+for trabajo := range cola { // termina cuando cierren el canal
+    resultado := procesar(trabajo)
+    fmt.Println("Procesado:", resultado)
+}
+fmt.Println("Cola cerrada: worker terminando limpio")</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <p>Estas trampas aparecen una y otra vez en quienes llegan a Go desde otros lenguajes. Repásalas antes de escribir tu próximo bucle:</p>
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Solución idiomática</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Poner paréntesis en <code>if (...) </code></td><td>Error de compilación</td><td>Escribe la condición directa: <code>if x &gt; 0 {</code></td></tr>
+                <tr><td>Llave de apertura en línea aparte</td><td>Error de sintaxis</td><td>La llave va siempre en la misma línea del <code>if/for/switch</code></td></tr>
+                <tr><td>Añadir <code>break</code> tras cada case</td><td>Innecesario (compila)</td><td>Elimínalo: Go rompe solo; deja <code>fallthrough</code> solo si lo necesitas de verdad</td></tr>
+                <tr><td>Usar la variable del range creyendo que muta la colección</td><td>Datos sin cambiar: <code>v</code> es una COPIA</td><td>Escribe por índice: <code>s[i] = nuevoValor</code></td></tr>
+                <tr><td>Declarar variable en init statement y usarla después</td><td>"undefined: variable"</td><td>Su ámbito muere con el if/switch; declara fuera si sobrevive</td></tr>
+                <tr><td>Bucle infinito sin salida definida</td><td>Programa colgado</td><td>Toda salida debe ser explícita: <code>break</code>, <code>return</code> o cierre de canal</td></tr>
+                <tr><td><code>range</code> sobre map esperando orden estable</td><td>Orden aleatorio en cada ejecución</td><td>Extrae y ordena las claves con <code>sort.Strings</code> antes de iterar</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>El caso de la copia del range merece énfasis: <code>for _, u := range usuarios { u.Activo = true }</code> NO activa a nadie. Modifica siempre a través del índice: <code>for i := range usuarios { usuarios[i].Activo = true }</code>.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>FizzBuzz Go</strong>: imprime del 1 al 50 usando UN solo <code>for</code> y un <code>switch</code> sin expresión. Múltiplos de 3 → "Fizz", de 5 → "Buzz", de ambos → "FizzBuzz".</li>
+            <li><strong>Tabla de multiplicar con range</strong>: dado un número, imprime su tabla del 1 al 12 iterando con <code>range</code> sobre un slice de enteros precreado.</li>
+            <li><strong>Clasificador de temperatura</strong>: escribe una función que reciba grados Celsius y devuelva una categoría ("congelación", "frío", "templado", "calor", "extremo") usando switch sin expresión, con init statement incluido.</li>
+            <li><strong>Búsqueda con etiqueta</strong>: crea una matriz 4×4 de números aleatorios y busca el mayor valor usando una etiqueta para cortar ambos bucles en cuanto encuentres uno superior a 90.</li>
+            <li><strong>Contador Unicode</strong>: dada una cadena con emojis y acentos (por ejemplo, "ñandú 🦤 café"), cuenta cuántos bytes ocupa y cuántos runess tiene, demostrando la diferencia entre <code>len(s)</code> y el range sobre strings. Explica los resultados en un comentario.</li>
+        </ol>
+    </div>
+</section>

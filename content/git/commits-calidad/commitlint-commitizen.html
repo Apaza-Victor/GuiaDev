@@ -1,6 +1,6 @@
 <!-- 3. Commitlint y Commitizen - Calidad de Commits (Control de Versiones) -->
 <section id="instalar-y-configurar-commitlint">
-  <h2>Instalar y configurar commitlint</h2>
+  <h2><i class="fa-solid fa-gauge"></i> Instalar y configurar commitlint</h2>
   <div class="doc-content">
     <p><strong>commitlint</strong> valida que los mensajes de commit cumplan Conventional Commits. Instalación en proyecto Node:</p>
     <pre><code class="language-bash">npm install --save-dev @commitlint/cli @commitlint/config-conventional
@@ -16,11 +16,15 @@ echo "cambios varios" | npx commitlint
 # ✗ subject may not be empty [subject-empty]
 # ✗ type may not be empty [type-empty]</code></pre>
     <p>La config preset rechaza tipos no estándar, subjects vacíos, mayúsculas iniciales y punto final, entre otras reglas.</p>
+    <blockquote class="aside aside-note">
+      <p>Las reglas tienen formato <code>[nivel, aplicabilidad, valor]</code>: nivel 0=off, 1=warning, 2=error; 'always' o 'never'. Así, <code>'type-enum': [2, 'always', ['feat','fix']]</code> bloquea cualquier otro tipo con severidad de error.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="validar-desde-husky-commit-msg">
-  <h2>Validar desde husky (commit-msg)</h2>
+  <h2><i class="fa-solid fa-shield-halved"></i> Validar desde husky (commit-msg)</h2>
     <div class="doc-content">
     <p>Con Husky ya instalado, agrega el hook <code>commit-msg</code>:</p>
     <pre><code class="language-bash">echo "npx --no -- commitlint --edit \$1" &gt; .husky/commit-msg</code></pre>
@@ -39,11 +43,15 @@ $ git commit -m "fix: arreglé el cálculo del IVA"
     'header-max-length': [2, 'always', 72]
   }
 };</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>El scope-enum es la regla más subestimada: al obligar a elegir entre scopes acordados, el historial se vuelve FILTRABLE ("muéstrame solo commits de auth"). Sin ella, cada dev inventa scopes y el valor analítico desaparece.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="commitizen-commits-guiados">
-  <h2>Commitizen: commits guiados</h2>
+  <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Commitizen: commits guiados</h2>
   <div class="doc-content">
     <p><strong>Commitizen</strong> invierte el enfoque: en vez de validar después, te guía durante la escritura con preguntas interactivas.</p>
     <pre><code class="language-bash"># Instalar el adaptador cz-conventional-changelog
@@ -66,11 +74,15 @@ npm install --save-dev commitizen cz-conventional-changelog
 ? Body / breaking changes? (opcional)
 → Genera: feat(carrito): cupones de descuento ✓</code></pre>
     <p>Uso global sin instalar nada en el repo: <code>npx cz</code>.</p>
+    <blockquote class="aside aside-caution">
+      <p>Commitizen NO reemplaza a commitlint: uno guía la escritura, el otro VALIDA. Un dev puede saltarse cz y escribir a mano — sin commitlint en commit-msg, nada lo detiene. El combo completo es: cz para comodidad + commitlint como guardia.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="changelog-automatico">
-  <h2>Changelog automático</h2>
+  <h2><i class="fa-solid fa-book"></i> Changelog automático</h2>
   <div class="doc-content">
     <p>Con commits estandarizados, el CHANGELOG se genera solo:</p>
     <pre><code class="language-bash"># Opción A: git-cliff (Rust, rápido, muy configurable)
@@ -86,5 +98,50 @@ npx conventional-changelog-cli -p angular -i CHANGELOG.md -s</code></pre>
 ### Bug Fixes
 * **auth:** expiración de tokens incorrecta</code></pre>
     <p>Nivel avanzado: <strong>semantic-release</strong> o <strong>release-please</strong> combinan todo — leen commits, deciden versión semver, generan changelog, crean tag/release de GitHub y publican a npm, todo desde CI. Ese es el destino final de un flujo de commits de calidad.</p>
+    <table class="doc-table">
+      <thead>
+        <tr><th>Herramienta de release</th><th>Lee…</th><th>Produce…</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>git-cliff</code></td><td>Historial convencional</td><td>CHANGELOG.md configurable por plantillas</td></tr>
+        <tr><td><code>conventional-changelog</code></td><td>Historial (preset angular)</td><td>CHANGELOG.md incremental</td></tr>
+        <tr><td><code>semantic-release</code></td><td>Commits + tags</td><td>Versión semver + changelog + release + publicación npm</td></tr>
+        <tr><td><code>release-please</code></td><td>Commits</td><td>Release PR que al mergear crea versión+changelog</td></tr>
+      </tbody>
+    </table>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="errores-comunes">
+  <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>commitlint.config.js no versionado</td><td>Cada dev valida con reglas distintas</td><td>Commit del config al repo, siempre</td></tr>
+        <tr><td>Husky sin commitlint instalado en CI</td><td>PRs con commits malos pasan el pipeline</td><td>npx commitlint --from=origin/main~1 en CI</td></tr>
+        <tr><td>Merge commits rechazados por la validación</td><td>"Merge branch..." falla el hook</td><td>Ignorar merges: 'type-enum' con regla default ya lo contempla; configurar si custom</td></tr>
+        <tr><td>Squash con mensaje auto-generado sucio</td><td>"feat: fix: chore: ..." concatenado</td><td>Redactar título convencional al hacer squash merge</td></tr>
+        <tr><td>cz instalado pero nadie lo usa</td><td>Validación bloqueante sin guía = frustración</td><td>npm run commit como camino fácil y documentado</td></tr>
+        <tr><td>Reglas nivel warning (1) esperando bloqueo</td><td>Commits malos "pasan" igualmente</td><td>Nivel 2 para reglas obligatorias</td></tr>
+      </tbody>
+    </table>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="ejercicios">
+  <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+  <div class="doc-content">
+    <ol>
+      <li><strong>Batería de pruebas</strong>: instala commitlint y prueba 8 mensajes: válidos perfectos, casi-válidos (mayúscula inicial, punto final, 80 chars) e inválidos totales; documenta cada veredicto.</li>
+      <li><strong>Guardia completa</strong>: husky commit-msg + commitlint con scope-enum propio (3-5 scopes de TU proyecto); intenta violar cada regla y verifica bloqueos.</li>
+      <li><strong>Ronda guiada</strong>: realiza 3 commits reales vía npm run commit; compara tiempo/errores vs escritura manual libre.</li>
+      <li><strong>Changelog real</strong>: genera CHANGELOG.md de un repo tuyo con git-cliff; ajusta plantilla para agrupar por scope.</li>
+      <li><strong>Validación en CI</strong>: añade job que valide TODOS los commits de un PR contra origin/main usando commitlint --from; simula PR con commit inválido y confirma rechazo.</li>
+    </ol>
   </div>
 </section>

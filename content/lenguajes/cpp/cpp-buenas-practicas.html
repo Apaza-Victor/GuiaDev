@@ -1,32 +1,160 @@
 <!-- 8. Buenas Prácticas - C++ (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="raii">
-    <h2>RAII</h2>
+<section id="raii">
+    <h2><i class="fa-solid fa-recycle"></i> RAII y el C++ moderno</h2>
     <div class="doc-content">
-<p><strong>RAII</strong> (Resource Acquisition Is Initialization): adquiere recursos en el constructor y los libera en el destructor. Así, archivos, memoria y locks se limpian solos incluso con excepciones.</p>
-<pre><code class="language-cpp">#include &lt;fstream&gt;
+        <p>Toda la filosofía del C++ moderno se resume en una idea: <strong>la adquisición de un recurso ES la construcción de un objeto, y su liberación ES la destrucción</strong>. Si cada memoria, archivo, socket o lock vive dentro de un objeto RAII, los errores de recursos se vuelven imposibles por diseño — no por disciplina.</p>
 
-void leer() {
-    std::ifstream file("datos.txt");   // abre
-    // ... usar file ...
-}                                      // se cierra automáticamente</code></pre>
+        <h3>La regla de cero en acción</h3>
+        <pre><code class="language-cpp">// ❌ C++ de los 90: gestión manual frágil
+class ReporteViejo {
+public:
+    ReporteViejo() : datos_{new int[1000]} {}
+    ~ReporteViejo() { delete[] datos_; }
+    // ¿Copias? ¿Asignaciones? → doble delete esperándote
+private:
+    int* datos_;
+};
+
+// ✅ C++ moderno: regla de CERO — cero código de gestión manual
+struct Reporte {
+    std::vector&lt;int&gt; datos = std::vector&lt;int&gt;(1000);  // RAII interno
+    std::string titulo;
+};  // copia, asignación, movimiento y destrucción: TODOS correctos gratis</code></pre>
+
+        <h3>Checklist de modernización</h3>
+        <table>
+            <thead>
+                <tr><th>Antiguo ❌</th><th>Moderno ✅</th><th>Ganancia</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>new/delete</code></td><td><code>make_unique/make_shared</code></td><td>Sin fugas ni dobles frees</td></tr>
+                <tr><td><code>char* / strcpy</code></td><td><code>std::string / string_view</code></td><td>Sin overflows de buffer</td></tr>
+                <tr><td>Arrays crudos <code>T a[N]</code></td><td><code>std::array&lt;T,N&gt;</code> / <code>vector</code></td><td>Tamaño conocido, sin decaimiento</td></tr>
+                <tr><td><code>NULL / 0</code></td><td><code>nullptr</code></td><td>Tipado correcto</td></tr>
+                <tr><td><code>#define PI 3.14</code></td><td><code>constexpr double PI = ...</code></td><td>Tipado, scoping, debuggeable</td></tr>
+                <tr><td>Casts estilo C <code>(int)x</code></td><td><code>static_cast&lt;int&gt;(x)</code></td><td>Intención explícita y buscable</td></tr>
+                <tr><td>Punteros out-params <code>f(&amp;a,&amp;b)</code></td><td>Retornar struct/pair + structured bindings</td><td>Claro qué produce la función</td></tr>
+                <tr><td><code>std::pair/lista mágica</code> para dominio</td><td><code>enum class</code>, <code>optional</code>, <code>variant</code></td><td>Tipos que expresan el dominio</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p><code>enum class Color { Rojo, Verde };</code> no se convierte implícitamente a int (adiós comparar colores con números), <code>std::optional&lt;T&gt;</code> expresa "quizá no hay valor" sin punteros nullptr, y <code>std::variant&lt;A,B&gt;</code> reemplaza uniones inseguras. Tipos ricos = bugs atrapados en compilación.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="compilacion-y-herramientas">
-    <h2>Compilación y herramientas</h2>
+<section id="compilacion-y-herramientas">
+    <h2><i class="fa-solid fa-screwdriver-wrench"></i> Compilación y herramientas</h2>
     <div class="doc-content">
-<pre><code class="language-bash">g++ -std=c++17 -Wall -Wextra -O2 main.cpp -o app
+        <h3>Warnings: tu primera línea de defensa</h3>
+        <pre><code class="language-text"># Configuración base NO negociable:
+g++ -std=c++20 -Wall -Wextra -Wpedantic -Werror main.cpp
 
-# Herramientas recomendadas
-# clang-tidy  -&gt; análisis estático
-# sanitizers  -&gt; -fsanitize=address,undefined
-# CMake       -&gt; sistema de build estándar</code></pre>
-<ul>
-<li>Activa warnings siempre (-Wall -Wextra)</li>
-<li>Usa -std=c++17 o superior</li>
-<li>Prefiere contenedores STL sobre arrays crudos</li>
-</ul>
+# -Wall       : advertencias comunes críticas
+# -Wextra    : adicionales (signed/unsigned, parámetros sin usar)
+# -Wpedantic : rechaza extensiones no estándar
+# -Werror    : warnings = errores de compilación (disciplina forzada)</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>Un warning en C++ casi nunca es estética: suele anunciar comportamiento indefinido, truncamiento silencioso o bug lógico real. Proyectos serios tratan -Werror como obligatorio desde el primer commit.</p>
+        </blockquote>
+
+        <h3>Sanitizers: detectores de runtime integrados</h3>
+        <table>
+            <thead>
+                <tr><th>Sanitizer</th><th>Flag</th><th>Detecta</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>ASan</strong></td><td><code>-fsanitize=address</code></td><td>Fugas, use-after-free, buffer overflow, doble free</td></tr>
+                <tr><td><strong>UBSan</strong></td><td><code>-fsanitize=undefined</code></td><td>Overflow signed, divisiones por cero, casts inválidos</td></tr>
+                <tr><td><strong>TSan</strong></td><td><code>-fsanitize=thread</code></td><td>Carreras de datos entre threads</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-text"># Ejecutar TU SUITE con ASan+UBSan es el hábito #1 de calidad:
+g++ -std=c++20 -g -fsanitize=address,undefined tests.cpp &amp;&amp; ./a.out
+# ERROR: AddressSanitizer: heap-use-after-free ... ← línea exacta, stack completo</code></pre>
+
+        <h3>Herramientas de ecosistema</h3>
+        <table>
+            <thead>
+                <tr><th>Herramienta</th><th>Rol</th><th>Comando típico</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>CMake</strong></td><td>Build system de facto multiplataforma</td><td><code>cmake -B build &amp;&amp; cmake --build build</code></td></tr>
+                <tr><td><strong>clang-format</strong></td><td>Formateo automático (fin de guerras de estilo)</td><td><code>clang-format -i src/*.cpp</code></td></tr>
+                <tr><td><strong>clang-tidy</strong></td><td>Linter estático con fixes automáticos modernizadores</td><td><code>clang-tidy main.cpp -- -std=c++20</code></td></tr>
+                <tr><td><strong>cppcheck</strong></td><td>Análisis estático adicional ligero</td><td><code>cppcheck --enable=all src/</code></td></tr>
+                <tr><td><strong>vcpkg/Conan</strong></td><td>Gestores de dependencias</td><td><code>vcpkg install fmt</code></td></tr>
+            </tbody>
+        </table>
+
+        <h3>Const-correctness: contratos en las firmas</h3>
+        <pre><code class="language-cpp">class Inventario {
+public:
+    // const al FINAL: promete no modificar this — exigible desde contextos const
+    [[nodiscard]] size_t totalUnidades() const;
+
+    // const&amp; en parámetros: sin copia, sin mutación
+    void agregar(const std::string&amp; producto, int unidades);
+
+    // constexpr donde aplique: cálculo movido a compilación
+    [[nodiscard]] static constexpr int limiteMaximo() { return 1'000'000; }
+};
+
+// const local: intención documentada + optimizaciones
+const auto total = inventario.totalUnidades();  // nadie lo cambia después</code></pre>
+
+        <h3>Checklist final de calidad</h3>
+        <table>
+            <thead>
+                <tr><th>Área</th><th>Criterio antes de mergear</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Compilación</td><td>-Wall -Wextra -Werror limpio en GCC y Clang</td></tr>
+                <tr><td>Memoria</td><td>Tests pasan con ASan+UBSan activos</td></tr>
+                <tr><td>Propiedad</td><td>Cero new/delete crudos; smart pointers o contenedores</td></tr>
+                <tr><td>APIs</td><td>const-correctas; concepts en plantillas públicas</td></tr>
+                <tr><td>Estilo</td><td>.clang-format versionado; CI verifica formato</td></tr>
+                <tr><td>Estaticidad</td><td>clang-tidy sin warnings nuevos; cppcheck limpio</td></tr>
+                <tr><td>Tests</td><td>Cobertura en lógica crítica; casos borde documentados</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-success">
+            <p>Ninguna herramienta sustituye pensar, pero todas multiplican tu capacidad de detectar errores ANTES de producción. Un proyecto C++ profesional moderno combina: estándar reciente + warnings estrictos + sanitizers en CI + formato/linting automáticos. Ese combo convierte al "C++ peligroso" de leyenda en un lenguaje industrial controlable.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Coste real</th><th>Prevención</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Ignorar warnings ("funciona igual")</td><td>Bugs latentes que explotan en producción</td><td>-Werror desde día uno</td></tr>
+                <tr><td>Probar solo el camino feliz</td><td>Use-after-free invisible hasta carga real</td><td>Sanitizers EN LA SUITE, no ocasionalmente</td></tr>
+                <tr><td>Estilo manual inconsistente en equipo</td><td>PRs con diffs de formato; revisión improductiva</td><td>clang-format automático pre-commit</td></tr>
+                <tr><td>Migrar todo a "moderno" de golpe</td><td>Refactor gigante bloqueante</td><td>Modernizar archivos nuevos; clang-tidy gradual</td></tr>
+                <tr><td>Depender de UB que "funciona en mi compilador"</td><td>Cambio de flags = desastre inexplicable</td><td>UBSan + leer el estándar en dudas</td></tr>
+                <tr><td>Headers sin include guards/#pragma once</td><td>Errores de redefinición crípticos</td><td>Plantilla de header estándar en el equipo</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Auditoría personal</strong>: toma un ejercicio anterior tuyo de esta serie y pásale clang-tidy + cppcheck; corrige TODO lo reportado y documenta los 3 hallazgos más interesantes.</li>
+            <li><strong>Modernizador</strong>: reescribe una clase con new/delete crudo usando regla de cero (vector + string); verifica con ASan que ambos versiones pasan tus tests.</li>
+            <li><strong>Cazador de UB</strong>: programa deliberadamente 5 UB distintos (signed overflow, uso tras delete, índice fuera de rango...); ejecuta con UBSan/ASan y captura el reporte de cada uno en comentarios.</li>
+            <li><strong>Setup profesional</strong>: monta CMake mínimo + .clang-format + targets con -Wall -Wextra -fsanitize para un proyecto de dos archivos; compila y ejecuta sus tests.</li>
+            <li><strong>Revisión cruzada</strong>: intercambia código con otro estudiante si es posible; aplica la checklist final de la lección como rúbrica y reporta hallazgos por área.</li>
+        </ol>
+    </div>
+</section>

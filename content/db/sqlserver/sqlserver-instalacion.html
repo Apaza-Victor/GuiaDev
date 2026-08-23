@@ -1,57 +1,158 @@
 <!-- 2. Instalación y primeros pasos - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="paso-1-instalar-el-motor">
-    <h2>Paso 1: instalar el motor</h2>
+<section id="paso-1-instalar-el-motor">
+    <h2><i class="fa-solid fa-download"></i> Paso 1: instalar el motor</h2>
     <div class="doc-content">
-<p>Descarga <strong>SQL Server Developer Edition</strong> desde el sitio oficial de Microsoft, ejecuta el instalador y elige <em>Basic</em> (Básico). Al terminar, anota la <strong>cadena de conexión</strong> y el nombre de instancia (normalmente <code>localhost\SQLEXPRESS</code> o similar).</p>
-    </div>
-  </section>
+        <p>Descarga la <strong>SQL Server Installation Center</strong> (Developer Edition recomendada) desde microsoft.com/sql-server. El instalador guía por pasos; estas son las decisiones que importan:</p>
+        <table>
+            <thead>
+                <tr><th>Paso del instalador</th><th>Elección recomendada</th><th>Por qué</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Edición</td><td>Developer (gratis, todo)</td><td>Express solo si RAM mínima</td></tr>
+                <tr><td>Tipo instalación</td><td>Custom → nueva standalone</td><td>Control sobre features</td></tr>
+                <tr><td>Feature Selection</td><td>Solo Database Engine Services</td><td>SSMS se instala aparte ahora</td></tr>
+                <tr><td>Instance Configuration</td><td>Named: SQLEXPRESS o default MSSQLSERVER</td><td>Define tu cadena de conexión para siempre</td></tr>
+                <tr><td>Authentication Mode</td><td><strong>Mixed Mode</strong> + contraseña SA fuerte</td><td>Permite login SQL además de Windows</td></tr>
+                <tr><td>Data Directories</td><td>Defaults OK para aprender</td><td>En producción: discos separados data/log/tempdb</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Apunta el nombre de instancia exacto en el paso Instance Configuration: será lo primero que SSMS te pida. En Express suele ser <code>localhost\SQLEXPRESS</code>; Developer default sin nombre: <code>localhost</code>.</p>
+        </blockquote>
 
-  <section id="paso-2-instalar-ssms">
-    <h2>Paso 2: instalar SSMS</h2>
-    <div class="doc-content">
-<p>Desde la pantalla final del instalador puedes descargar <strong>SSMS</strong>. Instálalo, ábrelo y conéctate con:</p>
-<ul>
-<li><strong>Server type:</strong> Database Engine</li>
-<li><strong>Server name:</strong> el nombre de instancia del paso anterior</li>
-<li><strong>Authentication:</strong> Windows Authentication</li>
-</ul>
-    </div>
-  </section>
+        <h3>Instalación silenciosa / Linux / Docker</h3>
+        <pre><code class="language-text"># Docker: entorno de práctica en 2 minutos:
+docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=TuClave123!" `
+  -p 1433:1433 --name sqldev `
+  -d mcr.microsoft.com/mssql/server:2022-latest
 
-  <section id="paso-3-primera-base-de-datos">
-    <h2>Paso 3: primera base de datos</h2>
+# Conexión desde el contenedor:
+docker exec -it sqldev /opt/mssql-tools18/bin/sqlcmd `
+  -S localhost -U sa -P "TuClave123!" -C
+
+# Linux nativo (Ubuntu): repos + paquete mssql-server vía apt.</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="paso-2-instalar-ssms">
+    <h2><i class="fa-solid fa-desktop"></i> Paso 2: instalar SSMS</h2>
     <div class="doc-content">
-<pre><code class="language-sql">-- Crear y usar una base de datos
-CREATE DATABASE Tienda;
+        <p>Desde 2016+ <strong>SSMS ya no viene con el motor</strong>: descárgalo aparte (búsqueda "Download SSMS") — es gratuito y su instalación es trivial (siguiente-siguiente). Al abrirlo:</p>
+        <pre><code class="language-text">Ventana "Connect to Server":
+  Server type:   Database Engine
+  Server name:   localhost\SQLEXPRESS     ← o localhost
+                 .                        ← punto = localhost también
+                 .\SQLEXPRESS             ← instancia nombrada local
+  Authentication:
+    Windows Authentication          ← tu usuario de Windows (sin clave)
+    SQL Server Authentication       ← usuario sa u otro login creado</code></pre>
+        <table>
+            <thead>
+                <tr><th>Panel de SSMS</th><th>Para qué sirve</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Object Explorer</strong> (F8)</td><td>Árbol completo: bases → tablas → columnas → índices</td></tr>
+                <tr><td><strong>New Query</strong> (Ctrl+N)</td><td>Ventana T-SQL conectada al contexto actual</td></tr>
+                <tr><td><strong>Messages</strong></td><td>Errores, filas afectadas, prints</td></tr>
+                <tr><td><strong>Results grid</strong></td><td>Datos tabulares exportables a CSV/Excel</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>El Object Explorer permite editar datos "a mano" (clic derecho Edit Top 200 Rows). Es cómodo para jugar pero NO genera transacciones ni validaciones serias: en cuanto salgas de tutoriales, trabaja SIEMPRE con scripts T-SQL versionables y repetibles.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="paso-3-primera-base-de-datos">
+    <h2><i class="fa-solid fa-database"></i> Paso 3: tu primera base de datos</h2>
+    <div class="doc-content">
+        <pre><code class="language-sql">-- Crear y usar una base:
+CREATE DATABASE TiendaPrueba;
+GO
+USE TiendaPrueba;
 GO
 
-USE Tienda;
-GO
-
-CREATE TABLE dbo.Productos (
-  Id INT IDENTITY(1,1) PRIMARY KEY,
-  Nombre NVARCHAR(100) NOT NULL,
-  Precio DECIMAL(10,2) NOT NULL
+CREATE TABLE Productos (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    nombre NVARCHAR(100) NOT NULL,
+    precio DECIMAL(10,2) NOT NULL CHECK (precio &gt;= 0),
+    stock INT NOT NULL DEFAULT 0,
+    creado_el DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
 
-INSERT INTO dbo.Productos (Nombre, Precio)
-VALUES (N'Laptop HP', 15500.00), (N'Mouse Logitech', 350.00);
-GO
+INSERT INTO Productos (nombre, precio, stock) VALUES
+    (N'Teclado mecánico', 89.90, 25),
+    (N'Monitor 27"', 249.00, 10),
+    (N' ratón inalámbrico', 29.50, 40);
 
-SELECT * FROM dbo.Productos;</code></pre>
-<blockquote class="aside aside-note">
-<p><code>GO</code> no es SQL: es un separador de lotes que entienden SSMS y sqlcmd. Envía lo anterior al servidor antes de continuar.</p>
-</blockquote>
+SELECT * FROM Productos;</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Fíjate en el prefijo N'...' para strings: indica literal Unicode (NVARCHAR). Sin la N, caracteres como ñ, á o emojis pueden corromperse según collation. Hazlo hábito desde el día uno.</p>
+        </blockquote>
+
+        <h3>Cosas básicas de navegación</h3>
+        <pre><code class="language-sql">EXEC sp_help 'Productos';              -- estructura completa
+EXEC sp_helpdb;                        -- lista bases y tamaños
+SELECT DB_NAME() AS base_actual;       -- ¿dónde estoy parado?
+SELECT @@VERSION AS version_motor;     -- build exacta instalada</code></pre>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="verificar-el-entorno">
-    <h2>Verificar el entorno</h2>
+<section id="verificar-el-entorno">
+    <h2><i class="fa-solid fa-clipboard-check"></i> Verificar el entorno completo</h2>
     <div class="doc-content">
-<pre><code class="language-sql">SELECT @@VERSION AS version;
-SELECT DB_NAME() AS base_actual;
-SELECT * FROM sys.databases;   -- todas las bases del servidor</code></pre>
+        <table>
+            <thead>
+                <tr><th>Check</th><th>Cómo</th><th>Esperado</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Servicio activo</td><td>services.msc → "SQL Server (...)"</td><td>Estado Running</td></tr>
+                <tr><td>Puerto escuchando</td><td>SSMS conecta / <code>netstat -ano | findstr 1433</code></td><td>LISTENING en 1433</td></tr>
+                <tr><td>Versión correcta</td><td><code>SELECT @@VERSION</code></td><td>Developer/Express 2019/2022</td></tr>
+                <tr><td>Mixed auth funciona</td><td>Login con sa + contraseña</td><td>Conecta (si elegiste Mixed)</td></tr>
+                <tr><td>Escritura real</td><td>CREATE TABLE + INSERT + SELECT</td><td>Fila visible tras reiniciar SSMS</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>Error clásico post-instalación: "Login failed for user 'sa' (Error 18456)". Casi siempre es Mixed Mode no habilitado o SA deshabilitado. Solución: conectar por Windows Auth → Properties del servidor → Security → SQL Server and Windows Authentication mode → habilitar login sa → reiniciar servicio.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Código/causa</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>No encontrar SSMS dentro del instalador</td><td>Cambio 2016+: es descarga separada</td><td>Descargar SSMS independiente</td></tr>
+                <tr><td>Login failed sa</td><td>Error 18456, Mixed off o SA disabled</td><td>Habilitar Mixed + ALTER LOGIN sa ENABLE</td></tr>
+                <tr><td>Strings con acentos corruptos</td><td>Literal sin prefijo N''</td><td>N'Texto español' siempre</td></tr>
+                <tr><td>Docker: contraseña débil rechazada</td><td>EULA ok pero password policy falla</td><td>Mayúscula+número+símbolo, ≥8 chars</td></tr>
+                <tr><td>Crear tabla sin estar en la base</td><td>Aparece en master 😱</td><td>USE MiBase antes de cada script</td></tr>
+                <tr><td>Puerto 1433 ocupado/oculto</td><td>Connection refused remoto</td><td>SQL Server Configuration Manager: TCP/IP enabled</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Setup documentado</strong>: instala motor + SSMS (o Docker), anota nombre de instancia y método de autenticación en un README propio.</li>
+            <li><strong>Base de práctica completa</strong>: crea InventarioDB con tabla Articulos (5 tipos distintos de columna), inserta 5 filas con N'', consulta con orden y filtro.</li>
+            <li><strong>Ronda de verificación</strong>: ejecuta los 5 checks de la tabla anterior y captura resultados.</li>
+            <li><strong>Reparador de SA</strong>: si tienes Mixed deshabilitado, actívalo siguiendo la nota de peligro y documenta los pasos que hiciste.</li>
+            <li><strong>Explorador de sistema</strong>: usa sp_helpdb, DB_NAME(), @@VERSION y Object Explorer para armar un mini-reporte de tu instalación.</li>
+        </ol>
+    </div>
+</section>

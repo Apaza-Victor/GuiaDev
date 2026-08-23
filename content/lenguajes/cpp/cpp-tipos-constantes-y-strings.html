@@ -1,32 +1,226 @@
 <!-- 2. Tipos, Constantes y Strings - C++ (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="tipos-fundamentales">
-    <h2>Tipos fundamentales</h2>
+<section id="tipos-fundamentales">
+    <h2><i class="fa-solid fa-layer-group"></i> Tipos fundamentales y sizeof</h2>
     <div class="doc-content">
-<pre><code class="language-cpp">int entero = 42;
-double decimal = 3.14;
-char letra = 'A';
-bool bandera = true;
+        <p>C++ es un lenguaje <strong>estáticamente tipado</strong>: cada variable tiene un tipo fijo en compilación, y ese tipo determina su tamaño en memoria, sus operaciones válidas y su comportamiento al desbordar. A diferencia de Java o C#, el estándar NO fija los tamaños exactos (solo garantías mínimas y relaciones), lo que hace que el código serio consulte <code>sizeof</code> o use tipos de ancho explícito.</p>
 
-const double PI = 3.14159;         // constante en tiempo de ejecución
-constexpr int LADO = 4;             // constante en tiempo de compilación
-auto deducido = 2.5;                // double</code></pre>
-    </div>
-  </section>
+        <h3>La familia de enteros</h3>
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Garantía estándar</th><th>Típico en x64</th><th>Rango práctico</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>char</code></td><td>≥ 8 bits (siempre 1 byte por definición)</td><td>1 byte</td><td>-128 a 127 / 0-255 unsigned</td></tr>
+                <tr><td><code>short</code></td><td>≥ 16 bits, ≤ int</td><td>2 bytes</td><td>±32 mil</td></tr>
+                <tr><td><code>int</code></td><td>≥ 16 bits (típicamente ≥32)</td><td>4 bytes</td><td>±2.100 millones</td></tr>
+                <tr><td><code>long</code></td><td>≥ 32 bits</td><td>4 (Win) / 8 (Linux)</td><td>OJO: difiere por plataforma</td></tr>
+                <tr><td><code>long long</code></td><td>≥ 64 bits</td><td>8 bytes</td><td>±9.2 × 10¹⁸</td></tr>
+                <tr><td><code>unsigned X</code></td><td>Mismos bits, solo positivos</td><td>—</td><td>Duplica techo, sin negativos</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-cpp">#include &lt;cstdint&gt;   // tipos de ancho EXACTO
 
-  <section id="std-string">
-    <h2>std::string</h2>
-    <div class="doc-content">
-<pre><code class="language-cpp">#include &lt;string&gt;
+int16_t  chico  = 32000;          // exactamente 16 bits
+int64_t  grande = 9'000'000'000;  // exactamente 64 bits
+size_t   n      = sizeof(double); // para tamaños/índices: SIEMPRE size_t
 
-std::string saludo = "Hola";
-saludo += ", mundo";
-std::size_t len = saludo.length();
-std::string sub = saludo.substr(0, 4);   // "Hola"
+#include &lt;iostream&gt;
+std::cout &lt;&lt; "int:     " &lt;&lt; sizeof(int)     &lt;&lt; " bytes\n";
+std::cout &lt;&lt; "double:  " &lt;&lt; sizeof(double)  &lt;&lt; " bytes\n";
+std::cout &lt;&lt; "bool:    " &lt;&lt; sizeof(bool)    &lt;&lt; " byte\n"; // ¡sí, bool ocupa 1!</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Los separadores de dígitos <code>'</code> (C++14) hacen legibles los literales grandes: <code>1'000'000</code>. Y para código portable usa siempre los alias de <code>&lt;cstdint&gt;</code>: int32_t, uint64_t… El <code>long</code> de Windows es 32 bits mientras en Linux es 64: bug clásico multiplataforma.</p>
+        </blockquote>
 
-if (saludo.find("mundo") != std::string::npos) {
-    // encontrado
+        <h3>Punto flotante y la trampa del 0.1</h3>
+        <p><code>float</code> (~7 dígitos) y <code>double</code> (~15 dígitos) siguen IEEE 754: binario incapaz de representar exactamente decimales como 0.1:</p>
+        <pre><code class="language-cpp">double a = 0.1 + 0.2;
+std::cout &lt;&lt; std::setprecision(20) &lt;&lt; a &lt;&lt; "\n";
+// 0.30000000000000004441 — nunca compares floats con ==
+
+if (std::abs(a - 0.3) &lt; 1e-9) {  // comparación con tolerancia
+    std::cout &lt;&lt; "suficientemente igual\n";
 }</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>NUNCA uses float/double para dinero. Un centavo no existe en binario IEEE 754. Usa enteros contando céntimos, o librerías decimales especializadas.</p>
+        </blockquote>
+
+        <h3>auto y decltype: deducción de tipos</h3>
+        <p>C++11 introdujo <code>auto</code>: el compilador deduce el tipo del inicializador. No es tipado dinámico — el tipo es único y fijo desde compilación:</p>
+        <pre><code class="language-cpp">auto i = 42;              // int
+auto d = 3.14;            // double
+auto s = std::string{"hi"}; // std::string
+auto it = mapa.begin();   // std::map&lt;K,V&gt;::iterator — ¡imposible escribir a mano!
+
+auto suma(int a, double b) -&gt; double { return a + b; } // trailing return
+decltype(i) copia = 10;   // "el mismo tipo que i"</code></pre>
+        <blockquote class="aside aside-caution">
+            <p><code>auto x = {1, 2, 3};</code> deduce <code>std::initializer_list&lt;int&gt;</code>, no un array. Y <code>auto</code> descarta referencias y const por defecto: <code>auto c = v[0]</code> sobre un vector de strings COPIA el string. Para no copiar: <code>auto&amp;</code> o <code>const auto&amp;</code>.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="const-y-constexpr">
+    <h2><i class="fa-solid fa-lock"></i> const vs constexpr</h2>
+    <div class="doc-content">
+        <p>Ambas palabras evitan modificaciones, pero significan cosas distintas. Dominar la diferencia es señal de madurez en C++ moderno:</p>
+        <table>
+            <thead>
+                <tr><th>Característica</th><th><code>const</code></th><th><code>constexpr</code></th></tr>
+            </thead>
+            <tbody>
+                <tr><td>"No puedo modificarlo tras crear"</td><td>Sí</td><td>Sí</td></tr>
+                <tr><td>Valor calculado en COMPILACIÓN</td><td>No necesariamente</td><td>Requerido</td></tr>
+                <tr><td>Válido para funciones</td><td>No</td><td>Sí (funciones evaluables en compile-time)</td></tr>
+                <tr><td>Tamaño de arrays estáticos / parámetros template</td><td>A veces</td><td>Siempre</td></tr>
+                <tr><td>Uso típico</td><td>Parámetros inmutables, punteros const</td><td>Constantes matemáticas, tablas precalculadas</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-cpp">// const: solo promete no modificar
+int pedirEdad();
+const int edad = pedirEdad(); // OK: se calcula en RUNTIME
+
+// constexpr: GARANTIZA compilación
+constexpr int TAMANO = 64;
+constexpr double PI = 3.14159265358979;
+constexpr int cuadrado(int x) { return x * x; }  // función constexpr
+constexpr int TABLA[TAMANO] = {};                 // array estático legal
+
+static_assert(cuadrado(8) == 64, "matemática rota"); // verificado AL COMPILAR</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Regla práctica moderna: constantes globales → <code>constexpr</code>. Parámetros y locales que no mutan → <code>const</code>. Si algo puede ser constexpr, hazlo constexpr: el trabajo desaparece del runtime gratis.</p>
+        </blockquote>
+
+        <h3>Conversiones: static_cast y compañía</h3>
+        <p>Los casts estilo C (<code>(int)x</code>) funcionan pero ocultan qué tipo de conversión ocurre. C++ tiene cuatro casts explícitos:</p>
+        <table>
+            <thead>
+                <tr><th>Cast</th><th>Propósito</th><th>Ejemplo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>static_cast</code></td><td>Conversiones comprobables en compilación</td><td><code>static_cast&lt;double&gt;(total) / n</code></td></tr>
+                <tr><td><code>dynamic_cast</code></td><td>Bajada segura en jerarquías polimórficas (RTTI)</td><td><code>dynamic_cast&lt;Perro*&gt;(animal)</code> → nullptr si no</td></tr>
+                <tr><td><code>const_cast</code></td><td>Quitar/añadir const (raro, peligroso)</td><td>Interfaz legacy sin const</td></tr>
+                <tr><td><code>reinterpret_cast</code></td><td>Reinterpretar bits crudos (systems programming)</td><td>Bytes ↔ punteros hardware</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-cpp">int total = 17;
+int cantidad = 4;
+double promedio = static_cast&lt;double&gt;(total) / cantidad; // 4.25
+// SIN cast: 17/4 == 4 (división entera silenciosa — bug #1 de novatos)</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="std-string">
+    <h2><i class="fa-solid fa-font"></i> std::string: texto sin dolor</h2>
+    <div class="doc-content">
+        <p><code>std::string</code> gestiona memoria automáticamente: crece, copia y libera sola. Olvida los char[] y strcpy de C salvo en APIs de sistema:</p>
+        <pre><code class="language-cpp">#include &lt;string&gt;
+
+std::string nombre = "Ada";
+nombre += " Lovelace";                    // concatenación in-place
+std::string completa = nombre + " (1815)";
+
+// Consulta
+bool vacia = nombre.empty();
+size_t len = nombre.length();             // == nombre.size()
+char primera = nombre[0];                 // 'A' — sin chequeo
+char segura  = nombre.at(999);            // lanza std::out_of_range
+
+// Búsqueda
+size_t pos = nombre.find("Love");
+if (pos != std::string::npos) {
+    std::cout &lt;&lt; "Encontrada en índice " &lt;&lt; pos &lt;&lt; "\n";
+}
+
+// Extracción y modificación
+std::string apellido = nombre.substr(4, 8); // "Lovelace"
+nombre.replace(0, 3, "ADA");                // reemplaza rango</code></pre>
+
+        <h3>Construcción con formato</h3>
+        <pre><code class="language-cpp">#include &lt;sstream&gt;
+
+std::ostringstream oss;
+oss &lt;&lt; "Usuario " &lt;&lt; nombre &lt;&lt; " tiene " &lt;&lt; 42 &lt;&lt; " mensajes";
+std::string mensaje = oss.str();
+
+// C++20: std::format (tipo Python f-strings)
+std::string m2 = std::format("Usuario {} tiene {} mensajes", nombre, 42);</code></pre>
+
+        <h3>Números ↔ texto</h3>
+        <pre><code class="language-cpp">int    edad = std::stoi("30");
+double peso = std::stod("72.5");
+std::string texto = std::to_string(42);       // "42"
+
+// Conversión SEGURA con validación:
+try {
+    int valor = std::stoi("abc123");  // stoi lee prefijo válido... ¡"abc" falla!
+} catch (const std::invalid_argument&amp; e) {
+    std::cout &lt;&lt; "No era número\n";
+}
+// OJO: stoi("123abc") devuelve 123 SILENCIOSAMENTE.
+// Para validación estricta usa std::from_chars (C++17):</code></pre>
+        <pre><code class="language-cpp">#include &lt;charconv&gt;
+int valor{};
+auto [ptr, ec] = std::from_chars(inicio, fin, valor);
+if (ec == std::errc{}) {
+    // conversión TOTAL y limpia
+}</code></pre>
+
+        <h3>string_view: pasar texto sin copiar</h3>
+        <p>Cada paso de <code>std::string</code> por valor copia. <code>std::string_view</code> (C++17) es una vista ligera (puntero + longitud) sobre texto existente — acepta string, literal y char* sin una sola copia:</p>
+        <pre><code class="language-cpp">#include &lt;string_view&gt;
+
+void imprimir(std::string_view sv) {   // NO copia nada
+    std::cout &lt;&lt; sv &lt;&lt; '\n';
+}
+
+std::string largo(1000, 'x');
+imprimir(largo);            // sin copia
+imprimir("literal directo"); // sin copia
+imprimir(largo.substr(0, 5)); // substr de string_view: O(1), sin copia</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>Un string_view NO posee sus datos. Guardarlo más allá de la vida del original (retornarlo de una función que creó el string local) es use-after-free garantizado. Regla: parámetros de entrada → string_view; almacenamiento propio → std::string.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Qué ocurre realmente</th><th>Solución</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>División entera accidental: <code>17/4</code></td><td>Resultado 4, no 4.25 — truncamiento silencioso</td><td><code>static_cast&lt;double&gt;(17)/4</code> o literales 17.0/4</td></tr>
+                <tr><td>Comparar doubles con <code>==</code></td><td>Falla por precisión binaria (0.1+0.2 ≠ 0.3)</td><td><code>std::abs(a-b) &lt; epsilon</code></td></tr>
+                <tr><td>Mixear signed/unsigned en bucles</td><td><code>i &lt; v.size()</code> con i int: warning; con i=-1: bucle infinito</td><td>Usar <code>size_t i</code> o ranges C++20</td></tr>
+                <tr><td>Desbordamiento de signed int</td><td><strong>Comportamiento indefinido</strong>: optimizadores asumen que no ocurre</td><td>Tipos anchos, checks previos, unsigned solo cuando aplique</td></tr>
+                <tr><td>Retornar string_view a local</td><td>Use-after-free: la vista apunta a memoria muerta</td><td>Retornar std::string (move barato)</td></tr>
+                <tr><td>Confundar char con string: <code>"a"[0] == "a"</code></td><td>Compara char con puntero</td><td>Comparar tipos homogéneos: 'a' vs "a"</td></tr>
+                <tr><td>Confianza ciega en stoi("123abc")</td><td>Devuelve 123 ignorando basura final</td><td>std::from_chars para validación estricta</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-note">
+            <p>Compila siempre con advertencias agresivas (<code>-Wall -Wextra</code>): la mayoría de estos errores produce warnings detectables. Ignorar warnings en C++ es programar con los ojos cerrados.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Inspector de tipos</strong>: imprime sizeof de todos los tipos fundamentales en tu plataforma; verifica las garantías mínimas de la tabla y documenta sorpresas (ej: long en Windows).</li>
+            <li><strong>Detector de palíndromos</strong>: función <code>bool esPalindromo(std::string_view)</code> que ignore mayúsculas y espacios; pruébala con "Anita lava la tina".</li>
+            <li><strong>Parser robusto de enteros</strong>: implementa <code>std::optional&lt;int&gt; parseEntero(std::string_view)</code> usando from_chars; debe rechazar "12abc", vacío y overflow, aceptar "-45".</li>
+            <li><strong>Constantes compile-time</strong>: crea tabla constexpr de factoriales hasta 12! con static_assert de verificación; imprímela en runtime.</li>
+            <li><strong>Cazador de bugs</strong>: escribe un programa con división entera accidental, comparación == de doubles y bucle signed/unsigned; corrige cada uno con la técnica correspondiente comentando el antes/después.</li>
+        </ol>
+    </div>
+</section>

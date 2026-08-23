@@ -1,6 +1,6 @@
 <!-- 3. GitLab CI/CD - GitLab (Control de Versiones) -->
 <section id="conceptos-clave-pipeline-stages-y-jobs">
-  <h2>Conceptos clave: pipeline, stages y jobs</h2>
+  <h2><i class="fa-solid fa-diagram-project"></i> Conceptos clave: pipeline, stages y jobs</h2>
   <div class="doc-content">
     <p>La arquitectura de GitLab CI se apoya en tres conceptos:</p>
     <ul>
@@ -13,11 +13,15 @@
 ├── stage: test    → [job: unit]     [job: lint]
 └── stage: deploy  → [job: staging]</code></pre>
     <p>Si cualquier job falla, los stages siguientes no se ejecutan: eso garantiza que nada roto avance hacia despliegue.</p>
+    <blockquote class="aside aside-note">
+      <p>Diferencia clave vs GitHub Actions: aquí el ORDEN viene de los stages (declarativo y global); en Actions viene de needs: entre jobs. El modelo de stages de GitLab hace pipelines "estándar" más simples — y los atípicos requieren needs: igual que Actions.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="el-archivo-gitlab-ciyml">
-  <h2>El archivo .gitlab-ci.yml</h2>
+  <h2><i class="fa-solid fa-file-code"></i> El archivo .gitlab-ci.yml</h2>
   <div class="doc-content">
     <p>Toda la configuración vive en un archivo <code>.gitlab-ci.yml</code> en la raíz del repositorio. GitLab lo detecta automáticamente en cada push.</p>
     <pre><code class="language-yaml"># .gitlab-ci.yml mínimo
@@ -38,11 +42,15 @@ probar:
     - npm ci
     - npm test</code></pre>
     <p>Cada job define al menos un <strong>stage</strong> y una lista de <strong>script</strong>. La clave <code>image</code> elige la imagen Docker donde corre el job.</p>
+    <blockquote class="aside aside-tip">
+      <p>Antes de pushear, valida tu YAML con <code>gitlab-ci-local</code> (local) o el linter integrado: <em>Pipeline editor</em> en la UI o <code>curl --data "content=$(cat .gitlab-ci.yml)" "https://gitlab.com/api/v4/ci/lint"</code>. Un typo YAML descubierto en el runner cuesta minutos de cuota; descubierto local, cero.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="runners-compartidos-y-propios">
-  <h2>Runners: compartidos y propios</h2>
+  <h2><i class="fa-solid fa-robot"></i> Runners: compartidos y propios</h2>
   <div class="doc-content">
     <p>Un <strong>runner</strong> es la máquina que ejecuta los jobs. Existen dos tipos:</p>
     <ul>
@@ -58,11 +66,15 @@ docker run --rm -it -v gitlab-runner-config:/etc/gitlab-runner \
 #  - Token de registro    → Settings → CI/CD → Runners
 #  - Executor             → docker
 #  - Imagen por defecto   → docker:24</code></pre>
+    <blockquote class="aside aside-caution">
+      <p>Un runner self-hosted registrado a nivel de INSTANCIA ejecuta jobs de cualquier proyecto que lo pida — incluidos PRs de terceros si la visibilidad lo permite. Para repos públicos, registra runners PROTEGIDOS (solo jobs de ramas protegidas) o asume riesgo de ejecución remota con tus secretos.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="pipeline-de-ejemplo-completo">
-  <h2>Pipeline de ejemplo completo</h2>
+  <h2><i class="fa-solid fa-list-ol"></i> Pipeline de ejemplo completo</h2>
   <div class="doc-content">
     <p>Pipeline Node.js típico con caché, artefactos y despliegue solo en main:</p>
     <pre><code class="language-yaml">image: node:20
@@ -96,11 +108,15 @@ deploy-staging:
   environment: staging
   only:
     - main</code></pre>
+    <blockquote class="aside aside-note">
+      <p>only/except funciona pero está en modo mantenimiento: la sintaxis moderna es <code>rules:</code> — más expresiva (if/exists/changes combinables). En YAML nuevos usa rules; aprenderás only solo para leer pipelines ajenos antiguos.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="variables-cache-y-artefactos">
-  <h2>Variables, caché y artefactos</h2>
+  <h2><i class="fa-solid fa-boxes-stacked"></i> Variables, caché y artefactos</h2>
   <div class="doc-content">
     <ul>
       <li><strong>Variables:</strong> define secretos en <em>Settings → CI/CD → Variables</em> (enmascaradas y protegidas) y úsalas como variables de entorno: <code>$DB_PASSWORD</code>.</li>
@@ -116,11 +132,15 @@ test:
   artifacts:
     reports:
       junit: resultados.xml   # reporte visible en la UI</code></pre>
+    <blockquote class="aside aside-caution">
+      <p>Caché vs artefactos NO son lo mismo: caché = optimización (puede regenerarse, no garantiza presencia), artefactos = datos de negocio que los stages siguientes NECESITAN. Nunca dependas del caché para pasar dist/ al deploy — un runner distinto puede tener caché vacío.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="buenas-practicas">
-  <h2>Buenas prácticas</h2>
+  <h2><i class="fa-solid fa-star"></i> Buenas prácticas</h2>
   <div class="doc-content">
     <ul>
       <li>Mantén los pipelines rápidos: usa caché e imágenes pequeñas (alpine).</li>
@@ -129,5 +149,42 @@ test:
       <li>Usa <code>rules</code>/<code>only</code> para ejecutar jobs solo cuando aplique (ramas, tags, cambios de rutas).</li>
       <li>Versiona las imágenes base (<code>node:20</code> mejor que <code>node:latest</code>) para builds reproducibles.</li>
     </ul>
+    <blockquote class="aside aside-tip">
+      <p>El arma secreta de GitLab CI: los <strong>includes</strong> y templates. Un pipeline base compartido a nivel de grupo (<code>include: project: ci/base</code>) evita copiar el mismo YAML en 30 repos — cambias la plantilla una vez y todos los proyectos heredan.</p>
+    </blockquote>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="errores-comunes">
+  <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Stage no declarado en stages:</td><td>"job X is used in pipeline but stage doesn't exist"</td><td>Declarar TODOS los stages usados</td></tr>
+        <tr><td>Depender de caché para artefactos</td><td>Deploy sin dist/ en runners limpios</td><td>artifacts: para datos necesarios; caché solo optimiza</td></tr>
+        <tr><td>Variables protegidas en ramas feature</td><td>"$SECRET vacío" solo fuera de main</td><td>Proteger también las ramas o desproteger variable (con cuidado)</td></tr>
+        <tr><td>image: latest</td><td>Builds que rompen "solos" semanas después</td><td>Tags versionados de imagen</td></tr>
+        <tr><td>Sin timeout por job</td><td>Job colgado consume cuota completa</td><td>timeout: 15m explícito en jobs largos</td></tr>
+        <tr><td>Copiar .gitlab-ci.yml a mano entre repos</td><td>Drift de configuración imposible de mantener</td><td>include: desde proyecto/grupo compartido</td></tr>
+      </tbody>
+    </table>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="ejercicios">
+  <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+  <div class="doc-content">
+    <ol>
+      <li><strong>Hola Pipeline</strong>: repo con .gitlab-ci.yml mínimo (build+test Node); verifica ejecución, logs y consumo de minutos en la UI.</li>
+      <li><strong>Pipeline completo del ejemplo</strong>: implementa build→test→deploy-staging con caché npm, artefactos dist/ y environment staging.</li>
+      <li><strong>Runner propio</strong>: registra un runner docker local contra GitLab.com; etiqueta jobs para usarlo y confirma minutos ilimitados.</li>
+      <li><strong>Laboratorio rules</strong>: convierte only: main a rules modernas añadiendo: job de lint solo cuando cambien *.js (changes), deploy manual (when: manual).</li>
+      <li><strong>Template grupal</strong>: crea repo "ci-base" con pipeline reutilizable e inclúyelo desde dos proyectos distintos; modifica la base y verifica propagación.</li>
+    </ol>
   </div>
 </section>

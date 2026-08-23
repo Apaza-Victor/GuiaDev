@@ -1,6 +1,6 @@
 <!-- 4. Comparativa y buenas prácticas de CI/CD - CI/CD (Control de Versiones) -->
 <section id="criterios-de-comparacion">
-  <h2>Criterios de comparación</h2>
+  <h2><i class="fa-solid fa-scale-balanced"></i> Criterios de comparación</h2>
   <div class="doc-content">
     <p>Para elegir plataforma CI/CD evalúa:</p>
     <ul>
@@ -11,11 +11,15 @@
       <li><strong>Sistemas operativos de runners:</strong> Linux, Windows, macOS, ARM.</li>
       <li><strong>Self-hosting:</strong> ¿puedes correr todo en tu infraestructura?</li>
     </ul>
+    <blockquote class="aside aside-tip">
+      <p>El criterio que pesa más en la práctica NO está en la lista: dónde vive tu código. Actions para repo en GitHub y GitLab CI para GitLab eliminan webhooks, permisos cruzados y sincronía de usuarios — el costo de integrar una CI externa supera cualquier ventaja teórica.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="tabla-comparativa">
-  <h2>Tabla comparativa</h2>
+  <h2><i class="fa-solid fa-table-list"></i> Tabla comparativa</h2>
   <div class="doc-content">
     <table class="doc-table">
       <thead>
@@ -60,11 +64,15 @@
       </tbody>
     </table>
     <p>Nota práctica: los YAML son tan parecidos que migrar entre plataformas suele ser cuestión de horas, no semanas.</p>
+    <blockquote class="aside aside-note">
+      <p>Los minutos gratis se multiplican rápido: una matriz de 6 jobs × 10 min = 60 minutos por push. Con 20 pushes diarios, GitHub Actions consume 1200 min/día — el mes gratis vuela en dos semanas. Calcula SIEMPRE con tu matriz real, no con "un job por pipeline".</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="buenas-practicas-universales">
-  <h2>Buenas prácticas universales</h2>
+  <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas universales</h2>
   <div class="doc-content">
     <ul>
       <li><strong>Pipelines como código:</strong> versionados junto al proyecto, revisados por PR.</li>
@@ -75,11 +83,15 @@
       <li><strong>Artefactos inmutables:</strong> construye UNA vez y promociona ese mismo binario/imagen por entornos.</li>
       <li><strong>Idempotencia y rollback:</strong> desplegar dos veces no rompe nada; volver atrás toma segundos.</li>
     </ul>
+    <blockquote class="aside aside-danger">
+      <p>"Artefactos inmutables" significa que NO se re-construye por entorno: la misma imagen Docker que pasó staging llega a producción. Rebuilds "idénticos" con dependencias flotantes han desplegado a producción código distinto al probado — bug clásico, imposible de detectar sin inmutabilidad.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="seguridad-en-pipelines">
-  <h2>Seguridad en pipelines</h2>
+  <h2><i class="fa-solid fa-shield"></i> Seguridad en pipelines</h2>
   <div class="doc-content">
     <ul>
       <li><strong>Secretos fuera del código:</strong> usa el almacén cifrado de la plataforma; rota credenciales periódicamente.</li>
@@ -91,11 +103,15 @@
     <pre><code class="language-yaml"># Ejemplo: escaneo de vulnerabilidades en cada PR
 - name: Escanear dependencias
   run: npm audit --audit-level=high</code></pre>
+    <blockquote class="aside aside-caution">
+      <p>El vector de ataque favorito de 2024-2026: supply chain vía actions/plugins comprometidos. Un maintainer phished publica versión maliciosa; tus pipelines la ejecutan con secretos disponibles. Defensas: fijar SHA, auditar cambios de terceros, y runners efímeros que no conservan credenciales entre jobs.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="costos-y-runners-propios">
-  <h2>Costos y runners propios</h2>
+  <h2><i class="fa-solid fa-coins"></i> Costos y runners propios</h2>
   <div class="doc-content">
     <p>Los minutos SaaS se cobran con multiplicadores (Windows ×2, macOS ×10). Cuando la factura crece, hay dos palancas:</p>
     <ol>
@@ -106,5 +122,39 @@
       <li><strong>Optimización:</strong> cachés agresivos, matrices reducidas, skip de jobs irrelevantes (<code>paths</code>/<code>changes only</code>).</li>
     </ol>
     <p>Regla final: empieza simple (SaaS del hosting donde ya vives), mide tiempos y costos reales, y migra a self-hosted solo cuando los números lo justifiquen.</p>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="errores-comunes">
+  <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Elegir plataforma por features de marketing</td><td>Migración costosa 6 meses después</td><td>Decidir por hosting del código + costos con TU matriz real</td></tr>
+        <tr><td>Ignorar multiplicadores OS</td><td>Factura ×10 sorpresa por jobs macOS</td><td>macOS solo para builds iOS imprescindibles</td></tr>
+        <tr><td>Self-hosted runner compartido entre proyectos</td><td>Fuga cruzada de secretos/artefactos</td><td>Runners efímeros o aislados por confianza</td></tr>
+        <tr><td>Pipeline sin límite de tiempo</td><td>Job colgado quema minutos horas</td><td>Timeouts explícitos en cada job</td></tr>
+        <tr><td>Cachés sin clave de lockfile</td><td>Dependencias stale rompen builds "aleatoriamente"</td><td>Key basada en hash del package-lock/go.sum/etc</td></tr>
+        <tr><td>Toda la seguridad confiada a la CI</td><td>Solo se escanea lo que llega al pipeline</td><td>Escaneo también local + pre-commit + auditoría periódica</td></tr>
+      </tbody>
+    </table>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="ejercicios">
+  <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+  <div class="doc-content">
+    <ol>
+      <li><strong>Evaluador estructurado</strong>: puntúa tus 3 plataformas candidatas (1-5) en los 6 criterios; documenta la decisión final con números, no sensaciones.</li>
+      <li><strong>Calculadora de matriz</strong>: modela tu pipeline real (jobs×minutos×pushes/día) en GitHub Actions vs GitLab CI; compara consumo mensual contra cuota gratis.</li>
+      <li><strong>Auditoría de supply chain</strong>: lista cada action/plugin externo que usas hoy; verifica versión fijada y última release del maintainer.</li>
+      <li><strong>Simulacro de inmutabilidad</strong>: intenta demostrar que staging y producción ejecutan el MISMO artefacto; si no puedes, diseña el flujo de promoción correcto.</li>
+      <li><strong>Runner self-hosted pilot</strong>: registra un runner propio en un repo privado, corre el pipeline y mide costo/tiempo vs SaaS; decide con datos si vale la pena escalar.</li>
+    </ol>
   </div>
 </section>

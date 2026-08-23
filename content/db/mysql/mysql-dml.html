@@ -1,61 +1,188 @@
 <!-- 5. Insertar, actualizar y eliminar (DML) - MySQL (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="insert">
-    <h2>INSERT</h2>
+<section id="insert">
+    <h2><i class="fa-solid fa-plus"></i> INSERT: formas y trampas</h2>
     <div class="doc-content">
-<pre><code class="language-sql">-- Una fila
-INSERT INTO clientes (email) VALUES ('ana@mail.com');
+        <p>El DML (Data Manipulation Language) mueve datos. INSERT tiene cuatro variantes que cubren del prototipo rápido a la carga masiva profesional:</p>
+        <pre><code class="language-sql">-- 1. Columnas explícitas (LA forma correcta):
+INSERT INTO clientes (nombre, email, ciudad)
+VALUES ('Ana García', 'ana@mail.com', 'Madrid');
 
--- Varias filas de una vez (más eficiente)
-INSERT INTO clientes (email) VALUES
-  ('luis@mail.com'),
-  ('maria@mail.com');
+-- 2. Múltiples filas de golpe (mucho más rápido que N inserts):
+INSERT INTO clientes (nombre, email, ciudad) VALUES
+    ('Luis Pérez', 'luis@mail.com', 'Barcelona'),
+    ('Marta Ruiz', 'marta@mail.com', 'Sevilla'),
+    ('Carlos López', 'carlos@mail.com', 'Valencia');
 
--- Especificando id manualmente
-INSERT INTO clientes (id, email) VALUES (10, 'leo@mail.com');</code></pre>
-<blockquote class="aside aside-note">
-<p>Si omites una columna con <code>DEFAULT</code> o nullable, tomará su valor por defecto.</p>
-</blockquote>
+-- 3. Omitir columnas → toman DEFAULT/NULL:
+INSERT INTO clientes (nombre) VALUES ('Sin datos aún');
+
+-- 4. Columnas posicionales frágiles (evita en producción):
+INSERT INTO clientes VALUES (NULL, 'Test', 't@x.com', null);</code></pre>
+
+        <h3>Conflictos de UNIQUE: ON DUPLICATE KEY UPDATE</h3>
+        <pre><code class="language-sql">-- Upsert: insertar o actualizar si el email ya existe:
+INSERT INTO clientes (email, nombre, ciudad)
+VALUES ('ana@mail.com', 'Ana García M.', 'Toledo')
+ON DUPLICATE KEY UPDATE
+    nombre = VALUES(nombre),
+    ciudad = VALUES(ciudad);
+
+-- Ignorar duplicados silenciosamente (usar con criterio):
+INSERT IGNORE INTO visitas (ip, fecha) VALUES ('1.2.3.4', NOW());
+
+-- Reemplazo destructivo total (¡borra y reinserta! nuevo id):
+REPLACE INTO sesiones (id, usuario_id) VALUES (7, 42);</code></pre>
+        <table>
+            <thead>
+                <tr><th>Estrategia</th><th>Al chocar UNIQUE</th><th>Uso</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>INSERT</code> puro</td><td>Error 1062 detiene todo</td><td>Cuando duplicado = bug real</td></tr>
+                <tr><td><code>INSERT IGNORE</code></td><td>Salta la fila conflictiva</td><td>Deduplicación tolerante</td></tr>
+                <tr><td><code>ON DUPLICATE KEY UPDATE</code></td><td>Fusiona: actualiza campos</td><td>Syncs, contadores, upsert</td></tr>
+                <tr><td><code>REPLACE</code></td><td>BORRA vieja + inserta nueva</td><td>Raro: rompe FKs hacia la fila vieja ⚠️</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>REPLACE ejecuta un DELETE interno: cualquier FK con ON DELETE RESTRICT hacia esa fila fallará, y los CASCADE borrarán hijos. Si buscas "actualizar si existe", ON DUPLICATE KEY UPDATE es casi siempre la respuesta correcta.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="update">
-    <h2>UPDATE</h2>
+<section id="update">
+    <h2><i class="fa-solid fa-pen"></i> UPDATE: cambiar con seguridad</h2>
     <div class="doc-content">
-<pre><code class="language-sql">UPDATE clientes SET email = 'ana-nueva@mail.com' WHERE id = 1;
+        <pre><code class="language-sql">-- Básico con WHERE (SIEMPRE WHERE salvo intención total):
+UPDATE clientes SET ciudad = 'Bilbao' WHERE id = 5;
 
--- Actualización masiva con cálculo
-UPDATE productos SET precio = precio * 1.10 WHERE categoria_id = 2;
+-- Varias columnas + expresiones:
+UPDATE productos
+SET precio = precio * 1.05,
+    actualizado_en = NOW()
+WHERE categoria_id = 3;
 
--- UPDATE con JOIN
-UPDATE productos p
-INNER JOIN categorias c ON p.categoria_id = c.id
-SET p.stock = 0
-WHERE c.nombre = 'Ofertas';</code></pre>
-<blockquote class="aside aside-caution">
-<p>Un <code>UPDATE</code> sin <code>WHERE</code> modifica TODAS las filas. Ejecuta antes el SELECT equivalente para revisar qué filas afectará.</p>
-</blockquote>
+-- UPDATE con JOIN (cálculos cruzados):
+UPDATE pedidos p
+JOIN clientes c ON c.id = p.cliente_id
+SET p.total = p.total * 0.95          -- 5% descuento VIP
+WHERE c.vip = 1;
+
+-- LIMIT como freno de emergencia:
+UPDATE logs SET procesado = 1 WHERE procesado = 0 LIMIT 1000;</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>El ritual anti-desastre antes de CUALQUIER UPDATE serio: 1) ejecuta primero el SELECT con el MISMO WHERE; 2) revisa cuántas filas tocaría; 3) recién entonces cambia SELECT por UPDATE. En producción añade transacción explícita para poder ROLLBACK si el affected-rows no coincide con lo esperado.</p>
+        </blockquote>
+        <pre><code class="language-sql">START TRANSACTION;
+UPDATE cuentas SET saldo = saldo - 100 WHERE id = 1;
+-- ¿Rows matched: 1? Bien. COMMIT. ¿0 o 5000? ROLLBACK inmediato.
+COMMIT;</code></pre>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="delete">
-    <h2>DELETE</h2>
+<section id="delete">
+    <h2><i class="fa-solid fa-eraser"></i> DELETE y borrado seguro</h2>
     <div class="doc-content">
-<pre><code class="language-sql">DELETE FROM clientes WHERE id = 10;
+        <pre><code class="language-sql">DELETE FROM sesiones WHERE expirada = 1;
 
--- Eliminar con condición relacional
-DELETE p FROM productos p
-LEFT JOIN categorias c ON p.categoria_id = c.id
-WHERE c.id IS NULL;   -- productos sin categoría válida</code></pre>
-<p><code>DELETE</code> registra en el log cada fila borrada (es recuperable dentro de una transacción); <code>TRUNCATE</code> vacía la tabla completa sin ese registro detallado.</p>
+-- DELETE con JOIN (borrar por relación):
+DELETE p FROM pedidos p
+JOIN clientes c ON c.id = p.cliente_id
+WHERE c.bloqueado = 1;
+
+-- LIMIT en borrados masivos por lotes (no bloquea eternamente):
+DELETE FROM logs_antiguos WHERE creado &lt; '2024-01-01' LIMIT 10000;
+-- repetir hasta affected rows = 0
+
+-- TRUNCATE cuando quieres TODO vacío rápido (ver lección DDL):</code></pre>
+        <h3>Borrado lógico vs físico</h3>
+        <table>
+            <thead>
+                <tr><th>Aspecto</th><th>DELETE físico</th><th>Soft delete (deleted_at)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Auditoría histórica</td><td>Perdida</td><td>Conservada</td></tr>
+                <tr><td>Tamaño tabla</td><td>Limpia</td><td>Crece eternamente sin purga</td></tr>
+                <tr><td>Complejidad consultas</td><td>Simple</td><td>Todas llevan WHERE deleted_at IS NULL</td></tr>
+                <tr><td>FKs RESTRICT</td><td>Bloqueadas</td><td>Nunca chocan ✅</td></tr>
+                <tr><td>Uso típico</td><td>Logs, temporales, GDPR</td><td>Usuarios, documentos de negocio</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Entidades de negocio (usuarios, facturas) casi siempre merecen soft delete: <code>deleted_at DATETIME NULL</code>. Los logs y datos derivados se borran físicos por lotes nocturnos.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="insert-select">
-    <h2>INSERT ... SELECT</h2>
+<section id="insert-select">
+    <h2><i class="fa-solid fa-arrows-turn-right"></i> INSERT ... SELECT y carga masiva</h2>
     <div class="doc-content">
-<pre><code class="language-sql">INSERT INTO clientes_archivo (id, email)
-SELECT id, email FROM clientes WHERE activo = FALSE;</code></pre>
-<p>Ideal para respaldos parciales o migraciones entre tablas con la misma estructura.</p>
+        <pre><code class="language-sql">-- Copiar entre tablas:
+INSERT INTO archivo_pedidos_2023
+SELECT * FROM pedidos WHERE YEAR(fecha) = 2023;
+
+-- Transformar durante la copia:
+INSERT INTO reportes_mensuales (mes, total_ventas)
+SELECT DATE_FORMAT(fecha, '%Y-%m'), SUM(total)
+FROM ventas
+GROUP BY DATE_FORMAT(fecha, '%Y-%m');
+
+-- Carga desde CSV (servidor local):
+LOAD DATA INFILE '/var/lib/mysql-files/clientes.csv'
+INTO TABLE clientes_staging
+FIELDS TERMINATED BY ',' ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES                       -- saltar cabecera
+(nombre, email, ciudad);</code></pre>
+        <table>
+            <thead>
+                <tr><th>Método de carga</th><th>Velocidad relativa</th><th>Cuándo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>INSERT fila a fila desde app</td><td>1x (referencia)</td><td>Volumen bajo interactivo</td></tr>
+                <tr><td>Múltiples VALUES por INSERT</td><td>~10x</td><td>Lotes medianos</td></tr>
+                <tr><td>INSERT ... SELECT / LOAD DATA</td><td>~20-50x</td><td>Migraciones, ETL</td></tr>
+                <tr><td>+ FOREIGN_KEY_CHECKS=0 y UNIQUE_CHECKS=0 alrededor</td><td>+30% extra</td><td>Cargas iniciales controladas</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-note">
+            <p>LOAD DATA requiere secure_file_priv configurado y archivo accesible por el SERVIDOR MySQL, no tu cliente. Para cargas desde app moderna, batch inserts de 500-5000 filas por statement son el sweet spot universal.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/consecuencia</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>UPDATE sin WHERE</td><td>TODAS las filas modificadas instantáneamente</td><td>WHERE obligatorio + safe-updates mode activo</td></tr>
+                <tr><td>Duplicado UNIQUE no previsto</td><td>Error 1062 aborta lote completo</td><td>ON DUPLICATE KEY UPDATE diseñado</td></tr>
+                <tr><td>REPLACE rompiendo FKs</td><td>Error 1451 o huérfanos CASCADE sorpresa</td><td>Upsert con ON DUPLICATE</td></tr>
+                <tr><td>Borrar millones en UN solo DELETE</td><td>Lock eterno, replication lag, undo gigante</td><td>Batches con LIMIT + bucle</td></tr>
+                <tr><td>Confundir VALUES() deprecated en 8.0.20+</td><td>Warning creciente</td><td>Sintaxis nueva: alias AS new ON DUPLICATE... (8.0.19+)</td></tr>
+                <tr><td>Contar con affected rows tras INSERT IGNORE</td><td>0 = ignorado, no necesariamente error</td><td>Interpretar códigos conscientemente</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Pobla la tienda</strong>: inserta 10 clientes, 15 productos, 20 pedidos con detalles usando multi-row inserts; verifica conteos.</li>
+            <li><strong>Upsert real</strong>: simula sync diario: mismo INSERT...ON DUPLICATE dos veces cambiando ciudad; verifica fusión sin duplicados.</li>
+            <li><strong>UPDATE seguro ritualizado</strong>: subida de precios 8% a una categoría — SELECT previo, transacción, verificación affected rows, commit/rollback documentado.</li>
+            <li><strong>Purga por lotes</strong>: genera 200k filas de log; borra en batches de 10k midiendo tiempo por lote; compara con intento de DELETE único.</li>
+            <li><strong>Archivado anual</strong>: INSERT INTO historico SELECT de pedidos antiguos + DELETE posterior dentro de UNA transacción; valida conteos cuadrando.</li>
+        </ol>
+    </div>
+</section>

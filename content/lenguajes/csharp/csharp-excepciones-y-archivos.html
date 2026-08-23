@@ -1,38 +1,234 @@
-<!-- 7. Excepciones y Archivos - C# (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="try-catch-finally">
-    <h2>try / catch / finally</h2>
+<!-- 8. Excepciones y Archivos - C# (Lenguajes de Programación) -->
+<section id="try-catch-finally">
+    <h2><i class="fa-solid fa-shield-halved"></i> try/catch/finally y jerarquía de excepciones</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">try
+        <p>C# usa excepciones para condiciones excepcionales reales. Toda excepción hereda de <code>System.Exception</code>, y el runtime lanza tipos específicos cuando algo falla — tu trabajo es atrapar lo que PUEDES manejar y dejar propagar lo que no:</p>
+
+        <h3>Estructura completa</h3>
+        <pre><code class="language-csharp">try
 {
-    int x = int.Parse("abc");
+    string contenido = File.ReadAllText("config.json");
+    var config = JsonSerializer.Deserialize&lt;Config&gt;(contenido)
+        ?? throw new InvalidOperationException("JSON nulo tras deserializar");
 }
-catch (FormatException ex)
+catch (FileNotFoundException ex)          // MÁS específicas primero
 {
-    Console.WriteLine($"Formato inválido: {ex.Message}");
+    Console.WriteLine($"Archivo ausente: {ex.FileName}. Usando defaults.");
+    return Config.PorDefecto();
 }
-catch (Exception ex)
+catch (JsonException ex) when (ex.Message.Contains("depth"))   // filtro 'when'
 {
-    Console.WriteLine($"Error general: {ex.Message}");
+    Console.WriteLine("JSON demasiado anidado");
+    throw;                                 // re-lanzar SIN perder stack trace
+}
+catch (IOException ex)                     // genérica después
+{
+    Console.WriteLine($"I/O falló: {ex.Message}");
+    throw new ApplicationException("Lectura imposible", ex);  // envolver
 }
 finally
 {
-    Console.WriteLine("Siempre se ejecuta");
+    // SIEMPRE se ejecuta: con o sin excepción, return o throw
+    Console.WriteLine("Cerrando recursos...");
 }</code></pre>
-    </div>
-  </section>
+        <table>
+            <thead>
+                <tr><th>Excepción común</th><th>La lanza</th><th>Manejo típico</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>NullReferenceException</code></td><td>Dereferenciar null</td><td>Prevenir con nullable types, no cachearla</td></tr>
+                <tr><td><code>FormatException</code></td><td>int.Parse("abc")</td><td>Usar TryParse mejor</td></tr>
+                <tr><td><code>IndexOutOfRangeException</code></td><td>Índice fuera de array</td><td>Validar límites</td></tr>
+                <tr><td><code>KeyNotFoundException</code></td><td>dic[claveInexistente]</td><td>TryGetValue</td></tr>
+                <tr><td><code>InvalidOperationException</code></td><td>Estado inválido de objeto</td><td>Revisar precondiciones</td></tr>
+                <tr><td><code>HttpRequestException</code></td><td>Falla HTTP</td><td>Retry/backoff, fallback</td></tr>
+                <tr><td><code>TaskCanceledException</code></td><td>Timeout/cancelación</td><td>Normal en timeouts: log leve</td></tr>
+            </tbody>
+        </table>
 
-  <section id="archivos">
-    <h2>Archivos</h2>
+        <h3>Excepciones propias: dominio expresivo</h3>
+        <pre><code class="language-csharp">public class SaldoInsuficienteException : Exception
+{
+    public decimal Faltante { get; }
+    public SaldoInsuficienteException(decimal faltante)
+        : base($"Faltan {faltante:C} para completar la operación")
+        =&gt; Faltante = faltante;
+
+    // Constructor para serialización (convención):
+    protected SaldoInsuficienteException(
+        System.Runtime.Serialization.SerializationInfo info,
+        System.Runtime.Serialization.StreamingContext context)
+        : base(info, context) { }
+}
+
+// Lanzar con contexto:
+if (monto &gt; saldo)
+    throw new SaldoInsuficienteException(monto - saldo);
+
+// Atrapar con acceso a datos del dominio:
+catch (SaldoInsuficienteException ex)
+{
+    MostrarAlerta($"Te faltan {ex.Faltante:C}");
+}</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>NUNCA hagas <code>catch (Exception) { }</code> vacío: traga bugs silenciosamente y convierte diagnósticos en pesadillas. Si realmente debes capturar todo (top-level de app), LOGUEA siempre y decide si relanzar.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="using-y-dispose">
+    <h2><i class="fa-solid fa-broom"></i> using y IDisposable: recursos que se limpian solos</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">using System.IO;
+        <p>Los archivos, conexiones y streams implementan <code>IDisposable</code>: liberan recursos NO gestionados por el GC. El statement <code>using</code> garantiza Dispose() al salir del bloque — incluso con excepciones:</p>
+        <pre><code class="language-csharp">// using statement: scope explícito
+using (var reader = new StreamReader("datos.txt"))
+{
+    Console.WriteLine(reader.ReadLine());
+}   // reader.Dispose() AUTOMÁTICO aquí, pase lo que pase
 
-File.WriteAllText("datos.txt", "Hola archivo");
-string contenido = File.ReadAllText("datos.txt");
-
-// Línea por línea con liberación automática
-foreach (string linea in File.ReadLines("datos.txt"))
-    Console.WriteLine(linea);</code></pre>
+// using DECLARATION (C# 8): hasta fin del método, menos indentación
+string LeerPrimeraLinea(string ruta)
+{
+    using var file = File.OpenText(ruta);
+    return file.ReadLine() ?? "";
+}   // disposed al salir de LeerPrimeraLinea</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>El GC gestiona MEMORIA automáticamente pero NO sabe cerrar archivos ni conexiones de red. Toda clase IDisposable que TÚ creas debe vivir dentro de un using — regla inquebrantable que evita fugas de handles (síntoma clásico: "too many open files" días después).</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="archivos-y-json">
+    <h2><i class="fa-solid fa-folder-open"></i> Archivos, rutas y JSON</h2>
+    <div class="doc-content">
+        <h3>Operaciones comunes de archivos</h3>
+        <pre><code class="language-csharp">using System.IO;
+
+// Lectura rápida todo-de-golpe:
+string texto = File.ReadAllText("notas.txt");
+string[] lineas = File.ReadAllLines("logs.csv");
+byte[] bytes = File.ReadAllBytes("imagen.png");
+
+// Escritura rápida (SOBREESCRIBE / crea):
+File.WriteAllText("salida.txt", "contenido completo");
+File.AppendAllText("log.txt", $"evento {DateTime.Now}\n");   // añadir
+
+// Verificaciones y manipulación del sistema:
+bool existe = File.Exists("config.json");
+File.Copy("origen.txt", "copia.txt", overwrite: true);
+File.Delete("temp.txt");
+File.Move("viejo.txt", "nuevo.txt");
+
+// Streams para archivos grandes línea a línea (memoria constante):
+foreach (string linea in File.ReadLines("gigante.log"))   // perezoso ✅
+{
+    if (linea.Contains("ERROR")) Contar(linea);
+}
+
+// Directory:
+Directory.CreateDirectory("datos/2026");
+var archivos = Directory.GetFiles(".", "*.csv", SearchOption.AllDirectories);</code></pre>
+
+        <h3>Rutas seguras multiplataforma: Path</h3>
+        <table>
+            <thead>
+                <tr><th>Método</th><th>Hace qué</th><th>Ejemplo resultado</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>Path.Combine(a, b)</code></td><td>Une con separador correcto (/ vs \)</td><td>"datos"/"2026" → datos/2026 o datos\2026</td></tr>
+                <tr><td><code>Path.GetFileName(ruta)</code></td><td>Solo nombre+extensión</td><td>"reporte.csv"</td></tr>
+                <tr><td><code>Path.GetExtension(ruta)</code></td><td>Extensión con punto</td><td>".csv"</td></tr>
+                <tr><td><code>Path.ChangeExtension(r, e)</code></td><td>Cambia extensión</td><td>.txt → .bak</td></tr>
+                <tr><td><code>Path.GetTempPath()</code></td><td>Carpeta temporal del SO</td><td>/tmp o %TEMP%</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>NUNCA concatenes rutas con + "/": en Windows es "\" y en Linux "/". Path.Combine existe precisamente por eso — y funciona igual en ambos.</p>
+        </blockquote>
+
+        <h3>System.Text.Json: serialización nativa</h3>
+        <pre><code class="language-csharp">using System.Text.Json;
+using System.Text.Json.Serialization;
+
+public record Configuracion(
+    [property: JsonPropertyName("nombre_app")] string NombreApp,
+    [property: JsonPropertyName("puerto")] int Puerto,
+    [property: JsonPropertyName("debug")] bool Debug = false);
+
+// Serializar bonito:
+var config = new Configuracion("MiApp", 8080, true);
+string json = JsonSerializer.Serialize(config, new JsonSerializerOptions
+{
+    WriteIndented = true
+});
+File.WriteAllText("appsettings.json", json);
+
+// Deserializar tolerante:
+var leida = JsonSerializer.Deserialize&lt;Configuracion&gt;(
+    File.ReadAllText("appsettings.json"),
+    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+Console.WriteLine(leida?.NombreApp);   // MiApp</code></pre>
+        <blockquote class="aside aside-success">
+            <p>System.Text.Json (built-in desde .NET Core 3) es rápido y sin dependencias. Para JSON dinámico/exótico existe Newtonsoft.Json (el clásico), pero proyectos nuevos arrancan con el nativo.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="buenas-practicas-excepciones">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón concreta</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Catch específico → general, nunca solo Exception global</td><td>Manejo diferenciado real; diagnóstico preservado</td></tr>
+                <tr><td>Lanza excepciones para ERRORES, TryParse/bool para ESPERADOS</td><td>Excepción = costoso + flujo excepcional; validación normal usa retorno</td></tr>
+                <tr><td>Mensajes con CONTEXTO: qué valor, qué operación</td><td>"Usuario 42 no encontrado" vs "Key not found"</td></tr>
+                <tr><td>throw; para re-lanzar (nunca throw ex;)</td><td>throw ex REINICIA stack trace perdiendo origen</td></tr>
+                <tr><td>using SIEMPRE con IDisposable</td><td>Handles de archivo/red finitos; fugas tardías imposibles de rastrear</td></tr>
+                <tr><td>ReadLines sobre ReadAllLines en archivos grandes</td><td>Streaming O(1) memoria vs cargar TODO el archivo</td></tr>
+                <tr><td>Path.Combine para construir rutas</td><td>Multiplataforma real Windows/Linux/macOS</td></tr>
+                <tr><td>Excepciones personalizadas para errores de DOMINIO</td><td>Catch tipado con datos útiles (Faltante, CampoInválido...)</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>catch vacío o catch(Exception){}</td><td>Bugs invisibles; sistema "funciona" corrupto</td><td>Loguear + decidir: manejar o relanzar</td></tr>
+                <tr><td>throw ex; dentro del catch</td><td>Stack trace reiniciado: origen perdido</td><td>throw; desnudo preserva cadena completa</td></tr>
+                <tr><td>Olvidar using en StreamReader/FileStream</td><td>Fugas de handles bajo carga</td><td>using declaration sistemático</td></tr>
+                <tr><td>Leer archivo gigante con ReadAllText</td><td>OutOfMemoryException</td><td>File.ReadLines streaming</td></tr>
+                <tr><td>Concatenar rutas con strings</td><td>Funciona en dev-Windows, rompe en prod-Linux</td><td>Path.Combine siempre</td></tr>
+                <tr><td>Asumir File.Exists antes de abrir (TOCTOU)</td><td>Race condition: archivo borrado entre check y uso</td><td>Intenta abrir directamente; catch FileNotFoundException</td></tr>
+                <tr><td>Excepciones como flujo normal (validaciones masivas)</td><td>Rendimiento catastrófico (throw costoso)</td><td>TryXxx patterns para casos esperables frecuentes</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Lector robusto de CSV</strong>: lee un CSV con ReadLines; parsea cada fila tolerando filas malformadas (skip + contador de errores); reporta total procesadas/fallidas.</li>
+            <li><strong>Jerarquía de dominio</strong>: crea ExcepcionBanco base + SaldoInsuficiente + LimiteExcedido con datos propios; simula operaciones lanzando y capturando cada una diferenciadamente.</li>
+            <li><strong>Config persistente</strong>: record Configuracion ↔ JSON en disco; si el archivo no existe, crea uno con defaults; valida JSON corrupto con mensaje amigable y backup del corrupto.</li>
+            <li><strong>Monitor de logs streaming</strong>: procesa un .log de ~100MB generado por ti con ReadLines contando niveles ERROR/WARN/INFO sin subir memoria (verifica con Task Manager).</li>
+            <li><strong>Cazador de throw ex</strong>: demuestra la pérdida de stack trace con throw ex; luego corrige a throw; comparando los stack traces impresos.</li>
+        </ol>
+    </div>
+</section>

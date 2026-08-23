@@ -1,6 +1,6 @@
 <!-- 2. Proyectos y Merge Requests - GitLab (Control de Versiones) -->
 <section id="creacion-y-clonado-de-proyectos">
-  <h2>Creación y clonado de proyectos</h2>
+  <h2><i class="fa-solid fa-folder-plus"></i> Creación y clonado de proyectos</h2>
   <div class="doc-content">
     <p>Un <strong>proyecto</strong> en GitLab equivale a un repositorio con todo su ecosistema (issues, pipelines, wiki). Puedes crearlo desde la web, desde la CLI o importándolo desde GitHub/Bitbucket con el asistente de importación.</p>
     <pre><code class="language-bash"># Clonar por HTTPS (pedirá token como contraseña)
@@ -13,11 +13,15 @@ git clone git@gitlab.com:grupo/api-ventas.git
 git init
 git remote add origin git@gitlab.com:grupo/api-ventas.git
 git push -u origin main</code></pre>
+    <blockquote class="aside aside-tip">
+      <p>GitLab imprime el comando de push con opciones mágicas al crear una rama: <code>git push -o merge_request.create...</code>. Estas "push options" crean el MR directamente desde terminal — sin tocar la web. Vale oro en flujos automatizados.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="visibilidad-y-membresias">
-  <h2>Visibilidad y membresías</h2>
+  <h2><i class="fa-solid fa-users-viewfinder"></i> Visibilidad y membresías</h2>
   <div class="doc-content">
     <p>Cada proyecto tiene tres niveles de visibilidad:</p>
     <ul>
@@ -26,11 +30,24 @@ git push -u origin main</code></pre>
       <li><strong>Public:</strong> cualquiera puede verlo.</li>
     </ul>
     <p>Los miembros se agregan desde <em>Manage → Members</em> con roles jerárquicos: <strong>Guest, Reporter, Developer, Maintainer, Owner</strong>. El rol <em>Developer</em> puede hacer push a ramas no protegidas y abrir merge requests; <em>Maintainer</em> administra configuración y despliegues.</p>
+    <table class="doc-table">
+      <thead><tr><th>Rol</th><th>Puede…</th><th>No puede…</th></tr></thead>
+      <tbody>
+        <tr><td>Guest</td><td>Ver issues/foros, crear issues</td><td>Ver código (en proyectos privados)</td></tr>
+        <tr><td>Reporter</td><td>Leer código, ver pipelines</td><td>Hacer push</td></tr>
+        <tr><td>Developer</td><td>Push a ramas libres, abrir MRs</td><td>Configurar CI/protecciones</td></tr>
+        <tr><td>Maintainer</td><td>Todo lo técnico: settings, CI, deploy</td><td>Gestionar membresías del grupo (Owner)</td></tr>
+      </tbody>
+    </table>
+    <blockquote class="aside aside-note">
+      <p>La herencia es descendente: un miembro del GRUPO con rol Maintainer lo es automáticamente en todos los proyectos del grupo. Diseña roles a nivel de grupo para evitar gestionar 50 proyectos uno por uno.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="ramas-protegidas">
-  <h2>Ramas protegidas</h2>
+  <h2><i class="fa-solid fa-lock"></i> Ramas protegidas</h2>
   <div class="doc-content">
     <p>En <em>Settings → Repository → Protected branches</em> defines quién puede hacer <strong>push</strong> y quién puede <strong>merge</strong> sobre ramas críticas como <code>main</code>. Es habitual protegerlas para que nadie suba directamente y todo pase por merge request revisado.</p>
     <pre><code class="language-text">Rama: main
@@ -38,11 +55,15 @@ git push -u origin main</code></pre>
   Allowed to push:    Nobody   ← obliga a usar Merge Requests
   Allowed to force push: off  ← protege el historial</code></pre>
     <p>También puedes definir patrones con comodines, por ejemplo <code>release/*</code>, para proteger todas las ramas de release a la vez.</p>
+    <blockquote class="aside aside-danger">
+      <p>"Allowed to push: Nobody" es la configuración que convierte GitLab en un flujo revisado de verdad: sin ella, cualquier Developer puede saltarse el MR con un push directo. Revisa esta opción en cada proyecto nuevo — el default NO la activa.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="merge-requests-flujo-de-trabajo">
-  <h2>Merge Requests: flujo de trabajo</h2>
+  <h2><i class="fa-solid fa-code-pull-request"></i> Merge Requests: flujo de trabajo</h2>
   <div class="doc-content">
     <p>El equivalente al pull request de GitHub es el <strong>Merge Request (MR)</strong>. El flujo típico:</p>
     <pre><code class="language-bash"># 1. Crea una rama de trabajo
@@ -55,11 +76,15 @@ git push -u origin feat/descuentos
 # 3. Abre el MR (o usa el enlace que imprime git push)
 git push -o merge_request.create -o merge_request.target=main</code></pre>
     <p>Al abrir el MR verás los cambios lado a lado, el pipeline asociado corriendo automáticamente y opciones como asignar revisores, etiquetas, milestone y cerrar issues vinculando texto como <code>Closes #12</code>.</p>
+    <blockquote class="aside aside-tip">
+      <p>Draft MRs: marca el título con "Draft:" (o WIP) para indicar trabajo en progreso — GitLab bloquea el merge hasta que lo quites. Permite abrir el MR TEMPRANO para feedback del pipeline y de revisores sin riesgo de fusión prematura.</p>
+    </blockquote>
+    <p>---</p>
   </div>
 </section>
 
 <section id="revision-y-aprobaciones">
-  <h2>Revisión y aprobaciones</h2>
+  <h2><i class="fa-solid fa-user-check"></i> Revisión y aprobaciones</h2>
   <div class="doc-content">
     <p>En cada MR puedes exigir <strong>aprobaciones</strong> mínimas antes de permitir el merge (<em>Settings → Merge requests → Approvals</em>). Los revisores comentan línea por línea, sugieren cambios aplicables con un clic y aprueban cuando el código cumple los criterios.</p>
     <p>Opciones útiles al fusionar:</p>
@@ -72,5 +97,39 @@ git push -o merge_request.create -o merge_request.target=main</code></pre>
       </tbody>
     </table>
     <p>Activa además <strong>Merge checks</strong>: pipelines exitosos obligatorios y resolución de todos los hilos de comentarios antes del merge.</p>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="errores-comunes">
+  <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+  <div class="doc-content">
+    <table class="doc-table">
+      <thead>
+        <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Proteger rama sin "push: Nobody"</td><td>Pushes directos saltan el MR igualmente</td><td>Ambas restricciones configuradas juntas</td></tr>
+        <tr><td>Squash sin redactar título</td><td>"feat: fix: docs: ..." concatenado en main</td><td>Editar el mensaje squash al fusionar</td></tr>
+        <tr><td>MR gigante de semanas</td><td>Revisión superficial, bugs colados</td><td>MRs pequeños; Draft MRs para visibilidad temprana</td></tr>
+        <tr><td>Roles asignados proyecto a proyecto</td><td>Gestión imposible al escalar</td><td>Membresías y roles a nivel de grupo</td></tr>
+        <tr><td>Owner único del grupo</td><td>Bloqueo si esa persona desaparece</td><td>Minimum dos Owners documentados</td></tr>
+        <tr><td>Ignorar hilos no resueltos</td><td>Feedback crítico perdido tras merge</td><td>Merge check: threads resolved obligatorio</td></tr>
+      </tbody>
+    </table>
+    <p>---</p>
+  </div>
+</section>
+
+<section id="ejercicios">
+  <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+  <div class="doc-content">
+    <ol>
+      <li><strong>Proyecto gobernado</strong>: crea proyecto, protege main (merge: Maintainers, push: Nobody) y verifica que un push directo es rechazado.</li>
+      <li><strong>MR end-to-end</strong>: rama feature → push con -o merge_request.create → revisa con sugerencias aplicables → aplica → aprueba → squash merge con título limpio.</li>
+      <li><strong>Laboratorio de roles</strong>: invita una segunda cuenta como Reporter e intenta push/MR; documenta exactamente qué puede y no puede hacer.</li>
+      <li><strong>Draft flow</strong>: abre MR en Draft desde el primer commit, itera 3 commits, quita Draft cuando pipeline verde — cronometra el ciclo.</li>
+      <li><strong>Patrones protegidos</strong>: protege release/* con comodín; crea release/1.0 y release/2.0 verificando que ambas heredan la protección.</li>
+    </ol>
   </div>
 </section>

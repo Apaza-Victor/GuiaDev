@@ -1,52 +1,167 @@
 <!-- 11. Vistas y funciones - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="vistas">
-    <h2>Vistas</h2>
+<section id="vistas">
+    <h2><i class="fa-solid fa-eye"></i> Vistas: simples, indexadas y particionadas</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE VIEW dbo.vw_ProductosCaros
+        <pre><code class="language-sql">CREATE VIEW dbo.vw_PedidosCompletos
+WITH SCHEMABINDING            -- ancla a estructura real (requerido p/ indexar)
 AS
-SELECT Id, Nombre, Precio FROM dbo.Productos WHERE Precio &gt; 10000;
+SELECT p.pedido_id, c.nombre AS cliente, p.fecha, p.total
+FROM dbo.Pedidos p
+JOIN dbo.Clientes c ON c.cliente_id = p.cliente_id;
 GO
 
-SELECT * FROM dbo.vw_ProductosCaros;
+SELECT * FROM vw_PedidosCompletos WHERE total &gt; 500;
 
-ALTER VIEW dbo.vw_ProductosCaros AS ...;
-DROP VIEW dbo.vw_ProductosCaros;</code></pre>
-<blockquote class="aside aside-tip">
-<p>Con <code>CREATE VIEW ... WITH SCHEMABINDING</code> la vista queda amarrada al esquema y puede indexarse (vista indexada/materializada).</p>
-</blockquote>
+ALTER VIEW vw_PedidosCompletos AS SELECT ...;   -- redefinir
+DROP VIEW IF EXISTS vw_PedidosCompletos;
+EXEC sp_helptext 'vw_PedidosCompletos';          -- ver su T-SQL</code></pre>
+
+        <h3>Los tres niveles de vista en SQL Server</h3>
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Qué aporta</th><th>Coste/requisito</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Vista estándar</td><td>Encapsula lógica, seguridad por columnas</td><td>Se ejecuta cada consulta (macro)</td></tr>
+                <tr><td><strong>Indexada</strong> (+ UNIQUE CLUSTERED)</td><td>Datos PRE-agregados en disco ⚡</td><td>SCHEMABINDING; mantenimiento en cada DML</td></tr>
+                <tr><td>Particionada (UNION ALL)</td><td>Une tablas físicas como una lógica</td><td>Check constraints para pruning</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-sql">-- Vista INDEXADA = "materialized view" de SQL Server:
+CREATE VIEW dbo.vw_VentasPorMes
+WITH SCHEMABINDING AS
+SELECT YEAR(fecha) AS anio, MONTH(fecha) AS mes,
+       COUNT_BIG(*) AS pedidos, SUM(total) AS facturado
+FROM dbo.Pedidos GROUP BY YEAR(fecha), MONTH(fecha);
+GO
+CREATE UNIQUE CLUSTERED INDEX IX_vVentas ON vw_VentasPorMes(anio, mes);
+-- ahora SUMs mensuales se LEEN, no se calculan:</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>Una vista indexada acelera lecturas pero grava cada INSERT/UPDATE/DELETE de la base con mantenimiento extra. Resérvala para agregados consultados miles de veces al día, no como decoración.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="funcion-escalar">
-    <h2>Función escalar</h2>
+<section id="funcion-escalar">
+    <h2><i class="fa-solid fa-square-root-variable"></i> Funciones escalares (UDF)</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE FUNCTION dbo.fn_Iva(@precio DECIMAL(10,2))
+        <pre><code class="language-sql">CREATE FUNCTION dbo.fn_CalcularIVA(@precio DECIMAL(10,2), @tasa DECIMAL(5,4))
 RETURNS DECIMAL(10,2)
+WITH SCHEMABINDING                 -- permite optimizaciones + inline
 AS
 BEGIN
-  RETURN @precio * 1.16;
+    RETURN ROUND(@precio * @tasa, 2);
 END;
 GO
 
-SELECT Nombre, dbo.fn_Iva(Precio) AS ConIva FROM dbo.Productos;</code></pre>
-    </div>
-  </section>
+SELECT nombre, precio,
+       dbo.fn_CalcularIVA(precio, 0.21) AS iva,
+       precio + dbo.fn_CalcularIVA(precio, 0.21) AS pvp
+FROM Productos;
 
-  <section id="funcion-de-tabla-inline-tvf">
-    <h2>Función de tabla inline (TVF)</h2>
+-- ✨ SCALAR UDF INLINING (2019+): el optimizador la expande inline
+-- automáticamente si cumple requisitos → coste casi nulo:
+CREATE OR ALTER FUNCTION ... -- patrón moderno idempotente</code></pre>
+
+        <h3>El problema histórico y su solución</h3>
+        <table>
+            <thead>
+                <tr><th>Situación</th><th>Pre-2019</th><th>2019+ con inlining</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>UDF escalar sobre 100k filas</td><td>100k ejecuciones RBAR 🐌 desastre</td><td>Se expande inline → velocidad de expresión normal ⚡</td></tr>
+                <tr><td>UDF en WHERE/JOIN</td><td>Mata paralelismo y estimaciones</td><td>Inlinable: plan decente posible</td></tr>
+                <tr><td>UDF no-inlinable (multi-statement)</td><td>Igual de lento</td><td>Igual — refactorizar o evitar</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>Regla clásica que sigue vigente en versiones viejas o UDFs complejas: una función escalar usada por fila convierte queries de milisegundos en minutos. Antes de meter un fn_() en producción caliente, mide. Si el plan muestra "Compute Scalar" dominante, inlinea manualmente la expresión.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="funcion-de-tabla-inline-tvf">
+    <h2><i class="fa-solid fa-table-list"></i> Funciones de tabla: iTVF vs multi-statement</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE FUNCTION dbo.fn_ProductosPorCategoria(@categoriaId INT)
+        <pre><code class="language-sql">-- ✅ INLINE TVF (iTVF): UN solo RETURN con SELECT parametrizado.
+-- Es "una vista con parámetros": el optimizador LA EXPANDE:
+CREATE FUNCTION dbo.fn_PedidosCliente(@cliente_id INT)
 RETURNS TABLE
-AS
-RETURN (
-  SELECT Id, Nombre, Precio
-  FROM dbo.Productos
-  WHERE CategoriaId = @categoriaId
+WITH SCHEMABINDING
+AS RETURN
+(
+    SELECT pedido_id, fecha, total
+    FROM dbo.Pedidos
+    WHERE cliente_id = @cliente_id
+      AND estado &lt;&gt; 'cancelado'
 );
 GO
 
-SELECT * FROM dbo.fn_ProductosPorCategoria(2);</code></pre>
-<p>Las TVF inline se comportan como vistas parametrizadas y el optimizador las trata mejor que las multientencia.</p>
+-- Se usa como tabla real, incluso en JOINs:
+SELECT c.nombre, p.pedido_id, p.total
+FROM Clientes c
+CROSS APPLY dbo.fn_PedidosCliente(c.cliente_id) AS p   -- APPLY = JOIN con función
+WHERE p.total &gt; 100;
+
+-- ❌ MULTI-STATEMENT TVF: declara tabla, llena fila a fila:
+CREATE FUNCTION dbo.fn_ReporteLento(@mes INT)
+RETURNS @resultado TABLE (dia INT, total DECIMAL(10,2))
+AS
+BEGIN
+    INSERT INTO @resultado SELECT DAY(fecha), SUM(total) FROM Pedidos GROUP BY DAY(fecha);
+    RETURN;
+END;
+-- Cardinalidad inventada=1, sin estadísticas: planes pésimos en joins ⚠️</code></pre>
+
+        <table>
+            <thead>
+                <tr><th>Criterio</th><th>iTVF ✅</th><th>MSTVF ⚠️</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Estructura interna</td><td>Un SELECT</td><td>Bloques + variable tabla</td></tr>
+                <tr><td>Optimización</td><td>Expandida inline, plan real</td><td>Caja negra, cardinalidad fija</td></tr>
+                <tr><td>Rendimiento en joins grandes</td><td>Comparable a vista/consulta</td><td>Colapsa</td></tr>
+                <tr><td>Lógica procedural (loops)</td><td>No soporta</td><td>Sí (única ventaja)</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>CROSS APPLY es el compañero natural de las iTVFs: aplica la función POR CADA FILA del exterior manteniendo plan óptimo — la forma correcta de "join contra cálculo parametrizado". OUTER APPLY conserva filas sin match (como LEFT).</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>UDF escalar en query masivo (pre-2019)</td><td>Minutos donde iban milisegundos</td><td>Inline manual / iTVF / inlining 2019 verificado</td></tr>
+                <tr><td>Vista estándar esperada materializada</td><td>Re-ejecuta todo cada vez</td><td>Vista indexada o #temp pre-calculada</td></tr>
+                <tr><td>SCHEMABINDING olvidado en funciones</td><td>"Unable to..." al intentar inlining/indexar</td><td>WITH SCHEMABINDING siempre en objetos nuevos</td></tr>
+                <tr><td>MSTVF en joins de reportes</td><td>Plan con cardinalidad absurda</td><td>Reescribir como iTVF</td></tr>
+                <tr><td>Modificar tabla base rompiendo vista sin SCHEMABINDING</td><td>Vista rota silenciosamente</td><td>Schemabinding protege: ALTER fallará antes</td></tr>
+                <tr><td>Confundir CROSS APPLY con CROSS JOIN</td><td>Cartesiano cuando esperabas parametrizado</td><td>APPLY pasa columnas de fila; JOIN no puede</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Vista de negocio</strong>: crea vw_InventarioCritico (stock bajo mínimo, proveedor incluido) y consúmela desde dos ángulos distintos.</li>
+            <li><strong>Laboratorio RBAR</strong>: UDF escalar simple aplicada a 100k filas; mide pre/post inlining (o versión expandida manual); documenta números.</li>
+            <li><strong>iTVF con APPLY</strong>: fn_TopProductos(@categoria,@n) consumida via CROSS APPLY por todas las categorías en una sola query.</li>
+            <li><strong>Vista indexada real</strong>: implementa vw_VentasPorMes indexada; compara lectura del reporte antes/después; mide penalización en inserts.</li>
+            <li><strong>Cazador de MSTVF</strong>: construye ambos sabores devolviendo lo mismo; EXPLAIN ambos en join grande; explica diferencia de cardinalidad observada.</li>
+        </ol>
+    </div>
+</section>

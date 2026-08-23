@@ -1,39 +1,187 @@
 <!-- 5. Structs y Métodos - Go (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="structs">
-    <h2>Structs</h2>
+<section id="structs">
+    <h2><i class="fa-solid fa-cubes"></i> Structs: datos con forma</h2>
     <div class="doc-content">
-<pre><code class="language-go">type Usuario struct {
-	Nombre string
-	Edad   int
+        <p>Go no tiene clases. Tiene <strong>structs</strong>: agrupaciones de campos con tipos definidos por ti. Esta distinción no es semántica menor — es la declaración de que Go privilegia la <strong>composición de datos simples</strong> sobre jerarquías de herencia profundas. Un struct es un valor concreto, sin magia: se copia al asignarlo, se compara campo a campo y vive donde lo pongas (stack o heap, según el compilador decida).</p>
+
+        <h3>Definición y creación de instancias</h3>
+        <pre><code class="language-go">// Definición del tipo
+type Producto struct {
+    ID       int
+    Nombre   string
+    Precio   float64
+    Stock    int
 }
 
-u := Usuario{Nombre: "Ana", Edad: 30}
-u.Edad = 31
+// Creación: literal NOMBRADO (el idiomático)
+teclado := Producto{
+    Nombre: "Teclado mecánico",
+    Precio: 89.99,
+} // ID y Stock toman sus zero values: 0
 
-p := &amp;u                  // puntero a struct
-p.Nombre = "Ana María"   // acceso directo, sin -&gt;</code></pre>
+// Literal posicional: compacto pero frágil
+monitor := Producto{2, "Monitor 24\"", 199.50, 10}
+
+// Con new(): puntero a zero value
+temp := new(Producto) // &Producto{ID:0, Nombre:"", ...}
+temp.Nombre = "Borrador"</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Usa SIEMPRE literales nombrados en código real. El posicional rompe silenciosamente si alguien reordena o inserta campos en el struct: tu compilación pasará… con los valores cambiados de sitio.</p>
+        </blockquote>
+
+        <h3>Structs son VALORES: la copia importa</h3>
+        <p>Al asignar o pasar un struct a una función, Go copia TODOS sus campos. Esto es una característica, no un defecto: significa inmutabilidad accidental y ausencia de efectos laterales sorpresa:</p>
+        <pre><code class="language-go">original := Producto{ID: 1, Nombre: "Mouse", Precio: 25}
+copia := original
+copia.Precio = 30 // NO afecta a original
+
+fmt.Println(original.Precio) // 25
+fmt.Println(copia == original) // false: comparación campo a campo</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Dos structs son comparables con <code>==</code> si TODOS sus campos lo son (números, strings, bools, otros structs comparables). Si contienen slices o maps, la comparación directa no compila: tendrás que comparar campo por campo o usar <code>reflect.DeepEqual</code>.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="metodos-y-composicion">
-    <h2>Métodos y composición</h2>
+<section id="metodos-y-composicion">
+    <h2><i class="fa-solid fa-gears"></i> Métodos y composición</h2>
     <div class="doc-content">
-<pre><code class="language-go">func (u Usuario) Saludar() string {
-	return "Hola, " + u.Nombre
+        <h3>Métodos: funciones con receptor</h3>
+        <p>Cualquier función puede "pegarse" a un tipo declarando un <strong>receptor</strong> entre func y el nombre. No hay this/this implícito mágico: tú eliges el nombre (convención: primera letra del tipo).</p>
+        <pre><code class="language-go">// Value receiver: recibe UNA COPIA del struct
+func (p Producto) Resumen() string {
+    return fmt.Sprintf("%s — $%.2f", p.Nombre, p.Precio)
 }
 
-func (u *Usuario) CumplirAnios() {   // receptor puntero: muta
-	u.Edad++
+// Pointer receiver: opera SOBRE el original
+func (p *Producto) Reponer(unidades int) {
+    p.Stock += unidades // modifica el struct real
 }
 
-type Admin struct {
-	Usuario      // embebido: composición
-	Permisos []string
+tv := Producto{Nombre: "TV 55\"", Precio: 450}
+fmt.Println(tv.Resumen())
+
+tv.Reponer(5)          // azúcar sintáctico: Go toma &amp;tv automático
+fmt.Println(tv.Stock)  // 5</code></pre>
+
+        <h3>¿Value o pointer receiver? La regla práctica</h3>
+        <table>
+            <thead>
+                <tr><th>Criterio</th><th>Value receiver <code>(p Producto)</code></th><th>Pointer receiver <code>(p *Producto)</code></th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Muta el struct</td><td>No (trabaja sobre copia)</td><td>Sí</td></tr>
+                <tr><td>Coste por llamada</td><td>Copia completa del struct</td><td>Solo copia el puntero (8 bytes)</td></tr>
+                <tr><td>Nil-safety</td><td>No puede ser nil</td><td>Puede recibir nil (debes validarlo)</td></tr>
+                <tr><td>Consistencia de interfaz</td><td>Ambos receptores satisfacen interfaces</td><td>Solo <code>*T</code> queda en el conjunto de métodos</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>La regla de oro de la comunidad: <strong>si UN método necesita pointer receiver, TODOS los métodos del tipo deben usarlo</strong>. Mezclar ambos genera conjuntos de métodos inconsistentes y bugs sutiles con interfaces.</p>
+        </blockquote>
+
+        <h3>Embedding: composición en vez de herencia</h3>
+        <p>Go no tiene herencia. En su lugar, un struct puede <strong>embeber</strong> otro, y sus campos/métodos quedan accesibles como si fueran propios ("promoción"). Es delegación explícita, no jerarquía:</p>
+        <pre><code class="language-go">type Motor struct {
+    Caballos int
+    Encendido bool
 }
 
-a := Admin{}
-a.Saludar()   // promovido desde Usuario</code></pre>
+func (m *Motor) Arrancar() { m.Encendido = true }
+
+type Auto struct {
+    Motor     // embebido: SIN nombre de campo
+    Marca string
+}
+
+a := Auto{Motor: Motor{Caballos: 150}, Marca: "Toyota"}
+a.Arrancar()            // promocionado desde Motor
+fmt.Println(a.Caballos) // también promovido: 150
+fmt.Println(a.Motor.Encendido) // acceso completo siempre disponible</code></pre>
+        <blockquote class="aside aside-note">
+            <p>¿Necesitas el comportamiento del Motor? Lo embebes. ¿Dejas de necesitarlo? Lo quitas. Sin clases abstractas, sin constructores encadenados, sin frágiles jerarquías de cinco niveles. Si dos structs comparten comportamiento, la respuesta idiomática suele ser: extrae una interfaz.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="constructores-y-json">
+    <h2><i class="fa-solid fa-hammer"></i> Constructores y serialización</h2>
+    <div class="doc-content">
+        <h3>El patrón NewX()</h3>
+        <p>Como no existe constructor, la convención es una función <code>NewX()</code> que garantiza invariantes antes de devolver el struct. Puede devolver valor o puntero según el caso:</p>
+        <pre><code class="language-go">type CuentaBancaria struct {
+    titular string
+    saldo   float64
+}
+
+// Campos privados → solo este paquete puede crear cuentas inválidas... o no
+func NewCuentaBancaria(titular string) (*CuentaBancaria, error) {
+    if titular == "" {
+        return nil, errors.New("titular requerido")
+    }
+    return &amp;CuentaBancaria{titular: titular, saldo: 0}, nil
+}
+
+func (c *CuentaBancaria) Depositar(monto float64) error {
+    if monto &lt;= 0 {
+        return fmt.Errorf("monto debe ser positivo: %v", monto)
+    }
+    c.saldo += monto
+    return nil
+}</code></pre>
+
+        <h3>Tags para JSON y más</h3>
+        <p>Los <strong>tags</strong> son metadatos adjuntos a campos, leídos vía reflexión por librerías como <code>encoding/json</code>, ORMs y validadores:</p>
+        <pre><code class="language-go">type APIUsuario struct {
+    ID        int      `json:"id"`
+    Nombre    string   `json:"nombre"`
+    Email     string   `json:"email"`
+    Password  string   `json:"-"`              // NUNCA serializar
+    CreadoEn  time.Time `json:"creado_en"`
+}
+
+u := APIUsuario{ID: 7, Nombre: "Ana", Email: "ana@dev.io", Password: "secreto"}
+salida, _ := json.Marshal(u)
+fmt.Println(string(salida))
+// {"id":7,"nombre":"Ana","email":"ana@dev.io","creado_en":...}</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>El tag <code>json:"-"</code> omite el campo en la serialización. Olvidarlo en contraseñas o tokens es una fuga de seguridad clásica. Revisa SIEMPRE qué expone tu struct antes de publicar un endpoint.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Qué pasa realmente</th><th>Solución</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Método value receiver que "no guarda cambios"</td><td>Modifica la copia; el original intacto</td><td>Pointer receiver cuando hay mutación: <code>func (p *Producto) ...</code></td></tr>
+                <tr><td>Mezclar value y pointer receivers en un mismo tipo</td><td>Conjunto de métodos inconsistente; interfaces fallan</td><td>Todos pointer o todos value dentro del tipo</td></tr>
+                <tr><td>Comparar structs con slices/maps usando <code>==</code></td><td>No compila: "cannot be compared"</td><td>Comparar campo a campo o <code>reflect.DeepEqual</code> (tests)</td></tr>
+                <tr><td>Literal posicional tras añadir un campo</td><td>Valores desplazados silenciosamente</td><td>Literales nombrados siempre</td></tr>
+                <tr><td>Creer que embedding ES herencia</td><td>Sorpresas: no hay polimorfismo automático ni override</td><td>Pensar en composición + interfaces</td></tr>
+                <tr><td>Exponer structs mutables desde APIs</td><td>Cualquiera corrompe el estado interno</td><td>Campos privados + métodos + NewX validador</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Inventario básico</strong>: define <code>Producto</code> con métodos <code>ValorTotal()</code> (precio×stock, value receiver) y <code>Vender(n int) error</code> (pointer receiver que valida stock suficiente).</li>
+            <li><strong>Banco seguro</strong>: implementa <code>CuentaBancaria</code> con campos privados, <code>NewCuentaBancaria</code> validadora, <code>Depositar</code>/<code>Retirar</code> con errores personalizados envueltos en %w, y método String() que implemente fmt.Stringer.</li>
+            <li><strong>Composición de figuras</strong>: crea <code>Dimensiones</code> (alto, ancho) embebida en <code>Ventana</code> y <code>Puerta</code>; demuestra la promoción de campos y un método compartido <code>Area()</code> definido sobre Dimensiones.</li>
+            <li><strong>API JSON</strong>: modela un struct <code>Pedido</code> con tags json correctos (omitir campos internos, renombrar a snake_case), serialízalo y deserialízalo de vuelta comprobando roundtrip.</li>
+            <li><strong>Comparador manual</strong>: dado un struct con slice interno (que no admite ==), escribe <code>IgualA(otro T) bool</code> campo por campo y pruébalo con casos positivos y negativos.</li>
+        </ol>
+    </div>
+</section>

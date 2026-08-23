@@ -1,48 +1,212 @@
 <!-- 8. Introducción a SwiftUI - Swift (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
 
   <section id="ui-declarativa">
-    <h2>UI declarativa</h2>
+    <h2><i class="fa-brands fa-swift"></i> UI declarativa frente a imperativa</h2>
     <div class="doc-content">
-<p><strong>SwiftUI</strong> describe la interfaz como función del estado: tú declaras QUÉ quieres ver, no cómo dibujarlo.</p>
+<p>Durante una década las apps de Apple se construían con <strong>UIKit</strong>: creabas cada botón, configurabas sus propiedades y lo añadías manualmente a la jerarquía. Ese estilo es <strong>imperativo</strong>: tú ordenas paso a paso cómo mutar la interfaz, y si el estado cambia, eres responsable de actualizarla otra vez. Con interfaces complejas, esa sincronización manual se convierte en la fuente nº 1 de bugs.</p>
+<p><strong>SwiftUI</strong> (2019) invierte el modelo con un enfoque <strong>declarativo</strong>: describes QUÉ debe verse para un estado dado, y el framework calcula y redibuja lo necesario cuando ese estado cambia.</p>
+<table><thead><tr><th>Criterio</th><th>UIKit (imperativo)</th><th>SwiftUI (declarativo)</th></tr></thead><tbody><tr><td>Mentalidad</td><td>"Crea y muta vistas paso a paso"</td><td>"Describe la UI como función del estado"</td></tr><tr><td>Actualizar tras un cambio</td><td>Manual: recargas tablas, cambias labels</td><td>Automático al cambiar el estado</td></tr><tr><td>Sincronización estado↔pantalla</td><td>Tu responsabilidad</td><td>Del framework</td></tr><tr><td>Vista previa</td><td>Compilar y ejecutar</td><td>Previews en tiempo real</td></tr><tr><td>Plataformas</td><td>iOS/tvOS</td><td>Todas: iOS, macOS, watchOS, tvOS, visionOS</td></tr></tbody></table>
+<h3>El protocolo View</h3>
+<p>Toda pieza de interfaz es un tipo que conforma el protocolo <code>View</code>, cuyo único requisito es la propiedad computada <code>body</code>. La anotación <code>some View</code> usa tipos opacos: "devuelvo alguna vista, ya sabré yo cuál exacta" — así el compilador optimiza y tú te ahorras tipos kilométricos:</p>
 <pre><code class="language-swift">import SwiftUI
 
-struct ContentView: View {
-    @State private var contador = 0
-
+struct Saludo: View {
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Contador: \(contador)")
-                .font(.largeTitle)
-
-            Button("Sumar") {
-                contador += 1        // la vista se actualiza sola
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .padding()
+        Text("Hola, GuiaDev!")
+            .font(.largeTitle)
+            .bold()
     }
 }</code></pre>
+<blockquote class="aside aside-note"><p><code>body</code> es una propiedad computada: cada renderizado la reevalúa. Por eso SwiftUI prohíbe trabajo pesado dentro de ella; construye datos antes, dibuja después.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="composicion">
-    <h2>Composición</h2>
+    <h2><i class="fa-solid fa-cubes"></i> Composición: stacks y spacers</h2>
     <div class="doc-content">
+<p>SwiftUI no tiene layouts absolutos que mantener: apilas contenedores y el sistema resuelve posiciones y tamaños. Los tres contenedores básicos cubren prácticamente cualquier disposición:</p>
+<table><thead><tr><th>Contenedor</th><th>Apila hacia…</th><th>Ejemplo de uso</th></tr></thead><tbody><tr><td><code>VStack</code></td><td>Verticalmente</td><td>Listas verticales, formularios, columnas</td></tr><tr><td><code>HStack</code></td><td>Horizontalmente</td><td>Filas: icono + texto, barras de botones</td></tr><tr><td><code>ZStack</code></td><td>En profundidad (superpuesto)</td><td>Fondos con contenido encima, insignias</td></tr></tbody></table>
 <pre><code class="language-swift">struct Tarjeta: View {
     let titulo: String
 
     var body: some View {
-        HStack {
-            Image(systemName: "star.fill")
+        HStack(spacing: 12) {
+            Image(systemName: "star.fill")   // iconos SF Symbols integrados
+                .foregroundStyle(.yellow)
             Text(titulo)
-            Spacer()
+            Spacer()                          // empuja lo demás al borde final
+            Text("4.8").font(.caption)
         }
         .padding()
         .background(Color.yellow.opacity(0.2))
         .cornerRadius(12)
     }
 }</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> Todo en SwiftUI es una View componibles: domina VStack/HStack/ZStack y podrás construir cualquier pantalla.</blockquote>
+<p>La composición escala indefinidamente: los stacks se anidan entre sí (un <code>ZStack { Color…; VStack { … } }</code> crea fondo + contenido) y cada bloque con nombre se convierte en una vista reutilizable.</p>
+<blockquote class="aside aside-tip"><p><code>Spacer()</code> es tu mejor amigo: absorbe el espacio sobrante y empuja los elementos vecinos a los extremos. Sin él, los stacks centran todo por defecto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="modificadores">
+    <h2><i class="fa-solid fa-paintbrush"></i> Modificadores encadenados</h2>
+    <div class="doc-content">
+<p>Los <strong>modificadores</strong> (<code>.padding()</code>, <code>.font(…)</code>, <code>.foregroundStyle(…)</code>) transforman una vista y devuelven <em>otra vista nueva</em> envuelta con esa característica. Por eso se encadenan en cascada… y por eso <strong>el orden importa</strong>: cada eslabón envuelve al anterior:</p>
+<pre><code class="language-swift">Text("Orden A")
+    .padding()                    // primero margen interior…
+    .background(Color.orange)     // …y el color cubre TAMBIÉN el padding
+
+Text("Orden B")
+    .background(Color.orange)     // el color abraza solo el texto…
+    .padding()                    // …y el margen queda FUERA del naranja</code></pre>
+<p>Ambos textos comparten propiedades idénticas salvo el orden, y sin embargo se ven distintos: en A el naranja incluye la zona de aire; en B solo rodea las letras. Regla práctica: lee los modificadores de arriba abajo pensando en capas que se van aplicando de dentro hacia fuera.</p>
+<h3>Los más usados a diario</h3>
+<table><thead><tr><th>Modificador</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>.padding(16)</code></td><td>Añade espacio interior (por defecto ~12 pt)</td></tr><tr><td><code>.frame(width:height:)</code></td><td>Fija o sugiere tamaño</td></tr><tr><td><code>.background / .foregroundStyle</code></td><td>Color de fondo / de contenido</td></tr><tr><td><code>.clipShape(Circle())</code></td><td>Recorta la forma (avatares)</td></tr><tr><td><code>.shadow(radius: 5)</code></td><td>Sombra suave</td></tr><tr><td><code>.opacity(0.7)</code></td><td>Transparencia</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Encadenar veinte modificadores seguidos vuelve el cuerpo ilegible. Si una cadena crece, extrae la vista a un tipo propio o usa variables intermedias con nombre descriptivo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="vistas-basicas">
+    <h2><i class="fa-solid fa-wpforms"></i> Vistas básicas: texto, imágenes y formularios</h2>
+    <div class="doc-content">
+<p>El kit inicial de piezas cubre la mayoría de pantallas cotidianas. <code>Text</code> muestra texto estilizable, <code>Image(systemName:)</code> accede a miles de símbolos vectoriales (SF Symbols), y los controles de entrada trabajan en pareja con bindings que verás enseguida:</p>
+<pre><code class="language-swift">struct FichaProducto: View {
+    let nombre = "Café de altura"
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(nombre).font(.headline)
+            Image(systemName: "cup.and.saucer.fill")   // SF Symbols
+                .foregroundStyle(.brown)
+            Label("Stock disponible", systemImage: "checkmark.circle")
+                .foregroundStyle(.green)
+        }
+        .padding()
+    }
+}</code></pre>
+<h3>Formularios con Form</h3>
+<p><code>Form</code> agrupa controles con el aspecto nativo de ajustes del sistema: filas separadas, scroll automático y estética coherente gratis:</p>
+<pre><code class="language-swift">struct RegistroRapido: View {
+    @State private var usuario = ""
+    @State private var notificaciones = true
+
+    var body: some View {
+        Form {
+            Section("Datos") {
+                TextField("Tu usuario", text: $usuario)   // $: binding bidireccional
+            }
+            Section("Preferencias") {
+                Toggle("Recibir avisos", isOn: $notificaciones)
+                Button("Crear cuenta") { print("Creando \(usuario)…") }
+            }
+        }
+    }
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Descarga la app gratuita <em>SF Symbols</em> desde developer.apple.com: busca iconos por nombre ("bell", "cart", "heart") y usa exactamente ese identificador en <code>Image(systemName:)</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="estado-y-binding">
+    <h2><i class="fa-solid fa-bolt"></i> Estado: @State y el flujo de datos</h2>
+    <div class="doc-content">
+<p>Aquí late el corazón declarativo. Una vista decorada con <code>@State</code> declara: <em>"este dato me pertenece y cuando cambie, redibújame"</em>. Tú nunca tocas etiquetas ni recargadas manuales: mutas el estado y SwiftUI recalcula el <code>body</code>:</p>
+<pre><code class="language-swift">struct ContadorVista: View {
+    @State private var contador = 0          // fuente de verdad LOCAL
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Pulsaciones: \(contador)")
+                .font(.largeTitle.monospacedDigit())
+
+            HStack {
+                Button("−") { contador -= 1 }
+                    .buttonStyle(.bordered)
+                Button("+") { contador += 1 }
+                    .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding()
+    }
+}</code></pre>
+<p>El ciclo completo es un círculo virtuoso: el usuario pulsa, el botón muta <code>@State</code>, SwiftUI detecta el cambio, reevalúa <code>body</code> y la pantalla se actualiza. Unidireccional y predecible:</p>
+<pre><code class="language-text">   ┌──────────────┐   interacción    ┌──────────────┐
+   │   PANTALLA   │ ───────────────► │  @State      │
+   │              │                  │ (contador=3) │
+   │              │ ◄─────────────── │              │
+   └──────────────┘  reevalúa body  └──────────────┘</code></pre>
+<h3>Bindings con $</h3>
+<p>Los controles de entrada necesitan escribir Y leer el valor: eso es un <em>binding</em> bidireccional. El prefijo <code>$</code> entrega una referencia editable del estado, como viste en <code>TextField("...", text: $usuario)</code>: tecleas y la variable se actualiza sola.</p>
+<blockquote class="aside aside-note"><p>La convención oficial es declarar el estado <code>@State private</code>: pertenece a esta vista y nadie externo debería manipularlo. Cuando varios tipos necesiten compartirlo existen <code>@ObservedObject</code> y <code>@Observable</code>, materia avanzada para más adelante.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="previews-y-estructura-app">
+    <h2><i class="fa-solid fa-eye"></i> Previews y estructura de una app</h2>
+    <div class="doc-content">
+<p>El superpoder diario de SwiftUI son las <strong>previews</strong>: el lienzo de Xcode renderiza tu vista real sin compilar toda la app, y refleja cada guardado al instante. Con la macro <code>#Preview</code> basta una línea; puedes declarar varias para comparar estados:</p>
+<pre><code class="language-swift">#Preview("Normal") {
+    ContadorVista()
+}
+
+#Preview("Oscuro y grande") {
+    ContadorVista()
+        .preferredColorScheme(.dark)
+        .environment(\.dynamicTypeSize, .accessibility2)
+}</code></pre>
+<h3>El punto de entrada: App y WindowGroup</h3>
+<p>Toda app arranca en un tipo marcado con <code>@main</code> que conforma <code>App</code>. Su <code>body</code> devuelve una escena; <code>WindowGroup</code> crea la ventana principal y coloca dentro tu vista raíz. Ese es el flujo mínimo completo de una aplicación moderna:</p>
+<pre><code class="language-swift">@main
+struct GuiaDevApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContadorVista()      // primera pantalla de la app
+        }
+    }
+}
+// Al lanzar: App → WindowGroup → ContadorVista → body → pantalla viva</code></pre>
+<blockquote class="aside aside-success"><p>Fíjate en la simetría: la lección de structs te enseñó que las vistas deben ser value types baratos de copiar; SwiftUI explota esa idea al máximo —cada renderizado reconstruye tu jerarquía de structs y compara qué cambió—. Todo lo aprendido hasta aquí encaja en un solo sistema.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas en SwiftUI</h2>
+    <div class="doc-content">
+<h3>1. Divide y vencerás: subvistas pequeñas</h3>
+<pre><code class="language-swift">// ❌ Un body gigante con 15 niveles de indentación
+// ✅ Extrae bloques coherentes a tipos propios
+struct ListaTareas: View {
+    var body: some View {
+        List(tareas) { tarea in
+            FilaDeTarea(tarea: tarea)     // subvista con nombre
+        }
+    }
+}</code></pre>
+<h3>2. Deja que el layout fluya</h3>
+<p>Evita <code>.frame(width: 373)</code> mágicos: usa <code>Spacer</code>, <code>maxWidth: .infinity</code>, padding y stacks. Las medidas fijas rompen en otros tamaños de pantalla o con letras grandes de accesibilidad.</p>
+<h3>3. El estado vive donde se necesita</h3>
+<p>Declara <code>@State</code> en la vista más pequeña posible que lo use; pasa datos hacia abajo como constantes (<code>let titulo</code>). Si dos pantallas distantes necesitan el mismo dato, la solución es subir el estado o usar observables, no duplicarlo.</p>
+<h3>4. Reutiliza componentes del sistema</h3>
+<p><code>List</code>, <code>Form</code>, <code>NavigationStack</code> y <code>TabView</code> traen comportamiento nativo (scroll, selección, navegación) gratis. Construirlo a mano suele ser más código y peor resultado.</p>
+<blockquote class="aside aside-tip"><p>Hábito de aprendizaje acelerado: mantén siempre un preview abierto mientras estudias. Cambiar un modificador y ver el efecto al instante fija conceptos mucho mejor que leerlos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Constrúyelos en Xcode con previews activos, en orden creciente:</p>
+<ol>
+<li><strong>Tarjeta de perfil:</strong> crea una vista con imagen de sistema circular, nombre en <code>.title2</code>, ciudad en gris y un botón "Seguir"; compón todo con un <code>VStack</code> y un <code>Spacer</code> que centre verticalmente el conjunto.</li>
+<li><strong>Laboratorio de modificadores:</strong> replica los ejemplos "Orden A" y "Orden B" de esta lección, añade un tercer caso con <code>.padding().background().cornerRadius(12).shadow(radius: 4)</code> y comenta en el código qué capa produce cada modificador.</li>
+<li><strong>Formulario de registro:</strong> con <code>Form</code>, monta campos de nombre y correo (<code>TextField</code>), un <code>Toggle</code> de términos aceptados y un <code>Button</code> que imprima los valores; valida con un <code>if</code> en <code>body</code> que el botón se deshabilite si falta el "@".</li>
+<li><strong>Contador con límites:</strong> extiende el contador de la lección: botones +/− que se deshabiliten al llegar a 0 o 20 (modificador <code>.disabled(contador &gt;= 20)</code>), un indicador de barra hecha con <code>ZStack</code> y colores que cambien según el nivel.</li>
+<li><strong>Mini lista de tareas:</strong> declara <code>@State private var tareas: [String]</code> y un campo de texto; al pulsar "Añadir", inserta la tarea y limpia el campo; muestra las tareas con <code>List</code> + <code>ForEach</code> y permite borrar tocando cada fila. Añade un contador de pendientes en la cabecera usando <code>Label</code>.</li>
+</ol>
     </div>
   </section>

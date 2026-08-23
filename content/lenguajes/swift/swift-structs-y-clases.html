@@ -1,38 +1,246 @@
 <!-- 5. Structs y Clases - Swift (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
 
   <section id="structs-value-type">
-    <h2>Structs (value type)</h2>
+    <h2><i class="fa-solid fa-clone"></i> Structs: tipos por valor</h2>
     <div class="doc-content">
+<p>Los <strong>struct</strong> agrupan datos y comportamiento relacionados bajo un mismo nombre, igual que una clase… con una diferencia filosófica enorme: al asignarlos o pasarlos, se <strong>copian</strong>. Son <em>tipos por valor</em>, como los <code>Int</code> o los arrays que ya conoces. Cada variable posee su propia copia independiente:</p>
 <pre><code class="language-swift">struct Punto {
     var x = 0.0, y = 0.0
 
     mutating func mover(dx: Double, dy: Double) {
-        x += dx; y += dy
+        x += dx
+        y += dy
     }
 }
 
 var a = Punto(x: 1, y: 2)
-var b = a                  // COPIA independiente
+var b = a                  // COPIA completa e independiente
 b.x = 99
-print(a.x)                 // 1</code></pre>
+
+print(a.x)                 // 1  ← 'a' ni se enteró
+print(b.x)                 // 99</code></pre>
+<p>La misma regla protege las constantes: un <code>let</code> con struct congela <strong>todo</strong> el valor, propiedad por propiedad. No hay matices ni sorpresas parciales:</p>
+<pre><code class="language-swift">let origen = Punto()
+// origen.x = 10    ❌ error: 'origen' es constante y sus propiedades también</code></pre>
+<blockquote class="aside aside-tip"><p>La guía oficial de Apple es clara: <strong>empieza siempre por struct</strong> y sube a clase solo cuando tengas una razón concreta. La copia elimina efectos secundarios, simplifica la concurrencia y hace el código predecible.</p></blockquote>
+<p>---</p>
     </div>
   </section>
 
   <section id="clases-reference-type">
-    <h2>Clases (reference type)</h2>
+    <h2><i class="fa-solid fa-link"></i> Clases: tipos por referencia</h2>
     <div class="doc-content">
+<p>Una <strong>clase</strong>, en cambio, crea objetos por <em>referencia</em>: asignar no copia el objeto, solo comparte otra flecha apuntando al mismo. Dos variables pueden mutar "lo mismo" sin saberlo, para bien (compartir estado real: una sesión, una vista) y para mal (efectos a distancia):</p>
 <pre><code class="language-swift">class Contador {
     var total = 0
     func incrementar() { total += 1 }
 }
 
-let c = Contador()         // let pero mutable por dentro
+let c = Contador()         // ¡'let' pero mutable POR DENTRO!
 c.incrementar()
 
-let d = c                  // MISMA referencia
+let d = c                  // MISMA instancia, no copia
 d.total                    // 1
-Contador === c             // identidad</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> Regla general de Apple: usa structs por defecto; clases solo cuando necesites herencia, identidad o Objective-C.</blockquote>
+d.incrementar()
+print(c.total)             // 2 ← 'c' ve los cambios de 'd'</code></pre>
+<p>Fíjate en el detalle revolucionario del ejemplo: <code>c</code> es <code>let</code> y aun así su contenido cambia. En clases, <code>let</code> congela la <em>flecha</em> (no podrás apuntar a otro objeto), no el objeto apuntado.</p>
+<h3>Gestión de memoria: ARC</h3>
+<p>Las instancias de clase viven en el montículo (<em>heap</em>) y Swift las libera automáticamente mediante <strong>ARC</strong> (<em>Automatic Reference Counting</em>): cuenta cuántas referencias apuntan a cada objeto y lo destruye al llegar a cero. No hay recolector de basura pausando el programa, pero sí responsabilidad: si dos objetos se retienen mutuamente para siempre, esa memoria nunca se libera (ciclos de retención).</p>
+<blockquote class="aside aside-caution"><p>La regla mental: struct = fotocopia, clase = documento compartido en la nube. Si editas la fotocopia, nadie más lo nota; si editas el documento compartido, cambian todos los lectores a la vez.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="inicializadores">
+    <h2><i class="fa-solid fa-hammer"></i> Inicializadores y deinit</h2>
+    <div class="doc-content">
+<p>Swift exige que toda propiedad tenga valor antes de usar una instancia. Para lograrlo con mínimo esfuerzo, los structs reciben gratis el <strong>memberwise initializer</strong>: un constructor con un parámetro por cada propiedad almacenada:</p>
+<pre><code class="language-swift">struct Libro {
+    let titulo: String
+    var paginas: Int = 300     // valores por defecto hacen el parámetro opcional
+}
+
+// El compilador generó init(titulo:paginas:) por ti
+let l1 = Libro(titulo: "Swift en serio", paginas: 480)
+let l2 = Libro(titulo: "Poemas")            // usa el defecto</code></pre>
+<h3>Inicializadores personalizados</h3>
+<pre><code class="language-swift">struct Temperatura {
+    var celsius: Double
+
+    init(celsius: Double) { self.celsius = celsius }
+
+    init(fahrenheit: Double) {
+        self.init(celsius: (fahrenheit - 32) * 5 / 9)   // delegar en otro init
+    }
+}
+
+Temperatura(celsius: 100)
+Temperatura(fahrenheit: 212)   // ambas: 100 °C</code></pre>
+<blockquote class="aside aside-caution"><p>Ojo: si defines un <code>init</code> propio dentro del cuerpo del struct, el memberwise gratuito <strong>desaparece</strong>. Truco profesional: pon los inicializadores extra en una <code>extension Temperatura { }</code> y conservarás ambos mundos.</p></blockquote>
+<h3>deinit: solo en clases</h3>
+<p>Cuando ARC destruye una instancia de clase, puede ejecutarse su <code>deinit</code>: el lugar para cerrar archivos, desconectar observadores o liberar recursos externos. Los structs no lo tienen (no hay referencia que contar): otro motivo por el que las clases son "más máquina" que los structs.</p>
+<pre><code class="language-swift">class Conexion {
+    deinit { print("Cerrando sockets…") }   // justo antes de morir
+}
+var conexion: Conexion? = Conexion()
+conexion = nil        // ARC llega a cero → imprime el mensaje</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="propiedades-computadas-y-observadores">
+    <h2><i class="fa-solid fa-calculator"></i> Propiedades computadas y observadores</h2>
+    <div class="doc-content">
+<p>No todo lo que expone un tipo necesita almacenarse. Las <strong>propiedades computadas</strong> calculan su valor al vuelo mediante <code>get</code> (y opcionalmente <code>set</code>): ocupan cero memoria extra y garantizan coherencia porque derivan de datos reales:</p>
+<table><thead><tr><th>Tipo de propiedad</th><th>¿Guarda memoria?</th><th>Ejemplo típico</th></tr></thead><tbody><tr><td>Almacenada (<code>var nombre: String</code>)</td><td>Sí</td><td>Datos crudos del modelo</td></tr><tr><td>Computada (<code>var area: Double { get set }</code>)</td><td>No, se calcula</td><td>Derivados: área, impuestos, iniciales</td></tr><tr><td>Solo lectura (<code>var descripcion: String { }</code>)</td><td>No</td><td>Texto derivado, formato</td></tr></tbody></table>
+<pre><code class="language-swift">struct Rectangulo {
+    var ancho: Double, alto: Double      // almacenadas
+
+    var area: Double {                   // computada de solo lectura
+        ancho * alto
+    }
+
+    var diagonal: Double {
+        (ancho * ancho + alto * alto).squareRoot()
+    }
+}
+
+var r = Rectangulo(ancho: 3, alto: 4)
+r.area          // 12
+r.diagonal      // 5.0</code></pre>
+<h3>get y set: propiedades puente</h3>
+<p>Con <code>set</code> puedes escribir también, convirtiendo entre representaciones. El nuevo valor llega implícitamente como <code>newValue</code>:</p>
+<pre><code class="language-swift">struct Horno {
+    var fahrenheit: Double = 32
+    var celsius: Double {
+        get { (fahrenheit - 32) * 5 / 9 }
+        set { fahrenheit = newValue * 9 / 5 + 32 }
+    }
+}
+
+var horno = Horno()
+horno.celsius = 180       // escribe a través del setter
+print(horno.fahrenheit)   // 356.0</code></pre>
+<h3>Observadores: willSet y didSet</h3>
+<p>Las propiedades almacenadas pueden <strong>reaccionar</strong> a cambios sin convertir el tipo en clase ni escribir accesores completos: <code>willSet</code> corre antes de asignar (recibe <code>newValue</code>) y <code>didSet</code> después (con acceso al <code>oldValue</code>). Perfectos para registrar, validar o refrescar interfaz:</p>
+<pre><code class="language-swift">struct Reproductor {
+    var volumen = 50 {
+        willSet { print("De \(volumen) a \(newValue)…") }
+        didSet {
+            if volumen &gt; 100 { volumen = 100 }   // didSet puede corregir
+        }
+    }
+}
+
+var player = Reproductor()
+player.volumen = 150
+// De 50 a 150…   ← willSet
+// (didSet recorta y deja volumen = 100)</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="metodos-mutating">
+    <h2><i class="fa-solid fa-pen"></i> Métodos mutating</h2>
+    <div class="doc-content">
+<p>Aquí aparece la regla más peculiar de los structs: sus métodos <strong>no pueden modificar</strong> las propiedades de <code>self</code> a menos que declares el método <code>mutating</code>. ¿Por qué? Porque un struct es un valor: modificarlo significa reemplazarlo, y Swift quiere que esa intención quede escrita en el código:</p>
+<pre><code class="language-swift">struct Billetera {
+    var pesos: Int = 0
+
+    func consultarSaldo() -&gt; Int { pesos }        // solo lectura: normal
+
+    mutating func depositar(_ monto: Int) {
+        pesos += monto                            // requiere mutating
+    }
+
+    mutating func vaciar() -&gt; Int {
+        let saldo = pesos
+        self = Billetera()                        // mutating permite REEMPLAZAR self
+        return saldo
+    }
+}
+
+var billetera = Billetera()
+billetera.depositar(500)
+
+let congelada = Billetera(pesos: 100)
+// congelada.depositar(1)   ❌ error: no puedes mutar un valor constante</code></pre>
+<blockquote class="aside aside-note"><p>En clases no existe <code>mutating</code>: todos sus métodos pueden mutar libremente porque operan sobre una referencia. Esa asimetría resume la diferencia entre ambos mundos: el valor debe pedir permiso explícito para cambiar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="identidad-y-eleccion">
+    <h2><i class="fa-solid fa-code-compare"></i> Identidad, herencia y la gran decisión</h2>
+    <div class="doc-content">
+<h3>=== compara identidad; == compara valor</h3>
+<p>Con clases dispones del operador <code>===</code>: ¿son literalmente el mismo objeto en memoria? Con structs no existe tal pregunta: cada copia es un mundo. El operador <code>==</code>, en cambio, compara contenido y funciona en ambos si el tipo conforma <code>Equatable</code>:</p>
+<pre><code class="language-swift">struct TarjetaStruct: Equatable { let numero: String }
+class TarjetaClass: Equatable { let numero: String
+    static func == (a: TarjetaClass, b: TarjetaClass) -&gt; Bool { a.numero == b.numero }
+}
+
+let t1 = TarjetaStruct(numero: "123"), t2 = TarjetaStruct(numero: "123")
+t1 == t2                       // true: mismo contenido
+
+let c1 = TarjetaClass(numero: "123"), c2 = c1
+c1 == c2                       // true
+c1 === c2                      // true: exactamente el mismo objeto
+TarjetaClass(numero: "123") === c1   // false: dos objetos distintos aunque iguales</code></pre>
+<h3>Herencia frente a protocolos</h3>
+<p>Solo las clases heredan (una única superclase), reutilizando código y comportamiento verticalmente. Los structs no heredan, pero pueden conformar <strong>cuantos protocolos quieras</strong>, compartiendo capacidades horizontalmente. La comunidad Swift ha girado hacia protocolos + extensiones (protocol-oriented programming) precisamente porque evitan jerarquías rígidas; lo disecaremos en la próxima lección.</p>
+<h3>¿Struct o clase? Tabla de decisión</h3>
+<table><thead><tr><th>Pregunta clave</th><th>Sí → usa</th></tr></thead><tbody><tr><td>¿Modela un dato con atributos (dinero, punto, usuario)?</td><td><strong>struct</strong></td></tr><tr><td>¿Necesitas identidad única compartida (sesión, vista, caché)?</td><td><strong>class</strong></td></tr><tr><td>¿Requiere heredar de otra clase u Objective-C?</td><td><strong>class</strong></td></tr><tr><td>¿Se pasará entre hilos o quieres evitar efectos laterales?</td><td><strong>struct</strong></td></tr><tr><td>¿Controlar ciclo de vida con deinit?</td><td><strong>class</strong></td></tr><tr><td>Modelo típico de app SwiftUI (@State, modelos)</td><td><strong>struct</strong></td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes con structs y clases</h2>
+    <div class="doc-content">
+<h3>1. Esperar que una función modifique tu struct</h3>
+<pre><code class="language-swift">func subirNivel(_ jugador: inout Jugador) { ... }   // ✅ inout declara la mutación
+subirNivel(&amp;jugador)                                 // el &amp; avisa en la llamada
+// Sin inout, la función recibió una COPIA: tus cambios se pierden silenciosamente</code></pre>
+<h3>2. Confundir qué congela let según el tipo</h3>
+<pre><code class="language-swift">let punto = Punto(x: 1, y: 1)
+// punto.x = 2        ❌ struct: let congela TODO
+
+let sesion = Sesion()
+sesion.usuario = "ana"   // ✅ clase: let solo congela la referencia</code></pre>
+<h3>3. Perder el memberwise initializer</h3>
+<pre><code class="language-swift">// ❌ Definir init dentro del struct elimina el generado automáticamente
+// ✅ Mover el init personalizado a una extensión lo conserva
+struct Producto { let nombre: String; let precio: Double }
+extension Producto {
+    init(json: [String: Any]) { ... }
+}
+Producto(nombre: "Té", precio: 2.0)   // sigue disponible</code></pre>
+<h3>4. Crear ciclos de retención sin darse cuenta</h3>
+<pre><code class="language-swift">class Padre {
+    var hijo: Hijo?
+    deinit { print("Padre liberado") }
+}
+class Hijo {
+    var padre: Padre?   // ⚠️ referencia fuerte mutua: ninguno muere jamás
+    deinit { print("Hijo liberado") }
+}
+// Solución: declarar uno de los lados como weak (próxima lección, patrón delegate)</code></pre>
+<blockquote class="aside aside-danger"><p>El bug más traicionero del mundo clases es creer que tienes una copia cuando tienes un alias. Si dos partes de tu app "misteriosamente" cambian juntas, busca una referencia compartida antes de culpar al azar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Ordenados por dificultad creciente:</p>
+<ol>
+<li><strong>Rectángulo completo:</strong> define un struct con <code>ancho</code> y <code>alto</code>, propiedades computadas <code>area</code> y <code>perimetro</code>, y demuestra que asignarlo a otra constante no sincroniza los cambios.</li>
+<li><strong>Termostato con reglas:</strong> crea un struct cuyo <code>celsius</code> sea propiedad computada puente sobre <code>fahrenheit</code> (get/set), y añade un observador <code>didSet</code> que registre cada cambio con el valor anterior.</li>
+<li><strong>Cuenta compartida vs copiada:</strong> implementa <code>class CuentaBancaria</code> (saldo mutable) y <code>struct Dinero</code> equivalente; transfiere ambas a dos variables y documenta con comentarios quién ve los cambios de quién, usando <code>===</code> donde aplique.</li>
+<li><strong>Vector matemático:</strong> construye un struct <code>Vector2D</code> con método <code>mutating escalar(_:)</code>, propiedad computada <code>magnitud</code>, conformancia a <code>Equatable</code> y un inicializador extra en <code>extension</code> que acepte ángulo y longitud conservando el memberwise.</li>
+<li><strong>Refactor arquitectónico:</strong> parte de tres clases con herencia <code>Vehiculo → Coche/Moto</code>; refactorízalas a structs con un protocolo común <code>Vehiculo</code>, justifica en comentarios cada decisión con la tabla de esta lección y explica qué gana el diseño (menos estado compartido, más testeable).</li>
+</ol>
     </div>
   </section>

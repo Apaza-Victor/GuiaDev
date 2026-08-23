@@ -1,27 +1,215 @@
-<!-- 8. C# Moderno - C# (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="records-inmutables">
-    <h2>Records (inmutables)</h2>
+<!-- 9. C# Moderno - C# (Lenguajes de Programación) -->
+<section id="records-inmutables">
+    <h2><i class="fa-solid fa-fingerprint"></i> Records y modelado inmutable</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">public record Punto(int X, int Y);
+        <p>Desde C# 9, el lenguaje empuja decididamente hacia la <strong>inmutabilidad por defecto</strong>: datos que no cambian tras crearse son más fáciles de razonar, thread-safe gratis y eliminan estados intermedios inválidos. Los records son el vehículo principal.</p>
 
-var a = new Punto(1, 2);
-var b = a with { X = 10 };   // copia cambiando X
-Console.WriteLine(a == b);   // false: compara valores</code></pre>
-    </div>
-  </section>
+        <h3>Record toolkit completo</h3>
+        <pre><code class="language-csharp">// Record posicional: constructor + props init + Equals por valor
+public record Punto(int X, int Y);
 
-  <section id="async-await">
-    <h2>async / await</h2>
-    <div class="doc-content">
-<pre><code class="language-csharp">static async Task&lt;string&gt; DescargarAsync(string url)
+var a = new Punto(3, 4);
+var b = new Punto(3, 4);
+Console.WriteLine(a == b);          // TRUE: contenido, no referencia
+Console.WriteLine(a.ToString());    // Punto { X = 3, Y = 4 }
+
+// Deconstrucción:
+var (x, y) = a;
+
+// with: copia no destructiva — LA operación estrella
+var movido = a with { X = 10 };
+Console.WriteLine(movido);          // Punto { X = 10, Y = 4 } — 'a' intacta
+
+// Record con lógica propia:
+public record Moneda(decimal Cantidad)
 {
-    using var http = new HttpClient();
-    return await http.GetStringAsync(url);
+    public Moneda Duplicar() =&gt; this with { Cantidad = Cantidad * 2 };
+}
+
+// Herencia entre records + exhaustividad:
+public abstract record Figura;
+public record Circulo(double Radio) : Figura;
+public record Rectangulo(double Ancho, double Alto) : Figura;
+
+double Area(Figura f) =&gt; f switch
+{
+    Circulo c       =&gt; Math.PI * c.Radio * c.Radio,
+    Rectangulo r    =&gt; r.Ancho * r.Alto,
+    _               =&gt; throw new UnreachableException("Figura nueva sin manejar")
+};</code></pre>
+
+        <h3>Pattern matching avanzado (C# 8-12)</h3>
+        <table>
+            <thead>
+                <tr><th>Patrón</th><th>Sintaxis</th><th>Caso de uso</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Relacional</td><td><code>n is &gt;= 18</code></td><td>Rangos legibles</td></tr>
+                <tr><td>Lógico</td><td><code>is &gt; 0 and &lt; 100 or == 999</code></td><td>Condiciones compuestas declarativas</td></tr>
+                <tr><td>Propiedad</td><td><code>{ Nombre.Length: &gt; 0 }</code></td><td>Filtrar por estado interno</td></tr>
+                <tr><td>Posicional</td><td><code>(0, 0) =&gt; "origen"</code></td><td>Tuples y records deconstructibles</td></tr>
+                <tr><td>List patterns</td><td><code>[1, .., var last]</code></td><td>Colecciones: inicio/fin/slice (C# 11)</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-csharp">// List patterns (C# 11): match sobre arrays/listas
+int[] serie = [1, 2, 3];
+string descripcion = serie switch
+{
+    []                    =&gt; "vacía",
+    [var solo]            =&gt; $"un solo elemento: {solo}",
+    [1, .., 3]            =&gt; "empieza en 1 y termina en 3",
+    [.., var ultimo]      =&gt; $"termina en {ultimo}",
+};
+
+// Property patterns combinando todo:
+static string Evalua(Empleado e) =&gt; e switch
+{
+    { Edad: &lt; 18 }                          =&gt; "Menor: no contratamos",
+    { Antiguedad: &gt; 10, Sueldo: &gt; 50000m }  =&gt; "Senior premium",
+    { Antiguedad: &gt; 5 }                     =&gt; "Veterano",
+    _                                       =&gt; "Junior"
+};</code></pre>
+        <blockquote class="aside aside-success">
+            <p>Records + switch expressions + patterns forman un trío que convierte lógica de negocio ramificada en tablas declarativas verificables. Si añades un nuevo subtipo de Figura, el compilador TE AVISA del case faltante — bugs de clasificación imposibles.</p>
+        </blockquote>
+
+        <h3>Azúcar sintáctico moderno esencial</h3>
+        <pre><code class="language-csharp">// Collection expressions (C# 12) para TODO:
+int[] numeros = [1, 2, 3];
+List&lt;string&gt; nombres = ["Ana", "Luis"];
+int[] combinado = [..numeros, 4, ..nombres.Select(s =&gt; s.Length)]; // spread
+
+// required members (C# 11): obligatorio inicializar SIN constructor largo
+public class Conexion
+{
+    public required string Host { get; init; }
+    public required int Puerto { get; init; }
+}
+var c = new Conexion { Host = "db.local", Puerto = 5432 };   // ✅ ambos exigidos
+// var mala = new Conexion { Host = "x" }; ❌ no compila: falta Puerto
+
+// Global usings (C# 10): imports una vez para todo el proyecto
+// GlobalUsings.cs:
+global using System.Collections.Generic;
+global using System.Linq;
+
+// File-scoped namespace (C# 10): menos indentación en TODOS tus archivos
+namespace MiApp.Servicios;      // ¡punto y coma! sin llaves
+
+public class Servicio { }       // ya está dentro, sin indentar</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>.editorconfig + dotnet format imponen file-scoped namespaces automáticamente en proyectos nuevos. Adopta el estándar desde el día uno: diffs limpios y archivos un 30% menos profundos.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="async-await">
+    <h2><i class="fa-solid fa-bolt"></i> async/await: asincronía sin dolor</h2>
+    <div class="doc-content">
+        <p>Las operaciones de I/O (red, disco, BD) tardan MILLISECONDS mientras tu CPU podría hacer millones de operaciones. async/await libera el hilo durante esas esperas — la base de servidores .NET que atienden miles de peticiones concurrentes:</p>
+        <pre><code class="language-csharp">using System.Net.Http;
+
+HttpClient http = new();
+
+// El método marca async, devuelve Task&lt;T&gt;, y await "pausa" sin bloquear:
+async Task&lt;string&gt; DescargarAsync(string url)
+{
+    Console.WriteLine($"Descargando {url}...");
+    string cuerpo = await http.GetStringAsync(url);   // hilo LIBERADO aquí
+    Console.WriteLine($"Recibidos {cuerpo.Length} bytes");
+    return cuerpo;
 }
 
 string html = await DescargarAsync("https://example.com");</code></pre>
-<blockquote class="aside aside-tip"><strong>Consejo:</strong> Los métodos async devuelven Task o Task&lt;T&gt;. El compilador transforma await en una máquina de estados sin bloquear el hilo.</blockquote>
+        <table>
+            <thead>
+                <tr><th>Concepto</th><th>Síncrono</th><th>Asíncrono</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Método</td><td><code>string Leer()</code></td><td><code>Task&lt;string&gt; LeerAsync()</code></td></tr>
+                <tr><td>Hilo durante espera I/O</td><td>BLOQUEADO esperando</td><td>Liberado para otro trabajo</td></tr>
+                <tr><td>Escala en servidor</td><td>~threads = RAM limitada</td><td>Miles de requests por pocos hilos</td></tr>
+                <tr><td>Regla API moderna</td><td>—</td><td>Toda I/O nueva DEBE exponer versión Async</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Patrones esenciales</h3>
+        <pre><code class="language-csharp">// Paralelizar independientes: Task.WhenAll
+Task&lt;string&gt; t1 = http.GetStringAsync(url1);
+Task&lt;string&gt; t2 = http.GetStringAsync(url2);
+string[] resultados = await Task.WhenAll(t1, t2);   // ambas EN PARALELO
+// ⚠️ await secuencial (await a; await b;) las haría SERIALES: 2x tiempo
+
+// Timeout con CancellationToken:
+using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+try {
+    var datos = await http.GetStringAsync(urlLenta, cts.Token);
+}
+catch (TaskCanceledException) {
+    Console.WriteLine("Timeout: cancelada a los 3s");
+}
+
+// Fire-and-forget responsable (raro pero útil):
+_ = RegistrarMetricasAsync();   // descartada conscientemente
+
+// Async Main ya existe: top-level statements son async-friendly
+foreach (var url in urls)
+    Console.WriteLine((await http.GetStringAsync(url)).Length);</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>NUNCA mezcles código síncrono bloqueante con async: <code>result.Result</code> o <code>task.Wait()</code> dentro de apps con contexto (ASP.NET clásico, UI) produce DEADLOCKS reales. Regla absoluta: "async all the way up" — si un método hace await, su firmo es async y sus llamadores también.</p>
+        </blockquote>
+
+        <h3>Checklist de modernización de proyecto</h3>
+        <table>
+            <thead>
+                <tr><th>Objetivo</th><th>Feature C#</th><th>Versión mínima</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Datos de dominio inmutables</td><td>record + with</td><td>C# 9</td></tr>
+                <tr><td>Constructor sin boilerplate</td><td>primary constructors / required</td><td>C# 11-12</td></tr>
+                <tr><td>Colecciones concisas</td><td>[1, 2, 3] collection expressions</td><td>C# 12</td></tr>
+                <tr><td>Lógica ramificada declarativa</td><td>switch expression + patterns</td><td>C# 8+</td></tr>
+                <tr><td>I/O escalable</td><td>async/await + WhenAll + tokens</td><td>desde siempre moderno</td></tr>
+                <tr><td>Archivos menos indentados</td><td>file-scoped namespaces + global usings</td><td>C# 10</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Un codebase C# 2026 idiomático combina: records para datos, interfaces pequeñas inyectadas, LINQ para transformaciones, async para I/O, y patterns para decisiones. Cada pieza reduce boilerplate respecto a Java/C++ equivalente — esa es la apuesta de productividad del lenguaje.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>await dentro de loops seriales cuando eran independientes</td><td>Latencia suma en vez de paralelizar</td><td>Lanzar Tasks primero; Task.WhenAll después</td></tr>
+                <tr><td>.Result/.Wait() en app con SynchronizationContext</td><td>Deadlock eterno o excepción críptica</td><td>async hasta arriba; nunca bloquear sobre Task</td></tr>
+                <tr><td>async void (salvo event handlers)</td><td>Excepciones NO capturables crashean proceso</td><td>async Task SIEMPRE; void solo eventos UI</td></tr>
+                <tr><td>Olvidar await (fire-and-forget accidental)</td><td>Warning CS4014 ignorado; errores silenciados</td><td>-WarnAsError en CI; _ = para descartes conscientes</td></tr>
+                <tr><td>with esperando mutación del original</td><td>"Cambió" la copia, original intacto</td><td>Reasignar: obj = obj with {...}</td></tr>
+                <tr><td>required sin init-only setter</td><td>No compila la combinación</td><td>required va de la mano con { get; init; }</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Figuras exhaustivas</strong>: jerarquía abstract record Figura + 3 formas; función Area con switch; añade Triangulo y observa el warning de exhaustividad ANTES de arreglarlo.</li>
+            <li><strong>Scraper paralelo</strong>: descarga 5 URLs con Task.WhenAll midiendo tiempo total vs suma secuencial (Stopwatch); documenta speedup obtenido.</li>
+            <li><strong>Inventario inmutable</strong>: record Producto; carrito como ImmutableList (System.Collections.Immutable) usando Add que retorna nueva lista; demuestra que el original jamás muta.</li>
+            <li><strong>List patterns</strong>: clasificador de series numéricas ([], [solo], ascendente con slice check, termina en X) usando list patterns C# 11.</li>
+            <li><strong>Cazador de deadlock didáctico</strong>: consola simple con .Result sobre async local (funciona por suerte) vs versión async correcta; comenta POR QUÉ el mismo patrón muere en ASP.NET Framework/UI.</li>
+        </ol>
+    </div>
+</section>

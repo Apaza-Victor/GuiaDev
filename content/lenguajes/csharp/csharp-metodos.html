@@ -1,47 +1,223 @@
-<!-- 4. Métodos - C# (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="definicion-basica">
-    <h2>Definición básica</h2>
+<!-- 5. Métodos - C# (Lenguajes de Programación) -->
+<section id="definicion-basica">
+    <h2><i class="fa-solid fa-cube"></i> Definición y parámetros</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">static int Sumar(int a, int b)
+        <p>Un método encapsula comportamiento reutilizable. Su firma declara visibilidad, retorno, nombre y parámetros — todo tipado, todo verificable en compilación:</p>
+
+        <h3>Anatomía completa</h3>
+        <pre><code class="language-csharp">public static decimal CalcularIVA(decimal baseImponible, double tasa = 0.21)
+//  ↑       ↑      ↑            ↑              ↑
+// acceso  tipo   NOMBRE       parámetro      opcional con default
 {
-    return a + b;
+    return baseImponible * (decimal)tasa;
 }
 
-static void Saludar(string nombre = "mundo") =&gt;
-    Console.WriteLine($"Hola, {nombre}!");
+CalcularIVA(100);          // usa tasa por defecto → 21
+CalcularIVA(100, 0.10);    // posicional
+CalcularIVA(tasa: 0.10, baseImponible: 100);   // ARGUMENTOS NOMBRADOS: orden libre</code></pre>
+        <table>
+            <thead>
+                <tr><th>Modificador</th><th>Efecto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>public/private/...</code></td><td>Visibilidad desde fuera del tipo</td></tr>
+                <tr><td><code>static</code></td><td>Pertenece a la CLASE, no a instancias (no requiere objeto)</td></tr>
+                <tr><td><code>virtual/override/abstract/sealed</code></td><td>Control de herencia y polimorfismo</td></tr>
+                <tr><td><code>async</code></td><td>Ejecución asíncrona awaitable (lección avanzada)</td></tr>
+                <tr><td><code>extern/unsafe/partial</code></td><td>Casos especiales: interop, punteros, clases divididas</td></tr>
+            </tbody>
+        </table>
 
-Sumar(2, 3);
-Saludar();               // usa el valor por defecto
-Saludar(nombre: "Ana");  // parámetro nombrado</code></pre>
-    </div>
-  </section>
+        <h3>Expression-bodied: métodos de una línea</h3>
+        <pre><code class="language-csharp">// En vez de:
+public double Area() { return Math.PI * Radio * Radio; }
 
-  <section id="ref-y-out">
-    <h2>ref y out</h2>
-    <div class="doc-content">
-<pre><code class="language-csharp">static void Duplicar(ref int x) =&gt; x *= 2;
+// Cuerpo de expresión: la flecha ES el return
+public double Area() =&gt; Math.PI * Radio * Radio;
+public string NombreCompleto =&gt; $"{Nombre} {Apellido}";   // también propiedades
+public bool EsMayorDeEdad(int edad) =&gt; edad &gt;= 18;</code></pre>
 
-static bool Dividir(int a, int b, out int cociente)
+        <h3>Retorno múltiple elegante</h3>
+        <pre><code class="language-csharp">// Tuples nombradas: sin crear clase para devolver dos valores
+static (bool Exito, string Mensaje) Validar(string input)
 {
-    cociente = 0;
-    if (b == 0) return false;
-    cociente = a / b;
-    return true;
+    if (string.IsNullOrWhiteSpace(input))
+        return (false, "Vacío");
+    return (true, "Válido");
 }
 
-int v = 5;
-Duplicar(ref v);                 // v = 10
-Dividir(10, 3, out int c);       // c = 3</code></pre>
+var (ok, msg) = Validar("hola");     // desestructuración directa
+Console.WriteLine(ok ? msg : $"Error: {msg}");</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Para resultados de dominio complejos prefiere records sobre tuples: <code>record Resultado(bool Ok, string Msg)</code>. Las tuples brillan en usos locales; los records documentan contratos públicos.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="sobrecarga">
-    <h2>Sobrecarga</h2>
+<section id="ref-y-out">
+    <h2><i class="fa-solid fa-arrows-left-right"></i> ref, out e in: paso por referencia</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">static void Log(string msg) =&gt; Console.WriteLine(msg);
-static void Log(int codigo) =&gt; Console.WriteLine($"[{codigo}]");
-static void Log(params object[] datos) =&gt; Console.WriteLine(string.Join(", ", datos));</code></pre>
+        <p>Por defecto TODO se pasa por valor (los objetos comparten la referencia, pero la variable es local). Los modificadores ref/out/in permiten que el MÉTODO toque la variable original:</p>
+        <table>
+            <thead>
+                <tr><th>Modificador</th><th>Entrada requerida</th><th>Salida obligatoria</th><th>Uso típico</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>(nada)</td><td>Valor copiado</td><td>No afecta al llamador</td><td>Caso normal (95%)</td></tr>
+                <tr><td><code>ref</code></td><td>Sí, inicializada antes</td><td>Opcional modificarla</td><td>Mutación bidireccional; evitar boxing</td></tr>
+                <tr><td><code>out</code></td><td>No (el método DEBE asignarla)</td><td>Obligatoria</td><td>Retornos adicionales: TryParse pattern</td></tr>
+                <tr><td><code>in</code></td><td>Sí</td><td>Promete NO modificarla</td><td>Structs grandes: pasar sin copiar ni mutar</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-csharp">// out: el patrón más famoso del ecosistema .NET
+bool exito = int.TryParse("42", out int resultado);
+Console.WriteLine(exito ? resultado : -1);
+
+// out múltiple: función que devuelve por varios canales
+void MinMax(int[] datos, out int minimo, out int maximo)
+{
+    minimo = maximo = datos[0];
+    foreach (var n in datos) {
+        if (n &lt; minimo) minimo = n;
+        if (n &gt; maximo) maximo = n;
+    }
+}
+MinMax(new[] {3, 9, 1}, out var lo, out var hi);
+Console.WriteLine($"[{lo}..{hi}]");
+
+// discard _: solo me interesa el bool
+if (int.TryParse(input, out _)) { /* era numérico, no necesito el valor */ }
+
+// ref: intercambio real de variables
+static void Swap(ref int a, ref int b) =&gt; (a, b) = (b, a);
+int x = 1, y = 2;
+Swap(ref x, ref y);
+Console.WriteLine($"{x}{y}");   // 21
+
+// params: número variable de argumentos (debe ser el último)
+static int Sumar(params int[] numeros) =&gt; numeros.Sum();
+Sumar(1, 2, 3, 4);   // 10</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>El abuso de out/ref produce APIs difíciles de leer y testear. Regla moderna: si necesitas devolver DOS cosas, devuelve una tuple o record; reserva out para el patrón TryXxx consagrado del framework.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="sobrecarga-y-lambdas">
+    <h2><i class="fa-solid fa-layer-group"></i> Sobrecarga, lambdas y delegados</h2>
+    <div class="doc-content">
+        <h3>Sobrecarga (overloading)</h3>
+        <p>Varios métodos comparten nombre si difieren en firma (número/tipos de parámetros). El retorno NO participa en la resolución:</p>
+        <pre><code class="language-csharp">public static string Formatear(decimal monto) =&gt; monto.ToString("C");
+public static string Formatear(DateTime fecha) =&gt; fecha.ToString("d");
+public static string Formatear(object valor) =&gt; valor?.ToString() ?? "";
+
+Formatear(99.5m);           // llama la versión decimal
+Formatear(DateTime.Today);  // la de DateTime
+Formatear("cualquiera");    // la genérica object</code></pre>
+
+        <h3>Lambdas y Func&lt;T&gt;/Action&lt;T&gt;</h3>
+        <p>Los métodos son ciudadanos pasables: los <strong>delegados</strong> son tipos-firma para funciones, y las lambdas su sintaxis literal:</p>
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Firma</th><th>Devuelve</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>Action</code></td><td>0+ argumentos</td><td>Nada (void)</td></tr>
+                <tr><td><code>Func&lt;T1,T2,...,TReturn&gt;</code></td><td>Argumentos + último tipo = retorno</td><td>El tipo final</td></tr>
+                <tr><td><code>Predicate&lt;T&gt;</code></td><td>Un argumento</td><td>bool</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-csharp">Func&lt;int, int&gt; cuadrado = x =&gt; x * x;
+Func&lt;int, int, int&gt; sumar = (a, b) =&gt; a + b;
+Action&lt;string&gt; logear = msg =&gt; Console.WriteLine($"[LOG] {msg}");
+Predicate&lt;int&gt; esPar = n =&gt; n % 2 == 0;
+
+Console.WriteLine(cuadrado(7));         // 49
+logear("sistema iniciado");
+
+// Composición real: callbacks y eventos
+void ProcesarConReintentos(Action operacion, Action&lt;Exception&gt; onError)
+{
+    try { operacion(); }
+    catch (Exception ex) { onError(ex); }
+}
+
+ProcesarConReintentos(
+    () =&gt; Console.WriteLine("trabajo crítico"),
+    ex =&gt; logear($"FALLO: {ex.Message}")
+);
+
+// Lambdas con statement body cuando hay lógica:
+Func&lt;string, bool&gt; passwordSegura = pwd =&gt; {
+    if (pwd.Length &lt; 8) return false;
+    return pwd.Any(char.IsDigit) &amp;&amp; pwd.Any(char.IsUpper);
+};</code></pre>
+        <blockquote class="aside aside-note">
+            <p>Las lambdas capturan variables locales del scope (closures): <code>int factor = 3; Func&lt;int,int&gt; triplicar = n =&gt; n * factor;</code> funciona. La variable vive mientras viva el delegado — cuidado con bucles que capturan la variable mutable compartida.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="buenas-practicas-metodos">
+    <h2><i class="fa-solid fa-list-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Práctica</th><th>Razón</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Verbos PascalCase: CalcularTotal(), ValidarUsuario()</td><td>Convención .NET universal; IntelliSense agrupa acciones</td></tr>
+                <tr><td>Método = UNA responsabilidad, &lt; ~30 líneas ideal</td><td>Testeable, reutilizable, comprensible de un vistazo</td></tr>
+                <tr><td>Parámetros opcionales AL FINAL y con moderación</td><td>Orden libre solo tras posicionales; defaults se HORNEAN en compilación del llamador</td></tr>
+                <tr><td>Arguments named para booleans en llamada</td><td>Enviar(true) vs Enviar(esUrgente: true) — autodocumentado</td></tr>
+                <tr><td>Tuples/records en vez de múltiples out</td><td>API declarativa; out solo para TryXxx</td></tr>
+                <tr><td>[NotNullWhen(true)] en patrones Try propios</td><td>El compilador entiende tu TryXxx como los nativos</td></tr>
+                <tr><td>Func/Action en firmas para inyectar comportamiento</td><td>Inversión de dependencias ligera sin interfaces ceremoniosas</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-csharp">// Firma auto-documentada completa:
+public static async Task&lt;ResultadoPago&gt; ProcesarPagoAsync(
+    Pedido pedido,
+    IMetodoPago metodo,
+    CancellationToken ct = default,
+    ILogger? logger = null) { ... }</code></pre>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>out sin asignar en algún camino</td><td>CS0177: must assign before leaving</td><td>Asignar SIEMPRE antes de cada return</td></tr>
+                <tr><td>Sobrecargas ambiguas entre sí</td><td>CS0121 ambiguous call en llamadas mixtas</td><td>Diferenciar claramente o renombrar métodos</td></tr>
+                <tr><td>Defaults que cambian sin recompilar clientes</td><td>Librerías viejas siguen usando valor viejo horneado</td><td>Overloads encadenados para defaults públicos estables</td></tr>
+                <tr><td>Capturar variable de bucle en lambda esperando snapshot</td><td>Todas las lambdas ven el ÚLTIMO valor (closure de variable)</td><td>Copiar a local dentro del loop antes de capturar</td></tr>
+                <tr><td>ref a propiedad o literal</td><td>No compila: ref exige VARIABLE</td><td>Variable temporal intermedia</td></tr>
+                <tr><td>Confundir Func&lt;int,bool&gt; con Predicate&lt;int&gt;</td><td>No son intercambiables pese a misma firma práctica</td><td>Predicados para filtros; Func general</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Biblioteca matemática</strong>: crea clase estática con sobrecargas de Maximo() para int, double y params int[]; prueba las tres rutas.</li>
+            <li><strong>TryParse propio</strong>: implementa TryParseFecha(string, out DateTime) validando formato dd/MM/yyyy; úsala con discard cuando solo importa validez.</li>
+            <li><strong>Motor de reglas funcional</strong>: lista de Func&lt;Pedido, decimal&gt; descuentos aplicables; recórrelos sumando; añade uno nuevo SIN tocar el motor.</li>
+            <li><strong>MinMax triple canal</strong>: método que recibe array y saca min/max/promedio vía tres outs; luego reescríbelo retornando tuple nombrada; compara legibilidad.</li>
+            <li><strong>Closure cazada</strong>: genera 3 lambdas en un for capturando i directo (bug demostrable) y versión corregida con local; imprime resultados y explica.</li>
+        </ol>
+    </div>
+</section>

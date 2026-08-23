@@ -1,39 +1,209 @@
-<!-- 2. Tipos y Variables - C# (Lenguajes de Programación) -->
-<!-- Contenido local del proyecto -->
-
-  <section id="variables-y-tipos">
-    <h2>Variables y tipos</h2>
+<!-- 3. Tipos y Variables - C# (Lenguajes de Programación) -->
+<section id="variables-y-tipos">
+    <h2><i class="fa-solid fa-tags"></i> Variables y tipos</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">int edad = 25;
-double precio = 99.99;
-decimal saldo = 1000.50m;   // precisión monetaria
-string nombre = "Ana";
-bool activo = true;
-var inference = "el compilador deduce el tipo";
-const double PI = 3.1416;</code></pre>
-    </div>
-  </section>
+        <p>C# divide su sistema de tipos en dos universos con comportamientos radicalmente distintos: los <strong>tipos de valor</strong> (structs, que se copian completas al asignar) y los <strong>tipos de referencia</strong> (classes, donde la variable guarda una referencia al objeto en el heap). Dominar esta distinción evita la mitad de los bugs de un principiante.</p>
 
-  <section id="strings-e-interpolacion">
-    <h2>Strings e interpolación</h2>
+        <h3>Los dos mundos</h3>
+        <table>
+            <thead>
+                <tr><th>Característica</th><th>Tipo valor (struct)</th><th>Tipo referencia (class)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Ejemplos</td><td><code>int</code>, <code>double</code>, <code>bool</code>, <code>char</code>, <code>DateTime</code>, <code>decimal</code></td><td><code>string</code>, arrays, <code>List&lt;T&gt;</code>, tus clases</td></tr>
+                <tr><td>Dónde viven</td><td>Stack o inline dentro del objeto contenedor</td><td>Heap; la variable guarda el puntero</td></tr>
+                <tr><td>Al asignar</td><td>Copia COMPLETA del dato</td><td>Copia la REFERENCIA: ambos apuntan igual</td></tr>
+                <tr><td>Valor "nulo"</td><td>No existe (usa Nullable&lt;T&gt;/T? si necesitas ausencia)</td><td><code>null</code> posible</td></tr>
+                <tr><td>Comparación ==</td><td>Por VALOR</td><td>Por identidad (mismo objeto), salvo string sobrecargado a contenido</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-csharp">// Valor: copia independiente
+int a = 42;
+int b = a;
+b++;
+Console.WriteLine($"{a} {b}");   // 42 43
+
+// Referencia: mismo objeto compartido
+var lista1 = new List&lt;int&gt; {1, 2};
+var lista2 = lista1;
+lista2.Add(3);
+Console.WriteLine(lista1.Count); // 3 — ¡la "otra" también cambió!</code></pre>
+
+        <h3>Tipos numéricos: elegir con criterio</h3>
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Rango / precisión</th><th>Úsalo para</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>int</code></td><td>±2.100 millones (32 bits)</td><td>Contadores, edades, IDs pequeños — default</td></tr>
+                <tr><td><code>long</code></td><td>±9.2 × 10¹⁸</td><td>Timestamps, IDs de BD grandes</td></tr>
+                <tr><td><code>double</code></td><td>~15-17 dígitos significativos</td><td>Física, gráficos, estadística</td></tr>
+                <tr><td><code>float</code></td><td>~7 dígitos</td><td>Juegos/gráficos cuando memoria manda</td></tr>
+                <tr><td><code>decimal</code></td><td>28 dígitos DECIMALES exactos</td><td>💰 DINERO — siempre decimal, jamás double</td></tr>
+                <tr><td><code>bool</code></td><td>true/false</td><td>Lógica</td></tr>
+                <tr><td><code>char</code></td><td>Un carácter UTF-16 ('A')</td><td>Caracteres individuales</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-csharp">decimal precio = 19.99m;         // sufijo m (money)
+double distancia = 3.5e8;        // notación científica
+long poblacionMundial = 7_900_000_000;  // separadores _ para legibilidad
+uint sinSigno = 4_000_000_000u;  // solo positivos, hasta 4.2 mil millones</code></pre>
+
+        <h3>var, const y readonly</h3>
+        <pre><code class="language-csharp">var nombre = "Ana";              // tipo DEDUCIDO en compilación: string
+var edad = 30;                   // int — NO es dinámico, ES tipado fuerte
+// nombre = 42;                  ❌ no compila: sigue siendo string
+
+const double Pi = 3.14159;       // constante de COMPILACIÓN, inmutable
+const int MaxIntentos = 3;
+
+public class Config {
+    public readonly DateTime CreadoEn;    // fijo DESPUÉS del constructor
+    public Config() { CreadoEn = DateTime.Now; }
+}</code></pre>
+        <blockquote class="aside aside-tip">
+            <p>Regla práctica de var: úsalo cuando el tipo es OBVIO por el lado derecho (<code>new</code>, literales, casts). Evítalo cuando oculta información valiosa (<code>var r = Procesar();</code> — ¿qué devuelve?). Y recuerda: dynamic sí es dinámico real, resuelto en runtime — casi nunca lo necesitas.</p>
+        </blockquote>
+
+        <h3>Nullable reference types: adiós a las NullReferenceException</h3>
+        <p>Desde C# 8 activado por defecto en proyectos nuevos, el compilador DISTINGUE strings que pueden ser null de los que no:</p>
+        <pre><code class="language-csharp">#nullable enable
+
+string obligatorio = "texto";     // NUNCA puede ser null
+string? opcional = null;          // el ? declara "puede ser null" HONESTAMENTE
+
+// Console.WriteLine(obligatorio.Length); ✅ garantizado seguro
+if (opcional != null) {
+    Console.WriteLine(opcional.Length);      // tras el check, flujo nulable satisfecho
+}
+Console.WriteLine(opcional?.Length ?? 0);    // operador ?. + ?? : 0 si null
+Console.WriteLine(opcional!.Length!);        // ! = "confía, no es null" (último recurso)</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>El operador <code>!</code> (null-forgiving) silencia al compilador pero NO protege en runtime: si te equivocas, NullReferenceException igual. Úsalo solo cuando puedas PROBAR la invariante, preferiblemente documentando por qué.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="strings-e-interpolacion">
+    <h2><i class="fa-solid fa-quote-right"></i> Strings e interpolación</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">string nombre = "Mundo";
-string saludo = $"Hola, {nombre}!";   // interpolación
-string upper = saludo.ToUpper();
-int largo = saludo.Length;
+        <p><code>string</code> es un tipo de referencia INMUTABLE: cada "modificación" crea un nuevo objeto. Para construcción intensiva existe StringBuilder.</p>
+        <pre><code class="language-csharp">string nombre = "Ada";
+int edad = 36;
 
-string multi = $@"Línea 1
-Línea 2 con {nombre}";</code></pre>
+// Interpolación ($): EL estándar moderno
+string mensaje = $"{nombre} tiene {edad} años";
+Console.WriteLine($"El IVA de {precio:C} es {precio * 0.21:C}");  // formato moneda
+Console.WriteLine($"|{nombre,10}|");     // alineado derecha 10 espacios
+Console.WriteLine($"|{nombre,-10}|");    // alineado izquierda
+Console.WriteLine($"Ratio: {0.856:P1}"); // 85.6 %
+
+// Verbatim (@): rutas y regex sin escapes dobles
+string ruta = @"C:\Users\ana\documentos";
+string json = """
+    {
+        "nombre": "multi-línea",
+        "raw": true
+    }
+    """;                                  // raw string literals (C# 11)
+
+// Métodos esenciales
+nombre.ToUpper();                        // "ADA"
+nombre.Substring(0, 2);                  // "Ad"
+nombre.Contains("ad", StringComparison.OrdinalIgnoreCase);
+string.Join(", ", new[] {"a", "b"});     // "a, b"
+string vaciaOblanco = "   ".Trim();
+bool blanca = string.IsNullOrWhiteSpace(vaciaOblanco);
+
+// Split y manipulación
+var partes = "ana@dev.io".Split('@');    // ["ana", "dev.io"]</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>Concatenar strings con += dentro de bucles genera O(n²): cada iteración copia TODO lo acumulado. Para miles de piezas usa <code>StringBuilder.Append()</code>. En código moderno, incluso mejor: <code>string.Join()</code> sobre colecciones.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="conversiones">
-    <h2>Conversiones</h2>
+<section id="conversiones">
+    <h2><i class="fa-solid fa-exchange-alt"></i> Conversiones y casting seguro</h2>
     <div class="doc-content">
-<pre><code class="language-csharp">int n = int.Parse("42");
-bool ok = int.TryParse("abc", out int resultado); // resultado = 0, ok = false
-double d = 9.75;
-int entero = (int)d;        // cast explícito: 9
-string s = entero.ToString();</code></pre>
+        <h3>Implícita vs explícita</h3>
+        <pre><code class="language-csharp">int entero = 42;
+long grande = entero;            // implícita: int cabe SIEMPRE en long ✅
+double d = entero;               // implícita: sin pérdida
+
+double pi = 3.99;
+int truncado = (int)pi;          // explícita (cast): TRUNCA → 3, no redondea
+long riesgo = (long)entero;      // cast necesario: posible pérdida silenciosa
+
+checked                          // detectar overflow en runtime:
+{
+    int max = int.MaxValue;
+    // int roto = max + 1;       ❌ lanza OverflowException dentro de checked
+}</code></pre>
+
+        <h3>Parseo de texto: tres estrategias</h3>
+        <table>
+            <thead>
+                <tr><th>Método</th><th>Entrada inválida</th><th>Cuándo usarlo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>int.Parse("abc")</code></td><td>Lanza FormatException</td><td>Confías en el formato (datos internos)</td></tr>
+                <tr><td><code>Convert.ToInt32(null)</code></td><td>null→0; inválido→excepción</td><td>Interop con bases de datos/COM</td></tr>
+                <tr><td><code>int.TryParse("abc", out var n)</code></td><td>Devuelve false SIN lanzar</td><td>Input de usuarios/archivos: LA elección</td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-csharp">Console.Write("Edad: ");
+if (int.TryParse(Console.ReadLine(), out int edadUsuario)) {
+    Console.WriteLine($"Naciste aprox. en {DateTime.Now.Year - edadUsuario}");
+} else {
+    Console.WriteLine("No es un número válido");
+}
+
+// is/as para tipos de referencia:
+object caja = "soy texto";
+if (caja is string texto) {           // verifica Y CONVIERTE en una línea
+    Console.WriteLine(texto.Length);
+}
+string? talVez = caja as string;      // null si no coincide, sin excepción</code></pre>
+        <blockquote class="aside aside-note">
+            <p>TryParse + out var es el patrón dominante para validar entrada. La cultura (CultureInfo) importa al parsear números: "3.14" es decimal en EE.UU. pero ¡314 en España! Para datos de servidor usa siempre CultureInfo.InvariantCulture.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>double para dinero</td><td>0.1+0.2 != 0.3; centavos fantasma en facturas</td><td>decimal SIEMPRE en finanzas</td></tr>
+                <tr><td>(int)pi esperando redondeo</td><td>3.99 se vuelve 3, no 4</td><td>Math.Round(pi) o MidpointRounding explícito</td></tr>
+                <tr><td>Parse sin manejo en input usuario</td><td>Crash FormatException con "12a"</td><td>TryParse con else informativo</td></tr>
+                <tr><td>Confundir copia valor vs referencia en List</td><td>"Modifiqué la copia y el original cambió"</td><td>Clonar: new List&lt;T&gt;(original) o ToList()</td></tr>
+                <tr><td>+= strings en loops calientes</td><td>Rendimiento cuadrático invisible</td><td>StringBuilder o string.Join</td></tr>
+                <tr><td>Usar ! (null-forgiving) como parche masivo</td><td>NRE en producción igualmente</td><td>Aceptar nullable design honestamente; checks reales</td></tr>
+                <tr><td>Comparar objetos clase con == esperando contenido</td><td>false aunque campos iguales (compara referencias)</td><td>Equals()/records (== sobrecargado a valor)</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Calculadora de IVA segura</strong>: pide precio por consola con TryParse (reintenta si inválido), calcula IVA 21% en decimal e imprime con formato :C de tu cultura.</li>
+            <li><strong>Demostrador valor vs referencia</strong>: replica el ejemplo List compartida; luego clona correctamente y verifica independencia; documenta en comentarios qué pasó línea a línea.</li>
+            <li><strong>Formateador de tabla</strong>: imprime 3 productos con interpolación alineada: |{nombre,-15}|{precio,10:C}|{stock,5}|.</li>
+            <li><strong>Parser robusto de fecha</strong>: lee "dd/MM/yyyy" del usuario con DateTime.TryParseExact y muestra día de semana en español (CultureInfo es-ES).</li>
+            <li><strong>Cazador de overflow</strong>: provoca overflow de int sin checked (valor absurdo silencioso) y con checked (excepción); explica la diferencia en comentario.</li>
+        </ol>
+    </div>
+</section>

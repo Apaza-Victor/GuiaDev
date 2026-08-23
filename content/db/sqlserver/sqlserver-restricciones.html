@@ -1,53 +1,216 @@
 <!-- 5. Restricciones (Constraints) - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="primary-key-identity">
-    <h2>PRIMARY KEY + IDENTITY</h2>
+<section id="primary-key-identity">
+    <h2><i class="fa-solid fa-fingerprint"></i> PRIMARY KEY e IDENTITY</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE TABLE dbo.Clientes (
-  Id INT IDENTITY(1,1) CONSTRAINT PK_Clientes PRIMARY KEY,
-  Email NVARCHAR(120) NOT NULL
-);</code></pre>
-    </div>
-  </section>
+        <p>La PK garantiza unicidad y crea automáticamente un índice. En SQL Server la combinación clásica es <code>INT IDENTITY</code> (autonumérico, el "auto_increment" local):</p>
+        <pre><code class="language-sql">CREATE TABLE Clientes (
+    id   INT IDENTITY(1000, 5) PRIMARY KEY,   -- seed 1000, salto 5
+    email NVARCHAR(120) NOT NULL
+);
+-- inserts generan: 1000, 1005, 1010...
 
-  <section id="foreign-key-y-acciones-referenciales">
-    <h2>FOREIGN KEY y acciones referenciales</h2>
+-- Ver el último generado en TU sesión:
+SELECT SCOPE_IDENTITY() AS ultimo_id;      -- ✅ recomendado (por sesión)
+SELECT @@IDENTITY;                          -- ⚠️ afectada por triggers
+SELECT IDENT_CURRENT('Clientes');           -- última de CUALQUIER sesión
+
+-- Insertar valor manual (cargas/migraciones):
+SET IDENTITY_INSERT Clientes ON;
+INSERT INTO Clientes (id, email) VALUES (1, 'legacy@mail.com');
+SET IDENTITY_INSERT Clientes OFF;
+
+-- Reajustar el contador:
+DBCC CHECKIDENT ('Clientes', RESEED, 500);  -- próximo insert: 505</code></pre>
+
+        <h3>PK natural vs surrogate</h3>
+        <table>
+            <thead>
+                <tr><th>Estrategia</th><th>Pros</th><th>Contras</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Surrogate INT IDENTITY</td><td>Corta, estable, joins rápidos</td><td>No significa nada por sí sola</td></tr>
+                <tr><td>Natural (DNI, email)</td><td>Autorreferencial legible</td><td>Datos reales CAMBIAN → cascade de updates</td></tr>
+                <tr><td>UNIQUEIDENTIFIER GUID</td><td>Generable offline, merge fácil</td><td>Ancho (16B), NEWID aleatorio fragmenta índice</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Patrón dominante corporativo: PK surrogate IDENTITY + constraint UNIQUE sobre la clave natural (email, DNI...). Lo mejor de ambos mundos.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="foreign-key-y-acciones-referenciales">
+    <h2><i class="fa-solid fa-link"></i> FOREIGN KEY y acciones referenciales</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE TABLE dbo.Pedidos (
-  Id INT IDENTITY(1,1) PRIMARY KEY,
-  ClienteId INT NOT NULL,
-  Fecha DATE NOT NULL CONSTRAINT DF_Pedidos_Fecha DEFAULT(GETDATE()),
-  CONSTRAINT FK_Pedidos_Clientes FOREIGN KEY (ClienteId)
-    REFERENCES dbo.Clientes(Id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
-);</code></pre>
-<p>Acciones disponibles: <code>CASCADE</code>, <code>SET NULL</code>, <code>SET DEFAULT</code> y <code>NO ACTION</code> (bloquea).</p>
-    </div>
-  </section>
+        <p>La FK garantiza que todo hijo apunte a un padre existente — la columna vertebral del modelo relacional:</p>
 
-  <section id="unique-check-y-not-null">
-    <h2>UNIQUE, CHECK y NOT NULL</h2>
+        <div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d206261636b67726f756e64436f6c6f7220234644464446380a736b696e706172616d2064656661756c74466f6e7453697a652031310a0a656e7469747920436c69656e746573207b0a20202a206964203a20494e54203c3c504b2c204944454e544954593e3e0a20202d2d0a2020656d61696c203a204e564152434841522831323029203c3c554e495155453e3e0a7d0a656e746974792050656469646f73207b0a20202a2070656469646f5f6964203a20494e54203c3c504b3e3e0a20202d2d0a20202320636c69656e74655f6964203a20494e54203c3c464b202d3e20436c69656e7465732e69643e3e0a20206665636861203a204441544554494d45320a7d0a656e746974792050726f647563746f73207b0a20202a2070726f647563746f5f6964203a20494e54203c3c504b3e3e0a20202d2d0a2020736b75203a205641524348415228323029203c3c554e495155453e3e0a7d0a656e7469747920446574616c6c65207b0a20202a2070656469646f5f6964203a20494e54203c3c504b2c20464b202d3e2050656469646f733e3e0a20202a2070726f647563746f5f6964203a20494e54203c3c504b2c20464b202d3e2050726f647563746f733e3e0a20202d2d0a202063616e7469646164203a20534d414c4c494e54203c3c434845434b203e20303e3e0a7d0a436c69656e746573207c7c2d2d6f7b2050656469646f73203a20636c69656e74655f69640a50656469646f73207c7c2d2d7c7b20446574616c6c65203a20636f6e7469656e650a50726f647563746f73207c7c2d2d6f7b20446574616c6c65203a207265666572656e636961646f0a40656e64756d6c" alt="Diagrama ER de tienda con restricciones entre clientes, pedidos y productos" loading="lazy"  />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam backgroundColor #FDFDF8
+skinparam defaultFontSize 11
+
+entity Clientes {
+  * id : INT <<PK, IDENTITY>>
+  --
+  email : NVARCHAR(120) <<UNIQUE>>
+}
+entity Pedidos {
+  * pedido_id : INT <<PK>>
+  --
+  # cliente_id : INT <<FK -> Clientes.id>>
+  fecha : DATETIME2
+}
+entity Productos {
+  * producto_id : INT <<PK>>
+  --
+  sku : VARCHAR(20) <<UNIQUE>>
+}
+entity Detalle {
+  * pedido_id : INT <<PK, FK -> Pedidos>>
+  * producto_id : INT <<PK, FK -> Productos>>
+  --
+  cantidad : SMALLINT <<CHECK > 0>>
+}
+Clientes ||--o{ Pedidos : cliente_id
+Pedidos ||--|{ Detalle : contiene
+Productos ||--o{ Detalle : referenciado
+@enduml</code></pre>
+  </details>
+</div>
+
+        <pre><code class="language-sql">CREATE TABLE Pedidos (
+    pedido_id  INT IDENTITY(1,1) NOT NULL,
+    cliente_id INT NOT NULL,
+    total      DECIMAL(12,2) NOT NULL,
+    CONSTRAINT PK_Pedidos PRIMARY KEY (pedido_id),
+    CONSTRAINT FK_pedidos_clientes FOREIGN KEY (cliente_id)
+        REFERENCES Clientes (id)
+        ON DELETE NO ACTION          -- default: bloquea borrar padre con hijos
+        ON UPDATE NO ACTION,
+);
+
+-- Cascadas (usar conscientemente):
+CONSTRAINT FK_detalles_pedidos FOREIGN KEY (pedido_id)
+    REFERENCES Pedidos (pedido_id)
+    ON DELETE CASCADE                 -- borrar pedido borra sus detalles
+    ON UPDATE CASCADE;
+
+-- SET NULL / SET DEFAULT al eliminar padre:
+ON DELETE SET NULL     -- huérfanos quedan NULL (columna nullable requerida)
+ON DELETE SET DEFAULT</code></pre>
+        <table>
+            <thead>
+                <tr><th>Acción ON DELETE</th><th>Efecto</th><th>Riesgo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>NO ACTION (default)</td><td>Error si hay hijos</td><td>Ninguno — el seguro por defecto ✅</td></tr>
+                <tr><td>CASCADE</td><td>Borra hijos en cadena</td><td>Eliminaciones masivas accidentales ⚠️</td></tr>
+                <tr><td>SET NULL</td><td>Huérfanos NULL</td><td>Solo si negocio lo permite</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>CASCADE encadenado en modelos profundos puede convertir un DELETE de una fila padre en borrado en cascada de millones de filas hijas — con locks y log incluidos. Documenta cada cascada y evita cadenas de más de dos niveles.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="unique-check-y-not-null">
+    <h2><i class="fa-solid fa-shield-halved"></i> UNIQUE, CHECK y NOT NULL</h2>
     <div class="doc-content">
-<pre><code class="language-sql">CREATE TABLE dbo.Empleados (
-  Id INT IDENTITY PRIMARY KEY,
-  Curp CHAR(18) NOT NULL CONSTRAINT UQ_Empleados_Curp UNIQUE,
-  Nombre NVARCHAR(80) NOT NULL,
-  Salario DECIMAL(10,2) CONSTRAINT CK_Empleados_Salario CHECK (Salario &gt; 0),
-  Edad TINYINT CONSTRAINT CK_Empleados_Edad CHECK (Edad BETWEEN 18 AND 100)
-);</code></pre>
-    </div>
-  </section>
+        <pre><code class="language-sql">-- UNIQUE: permite UN solo NULL (a diferencia de otras BD):
+CREATE TABLE Empleados (
+    dni   CHAR(14) NOT NULL UNIQUE,               -- inline
+    email NVARCHAR(120),
+    CONSTRAINT UQ_emp_email UNIQUE (email)         -- nombrada explícita
+);
 
-  <section id="administrar-restricciones">
-    <h2>Administrar restricciones</h2>
+-- CHECK: reglas de negocio a nivel motor:
+CREATE TABLE Pedidos (
+    cantidad SMALLINT NOT NULL CONSTRAINT CHK_cantidad_positiva CHECK (cantidad &gt; 0),
+    estado   VARCHAR(20) NOT NULL CONSTRAINT CHK_estado_valido
+             CHECK (estado IN ('pendiente','pagado','enviado','cancelado')),
+    f_nac    DATE NOT NULL,
+    f_alta   DATE NOT NULL,
+    CONSTRAINT CHK_fechas_coherentes CHECK (f_alta &gt;= f_nac)
+);
+
+-- CHECK con funciones (¡cuidado rendimiento!):
+ALTER TABLE Clientes ADD CONSTRAINT CHK_email_formato
+CHECK (email LIKE '%_@_%._%');                    -- simple, no RFC completo
+
+-- NOT NULL con valores default:
+activo BIT NOT NULL CONSTRAINT DF_activo DEFAULT(1);</code></pre>
+        <blockquote class="aside aside-caution">
+            <p>CHECK con UDFs o subconsultas NO existe (solo expresiones de fila). Y los CHECK existentes no revalidan datos antiguos salvo WITH CHECK: datos pre-existentes inválidos pueden convivir silenciosamente con tu constraint nueva.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="administrar-restricciones">
+    <h2><i class="fa-solid fa-sliders"></i> Administrar restricciones</h2>
     <div class="doc-content">
-<pre><code class="language-sql">-- Ver restricciones de una tabla
-SELECT name, type_desc FROM sys.objects
-WHERE parent_object_id = OBJECT_ID('dbo.Empleados');
+        <pre><code class="language-sql">-- Descubrir qué constraints tiene una tabla:
+EXEC sp_helpconstraint 'Pedidos';
+SELECT * FROM sys.key_constraints  WHERE parent_object_id = OBJECT_ID('Pedidos');
+SELECT * FROM sys.check_constraints WHERE parent_object_id = OBJECT_ID('Pedidos');
 
--- Eliminar y volver a crear
-ALTER TABLE dbo.Empleados DROP CONSTRAINT CK_Empleados_Edad;
-ALTER TABLE dbo.Empleados ADD CONSTRAINT CK_Empleados_Edad CHECK (Edad &gt;= 16);</code></pre>
+-- Deshabilitar temporalmente (cargas masivas):
+ALTER TABLE Pedidos NOCHECK CONSTRAINT FK_pedidos_clientes;
+-- ... carga ...
+ALTER TABLE Pedidos WITH CHECK CHECK CONSTRAINT FK_pedidos_clientes;
+
+-- Eliminar:
+ALTER TABLE Pedidos DROP CONSTRAINT FK_pedidos_clientes;</code></pre>
+        <blockquote class="aside aside-danger">
+            <p>NOCHECK sin re-habilitar con <strong>WITH CHECK</strong> deja la FK "no confiable": el optimizador la ignora para simplificar planes (joins eliminables) y tus datos pueden contener huérfanos invisibles. El patrón correcto siempre termina en WITH CHECK CHECK CONSTRAINT.</p>
+        </blockquote>
+
+        <h3>Checklist de diseño con constraints</h3>
+        <ul>
+            <li>Toda tabla tiene PK explícita con nombre (nunca anónima).</li>
+            <li>Claves naturales duplicadas protegidas con UNIQUE.</li>
+            <li>Reglas invariables del negocio en CHECK, no solo en app.</li>
+            <li>Constraints NOMBRADAS (migraciones limpias: DROP CONSTRAINT nombre exacto).</li>
+            <li>Cascadas mínimas y documentadas.</li>
+        </ul>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Error típico</th><th>Mensaje/síntoma</th><th>Correcto</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Confianza en @@IDENTITY tras triggers</td><td>ID de tabla AJENA al insert</td><td>SCOPE_IDENTITY() o OUTPUT clause</td></tr>
+                <tr><td>TRUNCATE con FKs activas</td><td>"Cannot truncate table because it is referenced"</td><td>DELETE por lotes o drop FKs primero</td></tr>
+                <tr><td>CASCADE accidental masivo</td><td>Borrados en cadena imprevistos</td><td>NO ACTION default + borrado explícito ordenado</td></tr>
+                <tr><td>Constraint sin nombre</td><td>Nombres aleatorios imposibles de migrar</td><td>CONSTRAINT nombre_siempre</td></tr>
+                <tr><td>NOCHECK olvidado activo</td><td>Filas huérfanas + planes subóptimos</td><td>WITH CHECK CHECK CONSTRAINT al terminar cargas</td></tr>
+                <tr><td>Esperar múltiples NULLs en UNIQUE</td><td>"Violation of UNIQUE KEY" al segundo NULL</td><td>SQL Server: único NULL permitido; diseñar acorde</td></tr>
+            </tbody>
+        </table>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Modela el ER del diagrama</strong>: implementa las 4 tablas completas con TODAS las constraints nombradas del diagrama PlantUML.</li>
+            <li><strong>Laboratorio cascadas</strong>: con pedidos+detalle poblados, prueba DELETE padre con NO ACTION vs CASCADE; documenta ambos comportamientos.</li>
+            <li><strong>Cazador de huérfanos</strong>: NOCHECK una FK, inserta hijo ilegal, re-habilita con y sin WITH CHECK; usa DBCC CHECKCONSTRAINTS para detectar.</li>
+            <li><strong>IDENTITY bajo control</strong>: practica IDENTITY_INSERT, RESEED y SCOPE_IDENTITY vs @@IDENTITY con trigger intermedio que inserte en otra tabla.</li>
+            <li><strong>Guardián de negocio</strong>: añade CHECKs realistas a tu modelo (precios ≥ 0, fechas coherentes, estados válidos) e intenta violarlos todos documentando mensajes.</li>
+        </ol>
+    </div>
+</section>

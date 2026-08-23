@@ -1,48 +1,165 @@
 <!-- 15. Seguridad: logins, usuarios y permisos - SQL Server (Base de Datos) -->
-<!-- Contenido local del proyecto -->
-  <section id="login-vs-usuario">
-    <h2>Login vs Usuario</h2>
+<section id="login-vs-usuario">
+    <h2><i class="fa-solid fa-id-card"></i> Login vs Usuario: dos puertas distintas</h2>
     <div class="doc-content">
-<p>Un <strong>login</strong> da acceso al SERVIDOR; un <strong>usuario</strong> mapea ese login dentro de UNA base de datos. Son dos niveles.</p>
-<pre><code class="language-sql">-- Nivel servidor
-CREATE LOGIN vendedor WITH PASSWORD = 'S3gura!2026', CHECK_POLICY = ON;
+        <p>El error conceptual más común: confundir el <strong>login</strong> (identidad a nivel SERVIDOR) con el <strong>usuario</strong> (su representación DENTRO de una base). Son dos cuentas mapeadas:</p>
+        <pre><code class="language-sql">-- 1. LOGIN a nivel servidor (puede conectar):
+CREATE LOGIN app_web WITH PASSWORD = 'ClaveFuerte123!',
+    CHECK_POLICY = ON;                    -- respeta política de Windows
 
--- Nivel base de datos
+-- Autenticación Windows (recomendada en dominios):
+CREATE LOGIN [DOMINIO\jlopez] FROM WINDOWS;
+
+-- 2. USUARIO en cada base donde necesita trabajar:
 USE Tienda;
-CREATE USER vendedor FOR LOGIN vendedor;</code></pre>
-    </div>
-  </section>
+CREATE USER app_web FOR LOGIN app_web;
 
-  <section id="roles-fijos-de-base-de-datos">
-    <h2>Roles fijos de base de datos</h2>
-    <div class="doc-content">
-<pre><code class="language-sql">ALTER ROLE db_datareader ADD MEMBER vendedor;   -- solo lectura
-ALTER ROLE db_datawriter ADD MEMBER vendedor;   -- lectura/escritura
-ALTER ROLE db_ddladmin  ADD MEMBER desarrollador; -- puede crear objetos</code></pre>
-<p>Roles clave: <code>db_datareader</code>, <code>db_datawriter</code>, <code>db_ddladmin</code>, <code>db_owner</code> (control total de la BD).</p>
-    </div>
-  </section>
+-- Mapeo directo al crear:
+USE Tienda;
+CREATE USER jlopez FOR LOGIN [DOMINIO\jlopez];
 
-  <section id="grant-deny-y-revoke">
-    <h2>GRANT, DENY y REVOKE</h2>
-    <div class="doc-content">
-<pre><code class="language-sql">GRANT SELECT, EXECUTE ON SCHEMA::ventas TO vendedor;
-DENY DELETE ON dbo.Facturas TO vendedor;   -- gana sobre cualquier GRANT
-REVOKE DENY ON dbo.Facturas FROM vendedor; -- revierte el DENY</code></pre>
+-- Ver quién es quién:
+SELECT SUSER_SNAME() AS login_actual, USER_NAME() AS usuario_en_esta_base;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Nivel</th><th>Objeto</th><th>Concede</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Servidor</td><td>Login + roles de servidor</td><td>Conectar, admin (sysadmin, dbcreator...)</td></tr>
+                <tr><td>Base de datos</td><td>Usuario + roles de BD</td><td>Leer/escribir/definir objetos concretos</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p>Usuarios contenidos (contained users): CREATE USER app_web WITH PASSWORD='...' — viven SOLO dentro de la base sin login de servidor. Perfectas para Azure SQL y para mover bases entre servidores sin re-mapear SIDs.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
 
-  <section id="buenas-practicas">
-    <h2>Buenas prácticas</h2>
+<section id="roles-fijos-de-base-de-datos">
+    <h2><i class="fa-solid fa-users-gear"></i> Roles: fijos y personalizados</h2>
     <div class="doc-content">
-<ul>
-<li>Usa <strong>Windows Authentication</strong> cuando sea posible (integrada con AD).</li>
-<li>Principio de mínimo privilegio: nada de trabajar con <code>sa</code>.</li>
-<li>Contraseñas con política (<code>CHECK_POLICY = ON</code>).</li>
-<li>Audita con <code>sys.server_principals</code>, <code>sys.database_permissions</code> y SQL Server Audit.</li>
-</ul>
-<pre><code class="language-sql">-- ¿Quién tiene acceso y con qué permisos?
-SELECT name, type_desc FROM sys.server_principals WHERE type IN ('S','U');
-SELECT * FROM fn_my_permissions(NULL, 'DATABASE');</code></pre>
+        <pre><code class="language-sql">-- Roles FIJOS de base de datos (no se pueden crear más así):
+ALTER ROLE db_datareader ADD MEMBER app_web;      -- leer TODO
+ALTER ROLE db_datawriter ADD MEMBER app_web;      -- escribir TODO
+-- db_ddladmin: crear/modificar objetos
+-- db_accessadmin: gestionar usuarios
+-- db_owner: dios de la base ⚠️ mínimo personal posible
+
+-- Roles FIJOS DE SERVIDOR (para logins):
+ALTER SERVER ROLE sysadmin ADD MEMBER [DOMINIO\dba_jefe];   -- máximo poder
+-- dbcreator, securityadmin, processadmin... por necesidad real
+
+-- ✅ ROL PERSONALIZADO: permisos exactos, sin sobrantes:
+CREATE ROLE rol_ventas;
+GRANT SELECT ON SCHEMA::ventas TO rol_ventas;
+GRANT EXECUTE ON OBJECT::dbo.sp_RegistrarPedido TO rol_ventas;
+ALTER ROLE rol_ventas ADD MEMBER usuario_app1, usuario_app2;</code></pre>
+
+        <h3>Jerarquía recomendada de roles por perfil</h3>
+        <table>
+            <thead>
+                <tr><th>Perfil</th><th>Rol</th><th>Puede…</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>App web</td><td>rol_app custom</td><td>DML sobre esquemas necesarios + EXEC procedures</td></tr>
+                <tr><td>Analista</td><td>db_datareader</td><td>Solo lectura global</td></tr>
+                <tr><td>Desarrollador</td><td>db_datareader + ddl en dev</td><td>Todo en entornos NO productivos</td></tr>
+                <tr><td>DBA</td><td>sysadmin (servidor)</td><td>Todo — auditado y contado (≤2-3 personas)</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>Mínimo privilegio como religión: la app web NUNCA con db_owner ni datareader global. Un rol por caso de uso con grants quirúrgicos. Cuando un ataque inyecta SQL, hereda EXACTAMENTE los permisos del login de conexión — diseña asumiendo que ese día llegará.</p>
+        </blockquote>
+        <p>---</p>
     </div>
-  </section>
+</section>
+
+<section id="grant-deny-y-revoke">
+    <h2><i class="fa-solid fa-lock"></i> GRANT / DENY / REVOKE</h2>
+    <div class="doc-content">
+        <pre><code class="language-sql">-- GRANT: conceder:
+GRANT SELECT ON dbo.Clientes TO rol_analistas;
+GRANT SELECT, INSERT, UPDATE ON SCHEMA::ventas TO rol_operaciones;   -- sin DELETE
+GRANT EXECUTE ON dbo.sp_CalcularNomina TO rol_rrhh;
+GRANT SELECT ON dbo.Clientes (nombre, ciudad) TO rol_marketing;      -- por columnas!
+
+-- DENY: prohibición que GANA siempre (override de cualquier GRANT):
+DENY DELETE ON dbo.Facturas TO PUBLIC;         -- nadie borra facturas jamás
+DENY UPDATE ON Facturas (numero_fiscal) TO rol_contabilidad;
+
+-- REVOKE: quitar lo otorgado (vuelve a default):
+REVOKE SELECT ON dbo.Clientes FROM rol_temporal;</code></pre>
+        <table>
+            <thead>
+                <tr><th>Sentencia</th><th>Efecto acumulativo</th><th>Caso de uso estrella</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>GRANT</td><td>Suma permiso (+)</td><td>Dar acceso funcional</td></tr>
+                <tr><td>DENY</td><td>Bloquea aunque haya GRANTs heredados (−∞)</td><td>Excepciones duras por columna/tabla sensible</td></tr>
+                <tr><td>REVOKE</td><td>Neutral (0): elimina grant/deny propio</td><td>Retirar accesos limpiamente</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-danger">
+            <p>Los permisos se ACUMULAN entre roles: usuario en rol A (SELECT) + rol B (INSERT) tiene ambos. DENY es el único veto absoluto — pero úsalo con pinzas: un DENY heredado olvidado produce errores "permission denied" imposibles de rastrear años después.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="buenas-practicas">
+    <h2><i class="fa-solid fa-user-shield"></i> Buenas prácticas de seguridad</h2>
+    <div class="doc-content">
+        <ol>
+            <li><strong>Sa deshabilitado o renombrado</strong>: contraseña kilométrica si existe; nunca usada por apps.</li>
+            <li><strong>Windows Auth primero</strong>: dominio gestiona claves y expiración; SQL Auth solo cuando no hay alternativa.</li>
+            <li><strong>Un login por aplicación/servicio</strong>: trazabilidad total de qué sistema hizo qué.</li>
+            <li><strong>Roles custom con grants mínimos</strong>: nada de db_owner por comodidad.</li>
+            <li><strong>Auditoría activa</strong>: SQL Server Audit o triggers DDL para cambios de seguridad.</li>
+            <li><strong>Encriptación en capas</strong>: TDE para reposo (archivo), Always Encrypted para columnas ultra-sensibles (tarjetas, salud).</li>
+            <li><strong>Dynamic Data Masking</strong>: teléfonos/tarjetas enmascarados automáticamente para no-privilegiados.</li>
+        </ol>
+        <pre><code class="language-sql">-- Revisión periódica de quién puede qué:
+EXEC sp_helpsrvrolemember 'sysadmin';           -- ¿quién es dios?
+EXEC sp_helprolemember 'db_owner';              -- ¿y dueños de bases?
+SELECT * FROM sys.database_principals WHERE type = 'S';  -- usuarios SQL puros
+SELECT * FROM sys.sql_logins WHERE is_policy_checked = 0; -- logins SIN política de clave ⚠️</code></pre>
+        <blockquote class="aside aside-note">
+            <p>La auditoría responde "¿quién tocó qué y cuándo?" DESPUÉS del incidente; los roles correctos lo PREVIENEN. Ambos son obligatorios: prevención sin auditoría es fe ciega; auditoría sin prevención es cámara filmando el robo.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+        <table>
+        <thead>
+            <tr><th>Error típico</th><th>Mensaje/síntoma</th><th>Correcto</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Crear LOGIN sin USUARIO en la base</td><td>"The server principal is not able to access the database"</td><td>CREATE USER ... FOR LOGIN en cada BD necesaria</td></tr>
+            <tr><td>App conectando como sa</td><td>Todo el mundo root; imposible auditar</td><td>Login dedicado + rol mínimo</td></tr>
+            <tr><td>Esperar que DENY de servidor baje a bases</td><td>Permisos sorpresa activos</td><td>Gestionar deny/grant en el nivel exacto requerido</td></tr>
+            <tr><td>db_owner por "si acaso"</td><td>Blast radius total ante compromisión</td><td>Grants quirúrgicos por esquema/objeto</td></tr>
+            <tr><td>Contraseñas en connection strings planas</td><td>Secrets versionados en git 😱</td><td>Secret managers / Integrated Security</td></tr>
+            <tr><td>Olvidar CHECK_POLICY=ON en logins SQL</td><td>'123456' aceptado eternamente</td><td>Política activa + rotación documentada</td></tr>
+        </tbody>
+    </table>
+    <p>---</p>
+    </div>
+</section>
+
+<section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+        <ol>
+        <li><strong>Setup completo</strong>: crea login app_web → usuario en Tienda → rol custom con DML+EXEC solo sobre ventas; verifica desde otra sesión SSMS conectada como app_web.</li>
+        <li><strong>Laboratorio GRANT columnas</strong>: concede SELECT de Clientes solo (nombre,email); intenta leer salario como ese usuario y documenta el error.</li>
+        <li><strong>Prueba del DENY absoluto</strong>: usuario con GRANT DELETE vía rol + DENY DELETE directo; intenta borrar; explica por qué gana el DENY.</li>
+        <li><strong>Auditor de tu instancia</strong>: ejecuta los 4 checks de buenas prácticas; lista hallazgos y corrige los corregibles.</li>
+        <li><strong>Simulacro de intrusión</strong>: asumiendo SQL injection exitosa bajo tu login de app, enumera QUÉ podría hacer el atacante con tus grants actuales — luego reduce permisos y repite el análisis.</li>
+    </ol>
+    </div>
+</section>
