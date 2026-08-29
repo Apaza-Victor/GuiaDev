@@ -1,0 +1,132 @@
+<!-- 3. IDEs y Herramientas para Python - Bibliotecas (Utilidades) -->
+  <section id="ides-python">
+    <h2>IDEs y editores Python <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># PyCharm (JetBrains): el más completo para Python
+#   - Community (gratis) cubre edición, depuración y test
+# VS Code: ligero, con extensión Python (Microsoft)
+code --install-extension ms-python.python
+code --install-extension ms-python.vscode-pylance
+
+# JupyterLab: notebooks para exploración/análisis de datos
+pip install jupyterlab &amp;&amp; jupyter lab
+
+# Neovim/Emacs + LSP (pyright) para minimalistas
+# Thiểm/Spyder (científico), Atom, Sublime como alternativas
+</code></pre>
+<blockquote class="aside aside-tip"><p>PyCharm para productividad tradicional, VS Code para flujo ligero/generoso, JupyterLab para análisis de datos. Todos con depurador interactivo integrado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="gestores-paquetes">
+    <h2>Gestores de paquetes modernos: uv, poetry, conda <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># uv: el gestor más rápido (reemplaza pip+venv+pipx)
+pip install uv
+uv venv                    # crea .venv
+uv pip install requests    # instala sin pip
+uv add requests            # con pyproject (uv.lock reproducible)
+
+# poetry: pyproject con dependencias aisladas
+poetry new proyecto
+poetry add requests
+poetry run python main.py
+
+# conda / mamba: cuando necesitas binarios nativos (numpy, cuda, GDAL)
+conda create -n data python=3.12
+conda activate data
+</code></pre>
+<blockquote class="aside aside-note"><p>Hoy se recomienda `uv` o `poetry` con `pyproject.toml`. `conda` sigue siendo útil para entornos científicos con binarios precompilados.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipo-lint-format">
+    <h2>Tipos, linting y formato <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Tipado
+pip install mypy
+mypy mi_codigo/                  # verificación de tipos
+# pyright (de Microsoft) integrado con Pylance en VS Code
+
+# Linting y formato
+pip install ruff
+ruff check .                     # lint a velocidad de explosión
+ruff format .                    # formateo (auto black-compatible)
+
+# Alternativas clásicas
+# black (formato), flake8 (lint), isort (orden imports),
+# pre-commit para ejecutarlos antes de cada commit:
+#   pre-commit install ; pre-commit run --all-files
+</code></pre>
+<pre><code class="language-python">def procesar(nombre: str, edad: int) -> dict[str, str]:
+    return {"nombre": nombre.upper(), "categoria": "adulto" if edad >= 18 else "menor"}
+</code></pre>
+<blockquote class="aside aside-success"><p>`ruff` unifica lint+formato en un solo binario ultrarrápido. Añade mypy para tipado fuerte, especialmente útil en proyectos de largo plazo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="debug-perfilado">
+    <h2>Debug y perfilado <span class="gd-badge gd-badge-note">Diagnóstico</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># pdb: depurador interactivo
+python -m pdb script.py
+# o en el código: breakpoint()
+
+# Post-mortem al ejecutar bajo pdb
+python -m pdb -c continue script.py
+
+# Perfilado
+python -m cProfile -o perfil.prof script.py
+pip install snakeviz
+snakeviz perfil.prof             # visual IC
+
+# Memoria
+pip install memory_profiler
+python -m memory_profiler script.py
+
+# Visual Studio Code: GUI debugger (solo clic en la línea)
+# PyCharm: profiler gráfico integrado
+</code></pre>
+<blockquote class="aside aside-tip"><p>cProfile + snakeviz son el par estándar para encontrar cuellos de botella. En los IDEs el debug visual (breakpoints con mouse) suele ser suficiente en el día a día.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="entornos-produccion">
+    <h2>Producción: contenedores y CI <span class="gd-badge gd-badge-note">Cloud</span></h2>
+    <div class="doc-content">
+<pre><code class="language-docker">FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY app/ app/
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+</code></pre>
+<pre><code class="language-yaml"># GitHub Actions
+- uses: actions/setup-python@v5
+  with: { python-version: '3.12' }
+- run: pip install -r requirements-dev.txt
+- run: ruff check .
+- run: mypy app/
+- run: pytest -v --cov=app --cov-fail-under=80
+</code></pre>
+<blockquote class="aside aside-note"><p>Imagen `-slim`, desactivar cache de pip, y un pipeline que corra ruff+mypy+pytest antes del push: mínimo de calidad reproducible.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un entorno `uv` en un proyecto y añade requests+fastapi.</li>
+<li>Configura `.pre-commit-config.yaml` con ruff y mypy, instala el hook.</li>
+<li>Perfila un script que procese 1M números con cProfile y mejóralo.</li>
+<li>Usa `breakpoint()` en un bucle y recorre cuadros/interior con pdb (up/down/p).</li>
+<li>Escribe el Dockerfile y la pipeline CI de tu app FastAPI con tests y lint.</li>
+</ol>
+    </div>
+  </section>

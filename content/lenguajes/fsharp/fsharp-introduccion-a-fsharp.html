@@ -1,0 +1,153 @@
+<!-- 1. Introducción a F# - F# (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="que-es-fsharp">
+    <h2>¿Qué es F#?</h2>
+    <div class="doc-content">
+<p><strong>F#</strong> (F sharp) es un lenguaje <strong>funcional</strong> de la familia .NET, creado inicialmente por Microsoft Research (2005) y hoy open source, multi-plataforma. Combina expresividad funcional con interoperabilidad total con C# y el resto de .NET.</p>
+<p>Su sintaxis prioriza la <strong>inmutabilidad</strong>, las funciones como ciudadanos de primera clase, el <strong>type inference</strong> (no escribes tipos casi nunca) y el <em>pattern matching</em>. En campos como finanzas, ciencia de datos y scripting, F# brilla por su seguridad y concisión: con menos código expresa lo mismo que C#.</p>
+<blockquote class="aside aside-note"><p>"Move fast and fix things" es el eslogan de F#: su sistema de tipos te deja refactorizar confiado porque el compilador detecta errores antes de ejecutar.</p></blockquote>
+<table><thead><tr><th>Característica</th><th>Detalle</th></tr></thead><tbody><tr><td>Ecosistema</td><td>.NET (Multi-plataforma: Windows, Linux, macOS)</td></tr><tr><td>Paradigma</td><td>Funcional primero, con OOP e imperativo cuando haga falta</td></tr><tr><td>Punto fuerte</td><td>Seguridad de tipos + concisión funcional</td></tr><tr><td>Tipado</td><td>Fuerte, estático, inferido</td></tr><tr><td>Herramientas</td><td>dotnet CLI, FSI (scripts), Ionide (VS Code)</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion">
+    <h2>Instalación</h2>
+    <div class="doc-content">
+<p>F# se instala con el <strong>.NET SDK</strong>. Una vez instalado, tienes el compilador F# (<code>dotnet fsi</code>) y puedes crear proyectos F# con plantillas.</p>
+<pre><code class="language-bash"># Verificar .NET SDK
+dotnet --version
+
+# Instalar SDK en Windows
+# winget install Microsoft.DotNet.SDK.8
+
+# en Ubuntu / Debian
+# sudo apt-get install dotnet-sdk-8.0   (tras configurar el repo de Microsoft)
+
+# en macOS con brew
+# brew install dotnet-sdk
+
+# Plantillas F#
+dotnet new list | findstr FSharp
+
+# Crear un proyecto de consola F#
+dotnet new console -lang F# -o MiAplicacion
+cd MiAplicacion
+dotnet run
+
+# Script F#: archivo .fsx ejecutado por el intérprete
+dotnet fsi mi_script.fsx</code></pre>
+<blockquote class="aside aside-tip"><p>Para escribir lo más rápido, crea un archivo <code>prueba.fsx</code> (Script F#): abres <code>dotnet fsi</code> y lo ejecutas sin compilar. Es la forma ideal para tutoriales, prototipos y automatización.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primer-programa">
+    <h2>Tu primer programa</h2>
+    <div class="doc-content">
+<p>Un programa F# es una lista de <strong>expresiones</strong>, no de sentencias. La función principal se llama <code>main</code>; el orden del código importa (no puedes usar un nombre antes de definirlo).</p>
+<pre><code class="language-fsharp">// Program.fs
+let nombre = "F#"            // let: vincula un valor (inmutable)
+printfn "Hola, %s!" nombre   // printfn imprime formateado
+
+let anio = 2026
+printfn "Estamos en %d" anio
+
+let suma = 2 + 3             // las expresiones producen valores
+printfn "2 + 3 = %d" suma
+
+// El último valor es la salida del programa (exit code implícito)
+0   // devolver 0 = éxito</code></pre>
+<pre><code class="language-bash"># Uso básico
+dotnet new console -lang F# -o Hola
+cd Hola
+dotnet run
+# Salida:
+# Hola, F#!
+# Estamos en 2026
+# 2 + 3 = 5
+
+# Versión script
+# hola.fsx
+dotnet fsi hola.fsx</code></pre>
+<blockquote class="aside aside-caution"><p>En F# los valores con <code>let</code> son <strong>inmutables por defecto</strong>: no puedes reasignar <code>let x = 1; x = 2</code>. Esa es una virtud: evita un montón de bugs. Para mutar se usa <code>let mutable</code>, con reserva.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fsi">
+    <h2>F# Interactive (FSI)</h2>
+    <div class="doc-content">
+<p><strong>FSI</strong> es el REPL de F#. En un script <code>.fsx</code> cada línea se puede evaluar repetidamente; en la terminal de FSI escribe expresiones y Julia te responde con <code>val</code> y su tipo.</p>
+<pre><code class="language-bash"># Lanzar el REPL
+dotnet fsi
+
+&gt; let x = 10;;
+val x : int = 10
+
+&gt; let y = x * 2;;
+val y : int = 20
+
+&gt; x + y;;
+val it : int = 30
+
+# Salir del REPL
+#quit;;
+</code></pre>
+<pre><code class="language-fsharp">// En un archivo .fsx puedes combinar en un solo flujo
+let celsius = 25.0
+let fahrenheit = celsius * 1.8 + 32.0
+printfn "%A grados C = %A grados F" celsius fahrenheit
+
+// %A es el formato "bonito" para cualquier tipo
+let datos = [ 1; 2; 3; 4 ]
+printfn "%A" datos   // [1; 2; 3; 4]</code></pre>
+<blockquote class="aside aside-tip"><p>El doble <code>;;</code> marca el final de una expresión en FSI. Los scripts <code>.fsx</code> no lo necesitan. Para ver el tipo de algo en el REPL sin imprimirlo, solo escribe la expresión.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="inmutabilidad">
+    <h2>Inmutabilidad y valores</h2>
+    <div class="doc-content">
+<p>El corazón de F# es el <strong>dato sobre el efecto</strong>: defines valores, no "variables". Combinas funciones y "pipes" para construir pipelines declarativos.</p>
+<pre><code class="language-fsharp">// Valores inmutables
+let ciudad = "Lima"
+let poblacion = 10_000_000
+
+// type inference: F# deduce todos los tipos
+let area = 3.14159 * (2.0 ** 2.0)
+
+// let mutable (úselo con moderación)
+let mutable contador = 0
+contador &lt;- contador + 1      // operador de asignación &lt;-
+printfn "%d" contador
+
+// Ninguna función con efectos secundarios escapa del sistema:
+// se puede saber qué produce una función literalmente leyéndola
+let conImpuesto precio = precio * 1.18
+printfn "Precio con impuesto: %A" (conImpuesto 100.0)
+
+// Tipo de unidad: funciones sin return devuelven () "unit"
+let saluda() = printfn "Saludos"
+saluda()</code></pre>
+<blockquote class="aside aside-success"><p>Esta inmutabilidad por defecto + funciones puras es lo que hace a F# fácil de razonar, testear y paralelizar. Cuando domines los "pipes" del siguiente módulo, escribirás análisis de datos en F# que en C# serían 3 veces más largos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Instalación</strong>: ejecuta <code>dotnet --version</code> y crea <code>dotnet new console -lang F#</code>; haz <code>dotnet run</code>.</li>
+<li><strong>Perfil personal</strong>: en un <code>.fsx</code> define tu nombre, edad y ciudad con <code>let</code>, e imprime un párrafo con <code>printfn</code> y <code>%s</code>.</li>
+<li><strong>Conversor</strong>: convierte pulgadas a centímetros y Fahrenheit a Celsius con funciones puras.</li>
+<li><strong>REPL</strong>: inicia <code>dotnet fsi</code>, declara un valor, usa <code>;;</code> y observa la inferencia de tipos.</li>
+<li><strong>Inmutabilidad</strong>: intenta reasignar un <code>let</code> (verás error), y luego prueba <code>let mutable</code> con <code>&lt;-</code>. Explica en un comentario qué pasó.</li>
+</ol>
+<p>En la próxima lección dominaremos la sintaxis: <code>let</code>, funciones, el operador <code>|&gt;</code> (pipe) y las tuplas.</p>
+    </div>
+  </section>

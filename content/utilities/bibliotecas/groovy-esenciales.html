@@ -1,0 +1,109 @@
+<!-- 1. Librerías Esenciales de Groovy - Bibliotecas (Utilidades) -->
+  <section id="groovy-std">
+    <h2>La sintaxis y la GDK <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-groovy">// GDK: Groovy Development Kit extiende JDK con métodos atajos
+def lista = [3, 1, 4, 1, 5]
+println lista.findAll { it % 2 == 0 }.collect { it * 10 }.sort()
+
+def mapa = [nombre: 'Ana', edad: 30]
+println mapa.nombre
+
+// Strings GString e interpolación
+def nombre = 'Mundo'
+println "Hola, $nombre"
+
+// closures y listas
+[1, 2, 3].each { println it * 2 }
+
+// JDK pots everywhere
+def texto = '  hola mundo  '
+println texto.trim().toUpperCase()
+println (1..10).sum()
+
+// Config y JSON con JsonSlurper
+import groovy.json.JsonSlurper
+def datos = new JsonSlurper().parseText('{"a": 1}')
+</code></pre>
+<blockquote class="aside aside-tip"><p>GDK añade sugar a las colecciones (each/findAll/collect), GString, closures y rangos. Groovy corre en JVM y es 100% interoperable con Java.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="grapes">
+    <h2>Grapes y @Grab: dependencias en el código <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-groovy">// @Grab: resuelve deps desde Maven Central dentro del propio script
+@Grab('com.fasterxml.jackson.core:jackson-databind:2.17.2')
+import com.fasterxml.jackson.databind.ObjectMapper
+
+def mapper = new ObjectMapper()
+def obj = mapper.readValue('{"x": 10}', Map)
+println obj
+
+// Corporativo: se usan build tools reales:
+//   Gradle (build.gradle) y/o Maven (pom.xml)
+//   groovy.jar para scripts en cualquier JVM
+</code></pre>
+<blockquote class="aside aside-note"><p>`@Grab` es perfecto para scripts autónomos; para apps/proyectos usa Gradle o Maven. Groovy además es lengua de scripting de Jenkins/Gradle por defecto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="librerias-utilidad-groovy">
+    <h2>Utilidades: XML, JSON, Mock <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-groovy">import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
+import groovy.xml.XmlSlurper
+
+// JSON nativo
+def salida = new JsonBuilder([nombre: 'Ana', notas: [10, 9, 8]]).toPrettyString()
+println salida
+def json = new JsonSlurper().parseText('{"id":7}')
+
+// XML con XMLSlurper
+def xml = new XmlSlurper().parseText('&lt;libro&gt;&lt;titulo&gt;Guia&lt;/titulo&gt;&lt;/libro&gt;')
+println xml.titulo.text()
+
+// Tests: JUnit (interoperable) o Spock (ver frameworks de Groovy)
+</code></pre>
+<blockquote class="aside aside-tip"><p>JsonSlurper/JsonBuilder y XmlSlurper son las APIs nativas de Groovy para datos. Para mocks/tests: Spock (el framework de tests Groovy) o JUnit de Java.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-groovy">
+    <h2>Instalación de Groovy <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># con SDKMAN
+curl -s "https://get.sdkman.io" | bash
+sdk install groovy
+# Windows: winget no oficial; descargar zip de groovy-lang.org
+#   o via Chocolatey: choco install groovy
+
+groovy --version
+# REPL interactivo
+groovyConsole
+# Ejecutar
+echo 'println "Hola desde Groovy"' &gt; hola.groovy
+groovy hola.groovy
+# Compilar a .class (JVM): groovyc
+</code></pre>
+<blockquote class="aside aside-tip"><p>SDKMAN es el camino en Unix; en Windows zip de Groovy o Chocolatey. `groovyConsole` da un REPL con autocompletado para experimentar en vivo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Filtra y transforma una lista de mapas (edad) con findAll/collect.</li>
+<li>Interpola variables en GString y usa rangos.</li>
+<li>Usa @Grab para agregar jackson y leer un JSON.</li>
+<li>Con JsonBuilder crea una estructura anidada y príntala.</li>
+<li>Parsea una XML con XmlSlurper y extrae textos.</li>
+</ol>
+    </div>
+  </section>

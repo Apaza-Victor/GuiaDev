@@ -1,0 +1,101 @@
+<!-- 3. IDEs y Herramientas para Rust - Bibliotecas (Utilidades) -->
+  <section id="ide-rust">
+    <h2>IDEs y editores Rust <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># VS Code con rust-analyzer (LSP estándar)
+code --install-extension rust-lang.rust-analyzer
+code --install-extension vadimcn.vscode-lldb     # debugger (lldb)
+# IntelliJ/CLion con plugin Rust: refactorización fuerte (pago)
+# Neovim/Emacs: rust-analyzer + LSP
+# RustRover (JetBrains): IDE dedicado a Rust
+
+# rust-analyzer minimo: autocompletado, renombrar global, ir-a
+# settings de formato al guardar:
+# [editor.formatOnSave]: true para rustfmt
+</code></pre>
+<blockquote class="aside aside-note"><p>rust-analyzer es el motor de TODOS los editores. VS Code + esa extensión es la combinación gratis estándar; RustRover/CLion si quieres IDE completo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="formato-lint">
+    <h2>rustfmt, clippy y análisis <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash">cargo fmt                 # formato obligatorio (no configurable)
+cargo fmt -- --check      # para CI
+cargo clippy -- -D warnings   # lint estricto (falla en warnings)
+
+# Más herramientas
+cargo audit                # vulnerabilidades en dependencias (cargo-audit)
+cargo deny                 # licencias/duplicados/seguridad en un solo comando
+cargo expand               # expande macros (depuración)
+cargo nextest              # runner de tests paralelo y rápido
+
+# evalúa estas en CI: fmt, clippy, test, audit
+</code></pre>
+<blockquote class="aside aside-tip"><p>rustfmt (sin config) elimina las discusiones de estilo; clippy con `-D warnings` hace el lint automático; cargo-audit para vulnerabilidades.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="debug-perfilado">
+    <h2>Depuración y perfilado Rust <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Debugger nativo: gdb (Linux) / lldb; en VS Code con extension vadimcn
+# estrategias:
+#   println!/eprintln! a secas (rápido en desarrollo)
+#   assert! en invariantes
+#   log + env_logger para logs estructurados
+RUST_LOG=debug cargo run
+
+# Perfilado
+#   criterion (benchmarks)
+cargo add --dev criterion
+#   cargo flamphram / samply / perf para hot spots
+#   tokio-console para ver tareas async (con feature inside)
+
+# sanity: cargo test -- --nocapture para ver prints en tests
+</code></pre>
+<blockquote class="aside aside-caution"><p>Compila `--release` para rendimiento real; en debug los asserts y usualmente son más lentos. Para benchmarks usa criterion, no un `time` a secas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-rust">
+    <h2>Compilación y despliegue <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Binario estático (sin libc para Linux x86_64)
+cargo build --release --target x86_64-unknown-linux-musl
+# o con Docker multistage
+</code></pre>
+<pre><code class="language-docker">FROM rust:1.80 AS build
+WORKDIR /app
+COPY Cargo.toml Cargo.lock ./
+RUN mkdir src && echo "fn main(){}" > src/main.rs \
+  && cargo build --release
+COPY src src
+RUN touch src/main.rs && cargo build --release
+
+FROM alpine:3.20
+WORKDIR /app
+COPY --from=build /app/target/release/mi_app .
+EXPOSE 3000
+CMD ["./mi_app"]
+</code></pre>
+<blockquote class="aside aside-success"><p>Compila estático y tendrás un binario de ~10-20MB sin runtimes: la imagen final cabe en menos de 20MB y arranca en milisegundos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala rust-analyzer en VS Code y explora "go to definition" en tu crate.</li>
+<li>Pon `clippy -D warnings` en CI y corrige 4 lints en tu código.</li>
+<li>Ejecuta `cargo audit` y explica las vulnerabilidades reportadas.</li>
+<li>Añade criterion y un benchmark de 3 implementaciones de una función.</li>
+<li>Construye el binario estático y ejecútalo en una imagen alpine.</li>
+</ol>
+    </div>
+  </section>

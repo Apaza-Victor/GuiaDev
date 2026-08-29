@@ -1,0 +1,195 @@
+<!-- 4. Objetos y Clases - Ruby (Lenguajes de Programación) -->
+  <section id="definir-clases">
+    <h2>Definir clases e instanciarlas</h2>
+    <div class="doc-content">
+<p>Ruby es un lenguaje <strong>orientado a objetos puro</strong>: todo valor es un objeto y los objetos pertenecen a una <strong>clase</strong>. Una clase define los <strong>atributos</strong> (datos) y los <strong>métodos</strong> (comportamiento) que tendrán sus instancias.</p>
+<p>Se define una clase con <code class="inline-code">class</code> + nombre en mayúscula, y se crean instancias con <code class="inline-code">new</code>. El método <code class="inline-code">initialize</code> es el <strong>constructor</strong>, que se ejecuta al instanciar.</p>
+<pre><code class="language-ruby">class Perro
+  def initialize(nombre, raza = "mestiza")
+    @nombre = nombre
+    @raza = raza
+  end
+
+  def ladrar
+    "#{@nombre} dice ¡Guau!"
+  end
+
+  def presentarse
+    "Soy #{@nombre}, un #{@raza}"
+  end
+end
+
+perro = Perro.new("Toby", "Labrador")
+puts perro.ladrar       # =&gt; Toby dice ¡Guau!
+puts perro.presentarse  # =&gt; Soy Toby, un Labrador
+</code></pre>
+<blockquote class="aside aside-note"><p>Las variables de instancia llevan <code class="inline-code">@</code> al inicio (<code class="inline-code">@nombre</code>) y son privadas por defecto. Solo se acceden mediante métodos de la propia instancia.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="accessors">
+    <h2>attr_accessor, attr_reader y attr_writer</h2>
+    <div class="doc-content">
+<p>Acceder a las variables de instancia desde afuera requiere definir métodos <strong>getter</strong> (leer) y <strong>setter</strong> (escribir). Como eso es muy común, Ruby ofrece <strong>macros</strong> que los generan automáticamente.</p>
+<p><code class="inline-code">attr_reader</code> crea solo getters (solo lectura), <code class="inline-code">attr_writer</code> solo setters (solo escritura) y <code class="inline-code">attr_accessor</code> ambos.</p>
+<pre><code class="language-ruby">class Producto
+  attr_accessor :nombre, :precio
+  attr_reader :codigo
+  attr_writer :stock
+
+  def initialize(nombre, precio, codigo)
+    @nombre = nombre
+    @precio = precio
+    @codigo = codigo
+    @stock = 0
+  end
+end
+
+p = Producto.new("Teclado", 1500, "TCK-101")
+p.nombre = "Teclado RGB"     # setter (escritura)
+puts p.nombre                # getter =&gt; Teclado RGB
+puts p.precio                # =&gt; 1500
+puts p.codigo                # =&gt; TCK-101 (solo lectura)
+p.stock = 25                 # attr_writer permite escribir
+</code></pre>
+<blockquote class="aside aside-tip"><p>Elegí <code class="inline-code">attr_reader</code> (no <code class="inline-code">attr_accessor</code>) para datos que no deben modificarse tras la creación, como códigos o ids. Menos escritura pública significa menos bugs.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="metodos-de-clase">
+    <h2>Métodos de instancia y de clase</h2>
+    <div class="doc-content">
+<p>Los <strong>métodos de instancia</strong> se llaman sobre una instancia concreta y tienen acceso a sus atributos. Los <strong>métodos de clase</strong> se llaman sobre la clase misma (con <code class="inline-code">NombreClase.metodo</code>) y no dependen de ninguna instancia en particular.</p>
+<p>Los métodos de clase son útiles para <strong>operaciones globales</strong> o <strong>constructores alternativos</strong>. Se definen con <code class="inline-code">self.metodo</code> dentro de la clase.</p>
+<pre><code class="language-ruby">class Circulo
+  attr_accessor :radio
+
+  def initialize(radio)
+    @radio = radio
+  end
+
+  def area
+    Math::PI * @radio ** 2
+  end
+
+  def self.desde_diametro(diametro)
+    new(diametro / 2.0)
+  end
+
+  def self.descripcion
+    "Clase para representar círculos"
+  end
+end
+
+c = Circulo.new(5)
+puts c.area.round(2)              # =&gt; 78.54
+
+c2 = Circulo.desde_diametro(10)
+puts c2.radio                     # =&gt; 5.0
+puts Circulo.descripcion          # =&gt; Clase para representar círculos
+</code></pre>
+<blockquote class="aside aside-success"><p>El <code class="inline-code">self</code> dentro de la clase (pero fuera de un método) se refiere a la clase misma. Así, <code class="inline-code">def self.metodo</code> define un método de clase y <code class="inline-code">new</code> llama al constructor.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="herencia">
+    <h2>Herencia</h2>
+    <div class="doc-content">
+<p>La <strong>herencia</strong> permite que una clase <strong>herede</strong> atributos y métodos de otra con el operador <code class="inline-code">&lt;</code>. La clase hija puede <strong>reutilizar</strong> el comportamiento del padre, <strong>agregar</strong> nuevos métodos y <strong>sobrescribir</strong> los existentes.</p>
+<p>En Ruby cada clase hereda de a lo sumo una clase padre (herencia simple), y todas heredan en última instancia de <code class="inline-code">Object</code>.</p>
+<pre><code class="language-ruby">class Animal
+  def initialize(nombre)
+    @nombre = nombre
+  end
+
+  def hablar
+    "hace un sonido"
+  end
+
+  def presentarse
+    "#{@nombre} #{hablar}"
+  end
+end
+
+class Gato &lt; Animal
+  def hablar
+    "dice ¡Miau!"
+  end
+end
+
+class Perro &lt; Animal
+  def hablar
+    "dice ¡Guau!"
+  end
+end
+
+g = Gato.new("Milo")
+p = Perro.new("Toby")
+puts g.presentarse   # =&gt; Milo dice ¡Miau!
+puts p.presentarse   # =&gt; Toby dice ¡Guau!
+</code></pre>
+<table>
+<thead><tr><th>Concepto</th><th>Detalle</th></tr></thead>
+<tbody><tr><td>super</td><td>Llama al método del padre con el mismo nombre</td></tr><tr><td>override</td><td>Reescribir un método heredado en la clase hija</td></tr><tr><td>Object</td><td>Clase raíz de todo objeto en Ruby</td></tr></tbody>
+</table>
+<blockquote class="aside aside-caution"><p>Priorizá la <strong>composición</strong> (incluir módulos) sobre la <strong>herencia profunda</strong>. Cadenas largas de herencia hacen el código difícil de entender; en Ruby los módulos te dan flexibilidad sin acoplar clases.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="modulos-y-mixins">
+    <h2>Módulos y mixins (include, extend)</h2>
+    <div class="doc-content">
+<p>Un <strong>módulo</strong> es un contenedor de métodos y constantes que no puede instanciarse. Sirve para dos propósitos: <strong>agrupar métodos relacionados</strong> (como un namespace) y <strong>mezclar</strong> comportamiento en clases mediante <code class="inline-code">include</code> o <code class="inline-code">extend</code>.</p>
+<p><code class="inline-code">include</code> agrega los métodos del módulo como <strong>métodos de instancia</strong>, mientras que <code class="inline-code">extend</code> los agrega como <strong>métodos de clase</strong>. A esta técnica de mezcla se la conoce como <strong>mixin</strong>.</p>
+<pre><code class="language-ruby">module Volador
+  def volar
+    "#{@nombre} vuela alto"
+  end
+end
+
+module Nadador
+  def nadar
+    "#{@nombre} nada en el agua"
+  end
+end
+
+class Pajaro
+  include Volador
+  def initialize(nombre)
+    @nombre = nombre
+  end
+end
+
+pajaro = Pajaro.new("Piolín")
+puts pajaro.volar   # =&gt; Piolín vuela alto
+</code></pre>
+<pre><code class="language-ruby">module Utilidades
+  def formatear(num)
+    "$%.2f" % num
+  end
+end
+
+class Cuenta
+  extend Utilidades
+end
+
+puts Cuenta.formatear(25.5)   # =&gt; $25.50
+</code></pre>
+<blockquote class="aside aside-tip"><p>Con <code class="inline-code">include</code> el módulo agrega métodos que las instancias pueden usar; con <code class="inline-code">extend</code> los agrega a la clase. Recordá: <strong>include &rarr; instancias, extend &rarr; clase</strong>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Poné a prueba la programación orientada a objetos en Ruby con estos ejercicios.</p>
+<ol>
+<li>Creá una clase <code class="inline-code">CuentaBancaria</code> con <code class="inline-code">attr_accessor</code> para saldo y métodos <code class="inline-code">depositar</code> y <code class="inline-code">retirar</code>.</li>
+<li>Añadí a la clase anterior un <code class="inline-code">attr_reader</code> para el número de cuenta y comprobá que no se pueda modificar desde fuera.</li>
+<li>Definí un método de clase que cuente cuántas cuentas se han creado (usando una variable de clase <code class="inline-code">@@total</code>).</li>
+<li>Creá las clases <code class="inline-code">Vehiculo</code> (padre) y <code class="inline-code">Auto</code>/<code class="inline-code">Moto</code> (hijas) sobrescribiendo un método <code class="inline-code">descripcion</code>.</li>
+<li>Creá un módulo <code class="inline-code">Conducible</code> con <code class="inline-code">include</code> y otro de utilidades con <code class="inline-code">extend</code> para comprobar la diferencia.</li>
+</ol>
+<p>En la próxima lección, "Colecciones y Bloques", aprenderás a manejar arreglos, hashes, bloques y los poderosos métodos de Enumerable.</p>
+    </div>
+  </section>

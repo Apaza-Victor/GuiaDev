@@ -1,0 +1,198 @@
+<!-- 3. Manipulación de Datos con dplyr - R (Lenguajes de Programación) -->
+  <section id="el-tidyverse">
+    <h2>El tidyverse y los pipes %>%</h2>
+    <div class="doc-content">
+<p>El <strong>tidyverse</strong> es una colección de paquetes que comparten una filosofía: datos ordenados (<em>tidy data</em>) y expresiones verbales. Su base de manipulación es <code>dplyr</code> y su amortiguador de lectura es el <strong>pipe</strong> <code>%&gt;%</code>: pasa el resultado de la izquierda como primer argumento de la función de la derecha. Con él, los análisis se leen como una historia, de arriba hacia abajo.</p>
+<pre><code class="language-r"># Instalar y cargar una sola vez
+install.packages("tidyverse")
+library(tidyverse)   # carga dplyr, ggplot2, tidyr, readr...
+
+# El pipe envía datos hacia la siguiente función
+4 %&gt;% sqrt()                 # sqrt(4) = 2
+1:10 %&gt;% mean()              # media de 1 a 10</code></pre>
+<pre><code class="language-r"># mpg viene con ggplot2 (incluido en el tidyverse)
+mpg
+
+# Cadena anidada SIN pipe: difícil de seguir
+head(arrange(filter(mpg, manufacturer == "honda"), year), 5)
+
+# Con pipe: la lectura fluye como un relato
+mpg %&gt;%
+  filter(manufacturer == "honda") %&gt;%
+  arrange(year) %&gt;%
+  select(model, year, cty) %&gt;%
+  head(5)</code></pre>
+<table><thead><tr><th>Paquete</th><th>Su propósito</th><th>Verbo estrella</th></tr></thead><tbody>
+<tr><td>dplyr</td><td>Manipulación de tablas</td><td><code>filter()</code>, <code>mutate()</code></td></tr>
+<tr><td>ggplot2</td><td>Visualización</td><td><code>ggplot()</code></td></tr>
+<tr><td>tidyr</td><td>Reorganizar datos (anchos/largos)</td><td><code>pivot_longer()</code></td></tr>
+<tr><td>readr</td><td>Importar archivos planos</td><td><code>read_csv()</code></td></tr>
+<tr><td>purrr</td><td>Programación funcional</td><td><code>map()</code></td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>El pipe <code>%&gt;%</code> nace en el paquete <code>magrittr</code>; desde R 4.1 existe el nativo <code>|&gt;</code>. Funcionan parecido, pero el curso usa <code>%&gt;%</code> por su compatibilidad total con el resto de paquetes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="filtrar-y-seleccionar">
+    <h2>filter y select</h2>
+    <div class="doc-content">
+<p><code>filter()</code> elige las <strong>filas</strong> que cumplen una condición y <code>select()</code> elige las <strong>columnas</strong> que te interesan. Juntos son el punto de partida de casi cualquier análisis: primero te quedas con los datos relevantes y luego con las variables necesarias.</p>
+<pre><code class="language-r"># filter: filas según condiciones
+mpg %&gt;%
+  filter(manufacturer == "honda")
+
+# Varias condiciones se combinan con comas (y lógico)
+mpg %&gt;%
+  filter(manufacturer == "honda", year == 2008)
+
+# Comparaciones con operadores
+mpg %&gt;%
+  filter(cty &gt; 25, hwy &lt;= 32)
+
+# Pertenencia y rangos
+mpg %&gt;%
+  filter(manufacturer %in% c("audi", "volkswagen"))
+mpg %&gt;%
+  filter(between(cty, 15, 20))</code></pre>
+<pre><code class="language-r"># select: elige columnas por nombre
+mpg %&gt;%
+  select(manufacturer, model, year)
+
+# Helpers de selección: empieza por, termina en, contiene
+mpg %&gt;%
+  select(starts_with("m"), ends_with("l"))
+
+# Todo menos una columna
+mpg %&gt;%
+  select(-model)
+
+# Mover una columna al frente
+mpg %&gt;%
+  select(class, everything())</code></pre>
+<blockquote class="aside aside-caution"><p>Dentro de las condiciones de dplyr usa <code>&amp;</code> y <code>|</code>, por ejemplo <code>filter(cty &gt; 20 &amp; hwy &gt; 30)</code>. Los operadores <code>&amp;&amp;</code> y <code>||</code> no se vectorizan y producen errores o resultados inesperados al filtrar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="mutar-y-ordenar">
+    <h2>mutate, arrange y rename</h2>
+    <div class="doc-content">
+<p><code>mutate()</code> crea o transforma columnas a partir de las existentes (el corazón de la ciencia de datos: la ingeniería de variables). <code>arrange()</code> ordena las filas y <code>rename()</code> cambia los nombres de las columnas. Con esos tres verbos resuelves la mayor parte de la preparación de datos.</p>
+<pre><code class="language-r"># mutate: nuevas columnas que usan otras
+mpg %&gt;%
+  mutate(consumo_total = cty + hwy,
+         economia = if_else(hwy &gt;= 30, "eficiente", "normal")) %&gt;%
+  select(manufacturer, model, cty, hwy, consumo_total, economia)
+
+# Las nuevas columnas pueden alimentar a otras en el mismo llamado
+mpg %&gt;%
+  mutate(efectividad = hwy / displ,
+         es_buena = efectividad &gt; mean(efectividad)) %&gt;%
+  select(model, efectividad, es_buena)</code></pre>
+<pre><code class="language-r"># arrange: ordenar por una o varias columnas
+mpg %&gt;%
+  arrange(cty)                     # ascendente por defecto
+
+mpg %&gt;%
+  arrange(desc(hwy), cty)          # hwy descendente, desempata con cty
+
+# rename: cambiar nombres (nuevo = viejo)
+mpg %&gt;%
+  rename(fabricante = manufacturer) %&gt;%
+  head(3)
+
+# rename_with: transformar varios nombres a la vez
+mpg %&gt;%
+  rename_with(toupper)             # nombres en mayúsculas</code></pre>
+<blockquote class="aside aside-tip"><p>En <code>mutate()</code> las columnas se evalúan de izquierda a derecha: puedes escribir <code>mutate(base = precio * 0.16, total = precio + base)</code> sin recalcular nada dos veces.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="agrupar-y-resumir">
+    <h2>group_by y summarize</h2>
+    <div class="doc-content">
+<p>El par <code>group_by()</code> + <code>summarize()</code> responde preguntas como "¿cuál es el promedio por fabricante?" o "¿cuántas filas hay por clase?". <code>group_by()</code> marca subgrupos y <code>summarize()</code> colapsa cada grupo a una fila con las estadísticas que pidas.</p>
+<pre><code class="language-r"># Promedio de consumo por fabricante
+mpg %&gt;%
+  group_by(manufacturer) %&gt;%
+  summarize(media_cty = mean(cty),
+            n = n()) %&gt;%
+  arrange(desc(media_cty))
+
+# Varias medidas a la vez con across
+mpg %&gt;%
+  group_by(class) %&gt;%
+  summarize(across(c(cty, hwy), mean),
+            n = n())
+
+# Más de un nivel de agrupación
+mpg %&gt;%
+  group_by(manufacturer, year) %&gt;%
+  summarize(media = mean(hwy), .groups = "drop")</code></pre>
+<pre><code class="language-r"># Datos con valores faltantes: trata los NA
+tibble(region = c("norte", "sur", "norte"),
+       ventas = c(10, NA, 15)) %&gt;%
+  group_by(region) %&gt;%
+  summarize(total = sum(ventas, na.rm = TRUE))</code></pre>
+<blockquote class="aside aside-success"><p><code>summarize()</code> nunca "pierde" las filas si usas <code>na.rm = TRUE</code> en <code>mean()</code>, <code>sum()</code> o <code>sd()</code>. Antes de resumir, pregunta siempre si tus datos tienen faltantes con <code>is.na(x)</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="unir-tablas">
+    <h2>Unir tablas con joins</h2>
+    <div class="doc-content">
+<p>Cuando la información vive repartida en varias tablas, los <strong>joins</strong> las combinan usando una columna clave común. En dplyr, <code>inner_join()</code> y <code>left_join()</code> cubren la mayoría de los casos: piensa en <em>cliente</em> y <em>pedido</em>, o en <em>película</em> y <em>recaudación</em>.</p>
+<pre><code class="language-r"># Dos tablas conectadas por la columna cliente_id
+clientes &lt;- tibble(cliente_id = 1:4,
+                   nombre = c("Ana", "Luis", "Eva", "Pablo"))
+pedidos &lt;- tibble(cliente_id = c(2, 2, 4),
+                  total = c(120, 95, 158))
+
+# inner_join: solo filas con clave en AMBAS tablas
+clientes %&gt;%
+  inner_join(pedidos, by = "cliente_id")
+
+# left_join: conserva todas las filas de la izquierda
+clientes %&gt;%
+  left_join(pedidos, by = "cliente_id")</code></pre>
+<pre><code class="language-r"># Join con nombres de clave distintos
+clientes2 &lt;- rename(clientes, id = cliente_id)
+clientes2 %&gt;%
+  inner_join(pedidos, by = c("id" = "cliente_id"))
+
+# anti_join: encuentra filas que NO tienen su par
+clientes %&gt;%
+  anti_join(pedidos, by = "cliente_id")
+
+# full_join: une todo y rellena con NA lo que falta
+clientes %&gt;%
+  full_join(pedidos, by = "cliente_id")</code></pre>
+<table><thead><tr><th>Join</th><th>Qué conserva</th><th>Caso típico</th></tr></thead><tbody>
+<tr><td><code>inner_join()</code></td><td>Solo pares coincidentes</td><td>Pedidos que sí tienen cliente</td></tr>
+<tr><td><code>left_join()</code></td><td>Todo lo de la izquierda</td><td>Todos los clientes, con pedidos si existen</td></tr>
+<tr><td><code>right_join()</code></td><td>Todo lo de la derecha</td><td>Simétrico al anterior</td></tr>
+<tr><td><code>full_join()</code></td><td>Todas las filas de ambas</td><td>Inventario completo para auditar</td></tr>
+<tr><td><code>anti_join()</code></td><td>Filas sin coincidencia</td><td>Clientes sin ningún pedido</td></tr>
+</tbody></table>
+<blockquote class="aside aside-note"><p>Si una clave aparece duplicada, los joins multiplican filas (cada par combina una vez). Antes de unir, revisa duplicados con <code>count(tabla, clave) %&gt;% filter(n &gt; 1)</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Usa el dataset <code>mpg</code> que ya cargaste con el tidyverse.</p>
+<ol>
+<li><strong>Filtro selectivo:</strong> obtén los autos de <code>toyota</code> del año 2008 con consumo de autopista (<code>hwy</code>) mayor a 30.</li>
+<li><strong>Selección quirúrgica:</strong> extrae solo <code>manufacturer</code>, <code>model</code> y <code>cty</code>; después aplica <code>select(cty, everything())</code> y observa cómo queda la tabla.</li>
+<li><strong>Ingeniería de variables:</strong> con <code>mutate()</code> crea <code>rendimiento = hwy / displ</code> e indica qué fabricante rinde mejor en promedio.</li>
+<li><strong>Resumen por clase:</strong> con <code>group_by(class)</code> calcula la mediana de <code>cty</code> y el número de autos de cada clase.</li>
+<li><strong>Join de negocio:</strong> crea dos tibbles (<code>productos</code> y <code>ventas</code>) con una columna <code>producto_id</code>, únelas con <code>left_join()</code> y descubre qué productos no tuvieron ventas con <code>anti_join()</code>.</li>
+</ol>
+<p>En la próxima lección convertirás tus datos en gráficos impactantes con <strong>ggplot2</strong>, la pieza estrella del tidyverse.</p>
+    </div>
+  </section>

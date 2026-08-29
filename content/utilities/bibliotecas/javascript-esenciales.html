@@ -1,0 +1,127 @@
+<!-- 1. Librerías Esenciales de JavaScript - Bibliotecas (Utilidades) -->
+  <section id="ecmascript-utilidades">
+    <h2>ECMAScript moderno: utilidades nativas <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Colecciones y utilidades sin dependencias
+const lista = [5, 1, 4, 2, 3];
+lista.filter(x =&gt; x % 2 === 0).map(x =&gt; x ** 2).sort((a, b) =&gt; a - b);
+const unico = new Set([1, 1, 2, 3]);          // {1,2,3}
+const mapa  = new Map([["a", 1]]);
+const total = lista.reduce((acc, n) =&gt; acc + n, 0);
+
+// Objects y promesas
+const { a, ...resto } = { a: 1, b: 2, c: 3 };
+const copia = structuredClone(mapa);          // deep clone nativo
+const espera = await Promise.all([fetch("/a"), fetch("/b")]);
+</code></pre>
+<blockquote class="aside aside-tip"><p>Antes de añadir una utilidad, revisa si la resuelve el estándar: `Set`, `Map`, `structuredClone`, `Array.at`, `Object.hasOwn`, `AbortController`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="npm-gestion-paquetes">
+    <h2>npm y el arte de gestionar dependencias <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash">npm init -y
+npm install express axios                 # registro
+npm install --save-dev vitest typescript  # devDeps
+npm update                                # actualizar dentro de rango
+npm audit                                 # vulnerabilidades
+npm outdated                              # ver paquetes atrasados
+
+# Alternativas: pnpm (huecos duros, más eficiente) y yarn
+pnpm add express
+# lockfile (package-lock.json / pnpm-lock.yaml): COMMITÉALO siempre
+</code></pre>
+<blockquote class="aside aside-caution"><p>Compromete el lockfile: garantiza builds reproducibles. Ejecuta `npm audit` en CI y prefiere paquetes con mantenimiento activo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="axios-fetch">
+    <h2>HTTP: fetch estándar y axios <span class="gd-badge gd-badge-note">Red</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// fetch es parte de Node/browser
+const res = await fetch("https://api.github.com/users/octocat", {
+  headers: { "User-Agent": "GuiaDev" },
+});
+if (!res.ok) throw new Error(`HTTP ${res.status}`);
+const data = await res.json();
+
+// axios: interceptores, timeout y errores
+import axios from "axios";
+
+const api = axios.create({ baseURL: "/api", timeout: 5000 });
+api.interceptors.request.use((cfg) =&gt; {
+  cfg.headers.Authorization = `Bearer ${token}`;
+  return cfg;
+});
+
+try {
+  const resp = await api.post("/usuarios", { nombre: "Ana" });
+} catch (err) {
+  if (axios.isAxiosError(err)) {
+    console.error(err.response?.data);
+  }
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>fetch nativo cubre casi todo; axios añade interceptores, cancelación por token y errores más cómodos. AbortController funciona también con fetch.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="date-fns-intl">
+    <h2>Fechas, números y formato con Intl <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">const now = new Date();
+new Intl.DateTimeFormat("es-ES", { dateStyle: "medium" }).format(now);
+new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(1200.5);
+new Intl.RelativeTimeFormat("es", { numeric: "auto" }).format(-2, "day");
+
+// date-fns para lógica de fechas
+import { addDays, subMonths, isWeekend, formatDistance } from "date-fns";
+addDays(now, 3);
+isWeekend(now);
+
+// Agrupación (nueva API nativa de ES2024)
+const agrupado = Object.groupBy(lista, (n) =&gt; (n % 2 ? "impar" : "par"));
+</code></pre>
+<blockquote class="aside aside-tip"><p>Intl es nativo para formato localizado de fechas, números y relativo (i18n). date-fns/luxon solo cuando necesitas lógica (aritmética) más pesada.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="validacion-utilidades">
+    <h2>Validación y utilidades extra <span class="gd-badge gd-badge-note">Más</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">import { z } from "zod";        // tipos en runtime
+const Perfil = z.object({ username: z.string().min(3), seguido: z.boolean() });
+
+import { debounce, throttle, groupBy } from "lodash-es";
+const guardar = debounce(props =&gt; enviaAPI(props), 400);
+
+// Array helpers modernos
+const first = arr.at(0), last = arr.at(-1);
+const sum = arr.reduce((a, n) =&gt; a + n, 0);
+const fila = arr.find((x) =&gt; x.id === id);
+
+// NN (intl para número grande)
+const intl = new Intl.NumberFormat("es", { notation: "compact" }).format(1200000);
+</code></pre>
+<blockquote class="aside aside-note"><p>Combinación pragmática: estándar (fetch/Intl/structuredClone) + un par de utilidades (lodash-es, date-fns) + Zod si la entrada de datos es externa.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Con fetch consume una API pública, maneja errores y muestra resultados en el DOM.</li>
+<li>Crea un debounce propio (sin lodash) para un buscador que haga fetch al soltar tecla.</li>
+<li>Formatea moneda y fecha localizadas con Intl en tu interfaz.</li>
+<li>Usa `Object.groupBy` para agrupar transacciones por categoría.</li>
+<li>Valida un formulario con Zod y muestra los errores por campo.</li>
+</ol>
+    </div>
+  </section>

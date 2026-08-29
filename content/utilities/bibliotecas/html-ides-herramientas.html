@@ -1,0 +1,110 @@
+<!-- 3. Herramientas HTML: validadores, templating y build - Bibliotecas (Utilidades) -->
+  <section id="validadores-html">
+    <h2>Validadores y lint de HTML <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># 1. W3C Markup Validator (https://validator.w3.org): el estándar
+#    subes archivo/URL y reporta errores de estructura
+# 2. html-validate (Node): lint en CI/pre-commit
+npm i -D html-validate
+npx html-validate src/index.html
+# 3. VSCode: extensión "HTML End Tag Labels" / "Mithril Emmet"
+
+# Otros:
+#   - a11y: axe-core (DevTools → axe) / Lighthouse accessibility
+#   - SEO: Lighthouse SEO / meta defaults
+
+# integración en CI:
+npx prettier --check "src/**/*.html"
+npx html-validate "src/**/*.html"
+</code></pre>
+<blockquote class="aside aside-tip"><p>W3C valida la especificación; html-validate (con eslint de html) se integra en Git hooks; axe-core audita accesibilidad. Así cerramos el piso de calidad HTML.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="emmet-docs-html">
+    <h2>Emmet, Snippets y documentación <span class="gd-badge gd-badge-note">DX</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Emmet: scribes HTML ultrarrápido (built-in en VS Code)
+#   `ul>li*3>a[href="#"]` + Tab → lista de 3 enlaces
+#   `!` + Tab → doctype completo
+#   `section.card>.titulo+p` → estructura anidada
+#   `.clase` y `#id` para divs
+# Snippets: puedes crear los tuyos en VS Code (File > Preferencias > Snippets)
+# Documentación de referencia:
+#   MDN HTML (developer.mozilla.org/es/docs/Web/HTML) — tu biblia
+#   htmlreference.io (cheatsheet visual)
+#   caniuse.com (compatibilidad de features)
+</code></pre>
+<blockquote class="aside aside-tip"><p>Emmet ahorra horas de escritura; MDN es la referencia canónica y caniuse la balanza de compatibilidad. Con esas tres herramientas el HTML se vuelve productivo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="build-html">
+    <h2>Build y automatización HTML <span class="gd-badge gd-badge-note">Build</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Para proyectos serios HTML/CSS/JS: Vite (esbuild)
+npm create vite@latest mi-sitio -- --template vanilla
+cd mi-sitio && npm install
+npm run dev      # dev server + HMR
+npm run build    # dist/ minificada + hashes
+
+# Plugins útiles:
+#   vite plugin html (múltiples pages): vite-plugin-html o multi-page manuales
+#   PostCSS + autoprefixer + cssnano en el build
+#   imagemin/Squoosh (optimiza imágenes)
+
+# Alternativas: parcel (cero config), astro (multi-page + islas HTML)
+# Netlify/Vercel/Pages: solo subes dist/
+</code></pre>
+<blockquote class="aside aside-note"><p>Vite es hoy el build estándar; Astro resalta si quieres sitios multi-página ultra-rápidos (HTML puro de salida). Despliegas `dist/` en cualquier host estático.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="deploy-html">
+    <h2>Desplegar sitios HTML <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Hosting estático (cualquiera sirve):
+#   GitHub Pages: repos públicos gratis
+#   Netlify / Vercel: CI + preview por PR + forms/functions
+#   Cloudflare Pages: edge + CDN
+#   S3+CloudFront / SCP para escala
+# Opciones sin build: subir carpeta + hosting; o con make dist
+</code></pre>
+<pre><code class="language-yaml"># .github/workflows/deploy-pages.yml
+name: Deploy
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci && npm run build
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+</code></pre>
+<blockquote class="aside aside-success"><p>HTML se publica directo; agrega un workflow de GH Pages o conecta Netlify al repo y tendrás deploy automático en cada push con preview por rama.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Valida tu página con el W3C validator y corrige 3 avisos.</li>
+<li>Configura html-validate + prettier en un npm script.</li>
+<li>Practica 5 snippets de Emmet (nav, lista, tarjeta, tabla, form).</li>
+<li>Migra tu sitio a Vite y revisa los assets de dist/.</li>
+<li>Despliega dist/ a GitHub Pages con el workflow provisto.</li>
+</ol>
+    </div>
+  </section>

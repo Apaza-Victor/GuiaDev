@@ -1,0 +1,208 @@
+<!-- 6. IO y Proyectos - Haskell (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="io">
+    <h2>IO: acciones puras para efectos</h2>
+    <div class="doc-content">
+<p>Haskell separa el <strong>mundo puro</strong> del <strong>mundo IO</strong>: las funciones son puras y el efecto vive en el tipo <code>IO a</code>. Una "acción IO" es un valor que, al ejecutarse, produce efectos y devuelve un <code>a</code>.</p>
+<pre><code class="language-haskell">-- Firmas IO
+getLine :: IO String
+putStrLn :: String -&gt; IO ()
+readFile :: FilePath -&gt; IO String
+
+-- main es una acción IO
+main :: IO ()
+main = do
+  putStrLn "¿Cómo te llamas?"
+  nombre &lt;- getLine              -- &lt;- extrae el valor del contexto IO
+  putStrLn ("Hola, " ++ nombre)
+
+-- Comparación:
+valorPuro   :: Int
+valorPuro   = 42
+
+-- una acción que devuelve Int:
+dameCinco   :: IO Int
+dameCinco   = return 5    -- "return" mete valor en IO (no "return" de funciones)
+
+-- En GHCi:
+ghci&gt; valorPuro
+42
+ghci&gt; dameCinco
+5   (- aunque el tipo es IO Int)</code></pre>
+<blockquote class="aside aside-caution"><p><code>return</code> solo "mete" un valor dentro de IO: no termina la función. Las funciones puras NO pueden leerse/escribirse: esa separación es lo que hace a Haskell tan fiable.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="do">
+    <h2>Notación do</h2>
+    <div class="doc-content">
+<p><code>do</code> es azúcar sintáctico para encadenar acciones IO con <code>&gt;&gt;=</code> (bind). Dentro, cada <code>expresión</code> ejecuta una acción y cada <code>x &lt;- acción</code> extrae su valor.</p>
+<pre><code class="language-haskell">main :: IO ()
+main = do
+  putStrLn "Dame un número:"
+  linea &lt;- getLine
+  let n = read linea :: Int
+  putStrLn $ "El doble es: " ++ show (n * 2)
+
+-- Lo mismo con bind (&gt;&gt;=) explícito:
+-- main = getLine &gt;&gt;= \l -&gt; putStrLn ("Hola " ++ l)
+
+-- En un do:
+-- líneas sin &lt;- son acciones ignoradas:
+main2 :: IO ()
+main2 = do
+  putStrLn "acción 1"
+  putStrLn "acción 2"
+
+-- &lt;- con pares y let combinados
+main3 :: IO ()
+main3 = do
+  let (a, b) = (3, 4)
+  print (a + b)
+
+-- Sharing: valores puros dentro de do (let)
+  let cuadrado x = x * x
+  print (cuadrado 9)</code></pre>
+<blockquote class="aside aside-tip"><p><code>lnea &lt;- getLine</code> es la línea que más verás en tutoriales. Cuando domines el <code>do</code>, entenderás que las mónadas "devuelven" efecto; casi todo I/O del mundo real (archivos, red, parseos) se escribe así.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cabal">
+    <h2>cabal: paquetes y proyectos</h2>
+    <div class="doc-content">
+<p><strong>cabal</strong> es el gestor de paquetes (Hackage) y entornos de Haskell: crea proyectos, resuelve dependencias y aísla versiones. Su forma moderna usa "cabal.project" con un paquete por directorio.</p>
+<pre><code class="language-bash"># Actualizar índice
+cabal update
+
+# Instalar paquetes globalmente NO es lo normal
+# Preferimos declarar en el proyecto:
+
+# 1. Usar cabal init
+mkdir mi_app &amp;&amp; cd mi_app
+cabal init --interactive --non-interactive     # genera .cabal
+
+# 2. Estructura clásica
+# mi_app/
+#   mi_app.cabal      # metadata, deps, libraries
+#   cabal.project     # configuración del build (opcional)
+#   app/Main.hs        # o src/Main.hs, test/...
+#   src/lib.hs
+
+# 3. Añadir dependencia (edita el .cabal: build-depends)
+#   build-depends: base ^&gt;=4.14, text, containers, bytestring
+
+# 4. Compilar y ejecutar
+cabal build
+cabal run
+cabal repl     # GHCi con las deps del proyecto</code></pre>
+<pre><code class="language-haskell">-- mi_app.cabal (extracto)
+cabal-version:      3.0
+name:               mi_app
+version:            0.1.0.0
+library
+  exposed-modules:     MiLib
+  build-depends:       base, text
+executable mi-app
+  main-is:            Main.hs
+  build-depends:      base, mi_app
+  hs-source-dirs:     app, src</code></pre>
+<blockquote class="aside aside-tip"><p>Puedes crear <code>Main.hs</code> en <code>app/</code> y bibliotecas en <code>src/</code>. Con <code>stack</code> (alternativa popular) el flujo es similar: tutorial de <code>stack new</code>. Elige el que tu equipo use.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing">
+    <h2>Pruebas con QuickCheck y HUnit</h2>
+    <div class="doc-content">
+<p>Dos frameworks clásicos: <strong>HUnit</strong> (asserts) y <strong>QuickCheck</strong> (property-based: genera datos aleatorios y verifica propiedades). La pureza de Haskell hace el testing realmente robusto.</p>
+<pre><code class="language-haskell">-- Cabal: test-suite tests
+--   type: exitcode-stdio-1.0
+--   main-is: Spec.hs
+--   build-depends: base, QuickCheck, HUnit, mi_app
+
+import Test.QuickCheck
+import Test.HUnit
+
+-- Propiedades
+prop_identidad :: [Int] -&gt; Bool
+prop_identidad xs = reverse (reverse xs) == xs
+
+prop_suma :: Int -&gt; Int -&gt; Bool
+prop_suma a b = a + b == b + a
+
+prop_dobles :: [Int] -&gt; Bool
+prop_dobles xs = map (*2) xs == [2*x | x &lt;- xs]
+
+-- HUnit assears
+test_suma :: Test
+test_suma = TestCase (assertEqual "2+3" 5 (2 + 3))
+
+-- main: correr el suite
+main :: IO ()
+main = do
+  quickCheck prop_identidad
+  quickCheck prop_suma
+  countTests runTestTT test_suma
+  putStrLn "Hecho"</code></pre>
+<blockquote class="aside aside-success"><p>QuickCheck prueba con MILES de entradas generadas aleatoriamente. Ese nivel de "proof via sampling" es más potente que 5 asserts. Es de los mayores beneficios de la pureza.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="practica">
+    <h2>Mini-proyecto práctico</h2>
+    <div class="doc-content">
+<p>Juntemos todo: un programa pequeño que lee una lista de la terminal, la procesa con funciones puras y muestra resultados.</p>
+<pre><code class="language-haskell">module Main where
+
+-- Biblioteca pura (sin IO): estadísticos
+promedio :: [Double] -&gt; Maybe Double
+promedio [] = Nothing
+promedio xs = Just (sum xs / fromIntegral (length xs))
+
+mayoresQue :: Double -&gt; [Double] -&gt; [Double]
+mayoresQue umbral = filter (&gt; umbral)
+
+-- IO: pedir números, procesar, mostrar
+main :: IO ()
+main = do
+  putStrLn "Escribe números separados por espacio:"
+  linea &lt;- getLine
+  let nums = map read (words linea) :: [Double]
+  putStrLn $ "Números: " ++ show nums
+  case promedio nums of
+    Nothing -&gt; putStrLn "Lista vacía"
+    Just p  -&gt; do
+      putStrLn $ "Promedio: " ++ show p
+      putStrLn $ "Mayores que el promedio: "
+                  ++ show (mayoresQue p nums)
+
+-- Ejecución:
+-- cabal run
+--   &gt; Escribe números separados por espacio:
+--   &gt; 4 8 15 16 23 42
+--   &gt; Números: [4.0,8.0,15.0,16.0,23.0,42.0]
+--   &gt; Promedio: 18.0
+--   &gt; Mayores que el promedio: [23.0,42.0]</code></pre>
+<blockquote class="aside aside-tip"><p>Observa la separación: las funciones puras están "abajo" y el IO solo "arriba". Ese es el modelo: sistema puro con una cáscara IO. Te queda un módulo de lógica 100% testeable con QuickCheck.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>IO básico</strong>: escribe <code>main</code> que pida tu nombre con <code>getLine</code> y lo imprima con <code>putStrLn</code>.</li>
+<li><strong>do</strong>: lee dos números, súmalos (función pura) y muestra el doble con un <code>do</code>.</li>
+<li><strong>cabal</strong>: crea un proyecto cabal, añade <code>text</code> como dep y ejecuta <code>cabal repl</code>.</li>
+<li><strong>QuickCheck</strong>: escribe una propiedad <code>prop_intercambio</code> (<code>a+b == b+a</code>) y hazla pasar.</li>
+<li><strong>Mini-app</strong>: termina el proyecto del promedio añadiendo la desviación estándar, y genera un test que verifique <code>maxima &gt;= minima</code>.</li>
+</ol>
+<p>Felicidades: has completado Haskell en GuiaDev. La comunidad recomienda seguir con el libro "Learn You a Haskell" y con <code>QuickCheck</code> para afianzar.</p>
+    </div>
+  </section>

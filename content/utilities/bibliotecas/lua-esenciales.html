@@ -1,0 +1,123 @@
+<!-- 1. Librerías Esenciales de Lua - Bibliotecas (Utilidades) -->
+  <section id="lua-std">
+    <h2>Biblioteca estándar de Lua <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-lua">-- La stdlib de Lua es pequeña pero potente (table, string, math, io)
+local nums = { 3, 1, 4, 1, 5 }
+
+-- tables: arrays y maps es lo mismo
+table.sort(nums)
+print(table.concat(nums, ", "))
+
+-- iteración
+for i, v in ipairs(nums) do print(i, v) end
+local mapa = { nombre = "Ana", edad = 30 }
+for k, v in pairs(mapa) do print(k, v) end
+
+-- string
+local texto = "Hola Mundo"
+print(string.upper(texto))
+print(texto:sub(1, 4), texto:len())
+
+-- math
+print(math.max(unpack(nums)), math.random(1, 100))
+
+-- io
+local f = io.open("data.txt", "w"); f:write("contenido"); f:close()
+print(io.open("data.txt"):read("a"))
+
+-- funciones de orden superior con closures
+local function mapa(t, fn)
+  local r = {}
+  for i, v in ipairs(t) do r[i] = fn(v) end
+  return r
+end
+</code></pre>
+<blockquote class="aside aside-tip"><p>La stdlib de Lua: tables (arrays+dicts), strings con métodos, math, io, os. Minimalista: al ser embebible, la filosofía es "una table para todo".</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="luarocks">
+    <h2>LuaRocks: paquetes de Lua <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># LuaRocks: el gestor de módulos
+luarocks install luafilesystem
+luarocks install luasocket
+luarocks install penlight
+# Paquetes se instalan en el tree del Lua (compartido)
+# Por proyecto: luarocks make + rockspec
+
+# Los módulos clave:
+#   luafilesystem (errores/fs), luasocket (red),
+#   penlight (utilidades: fun, path, tprint)
+#   luaunit (testing), busted (BDD) - en próximas secciones
+</code></pre>
+<blockquote class="aside aside-note"><p>LuaRocks maneja tree/paquetes (como pip). En sandbox/games la instalacion va al lua include; el ecosistema de módulos es bastante amplio (2500+ módulos).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="penlight">
+    <h2>penlight y librerías útiles <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-lua">local pl = require "pl"
+local path = pl.path
+local fun = pl.fun
+local tprint = pl.tablex
+
+-- path/files
+print(path.join("a", "b", "c.txt"))
+
+-- fun: filter/map útiles con funciones
+local nums = { 1, 2, 3, 4, 5 }
+local pares = fun.filter(function(x) return x % 2 == 0 end, nums)
+
+-- JSON (via lua-cjson o dkjson)
+local json = require "dkjson"
+local str = json.encode({ nombre = "Ana", notas = {9, 8} })
+local t = json.decode(str)
+
+-- lua-cjson (C fast path)
+local cjson = require "cjson"
+print(cjson.encode({ ok = true }))
+</code></pre>
+<blockquote class="aside aside-tip"><p>penlight es "la stdlib mejorada": path, file, tablex, fun; para JSON usa cjson (veloz) o dkjson (puro Lua). Estas cubren el 80% de utilidades diarias.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-lua">
+    <h2>Instalación de Lua <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Lua 5.4 (estable) / LuaJIT (veloz, usado en videojuegos)
+# Linux: apt install lua5.4 luarocks
+sudo apt install lua5.4 liblua5.4-dev luarocks
+# macOS: brew install lua luarocks
+brew install lua luarocks
+# Windows: tambien con winget
+winget install Lua.Lua          # o usar LuaBinaries zip
+# compilar desde source también fácil (make posix)
+
+lua --version
+echo 'print("Hola desde Lua")' &gt; hola.lua
+lua hola.lua
+# REPL: lua (sin argumentos) o "lua -i"
+</code></pre>
+<blockquote class="aside aside-note"><p>Lua se embebe fácil (C API), por eso juegos/games y LuaJIT son protagonistas. luarocks es imprescindible; también la vía "make && make install" super rápida.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Escribe una función "mapa" y aplícala con una closure.</li>
+<li>Une dos tables con tablex.concat y usa path.join.</li>
+<li>Instala dkjson y serializa/deserializa un objeto anidado.</li>
+<li>Lee y escribe un archivo con io, con manejo de errores (pcall).</li>
+<li>Usa math.randomseed(os.time()) y genera 10 números aleatorios.</li>
+</ol>
+    </div>
+  </section>

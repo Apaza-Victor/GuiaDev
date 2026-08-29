@@ -1,0 +1,96 @@
+<!-- 3. IDEs y Herramientas para Scala - Bibliotecas (Utilidades) -->
+  <section id="ide-scala">
+    <h2>IDEs y Metals <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Metals: LSP para Scala (recomendado, gratis, en VS Code)
+code --install-extension scalameta.metals
+# metal: autocompletado, go-to-definition, metales, renames, type info
+# Visual Studio Code es lo más común; también Neovim (Metals + LSP)
+
+# IntelliJ IDEA: plugin Scala (maduro, refactorizaciones)
+#   instalar scala plugin en IntelliJ; no para proyectos exclusivos
+
+# scalafmt y Metals integrados de serie en el LSP
+</code></pre>
+<blockquote class="aside aside-tip"><p>Metals (LSP, mantenga por scalameta) otorga heavy tooling sin IDE comercial: debug, refactors y `scalafmt`. IntelliJ+Scala para heavy IDE con GUI.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="herramientas-cli-scala">
+    <h2>scalafmt, scalafix y CLI <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># scalafmt (estilo obligatorio de la comunidad)
+scalafmt                   # formatea
+scalafmt --check           # verifica (CI)
+# scalafix (lints/auto-fix migraciones)
+scalafixAll                # aplica reglas
+sbt "scalafix RemoveUnused"
+# scala-cli (scripts/pruebas rápidas)
+scala-cli run src/main.scala --scala 3.3.4
+scala-cli test --test-framework munit
+# código educational para tips: taplook
+# interactive: sbt shell con Tab de comandos
+</code></pre>
+<blockquote class="aside aside-tip"><p>scalafmt es el estándar de formato: se usa en CI con `--check`. scala-cli es perfecto para scripts y ejercicios rápidos sin proyecto completo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depuracion-scala">
+    <h2>Depuración y perfilado <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Debug via a DAP (Debug Adapter Protocol) en Metals:
+#   breakpoints, call stack, variables en VS Code/IntelliJ
+# Estrategias = println!, logger
+#   slf4j + logback (clásico en JVM)
+#   scribe (Scala moderno, funcional y rápido)
+#   cats-effect tiempo de prueba: munit/cats
+
+# Perfilado en JVM
+#   async-profiler  (hot spots JIT)
+#   VisualVM / JFR (image heap y CPU)
+#   JFR en JDK moderno: -XX:StartFlightRecording
+# CI perf guard: JMH (microbenchmarks JVM) via jmh-sbt
+</code></pre>
+<blockquote class="aside aside-caution"><p>Scala corre en JVM, así que Debug (breakpoints) por Metals/DAP y perfilado con JFR/async-profiler/JMH son exactamente las mismas herramientas que en Java.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-scala">
+    <h2>Compilación y despliegue <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Fat jar con sbt-assembly (un solo ejecutable con deps)
+sbt assembly
+java -jar target/scala-3.3.4/mi-app-assembly-0.1.0.jar
+
+# Docker (multistage) - imagen JVM pequeña
+</code></pre>
+<pre><code class="language-docker">FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY target/scala-3.3.4/mi-app-assembly-0.1.0.jar app.jar
+EXPOSE 8080
+CMD ["java", "-jar", "app.jar"]
+</code></pre>
+<pre><code class="language-bash"># JVM tuning: -Xmx, G1GC, -XX flags según carga
+# Orchestación: cualquiera (K8s, Nomad) ya que es estándar HTTP
+# CI/CD: github actions + opcionalmente sbt-dynver para versión
+</code></pre>
+<blockquote class="aside aside-success"><p>sbt-assembly empaqueta todo en un jar; Docker con `temurin` JRE es lo mínimo. Scala produce binarios de ~100MB+ y JVM warmup, aunque perfecto para servicios HTTP.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala Metals en VS Code y explora goto-definition en tu código.</li>
+<li>Configura scalafmt en CI con `--check`.</li>
+<li>Haz un script con scala-cli que lea stdin y cuente líneas.</li>
+<li>Depura un breakpoint en Metals y mira variables del stack.</li>
+<li>Build con sbt-assembly y corre el jar en una imagen temurin.</li>
+</ol>
+    </div>
+  </section>

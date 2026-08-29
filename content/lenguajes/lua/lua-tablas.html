@@ -1,0 +1,191 @@
+<!-- 3. Tablas: el corazón de Lua - Lua (Lenguajes de Programación) -->
+  <section id="que-es-una-tabla">
+    <h2>¿Qué es una tabla?</h2>
+    <div class="doc-content">
+<p>La <strong>tabla</strong> es la única estructura de datos de Lua y, con diferencia, la más importante: sirve a la vez como <strong>arreglo</strong>, <strong>diccionario</strong> (mapa clave-valor), <strong>objeto</strong>, <strong>conjunto</strong> y casi cualquier otra colección. En esencia, una tabla es una colección desordenada de pares <strong>clave → valor</strong>, donde la clave puede ser cualquier valor excepto <code>nil</code>.</p>
+<p>Se crea con llaves <code>{}</code> y se accede a sus elementos con corchetes <code>t[clave]</code> o, cuando la clave es un identificador válido, con punto <code>t.clave</code>.</p>
+<pre><code class="language-lua">-- Crear una tabla vacía
+local t = {}
+
+-- Añadir pares clave-valor
+t["nombre"] = "Lua"
+t.version = 5.4          -- equivalente a t["version"]
+t[1] = "primero"         -- claves numéricas
+
+print(t["nombre"])       --> Lua
+print(t.version)         --> 5.4
+print(t[1])              --> primero</code></pre>
+<table><thead><tr><th>Característica</th><th>Detalle</th></tr></thead><tbody><tr><td><strong>Claves</strong></td><td>Cualquier valor salvo <code>nil</code> (números, strings, tablas, funciones)</td></tr><tr><td><strong>Valores</strong></td><td>Cualquier valor, incluso <code>nil</code> (que «borra» la clave)</td></tr><tr><td><strong>Tamaño</strong></td><td>Dinámico: crecen y se encogen sin declarar capacidad</td></tr><tr><td><strong>Índice inicial</strong></td><td>Los índices numéricos empiezan en 1, no en 0</td></tr><tr><td><strong>Referencia</strong></td><td>Las tablas se pasan por <em>referencia</em>, no por copia</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Los arreglos en Lua empiezan en el índice <strong>1</strong>, no en 0. Es una regla que sorprende a casi todos al llegar del mundo de C, Java o JavaScript, y olvidarla es la fuente de decenas de errores off-by-one.</p></blockquote>
+<blockquote class="aside aside-note"><p>Como las tablas son por referencia, asignar <code>local b = a</code> no copia la tabla: <code>b</code> y <code>a</code> apuntan al <strong>mismo objeto</strong>. Modificar uno cambia el otro. Para copiar necesitas recorrerla o usar <code>table.move</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tablas-como-arreglos">
+    <h2>Tablas como arreglos</h2>
+    <div class="doc-content">
+<p>Cuando las claves son números consecutivos (1, 2, 3...), la tabla se comporta como un <strong>arreglo</strong> o lista. Lua optimiza internamente estas tablas «de secuencia», y las maneja con funciones como <code>#</code> (longitud), <code>table.insert</code>, <code>table.remove</code> y <code>table.concat</code>.</p>
+<pre><code class="language-lua">-- Un arreglo básico
+local frutas = { "manzana", "pera", "uvas" }
+print(frutas[1])     --> manzana
+print(frutas[#frutas]) --> uvas   (último elemento)
+print(#frutas)       --> 3
+
+-- Añadir elementos
+table.insert(frutas, "naranja")        -- al final
+table.insert(frutas, 2, "plátano")     -- en el índice 2
+for _, f in ipairs(frutas) do io.write(f, " ") end
+print()  --> manzana plátano pera uvas naranja</code></pre>
+<p>Puedes recorrer un arreglo por su índice con un <code>for</code> numérico usando <code>#</code>, o con <code>ipairs</code> para iterar en orden:</p>
+<pre><code class="language-lua">local notas = { 90, 85, 96, 88 }
+
+-- Recorrido por índice
+for i = 1, #notas do
+  print("Nota", i, "=", notas[i])
+end
+
+-- Sumar los elementos
+local total = 0
+for _, n in ipairs(notas) do total = total + n end
+print("Promedio:", total / #notas)   --> Promedio: 89.75</code></pre>
+<table><thead><tr><th>Función</th><th>Qué hace</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>#t</code></td><td>Número de elementos</td><td><code>#frutas</code> → 5</td></tr><tr><td><code>table.insert(t, v)</code></td><td>Inserta al final</td><td><code>table.insert(a, 9)</code></td></tr><tr><td><code>table.insert(t, i, v)</code></td><td>Inserta en la posición i</td><td><code>table.insert(a, 1, 0)</code></td></tr><tr><td><code>table.remove(t)</code></td><td>Quita el último</td><td><code>table.remove(a)</code></td></tr><tr><td><code>table.remove(t, i)</code></td><td>Quita el de la posición i</td><td><code>table.remove(a, 2)</code></td></tr><tr><td><code>table.concat(t, sep)</code></td><td>Une en un string</td><td><code>table.concat(frutas, ", ")</code></td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>El operador <code>#</code> solo es fiable en tablas que son <em>secuencias</em> (índices 1..n sin huecos). Si la tabla tiene huecos o claves no numéricas, <code>#</code> puede devolver un valor ambiguo. Usa <code>#</code> en arreglos limpios y <code>pairs</code> para tablas mezcladas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tablas-como-diccionarios">
+    <h2>Tablas como diccionarios</h2>
+    <div class="doc-content">
+<p>Además de arreglos, las tablas funcionan como <strong>diccionarios</strong> (mapas clave-valor) para cualquier tipo de clave. Esto permite modelar registros, configuraciones, índices por nombre y en general cualquier relación entre un identificador y un valor.</p>
+<pre><code class="language-lua">-- Un diccionario: registros por clave de string
+local usuario = {
+  nombre  = "Ana",
+  edad    = 29,
+  correo  = "ana@guia.dev",
+  activo  = true,
+}
+
+print(usuario.nombre)      --> Ana
+print(usuario["edad"])     --> 29
+
+-- Añadir y modificar claves
+usuario.pais = "España"    -- crear una clave nueva
+usuario.edad = 30          -- actualizar una existente
+
+-- Claves que no son strings: números, tablas, funciones
+local contador = {}
+contador[1] = "uno"
+contador[2] = "dos"
+print(contador[2])         --> dos</code></pre>
+<p>Los diccionarios son la base para crear <strong>conjuntos</strong> (set) — una colección de claves únicas donde el valor puede ser <code>true</code> — o para llevar índices inversos:</p>
+<pre><code class="language-lua">-- Un conjunto con claves únicas
+local vistos = {}
+local datos = { "a", "b", "a", "c" }
+for _, letra in ipairs(datos) do
+  vistos[letra] = true      -- marca la letra como vista
+end
+
+if vistos["a"] then print("la 'a' ya se vio") end
+-- la 'a' ya se vio
+
+-- Índice inverso: buscar por valor
+local paises = { ES = "España", MX = "México", AR = "Argentina" }
+local codigo = "MX"
+print(paises[codigo])       --> México
+print(paises.MX)            --> México</code></pre>
+<blockquote class="aside aside-tip"><p>Definir una tabla con <code>{ clave = valor }</code> como en <code>usuario</code> es azúcar sintáctico: las claves se convierten en strings. Si necesitas una clave especial (con espacios o guiones), escríbela entre corchetes: <code>{ ["clave-compleja"] = 1 }</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="operaciones-con-tablas">
+    <h2>Operaciones sobre tablas</h2>
+    <div class="doc-content">
+<p>La librería <code>table</code> de Lua aporta utilidades para ordenar, insertar, eliminar, concatenar y mover elementos. Dos de las más usadas son <code>table.sort</code> y <code>table.concat</code>. <code>table.sort</code> acepta una función de comparación opcional, lo que le da flexibilidad total.</p>
+<pre><code class="language-lua">-- Ordenar en orden ascendente (por defecto)
+local numeros = { 30, 10, 50, 20, 40 }
+table.sort(numeros)
+print(table.concat(numeros, ", "))   --> 10, 20, 30, 40, 50
+
+-- Ordenar descendentemente con comparador
+table.sort(numeros, function(a, b) return a &gt; b end)
+print(table.concat(numeros, ", "))   --> 50, 40, 30, 20, 10</code></pre>
+<pre><code class="language-lua">-- Ordenar un array de registros por un campo
+local personas = {
+  { nombre = "Carlos", edad = 34 },
+  { nombre = "Lucía",  edad = 27 },
+  { nombre = "Pedro",  edad = 41 },
+}
+table.sort(personas, function(a, b) return a.edad &lt; b.edad end)
+for _, p in ipairs(personas) do print(p.nombre, p.edad) end
+--> Lucía	27
+--> Carlos	34
+--> Pedro	41</code></pre>
+<p><code>table.concat</code> une todos los elementos de una secuencia en un solo string, con un separador opcional. Es mucho más eficiente que concatenar con <code>..</code> dentro de un bucle, porque evita crear decenas de strings temporales:</p>
+<pre><code class="language-lua">local palabras = { "hola", "mundo", "desde", "Lua" }
+print(table.concat(palabras, " "))
+--> hola mundo desde Lua
+
+-- Concatenar un rango con separador
+print(table.concat(palabras, "-", 2, 4))
+--> mundo-desde-Lua</code></pre>
+<table><thead><tr><th>Función</th><th>Descripción</th></tr></thead><tbody><tr><td><code>table.sort(t, [cmp])</code></td><td>Ordena la tabla en el lugar</td></tr><tr><td><code>table.concat(t, [sep], [i], [j])</code></td><td>Une un rango en un string</td></tr><tr><td><code>table.insert / remove</code></td><td>Insertar y eliminar elementos</td></tr><tr><td><code>table.move(a, f, e, t)</code></td><td>Mueve un bloque de elementos</td></tr><tr><td><code>table.unpack(t)</code></td><td>Devuelve los valores como lista de retorno</td></tr><tr><td><code>table.pack(...)</code></td><td>Empaqueta argumentos en una tabla con campo <code>n</code></td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p><code>table.unpack</code> es muy práctico para llamar a funciones con muchos argumentos: <code>math.max(table.unpack(numeros))</code> devuelve el máximo de una lista sin escribirlos a mano.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="recorrer-tablas">
+    <h2>Recorrer tablas con pairs e ipairs</h2>
+    <div class="doc-content">
+<p>Para recorrer una tabla tienes dos iteradores principales: <code>pairs</code> (recorre <strong>todas</strong> las claves, en orden indeterminado) e <code>ipairs</code> (recorre solo la secuencia numérica 1, 2, 3... de forma ordenada y se detiene en el primer hueco). Elegir el correcto depende del tipo de tabla.</p>
+<pre><code class="language-lua">local persona = { nombre = "Sofía", edad = 33, ciudad = "Medellín" }
+
+-- pairs: visita cada par clave-valor (sin orden garantizado)
+for clave, valor in pairs(persona) do
+  print(clave, "=", valor)
+end
+-- El orden de salida puede variar entre ejecuciones</code></pre>
+<pre><code class="language-lua">-- ipairs: recorre la secuencia numérica en orden, hasta el primer hueco
+local lista = { "rojo", "verde", "azul" }
+for i, color in ipairs(lista) do
+  print(i, color)
+end
+--> 1	rojo
+--> 2	verde
+--> 3	azul</code></pre>
+<p>La diferencia práctica salta a la vista en esta tabla mixta — parte arreglo, parte diccionario — donde cada iterador se comporta distinto:</p>
+<pre><code class="language-lua">local mixta = { "a", "b", etiqueta = "x", "c" }
+
+print("Con ipairs:")     -- solo la secuencia inicial
+for i, v in ipairs(mixta) do print(i, v) end
+--> 1	a
+--> 2	b
+--> 3	c
+
+print("Con pairs:")      -- incluye la clave 'etiqueta'
+for k, v in pairs(mixta) do print(k, v) end
+-- Incluye etiqueta=x junto a 1,2,3 en orden arbitrario</code></pre>
+<table><thead><tr><th>Iterador</th><th>Qué recorre</th><th>Orden</th><th>Uso recomendado</th></tr></thead><tbody><tr><td><code>ipairs</code></td><td>Índices 1..n de la secuencia</td><td>Determinado</td><td>Arreglos y listas</td></tr><tr><td><code>pairs</code></td><td>Todas las claves</td><td>Indeterminado</td><td>Diccionarios y mixtas</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>No confíes en el orden de <code>pairs</code>: para las claves de string no hay garantía de secuencia. Si necesitas orden, ordena las claves primero (<code>table.sort</code> sobre un arreglo de claves) y luego recórrelo tú mismo.</p></blockquote>
+<blockquote class="aside aside-success"><p>Como regla práctica: usa <code>ipairs</code> para listas indexadas y <code>pairs</code> para mapas. Escribir a mano el nombre de cada variable (clave, valor) con nombres descriptivos hace que los bucles sean mucho más legibles.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica el manejo de tablas con estos ejercicios. Crea cada uno como un archivo <code>.lua</code> distinto y ejecútalo para comprobar la salida.</p>
+<ol>
+<li><strong>Arreglo y promedio</strong>: Con <code>local notas = { 80, 75, 92, 100, 88 }</code>, calcula el promedio usando <code>#</code> y un bucle <code>for</code>. Imprime la nota máxima con <code>math.max(table.unpack(notas))</code>.</li>
+<li><strong>Diccionario de inventario</strong>: Crea una tabla que asocie producto → cantidad, añade dos productos, actualiza uno y borra otro asignando <code>nil</code>. Recórrela con <code>pairs</code> e imprime cada línea.</li>
+<li><strong>Contar frecuencias</strong>: Dada una lista de palabras repetidas, usa una tabla de diccionario para contar cuántas veces aparece cada una. Recorre el resultado y muestra las frecuencias.</li>
+<li><strong>Ordenar por campo</strong>: Crea un arreglo de personas (<code>{nombre, edad}</code>) y ordénalo descendientemente por edad usando <code>table.sort</code> con un comparador.</li>
+<li><strong>Desafío</strong>: Escribe una función <code>invertir(t)</code> que reciba un diccionario y devuelva uno nuevo con las claves y valores intercambiados. Pruébala con <code>{ ES = "España", MX = "México" }</code> para obtener <code>{ España = "ES", México = "MX" }</code>.</li>
+</ol>
+<p>En el próximo capítulo, <code>control-de-flujo-y-funciones</code>, aprenderás a darle lógica a tus tablas con <strong>condicionales, bucles y funciones</strong> reutilizables.</p>
+    </div>
+  </section>

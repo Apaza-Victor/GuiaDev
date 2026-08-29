@@ -1,0 +1,134 @@
+<!-- 1. Librerías Esenciales de Dart - Bibliotecas (Utilidades) -->
+  <section id="dart-core">
+    <h2>Paquetes core y dart:core <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-dart">// dart:core viene implícito: colecciones, contexto, math, durations
+import 'dart:convert';
+import 'dart:math';
+import 'dart:async';
+
+void main() {
+  // Colecciones
+  final nums = [3, 1, 4, 1, 5];
+  final ordenados = List.of(nums)..sort();
+  final pares = nums.where((n) => n % 2 == 0).toList();
+
+  final mapa = {'a': 1, 'b': 2};
+  mapa.putIfAbsent('c', () => 3);
+
+  // JSON y string
+  final json = jsonEncode({'nombre': 'Ana', 'edad': 30});
+  final decodificado = jsonDecode(json);
+
+  // Fechas
+  final hoy = DateTime.now();
+  final enSemana = hoy.add(const Duration(days: 7));
+
+  // math
+  final r = Random();
+  print(max(1, 9)); // 9
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>dart:core/codec/math/async y collection cubren base en Dart. `jsonEncode/Decode` y `DateTime` sin dependencias y con tipos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pub-gestion">
+    <h2>pub: gestor de paquetes <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># pub (del SDK de Dart) y pubspec.yaml
+dart create mi_proyecto
+cd mi_proyecto
+dart pub add http      # añade dependencia y actualiza pubspec.lock
+dart pub get           # descarga
+dart pub upgrade       # actualiza dentro de constraint
+dart pub outdated
+</code></pre>
+<pre><code class="language-yaml"># pubspec.yaml
+name: mi_proyecto
+description: Aplicación de ejemplo
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  http: ^1.1.0
+  path: ^1.9.0
+
+dev_dependencies:
+  test: ^1.24.0
+  lints: ^3.0.0
+</code></pre>
+<blockquote class="aside aside-tip"><p>pub.dev es el repositorio central. El `pubspec.lock` se debe comprometer para reproducibilidad; los rangos con `^` permiten actualizaciones menores.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="package-http-json">
+    <h2>http, json y utilidades frecuentes <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-dart">import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+Future&lt;void&gt; obtenerUsuarios() async {
+  final res = await http.get(
+    Uri.parse('https://api.github.com/users/octocat'),
+    headers: {'User-Agent': 'GuiaDev'},
+  );
+  if (res.statusCode == 200) {
+    final usuario = jsonDecode(res.body) as Map&lt;String, dynamic&gt;;
+    print('Nombre: ${usuario['name']}');
+  }
+}
+
+// uuid y path son clásicos
+import 'package:uuid/uuid.dart';
+import 'package:path/path.dart' as p;
+
+final id = const Uuid().v4();
+final nombreCompleto = p.join('carpeta', 'archivo.txt');
+
+// intl: internacionalización (números, fechas, plurales)
+import 'package:intl/intl.dart';
+final f = NumberFormat.currency(locale: 'es-MX', symbol: '\$');
+print(f.format(1234.5));
+</code></pre>
+<blockquote class="aside aside-tip"><p>El trío http + uuid + intl cubre HTTP, IDs e i18n. En Flutter usarás también `package:flutter/services` para los sensores/plataforma.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-ambiente">
+    <h2>Instalación del SDK de Dart y Flutter <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Dart CLI
+winget install Dart.Dart        # Windows
+brew install dart               # macOS
+sudo apt install dart           # (o manual del SDK)
+
+# Flutter (incluye Dart SDK), para móvil/desktop/web
+git clone https://github.com/flutter/flutter.git -b stable
+# o: winget install Flutter.Flutter
+flutter doctor                   # verifica toolchain
+
+# Verificar Dart
+dart --version
+dart run                          # ejecuta bin/main.dart
+</code></pre>
+<blockquote class="aside aside-caution"><p>Si te instalan Flutter, usa su Dart (no dos Dart). `flutter doctor` verifica Android SDK, Xcode, Chrome y más para saber qué falta.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un `dart create console` y añade el paquete `http`.</li>
+<li>Filtra y agrupa una lista de mapas por una clave con colecciones dart.</li>
+<li>Descarga JSON de una API con http y valida el status code.</li>
+<li>Genera 5 UUID v4 y formatea moneda con intl.</li>
+<li>Escribe tests con `package:test` sobre una función de cálculo.</li>
+</ol>
+    </div>
+  </section>

@@ -1,0 +1,163 @@
+<!-- 2. Frameworks y Ecosistema Dart (Flutter) - Bibliotecas (Utilidades) -->
+  <section id="flutter">
+    <h2>Flutter: UI multiplataforma <span class="gd-badge gd-badge-note">Framework</span></h2>
+    <div class="doc-content">
+<pre><code class="language-dart">import 'package:flutter/material.dart';
+
+void main() => runApp(const MiApp());
+
+class MiApp extends StatelessWidget {
+  const MiApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'GuiaDev',
+      home: const Inicio(),
+    );
+  }
+}
+
+class Inicio extends StatefulWidget {
+  const Inicio({super.key});
+  @override
+  State&lt;Inicio&gt; createState() =&gt; _InicioState();
+}
+
+class _InicioState extends State&lt;Inicio&gt; {
+  int contador = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Contador')),
+      body: Center(
+        child: Text('Valor: $contador', style: Theme.of(context).textTheme.headlineMedium),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () =&gt; setState(() =&gt; contador++),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>Un solo código en Dart para Android, iOS, web y desktop. Compila a nativo (Impeller) y usa widgets de Material/Cupertino.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="riverpod-state">
+    <h2>Gestión de estado: Riverpod y Bloc <span class="gd-badge gd-badge-note">Estado</span></h2>
+    <div class="doc-content">
+<pre><code class="language-dart">// Riverpod: simple y testeable
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final contadorProvider = StateProvider&lt;int&gt;((ref) =&gt; 0);
+
+class Widget extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final valor = ref.watch(contadorProvider);
+    return Text('$valor');
+  }
+}
+
+// Bloc: arquitectura robusta para equipos grandes
+// package:bloc con eventos/estados explícitos
+
+// Otros: Provider, GetX (ligero), MobX (reactivo)
+</code></pre>
+<blockquote class="aside aside-note"><p>Riverpod es la recomendación moderna (simple, tipado, testeable con `ProviderContainer`); Bloc si te gusta la arquitectura por eventos/estados.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="dart-web-backend">
+    <h2>Dart fuera de Flutter: backend con Shelf/Lighthouse <span class="gd-badge gd-badge-note">Backend</span></h2>
+    <div class="doc-content">
+<pre><code class="language-dart">// Shelf: middleware HTTP estilo Express
+import 'package:shelf/shelf.dart';
+import 'package:shelf/shelf_io.dart' as io;
+
+Response saludar(Request req) {
+  return Response.ok('{"saludo": "Hola"}',
+    headers: {'content-type': 'application/json'});
+}
+
+void main() {
+  io.serve(
+    const Pipeline()
+        .addMiddleware(logRequests())
+        .addHandler(saludar),
+    InternetAddress.anyIPv4, 8080,
+  );
+}
+
+// Alternatives: Lighthouse (Framework), dart_frog (equipo de VeryGoodVentures)
+// SQLite/Postgres: package:sqlite3 y package:postgres incluyen drivers reales.
+</code></pre>
+<blockquote class="aside aside-note"><p>Shelf es el estándar server-side de Dart. Con `shelf_router`, `dart_frog` o `lighthouse` montas APIs REST en el mismo lenguaje de tu app móvil.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-flutter">
+    <h2>Testing: flutter_test y golden <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-dart">// flutter_test: unit + widget tests
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test('suma correcta', () {
+    expect(suma(2, 3), 5);
+  });
+
+  testWidgets('renderiza contador', (tester) async {
+    await tester.pumpWidget(const Inicio());
+    expect(find.text('Valor: 0'), findsOneWidget);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pump();
+    expect(find.text('Valor: 1'), findsOneWidget);
+  });
+}
+// Ejecutar: flutter test
+// Golden tests: flutter test --update-goldens (screenshots como reference)
+</code></pre>
+<blockquote class="aside aside-success"><p>`flutter_test` integra unit y widget tests. Golden tests aseguran que la UI no cambie visualmente sin querer.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ecosistema-flutter">
+    <h2>Paquetes y decisiones del ecosistema Flutter <span class="gd-badge gd-badge-note">Extras</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Navegación: go_router (declarativa con rutas y shields)
+dart pub add go_router
+# Networking: dio (además de http) con interceptores
+dart pub add dio
+# Estado: riverpod / bloc
+dart pub add flutter_riverpod
+# Caché local: shared_preferences / hive / isar
+dart pub add shared_preferences
+# BD local: drift / sqflite / isar
+# Imágenes y effetos: cached_network_image, lottie, shimmer
+# Servicios plataforma: local_auth (biometría), geolocator, camera
+</code></pre>
+<blockquote class="aside aside-tip"><p>El "favorito" de estado/paquetes cambia: revisa el repo `itsallwidgets.com` para ver stacks populares en apps reales públicas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una app Flutter con un contador persistido con shared_preferences.</li>
+<li>Migra el estado del contador a Riverpod y quédate con watch en un widget.</li>
+<li>Levanta un servidor Shelf con una ruta GET /saludo que devuelva JSON.</li>
+<li>Escribe un widget test que verifique el texto inicial y un tap.</li>
+<li>Añade GoRouter con dos rutas (Home/Detalle) y navega entre ellas.</li>
+</ol>
+    </div>
+  </section>

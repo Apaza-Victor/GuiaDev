@@ -1,0 +1,206 @@
+<!-- 4. Visualización con ggplot2 - R (Lenguajes de Programación) -->
+  <section id="la-gramatica">
+    <h2>La gramática de gráficos</h2>
+    <div class="doc-content">
+<p>ggplot2 implementa la <strong>gramática de gráficos</strong> de Leland Wilkinson: cualquier gráfico se construye combinando capas. Declaras los datos (<code>data</code>), mapeas variables a <em>aesthetics</em> con <code>aes()</code> (x, y, color, tamaño) y eliges la geometría (<code>geom_*</code>) que la dibuja. La base de R dibuja con <code>plot()</code>; ggplot2 separa limpiamente estructura, estética y datos.</p>
+<pre><code class="language-r"># La receta básica: datos + aes + geometría
+library(ggplot2)
+
+ggplot(data = mpg, aes(x = displ, y = hwy)) +
+  geom_point()
+
+# Los datos pasan por el pipe igual que en dplyr
+mpg %&gt;%
+  ggplot(aes(x = cty, y = hwy)) +
+  geom_point() +
+  geom_smooth(method = "lm")   # capa de tendencia</code></pre>
+<pre><code class="language-r"># Aesthetics: color según variable y tamaño constante
+mpg %&gt;%
+  ggplot(aes(x = displ, y = hwy, color = class)) +
+  geom_point(size = 2)
+
+# Un color fijo NO va dentro de aes()
+mpg %&gt;%
+  ggplot(aes(x = displ, y = hwy)) +
+  geom_point(color = "#1a8f77")</code></pre>
+<table><thead><tr><th>Geometría</th><th>Úsala para</th><th>Asociada a</th></tr></thead><tbody>
+<tr><td><code>geom_point()</code></td><td>Relación numérica vs numérica</td><td>Dispersión (scatter)</td></tr>
+<tr><td><code>geom_line()</code></td><td>Cambio a lo largo del tiempo</td><td>Series temporales</td></tr>
+<tr><td><code>geom_bar()</code></td><td>Conteos de una categórica</td><td>Barras</td></tr>
+<tr><td><code>geom_histogram()</code></td><td>Distribución de una numérica</td><td>Histograma</td></tr>
+<tr><td><code>geom_boxplot()</code></td><td>Distribución por categorías</td><td>Cajas y bigotes</td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>Regla mental: dentro de <code>aes()</code> van variables de tus datos (se mapean y generan leyenda automática); fuera de <code>aes()</code> van constantes (un solo color, un solo tamaño).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="puntos-y-lineas">
+    <h2>Gráficos de puntos y líneas</h2>
+    <div class="doc-content">
+<p>Los <strong>puntos</strong> exploran la relación entre dos variables numéricas y <strong>las líneas</strong> describen la evolución en el tiempo. Usos típicos: dispersión para detectar tendencias u outliers, y líneas para series ordenadas por fecha.</p>
+<pre><code class="language-r"># Dispersión con color a una tercera variable
+mpg %&gt;%
+  ggplot(aes(x = displ, y = hwy, color = drv)) +
+  geom_point(alpha = 0.6)      # transparencia para puntos solapados
+
+# Tendencia suave por grupo con una capa más
+mpg %&gt;%
+  ggplot(aes(x = displ, y = hwy, color = drv)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(se = FALSE, method = "lm")</code></pre>
+<pre><code class="language-r"># Serie temporal de ejemplo
+ventas_mes &lt;- data.frame(
+  mes  = seq(as.Date("2025-01-01"), by = "month", length.out = 8),
+  venta = c(120, 135, 110, 148, 152, 143, 165, 178))
+
+ventas_mes %&gt;%
+  ggplot(aes(x = mes, y = venta)) +
+  geom_line(color = "steelblue", linewidth = 1.2) +
+  geom_point()
+
+# Dos series: otra variable de grupo las colorea
+tabla &lt;- data.frame(
+  mes   = rep(ventas_mes$mes, 2),
+  venta = c(ventas_mes$venta, ventas_mes$venta * 1.1),
+  tipo  = rep(c("real", "meta"), each = 8))
+
+tabla %&gt;%
+  ggplot(aes(x = mes, y = venta, color = tipo)) +
+  geom_line()</code></pre>
+<blockquote class="aside aside-note"><p>En versiones recientes de ggplot2 el grosor de una línea se controla con <code>linewidth</code>. El viejo <code>size</code> sigue funcionando, pero puede emitir avisos de deprecación en algunas geometrías.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="barras-e-histogramas">
+    <h2>Barras e histogramas</h2>
+    <div class="doc-content">
+<p>Las barras dibujan <strong>frecuencias de una categórica</strong> y los histogramas la <strong>distribución de una numérica</strong>. Detalle clave: <code>geom_bar()</code> cuenta automáticamente; <code>geom_col()</code> usa los valores que ya tienes en una columna.</p>
+<pre><code class="language-r"># geom_bar: cuenta ocurrencias por categoría
+mpg %&gt;%
+  ggplot(aes(x = class)) +
+  geom_bar()
+
+# Fill apila otra categoría dentro de cada barra
+mpg %&gt;%
+  ggplot(aes(x = class, fill = drv)) +
+  geom_bar()
+
+# geom_col: valores ya precalculados en los datos
+resumen &lt;- mpg %&gt;%
+  group_by(manufacturer) %&gt;%
+  summarize(media_hwy = mean(hwy))
+
+resumen %&gt;%
+  ggplot(aes(x = manufacturer, y = media_hwy)) +
+  geom_col()</code></pre>
+<pre><code class="language-r"># Histograma: distribución de una variable continua
+mpg %&gt;%
+  ggplot(aes(x = hwy)) +
+  geom_histogram(bins = 20, fill = "gray40", color = "white")
+
+# Densidad: versión suavizada, fácil de superponer
+mpg %&gt;%
+  ggplot(aes(x = hwy, fill = drv)) +
+  geom_density(alpha = 0.4)
+
+# Boxplot: resumen numérico por categoría
+mpg %&gt;%
+  ggplot(aes(x = drv, y = hwy)) +
+  geom_boxplot()</code></pre>
+<blockquote class="aside aside-caution"><p>Si usas <code>geom_bar()</code> con un <code>y</code> que ya viene calculado en tus datos, R contará ese <code>y</code> en lugar de mostrarlo. Para valores agregados usa <code>geom_col()</code>: es la confusión número uno en ggplot2.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="facetas-y-temas">
+    <h2>Facetas y temas</h2>
+    <div class="doc-content">
+<p>Las <strong>facetas</strong> cortan los datos y producen un subgráfico por categoría, ideales para comparar grupos sin abarrotar una sola gráfica. Los <strong>temas</strong> controlan todo lo que no son datos: fondo, títulos, leyenda y ejes.</p>
+<pre><code class="language-r"># facet_wrap: un panel por valor de una variable
+mpg %&gt;%
+  ggplot(aes(x = displ, y = hwy)) +
+  geom_point() +
+  facet_wrap(~ drv)
+
+# facet_grid: filas y columnas con dos variables
+mpg %&gt;%
+  ggplot(aes(x = displ, y = hwy)) +
+  geom_point() +
+  facet_grid(year ~ drv)
+
+# Escalas libres para que los paneles no se compriman
+mpg %&gt;%
+  ggplot(aes(x = class)) +
+  geom_bar() +
+  facet_wrap(~ year, scales = "free_y")</code></pre>
+<pre><code class="language-r"># labs: título, subtítulo y etiquetas de ejes
+mpg %&gt;%
+  ggplot(aes(x = displ, y = hwy)) +
+  geom_point() +
+  labs(title = "Consumo vs cilindrada",
+       subtitle = "Datos mpg de ggplot2",
+       x = "Cilindrada (litros)", y = "Autopista (mpg)")
+
+# Temas listos: quitan la decoración del fondo
+mpg %&gt;%
+  ggplot(aes(x = displ, y = hwy)) +
+  geom_point() +
+  theme_minimal()
+
+# theme(): control fino de un elemento concreto
+mpg %&gt;%
+  ggplot(aes(x = class, y = hwy)) +
+  geom_boxplot() +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))</code></pre>
+<blockquote class="aside aside-tip"><p>Empieza tus gráficas con <code>theme_minimal()</code> o <code>theme_classic()</code> y añade limpieza extra solo si hace falta. Si necesitas una imagen institucional, el paquete <code>hrbrthemes</code> ofrece temas pulidos listos para usar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="guardar-graficos">
+    <h2>Guardar y exportar gráficos</h2>
+    <div class="doc-content">
+<p>Un gráfico solo es útil si se puede <strong>exportar</strong>. En RStudio el botón <em>Export</em> funciona, pero el camino reproducible es <code>ggsave()</code>: respeta el tamaño y la resolución que decides y se ejecuta dentro del script para que cualquiera regenere el mismo archivo.</p>
+<pre><code class="language-r"># Construir el gráfico y guardarlo en un objeto
+g &lt;- mpg %&gt;%
+  ggplot(aes(x = displ, y = hwy, color = drv)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "Consumo por tipo de tracción")
+
+ggsave("grafico_dispersion.png", plot = g,
+       width = 8, height = 5, dpi = 300)
+
+# Si omites plot, se exporta el último gráfico
+ggplot(mpg, aes(x = class)) + geom_bar()
+ggsave("grafico_barras.pdf", width = 6, height = 4)</code></pre>
+<pre><code class="language-r"># Elegir el formato según el destino final
+ggsave("informe.svg", plot = g, width = 8, height = 5)   # vectorial para web
+ggsave("diapositiva.png", plot = g, width = 10, height = 5.6, dpi = 150)
+
+# Control explícito del dispositivo gráfico base R
+png("dispersion_base.png", width = 700, height = 500, res = 150)
+plot(mpg$displ, mpg$hwy)
+dev.off()   # no olvides cerrar el dispositivo</code></pre>
+<blockquote class="aside aside-success"><p>Regla práctica: <em>300 dpi</em> para imprimir, <em>96-150 dpi</em> para pantalla o web y <em>SVG</em> para elementos vectoriales. Guardar el gráfico en un objeto <code>g</code> te permite reexportarlo al instante cuando cambias una capa.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Trabaja con el dataset <code>mpg</code>. Cada ejercicio termina con una exportación.</p>
+<ol>
+<li><strong>Dispersión básica:</strong> grafica <code>displ</code> vs <code>cty</code> coloreando por <code>year</code>, con puntos semitransparentes. Exporta a <code>dispersion.png</code> a 300 dpi.</li>
+<li><strong>Serie de líneas:</strong> inventa 10 puntos de ventas mensuales y grafícalos como línea con puntos encima, con títulos claros en <code>labs()</code>.</li>
+<li><strong>Histograma de grano fino:</strong> la distribución de <code>hwy</code> con <code>bins = 30</code> y bordes blancos; guarda el resultado en SVG.</li>
+<li><strong>Facetas con grid:</strong> aplica <code>facet_grid(drv ~ year)</code> sobre un scatter de <code>displ</code> vs <code>hwy</code> y observa cómo cambia la relación entre paneles.</li>
+<li><strong>Boxplot comparado:</strong> boxplot de <code>hwy</code> por <code>class</code> ordenado por mediana (ayúdate de <code>reorder()</code> dentro de <code>aes()</code>) y con <code>theme_minimal()</code>.</li>
+</ol>
+<p>En la próxima lección pasarás de describir a <strong>modelar</strong>: estadística, correlación, regresión lineal y pruebas de hipótesis con R.</p>
+    </div>
+  </section>

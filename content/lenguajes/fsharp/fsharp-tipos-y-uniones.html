@@ -1,0 +1,182 @@
+<!-- 4. Tipos y Uniones Discriminadas - F# (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="records">
+    <h2>Records</h2>
+    <div class="doc-content">
+<p>Un <strong>Record</strong> es un tipo de dato con nombre para sus campos, creado con <code>type Nombre = { ... }</code>. Viene con igualdad estructural, representación <code>%A</code>, y <em>copy-and-update</em> (una forma de "modificar" preservando la inmutabilidad).</p>
+<pre><code class="language-fsharp">type Persona = {
+    Nombre : string
+    Edad   : int
+    Ciudad : string
+}
+
+let ana = { Nombre = "Ana"; Edad = 30; Ciudad = "Lima" }
+printfn "%A" ana                         // { Nombre = "Ana"; ... }
+
+// Acceso por punto
+printfn "%s (%d) - %s" ana.Nombre ana.Edad ana.Ciudad
+
+// Igualdad estructural (dos records con mismos valores = iguales)
+let otra = { Nombre = "Ana"; Edad = 30; Ciudad = "Lima" }
+printfn "%b" (ana = otra)                // true
+
+// Copy-and-update: nuevo record modificando campos
+let ana_31 = { ana with Edad = 31 }
+printfn "%d" ana.Edad                    // 30 (inmutable, no cambió)
+printfn "%d" ana_31.Edad                 // 31
+
+// Patrón de campos en match
+let describir (p: Persona) =
+    match p with
+    | { Nombre = n; Edad = e } -&gt; $"{n} tiene {e} años"
+printfn "%s" (describir ana)</code></pre>
+<blockquote class="aside aside-tip"><p>Los Records no necesitan funciones constructoras ni setters: sobre todo <code>with</code> es la forma "inmutable" de actualizar un dato persistente. Los Records son ideales para datos de dominio (entidades, VMs).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="uniones">
+    <h2>Uniones Discriminadas</h2>
+    <div class="doc-content">
+<p>Una <strong>unión discriminada</strong> define un conjunto cerrado de casos. El compilador obliga a tratarlos todos, lo que elimina estados inválidos (el famoso "make illegal states unrepresentable").</p>
+<pre><code class="language-fsharp">type Estado =
+    | Activo
+    | Inactivo
+    | Suspendido
+
+let estado = Activo
+
+let texto =
+    match estado with
+    | Activo -&gt; "funcionando"
+    | Inactivo -&gt; "detenido"
+    | Suspendido -&gt; "en pausa"
+printfn "%s" texto
+
+// Con datos
+type Figura =
+    | Rectangulo of float * float
+    | Circulo    of float
+
+let area (fig: Figura) =
+    match fig with
+    | Rectangulo (a, b) -&gt; a * b
+    | Circulo r -&gt; System.Math.PI * r * r
+
+let f1 = Rectangulo (3.0, 4.0)
+let f2 = Circulo 2.0
+printfn "Áreas: %f, %f" (area f1) (area f2)</code></pre>
+<blockquote class="aside aside-success"><p>Las uniones discriminadas + match te dan "enum con datos" y modelado de estados de forma total. Es la herramienta con la que F# construye software a prueba de balas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="option">
+    <h2>Option: ausencia segura</h2>
+    <div class="doc-content">
+<p><code>Option&lt;'T&gt;</code> es la "nullable" segura: <code>Some valor</code> o <code>None</code>. Obliga a manejar la ausencia; no hay null silencioso ni NullReferenceException.</p>
+<pre><code class="language-fsharp">let buscarEn (pares: (string * int) list) clave =
+    List.tryFind (fun (k, _) -&gt; k = clave) pares
+
+// List.tryFind devuelve option
+let baseDatos = [ ("ana", 30); ("pedro", 25) ]
+let r = buscarEn baseDatos "ana"      // Some ("ana", 30)
+let r2 = buscarEn baseDatos "maria"   // None
+
+match r with
+| Some (nombre, edad) -&gt; printfn "%s: %d" nombre edad
+| None -&gt; printfn "No encontrado"
+
+// Comodines útiles
+printfn "%A" (Option.defaultValue (-1) (buscarEn baseDatos "ana"   |&gt; Option.map snd))
+printfn "%A" (Option.defaultValue (-1) (buscarEn baseDatos "maria" |&gt; Option.map snd))
+
+// Encadenar with Option.map / Option.bind
+let doble = Option.map (fun (_, e) -&gt; e * 2)
+printfn "%A" (doble (buscarEn baseDatos "ana"))    // Some 60</code></pre>
+<blockquote class="aside aside-tip"><p>Reglas de oro: nunca uses <code>null</code>, nunca fundas <code>Option.get</code> sin chequear, y encadena con <code>Option.map</code>/<code>Option.bind</code>. El alias <code>Option</code> en F# corresponde a la <code>maybe</code> monada de Haskell.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="result">
+    <h2>Result: errores como datos</h2>
+    <div class="doc-content">
+<p><code>Result&lt;'Ok, 'Error&gt;</code> es <code>Ok valor</code> o <code>Error err</code>: representas fallos como datos, sin excepciones. Ideal para validación donde quieres errores acumulables y control total.</p>
+<pre><code class="language-fsharp">type ErrorValidacion = string
+
+let validarEdad (n: int) : Result&lt;int, ErrorValidacion&gt; =
+    if n &lt; 0 then Error "Edad negativa"
+    elif n &gt; 120 then Error "Edad imposible"
+    else Ok n
+
+let resultado = validarEdad 25
+
+let mensaje =
+    match resultado with
+    | Ok n -&gt; $"edad válida: {n}"
+    | Error e -&gt; $"inválido: {e}"
+printfn "%s" mensaje
+
+// Combinar Result con Result.bind (encadenar)
+let validarNombre (s: string) : Result&lt;string, ErrorValidacion&gt; =
+    if s.Length &gt; 3 then Ok s else Error "nombre corto"
+
+let completa =
+    validarNombre "Ana"
+    |&gt; Result.bind (fun _ -&gt; validarEdad 121)
+
+match completa with
+| Ok (nom) -&gt; printfn "Todo OK: %s" nom
+| Error e -&gt; printfn "Fallo: %s" e</code></pre>
+<blockquote class="aside aside-note"><p><code>Result</code> inspirado en TypeScript/Either. Lo usas cuando quieres propagar errores esperados (validación, IO) como datos; las excepciones quedan para bugs imprevistos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="parsing">
+    <h2>Parsing y la regla "parse, don't validate"</h2>
+    <div class="doc-content">
+<p>Un patrón F# favorito: parsear los datos brutos a tipos fuertes (con Option/Result) y nunca más validar después. Los tipos garantizan que el dato ya es válido.</p>
+<pre><code class="language-fsharp">type Email = Email of string
+type Usuario = {
+    Nombre : string
+    Email  : Email
+}
+
+let crearEmail (s: string) : Result&lt;Email, string&gt; =
+    if s.Contains("@") &amp;&amp; s.Contains(".") then Ok (Email s)
+    else Error $"Email inválido: {s}"
+
+let crearUsuario nombre email =
+    match crearEmail email with
+    | Ok em -&gt; Ok { Nombre = nombre; Email = em }
+    | Error e -&gt; Error e
+
+let resultado = crearUsuario "Ana" "ana@guia.dev"
+match resultado with
+| Ok u -&gt; printfn "Usuario: %s (%A)" u.Nombre u.Email
+| Error e -&gt; printfn "No: %s" e
+
+// Ahora "Email" conlleva la garantía de validez: nadie puede crear un
+// Email inválido sin pasar por crearEmail</code></pre>
+<blockquote class="aside aside-caution"><p>Evita los "stringly typed" (modelar todo como <code>string</code>). Crea tipos para Email, ID, Código... y benefíciate de la comprobación del compilador y de la documentación implícita.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Record Producto</strong>: define <code>Producto = { Nombre; Precio }</code>, crea dos y usa <code>with</code> para subir precio un 10%.</li>
+<li><strong>Máquina de estados</strong>: modela <code>Vehiculo = Parado | Andando of float | Averiado</code> y una función que <code>match</code> y describa cada estado.</li>
+<li><strong>Busqueda con Option</strong>: sobre una lista de pares, implementa <code>buscar</code> con <code>List.tryFind</code> y maneja None.</li>
+<li><strong>Validación con Result</strong>: crea <code>validarEdad</code> y <code>validarNombre</code>, compónlas con <code>Result.bind</code>.</li>
+<li><strong>Email tipado</strong>: implementa <code>crearEmail</code> y un <code>Usuario</code> cuyo Email sea infaliblemente válido.</li>
+</ol>
+<p>En la próxima lección dominaremos colecciones: listas, secuencias, y las funciones de orden superior de F#.</p>
+    </div>
+  </section>

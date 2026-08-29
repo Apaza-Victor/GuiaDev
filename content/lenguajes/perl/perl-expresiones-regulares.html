@@ -1,0 +1,184 @@
+<!-- 4. Expresiones Regulares - Perl (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="sintaxis-regex">
+    <h2>Sintaxis: =~, m// y s///</h2>
+    <div class="doc-content">
+<p>Las <strong>expresiones regulares</strong> son la razón histórica de la fama de Perl. El operador <code>=~</code> aplica un patrón a una variable y devuelve verdadero/falso, con dos formas principales: <code>m//</code> (coincidencia / match) y <code>s///</code> (sustitución / replace).</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my $texto = "El correo es ana@guia.dev";
+
+# m// : buscar coincidencia (el m es opcional con //)
+if ($texto =~ m/\@/) {
+    print "Contiene @\n";
+}
+
+# Captura de valor
+if ($texto =~ /([\w.-]+)\@([\w.-]+)/) {
+    print "Usuario: $1\n";   # ana
+    print "Dominio: $2\n";   # guia.dev
+}
+
+# s/// : sustitución
+my $limpio = $texto;
+$limpio =~ s/guia/dev/;
+print "$limpio\n";
+
+# Negación: !~
+print "No contiene 'xyz'\n" if $texto !~ /xyz/;</code></pre>
+<blockquote class="aside aside-tip"><p>Por defecto, <code>=~ m//</code> busca en CUALQUIER parte de la cadena. Para anclar al inicio usa <code>^</code> (ej. <code>/^Hola/</code>) y al final usa <code>$</code> (ej. <code>/fin$/</code>).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="clases-y-cuantificadores">
+    <h2>Clases de caracteres y cuantificadores</h2>
+    <div class="doc-content">
+<p>Los patrones se componen de <strong>clases</strong> (conjuntos de caracteres) y <strong>cuantificadores</strong> (repeticiones). Saber estas piezas te permite construir casi cualquier patrón.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my @ejemplos = ("item-123", "ITEM_9", "codigo", "123-456-789");
+foreach my $e (@ejemplos) {
+    # \d dígito, \w palabra, \s espacio; . cualquier carácter
+    # Cuantificadores: * (0+), + (1+), ? (0 o 1), {n} exacto, {n,} n+, {n,m}
+    print "$e -> ",
+      ($e =~ /^[\w\-]+$/ ? "válido" : "no válido"), "\n";
+}
+
+# Código postal: 5 dígitos o 5-4
+my $cp = "12345-6789";
+if ($cp =~ /^\d{5}(-\d{4})?$/) {
+    print "CP válido\n";
+}
+
+my $fecha = "2026-08-29";
+$fecha =~ /^(\d{4})-(\d{2})-(\d{2})$/;
+print "Año: $1  Mes: $2  Día: $3\n";</code></pre>
+<table><thead><tr><th>Clase</th><th>Significado</th><th>Equivalente</th></tr></thead><tbody><tr><td><code>\d</code></td><td>Dígito</td><td><code>[0-9]</code></td></tr><tr><td><code>\w</code></td><td>Carácter de palabra</td><td><code>[A-Za-z0-9_]</code></td></tr><tr><td><code>\s</code></td><td>Espacio en blanco</td><td><code>[ \t\n]</code></td></tr><tr><td><code>\D</code>, <code>\W</code>, <code>\S</code></td><td>Negación de la anterior</td><td>—</td></tr><tr><td><code>.</code></td><td>Cualquier carácter (salvo nueva línea)</td><td>—</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="capturas">
+    <h2>Capturas y retroreferencias</h2>
+    <div class="doc-content">
+<p>Los paréntesis <code>(...)</code> agrupan y <strong>capturan</strong> porciones del texto que luego estarán en <code>$1</code>, <code>$2</code>, etc. Las <strong>retroreferencias</strong> (<code>\1</code>, <code>\2</code>) permiten referirse a una captura dentro del propio patrón.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my $nomina = "Ana;Lima;30";
+
+# Capturas con split y regex
+my ($nombre, $ciudad, $edad) = split /;/, $nomina;
+print "Nombre: $nombre\n";
+
+# Retroreferencia: buscar palabras repetidas ("hola hola")
+my $frase = "el el perro duerme duerme";
+if ($frase =~ /(\w+)\s+\1/) {
+    print "Palabra repetida: $1\n";   # "el"
+}
+
+# Reordenar texto con s///  y capturas (ca + $3 para evitar ambigüedad)
+my $iso = "29-08-2026";
+$iso =~ s/^(\d+)-(\d+)-(\d+)$/$3-$2-$1/;
+print "Fecha ISO: $iso\n";            # 2026-08-29
+
+# Grupos que NO capturan: (?:...)
+if ("abc" =~ /(?:ab)(c)/) {
+    print "Capturé solo: $1\n";        # c
+}</code></pre>
+<blockquote class="aside aside-note"><p>Si hay varias coincidencias, <code>$1</code>… se refieren a la ÚLTIMA. Para obtener todas, usa capturas en contexto de lista: <code>my @todas = $texto =~ /(\w+)/g;</code> con la bandera <code>/g</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="flags-y-agrupacion">
+    <h2>Flags y agrupación</h2>
+    <div class="doc-content">
+<p>Los <strong>flags</strong> (modificadores) cambian el comportamiento del patrón y se colocan al final: <code>/patron/flags</code>.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my $texto = "Perl PERL perl";
+
+# i : insensible a mayúsculas
+my $n1 = () = $texto =~ /perl/gi;   # cuenta las 3 apariciones
+print "Apariciones (i): $n1\n";
+
+# g : global (todas las coincidencias)
+my @todas = $texto =~ /(perl)/gi;
+print "Lista: @todas\n";             # PERL PERL perl
+
+# m : multilínea (^ y $ por línea)
+my $multi = "linea1\nlinea2\n";
+if ($multi =~ /^linea2$/m) {
+    print "Anclas multilínea OK\n";
+}
+
+# x : espacios y comentarios en el patrón (legibilidad)
+if ($texto =~ / perl  # busca perl literal
+              /ix) {
+    print "Con /x y /i: sí\n";
+}
+
+# s : hacer que . también capture \n
+my $parrafo = "hola\nmundo";
+print "DOTALL: ", ($parrafo =~ /hola.*mundo/s ? "sí" : "no"), "\n";</code></pre>
+<table><thead><tr><th>Flag</th><th>Efecto</th></tr></thead><tbody><tr><td><code>i</code></td><td>Coincidencia insensible a mayúsculas</td></tr><tr><td><code>g</code></td><td>Global: captura todas las coincidencias</td></tr><tr><td><code>m</code></td><td><code>^</code>/<code>$</code> funcionan por línea</td></tr><tr><td><code>s</code></td><td><code>.</code> también captura saltos de línea</td></tr><tr><td><code>x</code></td><td>Permite espacios y comentarios dentro del patrón</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="regex-en-el-mundo-real">
+    <h2>Regex en el mundo real</h2>
+    <div class="doc-content">
+<p>Veamos un ejemplo integral: extraer y validar datos de un log, la tarea más típica en el día a día de un administrador.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my $linea = "2026-08-29 10:15:42 ERROR user=ana ip=192.168.0.10 message='disk full'";
+
+# Capturar nivel y mensaje
+if ($linea =~ /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) (\w+) user=(\w+) ip=([\d.]+) message='([^']*)'/) {
+    my ($fecha, $hora, $nivel, $user, $ip, $msg) = ($1, $2, $3, $4, $5, $6);
+    print "Evento: $nivel ($fecha $hora)\n";
+    print "Usuario: $user desde $ip\n";
+    print "Mensaje: $msg\n";
+}
+
+# Validación de emails en una lista
+my @emails = ("ana@guia.dev", "mal-correo", "pedro@sitiodefault.org");
+foreach my $e (@emails) {
+    my $ok = $e =~ /^[\w.\-]+@[\w.\-]+\.(dev|com|org|net)$/i;
+    print "$e -> ", ($ok ? "válido" : "inválido"), "\n";
+}
+
+# Sanitizar entrada antes de usar (safe interpolation no existe en Perl: escápalo)
+my $entrada = "foo <script>alert(1)</script>";
+$entrada =~ s/&amp;/&amp;amp;/g;
+$entrada =~ s/&lt;/&amp;lt;/g;
+$entrada =~ s/&gt;/&amp;gt;/g;
+$entrada =~ s/"/&amp;quot;/g;
+print "$entrada\n";</code></pre>
+<blockquote class="aside aside-caution"><p>Las regex no son la herramienta universal: si necesitas parsear HTML, JSON o XML, usa módulos de CPAN (<code>HTML::TreeBuilder</code>, <code>JSON::PP</code>) en lugar de un patrón casero. Las regex anidadas en HTML/JSON son frágiles.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Validar telefonos</strong>: escribe un patrón que valide <code>+51 999 999 999</code> con dígitos, separadores opcionales y prefijo.</li>
+<li><strong>Extractor de IPs</strong>: dado un texto con varias IPs, usa <code>/g</code> para extraerlas todas con <code>my @ips = $texto =~ /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/g;</code>.</li>
+<li><strong>URL a partes</strong>: dado <code>http://guia.dev/path?q=1</code>, captura protocolo, dominio y path con un patrón anclado.</li>
+<li><strong>Palabras duplicadas</strong>: usando retroreferencias, detecta y elimina palabras repetidas seguidas ("hola hola" → "hola").</li>
+<li><strong>Log parser</strong>: parsea al menos 5 líneas de log distintas y extrae fecha, nivel y usuario; imprime un resumen por nivel.</li>
+</ol>
+<p>En la próxima lección crearemos subrutinas, manejaremos referencias y nos conectaremos al mar de módulos de CPAN.</p>
+    </div>
+  </section>

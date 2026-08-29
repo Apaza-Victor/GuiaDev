@@ -1,0 +1,208 @@
+<!-- 6. Scripts y Automatización - PowerShell (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="scripts">
+    <h2>Estructura de un script</h2>
+    <div class="doc-content">
+<p>Un script es un archivo <code>.ps1</code> con la <strong>política de ejecución</strong> permitiendo correrlo, el comentario de ayuda <code>.SYNOPSIS</code> y la lógica organizada en funciones.</p>
+<pre><code class="language-powershell"># mi-script.ps1
+&lt;#
+.SYNOPSIS
+    Reporte de servicios de una máquina.
+.DESCRIPTION
+    Genera un CSV con el estado de los servicios.
+.PARAMETER Computador
+    Nombre de la máquina remota.
+.EXAMPLE
+    .\mi-script.ps1 -Computador server01
+#&gt;
+
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)]
+    [string]$Computador
+)
+
+function Get-Reporte {
+    param($Equipo)
+    Get-Service -ComputerName $Equipo |
+        Select-Object Name, Status, DisplayName
+}
+
+# --- cuerpo principal ---
+$reporte = Get-Reporte -Equipo $Computador
+$reporte | Export-Csv "reporte-$Computador.csv" -NoTypeInformation
+Write-Host "Reporte generado para $Computador"</code></pre>
+<blockquote class="aside aside-tip"><p>El bloque de comentarios <code>&lt;# ... #&gt;</code> con <code>.SYNOPSIS</code> y <code>.PARAMETER</code> alimenta la ayuda automática: <code>Get-Help .\mi-script.ps1</code>. Un script debe tener el objetivo de pasos: <strong>README + funciones + main</strong>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="parametros">
+    <h2>Parámetros avanzados</h2>
+    <div class="doc-content">
+<p>Los atributos de parámetro permiten validación (rangos, conjuntos, existencia de rutas), descripción y conjuntos de parámetros disjuntos.</p>
+<pre><code class="language-powershell"># Validación de valores
+param(
+    [ValidateRange(1, 10)] [int]$Nivel,
+    [ValidateSet('P', 'D', 'N')] [string]$Modo,
+    [ValidateScript({ Test-Path $_ })] [string]$Ruta
+)
+
+# Conjuntos de parámetros (solo uno a la vez)
+param(
+    [Parameter(ParameterSetName = 'Local')]
+    [switch]$Local,
+    [Parameter(ParameterSetName = 'Remote')]
+    [string]$Servidor
+)
+if ($PSCmdlet.ParameterSetName -eq 'Remote') {
+    "Vía remota: $Servidor"
+} else {
+    'Vía local'
+}
+
+# Parametrizar valores con mensajes de ayuda
+function Instalar {
+    param(
+        [Parameter(Mandatory, HelpMessage = '¿Qué paquete?')]
+        [string]$Paquete
+    )
+    "Instalando $Paquete"
+}
+
+# Valores contados y matrices
+param(
+    [int[]]$Puertos,
+    [ValidateCount(1, 3)] [string[]]$Nombres
+)
+
+# Atributos dinámicos con aliases
+param(
+    [Alias('hv')]
+    [string]$HostVirtual
+)</code></pre>
+<blockquote class="aside aside-caution"><p><code>ValidateSet</code> evita errores de tipeo, <code>ValidateScript</code> agrega lógica personalizada (como verificar que una ruta exista) y los <code>ParameterSetName</code> crean firmas de comando distintas según el escenario.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="modulos">
+    <h2>Módulos</h2>
+    <div class="doc-content">
+<p>Un <strong>módulo</strong> (<code>.psm1</code>) agrupa funciones reutilizables; un <strong>manifest</strong> (<code>.psd1</code>) lo describe. <code>Import-Module</code> lo carga y <code>Export-ModuleMember</code> controla qué se expone.</p>
+<pre><code class="language-powershell"># utilidades.psm1
+function Convertir-Celsius {
+    param([double]$fahrenheit)
+    ($fahrenheit - 32) * 5 / 9
+}
+function Convertir-MB {
+    param([long]$bytes)
+    [math]::Round($bytes / 1MB, 2)
+}
+# Solo exponemos las públicas
+Export-ModuleMember -Function Convertir-*
+
+# Cargar el módulo
+Import-Module .\utilidades.psm1 -Force
+Convertir-Celsius -fahrenheit 212
+Convertir-MB -bytes 536870912
+
+# Listar módulos instalados
+Get-Module -ListAvailable | Select-Object Name, Version, Author
+
+# Módulo de la galería
+Install-Module -Name PSScriptAnalyzer -Scope CurrentUser
+Import-Module PSScriptAnalyzer
+Invoke-ScriptAnalyzer -Path .\mi-script.ps1</code></pre>
+<blockquote class="aside aside-tip"><p>PSGallery es el repositorio oficial de módulos PowerShell. Instálalos con <code>Install-Module</code> y expón solo lo necesario con <code>Export-ModuleMember</code> para mantener APIs limpias.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="programacion">
+    <h2>Programar tareas</h2>
+    <div class="doc-content">
+<p>Combinar <code>Register-ScheduledJob</code>, el Programador de Tareas (<code>ScheduledTasks</code>) o simplemente <code>Register-ObjectEvent</code> permite ejecutar scripts de forma automática.</p>
+<pre><code class="language-powershell"># Trabajo programado vía módulo PSScheduledJob
+Register-ScheduledJob -Name 'RespaldoDiario' `
+    -ScriptBlock {
+        & "C:\scripts\respaldar.ps1"
+    } `
+    -Trigger (New-JobTrigger -Daily -At '02:00')
+
+Get-ScheduledJob
+Start-Job -DefinitionName 'RespaldoDiario'
+Get-Job -Name 'Respaldo*' | Receive-Job
+
+# Con el Programador de Tareas nativo (más control)
+Register-ScheduledTask -TaskName 'LimpiezaTemp' `
+    -Action (New-ScheduledTaskAction -Execute 'powershell.exe' `
+        -Argument '-File C:\scripts\limpiar.ps1') `
+    -Trigger (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At '07:00')
+
+# Habilitar / deshabilitar
+Disable-ScheduledTask -TaskName 'LimpiezaTemp'
+Enable-ScheduledTask -TaskName 'LimpiezaTemp'
+
+# Eventos del sistema como disparador
+Register-ObjectEvent -InputObject $env:COMPUTERNAME `
+    -EventName 'TransactionStarted' -Action { 'detectado' }</code></pre>
+<blockquote class="aside aside-note"><p>Distingue: <code>PSScheduledJob</code> son trabajos de PowerShell dentro de la sesión; <code>ScheduledTasks</code> son tareas de Windows más potentes (corren fuera de la sesión). Para tareas de infraestructura, el segundo suele ser el adecuado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas">
+    <h2>Mejores prácticas</h2>
+    <div class="doc-content">
+<p>Escribir PowerShell robusto y mantenible sigue una lista corta de reglas: nombrado <code>Verbo-Sustantivo</code>, parámetros nombrados, control explícito de errores, y análisis estático con PSScriptAnalyzer.</p>
+<pre><code class="language-powershell"># Nombrado: Verbo-Sustantivo (Get-, Set-, New-, Test-, Export-)
+function Get-ResumenServicios { ... }
+function Test-PuertoAbierto { ... }
+
+# Parámetros nombrados siempre
+Get-Service -ComputerName server01 -Name spooler
+
+# No silenciar errores sin más; informarlos
+try {
+    Remove-Item $path -Force -ErrorAction Stop
+} catch {
+    Write-Warning "No pude eliminar $path: $($_.Exception.Message)"
+}
+
+# No escribir de más: usa Write-Verbose / Write-Debug
+function Ping-Sevidor {
+    [CmdletBinding()]
+    param([string]$Host)
+    Write-Verbose "Ping a $Host..."
+    Test-Connection -ComputerName $Host -Count 1 -Quiet
+}
+Ping-Sevidor -Host ejemplo.com -Verbose
+
+# Variables nombradas y sin ambigüedad
+$rutaOrigen     = 'C:\in'
+$rutaDestino    = 'C:\out'
+
+# Siembra el principio: retorna objetos, no texto
+Get-Process | Format-Table  # para ver
+Get-Process | Export-Csv    # para procesar</code></pre>
+<blockquote class="aside aside-success"><p>Regla de oro: <strong>los cmdlets devuelven objetos</strong>; el formateo es solo la vista. Así los scripts se componen y reutilizan. Valida tus scripts con <code>Invoke-ScriptAnalyzer</code> antes de desplegarlos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Script</strong>: crea <code>saludar.ps1</code> con <code>param([string]$Nombre)</code> y ayuda <code>.SYNOPSIS</code>; invócalo con <code>Get-Help</code>.</li>
+<li><strong>Parámetros</strong>: amplía el script con <code>ValidateSet('Informal','Formal')</code> que cambie el saludo según el modo.</li>
+<li><strong>Módulo</strong>: crea un módulo con dos funciones matemáticas y expórtalas con <code>Export-ModuleMember</code>.</li>
+<li><strong>Tareas</strong>: registra un trabajo programado que ejecute un script ficticio a las 03:00 diarias y verifícalo con <code>Get-ScheduledJob</code>.</li>
+<li><strong>Prácticas</strong>: ejecuta PSScriptAnalyzer sobre uno de tus scripts y corrige al menos 2 advertencias.</li>
+</ol>
+<p>¡Felicidades! Terminaste el curso de PowerShell de GuiaDev. Revisa los ejercicios, vuelve a las lecciones y combina todo en un script de administración real.</p>
+    </div>
+  </section>

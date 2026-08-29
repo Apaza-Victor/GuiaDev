@@ -1,0 +1,128 @@
+<!-- 1. Librerías Esenciales de Scala - Bibliotecas (Utilidades) -->
+  <section id="biblioteca-estandar">
+    <h2>Scala stdlib y collections <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-scala">object Main extends App {
+  // Collections inmutables por defecto
+  val nums = List(3, 1, 4, 1, 5)
+  val pares = nums.filter(_ % 2 == 0).map(_ * 10).sorted
+  val suma = nums.sum
+
+  // Vectores y maps
+  val mapa = Map("a" -&gt; 1, "b" -&gt; 2)
+  val conClave = mapa.getOrElse("c", 0)
+
+  // pattern matching
+  def describe(x: Any): String = x match {
+    case i: Int if i &gt; 10 =&gt; "int grande"
+    case s: String =&gt; s"texto: $s"
+    case _ =&gt; "otro"
+  }
+
+  // Option, Either y tuple for-comprehension
+  val op: Option[Int] = Some(5)
+  val res = for { n &lt;- op } yield n * 2
+  println(pares, suma, conClave, res)
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>La stdlib de Scala: collections inmutables, pattern matching, Option/Either, implicits y Scala 3 opaque types. El estilo es funcional y conciso.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="scala-funcional">
+    <h2>Librerías funcionales: cats y zio <span class="gd-badge gd-badge-note">Funcional</span></h2>
+    <div class="doc-content">
+<pre><code class="language-scala">// cats: typeclasses y composición
+import cats.implicits._
+
+val a: Option[Int] = Some(3)
+val b: Option[Int] = Some(4)
+val c = (a, b).mapN(_ + _)         // Option(7)
+
+// zio: efectos asíncronos tipados (moderno y potente)
+import zio._
+
+val programa: UIO[String] =
+  for {
+    ahora &lt;- Clock.currentDateTime
+    _ &lt;- Console.printLine(s"hora: $ahora")
+  } yield "listo"
+
+// scala: la alternativa ligera a zio (scalaz para legacy)
+</code></pre>
+<blockquote class="aside aside-note"><p>cats (typeclasses: Functor/Monad) y zio (efectos) son el corazón del Scala funcional moderno; scalaz fue la base histórica; cats-effect para streaming Send.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="build-sbt">
+    <h2>sbt: el build de Scala <span class="gd-badge gd-badge-note">Build</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># sbt (Scala Build Tool): compila, resuelve y paqueta
+sbt compile
+sbt run
+sbt test
+sbt scalafmtAll
+sbt "scalafixAll"              # lints/auto-fix
+sbt assembly                   # fat jar (plugin sbt-assembly)
+# Consola interactiva con Tabulador de comandos
+</code></pre>
+<pre><code class="language-scala">// build.sbt
+ThisBuild / scalaVersion := "3.3.4"
+ThisBuild / organization := "com.ejemplo"
+
+lazy val root = (project in file("."))
+  .settings(
+    name := "mi-app",
+    libraryDependencies ++= Seq(
+      "org.scalameta" %% "munit"   % "1.0.0" % Test,
+      "com.lihaoyi"   %% "upickle" % "3.3.1",
+      "dev.zio"       %% "zio"     % "2.1.6"
+    ),
+    scalacOptions ++= Seq(
+      "-deprecation", "-feature", "-Wunused:all"
+    )
+  )
+</code></pre>
+<blockquote class="aside aside-tip"><p>sbt maneja deps (%% para versions cross), tasks y plugins; scalafmt estándar; munit para tests de Scala 3; scalafix para lints => pipeline sólido.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-scala">
+    <h2>Instalación de Scala <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># sce - Scala CLI / con SDKMAN
+curl -s "https://get.sdkman.io" | bash
+sdk install scala
+sdk install sbt
+
+# Scala 3 con scala-cli (rápido para aprender/scrips)
+brew install virtuslab/scala-cli/scala-cli   # o winget? no; usa sdkman
+curl -sSL https://scala-cli.virtuslab.org | sh
+
+# Verificar
+scala-cli version
+echo 'println("Hola desde Scala")' &gt; hola.scala
+scala-cli run hola.scala
+
+# IDE: Metals (LSP) para VS Code / IntelliJ plugin Scala
+</code></pre>
+<blockquote class="aside aside-note"><p>Metals (LSP) es el servidor de lenguajes; scala-cli para scripts rápidos; IntelliJ + plugin Scala para proyectos grandes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Filtra y mapea una List con pattern matching y for-comprehension.</li>
+<li>Usa `mapN` de cats para combinar dos Option en una tupla.</li>
+<li>Con scala-cli lee un archivo y cuenta palabras (método + función).</li>
+<li>Con sbt crea un proyecto con munit y escribe 3 tests.</li>
+<li>Aplica scalafmt y scalafix en tu build.</li>
+</ol>
+    </div>
+  </section>

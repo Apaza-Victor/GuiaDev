@@ -1,0 +1,159 @@
+<!-- 1. Introducción a Elixir - Elixir (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="que-es-elixir">
+    <h2>¿Qué es Elixir?</h2>
+    <div class="doc-content">
+<p><strong>Elixir</strong> es un lenguaje <strong>funcional</strong> y <strong>concurrente</strong> creado por <strong>José Valim</strong> (2011), que corre sobre la máquina virtual de Erlang (<strong>BEAM</strong>). Hereda de Erlang la fiabilidad (estaba pensado para telecomunicaciones con disponibilidad 24/7) y le aporta una sintaxis moderna y herramientas de productividad.</p>
+<p>Sus credenciales: <strong>inmutabilidad</strong>, <strong>pattern matching</strong>, <strong>pipes</strong> <code>|&gt;</code>, procesos ligeros, supervisión y tolerancia a fallos. Lo usan empresas como Discord, Pinterest o WhatsApp (vía Erlang) para servidores con millones de conexiones simultáneas.</p>
+<blockquote class="aside aside-note"><p>"Let it crash" es la filosofía de Elixir/Erlang: ante un error, el proceso falla y un supervisor lo reinicia. Distinto de "mirar y arreglar": el sistema se mantiene vivo.</p></blockquote>
+<table><thead><tr><th>Característica</th><th>Detalle</th></tr></thead><tbody><tr><td>Máquina virtual</td><td>BEAM (Erlang VM)</td></tr><tr><td>Paradigma</td><td>Funcional, orientado a procesos</td></tr><tr><td>Punto fuerte</td><td>Concurrencia masiva y tolerancia a fallos</td></tr><tr><td>Tipado</td><td>Dinámico con pattern matching</td></tr><tr><td>Población</td><td>Web (Phoenix), sistemas distribuidos, IoT</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion">
+    <h2>Instalación</h2>
+    <div class="doc-content">
+<p>Se instala como paquete del sistema o con versionadores. Necesitas <strong>Elixir</strong> y, para proyectos, el gestor <strong>Hex</strong> y la herramienta <code>mix</code> (incluida).</p>
+<pre><code class="language-bash"># Windows (chocolatey o scoop)
+choco install elixir
+# o scoop install elixir
+
+# Linux / macOS (apt, brew)
+brew install elixir
+
+# Instalar Hex (gestor de paquetes)
+mix local.hex --force
+mix local.rebar --force
+
+# Verificar
+elixir --version   # Elixir x.y.z (compiled with Erlang/OTP N)
+iex --version
+
+# Estructura básica ya disponible
+mix help</code></pre>
+<blockquote class="aside aside-tip"><p>Con <code>asdf</code> o <code>mise</code> puedes gestionar varias versiones de Erlang+Elixir. Si vienes de JavaScript, piensa en Hex como npm y en mix como tu script de build/scaffolder.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="iex">
+    <h2>IEx: el REPL interactivo</h2>
+    <div class="doc-content">
+<p><strong>IEx</strong> (Interactive Elixir) es el REPL: evalúa expresiones, ayuda integrada y recompilación. Es tu laboratorio para probar cada idea.</p>
+<pre><code class="language-bash">iex
+
+iex&gt; 1 + 2
+3
+
+iex&gt; "Hola" &lt;&gt; ", mundo"
+"Hola, mundo"
+
+iex&gt; [1, 2, 3] |&gt; Enum.sum
+6
+
+# Ayuda de un módulo
+iex&gt; h Enum
+
+# Docs de un módulo con tipo
+iex&gt; t Integer
+
+# Historial y tab
+iex&gt; Str  # + Tab te completa String/Stream...
+
+# Salir con Ctrl+C dos veces o con `System.halt`</code></pre>
+<pre><code class="language-elixir"># Archivo script: saludo.exs (extensión exs = "script")
+IO.puts("Hola desde un script")
+
+suma = 2 + 3
+IO.puts("Resultado: #{suma}")   # interpolación con #{}</code></pre>
+<blockquote class="aside aside-note"><p>Los archivos con extensión <code>.ex</code> se compilan (código de tu app); los <code>.exs</code> se interpretan (scripts, tests, tareas). Es una distinción binaria y útil.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primer-programa">
+    <h2>Tu primer programa</h2>
+    <div class="doc-content">
+<p>Un programa Elixir es una serie de expresiones. Lo ejecutas con <code>elixir</code> para scripts o, mejor, creando un proyecto con <code>mix</code>.</p>
+<pre><code class="language-elixir"># hola.exs
+IO.puts("Hola, GuiaDev!")
+
+nombre = "Elixir"
+anio = 2026
+IO.puts("Aprendiendo #{nombre} en #{anio}")
+
+# Interpolación avanzada
+precio = 99.5
+IO.puts("Precio: #{precio}")
+
+# Condicionales y funciones
+doble = fn x -&gt; x * 2 end
+IO.puts("Doble de 4: #{doble.(4)}")   # nota el punto .(4) para anónimas</code></pre>
+<pre><code class="language-bash">elixir hola.exs
+# Salida:
+# Hola, GuiaDev!
+# Aprendiendo Elixir en 2026
+# Precio: 99.5
+# Doble de 4: 8</code></pre>
+<blockquote class="aside aside-caution"><p>Elixir es un lenguaje de <strong>expresiones</strong>: todo devuelve algo, no existe "statement". Las funciones anónimas se invocan como <code>f.(arg)</code> (con punto); las funciones con nombre, <code>Modulo.f(arg)</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="mix">
+    <h2>Mix: el gestor de proyectos</h2>
+    <div class="doc-content">
+<p><strong>Mix</strong> crea, compila, ejecuta y prueba proyectos Elixir. Es la columna que te permite crecer de un script a una aplicación con dependencias y tests.</p>
+<pre><code class="language-bash"># Crear proyecto (supervisor argument elige estructura)
+mix new mi_app
+cd mi_app
+
+# Estructura generada
+# mi_app/
+#   mix.exs            # definición del proyecto/deps
+#   lib/mi_app.ex       # código fuente (.ex)
+#   test/mi_app_test.exs  # tests (.exs)
+
+# Compilar
+mix compile
+
+# Probar con la consola del proyecto (MIX_ENV)
+iex -S mix
+
+# Ejecutar scripts del directorio priv o tasks
+mix run lib/mi_app.ex   # ejecuta un archivo en el contexto
+
+# Tests
+mix test
+
+# Docs
+mix hex.doc</code></pre>
+<pre><code class="language-elixir"># lib/mi_app.ex
+defmodule MiApp do
+  def saludar(nombre), do: "Hola, #{nombre}"
+end
+
+# En IEx -S mix:
+# iex&gt; MiApp.saludar("Ana")
+# "Hola, Ana"</code></pre>
+<blockquote class="aside aside-tip"><p><code>iex -S mix</code> arranca tu app con sus módulos y deps cargados. Es el flujo principal de desarrollo: editar módulo, recompilar (R en iex) y probar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Instalación</strong>: verifica <code>elixir --version</code> e instala Hex.</li>
+<li><strong>REPL</strong>: en IEx, calcula <code>10 * 10</code>, concatena strings con <code>&lt;&gt;</code> y usa <code>|&gt;</code> con <code>Enum.sum</code>.</li>
+<li><strong>Script</strong>: escribe <code>perfil.exs</code> que interpole tu nombre, edad y ciudad con <code>#{}</code>.</li>
+<li><strong>Mix new</strong>: crea <code>mix new mis_mat_ii</code>, edita <code>lib/mis_mat_ii.ex</code> para exponer <code>cuadrado/1</code> y pruébalo con <code>iex -S mix</code>.</li>
+<li><strong>Tests</strong>: agrega un test para <code>cuadrado/1</code> en <code>test/</code> y ejecuta <code>mix test</code>.</li>
+</ol>
+<p>En la próxima lección veremos la sintaxis básica: tipos, pattern matching y la inmutabilidad.</p>
+    </div>
+  </section>

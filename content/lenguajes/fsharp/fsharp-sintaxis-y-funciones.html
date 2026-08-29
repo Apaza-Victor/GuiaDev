@@ -1,0 +1,175 @@
+<!-- 2. Sintaxis y Funciones - F# (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="let">
+    <h2>let y la vinculación</h2>
+    <div class="doc-content">
+<p><code>let</code> es la instrucción base de F#: define un valor, una función, o "destruye" un patrón en nuevo scop. Todo via <code>let ... = expresion</code>.</p>
+<pre><code class="language-fsharp">let usuario = "ana"              // valor
+let suma a b = a + b             // función
+
+// Shadowing: redefinir un nombre en un ámbito interno es legal
+let x = 1
+let resultado =
+    let x = 2                     // sombrea x solo aquí
+    x * 10
+printfn "%d" resultado            // 20
+printfn "%d" x                    // 1 (el exterior no cambia)
+
+// let sobre una tupla: liga a la vez
+let (nombre, edad) = ("Ana", 30)
+printfn "%s tiene %d" nombre edad
+
+// let como EXPRESIÓN: puede devolver valor
+let par = 
+    let n = 4
+    n % 2 = 0
+printfn "es par: %b" par          // true</code></pre>
+<blockquote class="aside aside-tip"><p>El "shadowing" es intencional y se usa mucho: evita renombrar variables en cada transformación. En otros lenguajes es error; en F# es idioma.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="funciones">
+    <h2>Funciones</h2>
+    <div class="doc-content">
+<p>Las funciones se definen con <code>let nombre parametros = cuerpo</code>. Se puede encadenar con operadores, invocar con espacio y pasar como argumentos. F# soporta <strong>currying</strong> nativo: cada función se puede aplicar a un argumento y devolver otra función.</p>
+<pre><code class="language-fsharp">let doble x = x * 2               // toma un int, devuelve int
+let suma a b = a + b              // dos args: es (a -> (b -> r))
+
+// Inferencia de tipos automática
+let cuadrado x = x * x            // int -&gt; int
+
+// anotación opcional
+let incremento (n: int) : int = n + 1
+
+// Currying: suma a b  es realmente  (suma a) b
+let sumarCinco = suma 5            // parcial: espera el segundo arg
+printfn "%d" (sumarCinco 3)        // 8
+
+// Composición con &gt;&gt; y &lt;&lt;
+let cuadradoYmas1 = cuadrado &gt;&gt; doble
+printfn "%A" (cuadradoYmas1 3)     // 18
+
+// Funciones como argumento
+let aplica f x = f (f x)           // llamar dos veces a f
+printfn "%d" (aplica doble 3)      // 12</code></pre>
+<p>La <strong>sintaxis de tipo de función</strong> es <code>arg1 -&gt; arg2 -&gt; resultado</code>. Cada flecha vuelve a ser un parámetro; es la base de las pipes.</p>
+<blockquote class="aside aside-note"><p>No olvides los paréntesis al llamar dentro de otra llamada: <code>suma (doble 2) 3</code>. La adhesión a funciones es altísima en F#.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pipes">
+    <h2>El operador pipe |&gt;</h2>
+    <div class="doc-content">
+<p>El <strong>pipeline</strong> <code>|&gt;</code> pasa el valor de la izquierda como ÚLTIMO argumento de la función de la derecha: <code>x |&gt; f</code> equivale a <code>f x</code>. Es la forma canónica de componer transformaciones legibles de izquierda a derecha (como en un shell).</p>
+<pre><code class="language-fsharp">let doble = fun x -&gt; x * 2
+let masUno = fun x -&gt; x + 1
+
+// Sin pipes (de dentro hacia fuera)
+let a = doble (masUno 5)        // 12
+
+// Con pipes (de izquierda a derecha, se lee naturalmente)
+let b = 5 |&gt; masUno |&gt; doble    // 12
+
+// Ejemplo real con listas: 5 -&gt; 5*2=10 ... encadenar
+let n = 3
+let res =
+    n
+    |&gt; doble          // 6
+    |&gt; masUno         // 7
+    |&gt; cuadrado       // 49
+printfn "%d" res
+
+// Pipes con funciones anónimas (fun args -&gt; ...)
+let lista = [ 1; 2; 3; 4 ]
+let resultado =
+    lista
+    |&gt; List.filter (fun x -&gt; x % 2 = 0)
+    |&gt; List.map (fun x -&gt; x * 10)
+printfn "%A" resultado     // [20; 40]</code></pre>
+<blockquote class="aside aside-tip"><p><code>|&gt;</code> es tan común que leerás "el resultado se va a..." en prácticas. También existe <code>&lt;|</code> (el reverso) y normalmente lo evitarás. F# incluso permite definir tus propias pipes.<br/>I always recomiendo escribir los pipelines verticalmente para legibilidad.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="interpolacion">
+    <h2>Cadenas e interpolación</h2>
+    <div class="doc-content">
+<p>F# tiene varias formas de construir texto. La más moderna es la <strong>interpolación</strong> <code>$"..."</code> con <code>{expr}</code>, aunque coexistirá para siempre con <code>printf</code> (formatos) y <code>%s</code>.</p>
+<pre><code class="language-fsharp">let nombre = "Ana"
+let edad = 30
+
+// Interpolación (preferida)
+let mensaje = $"Hola, {nombre}. Edad: {edad} años"
+printfn "%s" mensaje
+
+// Interpolación con formato dentro de llaves
+let precio = 1250.5
+let detalle = $"Total: {precio:N2}"        // 1.250,50 (locale)
+printfn "%s" detalle
+
+// printf con placeholders
+printfn "Hola, %s (edad %d)" nombre edad
+
+// Texto multilínea con triple comilla
+let largo = """Línea uno
+Línea dos
+Fin"""
+printfn "%s" largo
+
+// Concat clásica
+let sum = nombre + " tiene " + string edad + " años"
+printfn "%s" sum</code></pre>
+<blockquote class="aside aside-caution"><p>Los placeholders de <code>printf</code> son tipados: <code>%d</code> para int, <code>%s</code> para string, <code>%b</code> para bool, <code>%f</code> para float, <code>%A</code> "cualquier cosa". Si el tipo no corresponde, el compilador se queja.</p></blockquote>
+<table><thead><tr><th>Placeholder</th><th>Tipo</th></tr></thead><tbody><tr><td><code>%s</code></td><td>string</td></tr><tr><td><code>%d</code>/<code>%i</code></td><td>int</td></tr><tr><td><code>%f</code></td><td>float</td></tr><tr><td><code>%b</code></td><td>bool</td></tr><tr><td><code>%A</code></td><td>cualquier tipo (printfn bonito)</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tuplas">
+    <h2>Tuplas y destructuring</h2>
+    <div class="doc-content">
+<p>Las <strong>tuplas</strong> agrupan valores fijos de distinto tipo: <code>(a, b, c)</code>. Se usan para retornos múltiples y para pasar pares "nombre/valor". El <em>pattern matching</em> las extrae sin funciones de acceso.</p>
+<pre><code class="language-fsharp">let coord = (10, 20)                  // int * int
+let (x, y) = coord                    // destructurar
+printfn "x=%d y=%d" x y
+
+let persona : (string * int) = ("Ana", 30)
+let (nom, ed) = persona
+printfn "%s %d" nom ed
+
+// Tuplas en argumentos y retorno
+let dividirConResto a b : (int * int) = (a / b, a % b)
+let (cociente, resto) = dividirConResto 17 5
+printfn "17 = 5*%d + %d" cociente resto
+
+// Acceso por posición (fst / snd para 2-tuplas)
+printfn "%d" (fst coord)     // 10
+printfn "%d" (snd coord)     // 20
+
+// Tuplas en pipelines
+let proceso =
+    (1, "uno")
+    ||&gt; fun n s -&gt; $"{s}={n}"     // ||&gt; "pipe doble" pasa la tupla
+printfn "%s" proceso</code></pre>
+<blockquote class="aside aside-tip"><p>Para más de ~2-3 valores, prefiere un <strong>Record</strong> (qué veremos en la lección 4). Las tuplas funcionan para grupos cortos y temporales.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Funciones puras</strong>: define <code>celsiusAFahrenheit</code> y <code>fahrenheitACelsius</code>, y <code>esPar n</code>.</li>
+<li><strong>Pipeline</strong>: dado <code>n = 7</code>, encadena <code>|&gt; doble |&gt; masUno |&gt; cuadrado</code> y explica el resultado.</li>
+<li><strong>Composición</strong>: crea <code>procesa = cuadrado &gt;&gt; masUno</code> y aplícala a 4.</li>
+<li><strong>Interpolación</strong>: construye una ficha con nombre, edad y ciudad usando <code>$"..."</code> y formatos numéricos.</li>
+<li><strong>Tuplas</strong>: escribe una función que devuelva <code>(pares, impares)</code> de una lista, y destructúrala.</li>
+</ol>
+<p>En la próxima lección veremos el control de flujo: <code>if</code>, <code>match</code> (pattern matching), bucles y comprensiones.</p>
+    </div>
+  </section>

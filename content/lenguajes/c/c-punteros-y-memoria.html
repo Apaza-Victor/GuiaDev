@@ -1,0 +1,151 @@
+<!-- 5. Punteros y Memoria Dinámica - C (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="que-es-un-puntero">
+    <h2>¿Qué es un puntero?</h2>
+    <div class="doc-content">
+<p>Un <strong>puntero</strong> es una variable que guarda una <strong>dirección de memoria</strong>, es decir, indica dónde vive otra variable en lugar de guardar el valor en sí. Se declara con un asterisco (<code class="inline-code">int *p</code>) y se usa con dos operadores: <code class="inline-code">&amp;</code> obtiene la dirección de una variable, y <code class="inline-code">*</code> accede al valor de la dirección apuntada.</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int main(void) {
+    int edad = 25;
+    int *p = &amp;edad;      // p guarda la dirección de edad
+
+    printf("Valor de edad: %d\n", edad);      // 25
+    printf("Dirección: %p\n", (void *)p);     // 0x...
+    printf("Valor apuntado: %d\n", *p);       // 25
+
+    *p = 30;              // cambia edad usando el puntero
+    printf("Nueva edad: %d\n", edad);         // 30
+    return 0;
+}</code></pre>
+<table><thead><tr><th>Símbolo</th><th>Significado</th></tr></thead><tbody><tr><td>int *p</td><td>p es un puntero a entero</td></tr><tr><td>&amp;edad</td><td>Dirección de la variable edad</td></tr><tr><td>*p</td><td>Valor guardado en la dirección apuntada</td></tr><tr><td>(void *)p</td><td>El formato %p espera un puntero void *</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Un puntero que no apunta a algo válido se llama <strong>puntero colgante</strong>. Decláralo siempre inicializado: <code class="inline-code">int *p = NULL;</code> y compruébalo antes de usarlo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="aritmetica-de-punteros">
+    <h2>Aritmética de punteros y arreglos</h2>
+    <div class="doc-content">
+<p>Los punteros admiten operaciones aritméticas: sumar 1 a un puntero avanza al <strong>siguiente elemento</strong> del mismo tipo, no al siguiente byte. Esto convierte al puntero en la mano derecha de los arreglos: el nombre de un arreglo es, en realidad, un puntero al primer elemento.</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int main(void) {
+    int numeros[4] = {10, 20, 30, 40};
+    int *p = numeros;      // apunta a numeros[0]
+
+    printf("Primero: %d\n", *p);         // 10
+    printf("Segundo: %d\n", *(p + 1));   // 20
+    printf("Tercero: %d\n", *(p + 2));   // 30
+
+    int i;
+    for (i = 0; i &lt; 4; i++) {
+        printf("%d ", numeros[i]);       // 10 20 30 40
+    }
+    printf("\n");
+
+    for (p = numeros; p &lt; numeros + 4; p++) {
+        printf("%d ", *p);               // 10 20 30 40
+    }
+    printf("\n");
+    return 0;
+}</code></pre>
+<table><thead><tr><th>Expresión</th><th>Equivale a</th></tr></thead><tbody><tr><td>numeros</td><td>&amp;numeros[0] (dirección del primero)</td></tr><tr><td>numeros + 2</td><td>&amp;numeros[2]</td></tr><tr><td>*(numeros + 2)</td><td>numeros[2]</td></tr><tr><td>p++</td><td>Avanza al siguiente elemento</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>El compilador calcula el salto automáticamente según el tipo: en <code class="inline-code">int</code> (4 bytes), <code class="inline-code">p + 1</code> suma 4 bytes a la dirección.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="memoria-dinamica">
+    <h2>Memoria dinámica: malloc, calloc y free</h2>
+    <div class="doc-content">
+<p>Las variables y arreglos vistos hasta ahora viven en la <strong>pila</strong> y su tamaño se fija al compilar. La <strong>memoria dinámica</strong> se pide en tiempo de ejecución desde el <em>heap</em>, con funciones de <code class="inline-code">stdlib.h</code>: <code class="inline-code">malloc</code> reserva bytes, <code class="inline-code">calloc</code> reserva y pone a cero, y <code class="inline-code">free</code> libera lo reservado.</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main(void) {
+    int n = 5;
+    int *arreglo = (int *)malloc(n * sizeof(int));
+
+    if (arreglo == NULL) {           // malloc falla con NULL
+        printf("Sin memoria disponible\n");
+        return 1;
+    }
+
+    int i;
+    for (i = 0; i &lt; n; i++) {
+        arreglo[i] = (i + 1) * 10;   // 10 20 30 40 50
+    }
+
+    for (i = 0; i &lt; n; i++) {
+        printf("%d ", arreglo[i]);
+    }
+    printf("\n");
+
+    free(arreglo);                   // devolver la memoria al sistema
+    return 0;
+}</code></pre>
+<table><thead><tr><th>Función</th><th>Qué hace</th></tr></thead><tbody><tr><td>malloc(tamano_bytes)</td><td>Reserva bytes sin inicializar</td></tr><tr><td>calloc(cant, tamano)</td><td>Reserva y pone todo en cero</td></tr><tr><td>realloc(p, nuevo_tamano)</td><td>Cambia el tamaño de una reserva</td></tr><tr><td>free(p)</td><td>Libera la memoria reservada</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Siempre verifica que <code class="inline-code">malloc</code> no devuelva <code class="inline-code">NULL</code> antes de usar la memoria, y libera con <code class="inline-code">free</code> exactamente lo que reservaste. Liberar algo dos veces o liberar sin haber reservado produce errores graves.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="structs">
+    <h2>Estructuras (struct) y punteros a struct</h2>
+    <div class="doc-content">
+<p>Una <strong>estructura</strong> agrupa variables de distintos tipos bajo un solo nombre. Es la antesala de las clases en la programación orientada a objetos. Se accede a sus campos con el punto (<code class="inline-code">.</code>) y, si tienes un puntero a struct, con la flecha (<code class="inline-code">-&gt;</code>).</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+struct Alumno {
+    char nombre[30];
+    int edad;
+    float promedio;
+};
+
+int main(void) {
+    struct Alumno ana;
+    strcpy(ana.nombre, "Ana");
+    ana.edad = 21;
+    ana.promedio = 9.4;
+
+    struct Alumno *p = &amp;ana;      // puntero a struct
+
+    printf("Nombre: %s\n", p-&gt;nombre);    // flecha (-&gt;) con puntero
+    printf("Edad: %d\n", p-&gt;edad);
+    printf("Promedio: %.2f\n", (*p).promedio);  // equivalente
+    return 0;
+}</code></pre>
+<table><thead><tr><th>Acceso</th><th>Cuándo</th><th>Ejemplo</th></tr></thead><tbody><tr><td>Punto (.)</td><td>Con la variable struct</td><td>ana.edad</td></tr><tr><td>Flecha (-&gt;)</td><td>Con un puntero a struct</td><td>p-&gt;edad</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Definir el tipo con <code class="inline-code">typedef struct</code> permite escribir <code class="inline-code">Alumno ana;</code> en vez de <code class="inline-code">struct Alumno ana;</code>, lo que hace el código más limpio.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fugas-de-memoria">
+    <h2>Fugas de memoria y buenas prácticas</h2>
+    <div class="doc-content">
+<p>Una <strong>fuga de memoria</strong> (memory leak) ocurre cuando reservas memoria con <code class="inline-code">malloc</code> y nunca la liberas con <code class="inline-code">free</code>. El programa crece en consumo y, en ejecuciones largas como un servidor, puede agotar la memoria del sistema.</p>
+<table><thead><tr><th>Práctica</th><th>Por qué importa</th></tr></thead><tbody><tr><td>Liberar con free tras usar</td><td>Devuelve memoria al sistema operativo</td></tr><tr><td>Verificar NULL tras malloc</td><td>Evita usar memoria inexistente</td></tr><tr><td>No liberar dos veces la misma zona</td><td>El doble free provoca fallos graves</td></tr><tr><td>Asignar NULL a punteros liberados</td><td>Evita punteros colgantes reutilizados</td></tr><tr><td>Detectar fugas con valgrind</td><td>valgrind ./programa reporta fugas y errores</td></tr></tbody></table>
+<p>Hay una regla simple que resume todas las demás: <strong>a cada malloc le corresponde un free</strong>, en el mismo nivel de lógica (quien reserva, libera).</p>
+<blockquote class="aside aside-caution"><p>Herramientas como <code class="inline-code">valgrind</code> y los sanitizers de GCC (<code class="inline-code">-fsanitize=address</code>) detectan fugas, accesos fuera de límites y usos de memoria ya liberada. Ejecútalas en tus ejercicios a partir de esta lección.</p></blockquote>
+<blockquote class="aside aside-success"><p>Con la disciplina correcta, los punteros dejan de ser peligrosos y se convierten en la herramienta que hace de C un lenguaje tan poderoso.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<ol>
+<li>Declara un entero y un puntero a ese entero; modifica su valor a través del puntero y muéstralo por pantalla.</li>
+<li>Recorre el arreglo <code class="inline-code">int datos[6] = {2, 4, 6, 8, 10, 12}</code> usando aritmética de punteros en lugar de índices.</li>
+<li>Reserva con <code class="inline-code">malloc</code> un arreglo de n enteros leídos por el usuario, rellénalo y libéralo con <code class="inline-code">free</code>.</li>
+<li>Define un <code class="inline-code">struct Rectangulo</code> con base y altura, y escribe una función que reciba un puntero a él y devuelva su área.</li>
+<li>Compila uno de tus programas con <code class="inline-code">valgrind ./programa</code> o con <code class="inline-code">-fsanitize=address</code> y comprueba que no reporte fugas.</li>
+</ol>
+<p>En la próxima lección llevarás tus programas al siguiente nivel: archivos en disco, argumentos de terminal y compilación profesional.</p>
+    </div>
+  </section>

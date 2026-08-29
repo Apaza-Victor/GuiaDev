@@ -1,0 +1,156 @@
+<!-- 2. Frameworks TypeScript: tRPC, NestJS, Next.js - Bibliotecas (Utilidades) -->
+  <section id="framework-pila-ts">
+    <h2>Elegir pila full-Stack con TypeScript <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Opciones principales de frontend
+npm create vite@latest   # Vite + React/Vue/Svelte para SPA
+npx create-next-app@latest   # Next.js: SSR/SSG, rutas de archivo, API routes
+# Alternativas: Astro (islas), Remix, SvelteKit, Nuxt (Vue)
+
+# Backend
+#   Express (simple) / Fastify (rápido y con schema JSON)
+#   NestJS (estructura modular empresarial)
+#   tRPC (procedimientos tipados entre cliente y servidor)
+#   Hono (w/edge, mínimo)
+</code></pre>
+<blockquote class="aside aside-tip"><p>Para el día a día: Next.js o Vite+React en front; Fastify/NestJS/tRPC en back. Todo tipado gracias a que ambos lados son TS.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="trpc">
+    <h2>tRPC: APIs tipadas de extremo a extremo <span class="gd-badge gd-badge-note">API</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ts">// Server (trpc/router.ts)
+import { initTRPC } from "@trpc/server";
+
+const t = initTRPC.create();
+
+export const appRouter = t.router({
+  saludar: t.procedure
+    .input((i: unknown) =&gt; i as string)
+    .query(({ input }) =&gt; `Hola ${input}`),
+  crearUsuario: t.procedure
+    .input(UsuarioSchema)
+    .mutation(async ({ input }) =&gt; {
+      return await usuariosInserto(input);
+    }),
+});
+export type AppRouter = typeof appRouter;
+</code></pre>
+<pre><code class="language-ts">// Client (trpc/Client.ts): tipos inferidos desde el server
+import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
+import type { AppRouter } from "@/server/router";
+
+const trpc = createTRPCProxyClient&lt;AppRouter&gt;({
+  links: [httpBatchLink({ url: "/api/trpc" })],
+});
+
+const saludo = await trpc.saludar.query("GuiaDev");
+// autocompletado y chequeo de tipos en el cliente sin generar tipos
+</code></pre>
+<blockquote class="aside aside-note"><p>tRPC elimina el "puente" REST: el cliente conoce el contrato directamente. Excelente para apps full-Stack con Next.js/nod servers perezosos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="nestjs">
+    <h2>NestJS: arquitectura empresarial <span class="gd-badge gd-badge-note">Backend</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ts">import { Controller, Get, Body, Post, Injectable } from "@nestjs/common";
+
+@Injectable()
+export class UserService {
+  private datos = [{ id: 1, nombre: "Ana" }];
+  findAll() { return this.datos; }
+  create(u: { nombre: string }) { return this.datos.push({ id: 2, ...u }); }
+}
+
+@Controller("usuarios")
+export class UserController {
+  constructor(private readonly svc: UserService) {}
+
+  @Get()
+  lista() { return this.svc.findAll(); }
+
+  @Post()
+  crear(@Body() body: { nombre: string }) { return this.svc.create(body); }
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>NestJS ofrece DI (inyección), módulos, guards, pipes y validación con class-validator. Ideal para equipo que ya usa Angular en estructura.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="prisma-tipos">
+    <h2>Prisma + tRPC: datos con tipos <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ts">// schema.prisma
+model Usuario {
+  id     Int      @id @default(autoincrement())
+  nombre String
+  email  String   @unique
+  ordenes Orden[]
+}
+model Orden {
+  id        Int @id @default(autoincrement())
+  total     Decimal
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+}
+</code></pre>
+<pre><code class="language-bash">npx prisma migrate dev --name init
+npx prisma generate        # genera tipos para el cliente
+</code></pre>
+<pre><code class="language-ts">import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+
+const usuario = await prisma.usuario.findUnique({
+  where: { email: "ana@x.com" },
+  include: { ordenes: true },
+});
+</code></pre>
+<blockquote class="aside aside-note"><p>Prisma genera el cliente TS tipado directamente de tu schema; combinado con tRPC el flujo de datos queda con tipos de extremo a extremo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-vitest">
+    <h2>Testing: Vitest y React Testing Library <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ts">// Vitest: ejecutor rápido (compatible con Vite)
+import { describe, it, expect, vi } from "vitest";
+
+describe("suma", () =&gt; {
+  it("suma correcta", () =&gt; {
+    expect(suma(2, 3)).toBe(5);
+  });
+});
+
+// React Testing Library: probar componentes por comportamiento
+import { render, screen, fireEvent } from "@testing-library/react";
+import Contador from "./Contador";
+
+it("incrementa al pulsar", async () =&gt; {
+  render(&lt;Contador /&gt;);
+  fireEvent.click(screen.getByRole("button", { name: /increment/i }));
+  expect(await screen.findByText("1")).toBeInTheDocument();
+});
+</code></pre>
+<blockquote class="aside aside-success"><p>Vitest + RTL (para React) o similar para cada framework + happy-dom/jsdom: testea por comportamiento de usuario, no por detalles internos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una SPA con Vite y un componente React que consuma un endpoint propio.</li>
+<li>Monta un router tRPC con una query y una mutation (input validado con Zod).</li>
+<li>Construye un módulo NestJS con un service inyectado en un controller (GET/POST).</li>
+<li>Añade Prisma con un modelo `Producto` y genera el cliente tipado.</li>
+<li>Escribe tests Vitest sobre un hook/función pura y uno de RTL sobre un botón.</li>
+</ol>
+    </div>
+  </section>

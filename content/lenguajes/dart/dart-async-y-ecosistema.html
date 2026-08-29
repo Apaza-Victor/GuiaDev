@@ -1,0 +1,122 @@
+<!-- 6. Async y Ecosistema - Dart (Lenguajes de Programación) -->
+
+  <section id="async-y-futures">
+    <h2>async/await y Futures</h2>
+    <div class="doc-content">
+<p>Muchas operaciones no son instantáneas: leer un archivo, consultar una API o esperar la respuesta de un usuario. Dart las modela con <code>Future</code>, un valor que <strong>estará disponible más adelante</strong>, y con las palabras clave <code>async</code> / <code>await</code>, que permiten escribir código asíncrono con la misma claridad que el síncrono. Una función marcada con <code>async</code> devuelve siempre un <code>Future</code>, y el <code>await</code> pausa su ejecución hasta que ese futuro se complete.</p>
+<pre><code class="language-dart">Future&lt;String&gt; pedirDatos() async {
+  await Future.delayed(Duration(seconds: 1));
+  return 'datos de la API';
+}
+
+void main() async {
+  print('Cargando...');
+  final datos = await pedirDatos();
+  print('Recibido: $datos');
+}
+
+// Salida:
+// Cargando...
+// Recibido: datos de la API</code></pre>
+<table><thead><tr><th>Miembro de Future</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>await</code></td><td>Espera el valor real del futuro</td></tr><tr><td><code>.then(f)</code></td><td>Ejecuta una función cuando se complete</td></tr><tr><td><code>.catchError(f)</code></td><td>Reacciona ante un error del futuro</td></tr><tr><td><code>Future.wait(lista)</code></td><td>Lanza varios futures y espera a todos</td></tr><tr><td><code>Future.delayed(d)</code></td><td>Crea un futuro que espera antes de resolver</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>El orden realmente importa: <code>void main() async</code> espera con <code>await</code> y muestra «Cargando...» antes de «Recibido...». Sin <code>await</code> imprimirías la representación del <code>Future</code> pendiente, no su resultado, y el programa terminaría antes de la respuesta.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="streams">
+    <h2>Streams</h2>
+    <div class="doc-content">
+<p>Un <code>Stream</code> es una secuencia de eventos que llegan <strong>a lo largo del tiempo</strong>: la evolución de una descarga, los datos de un sensor o las pulsaciones de un usuario. Se diferencian de los <code>Future</code> en que pueden emitir cero, uno o varios valores. Se consumen con <code>await for</code> dentro de una función asíncrona, y se producen con generadores marcados con <code>async*</code> y la palabra <code>yield</code>.</p>
+<pre><code class="language-dart">import 'dart:async';
+
+Future&lt;void&gt; main() async {
+  // Generador asíncrono: emite varios valores
+  Stream&lt;int&gt; contador(int max) async* {
+    for (int i = 1; i &lt;= max; i++) {
+      yield i;
+    }
+  }
+
+  await for (final numero in contador(3)) {
+    print('Tic: $numero');
+  }
+  print('Fin del stream');
+}
+
+// Salida:
+// Tic: 1
+// Tic: 2
+// Tic: 3
+// Fin del stream</code></pre>
+<blockquote class="aside aside-tip"><p>La diferencia mental: un <code>Future</code> devuelve <strong>un</strong> resultado (o un error), un <code>Stream</code> devuelve <strong>muchos a lo largo del tiempo</strong>. Piensa en <code>Future&lt;String&gt;</code> como «la respuesta» y en <code>Stream&lt;String&gt;</code> como «las notificaciones».</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="aplicaciones-de-consola">
+    <h2>Apps de consola con argumentos</h2>
+    <div class="doc-content">
+<p>Con Dart puedes construir <strong>aplicaciones de consola reales</strong> que reciban argumentos desde la terminal y lean la entrada del usuario. El paquete <code>args</code> simplifica el análisis de opciones con banderas; la librería <code>dart:io</code> proporciona <code>stdin</code> y <code>stdout</code> para leer y escribir.</p>
+<pre><code class="language-dart">import 'dart:io';
+
+void main(List&lt;String&gt; argumentos) {
+  if (argumentos.isEmpty) {
+    stdout.writeln('Uso: dart saludo.dart &lt;nombre&gt;');
+    exit(1);
+  }
+
+  final nombre = argumentos.first;
+  stdout.writeln('Hola, $nombre');
+}</code></pre>
+<p>Así se ejecuta desde la terminal: <code>dart run saludo.dart GuiaDev</code> mostrará <code>Hola, GuiaDev</code>; sin argumentos, el programa avisará del uso correcto y terminará con un código de error <code>1</code>.</p>
+<table><thead><tr><th>Elemento</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>argumentos</code></td><td>Lista con los valores pasados tras el nombre del archivo</td></tr><tr><td><code>stdin.readLineSync()</code></td><td>Lee una línea escrita por el usuario</td></tr><tr><td><code>stdout.writeln(texto)</code></td><td>Escribe texto con salto de línea</td></tr><tr><td><code>exit(codigo)</code></td><td>Finaliza el programa con un código de salida</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>El <strong>código de salida</strong> importa: <code>0</code> indica éxito y cualquier otro valor un error. Las herramientas de automatización y CI toman decisiones basándose en él, así que usa <code>exit(1)</code> cuando el programa no pueda hacer su trabajo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pub-paquetes">
+    <h2>pub: paquetes y dependencias</h2>
+    <div class="doc-content">
+<p>El ecosistema de Dart gira alrededor de <code>pub</code>, el administrador de paquetes que descarga dependencias, las actualiza y las publica. Cada proyecto declara su configuración en <code>pubspec.yaml</code>, un archivo YAML con el nombre, la versión y las dependencias, y el repositorio oficial de paquetes se llama <strong>pub.dev</strong>.</p>
+<pre><code class="language-bash"># Crear un proyecto (genera pubspec.yaml, lib/ y test/)
+dart create mi_proyecto
+cd mi_proyecto
+
+# Añadir una dependencia desde pub.dev
+dart pub add args
+
+# Descargar todo lo declarado en pubspec.yaml
+dart pub get</code></pre>
+<table><thead><tr><th>Archivo / carpeta</th><th>Propósito</th></tr></thead><tbody><tr><td><code>pubspec.yaml</code></td><td>Declaración de metadatos y dependencias del proyecto</td></tr><tr><td><code>lib/</code></td><td>Código público reutilizable del paquete</td></tr><tr><td><code>bin/</code></td><td>Programas ejecutables de línea de comandos</td></tr><tr><td><code>test/</code></td><td>Pruebas del proyecto</td></tr><tr><td><code>pubspec.lock</code></td><td>Versiones exactas resueltas; se comparte en proyectos de aplicación</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>Las dependencias se escriben con <strong>versionado semántico</strong>: <code>args: ^2.4.0</code> acepta cualquier versión 2.x compatible. El acento circunflejo <code>^</code> se lee como «compatible con», y <code>pub</code> se encarga de encontrar una combinación válida para todo tu árbol de dependencias.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="flutter">
+    <h2>Una mirada a Flutter</h2>
+    <div class="doc-content">
+<p>Y llegamos a la estrella del ecosistema: <strong>Flutter</strong>, el framework de Google para construir interfaces de usuario compiladas de forma nativa desde un único código en Dart. Cada pantalla se describe como un <strong>árbol de widgets</strong>: componentes visuales como botones, textos y listas que se combinan para formar la interfaz completa.</p>
+<table><thead><tr><th>Widget</th><th>Función</th></tr></thead><tbody><tr><td><code>Scaffold</code></td><td>Estructura base de una pantalla (barra, fondo, body)</td></tr><tr><td><code>Text('Hola')</code></td><td>Muestra un texto</td></tr><tr><td><code>ElevatedButton</code></td><td>Botón con acción al pulsarlo</td></tr><tr><td><code>ListView</code></td><td>Lista que hace scroll</td></tr><tr><td><code>StatelessWidget / StatefulWidget</code></td><td>Widgets sin estado y con estado controlado</td></tr></tbody></table>
+<p>Para empezar: <code>flutter create mi_app</code> genera un proyecto y <code>flutter run</code> lo lanza en Android, iOS, la web o el escritorio. Todo el Dart que has aprendido sirve para la lógica de negocio, los modelos y los servicios; Flutter se encarga de la capa visual.</p>
+<blockquote class="aside aside-success"><p>Con lo visto en estas seis lecciones ya tienes la base completa: variables y tipos, control de flujo, funciones y clases, colecciones, null safety y asincronía. Es exactamente el temario previo que exige cualquier curso de Flutter para aprovecharlo al máximo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Para esta última lección crea un proyecto con <code>dart create async_app</code> y resuelve los retos dentro de la carpeta <code>bin</code>:</p>
+<ol>
+<li><strong>Future</strong>: Escribe una función <code>esperarYSaludar()</code> que use <code>Future.delayed</code> para esperar dos segundos y después imprima «Listo». Llámala desde un <code>main</code> asíncrono con <code>await</code>.</li>
+<li><strong>Stream</strong>: Crea un generador <code>async*</code> que emita los números del 1 al 5 con un <code>Duration</code> entre cada uno, consúmelo con <code>await for</code> e imprime el cuadrado de cada valor.</li>
+<li><strong>Argumentos</strong>: Escribe un programa de consola que reciba dos números como argumentos y muestre su suma. Comprueba el caso con argumentos ausentes usando <code>exit(1)</code>.</li>
+<li><strong>Paquete</strong>: Añade <code>args</code> con <code>dart pub add args</code> y reescribe el punto 3 para soportar las banderas <code>--sumar</code> y <code>--restar</code> usando el analizador de la librería.</li>
+<li><strong>Abrir la puerta a Flutter</strong>: Instala el SDK de Flutter (o usa DartPad para este paso) y genera un proyecto con la plantilla del contador. Modifica el texto de bienvenida y ejecútalo en el navegador o en un emulador.</li>
+</ol>
+<p>Esta lección cierra el módulo de Dart: ya conoces el lenguaje de punta a punta, desde la sintaxis hasta la asincronía y el ecosistema. En el siguiente módulo de la plataforma podrás continuar con otro lenguaje o sumergirte de lleno en <strong>Flutter y el desarrollo móvil</strong>.</p>
+    </div>
+  </section>

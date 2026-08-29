@@ -8,6 +8,8 @@
     hljs.registerAliases(['mdx'], { languageName: 'markdown' });
     hljs.registerAliases(['mermaid', 'txt', 'text'], { languageName: 'plaintext' });
     hljs.registerAliases(['blade'], { languageName: 'php' });
+    hljs.registerAliases(['ps1', 'pwsh'], { languageName: 'powershell' });
+    hljs.registerAliases(['fs'], { languageName: 'fsharp' });
   } catch (e) { /* noop */ }
 
   if (!hljs.getLanguage('plantuml')) {

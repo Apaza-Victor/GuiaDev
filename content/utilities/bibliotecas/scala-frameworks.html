@@ -1,0 +1,152 @@
+<!-- 2. Frameworks Scala: Play, Akka, ZIO HTTP - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework-scala">
+    <h2>Elegir backend en Scala <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Opciones populares:
+#   Play Framework (de facto, Style MVC tipo Spring)
+#   Akka HTTP (HTTP sobre Akka Actors, tipo actor)
+#   ZIO HTTP (moderno, funcional tipado, sin actores)
+#   Finatra (Twitter) / http4s (funcional-cats)
+#   ScalikeJDBC / Slick / Doobie para Base de Datos
+# Elección actual: http4s o ZIO HTTP para funcional; Play para equipo grande
+</code></pre>
+<blockquote class="aside aside-note"><p>Play si vienes de Java/equipos grandes; Akka HTTP si ya usas actores; ZIO/http4s si priorizas las typeclasses funcionales y seguridad de tipos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="play">
+    <h2>Play Framework: servidor MVC <span class="gd-badge gd-badge-note">Framework</span></h2>
+    <div class="doc-content">
+<pre><code class="language-scala">// build.sbt
+// lazy val root = (project in file(".")).enablePlugins(PlayScala)
+
+import play.api.mvc._
+import play.api.libs.json._
+
+class HomeController @Inject() (val controllerComponents: ControllerComponents)
+    extends BaseController {
+
+  def saludo(nombre: String) = Action {
+    Ok(Json.obj("saludo" -&gt; s"Hola $nombre"))
+  }
+
+  def usuarios = Action { implicit request =&gt;
+    Ok(Json.toJson(List(Usuario(1, "Ana"), Usuario(2, "Luis"))))
+  }
+}
+
+case class Usuario(id: Int, nombre: String)
+implicit val usuWrites: OWrites[Usuario] = Json.writes[Usuario]
+</code></pre>
+<pre><code class="language-bash"># rutas en conf/routes
+GET   /saludo/:nombre   controllers.HomeController.saludo(nombre: String)
+GET   /usuarios         controllers.HomeController.usuarios
+</code></pre>
+<blockquote class="aside aside-note"><p>Play tiene Action, JSON (Json.toJson/reads), templates Twirl y viene con sbt; es maduro y escalable, con soporte de async (Action.async).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="akka-http">
+    <h2>Akka HTTP y ZIO HTTP <span class="gd-badge gd-badge-note">HTTP</span></h2>
+    <div class="doc-content">
+<pre><code class="language-scala">// Akka HTTP (actor-based)
+import akka.actor.ActorSystem
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.Http
+
+object AkkaMain extends App {
+  implicit val system = ActorSystem("api")
+
+  val route =
+    path("saludo" / Segment) { nombre =&gt;
+      get { complete(s"Hola $nombre") }
+    }
+
+  Http().newServerAt("0.0.0.0", 8080).bind(route)
+}
+
+// ZIO HTTP (funcional tipado)
+import zio.http._
+
+object ZioMain extends ZIOAppDefault {
+  val routes = Routes(
+    Method.GET / "saludo" / string("nombre") -&gt;
+      handler { (nombre: String, _: Request) =&gt; Response.text(s"Hola $nombre") }
+  )
+  override val run = Server.serve(routes).provide(Server.defaultWithPort(8080))
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>Akka HTTP usa el DSL de Directives; ZIO HTTP construye Routes y es integrable con todo zio. Ambos async con alto rendimiento sobre Netty.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="persistencia-scala">
+    <h2>Slick, Doobie y datos <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-scala">// Slick: ORM tipo-verificado (sbt: com.typesafe.slick %% slick 3.5.x)
+import slick.jdbc.H2Profile.api._
+
+case class Usuario(id: Long, nombre: String)
+class Usuarios(tag: Tag) extends Table[Usuario](tag, "usuarios") {
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def nombre = column[String]("nombre")
+  def * = (id, nombre).mapTo[Usuario]
+}
+val usuarios = TableQuery[Usuarios]
+
+val db = Database.forConfig("db")
+val insertar = usuarios += Usuario(0, "Ana")
+val consulta = usuarios.filter(_.nombre === "Ana").result
+
+// Doobie: funcional JDBC (cats-effect)
+//   val q = sql"SELECT nombre FROM usuarios".query[String]
+// sc من البل متناub: fuentes: scalikejdbc (SQL directo) 
+</code></pre>
+<blockquote class="aside aside-tip"><p>Slick compila el modelo a SQL tipado (table definition); Doobie construye queries con efectos funcionales. `scalikejdbc`/`quill` para SQL sencillo otra opción.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-scala">
+    <h2>Testing munit y płytest <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-scala">// munit (Scala 3 default)
+import munit.FunSuite
+
+class CalcSuite extends FunSuite {
+  test("suma números") {
+    assertEquals(suma(2, 3), 5)
+  }
+  test("divide por cero lanza") {
+    intercept[ArithmeticException](divide(1, 0))
+  }
+}
+
+// scalatest (clásico, matchers ricos)
+import org.scalatest.funsuite.AnyFunSuite
+class CalcTest extends AnyFunSuite {
+  test("resta funciona") { assert(resta(5, 2) == 3) }
+}
+
+// CI: sbt test ; sbt jacocoReport (cobertura)
+</code></pre>
+<blockquote class="aside aside-tip"><p>munit (moderno, ligero) y scalatest (clásico y completo) son las dos familias; ambos con assertions y ejecución desde sbt/Gradle.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un Play con rutas GET /saludo/:nombre y JSON response.</li>
+<li>Replica con ZIO HTTP y compara la firma de roturas.</li>
+<li>Define una tabla Slick y haz un insert+select con H2.</li>
+<li>Con munit escribe 3 tests sobre una función de redondeo.</li>
+<li>Integra `sbt jacocoReport` y revisa cobertura.</li>
+</ol>
+    </div>
+  </section>

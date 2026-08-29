@@ -1,0 +1,123 @@
+<!-- 1. Librerías Esenciales de Ruby - Bibliotecas (Utilidades) -->
+  <section id="stdlib-ruby">
+    <h2>Librería estándar (stdlib) y core <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ruby"># Core: colecciones, enumerables, texto, Time
+nums = [3, 1, 4, 1, 5]
+nums.map    { |n| n * 2 }
+nums.select { |n| n > 2 }
+nums.reduce(0) { |acc, n| acc + n }
+
+frec = Hash.new(0)
+"hola mundo".split.each { |p| frec[p] += 1 }
+
+require "date"
+today = Date.today
+today + 30
+
+# Stdlib: csv, json, uri, net/http, securerandom
+require "json", "csv", "securerandom"
+perfil = JSON.parse('{"nombre":"Ana"}')
+SecureRandom.hex(8)
+
+# Arquitectura de módulos
+module Utilidades
+  VERSION = "1.0"
+  def self.saludo(nombre) = "Hola #{nombre}"
+end
+puts Utilidades::VERSION
+</code></pre>
+<blockquote class="aside aside-tip"><p>La stdlib de Ruby resuelve JSON, CSV, fechas, red (net/http), cripto (openssl) y colecciones. Requiere añadir solo lo que falte vía gemas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="gemas-bundler">
+    <h2>RubyGems y Bundler <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># RubyGems: el gestor de paquetes (gemas)
+gem install rails nokogiri
+gem search "fast nokogiri"
+gem list
+
+# Bundler: declarar y congelar dependencias de un proyecto
+bundle init                          # crea Gemfile
+bundle add faraday rspec             # añade y resuelve versions
+bundle install                       # instala según Gemfile.lock
+bundle exec ruby app.rb              # ejecuta en el entorno del Gemfile
+
+# Gemfile
+source "https://rubygems.org"
+gem "sinatra"
+gem "puma"
+group :test do
+  gem "rspec", require: false
+end
+</code></pre>
+<blockquote class="aside aside-tip"><p>Bundler garantiza reproducción con `Gemfile.lock` y `bundle exec`. Las gemas son similares a npm/pip: versiones, grupos y dependencias transitivas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="utilidades-gemas">
+    <h2>Gemas de utilidad más usadas <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ruby"># pry: REPL mejorado (debugging interactivo)
+require "pry"
+binding.pry                # pausa y abre consola en ese punto
+
+# faraday: cliente HTTP moderno
+require "faraday"
+conn = Faraday.new(url: "https://api.github.com")
+resp = conn.get("/users/octocat", nil, { "User-Agent" => "GuiaDev" })
+JSON.parse(resp.body)
+
+# nokogiri: parseo HTML/XML
+require "nokogiri"
+doc = Nokogiri::HTML(File.read("pagina.html"))
+doc.css("h1")&.first&.text
+
+# dotenv y figaro: config
+require "dotenv/load"
+ENV.fetch("DATABASE_URL")
+</code></pre>
+<blockquote class="aside aside-note"><p>pry (debug), faraday (HTTP), nokogiri (HTML/XML) y dotenv (config) son la base de muchas tareas de scripting e integración en Ruby.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-ruby">
+    <h2>Instalación de Ruby <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Linux/macOS: rbenv o asdf (no utilices el de sistema a menos que sea necesario)
+rbenv install 3.3.0
+rbenv global 3.3.0
+# Windows: RubyInstaller con DevKit
+winget install RubyInstallerTeam.Ruby.3.3
+
+# Verificar
+ruby -v
+gem -v
+
+# Primer script
+ruby -e 'puts "Hola desde Ruby"'
+echo '3.times { |i| puts "repetir #{i}" }' &gt; hola.rb
+ruby hola.rb
+</code></pre>
+<blockquote class="aside aside-tip"><p>En Linux/Mac usa rbenv/asdf para alternar versiones; en Windows, RubyInstaller. Crea versiones por proyecto según tu entorno.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Procesa un CSV (celebrate) y agrupa frecuencias con `Hash.new(0)`.</li>
+<li>Crea un proyecto con Bundler: Gemfile con faraday + pry.</li>
+<li>Con faraday descarga una API pública y muestra nombres con JSON.parse.</li>
+<li>Parsea un HTML con nokogiri y extrae todos los títulos h2.</li>
+<li>Usa `binding.pry` dentro de una función para inspeccionar variables.</li>
+</ol>
+    </div>
+  </section>

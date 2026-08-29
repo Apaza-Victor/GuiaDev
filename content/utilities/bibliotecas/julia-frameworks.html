@@ -1,0 +1,132 @@
+<!-- 2. Frameworks Julia: Genie, ecosistema ML - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework-julia">
+    <h2>Web y ciencia en Julia <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Web:
+#   Genie (de facto full-stack web)
+#   HTTP.jl + routes manuales (bajo nivel)
+#   Oxygen.jl (sencillo tipo Express), HTTPJump
+# Ciencia/datos (donde Julia brilla):
+#   DataFrames, Plots, CSV, GLM, Turing (Bayes), Flux/Zygote (ML),
+#   ForwardDiff, Sundials (ODE), SciML ecosistema
+# Aplicaciones de modelos/APIs: Genie + ecosistema científico
+</code></pre>
+<blockquote class="aside aside-note"><p>Genie es el framework web más completo; Oxygen/HTTP para APIs simples. Pero el fuerte de Julia es el stack científico: SciML, DataFrames, Plots y ML.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="genie">
+    <h2>Genie: web full-stack en Julia <span class="gd-badge gd-badge-note">Web</span></h2>
+    <div class="doc-content">
+<pre><code class="language-julia">using Genie
+
+# Rutas (App.get, Router)
+Genie.Router.route("/saludo/:nombre") do params
+  "Hola $(params[:nombre])"
+end
+
+Genie.Router.route("/datos", method = POST) do params
+  # params JSON/query disponibles
+  "recibido: $(params[:cuerpo_registrado])"
+end
+
+Genie.up(port = 8000)
+
+# Render, templating (Stipple.jl reactivo), channels
+# Genie Serve para desarrollo: genie -S
+</code></pre>
+<blockquote class="aside aside-tip"><p>Genie da rutas, params, templates y Stipple (UI reactiva tipo LiveView). Se integra con el stack científico para servir modelos y modelos de datos en la web.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="oxygen-http">
+    <h2>Oxygen y HTTP.jl <span class="gd-badge gd-badge-note">Micro</span></h2>
+    <div class="doc-content">
+<pre><code class="language-julia"># Oxygen.jl: microframework tipo Express
+using Oxygen
+
+# GET con parámetro
+@get "/saludo/{nombre}" function saludo(nombre)
+  Dict("saludo" =&gt; "Hola $nombre")
+end
+
+@post "/datos" function recibir(req)
+  # req.data tiene el body
+  Dict("ok" =&gt; true, "cuerpo" =&gt; req.data)
+end
+
+serve(port = 8080)
+
+# HTTP.jl (bajo nivel)
+using HTTP
+r = HTTP.post("http://localhost:8080/datos", body = "{}")
+HTTP.get("http://localhost:8080/saludo/Mundo")
+</code></pre>
+<blockquote class="aside aside-tip"><p>Oxygen es lo más ligero para APIs; HTTP.jl es el cliente/servidor subyacente de todo el ecosistema web. Ambos perfectos para exponer modelos científico.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cientifico-julia">
+    <h2>Ciencia de datos: DataFrames, Plots, GLM <span class="gd-badge gd-badge-note">Ciencia</span></h2>
+    <div class="doc-content">
+<pre><code class="language-julia">using DataFrames, CSV, GLM, Plots
+
+# Cargar CSV
+df = CSV.read("datos.csv", DataFrame)
+# estadística rápida
+describe(df)
+
+# GLM: regresión lineal
+# lm viene con ese paquete:
+modelo = lm(@formula(edad ~ peso + altura), df)
+coef(modelo)
+r2(modelo)
+
+# Plots: visualización múltiples backends
+scatter(df.peso, df.edad)
+
+# Otras libs: Turing (Bayes), Flux (deep learning),
+# SupportVectorMachine, DecisionTree, Clustering
+</code></pre>
+<blockquote class="aside aside-success"><p>El stack: CSV+DataFrames (datos), GLM (modelos clásicos), Turing (Bayes), Flux/Zygote (redes neuronales), Plots (visualización). Julia lo hace tipado y veloz.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-julia">
+    <h2>Testing: Test.jl <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-julia">using Test
+
+# Adjuntar a tu paquete: test/runtests.jl
+@testset "funciones básicas" begin
+  @test suma(2, 3) == 5
+  @test_broken suma(0, 0) == 1     # espera fallo
+  @test_throws DivideError divide(1, 0)
+end
+
+# Random en paquetes
+# Correr con Pkg.test() desde el REPL (proyecto activo) o `] test`
+# CI: suele correr julia --project=. test
+# cobertura: coverage.jl (built-in with julia)
+</code></pre>
+<blockquote class="aside aside-tip"><p>Test.jl es el framework oficial; `@testset` agrupa asserts; `- ] test` corre la suite del proyecto. Julia viene con todo, incluyendo testing y coverage built-in.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una API en Genie con GET /saludo/:nombre.</li>
+<li>Repite con Oxygen y compara verbosidad.</li>
+<li>Con DataFrames+CSV carga tus datos y describe cada columna.</li>
+<li>Ajusta un modelo GLM y reporta coef + r².</li>
+<li>Escribe un testset con 4 @test y corre `Pkg.test()`.</li>
+</ol>
+    </div>
+  </section>

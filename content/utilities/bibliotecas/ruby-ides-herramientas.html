@@ -1,0 +1,102 @@
+<!-- 3. IDEs y Herramientas para Ruby - Bibliotecas (Utilidades) -->
+  <section id="ide-ruby">
+    <h2>IDEs y editores Ruby <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># JetBrains RubyMine: el IDE de Ruby más completo (de pago)
+# VS Code (gratuito):
+code --install-extension castwide.solargraph            # LSP de Ruby
+code --install-extension rebornix.ruby                 # depuración/debug
+code --install-extension misogi.ruby-rubocop           # lint RuboCop
+# Neovim/Emacs + Solargraph
+# Rails copilot: RubyMine tiene soporte Rails profundo (templates, routes, jobs)
+</code></pre>
+<blockquote class="aside aside-tip"><p>Solargraph (LSP) da autocompletado y "ir a definición" en cualquier editor. RubyMine añade refactorización y soporte Rails avanzado si lo necesitas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="rubocop-bundler-audit">
+    <h2>RuboCop, Bundler Audit y brakeman <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># RuboCop: linting y estilo (convención Ruby estricta)
+gem install rubocop
+rubocop --require rubocop-rails
+rubocop --auto-gen-config    # generar excepciones iniciales
+rubocop -a                   # autocorregir lo seguro
+
+# Bundler Audit: vulnerabilidades en gemas
+gem install bundler-audit
+bundle audit check --update
+
+# Brakeman: análisis de seguridad para Rails
+gem install brakeman
+brakeman -A                  # scan completo
+
+# Mejora: intégralos en la CI (railsoft, semgrep...)
+</code></pre>
+<blockquote class="aside aside-tip"><p>RuboCop (estilo) + bundler-audit (vulns) + Brakeman (seguridad Rails) son el tándem de calidad barato que cualquier proyecto Ruby debería ejecutar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="debug-ruby">
+    <h2>Depuración: byebug y debug <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ruby"># byebug (o la gema debug de Rails)
+require "byebug"
+byebug                 # pausa con consola interactiva
+# Comandos: next, step, continue, display, backtrace, break line
+
+# Técnicas de scripting
+require "pry"
+binding.pry
+# inside the editor: VSCode Ruby (ruby-debug-ide) con breakpoints visuales
+
+# Profiling: benchmark, memory profiler, stackprof
+require "benchmark"
+Benchmark.realtime { 1_000_000.times { 2 ** 10 } }
+# stackprof: muestras por método para hotspots
+gem install stackprof
+</code></pre>
+<blockquote class="aside aside-caution"><p>No dejes `binding.pry`/`byebug` en producción: se bloquean en esa línea. M o bien usa logs y métricas en producción.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="produccion-ruby">
+    <h2>Producción y despliegue Ruby <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-docker"># App Rails en contenedor
+FROM ruby:3.3-slim
+RUN apt-get update &amp;&amp; apt-get install -y build-essential libpq-dev
+WORKDIR /app
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+COPY . .
+EXPOSE 3000
+CMD ["bin/rails", "server", "-b", "0.0.0.0"]
+</code></pre>
+<pre><code class="language-bash"># Alternativas de despliegue
+#  - Heroku/Render/Fly: PaaS sin administrar servidores
+#  - Puma + Nginx en una VPS (config típica)
+#  - Kubernetes para escalar (con Dockerfile arriba)
+#  - Kamal (de Rails): deploy simple con Docker solo
+#  - Sidekiq necesita Redis: planifica env vars para el worker
+</code></pre>
+<blockquote class="aside aside-note"><p>Puma + Nginx o un PaaS + Kamal cubre los escenarios típicos de Rails. Todos hoy pasan por CI que corre `bundle exec rspec` y `brakeman`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala Solargraph en VS Code y usa "ir a definición" en una gema.</li>
+<li>Ejecuta RuboCop en tu app Rails y corrige 5 ofensas con `-a`.</li>
+<li>Haz `bundle audit check` y explica las vulnerabilidades que reporte.</li>
+<li>Coloca `binding.byebug` en un job lento y recorre variables con next/step.</li>
+<li>Escribe el Dockerfile de tu Rails + puma y despliégalo en Heroku/Render.</li>
+</ol>
+    </div>
+  </section>

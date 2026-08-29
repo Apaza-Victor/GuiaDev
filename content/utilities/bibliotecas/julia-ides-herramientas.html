@@ -1,0 +1,104 @@
+<!-- 3. IDEs y Herramientas para Julia - Bibliotecas (Utilidades) -->
+  <section id="ide-julia">
+    <h2>Editores Julia: VS Code + Julia extension <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># VS Code: editor recomendado oficial
+code --install-extension julialang.language-julia
+#   - REPL integrado (terminal Julia)
+#   - plots inline (Plots.jl + plot pane)
+#   - debugger (DAP), profiler
+# Alternativas: Jupyter (IJulia) para notebooks,
+#   Emacs jupyter, Pluto.jl para notebooks reactivos (ciencia)
+# Julia en la web de JuliaHub for notebooks en cloud
+</code></pre>
+<blockquote class="aside aside-tip"><p>VS Code + julialang.language-julia es el estándar: REPL, plots, debug y profiling. Para exploración científica, Pluto.jl (reactivo/declarativo) es una joya.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="julia-cli-juliaup">
+    <h2>Juno? mejor: JuliaFormatter y tooling CLI <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-julia"># JuliaFormatter.jl: formatter oficial de estilo
+using JuliaFormatter
+format("src/")          # o format_file
+format("src/", overwrite = true)
+# CI: format("src/"; verbose=true) y verifica cambios
+
+# Habilidades extra
+#   PackageCompiler.jl: crea binaries nativos (sysimage)
+#     using PackageCompiler; create_app("proyecto","mi_app")
+#   BenchmarkTools: @benchmark para microbenchmarks
+using BenchmarkTools
+@benchmark suma(2, 3)
+</code></pre>
+<pre><code class="language-bash"># terminal con julia
+julia -e 'println("hola")'
+julia -e 'include("script.jl")'
+julia --project=. -e 'using Pkg; Pkg.status()'
+# REPL: shift+enter multipline
+</code></pre>
+<blockquote class="aside aside-note"><p>JuliaFormatter estandariza; BenchmarkTools hace microbenchmarks fiables; PackageCompiler crea ejecutables/sysimag (arranque instantáneo). Estos son los aliados del tooling Julia moderno.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depuracion-julia">
+    <h2>Depuración y perfilado <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-julia"># @show / @info para inspección rápida
+@show variable sensata
+
+# Debugger: VS Code (DAP) o
+using Debugger
+@enter mi_funcion(42)     # step-by-step interactivo en REPL
+
+# Profiling
+using Profile
+@profile mi_funcion(datos)
+Profile.print()
+# PProf.jl → pprof UI para flamegraph
+
+# Code tools: @code_lowered, @code_llvm, @code_native
+#   para verificar que la compilación bajó sin boxes
+mf = @code_warntype mi_funcion(42)   # warnings de tipado perezoso
+</code></pre>
+<blockquote class="aside aside-caution"><p>Julia compila al vuelo; los patrones de "type instability" degradan rendimiento. `@code_warntype` muestra esas fugas y `Profiler+pprof` mide hot spots reales.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-julia">
+    <h2>Compilar y desplegar Julia <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># PackageCompiler: binario standalone (sysimage)
+julia --project=. -e 'using PackageCompiler; create_app(".", "mi_app")'
+./mi_app/bin/mi_app
+
+# Contenedor
+</code></pre>
+<pre><code class="language-docker">FROM julia:1.10-slim
+WORKDIR /app
+COPY Project.toml Manifest.toml ./
+COPY src src
+RUN julia --project=. -e 'using Pkg; Pkg.instantiate()' \
+  && julia --project=. -e 'using PackageCompiler; create_app(".", "app_build")'
+CMD ["./app_build/bin/app_build"]
+</code></pre>
+<blockquote class="aside aside-success"><p>Con PackageCompiler produces un binario nativo (sin arrancar LLVM cada vez); la imagen `julia:slim` es grande pero los ejecutables sirven bien en servicios/APIs.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Ejecuta una función pesada y observa la compilación (primera vs segunda).</li>
+<li>Formatea tu proyecto con JuliaFormatter y pídelo estricto en CI.</li>
+<li>Haz un benchmark con @benchmark y recuerda los resultados.</li>
+<li>Inspecciona con @code_warntype una función con empuje a Any.</li>
+<li>Construye el ejecutable con PackageCompiler y mide el arranque.</li>
+</ol>
+    </div>
+  </section>

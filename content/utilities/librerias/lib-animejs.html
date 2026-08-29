@@ -1,0 +1,163 @@
+<!-- animejs - Librerías (Utilidades) -->
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install animejs
+</code></pre>
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-js">import anime from 'animejs';
+</code></pre>
+<blockquote class="aside aside-tip"><p>Anime.js anima propiedades CSS, transformaciones, SVG y atributos de JavaScript con una API declarativa y potente curva de easing. Es el motor que usa GuiaDev para sus micro-interacciones.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="animaciones-basicas">
+    <h2>Animaciones Básicas <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Mover y rotar un elemento
+anime({
+  targets: '.caja',
+  translateX: 250,
+  rotate: '1turn',
+  duration: 800,
+});
+
+// Opacidad y color
+anime({
+  targets: '#aviso',
+  opacity: [0, 1],
+  backgroundColor: ['#f59e0b', '#10b981'],
+  easing: 'easeOutQuad',
+});
+
+// Múltiples propiedades con diferentes duraciones
+anime({
+  targets: '.tarjeta',
+  scale: [1, 1.15],
+  translateY: -12,
+  delay: anime.stagger(80),   // escalonado entre elementos
+  duration: 600,
+});
+
+// Función de tiempo (easing)
+anime({
+  targets: '.pelota',
+  translateY: [0, 300],
+  direction: 'alternate',
+  loop: true,
+  easing: 'easeInOutSine',
+});
+</code></pre>
+<blockquote class="aside aside-tip"><p>`anime.stagger()` reparte retrasos entre los elementos seleccionados, logrando ondas/efectos cascada sin calcular índices manualmente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="timelines">
+    <h2>Timelines (secuencias) <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Crear una secuencia de pasos
+const tl = anime.timeline({
+  easing: 'easeOutExpo',
+  duration: 400,
+});
+
+tl.add({ targets: '.paso1', opacity: [0, 1], translateY: [20, 0] })
+  .add({ targets: '.paso2', opacity: [0, 1], translateX: [-20, 0] })
+  .add({ targets: '.paso3', scale: [0.8, 1] });
+
+// Sincronizar un paso con el anterior
+tl.add({ targets: '.fondo', opacity: 0.6 }, '-=200');
+
+// Pausar y continuar
+tl.pause();
+tl.play();
+tl.restart();
+tl.seek(500); // posición en ms
+</code></pre>
+<blockquote class="aside aside-note"><p>Las timelines encadenan animaciones de forma legible; el tercer argumento de `.add` (offset) permite solapamientos en milisegundos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="svg-y-control">
+    <h2>SVG y Control Fino <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Animación de trazo SVG (efecto "dibujado")
+anime({
+  targets: '.linea',
+  strokeDashoffset: [anime.setDashoffset, 0],
+  easing: 'easeInOutSine',
+  duration: 1200,
+});
+
+// Atributos numéricos de SVG
+anime({
+  targets: '.circulo',
+  r: [10, 40],
+  opacity: [1, 0.5],
+});
+
+// Animación de propiedades numéricas de un objeto JS
+const estado = { valor: 0 };
+anime({
+  targets: estado,
+  valor: 100,
+  round: 1,
+  update: () =&gt; { contador.textContent = estado.valor; },
+});
+
+// Cursos con callback por actualización
+anime({
+  targets: '.caja',
+  translateX: 300,
+  easing: 'easeOutQuad',
+  complete: () =&gt; { /* al terminar */ },
+});
+</code></pre>
+<blockquote class="aside aside-tip"><p>Animando un objeto JS cualquiera puedes sincronizar números en pantalla (contadores, barras de progreso) con la misma curva de easing del resto de la UI.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas">
+    <h2>Buenas Prácticas y Rendimiento <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Respetar prefers-reduced-motion
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (reduceMotion) return; // no animar elementos decorativos
+
+// Detener animaciones antes de desmontar
+const animacion = anime({ targets: '#modal', scale: [0.9, 1] });
+animacion.pause();
+animacion.seek(0);
+
+// Priorizar transform/opacity (no tocan layout)
+anime({ targets: '.card', translateX: 40, opacity: 0.8 });
+// Evita animar width/height/top/left en listas largas
+
+// Batches: animar selecciones pequeñas, no el documento entero
+anime({ targets: document.querySelectorAll('.fila.visible'), opacity: [0, 1] });
+</code></pre>
+<blockquote class="aside aside-success"><p>Anima `transform` y `opacity` (compuestas por la GPU), respeta la preferencia de movimiento reducido y pausa animaciones al desmontar componentes. Eso basta para una UI fluida.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una entrada en cascada con `anime.stagger` y 4 tarjetas que aparezcan de abajo.</li>
+<li>Construye una timeline que mueva, rote y cambie de color a un logo en 3 pasos.</li>
+<li>Dibuja una línea con el efecto de trazo SVG usando `anime.setDashoffset`.</li>
+<li>Haz un contador animado del 0 al 1000 sincronizado con una propiedad de objeto JS.</li>
+<li>Añade soporte de `prefers-reduced-motion` para desactivar animaciones decorativas.</li>
+</ol>
+    </div>
+  </section>

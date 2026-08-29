@@ -1,0 +1,147 @@
+<!-- 2. Frameworks F#: Giraffe, Saturn, Fable - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework-fsharp">
+    <h2>Frameworks web F# <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Web:
+#   Giraffe: web HTTP funcional sobre ASP.NET Core (Kestrel)
+#   Saturn: framework full-stack (sobre Giraffe + Fable/SAFE)
+#   Suave: servidor ligero con router funcional (legacy)
+# SAFE Stack: Saturn + Azure + Fable (React F#) + Elmish
+#   → la pila completa recomendada para F#-first
+# ML/scripting: el ecosistema per Python es .NET (ML.NET, TorchSharp)
+</code></pre>
+<blockquote class="aside aside-note"><p>Giraffe (HTTP funcional) y Saturn (full-stack) sobre ASP.NET Core; SAFE (Fable+Elmish) para frontend en F#. ML.NET es el ML del universo .NET.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="giraffe">
+    <h2>Giraffe: HTTP funcional <span class="gd-badge gd-badge-note">Backend</span></h2>
+    <div class="doc-content">
+<pre><code class="language-fsharp">open Giraffe
+open Microsoft.AspNetCore.Http
+open Microsoft.Extensions.Hosting
+open Microsoft.AspNetCore.Hosting
+
+// HttpHandlers componibles
+let webApp =
+    choose [
+        GET &gt;=&gt; route "/saludo/:nombre"
+            &gt;=&gt; fun next ctx -&gt;
+                let nombre = ctx.GetRouteValue("nombre").ToString()
+                json {| saludo = $"Hola {nombre}" |} next ctx
+        POST &gt;=&gt; route "/datos" &gt;=&gt; bindJson &gt;&gt; (fun d -&gt; json d)
+        setStatusCode 404 &gt;=&gt; text "No encontrado"
+    ]
+
+[&lt;EntryPoint&gt;]
+let main _ =
+    Host.CreateDefaultBuilder()
+        .ConfigureWebHostDefaults(fun wb -&gt;
+            wb.UseUrls("http://0.0.0.0:8080")
+              .Configure(fun app -&gt;
+                  app.UseGiraffe(webApp)) |&gt; ignore)
+        .Build().Run()
+    0
+</code></pre>
+<blockquote class="aside aside-note"><p>Giraffe expone composición de HttpHandlers con `&gt;=&gt;`, routing combinador y serialización a JSON. Corre en ASP.NET Core/Kestrel; muy natural para F#.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="saturn-safel">
+    <h2>Saturn y SAFE Stack <span class="gd-badge gd-badge-note">FullStack</span></h2>
+    <div class="doc-content">
+<pre><code class="language-fsharp">open Saturn
+
+let port = 8080us
+
+let api =
+    router {
+        get "/saludo/:nombre" (fun next ctx -&gt;
+            let nombre = ctx.GetRouteValue("nombre").ToString()
+            json {| saludo = $"Hola {nombre}" |} next ctx)
+        post "/datos" (fun next ctx -&gt; bindJson (fun d -&gt; json d) next ctx)
+    }
+
+[&lt;EntryPoint&gt;]
+let main _ =
+    application {
+        use_router api
+        url "http://0.0.0.0:8080"
+    } |&gt; run
+    0
+
+// SAFE: Saturn server + Fable/Elmish cliente (React F#) + Azure
+//  → s.t. El ecosistema SAFE comparte tipos F# cliente/servidor
+</code></pre>
+<blockquote class="aside aside-tip"><p>Saturn simplifica con `router { }` la sintaxis de Giraffe y viene con pipelines de configuración. SAFE reúne lo mismo + Elmish para el frontend F# en JS.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="persistencia-fsharp">
+    <h2>Datos .NET: EF Core y Mio <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-fsharp">// EF Core (share con C#): ORM de Microsoft
+open Microsoft.EntityFrameworkCore
+
+type Context(dbc: DbContextOptions&lt;Context&gt;) =
+    inherit DbContext(dbc)
+    [&lt;DefaultValue&gt;] val mutable Usuarios: DbSet&lt;Usuario&gt;
+    member _.UsuariosProp with get() = this.Usuarios and set v = this.Usuarios &lt;- v
+
+// Eliges por el estilo del equipo: siempre interoperable con C#
+
+// Alternativas más fp:
+//   Marten: PostgreSQL document DB para .NET (FS-friendly)
+//   FSharpLite: F# extensiones sobre Dapper (SQL ligero)
+//   SqlClient directo: FSharp.Data.SqlClient
+// Eliges por el estilo del equipo: siempre interoperable con C#
+</code></pre>
+<blockquote class="aside aside-note"><p>EF Core es el ORM del universo .NET y funciona en F#; Marten (Postgres document) encaja con el estilo funcional; FSharp.Data.SqlClient es para SQL directo tipado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-fsharp">
+    <h2>Testing: xUnit + FsUnit <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-fsharp">// xUnit (estándar .NET) + FsUnit (matchers F#)
+module Tests
+
+open Xunit
+open FsUnit.Xunit
+
+[&lt;Fact&gt;]
+let ``suma es correcta`` () =
+    suma 2 3 |&gt; should equal 5
+
+[&lt;Fact&gt;]
+let ``dividir por cero lanza`` () =
+    (fun () -&gt; divide 1 0 |&gt; ignore) |&gt; should throw typeof&lt;System.DivideByZeroException&gt;
+
+// FsCheck (property testing, como QuickCheck)
+open FsCheck.Xunit
+[&lt;Property&gt;]
+let ``suma conmuta`` a b = suma a b = suma b a
+
+// Correr: dotnet test
+</code></pre>
+<blockquote class="aside aside-success"><p>xUnit es el marco .NET; FsUnit trae matchers idiomáticos; FsCheck hace property testing. Framework de mocks: NSubstitute/Moq (de C#) interoperan sin fricción.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un proyecto Giraffe y expón GET y POST JSON.</li>
+<li>Reescribe con Saturn usando `router { }`.</li>
+<li>Mapea una entidad con EF Core (F# class) y haz un CRUD mínimo.</li>
+<li>Escribe 3 Facts con FsUnit + un Property test de FsCheck.</li>
+<li>Reparte la app como webapi ASP.NET y prueba con curl.</li>
+</ol>
+    </div>
+  </section>

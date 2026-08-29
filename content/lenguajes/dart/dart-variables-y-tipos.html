@@ -1,0 +1,135 @@
+<!-- 2. Variables y Tipos de Datos - Dart (Lenguajes de Programación) -->
+
+  <section id="variables">
+    <h2>Variables: var, final y const</h2>
+    <div class="doc-content">
+<p>En Dart hay tres formas de declarar variables que se parecen pero significan cosas distintas. <code>var</code> crea una variable cuyo tipo se deduce del valor inicial y que se puede reasignar; <code>final</code> crea una variable que solo se asigna <strong>una vez</strong> (en tiempo de ejecución); <code>const</code> crea una <strong>constante en tiempo de compilación</strong>, cuyo valor debe ser conocido antes de ejecutar el programa.</p>
+<pre><code class="language-dart">void main() {
+  var contador = 0;          // tipo deducido: int, reasignable
+  contador = 5;              // correcto
+
+  final String curso = 'Dart';
+  // curso = 'Kotlin';       // error: final solo se asigna una vez
+
+  const double pi = 3.1416;  // constante de compilación
+  // pi = 3.0;               // error: const nunca cambia
+
+  print('$curso, contador $contador, pi $pi');
+}</code></pre>
+<p>Regla práctica: usa <code>final</code> por defecto, <code>const</code> cuando el valor se conoce de antemano y <code>var</code> cuando la variable va a cambiar a lo largo del programa. La herramienta <code>dart analyze</code> te avisará si declaras algo constante que nunca cambia.</p>
+<blockquote class="aside aside-tip"><p>Cuando una clase (como <code>DateTime</code>) calcula el valor durante la ejecución, no puedes usar <code>const</code>, pero sí <code>final</code>. La diferencia es que <code>const</code> exige que el valor exista <em>antes</em> de ejecutar el programa.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="null-safety">
+    <h2>Null safety</h2>
+    <div class="doc-content">
+<p>Dart incorpora <strong>null safety</strong> de forma sólida desde la versión 2.12: el sistema de tipos distingue entre valores que pueden ser <code>null</code> y los que no. Por defecto un <code>int</code>, un <code>String</code> o un <code>bool</code> <strong>jamás</strong> contienen <code>null</code>; para permitirlo se escribe el tipo con un interrogante (<code>int?</code>). El analizador comprueba que no accedas a un valor posiblemente nulo sin protegerte antes.</p>
+<pre><code class="language-dart">void main() {
+  int prioridad = 1;       // siempre tiene un número
+  int? descuento;          // empieza valiendo null
+
+  // print(descuento.isEven);  // error: descuento podría ser null
+
+  descuento = 15;
+  if (descuento != null) {
+    print('Tienes un descuento de $descuento');
+  }
+}
+
+// Salida:
+// Tienes un descuento de 15</code></pre>
+<table><thead><tr><th>Declaración</th><th>¿Puede ser null?</th><th>Cómo se accede</th></tr></thead><tbody><tr><td><code>String texto</code></td><td>No</td><td>Acceso directo y seguro</td></tr><tr><td><code>String? texto</code></td><td>Sí</td><td>Tras comprobar con <code>if</code>, con <code>!</code> o con <code>??</code></td></tr><tr><td><code>late String texto</code></td><td>No (aunque aún sin valor)</td><td>Seguro una vez que se asigna</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>La null safety no es una mera opción: en proyectos modernos ya no existe el «millón-de-dólares» error de acceder a nulos en producción. Los lenguajes como Kotlin, Swift y Rust han popularizado la misma idea porque elimina una familia entera de errores.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipos-de-datos">
+    <h2>Tipos: int, double, bool y String</h2>
+    <div class="doc-content">
+<p>Dart tiene tipos simples de <strong>primera clase</strong>: números enteros con <code>int</code>, números reales con <code>double</code>, valores lógicos con <code>bool</code> y cadenas de texto con <code>String</code>. Todos son objetos, así que hasta un entero tiene métodos como <code>isEven</code> o <code>toString()</code>, y todos son <strong>inmutables</strong>: una operación devuelve un valor nuevo en lugar de modificar el original.</p>
+<table><thead><tr><th>Tipo</th><th>Ejemplo</th><th>Descripción</th></tr></thead><tbody><tr><td><code>int</code></td><td><code>int edad = 30;</code></td><td>Número entero, positivo, negativo o cero</td></tr><tr><td><code>double</code></td><td><code>double nota = 8.75;</code></td><td>Número con parte decimal</td></tr><tr><td><code>num</code></td><td><code>num valor = 3;</code></td><td>Superclase común de <code>int</code> y <code>double</code></td></tr><tr><td><code>bool</code></td><td><code>bool activo = true;</code></td><td>Únicamente <code>true</code> o <code>false</code></td></tr><tr><td><code>String</code></td><td><code>String nombre = 'Ada';</code></td><td>Secuencia de caracteres Unicode</td></tr></tbody></table>
+<p>Los <em>strings</em> admiten comillas simples o dobles y pueden ocupar varias líneas con comillas triples (<code>'''...'''</code>). El tipo <code>dynamic</code> existe por compatibilidad, pero se desaconseja para código nuevo: apaga el analizador y devuelve el problema de los errores en tiempo de ejecución.</p>
+<blockquote class="aside aside-tip"><p>Dart puede <strong>inferir</strong> el tipo de una variable: <code>var edad = 30</code> es un <code>int</code> aunque no lo digas. Declarar el tipo explícito es opcional y muy útil para que otras personas lean tu intención.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="conversion-de-tipos">
+    <h2>Conversión entre tipos</h2>
+    <div class="doc-content">
+<p>Convertir entre tipos es una operación cotidiana: lo que llega de un formulario o de un archivo suele ser <code>String</code> y muchas veces necesitas un número. Cada tipo ofrece métodos específicos para la conversión y, si el texto no tiene el formato esperado, Dart lanza una excepción que puedes capturar con <code>try</code> y <code>catch</code>.</p>
+<pre><code class="language-dart">void main() {
+  // String a int y a double
+  int anio = int.parse('2026');
+  double altura = double.parse('1.72');
+
+  // Números y booleanos a String con interpolación
+  String texto = 'Año $anio y altura $altura';
+
+  // int a double y double a int (trunca los decimales)
+  double desdeInt = anio.toDouble();
+  int desdeDouble = 42.99.toInt();   // 42
+
+  // String a bool (Dart no tiene un parse nativo directo)
+  String activo = 'true';
+  bool esActivo = activo == 'true';
+
+  print(texto);
+  print('desdeDouble: $desdeDouble, esActivo: $esActivo');
+}
+
+// Salida:
+// Año 2026 y altura 1.72
+// desdeDouble: 42, esActivo: true</code></pre>
+<blockquote class="aside aside-caution"><p>Si el texto no se puede convertir, métodos como <code>int.parse()</code> lanzan <code>FormatException</code>. Para entornos donde el fallo es posible, prefiere la variante con paramétrica: <code>int.tryParse('abc') ?? 0</code> devuelve <code>null</code> o el valor alternativo en lugar de lanzar un error.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="interpolacion">
+    <h2>Interpolación de strings</h2>
+    <div class="doc-content">
+<p>La <strong>interpolación de strings</strong> inserta valores de variables y expresiones dentro de un texto con <code>$variable</code> o <code>${expresion}</code>. Es la forma más legible de construir mensajes y evita encadenar texto con <code>+</code>, como se hacía en otros lenguajes.</p>
+<pre><code class="language-dart">void main() {
+  String nombre = 'Andrea';
+  int edad = 30;
+  double nota = 8.5;
+
+  // Variable simple
+  print('Hola, $nombre');
+
+  // Expresión entre llaves
+  print('Edad: ${edad + 1}');
+  print('Aprobada: ${nota &gt;= 5}');
+
+  // Llamada a métodos
+  print('Mayúsculas: ${nombre.toUpperCase()}');
+}
+
+// Salida:
+// Hola, Andrea
+// Edad: 31
+// Aprobada: true
+// Mayúsculas: ANDREA</code></pre>
+<blockquote class="aside aside-tip"><p>Para mostrar un signo <code>$</code> literal (como en precios) escápalo con contrabarra: <code>print('\$5.00')</code>. La interpolación funciona dentro de comillas simples y dobles por igual.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Crea un archivo <code>tipos.dart</code> y resuelve los siguientes retos ejecutando con <code>dart run tipos.dart</code>:</p>
+<ol>
+<li><strong>Tres formas</strong>: Declara una variable con <code>var</code>, otra con <code>final</code> y otra con <code>const</code>. Intenta reasignarlas y explica con tus palabras cuál de los tres errores aparece.</li>
+<li><strong>Null safety</strong>: Define un <code>String?</code> que empiece como <code>null</code>, asígnale un valor y muéstralo con una comprobación <code>if</code>. Escribe una línea comentada que provoque un error del analizador por acceso sin comprobar.</li>
+<li><strong>Cuatro tipos</strong>: Declara un <code>int</code>, un <code>double</code>, un <code>bool</code> y un <code>String</code>, imprímelos todos juntos usando interpolación con <code>${}</code>.</li>
+<li><strong>Conversión</strong>: Convierte el texto <code>'42'</code> a <code>int</code> y el texto <code>'3.14'</code> a <code>double</code>, súmalos y muestra el resultado. Prueba después <code>int.tryParse('abc')</code> y observa qué devuelve.</li>
+<li><strong>Desafío</strong>: Crea un mensaje de bienvenida que use interpolación con una operación (por ejemplo «Te quedan 3 intentos» donde <code>3</code> salga de restar <code>5 - 2</code>) y otro que muestre un símbolo de moneda escapado con <code>\$</code>.</li>
+</ol>
+<p>En la próxima lección darás vida a los datos con el <strong>control de flujo</strong>: condiciones con <code>if</code> y <code>switch</code>, los tres bucles clásicos y las colecciones básicas <code>List</code> y <code>Map</code>.</p>
+    </div>
+  </section>

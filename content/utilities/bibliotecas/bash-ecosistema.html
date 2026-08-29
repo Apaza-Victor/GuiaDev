@@ -1,0 +1,99 @@
+<!-- 2. Ecosistema de Bash y Herramientas CLI - Bibliotecas (Utilidades) -->
+  <section id="herramientas-modernas-cli">
+    <h2>Herramientas modernas en línea de comandos <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Sustituyen a los clásicos con mejor UX y velocidad
+bat archivo.txt          # cat con color y paginación
+rg "patrón" src/          # grep moderno (más rápido, busca en git)
+fd . -e md                # find moderno
+lsd                      # ls con colores e iconos
+sd 'foo' 'bar' archivo    # sed moderno y claro
+
+# Mira este repos: "modern-unix" agrupa esta familia
+# (exa/lsd, ripgrep, fd, bat, fzf, jq, duf, tldr, etc.)
+</code></pre>
+<blockquote class="aside aside-tip"><p>Instala la familia modern-unix: velocidad y DX mejores. Son binarios simples, instalables por gestor del sistema.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="frameworks-cli">
+    <h2>Frameworks de CLI: shellcheck y bashly <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># shellcheck: linting estático de Bash (imprescindible)
+shellcheck deploy.sh
+# bashate: estilo (indentación, líneas largas)
+# shamirs/cli: generar comandos estructurados:
+# args: bash-cli --flag valor
+
+# Bats: framework de testing para Bash
+git clone https://github.com/bats-core/bats-core
+./install.sh /usr/local
+# test_script.bats
+@test "suma funciona" {
+  run ./mi-script.sh 2 3
+  [ "$status" -eq 0 ]
+  [ "$output" = "5" ]
+}
+bats test_script.bats
+</code></pre>
+<blockquote class="aside aside-note"><p>shellcheck evita los bugs clásicos (unquoted vars, globbing); Bats hace tus scripts testeables igual que en otros lenguajes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="procesos-paralelo">
+    <h2>Ejecución en paralelo y control <span class="gd-badge gd-badge-note">Concurrencia</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Precaución: los &amp; son procesos en background; espera con wait
+trabajo1() { sleep 2; echo "fin1"; }
+trabajo2() { sleep 1; echo "fin2"; }
+trabajo1 &amp; trabajo2 &amp;
+wait                 # espera ambos
+
+# xargs -P: paralelizar N ejecuciones
+seq 1 8 | xargs -P 4 -I {} sh -c 'echo "proceso {}"; sleep 1'
+
+# tareas programadas: cron / systemd timers
+# 0 2 * * *  /ruta/backup.sh
+# systemd: mi-job.timer permite calendar en logs y control de estado
+
+# señales: trap, kill -TERM, nohup/disown para desmontar del terminal
+</code></pre>
+<blockquote class="aside aside-caution"><p>Solo paraleliza con `&amp;` + `wait` para reuso de recursos; un mal `&amp;` puede lanzar trabajo duplicado. Cron/systemd timers son lo fiable para programar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="devops-helpers">
+    <h2>Bash dentro del DevOps: contenedores y CI <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Docker la orquesta scripts: docker/Compose + entrypoint
+# - Volunteers/CI usan bash -c "..." en cada 'run'
+# Ejemplo de step en GitHub Actions:
+#   run: bash scripts/validar.sh
+
+# jq para leer respuesta de APIs (deploy checks)
+STATUS=$(curl -s http://localhost:8080/health | jq -r '.status')
+[[ "$STATUS" == "ok" ]] || { echo "health check falló"; exit 1; }
+
+# terraform/ansible llaman shell modules — aprender a escribir scripts
+# reutilizables (salida limpiable, errores claros, no variables secretas)
+</code></pre>
+<blockquote class="aside aside-tip"><p>Los scripts de CI/CD e infra no difieren del resto: `set -euo pipefail`, funciones, checks de estado y salida clara. Con eso se mantienen bien en cualquier pipeline.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala shellcheck y corrige todas las advertencias de uno de tus scripts.</li>
+<li>Escribe dos tests Bats para una función que calcule el factorial.</li>
+<li>Ejecuta 8 tareas con `xargs -P 4 --timeout` y observa el orden de salida.</li>
+<li>Haz un health-check de una API con curl+jq y valida el estado en un script.</li>
+<li>Crea un `.timer` de systemd que ejecute un backup diario a las 2h.</li>
+</ol>
+    </div>
+  </section>

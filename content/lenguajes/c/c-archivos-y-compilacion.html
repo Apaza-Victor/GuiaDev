@@ -1,0 +1,140 @@
+<!-- 6. Archivos y Compilación - C (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="manejo-de-archivos">
+    <h2>Manejo de archivos: fopen, fread, fwrite</h2>
+    <div class="doc-content">
+<p>Escribir y leer archivos en disco hace tus programas útiles: guardan datos entre ejecuciones. La biblioteca <code class="inline-code">stdio.h</code> ofrece <code class="inline-code">fopen</code> (abrir), <code class="inline-code">fread</code> y <code class="inline-code">fwrite</code> (bloques binarios), <code class="inline-code">fprintf</code> y <code class="inline-code">fgets</code> (texto) y <code class="inline-code">fclose</code> (cerrar).</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int main(void) {
+    FILE *archivo = fopen("datos.txt", "w");
+
+    if (archivo == NULL) {
+        printf("No se pudo abrir el archivo\n");
+        return 1;
+    }
+
+    fprintf(archivo, "Nombre: Ana\n");
+    fprintf(archivo, "Edad: %d\n", 21);
+    fclose(archivo);               // siempre cerrar
+
+    // Ahora lo leemos y lo mostramos en pantalla
+    archivo = fopen("datos.txt", "r");
+    char linea[100];
+    while (fgets(linea, sizeof(linea), archivo) != NULL) {
+        printf("%s", linea);
+    }
+    fclose(archivo);
+    return 0;
+}</code></pre>
+<table><thead><tr><th>Modo</th><th>Significado</th><th>Si no existe</th></tr></thead><tbody><tr><td>"r"</td><td>Lectura</td><td>Error (NULL)</td></tr><tr><td>"w"</td><td>Escritura (borra el contenido)</td><td>Lo crea</td></tr><tr><td>"a"</td><td>Añadir al final</td><td>Lo crea</td></tr><tr><td>"r+", "w+", "a+"</td><td>Combinaciones de lectura y escritura</td><td>Varía según el modo</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Comprueba siempre que <code class="inline-code">fopen</code> no devuelva <code class="inline-code">NULL</code>: una ruta equivocada o la falta de permisos hace fallar la apertura sin avisar.</p></blockquote>
+<blockquote class="aside aside-tip"><p>Para datos binarios (imágenes, buffers, structs serializados) se usan <code class="inline-code">fread</code> y <code class="inline-code">fwrite</code>, que trabajan con bloques de <code class="inline-code">sizeof</code> bytes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="argumentos-cli">
+    <h2>Argumentos por línea de comandos: argc y argv</h2>
+    <div class="doc-content">
+<p>Todo programa puede recibir parámetros al ser lanzado desde la terminal. <code class="inline-code">argc</code> cuenta los argumentos (el nombre del programa siempre es el primero) y <code class="inline-code">argv</code> es un arreglo de cadenas con los valores.</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+int main(int argc, char *argv[]) {
+    int i;
+
+    printf("Número de argumentos: %d\n", argc);
+    for (i = 0; i &lt; argc; i++) {
+        printf("argv[%d] = %s\n", i, argv[i]);
+    }
+
+    if (argc &gt; 1 &amp;&amp; strcmp(argv[1], "--ayuda") == 0) {
+        printf("Uso: programa [archivo]\n");
+    }
+    return 0;
+}</code></pre>
+<p>Compila y ejecuta pasando argumentos; por ejemplo, <code class="inline-code">./programa datos.txt</code> imprime <code class="inline-code">argv[1] = datos.txt</code>.</p>
+<table><thead><tr><th>Variable</th><th>Qué contiene</th></tr></thead><tbody><tr><td>argc</td><td>Número total de argumentos (incluido el programa)</td></tr><tr><td>argv[0]</td><td>Nombre del programa ejecutado</td></tr><tr><td>argv[1]</td><td>Primer argumento de la línea de comandos</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>En <code class="inline-code">main(int argc, char *argv[])</code>, argv es un arreglo de punteros a char: cada cadena termina en <code class="inline-code">'\0'</code>, como toda cadena de C. Es una primera muestra real de arreglos de punteros.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="compilacion-multiarchivo">
+    <h2>Compilar múltiples archivos y Makefile</h2>
+    <div class="doc-content">
+<p>Los proyectos reales se dividen en varios archivos <code class="inline-code">.c</code> y <code class="inline-code">.h</code>. Cada <code class="inline-code">.c</code> se compila a un objeto <code class="inline-code">.o</code> y, al final, el <strong>enlazador</strong> une todos los objetos en un único ejecutable. La ventaja: al cambiar un solo archivo, solo se recompila ese.</p>
+<pre><code class="language-bash"># Compilar (sin enlazar) cada archivo por separado
+gcc -c main.c -o main.o
+gcc -c utilidades.c -o utilidades.o
+
+# Enlazar los objetos en un único ejecutable
+gcc main.o utilidades.o -o programa
+
+# Ejecutar
+./programa</code></pre>
+<p>Hacer esto a mano es tedioso. La herramienta <code class="inline-code">make</code> automatiza la tarea leyendo un archivo llamado <strong>Makefile</strong>. Cada regla dice qué depende de qué, y <code class="inline-code">make</code> reconstruye solo lo necesario:</p>
+<pre><code class="language-makefile">CC = gcc
+CFLAGS = -Wall -Wextra
+
+programa: main.o utilidades.o
+	$(CC) main.o utilidades.o -o programa
+
+main.o: main.c utilidades.h
+	$(CC) $(CFLAGS) -c main.c
+
+utilidades.o: utilidades.c utilidades.h
+	$(CC) $(CFLAGS) -c utilidades.c
+
+clean:
+	rm -f *.o programa</code></pre>
+<blockquote class="aside aside-note"><p>En un Makefile, la línea que ejecuta el comando de cada regla debe empezar con un <strong>tabulador</strong>, no con espacios. Es el error más común al escribir el primer Makefile.</p></blockquote>
+<blockquote class="aside aside-tip"><p>El comando <code class="inline-code">make</code> sin argumentos construye la primera regla del archivo. La regla <code class="inline-code">clean</code> se invoca con <code class="inline-code">make clean</code> para eliminar objetos y ejecutables.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="preprocesador">
+    <h2>El preprocesador y las cabeceras</h2>
+    <div class="doc-content">
+<p>Antes de compilar, el <strong>preprocesador</strong> procesa las directivas que empiezan con <code class="inline-code">#</code>: incluye archivos, define constantes y macros, y decide qué bloques se compilan. Puedes inspeccionar su resultado con <code class="inline-code">gcc -E programa.c</code>.</p>
+<table><thead><tr><th>Directiva</th><th>Qué hace</th><th>Ejemplo</th></tr></thead><tbody><tr><td>#include</td><td>Copia el contenido de un archivo</td><td>#include &lt;stdio.h&gt;</td></tr><tr><td>#define</td><td>Define una constante o macro</td><td>#define MAXIMO 100</td></tr><tr><td>#ifdef ... #endif</td><td>Compila el bloque solo si algo está definido</td><td>#ifdef DEBUG</td></tr><tr><td>#ifndef ... #define</td><td>Guarda contra la doble inclusión</td><td>#ifndef UTILIDADES_H</td></tr></tbody></table>
+<p>La forma clásica de evitar que una misma cabecera se incluya dos veces son las <strong>header guards</strong>:</p>
+<pre><code class="language-c">#ifndef UTILIDADES_H
+#define UTILIDADES_H
+
+int sumar(int a, int b);
+double promedio(double a, double b);
+
+#endif  /* UTILIDADES_H */</code></pre>
+<blockquote class="aside aside-tip"><p>Si una cabecera se incluye dos veces, sus funciones se declaran dos veces y las definiciones duplicadas pueden hacer fallar el enlazador. Las guards son la protección estándar contra ese problema.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depuracion">
+    <h2>Depuración con gdb y sanitizers</h2>
+    <div class="doc-content">
+<p>Un error de lógica no produce aviso del compilador: el programa "compila bien" y falla al ejecutarse. Para esos casos existen dos aliados: el depurador <strong>gdb</strong> y los <strong>sanitizers</strong> de GCC/Clang, que instrumentan el programa para detectar errores de memoria en tiempo real.</p>
+<table><thead><tr><th>Herramienta / comando</th><th>Qué permite ver</th></tr></thead><tbody><tr><td>gcc -g programa.c -o programa</td><td>Genera símbolos de depuración</td></tr><tr><td>gdb ./programa</td><td>Abre el depurador interactivo</td></tr><tr><td>break main</td><td>Pone un punto de ruptura en main</td></tr><tr><td>run</td><td>Ejecuta hasta el primer punto de ruptura</td></tr><tr><td>next / step</td><td>Avanza línea a línea</td></tr><tr><td>print variable</td><td>Muestra el valor de una variable</td></tr><tr><td>gcc -fsanitize=address</td><td>Detecta accesos fuera de límites y fugas</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Compila en desarrollo con <code class="inline-code">gcc -Wall -Wextra -g</code>: las advertencias evitan errores y los símbolos <code class="inline-code">-g</code> hacen posible el depurado con gdb.</p></blockquote>
+<blockquote class="aside aside-success"><p>La combinación valgrind + sanitizers + gdb cubre la práctica totalidad de errores de memoria y lógica que un programador de C puede cometer.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<ol>
+<li>Escribe un programa que guarde 10 números en <code class="inline-code">numeros.txt</code> y luego los lea e imprima su suma.</li>
+<li>Crea un programa con <code class="inline-code">argc</code> y <code class="inline-code">argv</code> que reciba un nombre de archivo y un modo ("leer" o "escribir"), y acepte o rechace la operación con un mensaje.</li>
+<li>Divide tu ejercicio anterior en <code class="inline-code">main.c</code>, <code class="inline-code">utilidades.c</code> y su cabecera <code class="inline-code">utilidades.h</code>, y compílalo con <code class="inline-code">gcc</code> en dos pasos.</li>
+<li>Escribe un <code class="inline-code">Makefile</code> para ese programa con reglas para cada objeto, la regla principal y un objetivo <code class="inline-code">clean</code>.</li>
+<li>Depura un programa que falle con <code class="inline-code">-fsanitize=address</code> y, si tienes valgrind, confirma que no hay fugas al finalizar.</li>
+</ol>
+<p>Con esta lección completas la base del lenguaje C: ya puedes escribir programas que interactúan con el sistema, organizar proyectos y depurarlos con criterio.</p>
+    </div>
+  </section>

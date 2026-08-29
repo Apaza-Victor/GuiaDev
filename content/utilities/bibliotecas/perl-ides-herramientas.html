@@ -1,0 +1,98 @@
+<!-- 3. IDEs y Herramientas para Perl - Bibliotecas (Utilidades) -->
+  <section id="ide-perl">
+    <h2>Editores y LSP Perl <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Opciones:
+#   - Padre (PADRE) IDE antiguo Perl; comunidad alterna
+#   - VS Code: extensión "perl" + "Perl Language Server" (options)
+#   - IntelliJ + plugin Perl
+#   - Vim/NeoVim con perlbrew y entorno: recomendar brown-visual
+# Mejor opción hoy: VS Code + extensions (perl, perl-env) y
+#   use dzil (Dist::Zilla) como orquesta de proyecto
+</code></pre>
+<blockquote class="aside aside-note"><p>No hay un solo LSP maduro; VS Code con las extensiones Perl es lo más práctico, y `perl -c` (sintaxis) más `prove` lo hacen bien verificable desde terminal.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="perlcritic-buenas-practicas">
+    <h2>perlcritic, Perl::Tidy y buenas prácticas <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># perlcritic: linter de estilo (estándares de la comunidad)
+cpanm Perl::Critic
+perlcritic --severity 3 script.pl
+# config personalizada en .perlcriticrc
+
+# perltidy: formateo/clasificación de código
+cpanm Perl::Tidy
+perltidy -b -bext='/' # .bak al remoto
+
+# análisis
+perl -c script.pl                     # solo sintaxis
+prove -l t/                           # tests
+perldoc -f function                   # documentación
+# Dist::Zilla para packaging, MiniCPAN para repos locales
+</code></pre>
+<blockquote class="aside aside-tip"><p>Perl::Critic aplica "Perl Best Practice"; perltidy normaliza estilo; `perl -c` es el sanity check clásico de sintaxis en cualquier script.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depuracion-perl">
+    <h2>Depuración: settrace, Devel::NYTProf <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Depuración interactiva: perl debugger (-d)
+perl -d script.pl
+# dentro: b breakpoint, s step, n next, p print, w watch, C continuar
+
+# Tracing de variables - warn/Data::Dumper (rápido)
+use Data::Dumper; warn Dumper(\@datos);
+
+# Devel::NYTProf: perfilador de rendimiento
+cpanm Devel::NYTProf
+perl -d:NYTProf script.pl
+nytprofhtml
+
+# recursos: perlmonks, perldoc, stackoverflow (etiqueta perl)
+</code></pre>
+<blockquote class="aside aside-caution"><p>`perl -d` y breakpoints funcionan por terminal; poderoso aunque menos visual. En IDE meJorar: Padre soporto debug también. NYTProf es el gold standard de profiling.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-perl">
+    <h2>Despliegue y empaquetado <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Distribución con Dist::Zilla (dzil) o Module::Build
+dzil build          # genera tarball distribuible
+dzil test           # corre tests antes de build
+# Empaquetar script standalone: par / PAR (App::PAR)
+#   puede crear ejecutables con perl incluyendo módulos
+# cpanfile + Carton para lock de versiones
+
+# Despliegue en contenedor
+</code></pre>
+<pre><code class="language-docker">FROM perl:5.40-slim
+RUN cpm install -g --no-test @cpanfile
+COPY . /app
+WORKDIR /app
+EXPOSE 3000
+CMD ["starman", "--listen", ":3000", "app.pl"]
+</code></pre>
+<blockquote class="aside aside-success"><p>Dist::Zilla y Carton estabilizan el ciclo de lanzamientos; starman (Plack server prefork) es el worker de producción típico; la imagen `perl:slim` lleva la base mínima.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Corre `perlcritic --severity 3` sobre tu script y corrige 5 avisos.</li>
+<li>Aplica perltidy y revisa el diff.</li>
+<li>Usa `perl -d` para depurar un bucle con múltiples breakpoints.</li>
+<li>Perfilea con NYTProf un script que procese 100K líneas.</li>
+<li>Arma un Dockerfile perl+slim con starman para tu app web.</li>
+</ol>
+    </div>
+  </section>

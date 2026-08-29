@@ -1,0 +1,153 @@
+<!-- 2. Frameworks y Librerías Populares de C - Bibliotecas (Utilidades) -->
+  <section id="glib">
+    <h2>GLib: utilidades y estructuras <span class="gd-badge gd-badge-note">Ecosistema</span></h2>
+    <div class="doc-content">
+<pre><code class="language-c">// GLib es la base de GTK: listas, hashes y utilidades multiplataforma
+#include &lt;glib.h&gt;
+
+int main(void) {
+  GHashTable *tabla = g_hash_table_new(g_str_hash, g_str_equal);
+  g_hash_table_insert(tabla, g_strdup("clave"), g_strdup("valor"));
+
+  // Listas enlazadas
+  GList *lista = NULL;
+  lista = g_list_append(lista, g_strdup("a"));
+  lista = g_list_append(lista, g_strdup("b"));
+
+  // Menoría gestionada
+  g_autofree char *s = g_strdup_printf("Hola %d", 42);
+  g_print("%s\n", s);
+
+  g_hash_table_destroy(tabla);
+  g_list_free(lista);
+  return 0;
+}
+// Compilar: gcc app.c $(pkg-config --cflags --libs glib-2.0)
+</code></pre>
+<blockquote class="aside aside-tip"><p>GLib aporta estructuras seguras (hash, list, queue, tree), utilidades de string y gestión de memoria con `g_autofree`. Es lo más parecido a la "stdlib moderna" de otros lenguajes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ncurses">
+    <h2>ncurses: interfaces de texto <span class="gd-badge gd-badge-note">TUI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-c">// ncurses crea interfaces en la terminal (TUI)
+#include &lt;curses.h&gt;
+
+int main(void) {
+  initscr();               // iniciar modo curses
+  cbreak();
+  noecho();
+
+  mvprintw(3, 5, "Hola desde ncurses");
+  refresh();
+  getch();                 // esperar tecla
+
+  endwin();                // restaurar terminal
+  return 0;
+}
+// Compilar: gcc app.c -lncurses
+</code></pre>
+<blockquote class="aside aside-tip"><p>ncurses permite menús, ventanas y colores en la terminal. Programas como `htop`, `vim` y `screen` lo usan.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="curl-ssl-zlib">
+    <h2>libcurl, OpenSSL y zlib <span class="gd-badge gd-badge-note">Red y datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-c">// libcurl: descargar contenido HTTP
+#include &lt;curl/curl.h&gt;
+
+size_t escribir(void *datos, size_t t, size_t n, void *buf) {
+  fwrite(datos, t, n, (FILE *)buf);
+  return t * n;
+}
+
+int main(void) {
+  curl_global_init(CURL_GLOBAL_DEFAULT);
+  CURL *c = curl_easy_init();
+  FILE *out = fopen("pagina.html", "wb");
+
+  curl_easy_setopt(c, CURLOPT_URL, "https://example.com");
+  curl_easy_setopt(c, CURLOPT_WRITEFUNCTION, escribir);
+  curl_easy_setopt(c, CURLOPT_WRITEDATA, out);
+  curl_easy_perform(c);
+
+  curl_easy_cleanup(c);
+  fclose(out);
+  return 0;
+}
+// Compilar: gcc app.c -lcurl
+
+// zlib: compresión/decompresión
+// OpenSSL: crypto y TLS (HTTPS seguro, certificados)
+</code></pre>
+<blockquote class="aside aside-tip"><p>El trío `libcurl` (HTTP/FTP), `OpenSSL` (TLS/crypto) y `zlib` (compresión) resuelve la mayoría de tareas de red y datos en C.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="sqlite">
+    <h2>SQLite: base de datos embebida <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-c">#include &lt;sqlite3.h&gt;
+#include &lt;stdio.h&gt;
+
+int main(void) {
+  sqlite3 *db;
+  char *err = NULL;
+
+  sqlite3_open("app.db", &amp;db);
+  const char *sql =
+    "CREATE TABLE IF NOT EXISTS usuarios (" \
+    "id INTEGER PRIMARY KEY, nombre TEXT);";
+  sqlite3_exec(db, sql, NULL, NULL, &amp;err);
+
+  sqlite3_stmt *st;
+  sqlite3_prepare_v2(db,
+    "SELECT nombre FROM usuarios;", -1, &amp;st, NULL);
+  while (sqlite3_step(st) == SQLITE_ROW) {
+    printf("%s\n", sqlite3_column_text(st, 0));
+  }
+  sqlite3_finalize(st);
+  sqlite3_close(db);
+  return 0;
+}
+// Compilar: gcc app.c -lsqlite3
+</code></pre>
+<blockquote class="aside aside-tip"><p>SQLite es una BD completa en un solo archivo. Perfecto para apps de escritorio y herramientas CLI sin servidor ni configuración.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="frameworks-decision">
+    <h2>¿Cómo elegir? <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-c">// Trabajo con archivos/compresión   -&gt; zlib + libarchive
+// Red / HTTP via CLI o API           -&gt; libcurl
+// Seguridad / certificados           -&gt; OpenSSL (o BearSSL si es liviano)
+// GUI de escritorio                  -&gt; GTK4 (GLib) / Qt (C++ más común)
+// Juegos / gráficos                  -&gt; SDL2, Raylib, Allegro
+// Numeréérica / álgebra lineal       -&gt; BLAS, LAPACK, GSL
+// Serialización                      -&gt; libjson-c, cJSON, protobuf-c
+// BDD embebida                       -&gt; SQLite
+</code></pre>
+<blockquote class="aside aside-success"><p>Regla: usa la librería probada de la comunidad para cada necesidad, con licencia compatible con tu proyecto, en lugar de escribir todo desde cero.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Con libcurl descarga el HTML de una web pública y guárdalo en un archivo.</li>
+<li>Crea con SQLite una tabla `tareas`, inserta 3 filas y lista las pendientes.</li>
+<li>Usa GLib para agrupar las palabras de un texto en un hash y contar frecuencias.</li>
+<li>Diseña una TUI de menú con ncurses y una opción que salga limpiamente.</li>
+<li>Investiga qué licencia tiene cada librería de la sección "¿Cómo elegir?" y justifica una decisión.</li>
+</ol>
+    </div>
+  </section>

@@ -1,0 +1,129 @@
+<!-- 1. Librerías y Herramientas Esenciales de Bash - Bibliotecas (Utilidades) -->
+  <section id="core-bash">
+    <h2>El "shell" como librería de utilidades <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -euo pipefail   # falla ante errores, variables sin definir y pipes rotos
+
+# Herramientas core (GNU coreutils): casi todo lo que necesitas
+archivo="datos.txt"
+wc -l "$archivo"                 # contar líneas
+sort -u "$archivo"               # ordenar y dedup
+grep -i "error" "$archivo"       # filtrar
+cut -d, -f1 "$archivo"           # delimitadores
+curl -s "https://api.x.com" | jq '.usuarios[0]'
+</code></pre>
+<blockquote class="aside aside-tip"><p>Las utilidades GNU (grep, awk, sed, sort, cut, xargs, tar, find, jq) son la "librería estándar" de cada shell script: compónlas con pipes en lugar de escribir lógica compleja.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="condicionales-funciones">
+    <h2>Funciones y utilidades propias <span class="gd-badge gd-badge-note">Script</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -euo pipefail
+
+log() {
+  local nivel="$1"; shift
+  printf '[%s] %s\n' "$nivel" "$*"
+}
+log INFO "Iniciando despliegue"
+
+# Reutilizar jq: transformar JSON del API
+descargar_api() {
+  local url="$1"
+  curl -sfL "$url" | jq -r '.items[] | select(.estado == "ok") | .nombre'
+}
+
+# Manejar argumentos (getopts)
+while getopts "hvp:" opt; do
+  case "$opt" in
+    h) usage; exit 0 ;;
+    p) PUERTO="$OPTARG" ;;
+    v) set -x ;;          # verbose debug
+  esac
+done
+</code></pre>
+<blockquote class="aside aside-tip"><p>Estructura tus scripts con funciones, `set -euo pipefail`, y `getopts` para argumentos. `helper.sh` puede "exportarse" para reutilizar funciones en tu repo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="texto-awk-sed">
+    <h2>Procesado de texto: awk, sed, grep <span class="gd-badge gd-badge-note">Texto</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># CSV a reporte con awk
+awk -F, '{if ($3 > 100) print $1, $3}' datos.csv | head -10
+awk 'BEGIN{FS=","; total=0} {total+=$2} END{print "Suma:", total}' datos.csv
+
+# replace en archivos con sed
+sed -i 's/old_url/new_url/g' config.env
+# borrar líneas vacías
+sed -i '/^$/d' notas.txt
+
+# grep recursivo con contexto
+grep -rn "TODO" src/ | head -20
+grep -E '^#include' -r . --include='*.c'
+
+# jq, yq (YAML), tr, uniq, tee, xargs, find — combinar
+find . -name '*.log' -mtime +30 -delete
+find . -type f | xargs wc -l
+</code></pre>
+<blockquote class="aside aside-caution"><p>`sed -i` reescribe el archivo: haz una copia (`cp`) o revisa con `sed 's/...//' archivo | diff archivo -` antes de aplicar en masa.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="gestores-paquetes">
+    <h2>Gestores de paquetes del sistema <span class="gd-badge gd-badge-note">Sys</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># En tus scripts de instalación puedes apoyarte en:
+sudo apt update &amp;&amp; sudo apt install -y jq curl git
+# o para distribuciones RPM: dnf install -y
+# macOS: brew install jq
+# Windows (Git Bash/WSL): winget install / chocolatey
+
+# comprobador	simple de comandos presentes
+requiere() { for c in "$@"; do command -v "$c" &gt;/dev/null || { echo "falta $c"; exit 1; }; done; }
+requiere jq curl docker
+</code></pre>
+<blockquote class="aside aside-note"><p>Valida dependencias con `command -v`; los gestores oficiales (apt/dnf/brew/winget) son la mejor fuente de herramientas para scriptcontinuar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="seguridad-variables">
+    <h2>Seguridad y secretos en scripts <span class="gd-badge gd-badge-note">Seguridad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Nunca pongas secretos en el script: usa variables de entorno
+if [[ -z "${API_KEY:-}" ]]; then
+  echo "API_KEY no definida" &gt;&amp;2; exit 1
+fi
+
+# y en TU CI / bashrc, nunca en repo:
+#   export API_KEY=... (fuera de git)
+# Limpieza de histórico de shell
+alias jq2='"color": ...'
+
+# Traps para limpiar recursos
+limpiar() { rm -f /tmp/mi_tmp.$$; }
+trap limpiar EXIT       # EXIT / ERR / INT
+</code></pre>
+<blockquote class="aside aside-caution"><p>Secretos solo vía env vars o un gestor (direnv/.env NOa git). Los `trap` garantizan limpieza incluso cuando el script falla o recibe Ctrl-C.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Escribe un script que filtre un CSV (awk), ordene y muestre el top 10.</li>
+<li>Crea funciones `info`/`error` y pruébalas en un despliegue simulado.</li>
+<li>Usa `find -mtime` para borrar archivos temporales de más de 7 días.</li>
+<li>Limpia un archivo de config con `sed` (reemplazar 2 claves) verificando con diff.</li>
+<li>Protege un script con trap + validación de variable de entorno obligatoria.</li>
+</ol>
+    </div>
+  </section>

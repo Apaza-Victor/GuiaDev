@@ -1,0 +1,169 @@
+<!-- 2. Frameworks Java: Spring, Quarkus, etc - Bibliotecas (Utilidades) -->
+  <section id="spring-boot">
+    <h2>Spring Boot: el estándar empresarial <span class="gd-badge gd-badge-note">Framework</span></h2>
+    <div class="doc-content">
+<pre><code class="language-java">// Spring Boot con Spring Web (REST) + JPA
+// @SpringBootApplication (clase principal)
+import org.springframework.boot.*;
+import org.springframework.boot.autoconfigure.*;
+
+@SpringBootApplication
+public class App {
+  public static void main(String[] args) {
+    SpringApplication.run(App.class, args);
+  }
+}
+
+// Controlador REST
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/usuarios")
+public class UsuarioController {
+
+  @GetMapping("/{id}")
+  public Usuario obtener(@PathVariable Long id) {
+    return new Usuario(id, "Ana", 30);
+  }
+
+  @PostMapping
+  public Usuario crear(@RequestBody Usuario u) {
+    return u; // en producción: save en un repositorio
+  }
+}
+// Repositorio JPA, config en application.yml, dependencias en pom.xml/Gradle.
+</code></pre>
+<blockquote class="aside aside-tip"><p>Spring Boot + Spring MVC simplifica todo: inyecta dependencias (@Autowired), REST, seguridad, BD (JPA) y microservicios (Spring Cloud). Contrato "starter" reduce la configuración a casi cero.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="quarkus-micronaut">
+    <h2>Alternativas nativas: Quarkus y Micronaut <span class="gd-badge gd-badge-note">Nativos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-java">// Quarkus: arranque rápido, bajo consumo, nativo con GraalVM
+// @QuarkusMain + paneles /dev; build con:
+//   mvn quarkus:dev          # hot reload
+//   mvn package -Pnative     # binario nativo GraalVM
+
+// Micronaut: contenedores AOT, sin reflexión
+//   mn create-app appRest
+// cotizent con inyección por constructor y test sereno
+
+// Comparativa (rendimiento de arranque y memoria — orden de magnitud):
+// Spring  ~2-4 s, ~500MB
+// Quarkus ~0.3 s, ~80-120MB
+// Micronaut ~0.2 s, ~60-90MB
+</code></pre>
+<blockquote class="aside aside-note"><p>Quarkus/Micronaut brillan en serverless y K8s: menos RAM y arranque en milisegundos gracias a GraalVM y AOT. Spring sigue dominando el ecosistema Java tradicional.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="persistencia">
+    <h2>Persistencia: Hibernate, JPA y MyBatis <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-java">// JPA + Hibernate: mapeo objeto-relacional
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "usuarios")
+public class Usuario {
+  @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+  @Column(nullable = false)
+  private String nombre;
+  private int edad;
+  // getters/setters ...
+}
+
+// Repositorio con Spring Data JPA
+public interface UsuarioRepo extends JpaRepository&lt;Usuario, Long&gt; {
+  List&lt;Usuario&gt; findByEdadGreaterThan(int edad);
+  // métodos derivados del nombre: findByNombre, findByEdadBetween...
+}
+
+// MyBatis: SQL manual con mappers XML/annotations (más control, menos mágica)
+// Liquibase/Flyway: versionado de esquema BD
+</code></pre>
+<blockquote class="aside aside-tip"><p>Hibernate (JPA) es el ORM más usado; Spring Data añade repositorios con consultas derivadas del nombre del método. MyBatis es la opción "SQL explícita".</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing">
+    <h2>Testing: JUnit 5 y Mockito <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-java">// JUnit 5: el estándar
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+class CalculadoraTest {
+  @Test
+  void sumaEsteCorrecta() {
+    assertEquals(5, Calculadora.suma(2, 3));
+  }
+
+  @Test
+  void lanzaExcepcion() {
+    assertThrows(ArithmeticException.class, () -&gt; Calculadora.divide(1, 0));
+  }
+}
+
+// Mockito: simular dependencias
+import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+@ExtendWith(MockitoExtension.class)
+class ServicioTest {
+  @Mock Repositorio repo;
+  @InjectMocks Servicio servicio;
+
+  @Test
+  void devuelveUsuario() {
+    when(repo.findById(1L)).thenReturn(new Usuario(1L, "Ana"));
+    assertEquals("Ana", servicio.obtenerNombre(1L));
+  }
+}
+// Maven: mvn test — Gradle: ./gradlew test — coverage: JaCoCo
+</code></pre>
+<blockquote class="aside aside-tip"><p>Spring Boot incluye `spring-boot-starter-test` con JUnit, Mockito y AssertJ. JaCoCo mide cobertura en el build.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="otros-ecosistema">
+    <h2>Otros del ecosistema prioritario <span class="gd-badge gd-badge-note">Extras</span></h2>
+    <div class="doc-content">
+<table>
+<thead><tr><th>Necesidad</th><th>Opción principal</th><th>Alternativa</th></tr></thead>
+<tbody>
+<tr><td>REST / API</td><td>Spring MVC</td><td>JAX-RS (Quarkus/SmallRye)</td></tr>
+<tr><td>BD</td><td>Hibernate/JPA</td><td>MyBatis, jOOQ</td></tr>
+<tr><td>Migraciones BD</td><td>Flyway</td><td>Liquibase</td></tr>
+<tr><td>Batch/EJBs</td><td>Spring Batch</td><td>Jakarta Batch</td></tr>
+<tr><td>Seguridad</td><td>Spring Security</td><td>OIDC/OAuth2 + Keycloak</td></tr>
+<tr><td>Reactive</td><td>WebFlux/Reactor</td><td>Vert.x</td></tr>
+<tr><td>Mensajería</td><td>Spring AMQP</td><td>Kafka Clients, JMS</td></tr>
+<tr><td>Testing end-to-end</td><td>Testcontainers</td><td>Cucumber/BDD</td></tr>
+</tbody>
+</table>
+<blockquote class="aside aside-success"><p>Elige el stack según contexto: Spring si buscas ecosistema y comunidad; Quarkus/Micronaut para arranque nativo y memoria; la combinación más productiva hoy suele ser Spring Boot + JPA + Flyway + Testcontainers.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea con start.spring.io una app REST con un endpoint GET/POST de usuario.</li>
+<li>Añade Spring Data JPA y usa `findByNombreContaining`.</li>
+<li>Escribe tests JUnit+Mockito para un servicio con una dependencia mockeada.</li>
+<li>Compara el arranque de la misma app en Spring vs Quarkus (tiempo y RAM).</li>
+<li>Integra Flyway y una migración inicial que cree la tabla `usuarios`.</li>
+</ol>
+    </div>
+  </section>

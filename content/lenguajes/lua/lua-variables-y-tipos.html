@@ -1,0 +1,155 @@
+<!-- 2. Variables y Tipos - Lua (Lenguajes de Programación) -->
+  <section id="variables-y-ambito">
+    <h2>Variables y ámbito</h2>
+    <div class="doc-content">
+<p>En Lua una variable es un contenedor con nombre que guarda un valor. Lo más importante desde el principio: por defecto una asignación crea una variable <strong>global</strong>, visible desde cualquier punto del programa. Para crear variables locales, que solo existen dentro del bloque donde se declaran, usas la palabra clave <code>local</code>. Usar <code>local</code> siempre que sea posible es la norma en código Lua moderno.</p>
+<pre><code class="language-lua">-- Variable global: visible en todo el programa
+global = 100
+
+-- Variable local: visible solo en este bloque
+local local_ = 200
+
+do
+  local bloque = 300      -- local dentro de este bloque "do"
+  print(bloque)           -- 300
+end
+-- print(bloque)  -- error: bloque no existe fuera del do...end
+
+print(global)             -- 100
+print(local_)             -- 200</code></pre>
+<p>La <strong>anteposición del guion bajo</strong> después de <code>local</code> es una convención para nombres; la variable real se llama <code>local_</code>. Lo esencial es recordar que sin <code>local</code> estás llenando el espacio global con nombres que podrían chocar con los de otras librerías.</p>
+<table><thead><tr><th>Forma</th><th>Ámbito</th><th>Cuándo usarla</th></tr></thead><tbody><tr><td><code>x = 1</code></td><td>Global (todo el programa)</td><td>Solo en scripts cortos o para APIs públicas</td></tr><tr><td><code>local x = 1</code></td><td>Local al bloque actual</td><td>Casi siempre; la opción recomendada</td></tr><tr><td><code>local x</code></td><td>Local, valor <code>nil</code> inicial</td><td>Declarar antes de asignar en condiciones</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Una variable sin valor inicial en Lua no es un error: toma automáticamente el valor <code>nil</code>. Esto convierte a Lua en un lenguaje muy tolerante, pero puede ocultar bugs si olvidas inicializar variables importantes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipos-de-datos">
+    <h2>Tipos de datos</h2>
+    <div class="doc-content">
+<p>Lua es un lenguaje de <strong>tipado dinámico</strong>: una misma variable puede guardar valores de tipos distintos a lo largo del programa sin declararlo. Aun así, cada valor pertenece a uno de los <strong>ocho tipos básicos</strong> que Lua reconoce, y la función <code>type()</code> te dice cuál es.</p>
+<pre><code class="language-lua">print(type("hola"))     --> string
+print(type(42))         --> number
+print(type(3.14))       --> number
+print(type(true))       --> boolean
+print(type(nil))        --> nil
+print(type({}))         --> table
+print(type(print))      --> function
+print(type(io.stdout))  --> userdata</code></pre>
+<table><thead><tr><th>Tipo</th><th>Descripción</th><th>Ejemplos</th></tr></thead><tbody><tr><td><code>nil</code></td><td>Ausencia de valor</td><td><code>local x</code></td></tr><tr><td><code>boolean</code></td><td>Verdadero o falso</td><td><code>true</code>, <code>false</code></td></tr><tr><td><code>number</code></td><td>Números enteros o decimales</td><td><code>10</code>, <code>3.14</code>, <code>-2.5</code></td></tr><tr><td><code>string</code></td><td>Secuencias de caracteres</td><td><code>"abc"</code>, <code>'xyz'</code></td></tr><tr><td><code>function</code></td><td>Bloque de código reutilizable</td><td><code>function() ... end</code></td></tr><tr><td><code>table</code></td><td>Estructura de datos universal</td><td><code>{}</code></td></tr><tr><td><code>userdata</code></td><td>Datos del programa host (C)</td><td>Objetos de io, sockets</td></tr><tr><td><code>thread</code></td><td>Corrutina (ejecución cooperativa)</td><td><code>coroutine.create()</code></td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>Como el tipo es una propiedad del <em>valor</em>, no de la variable, puedes reasignar <code>x = 1</code> y luego <code>x = "texto"</code> sin problemas. Herramientas de análisis estático modernas (como el diagnóstico de sumneko) te ayudan a detectar estos cambios si quieres más rigor.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="nil-y-booleans">
+    <h2>nil y booleanos</h2>
+    <div class="doc-content">
+<p><code>nil</code> representa «la ausencia de valor»: es el valor por defecto de cualquier variable no inicializada, de los índices inexistentes de una tabla y del retorno de funciones que no devuelven nada. <code>boolean</code> tiene dos únicos valores, <code>true</code> y <code>false</code>, usados en condiciones.</p>
+<pre><code class="language-lua">local a            -- a vale nil
+print(a)           --> nil
+
+local b = 5
+b = nil            -- borrar una variable: le devolvemos nil
+print(b)           --> nil
+
+print(true and false)   --> false
+print(true or false)    --> true
+print(not true)         --> false</code></pre>
+<p>Un detalle crucial de Lua: solo <code>false</code> y <code>nil</code> se consideran «falsos» en una condición. Todo lo demás — incluyendo el número <code>0</code> y la cadena vacía <code>""</code> — es verdadero. Esto sorprende a quienes vienen de otros lenguajes.</p>
+<pre><code class="language-lua">if 0 then print("0 es verdadero") end      --> 0 es verdadero
+if "" then print("cadena vacía es verdadera") end  --> sí se imprime
+if nil then print("nunca") else print("nil es falso") end  --> nil es falso
+
+-- Asignación múltiple con or: valor por defecto
+local nombre = nombre or "Anónimo"
+print(nombre)      --> Anónimo</code></pre>
+<blockquote class="aside aside-caution"><p>El patrón <code>x = x or valor_predeterminado</code> funciona solo porque <code>nil</code> es falso y <code>false</code> también. Si un valor legítimo pudiera ser <code>false</code> o <code>0</code>, este atajo devolvería el defecto por error: en esos casos usa una comparación explícita con <code>== nil</code>.</p></blockquote>
+<blockquote class="aside aside-tip"><p>Conocer la «verdad» de un valor es esencial en Lua. Cuando leas código ajeno, recuerda la regla de oro: <strong>solo <code>nil</code> y <code>false</code> son falsos</strong>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="numeros-y-strings">
+    <h2>Números y strings</h2>
+    <div class="doc-content">
+<p>Lua distingue dos subtipos de <code>number</code>: <strong>enteros</strong> y <strong>flotantes</strong> (decimales), manejados de forma transparente. Un número con parte decimal se llama flotante; uno sin ella, entero. La aritmética elige el resultado más preciso automáticamente.</p>
+<pre><code class="language-lua">print(7 / 2)        --> 3.5   (división siempre devuelve flotante)
+print(7 // 2)       --> 3     (división entera)
+print(7 % 2)        --> 1     (módulo / resto)
+print(2 ^ 10)       --> 1024  (potencia)
+print(math.floor(3.9))  --> 3
+print(math.ceil(3.1))   --> 4</code></pre>
+<p>Los <strong>strings</strong> son cadenas inmutables de bytes. Pueden escribirse con comillas simples, dobles y también con llaves dobles <code>[[ ]]</code> para bloques multilínea. La concatenación se hace con <code>..</code>, nunca con <code>+</code> (que solo suma números):</p>
+<pre><code class="language-lua">local saludo = "Hola"
+local nombre = 'Lua'
+print(saludo .. ", " .. nombre .. "!")   --> Hola, Lua!
+
+-- String multilínea con [[ ]]
+local poema = [[
+Línea uno
+Línea dos
+]]
+print(poema)
+
+-- Tamaño y subcadena
+local texto = "GuiaDev"
+print(#texto)                 --> 7   (longitud)
+print(string.upper(texto))    --> GUIADEV
+print(string.sub(texto, 1, 4)) --> Guia
+print(string.rep("ab", 3))    --> ababab</code></pre>
+<table><thead><tr><th>Operación</th><th>Operador / función</th><th>Ejemplo y resultado</th></tr></thead><tbody><tr><td>Concatenar</td><td><code>..</code></td><td><code>"a" .. "b"</code> → <code>"ab"</code></td></tr><tr><td>Longitud</td><td><code>#</code></td><td><code>#"hola"</code> → 4</td></tr><tr><td>Mayúsculas</td><td><code>string.upper</code></td><td><code>string.upper("abc")</code> → <code>"ABC"</code></td></tr><tr><td>Subcadena</td><td><code>string.sub</code></td><td><code>string.sub("hola",2,3)</code> → <code>"ol"</code></td></tr><tr><td>Encontrar patrón</td><td><code>string.find</code></td><td><code>string.find("lua","ua")</code> → 2</td></tr><tr><td>Repetir</td><td><code>string.rep</code></td><td><code>string.rep("x",3)</code> → <code>"xxx"</code></td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Para convertir entre números y textos usa <code>tostring()</code> y <code>tonumber()</code>. <code>tonumber("42")</code> devuelve 42 y <code>tostring(3.14)</code> devuelve <code>"3.14"</code>. Utilízalos siempre que cruces la frontera entre tipos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="operadores">
+    <h2>Operadores</h2>
+    <div class="doc-content">
+<p>Lua agrupa sus operadores en aritméticos, relacionales, lógicos, de concatenación y de longitud. Conocer la precedencia y el comportamiento de cada grupo evita errores sutiles. Los operadores lógicos <code>and</code>, <code>or</code> y <code>not</code> son de los más usados y tienen un comportamiento especial: <code>and</code> y <code>or</code> devuelven uno de sus operandos, no siempre un booleano.</p>
+<pre><code class="language-lua">-- Aritméticos
+local a, b = 10, 3
+print(a + b, a - b, a * b)   --> 13	7	30
+print(a / b, a % b, a ^ 2)   --> 3.3333333333333	1	100
+
+-- Relacionales (devuelven boolean)
+print(10 == 10)      --> true
+print(10 ~= 3)       --> true  (distinto de, con ~)
+print(10 &lt; 3)        --> false
+print("abc" &lt; "abd") --> true  (comparación lexicográfica)
+
+-- Lógicos: and/or devuelven un operando
+print(nil and "x")   --> nil
+print(false or "y")  --> y
+print(5 and 7)       --> 7     (ambos verdaderos: devuelve el segundo)</code></pre>
+<table><thead><tr><th>Categoría</th><th>Operadores</th></tr></thead><tbody><tr><td><strong>Aritméticos</strong></td><td><code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>//</code>, <code>%</code>, <code>^</code></td></tr><tr><td><strong>Relacionales</strong></td><td><code>==</code>, <code>~=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code></td></tr><tr><td><strong>Lógicos</strong></td><td><code>and</code>, <code>or</code>, <code>not</code></td></tr><tr><td><strong>Concatenación</strong></td><td><code>..</code></td></tr><tr><td><strong>Longitud</strong></td><td><code>#</code></td></tr><tr><td><strong>Asignación múltiple</strong></td><td><code>a, b = 1, 2</code></td></tr></tbody></table>
+<pre><code class="language-lua">-- Asignación múltiple e intercambio de valores
+local x, y = 1, 2
+x, y = y, x            -- intercambio sin variable temporal
+print(x, y)            --> 2	1
+
+-- Operadores en cadenas de comparación
+local edad = 25
+if edad &gt;= 18 and edad &lt; 65 then
+  print("Adulto en edad laboral")
+end</code></pre>
+<blockquote class="aside aside-caution"><p>Lua <strong>no tiene operadores de incremento</strong> como <code>++</code> ni de asignación compuesta como <code>+=</code>. Debes escribir <code>x = x + 1</code> siempre. Es una diferencia notable si vienes de C, Java o JavaScript.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica variables y tipos creando scripts pequeños y ejecutándolos con <code>lua</code>. Recuerda sustituir cada fragmento por tu propia solución y comprobar la salida.</p>
+<ol>
+<li><strong>Type de cada valor</strong>: Escribe un script que use <code>type()</code> para imprimir el tipo de <code>"7"</code>, <code>7</code>, <code>7.0</code>, <code>true</code>, <code>nil</code> y de una función. Comenta el resultado en cada línea.</li>
+<li><strong>Ámbito local vs global</strong>: Crea una variable global <code>g</code> y otra local <code>l</code> dentro de un bloque <code>do ... end</code>. Intenta imprimir <code>l</code> fuera del bloque y observa el error de <code>nil</code>. Escribe la explicación en un comentario.</li>
+<li><strong>Calculadora de números</strong>: Con dos variables locales <code>a = 15</code> y <code>b = 4</code>, imprime suma, resta, multiplicación, división, división entera, módulo y potencia.</li>
+<li><strong>Manipular strings</strong>: Dado <code>local frase = "GuiaDev aprende Lua"</code>, imprime su longitud con <code>#</code>, la versión en mayúsculas, y las subcadenas <code>"Dev"</code> y <code>"Lua"</code>.</li>
+<li><strong>Desafío</strong>: Usa el patrón <code>or</code> con valor por defecto para escribir una función que reciba un nombre y salude con <code>"Anónimo"</code> si no se le pasa ninguno. Prueba con <code>nil</code> y con un nombre real.</li>
+</ol>
+<p>En el próximo capítulo, <code>tablas</code>, descubrirás la estructura de datos que lo une todo en Lua: la <strong>tabla</strong>, capaz de funcionar como arreglo, diccionario y objeto al mismo tiempo.</p>
+    </div>
+  </section>

@@ -1,0 +1,119 @@
+<!-- 1. Librerías Esenciales de Haskell - Bibliotecas (Utilidades) -->
+  <section id="cabal-hackage">
+    <h2>Cabal y Hackage <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Hackage: repositorio oficial de paquetes (hackage.haskell.org)
+cabal update
+cabal search json
+cabal install aeson
+# puro: stack también agrega  (resolver ghc + lts)
+stack new app
+stack build
+</code></pre>
+<pre><code class="language-haskell">{-# LANGUAGE OverloadedStrings #-}
+
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.Aeson as A
+
+main :: IO ()
+main = do
+  -- aeson: JSON para Haskell
+  let json = A.encode (A.object ["nombre" A..= ("Ana" :: String)])
+  BL.putStrLn json
+</code></pre>
+<blockquote class="aside aside-note"><p>Hackage + Cabal/stack son el gestor de paquetes de Haskell; aeson (JSON), text, containers, bytestring, mtl son el estandar. Hoogle busca firmas online.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="base-y-ghc-libs">
+    <h2>base, containers, text, bytestring <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-haskell">import Data.List (sort, nub)
+import qualified Data.Map.Strict as M
+import qualified Data.Text as T
+
+main :: IO ()
+main = do
+  -- listas: funciones de foldr/map/filter (Prelude)
+  let nums = [3,1,4,1,5]
+  print (sort nums, nub nums, sum nums)
+
+  -- Data.Map (contamos frecuencias)
+  let freq = foldr (\w m -> M.insertWith (+) w 1 m) M.empty ["hola","mundo","hola"]
+  print (M.toList freq)
+
+  -- Data.Text para strings eficientes
+  let t = T.pack "Hola, Mundo!"
+  print (T.toUpper t, T.length t)
+</code></pre>
+<blockquote class="aside aside-tip"><p>La base: Prelude (funciones de listas), containers (Map/Set/Seq), text/bytestring para strings. La perezosidad y types son lo que definen el resto del ecosistema.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="monad-mtl-transformers">
+    <h2>mtl, transformers y efectos <span class="gd-badge gd-badge-note">Funcional</span></h2>
+    <div class="doc-content">
+<pre><code class="language-haskell">{-# LANGUAGE OverloadedStrings #-}
+
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Reader (ReaderT, ask, runReaderT)
+import Control.Monad.Except (ExceptT, throwError, runExceptT)
+
+-- transformers: composas transformadores de monadas
+data Config = Config { cfgNombre :: String }
+
+saludo :: ReaderT Config IO String
+saludo = do
+  c <- ask
+  liftIO (putStrLn "task...")
+  pure ("Hola " ++ cfgNombre c)
+
+main :: IO ()
+main = runReaderT saludo (Config "Ana") >>= putStrLn
+
+-- mtl: typeclasses MonadReader/MonadState sobre los transformers
+-- para aplicaciones grandes: ReaderT Config IO como base del stack
+</code></pre>
+<blockquote class="aside aside-note"><p>mtl/transformers dan el patrón de efectos (Reader/State/Except/IO). Esa es la base del estilo moderno; las libs fx de confianza: lens (ópticas) y conduit.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-haskell">
+    <h2>Instalación de Haskell <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># GHCUps general (ghcup): gestor moderno de GHC+cabal
+curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+ghcup install ghc recommended
+ghcup install cabal recommended
+ghcup set ghc recommended
+
+# stack (capa sobre GHC/Cabal con stackage)
+curl -sSL https://get.haskellstack.org | sh
+
+# Verificar y ejecutar
+ghc --version
+echo 'main = putStrLn "Hola desde Haskell"' &gt; hola.hs
+runghc hola.hs
+
+# ghci -- REPL para experimentos
+</code></pre>
+<blockquote class="aside aside-note"><p>GHC+ghcup y cabal son la base; stack añade resolución LTS (conjunto de versiones curadas). `ghci` funciona como REPL para probar funciones al vuelo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>En ghci explora sort, take, map y foldr sobre listas.</li>
+<li>Cuenta palabras de un texto con Data.Map.Strict.</li>
+<li>Instala aeson y decod/encode un objeto JSON.</li>
+<li>Escribe una función con ReaderT Config IO.</li>
+<li>Crea un proyecto cabal (cabal init) y ejecuta su main.hs.</li>
+</ol>
+    </div>
+  </section>

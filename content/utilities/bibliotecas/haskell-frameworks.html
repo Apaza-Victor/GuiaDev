@@ -1,0 +1,134 @@
+<!-- 2. Frameworks Haskell: Yesod, Scotty, Servant - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework-haskell">
+    <h2>Frameworks web Haskell <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># SSH stack of πα: 
+#   Servant: tipado por tipos (API por types a endpoints) - moderno
+#   Yesod: completo/productivo tipo Rails (con seguridad alta)
+#   Scotty: minimal tipo Sinatra (rápidos scripts/APIs)
+#   Others: Spock, WAI (Warp) base HTTP de bajo nivel
+# Recomendación de hoy: Servant para API tipada, Yesod para apps grandes,
+#   Scotty para prototipos rápidos; todos sirven sobre Warp (servidor HTTP)
+</code></pre>
+<blockquote class="aside aside-note"><p>Warp es el servidor HTTP base; encima están Servant (types), Yesod (full stack) y Scotty (minimal). Elige según el tamaño del proyecto y tu familaridad con types.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="servant">
+    <h2>Servant: APIs tipo-verificadas <span class="gd-badge gd-badge-note">API</span></h2>
+    <div class="doc-content">
+<pre><code class="language-haskell">{-# LANGUAGE DataKinds, TypeOperators #-}
+
+import Servant
+import Data.Aeson
+
+data Usuario = Usuario { nombre :: String, edad :: Int }
+
+type API =
+       "saludo" :> Capture "nombre" String :> Get '[JSON] Text
+  :<|> "usuarios" :> Get '[JSON] [Usuario]
+
+server :: Server API
+server = saludo :<|> usuarios
+  where
+    saludo n = pure (fromString ("Hola " <> n))
+    usuarios = pure [Usuario "Ana" 30, Usuario "Luis" 25]
+
+main :: IO ()
+main = run 8080 (serve (Proxy @API) server)
+-- curl localhost:8080/saludo/Mundo
+-- El API se define como TIPO: el compilador verifica client y server
+</code></pre>
+<blockquote class="aside aside-success"><p>En Servant, la API es un tipo (Proxy @API); un cambio en el tipo rompe compilación tanto en server como client generado. Un estilo único en lenguajes estáticos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="scotty-y-yesod">
+    <h2>Scotty y Yesod <span class="gd-badge gd-badge-note">Web</span></h2>
+    <div class="doc-content">
+<pre><code class="language-haskell">-- Scotty (minimal, tipo Sinatra)
+import Web.Scotty
+import Data.Text.Lazy (Text)
+import Data.Text.Lazy.IO as T
+
+main :: IO ()
+main = scotty 3000 $ do
+  get "/saludo/:nombre" $ do
+    n <- param "nombre"
+    text (fromString ("Hola " <> T.unpack n))
+
+-- Yesod (full stack)
+--   stack new yesod-app yesodweb/sqlite
+--   Defines: Foundation type, mkYesod (DSL de rutas+types),
+--   Persistent (ORM), Widgets GHCJS? templates (linkóhaml)
+-- Los dos sirven sobre Warp; Yesod trae auth, CSRF, i18n, caching
+</code></pre>
+<blockquote class="aside aside-tip"><p>Scotty: routers y helpers simples con `param` y `text`. Yesod: typos de rutas + Persistent + widgets; seguridad y templates por convención. Decide según volumen.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="persistencia-haskell">
+    <h2>Persistencia: Persistent y esqueleto <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-haskell">{-# LANGUAGE TemplateHaskell, QuasiQuotes, OverloadedStrings #-}
+
+import Database.Persist.Sqlite
+import Database.Persist.TH
+
+share [mkPersist sqlSettings, mkMigrate "migrar"] [persistLowerCase|
+Usuario json
+  nombre Text
+  edad Int
+  deriving Show
+|]
+
+main :: IO ()
+main = runSqlite "app.db" $ do
+  runMigration migrateAll
+  _ <- insertUsuario (Usuario "Ana" 30)  -- insert generado
+  usuarios <- selectList [] [Asc UsuarioNombre]
+  liftIO (print (map entityVal usuarios))
+</code></pre>
+<blockquote class="aside aside-note"><p>Persistent genera tipos+SQL desde una sintaxis de esquema; el acceso es funcional y seguro. Esqueleto (query DSL embebido) y raw query con `rawSql` de respaldo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-haskell">
+    <h2>Testing: Tasty/Hspec/HUnit <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-haskell">import Test.Hspec
+import Test.QuickCheck
+
+main = hspec $ do
+  describe "funciones" $ do
+    it "suma" $ do
+      suma 2 3 `shouldBe` 5
+    -- property test
+    it "suma conmuta (property)" $ property $ \a b ->
+      suma a b == suma b a
+
+-- HUnit: assertions clásicas (assertEqual)
+-- Tasty: integra Hspec+QuickCheck+Golden en un solo runner
+-- Correr: cabal test / stack test
+</code></pre>
+<blockquote class="aside aside-success"><p>Hspec (BDD) + QuickCheck (property testing) son la pareja; Tasty como runner unificado. Haskell se presta muy bien al testing de propiedades matemáticas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Define un Servant API GET /saludo/:nombre y prueba en curl.</li>
+<li>Repite en Scotty (minimal) y compara verbosidad.</li>
+<li>Con Persistent crea una tabla, inserta y query asc.</li>
+<li>Escribe una hspec con un property test de conmutación.</li>
+<li>Cambia el tipo del API y observa como el compilador marca el fallo.</li>
+</ol>
+    </div>
+  </section>

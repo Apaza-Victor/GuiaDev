@@ -1,0 +1,189 @@
+<!-- 6. Ecosistema y .NET - F# (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="interop">
+    <h2>Interoperabilidad con .NET</h2>
+    <div class="doc-content">
+<p>F# se ejecuta en .NET y puede usar <strong>toda</strong> la plataforma: librerías de C#, NuGet, `System.*`, entity framework, y al revés, C# puede consumir F# sin problemas. Los tipos F# se convierten a tipos CLR estándar.</p>
+<pre><code class="language-fsharp">open System
+open System.Text
+
+// Clases y métodos del BCL
+let fecha = DateTime.Now
+printfn "Hoy: %s" (fecha.ToString("yyyy-MM-dd"))
+
+let enorme = StringBuilder()
+[ "Hola"; " "; "F#" ] |&gt; List.iter (fun s -&gt; enorme.Append(s) |&gt; ignore)
+printfn "%s" (enorme.ToString())
+
+// Colecciones .NET desde F#
+let col = System.Collections.Generic.List&lt;int&gt;()
+col.Add(1); col.Add(2)
+for x in col do printfn "%d" x
+
+// Consumir una clase C# (ejemplo estilizado)
+// let app = new MiClaseCSharp()
+// app.HacerAlgo()
+
+// F# dentro de C#: los modules se exponen como funciones estáticas</code></pre>
+<p>Compartes el runtime y las librerías: si existe en NuGet, F# lo usa (aunque los lea en su estilo idiomático).</p>
+<blockquote class="aside aside-tip"><p>F# se usa dentro de empresas donde C# es el lenguaje principal: proyectos F# ocultos o módulos de dominio F# funcionando junto a C#, entre ellos Giraffe/Saturn para web.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="async">
+    <h2>Async y computación</h2>
+    <div class="doc-content">
+<p>F# ofrece flujos de <strong>computación asíncrona</strong> con <code>async</code>-expressions. El operador <code>let!</code> y <code>do!</code> hacen que el código se lea como secuencial pese a ser asíncrono; <code>Async.RunSynchronously</code> ejecuta.</p>
+<pre><code class="language-fsharp">open System.Net.Http
+
+let fetchLongitud (url: string) = async {
+    use cliente = new HttpClient()
+    let! contenido = cliente.GetStringAsync(url) |&gt; Async.AwaitTask
+    return contenido.Length
+}
+
+let urls = [ "https://example.com"; "https://dotnet.microsoft.com" ]
+
+// Ejecutar en paralelo
+let totales =
+    urls
+    |&gt; List.map fetchLongitud
+    |&gt; Async.Parallel
+    |&gt; Async.RunSynchronously
+
+printfn "Longitudes: %A" totales
+
+// Pipeline asíncrono con let!
+let proceso = async {
+    let! a = fetchLongitud "https://example.com"
+    let! b = fetchLongitud "https://dotnet.microsoft.com"
+    return a + b
+}
+printfn "Suma: %d" (Async.RunSynchronously proceso)
+
+// 3 líneas o menos para lanzar un async sencillo
+# of
+let micro = async { return 41 + 1 }
+printfn "%d" (Async.RunSynchronously micro)</code></pre>
+<blockquote class="aside aside-caution"><p><code>let!</code> (y <code>do!</code>, <code>return!</code>) "extrae el valor" dentro del contexto async. No abuses tareas no await: gestiona cancelaciones con <code>Async.Catch</code> si la tarea puede fallar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing">
+    <h2>Testing con Expecto / xUnit</h2>
+    <div class="doc-content">
+<p>La gran ventaja: funciones puras, verificables por tipos; testear se simplifica. Los frameworks clásicos son <strong>xUnit</strong> (estándar .NET) y <strong>Expecto</strong> (100% F#, funciones como casos de prueba).</p>
+<pre><code class="language-fsharp">// Ejemplo con Expecto (NuGet: Expecto)
+open Expecto
+
+let agregar a b = a + b
+let divide a b = if b = 0 then failwith "división por cero" else a / b
+
+let tests =
+    testList "aritmética" [
+        testCase "suma básica" (fun () -&gt;
+            Expect.equal (agregar 2 3) 5 "2+3 debe ser 5")
+        testCase "suma negativos" (fun () -&gt;
+            Expect.equal (agregar -1 1) 0 "-1+1 = 0")
+        testCase "división por cero lanza" (fun () -&gt;
+            Expect.throws (fun () -&gt; divide 1 0 |&gt; ignore) "must throw")
+    ]
+
+// Ejecutar: dotnet run (en el proyecto de tests)
+// [&lt;EntryPoint&gt;]
+// let main argv = runTestsWithCLIArgs [] argv tests</code></pre>
+<pre><code class="language-bash"># Con xUnit en un proyecto F#
+dotnet new xunit -lang F# -o Tests
+dotnet add Tests reference ../MiAula/MiAula.fsproj
+cd Tests
+dotnet test</code></pre>
+<blockquote class="aside aside-tip"><p>Expecto permite escribir tests como funciones y ejecutarlos en paralelo con la opción <code>--parallel</code> (pruebas en F# son cheap). xUnit queda para equipos que ya trabajan con C#.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="web">
+    <h2>Aplicaciones web</h2>
+    <div class="doc-content">
+<p>F# puede servir APIs y front con ASP.NET Core, y tiene librerías propias: <strong>Giraffe</strong> (HTTP funcional) y <strong>Saturn</strong>/<strong>Fable</strong> (frontend JS/FS). Ejemplo con Giraffe en unas líneas:</p>
+<pre><code class="language-fsharp">open Giraffe
+open Microsoft.AspNetCore.Builder
+open Microsoft.Extensions.Hosting
+
+// Handler: una función que devuelve HTTP
+let holaHandler : HttpHandler =
+    fun next ctx -&gt;
+        ctx.WriteJsonAsync({| saludo = "Hola F#"; estado = "ok" |})
+
+let webApp : HttpHandler =
+    choose [
+        GET &gt;&gt;= route "/" &gt;&gt;= holaHandler
+        GET &gt;&gt;= routef "/hola/%s" (fun nombre -&gt;
+            text $"Hola, {nombre}")
+        setStatusCode 404 &gt;&gt;= text "No existe"
+    ]
+
+// Host de ASP.NET
+[&lt;EntryPoint&gt;]
+let main _ =
+    let builder = Host.CreateDefaultBuilder()
+    builder.ConfigureWebHostDefaults(fun w -&gt;
+        w.Configure(fun app -&gt; app.UseGiraffe webApp) |&gt; ignore)
+    builder.Build().Run()
+    0</code></pre>
+<pre><code class="language-bash"># Plantillas de Saturn / Farmer para backends
+dotnet new saturn -o MiApi
+cd MiApi
+dotnet run</code></pre>
+<blockquote class="aside aside-note"><p>Giraffe/Saturn exponen el patrón "web como función de request a response". Para frontend, <strong>Fable</strong> compila F# a JavaScript y te permite un stack 100% F#.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas">
+    <h2>Buenas prácticas en proyectos F#</h2>
+    <div class="doc-content">
+<p>Lo que los profesionales y el libro "Domain Modeling Made Functional" (Scott Wlaschin) recomiendan en 2026:</p>
+<pre><code class="language-fsharp">// 1. "Primitive obsession": nada de string sobre string
+type ProductoId = ProductoId of System.Guid
+
+// 2. Domino con Records + Uniones Discriminadas; valides con tipos
+type EstadoOrden =
+    | Nueva
+    | Pagada
+    | Cancelada
+
+// 3. Totalidad: match siempre con todas las ramas (sin comodines fáciles)
+let procesar (e: EstadoOrden) =
+    match e with
+    | Nueva -&gt; "crear"
+    | Pagada -&gt; "enviar"
+    | Cancelada -&gt; "reembolsar"
+
+// 4. Inmutabilidad: funciones puras, data-in//data-out
+// 5. Módulos por feature, no por tipo:
+//    Archivo "Orden.fs": type Orden + module Orden (crear, pagar, cancelar)
+// 6. IoT de Función = la vista; el dominio en el centro, sin IO</code></pre>
+<table><thead><tr><th>Práctica</th><th>Por qué importa</th></tr></thead><tbody><tr><td>Compilador total</td><td>Errores tempranos, refactor seguro</td></tr><tr><td>Uniones discriminadas</td><td>Estados válidos modelados, no "strings"</td></tr><tr><td>Funciones puras</td><td>Testeables y paralelizables</td></tr><tr><td>Pipelines &gt; bucles</td><td>Código declarativo, corto</td></tr><tr><td>Option/Result</td><td>Nada de null ni excepciones por flujo normal</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p>Has completado F# en GuiaDev. El último paso de esta sección: ejecuta el pipeline de <code>dotnet run</code>, compila sin warnings y enlaza ideas funcionales con el resto de tu stack .NET.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Interop</strong>: usa <code>System.Net.Http</code> para traer el contenido de una URL y mostrar su longitud.</li>
+<li><strong>Async paralelo</strong>: lanza 3 peticiones HTTP con <code>Async.Parallel</code> y muestra la suma de longitudes.</li>
+<li><strong>Tests</strong>: crea un proyecto <code>xunit</code> F# que pruebe <code>agregar</code> y <code>divide</code>; ejecuta <code>dotnet test</code>.</li>
+<li><strong>API Giraffe</strong>: monta un endpoint <code>/hola/%s</code> y pruebalo con curl en localhost.</li>
+<li><strong>Domain modeling</strong>: modela un pedido con <code>ProductoId</code>, <code>EstadoOrden</code> y una función <code>procesar</code> total.</li>
+</ol>
+<p>Con esto has terminado el módulo de F#: de <code>dotnet new</code> a un dominio modelado con seguridad total de tipos.</p>
+    </div>
+  </section>

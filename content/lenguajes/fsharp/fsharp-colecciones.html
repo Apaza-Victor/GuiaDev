@@ -1,0 +1,194 @@
+<!-- 5. Colecciones y Secuencias - F# (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="listas">
+    <h2>Listas</h2>
+    <div class="doc-content">
+<p>Las <code>List</code> en F# son listas enlazadas <strong>inmutables</strong>, eficientes por su cabeza. Se construyen con <code>[]</code>, se concatenan con <code>::</code> y admiten todas las funciones de orden superior que veremos de aquí en adelante.</p>
+<pre><code class="language-fsharp">// Construcción
+let lista1 = [ 1; 2; 3 ]
+let lista2 = [ 1 .. 10 ]            // rango
+let lista3 = [ 1; 2 ] @ [ 3; 4 ]    // concatenar con @
+
+// Agregar a la cabeza (cons) — inmutable, new list
+let conCabeza = 0 :: lista1         // [0; 1; 2; 3]
+
+// Acceder nada más a la cabeza
+printfn "%d" (List.head lista1)     // 1
+printfn "%A" (List.tail lista1)     // [2; 3]
+
+// Propiedades
+printfn "Longitud: %d" (List.length lista1)
+printfn "Vacía: %b" (List.isEmpty lista1)
+printfn "Última: %d" (List.last lista1)
+
+// Recursión clásica
+let rec sumaLista = function
+    | [] -&gt; 0
+    | h :: t -&gt; h + sumaLista t
+printfn "%d" (sumaLista [1;2;3;4])   // 10
+
+// Pattern matching sobre lista
+let describirLista xs =
+    match xs with
+    | [] -&gt; "vacía"
+    | [x] -&gt; $"solo el {x}"
+    | x :: y :: _ -&gt; $"empieza con %d{x} y %d{y}"
+printfn "%s" (describirLista [1; 2; 3])</code></pre>
+<blockquote class="aside aside-note"><p>Las listas son eficientes para recorrer, no para acceder por índice. Para acceso posicional y mutación usa <code>Array</code>. El patrón <code>head :: tail</code> se usa en match y recursión por igual.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="secuencias">
+    <h2>Secuencias y colecciones</h2>
+    <div class="doc-content">
+<p>F# ofrece tres familias principales: <code>List</code> (materializada), <code>Seq</code> (perezosa) y <code>Array</code> (posicional/mutable). Cada una tiene su módulo <code>List.</code>, <code>Seq.</code>, <code>Array.</code> con la misma API.</p>
+<pre><code class="language-fsharp">// Seq: perezosa, no genera todos los datos hasta que se consumen
+let nums = seq { 1 .. 1_000_000 }
+let primero = Seq.head nums             // 1 (no materializa el millón)
+let cinco = Seq.take 5 nums |&gt; List.ofSeq
+printfn "%A" cinco
+
+// Array: posicional y mutable
+let arr = [| 10; 20; 30 |]
+arr.[0] &lt;- 99                          // índice con .
+printfn "%d" arr.[0]
+
+// Array de rango
+let arr2 = [| 1 .. 5 |]
+
+// Otras colecciones útiles del BCL
+let delMap = Map.ofList [ (1, "uno"); (2, "dos") ]
+printfn "%s" delMap.[1]
+
+let hs = Set.ofList [ 1; 2; 2; 3 ]     // Set elimina dup: [1;2;3]
+printfn "%A" hs
+
+// Usa el módulo que corresponda: Seq.map, Array.map, List.filter, ...</code></pre>
+<blockquote class="aside aside-tip"><p>Regla: si el tamaño es pequeño y lo recorres entero → <code>List</code>. Si es enorme o infinito → <code>Seq</code>. Si necesitas indexar o mutar → <code>Array</code>. La API (map/filter/fold) es idéntica entre las tres.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="higher-order">
+    <h2>Funciones de orden superior</h2>
+    <div class="doc-content">
+<p><code>map</code>, <code>filter</code>, <code>fold</code>, <code>collect</code>, <code>sort</code>... son el pan de cada día. Aquí el corazón del estilo F#: transformar datos declarativamente.</p>
+<pre><code class="language-fsharp">let nums = [ 1; 2; 3; 4; 5 ]
+
+// map
+let dobles = List.map (fun n -&gt; n * 2) nums
+printfn "%A" dobles
+
+// filter
+let pares = List.filter (fun n -&gt; n % 2 = 0) nums
+printfn "%A" pares
+
+// fold: acumular
+let suma = List.fold (fun acc n -&gt; acc + n) 0 nums
+printfn "%d" suma
+
+// reduce: fold sin valor inicial
+let producto = List.reduce (fun a b -&gt; a * b) nums
+printfn "%d" producto     // 120
+
+// sort y unique
+let ordenado = List.sort [ 3; 1; 2 ]
+printfn "%A" (List.distinct [ 1; 1; 2 ])     // [1; 2]
+
+// find / exists / forall
+printfn "%b" (List.exists (fun x -&gt; x &gt; 4) nums)
+printfn "%b" (List.forall (fun x -&gt; x &gt; 0) nums)
+printfn "%d" (List.find (fun x -&gt; x = 3) nums)
+
+// partition: divide en dos listas
+let (paresL, imparesL) = List.partition (fun n -&gt; n % 2 = 0) nums
+printfn "Pares: %A\nImpares: %A" paresL imparesL</code></pre>
+<blockquote class="aside aside-tip"><p>Nota para mentes OOP: <code>fold</code> es "reduce"; <code>scan</code> es "fold guardo cada paso". Encadena estas y el resultado será código declarativo que se lee como una especificación.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pipeline">
+    <h2>Pipeline real de datos</h2>
+    <div class="doc-content">
+<p>Combinemos todo: construir una cadena de transformación estilo ETL sobre listas de datos.</p>
+<pre><code class="language-fsharp">type Venta = { Producto : string; Monto : float; Region : string }
+
+let ventas = [
+    { Producto = "Laptop"; Monto = 1500.0; Region = "Norte" }
+    { Producto = "Mouse";  Monto = 30.0;   Region = "Sur" }
+    { Producto = "Teclado";Monto = 80.0;   Region = "Norte" }
+]
+
+let totalNorte =
+    ventas
+    |&gt; List.filter (fun v -&gt; v.Region = "Norte")
+    |&gt; List.map (fun v -&gt; v.Monto)
+    |&gt; List.sum
+
+printfn "Ventas Norte: %f" totalNorte   // 1580.0
+
+// Con precios por producto y dividendos
+let mapaOpciones =
+    ventas
+    |&gt; List.map (fun v -&gt; v.Producto)
+    |&gt; List.distinct
+    |&gt; List.sort
+
+printfn "Productos: %A" mapaOpciones</code></pre>
+<blockquote class="aside aside-success"><p>Este pipeline es el patrón más representativo de F# en análisis de datos: <code>filter → map → reduce</code>. Verás la misma fórmula en toda la literatura funcional.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="aplicacion">
+    <h2>Aplicación práctica y rendimiento</h2>
+    <div class="doc-content">
+<p>F# materializa listas; para tareas pesadas conviene elegir bien (Seq perezosa) y medir con stopwatch. Veamos una mini aplicación con scripts.</p>
+<pre><code class="language-fsharp">open System.Diagnostics
+
+// Demo: calcular estadísticos de una "serie" grande con Seq
+let serie = seq { 1.0 .. 1_000_000.0 }
+
+let stats =
+    Serie = serie
+    // &lt;- compilar
+    serie
+    |&gt; Seq.map (fun x -&gt; x * x)
+    |&gt; Seq.sum
+
+// cronometrar
+let sw = Stopwatch.StartNew()
+let sumaEst = 
+    serie
+    |&gt; Seq.map (fun x -&gt; x * x)
+    |&gt; Seq.sum
+sw.Stop()
+printfn "suma cuadrados 1..1M = %f  (%d ms)" sumaEst sw.ElapsedMilliseconds
+
+// Guardar a CSV sencillo (sin librerías)
+open System.IO
+File.WriteAllLines("salida.txt",
+    [ for i in 1..5 -&gt; $"{i},{i * i}" ])
+printfn "%s" (File.ReadAllText("salida.txt"))</code></pre>
+<blockquote class="aside aside-tip"><p>Para conjuntos grandes dale una vuelta a las comprensiones <code>seq</code> y a <code>Seq.map</code> enlazadas: evitan intermedios. Y recuerda que F# corre en .NET: tienes todo el BCL (System.IO, System.Text.Json...) a tu alcance.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Rangos y cons</strong>: construye <code>[1..15]</code>, agrega <code>0 ::</code> al frente y suma con <code>List.fold</code>.</li>
+<li><strong>Pipeline</strong>: de una lista de números, filtra pares, eleva al cuadrado, y suma con pipes <code>|&gt;</code> (sin paréntesis anidados).</li>
+<li><strong>Frequency words</strong>: dada una lista de palabras, cuenta cuántas veces aparece cada una (usa <code>List.countBy</code>).</li>
+<li><strong>Secuencia perezosa</strong>: crea con <code>seq</code> los cuadrados de 1..1M y toma los primeros 5 con <code>Seq.take</code> sin materializar.</li>
+<li><strong>ETL Venta</strong>: con el record <code>Venta</code>, suma por región usando <code>filter|map|sum</code>.</li>
+</ol>
+<p>En la última lección veremos el ecosistema .NET: interop con C#, async, testing y aplicaciones web con F#.</p>
+    </div>
+  </section>

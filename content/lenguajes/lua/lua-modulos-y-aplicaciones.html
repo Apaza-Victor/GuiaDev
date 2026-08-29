@@ -1,0 +1,199 @@
+<!-- 6. Módulos y Aplicaciones - Lua (Lenguajes de Programación) -->
+  <section id="modulos-y-require">
+    <h2>Módulos con require</h2>
+    <div class="doc-content">
+<p>Para organizar código en proyectos grandes, Lua usa <strong>módulos</strong>: un archivo que devuelve una tabla con funciones y datos, y que se <strong>carga</strong> desde otro archivo con <code>require("nombre")</code>. <code>require</code> ejecuta el archivo una sola vez y guarda el resultado en caché: las llamadas posteriores devuelven lo ya cargado.</p>
+<pre><code class="language-lua">-- operaciones.lua  (un módulo)
+local M = {}
+
+local function privada(x)
+  return x * 2
+end
+
+function M.sumar(a, b)
+  return a + b
+end
+
+function M.mostrar_duplicado(x)
+  print(privada(x))   -- usa la función interna, no exportada
+end
+
+return M</code></pre>
+<pre><code class="language-lua">-- principal.lua  (usa el módulo)
+local op = require("operaciones")
+
+print(op.sumar(5, 3))        --> 8
+op.mostrar_duplicado(4)      --> 8
+
+-- op.privada  -- error: no está exportada
+-- El módulo se carga una sola vez: require es idempotente
+local op2 = require("operaciones")
+print(op == op2)             --> true  (misma tabla en caché)</code></pre>
+<table><thead><tr><th>Detalle</th><th>Comportamiento de <code>require</code></th></tr></thead><tbody><tr><td>Almacenamiento</td><td>Busca el archivo en <code>package.path</code></td></tr><tr><td>Extensión</td><td>Busca <code>.lua</code> y <code>.lua.dll</code> (o <code>.so</code>)</td></tr><tr><td>Ejecución</td><td>Corre el módulo una sola vez y lo guarda en <code>package.loaded</code></td></tr><tr><td>Retorno</td><td>Usa el valor que devuelve el módulo (normalmente una tabla)</td></tr><tr><td>Errores</td><td><code>require</code> lanza un error si no encuentra el archivo</td></tr></tbody></table>
+<pre><code class="language-bash"># Ejecutar el programa principal que importa el módulo
+lua principal.lua
+# Salida:
+# 8
+# 8</code></pre>
+<blockquote class="aside aside-tip"><p>Como <code>require</code> memoriza los módulos, los nombres de los módulos propios deben ser únicos en el proyecto. Evita usar <code>require</code> con rutas con <code>..</code> personalizados a menos que lo necesites: la forma idiomática es <code>require("nombre")</code>.</p></blockquote>
+<blockquote class="aside aside-note"><p>Un módulo puede también devolver una <strong>función</strong> en lugar de una tabla (útil para fabricas) o simplemente registrar efectos en el entorno (menos idiomático). El estándar es devolver la tabla pública.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="libreria-estandar">
+    <h2>Librería estándar útil</h2>
+    <div class="doc-content">
+<p>La librería estándar de Lua es pequeña pero potente. Las funciones más usadas viven en <code>string</code>, <code>table</code>, <code>math</code>, <code>io</code> y <code>os</code>. Conocerlas ahorra muchísimo tiempo. He aquí un vistazo a las operaciones cotidianas:</p>
+<pre><code class="language-lua">-- math: funciones matemáticas
+print(math.pi)            --> 3.1415926535898
+print(math.floor(3.7))    --> 3
+print(math.max(4, 9, 2))  --> 9
+print(math.random(1, 6))  --> número entre 1 y 6
+print(math.min(4, 9, 2))  --> 2
+
+-- string: manipulación de texto
+local s = "guia dev"
+print(string.upper(s))    --> GUIA DEV
+print(string.gsub("a1b2", "%d", "X"))  --> aXbX
+print(string.format("Edad: %d", 25))   --> Edad: 25</code></pre>
+<pre><code class="language-lua">-- io: lectura y escritura de archivos
+local archivo = io.open("notas.txt", "w")   -- "w" = escribir
+archivo:write("Línea de ejemplo\n")
+archivo:close()
+
+local lectura = io.open("notas.txt", "r")   -- "r" = leer
+local contenido = lectura:read("a")          -- "a" = todo el archivo
+lectura:close()
+print(contenido)   --> Línea de ejemplo
+
+-- os: sistema operativo
+print(os.date("%Y-%m-%d"))   --> 2026-08-28 (fecha actual)
+print(os.time())             --> timestamp Unix</code></pre>
+<table><thead><tr><th>Librería</th><th>Funciones típicas</th></tr></thead><tbody><tr><td><code>math</code></td><td><code>floor</code>, <code>ceil</code>, <code>random</code>, <code>max</code>, <code>min</code>, <code>sqrt</code></td></tr><tr><td><code>string</code></td><td><code>upper</code>, <code>lower</code>, <code>sub</code>, <code>gsub</code>, <code>format</code>, <code>find</code></td></tr><tr><td><code>table</code></td><td><code>insert</code>, <code>remove</code>, <code>sort</code>, <code>concat</code>, <code>unpack</code></td></tr><tr><td><code>io</code></td><td><code>open</code>, <code>read</code>, <code>write</code>, <code>close</code>, <code>lines</code></td></tr><tr><td><code>os</code></td><td><code>date</code>, <code>time</code>, <code>clock</code>, <code>exit</code>, <code>getenv</code></td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p><code>os.remove("archivo")</code> borra un archivo y <code>os.rename(a, b)</code> lo renombra. Para operaciones más complejas (directorios, permisos), deberás usar un módulo como <code>lfs</code> (LuaFileSystem) de luarocks.</p></blockquote>
+<blockquote class="aside aside-caution"><p><code>io.open</code> devuelve <code>nil</code> y un mensaje de error si no puede abrir el archivo. Es recomendable comprobar el resultado con <code>assert</code> o <code>pcall</code>, sobre todo cuando trabajas con rutas que vienen del usuario.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="corrutinas">
+    <h2>Corrutinas</h2>
+    <div class="doc-content">
+<p>Una <strong>corrutina</strong> es una función que puede pausarse en un punto y reanudarse más tarde desde donde quedó. En Lua son cooperativas: solo una corre a la vez y se transfieren el control explícitamente con <code>coroutine.yield()</code> y <code>coroutine.resume()</code>. Sirven para tareas como generadores, máquinas de estado y procesamiento paso a paso.</p>
+<pre><code class="language-lua">-- Un generador infinito usando una corrutina
+local function generador_contador()
+  local n = 0
+  while true do
+    n = n + 1
+    coroutine.yield(n)   -- pausa y devuelve n
+  end
+end
+
+local co = coroutine.create(generador_contador)
+
+for i = 1, 3 do
+  local ok, valor = coroutine.resume(co)
+  print(valor)   --> 1, luego 2, luego 3
+end</code></pre>
+<p>Las corrutinas se usan habitualmente para pausar una tarea larga y permitir que otras cosas avancen, como en un juego que proceso enemigos por turnos:</p>
+<pre><code class="language-lua">-- Procesar una lista paso a paso con estado preservado
+local function limpiar_datos(datos)
+  for i, d in ipairs(datos) do
+    coroutine.yield("procesado: " .. d)   -- informa a cada paso
+  end
+  coroutine.yield("terminado")
+end
+
+local tarea = coroutine.create(limpiar_datos)
+local datos = { "a", "b", "c" }
+
+while true do
+  local ok, paso = coroutine.resume(tarea, datos)
+  if not ok then break end
+  print(paso)
+  if paso == "terminado" then break end
+end
+-- procesado: a
+-- procesado: b
+-- procesado: c
+-- terminado</code></pre>
+<table><thead><tr><th>Función</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>coroutine.create(f)</code></td><td>Crea una corrutina a partir de la función <code>f</code></td></tr><tr><td><code>coroutine.resume(co, ...)</code></td><td>Ejecuta o reanuda la corrutina</td></tr><tr><td><code>coroutine.yield(...)</code></td><td>Pausa la corrutina y transfiere el control</td></tr><tr><td><code>coroutine.status(co)</code></td><td>Devuelve <code>"running"</code>, <code>"suspended"</code>, etc.</td></tr><tr><td><code>coroutine.wrap(f)</code></td><td>Devuelve una función que resume internamente</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>A diferencia de los hilos del sistema, las corrutinas no se ejecutan en paralelo y no hay que sincronizar memoria compartida. Son un mecanismo de <strong>cooperación</strong>, no de concurrencia real.</p></blockquote>
+<blockquote class="aside aside-tip"><p><code>coroutine.wrap</code> es mucho más cómodo para generadores simples: devuelve una función que, al llamarla, reanuda la corrutina y devuelve el valor de <code>yield</code>, sin manejar los códigos booleanos a mano.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="lua-en-juegos">
+    <h2>Lua en juegos: LÖVE y más</h2>
+    <div class="doc-content">
+<p>Uno de los usos más famosos de Lua son los <strong>videojuegos</strong>. Motores como Roblox, Defold o Garry's Mod lo usan como lenguaje de scripting, y <strong>LÖVE</strong> (LÖVE2D) es un framework que permite crear juegos 2D escribiendo toda la lógica en Lua y compilando el empaquetado con C++. Con solo unos métodos (<code>love.load</code>, <code>love.update</code>, <code>love.draw</code>) tienes un ciclo de juego completo.</p>
+<pre><code class="language-lua">-- main.lua  (un mini juego con LÖVE)
+local x, y = 100, 100
+
+function love.load()
+  love.window.setTitle("Mi primer juego en LÖVE")
+end
+
+function love.update(dt)
+  if love.keyboard.isDown("left")  then x = x - 200 * dt end
+  if love.keyboard.isDown("right") then x = x + 200 * dt end
+end
+
+function love.draw()
+  love.graphics.print("Mueveme con las flechas", 10, 10)
+  love.graphics.circle("fill", x, y, 20)
+end</code></pre>
+<pre><code class="language-bash"># Ejecutar el juego con LÖVE (necesitas instalarlo)
+love main.lua</code></pre>
+<table><thead><tr><th>Framework</th><th>Enfoque</th><th>Plataforma</th></tr></thead><tbody><tr><td><strong>LÖVE</strong></td><td>Juegos 2D, programático</td><td>PC, móvil</td></tr><tr><td><strong>Roblox</strong></td><td>Plataforma multijugador</td><td>Web, PC, móvil</td></tr><tr><td><strong>Defold</strong></td><td>Motor 2D profesional</td><td>PC, móvil, web</td></tr><tr><td><strong>Garry's Mod</strong></td><td>Modding y sandbox</td><td>PC (Steam)</td></tr><tr><td><strong>Corona</strong></td><td>Juegos 2D multiplataforma</td><td>iOS, Android</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p>La ventaja de Lua en juegos es la <strong>iteración instantánea</strong>: cambias la lógica y recargas el juego sin recompilar todo el motor. Por eso tantos motores lo adoptan para la lógica de juego, partículas, IA y modificación por parte de los jugadores.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="lua-y-redis">
+    <h2>Lua en Redis y sistemas embebidos</h2>
+    <div class="doc-content">
+<p>Lua brilla en <strong>sistemas embebidos</strong> y servidores. El caso más popular es <strong>Redis</strong>: permite escribir <em>scripts</em> en Lua que se ejecutan de forma <strong>atómica</strong> dentro del servidor, lo que asegura operaciones complejas sin condiciones de carrera. Gracias a la API <code>redis.call</code>, un script puede leer y escribir claves con una sola operación indivisible.</p>
+<pre><code class="language-lua">-- un script Lua para Redis (ejemplo conceptual)
+-- Devuelve la clave si existe, o un valor por defecto
+local clave = KEYS[1]
+local valor = redis.call("GET", clave)
+
+if valor then
+  return valor
+else
+  redis.call("SET", clave, "por_defecto")
+  return "por_defecto"
+end</code></pre>
+<pre><code class="language-bash"># Evaluar el script en la línea de comandos de Redis
+redis-cli --eval mi_script.lua 1 mi_clave</code></pre>
+<p>La <strong>embebibilidad</strong> es la clave del éxito de Lua: al ser un intérprete de pocos cientos de kilobytes con una API en C limpia, cabe perfectamente en routers, microcontroladores y aplicaciones como Nginx (vía OpenResty) o Wireshark. Puedes ejecutar Lua dentro de tu propio programa C con una docena de líneas:</p>
+<pre><code class="language-lua">-- Desde C, cargar y ejecutar un archivo Lua es tan simple como:
+-- lua_State *L = luaL_newstate();
+-- luaL_dofile(L, "script.lua");
+-- lua_close(L);
+-- El host controla memoria, filosofía y expansión</code></pre>
+<table><thead><tr><th>Sistema</th><th>Uso de Lua</th></tr></thead><tbody><tr><td><strong>Redis</strong></td><td>Scripts atómicos con <code>redis.call</code></td></tr><tr><td><strong>Nginx / OpenResty</strong></td><td>Procesamiento de peticiones en Lua</td></tr><tr><td><strong>Wireshark</strong></td><td>Decodificación de protocolos</td></tr><tr><td><strong>Neovim</strong></td><td>Configuración y plugins</td></tr><tr><td><strong>LuaTeX</strong></td><td>Automatización de documentos</td></tr><tr><td><strong>Microcontroladores</strong></td><td>eLua para dispositivos embebidos</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>En Redis, un script tarde demasiado en ejecutarse puede bloquear el servidor para el resto de clientes. Mantén los scripts cortos, evita trabajo pesado y, si es posible, usa estructuras de datos nativas de Redis dentro del Lua en lugar de recorrer listas gigantes.</p></blockquote>
+<blockquote class="aside aside-tip"><p>La API de C de Lua te permite exponer <strong>funciones del host a los scripts</strong>. Es el mismo patrón que usan los motores de juegos: el mundo real (gráficos, red, física) vive en C/C++, y Lua orquesta esa lógica con un lenguaje seguro y de alto nivel.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Aplica módulos, librería estándar, corrutinas y los conceptos de aplicación. Crea los archivos indicados y ejecuta <code>lua</code> para comprobar cada entrega.</p>
+<ol>
+<li><strong>Crear un módulo</strong>: Escribe un módulo <code>utilidades.lua</code> que exporte <code>maximo(...)</code>, <code>minimo(...)</code> y <code>aleatorio(a, b)</code>. Crea un <code>main.lua</code> que lo importe con <code>require</code> y pruebe las tres funciones.</li>
+<li><strong>Librería estándar</strong>: Usa <code>string.format</code> para imprimir un resumen formateado de nombre y edad, <code>os.date</code> para mostrar la fecha de hoy y <code>table.sort</code> para ordenar una lista de números.</li>
+<li><strong>Generador con corrutinas</strong>: Implementa un generador de Fibonacci con <code>coroutine.yield</code>. Reinicia la corrutina 8 veces e imprime los primeros números de la serie.</li>
+<li><strong>Mini movimiento en LÖVE</strong>: Amplía el ejemplo de LÖVE añadiendo movimiento vertical con las flechas arriba/abajo y un <code>print</code> de posición al soltar una tecla. Si no tienes LÖVE, escribe el código y describe qué haría.</li>
+<li><strong>Desafío: script de Redis</strong>: Escribe un script de Redis que tome dos claves de enteros, las sume y guarde el resultado en una tercera clave con <code>redis.call</code>, devolviéndolo. Explica en un comentario por qué ejecutarlo con Lua garantiza la atomicidad.</li>
+</ol>
+<p>Con esta lección cierras el recorrido de Lua en GuiaDev. Has aprendido desde la instalación hasta metatablas, módulos y aplicaciones reales. Para seguir profundizando, explora <code>luarocks</code> (gestor de paquetes) y los frameworks de la tabla de juegos, y construye tu propio proyecto para consolidar todo lo aprendido.</p>
+    </div>
+  </section>

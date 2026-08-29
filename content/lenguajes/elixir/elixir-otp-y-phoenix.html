@@ -1,0 +1,200 @@
+<!-- 6. OTP y Phoenix - Elixir (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="procesos">
+    <h2>Procesos ligeros</h2>
+    <div class="doc-content">
+<p>La unidad de concurrencia en Elixir es el <strong>proceso</strong> (no del OS): millones de procesos ligeros en la BEAM, aislados entre sí y comunicados por <strong>mensajes</strong> asíncronos. No hay memoria compartida ni locks.</p>
+<pre><code class="language-elixir"># Lanzar un proceso que ejecute una función
+pid = spawn(fn -&gt; IO.puts("Proceso corriendo") end)
+IO.inspect(pid)
+
+# Sincronizar con el término del proceso
+padre = self()
+spawn(fn -&gt; send(padre, :terminado) end)
+receive do
+  :terminado -&gt; IO.puts("Terminó OK")
+end
+
+# Ejecutar muchas a la vez
+for i &lt;- 1..5 do
+  spawn(fn -&gt; IO.puts("Tarea #{i}") end)
+end
+
+# PID = Process ID: puedes inspeccionarlo
+IO.inspect(Process.alive?(spawn(fn -&gt; :ok end)))   # true (puede morir rápido)</code></pre>
+<blockquote class="aside aside-tip"><p>Cada proceso es aislado: si uno lanza una excepción, no tumba a los demás, solo se muere él (supervisado). <code>self()</code> devuelve el PID del proceso actual.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="mensajes">
+    <h2>Mensajes y receive</h2>
+    <div class="doc-content">
+<p>La comunicación es con <code>send/2</code> (asíncrono) y <code>receive</code> (bloqueante con selección por pattern matching). Un "actor" típico: bucle que procesa mensajes.</p>
+<pre><code class="language-elixir">px = fn nombre -&gt;
+  receive do
+    {:hola, quien} -&gt; IO.puts("#{nombre} saluda a #{quien}")
+    {:suma, a, b} -&gt; IO.puts("#{nombre} ve que #{a}+#{b}=#{a+b}")
+    :salir -&gt; :ok
+  end
+end
+
+proceso = spawn(fn -&gt; px.(proc) end)
+
+# Le enviamos mensajes
+send(proceso, {:hola, "Ana"})
+send(proceso, {:suma, 2, 3})
+
+# Recibir de cualquier proceso (demo)
+send(self(), :mensaje_para_mi)
+receive do
+  :mensaje_para_mi -&gt; IO.puts("Recibido")
+after
+  1000 -&gt; IO.puts("timeout")
+end</code></pre>
+<code class="language-elixir"># Demo corta: proceso que cuenta para siempre y capta :alto
+contador = spawn(fn -&gt; loop(0) end)
+loop = fn n -&gt;
+  receive do
+    :alto -&gt; IO.puts("detenido en #{n}")
+    {:mas, k} -&gt; dame_loop(n + k)
+  end
+end
+
+# Este patrón (proceso + receive + loop) es literalmente el GenServer manual</code>
+<blockquote class="aside aside-note"><p>El bloque <code>after</code> evita bloqueos eternos. La disciplina: no uses variables de módulo compartidas; pasa mensajes. Esa pureza evita carreras.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="genserver">
+    <h2>GenServer: estado encapsulado</h2>
+    <div class="doc-content">
+<p><code>GenServer</code> es el "servidor con estado" de OTP: recibe llamadas (<code>call</code>, síncronas) y cast (<code>cast</code>, asíncronas), manejando el estado dentro de un proceso. Es el bloque fundamental de aplicaciones Elixir.</p>
+<pre><code class="language-elixir">defmodule Contador do
+  use GenServer
+
+  def start_link(inicial) do
+    GenServer.start_link(__MODULE__, inicial, name: __MODULE__)
+  end
+
+  # Callbacks OTP
+  def init(inicial), do: {:ok, inicial}
+  def handle_call(:leer, _from, estado), do: {:reply, estado, estado}
+  def handle_cast({:incrementar, n}, estado), do: {:noreply, estado + n}
+
+  def leer, do: GenServer.call(__MODULE__, :leer)
+  def incrementar(n \\ 1), do: GenServer.cast(__MODULE__, {:incrementar, n})
+end
+
+# Iniciar (en una sup servida o a mano en IEx):
+# iex(1)&gt; {:ok, pid} = Contador.start_link(0)
+# iex(2)&gt; Contador.incrementar(5)
+# iex(3)&gt; Contador.incrementar(3)
+# iex(4)&gt; Contador.leer()   # 8</code></pre>
+<blockquote class="aside aside-success"><p>GenServer encapsula el estado en un proceso aislado. Operaciones <code>call</code> esperan respuesta; <code>cast</code> no. Tu aplicación guarda estado en GenServers supervisados, nunca en variables globales.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="supervision">
+    <h2>Supervisión y tolerancia a fallos</h2>
+    <div class="doc-content">
+<p>La joya de OTP: los <strong>supervisores</strong> con árbol de supervisión (supervisor + workers) deciden la estrategia de reinicio cuando un proceso cae. Así se construye el sistema "let it crash" que nunca se apaga.</p>
+<pre><code class="language-elixir">defmodule MiApp.Application do
+  use Application
+
+  def start(_tipo, _args) do
+    children = [
+      # un worker GenServer
+      {Contador, 0},
+      # un Supervisor dentro del árbol
+      {Task.Supervisor, name: MiApp.TaskSupervisor},
+    ]
+
+    opts = [strategy: :one_for_one, name: MiApp.Supervisor]
+    Supervisor.start_link(children, opts)
+  end
+end</code></pre>
+<p>Detalles de la estrategia:</p>
+<table><thead><tr><th>Estrategia</th><th>Comportamiento</th></tr></thead><tbody><tr><td><code>:one_for_one</code></td><td>Solo reinicia el hijo caído</td></tr><tr><td><code>:one_for_all</code></td><td>Reinicia todo el árbol</td></tr><tr><td><code>:rest_for_one</code></td><td>Reinicia el hijo caído y los siguientes</td></tr></tbody></table>
+<pre><code class="language-elixir"># Combinado con mensajes, un supervisor "repara" el sistema solo
+# en producción: crashes = características de trabajo normal y programado
+# (ej: falla de red, timeouts) se manejan como mensajes, no como abort de app
+
+# También existen Task (un disparo), Agent (estado simple)
+{:ok, pid} = Task.start(fn -&gt; IO.puts("tarea") end)
+IO.inspect(Task.async(fn -&gt; 1 + 1 end) |&gt; Task.await())   # 2</code></pre>
+<blockquote class="aside aside-tip"><p>La doc oficial de Elixir ("Supervisor and Application") es la hoja de ruta. El consejo práctico: todo lo que inicie estado debe estar bajo un supervisor.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="phoenix">
+    <h2>Phoenix: el framework web</h2>
+    <div class="doc-content">
+<p><strong>Phoenix</strong> es el framework web Elixir: rápido, con canales en tiempo real (WebSocket) y arquitectura "LiveView" para réconcil de UI en el servidor. Se sirve sobre Plug/Erlang/OTP.</p>
+<pre><code class="language-bash"># Instalar el generador
+mix archive.install hex phx_new
+
+# Crear una app (usa el adaptador de base de datos deseado)
+mix phx.new mi_web --database sqlite3
+cd mi_web
+
+# Crear la base y lanzar el servidor
+mix ecto.create
+mix phx.server
+# Visita http://localhost:4000
+
+# Generar un recurso (modelo + vistas + rutas)
+mix phx.gen.html Blog Post titulo:string cuerpo:text
+mix ecto.migrate</code></pre>
+<pre><code class="language-elixir"># Router: lib/mi_web_web/router.ex (extracto)
+defmodule MiWebWeb.Router do
+  use MiWebWeb, :router
+
+  pipeline :browser do
+    plug :accepts, ["html"]
+    plug :fetch_session
+  end
+
+  scope "/" do
+    pipe_through :browser
+    get "/", PaginaController, :index
+    resources "/entradas", EntradaController
+  end
+end
+
+# LiveView: UI reactiva sin JS (síntesis)
+# defmodule MiWeb.Live.CuentaLive do
+#   use Phoenix.LiveView
+#   def render(assigns) do
+#     ~H"""
+#     &lt;h1&gt;Cuenta: &lt;%= @cuenta %&gt;&lt;/h1&gt;
+#     &lt;button phx-click="inc"&gt;+1&lt;/button&gt;
+#     """
+#   end
+#   def handle_event("inc", _, socket) do
+#     {:noreply, update(socket, :cuenta, &amp;(&amp;1 + 1))}
+#   end
+# end</code></pre>
+<blockquote class="aside aside-tip"><p>Phoenix se usa con Ecto (ORM), LiveView (SSR reactivo) y canales para tiempo real. Es EL motivo más común para aprender Elixir en 2026: apps de baja latencia y alta concurrencia.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>spawn</strong>: lanza tres procesos que impriman sus números; verifica con <code>Process.alive?</code>.</li>
+<li><strong>Mensajes</strong>: crea un proceso que reciba <code>{:suma, a, b}</code> y devuelva el resultado mediante un mensaje de vuelta a <code>self()</code>.</li>
+<li><strong>GenServer</strong>: implementa una <code>ColaSimple</code> con <code>call :agregar</code> y <code>cast :agregar</code>, manteniendo una lista en el estado.</li>
+<li><strong>Supervisor</strong>: arma una <code>Application</code> que supervise tu <code>Contador</code> y prueba que se reinicia (mata el pid y vuelve a preguntar).</li>
+<li><strong>Phoenix</strong>: crea <code>mix phx.new</code>, genera el recurso <code>Entrada</code> y publica en <code>mix phx.server</code>.</li>
+</ol>
+<p>Has completado Elixir con GuiaDev. La mejor siguiente parada: la doc oficial de OTP y un tutorial de Phoenix para consolidar.</p>
+    </div>
+  </section>

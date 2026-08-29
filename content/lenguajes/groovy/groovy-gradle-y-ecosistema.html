@@ -1,0 +1,226 @@
+<!-- 6. Gradle y Ecosistema - Groovy (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="gradle">
+    <h2>Gradle: scripts de build con Groovy</h2>
+    <div class="doc-content">
+<p><strong>Gradle</strong> es el sistema de build más usado en la JVM, y sus scripts tradicionales están escritos en <strong>Groovy</strong> (aunque soporta Kotlin DSL). Entender Gradle es entender Groovy DSL en acción: bloques, closures, delegate.</p>
+<pre><code class="language-groovy">// build.gradle (DSL Groovy)
+plugins {
+    id 'groovy'
+    id 'application'
+}
+
+group = 'com.guiadev'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.codehaus.groovy:groovy:4.0.26'
+    testImplementation platform('org.spockframework:spock-bom:2.4-M3-groovy-4.0')
+    testImplementation 'org.spockframework:spock-core'
+}
+
+application {
+    mainClass = 'com.guiadev.Main'
+}
+
+// Tu propia tarea con closures
+tasks.register('hola') {
+    doLast {
+        println 'Tarea hola desde Groovy DSL'
+    }
+}</code></pre>
+<pre><code class="language-bash"># Comandos típicos
+gradle build          # compilar + test
+gradle run            # ejecutar la app (plugin application)
+gradle test           # solo tests
+gradle hola           # tu tarea
+gradle dependencies   # árbol de dependencias
+gradle wrapper        # genera gradlew (recomendado)
+
+# Lanzar sin gradle instalado globalmente
+./gradlew run</code></pre>
+<blockquote class="aside aside-tip"><p>Todo en <code>build.gradle</code> es Groovy: <code>dependencies { ... }</code> es una closure evaluada sobre el proyecto. Aprender Groovy te da el control total de tu build (y leyendo builds Kotlin entenderás el diseño).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="spock">
+    <h2>Testing con Spock</h2>
+    <div class="doc-content">
+<p><strong>Spock</strong> es el framework de testing BDD de la JVM escrito en Groovy: testes legibles con bloques <code>given/when/then</code> y <code>where</code> para datos.</p>
+<pre><code class="language-groovy">// src/test/groovy/com/guiadev/CalculadoraSpec.groovy
+import spock.lang.Specification
+
+class CalculadoraSpec extends Specification {
+    def "suma básica"() {
+        given: "una calculadora"
+        def calc = new Calculadora()
+
+        when: "sumo 2 y 3"
+        def r = calc.suma(2, 3)
+
+        then: "obtengo 5"
+        r == 5
+    }
+
+    def "suma con tabla"() {
+        expect: "a + b == resultado"
+        calc.suma(a, b) == resultado
+
+        where:
+        a | b | resultado
+        1 | 2 | 3
+        10 | 5 | 15
+        0 | 0 | 0
+    }
+
+    def "division valida"() {
+        when: "intento dividir por cero"
+        calc.divide(1, 0)
+
+        then:
+        thrown(ArithmeticException)
+    }
+}
+
+class Calculadora {
+    int suma(int a, int b) { a + b }
+    int divide(int a, int b) { a / b }
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Los strings de los test en <code>"""..."""</code> se convierten en nombres de test legibles. <code>where:</code> ejecuta N casos de la misma expect, perfecto para matrices. Spock integra mocks (<code>interaction { }</code>) sin librerías extra.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="jenkins">
+    <h2>Jenkins: pipelines con Groovy</h2>
+    <div class="doc-content">
+<p>Los <strong>Jenkinsfile</strong> de Jenkins (Declarative/Shared Library) están escritos en Groovy. Veamos el patrón de un pipeline declarativo simple.</p>
+<pre><code class="language-groovy">// Jenkinsfile
+pipeline {
+    agent any
+
+    environment {
+        APP_VERSION = '1.2.3'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+        stage('Build') {
+            steps {
+                sh 'gradle clean build'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'gradle test'
+            }
+        }
+        stage('Despliegue') {
+            steps {
+                echo "Desplegando ${APP_VERSION}"
+            }
+        }
+    }
+
+    post {
+        always { echo 'Fin del pipeline' }
+        failure { echo 'Pipeline falló' }
+    }
+}</code></pre>
+<blockquote class="aside aside-success"><p>Jenkins usa Groovy por su DSL y su capacidad de scripting. Los "Shared Libraries" son librerías Groovy reutilizables entre pipelines. Conocer Groovy te permite escribir Jenkinsfile complejos con condiciones, closures y variables sin fricción.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="rest">
+    <h2>Servicios REST y consola</h2>
+    <div class="doc-content">
+<p>Groovy brilla para hacer clientes REST (<code>HttpBuilder-NG</code>), parsear respuestas, y también para crear servicios con frameworks como Grails o Micronaut. En scripting, <code>groovy</code> con un script pequeño es tu curl con esteroides.</p>
+<pre><code class="language-groovy">// Cliente HTTP simple sin librerías extra
+// (Groovy 3+ incluye HttpBuilder; más simple: java.net.http)
+
+import java.net.URI
+import java.net.http.*
+
+def client = HttpClient.newHttpClient()
+def req = HttpRequest.newBuilder()
+        .uri(URI.create('https://httpbin.org/json'))
+        .GET()
+        .build()
+
+def resp = client.send(req, HttpResponse.BodyHandlers.ofString())
+println "Estado: ${resp.statusCode()}"
+println resp.body()
+
+// Parsear JSON con Groovy
+import groovy.json.JsonSlurper
+def json = new JsonSlurper().parseText(resp.body())
+println json.slideshow.title
+
+// API con Grails 5+ [resumen] o con Micronaut:
+// Aplicación completa se genera con:
+//   curl -s https://start.micronaut.io | groovy ...
+// Código:
+// import io.micronaut.http.annotation.*
+// @Controller('/saludo')
+// class SaludoController {
+//     @Get('/{nombre}')
+//     String saluda(String nombre) { "Hola $nombre" }
+// }</code></pre>
+<blockquote class="aside aside-tip"><p>Para microservicios rápidos en JVM con Groovy: <strong>Micronaut</strong> y <strong>Grails</strong> (con su "reload" en desarrollo) son dos opciones reales. Los scripts con <code>JsonSlurper</code> cubren consumo de APIs de forma inmediata.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas">
+    <h2>Buenas prácticas</h2>
+    <div class="doc-content">
+<p>Recomendaciones de la comunidad (Java + Groovy) en 2026 para proyectos sostenibles.</p>
+<pre><code class="language-groovy">// 1. Preferir @CompileStatic en producción (rendimiento + seguridad)
+import groovy.transform.CompileStatic
+
+@CompileStatic
+int cuadrado(int n) { n * n }
+
+// 2. No abusar del dinamismo en domain y servicios
+// 3. Usar Spock para casi todo test (excepto interop Java pura)
+// 4. Depura tranquilo: console + println + dump()
+// 5. Metaprogramación SOLO donde aporte (DSL), con tests
+// 6. Estructura de paquetes: igual que Java (com.company.modulo)
+
+// Convention mejorada con 'groovy --config'
+// - CompileStatic a partir de una config de proyecto si el equipo lo elige
+
+// Aprobar an*lisis: CodeNarc (estático para Groovy)
+// import org.codenarc.ant.CodeNarcTask
+
+// Lint básico en scripts
+// groovyc -Werror ...  # trata warning como error</code></pre>
+<table><thead><tr><th>Práctica</th><th>Impacto</th></tr></thead><tbody><tr><td><code>@CompileStatic</code></td><td>Rendimiento y detección temprana de errores</td></tr><tr><td>Spock</td><td>Tests legibles, BDD en la JVM</td></tr><tr><td>Dinamismo medido</td><td>Menor consumo de memoria y mejor mantenibilidad</td></tr><tr><td>Managers de builds (Gradle Wrapper)</td><td>Reproducible para todo el equipo y CI</td></tr><tr><td>Jenkins + librerías</td><td>CI/CD con el mismo lenguaje</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p>Has terminado Groovy en GuiaDev. La mejor ruta siguiente: un proyecto Spock con Gradle, y un pipeline CI/Jenkins para ejecutarlo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Gradle</strong>: crea un proyecto <code>gradle init</code> con plugin groovy, añade la tarea <code>hola</code> y ejecútala.</li>
+<li><strong>Spock</strong>: escribe un Spec para <code>Calculadora</code> con una tabla <code>where</code> de 3 casos.</li>
+<li><strong>Jenkinsfile</strong>: escribe un pipeline con stages build/test/deploy y un post que siempre imprima "fin".</li>
+<li><strong>REST</strong>: con <code>java.net.http</code> haz GET a una API pública y extrae un campo con <code>JsonSlurper</code>.</li>
+<li><strong>Buenas prácticas</strong>: añade <code>@CompileStatic</code> a un método crítico y explica qué garantiza.</li>
+</ol>
+<p>Eso cierra el módulo de Groovy: del primer println a un pipeline de CI con el mismo lenguaje.</p>
+    </div>
+  </section>

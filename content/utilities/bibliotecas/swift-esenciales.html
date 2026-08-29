@@ -1,0 +1,128 @@
+<!-- 1. Librerías Esenciales de Swift - Bibliotecas (Utilidades) -->
+  <section id="swift-core">
+    <h2>Módulos core: Foundation y Swift estándar <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-swift">import Foundation
+
+// La stdlib de Swift + Foundation de Apple: todo lo esencial
+let nums = [3, 1, 4, 1, 5]
+let ordenados = nums.sorted()
+let pares = nums.filter { $0 % 2 == 0 }.map { $0 * 10 }
+
+// Dictionaries y sets
+var frec: [String: Int] = [:]
+"hola mundo hola".split(separator: " ").forEach { frec[String($0), default: 0] += 1 }
+
+// Fechas y JSON (Codable)
+struct Usuario: Codable {
+    let nombre: String
+    let edad: Int
+}
+
+let json = #"{"nombre":"Ana","edad":30}"#
+let data = json.data(using: .utf8)!
+let usuario = try! JSONDecoder().decode(Usuario.self, from: data)
+
+// Strings con interpolación
+let saludo = "Hola \(usuario.nombre), edad \(usuario.edad)"
+</code></pre>
+<blockquote class="aside aside-tip"><p>La stdlib de Swift (+ Foundation/Codable) cubren colecciones, JSON, fechas y red sin dependencias. `Codable` serializa/deserializa seguro y tipo-verificado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="swift-package-manager">
+    <h2>Swift Package Manager (SPM) <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># SPM: el gestor de paquetes de Swift (similar a Cargo)
+swift package init --type executable
+swift build
+swift run
+swift test
+npm styled: 'swift package add' no existe; se edita Package.swift
+
+# Package.swift
+// swift-tools-version:5.9
+import PackageDescription
+
+let package = Package(
+    name: "MiApp",
+    dependencies: [
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0")
+    ],
+    targets: [
+        .executableTarget(name: "MiApp", dependencies: ["Vapor"])
+    ]
+)
+</code></pre>
+<blockquote class="aside aside-tip"><p>SPM descarga desde git (GitHub) o registros; resolve + lockfile `Package.resolved`. Es el equivalente a Cargo/npm dentro del ecosistema Swift.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="swift-async">
+    <h2>async/await y Combine <span class="gd-badge gd-badge-note">Async</span></h2>
+    <div class="doc-content">
+<pre><code class="language-swift">import Foundation
+
+// async/await nativo desde Swift 5.5
+func fetchUsuarios() async throws -&gt; [Usuario] {
+    let (data, _) = try await URLSession.shared.data(
+        from: URL(string: "https://api.example.com/usuarios")!
+    )
+    return try JSONDecoder().decode([Usuario].self, from: data)
+}
+
+func main() async {
+    do {
+        let usuarios = try await fetchUsuarios()
+        for u in usuarios { print(u.nombre) }
+    } catch {
+        print("error: \(error)")
+    }
+}
+// async let para paralelismo sencillo
+// TaskGroup para fan-out/fan-in
+
+// Combine: framework de reactivo de Apple (publicadores/subscriptores)
+// Foundation también: @Observable / Observation (iOS 17+)
+</code></pre>
+<blockquote class="aside aside-tip"><p>async/await + URLSession + Codable son el patrón estándar de red. `@Observable` y el observation framework modernizan el estado reactivo en la UI.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-swift">
+    <h2>Instalación de Swift <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># macOS: Xcode / Command Line Tools traen Swift completo
+xcode-select --install
+
+# Linux (Ubuntu/Debian) y Windows (Swift 6+) descargar el toolchain
+# download.swift.org →  .tar.gz (Linux) o .exe (Windows)
+# Linux: exportar PATH con el toolchain
+
+# Verificar
+swift --version
+echo 'print("Hola desde Swift")' &gt; hola.swift
+swift hola.swift
+
+# En macOS/iOS usarás Xcode (IDE) + SwiftUI/UIKit
+</code></pre>
+<blockquote class="aside aside-caution"><p>El ecosistema iOS (Xcode, Simulator) solo funciona en macOS. Swift de servidor (Vapor, Hummingbird) y Linux/Windows para backend sí son multiplataforma.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Define una struct `Producto: Codable`, encode y decodéala en JSON.</li>
+<li>Ordena y filtra una lista de productos por precio y nombre.</li>
+<li>Con async/await descarga JSON de una API pública y muestra resultados.</li>
+<li>Crea un paquete SPM con una librería y un test unitario.</li>
+<li>Usa `async let` para descargar dos recursos en paralelo y combinar.</li>
+</ol>
+    </div>
+  </section>

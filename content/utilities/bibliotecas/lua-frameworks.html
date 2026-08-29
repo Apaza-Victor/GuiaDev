@@ -1,0 +1,143 @@
+<!-- 2. Frameworks Lua: LÖVE, OpenResty, Lapis - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework-lua">
+    <h2>Usos de Lua: juegos, web, scripting <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Juegos (el fuerte):
+#   LÖVE (2D game framework, racket la más popular)
+#   Corona/Solar2D, Love2D Tiled
+# Web:
+#   OpenResty (Nginx+Lua): gateway/APIs de alto rendimiento
+#   Lapis (framework web sobre OpenResty/Warp)
+#   sails? no: Lapis es el de Lua; también LuaNode
+# Scripting: embebido (Redis, Nginx, Wireshark, Neovim, garry's mod)
+#  → cada host trae su API; aquí cubrimos web con OpenResty/Lapis
+</code></pre>
+<blockquote class="aside aside-note"><p>LÖVE para juegos 2D; OpenResty (Nginx+LuaJIT) para APIs/servicios; Lapis para web. La mayor adopción de Lua está como lenguaje embebido de scripting.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="love2d">
+    <h2>LÖVE: juegos 2D en Lua <span class="gd-badge gd-badge-note">Juegos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-lua">-- main.lua de un LÖVE
+function love.load()
+  x, y = 400, 300
+  vel = 300
+end
+
+function love.update(dt)
+  if love.keyboard.isDown("left")  then x = x - vel * dt end
+  if love.keyboard.isDown("right") then x = x + vel * dt end
+end
+
+function love.draw()
+  love.graphics.circle("fill", x, y, 20)
+  love.graphics.print("Pulsa flechas", 10, 10)
+end
+
+function love.keypressed(k)
+  if k == "escape" then love.event.quit() end
+end
+-- Ejecutar: love .  (dentro de carpeta del proyecto)
+</code></pre>
+<blockquote class="aside aside-tip"><p>LÖVE da callbacks (load/update/draw), input, audio, física (Box2D), sprites. Es el framework 2D más querido para prototipos y juegos indie en Lua.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="openresty">
+    <h2>OpenResty y Lapis: web con Nginx <span class="gd-badge gd-badge-note">Web</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># OpenResty = Nginx + LuaJIT: ejecuta lua_en el servidor
+# config nginx.conf básico:
+</code></pre>
+<pre><code class="language-nginx">server {
+    listen 8080;
+    location /saludo/ {
+        content_by_lua_block {
+            ngx.say("Hola desde OpenResty")
+        }
+    }
+}
+</code></pre>
+<pre><code class="language-lua">-- Lapis: framework MVC sobre OpenResty
+-- app = require("lapis").application
+lapis new              # crea proyecto
+lapis server           # dev server
+-- rutas:
+-- app:match("saludo/:nombre", function(self)
+--   return "Hola " .. self.params.nombre
+-- end)
+</code></pre>
+<blockquote class="aside aside-tip"><p>OpenResty es el rey de los gateways API (muy conveniente); Lapis añade MVC, templates (etlua) y modelos. Para servicios de alto rendimiento con Lua, vas aquí.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="persistencia-lua">
+    <h2>Datos: SQLite + LuaSQL <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-lua">-- LuaSQL: SQL genérico (SQLite/Postgres/MySQL)
+local luasql = require "luasql.sqlite3"
+local env = luasql.sqlite3()
+local conn = env:connect("app.db")
+
+conn:execute("CREATE TABLE IF NOT EXISTS users (id INTEGER, name TEXT)")
+conn:execute("INSERT INTO users VALUES (1, 'Ana')")
+
+local cur = conn:execute("SELECT * FROM users")
+row = cur:fetch({}, "a")
+while row do
+  print(row.id, row.name)
+  row = cur:fetch(row, "a")
+end
+cur:close(); conn:close(); env:close()
+
+-- En Lapis: el módulo "lapis.db" para modelos (query selector)
+</code></pre>
+<blockquote class="aside aside-tip"><p>LuaSQL es la capa driver genérica (SQLite/Postgres/MySQL); en Lapis, `lapis.db` da un mini-ORM select de funciones para tus modelos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-lua">
+    <h2>Testing: busted y luaunit <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-lua">-- busted (BDD, con pendiente)
+describe("suma", function()
+  it("suma dos números", function()
+    assert.are.equal(5, suma(2, 3))
+  end)
+  it("maneja negativos", function()
+    assert.are.equal(-1, suma(-2, 1))
+  end)
+end)
+-- ejecutar: busted
+
+-- luaunit (XUnit clásico)
+local lu = require "luaunit"
+
+TestSuma = {}
+function TestSuma:test_sum()
+  lu.assertEquals(suma(2,3), 5)
+end
+os.exit(lu.LuaUnit.run())
+</code></pre>
+<blockquote class="aside aside-success"><p>busted (BDD, magnífico con LuaJIT) o luaunit (simple). Se integran en CI: `busted` se instala con luarocks y deja salida TAP interoperable.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un LÖVE con un rectángulo que se mueva con las flechas.</li>
+<li>Levanta OpenResty y agrega una ruta que responda JSON.</li>
+<li>Con LuaSQL crea una tabla e inserta 3 registros.</li>
+<li>Escribe una spec de busted para una función de validación.</li>
+<li>Corre tus tests desde CI (luarocks install + busted).</li>
+</ol>
+    </div>
+  </section>

@@ -1,0 +1,125 @@
+<!-- 1. Librerías Esenciales de Elixir - Bibliotecas (Utilidades) -->
+  <section id="elixir-std">
+    <h2>Elixir stdlib: Enum, String, Map <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-elixir"># La stdlib de Elixir es enorme: Enum, String, Map, List, Kernel
+
+list = [3, 1, 4, 1, 5]
+Enum.filter(list, &(rem(&1, 2) == 0))
+|> Enum.map(&(&1 * 10))
+|> Enum.sort()
+|> Enum.sum()          # 140 si fuera solo pares * 10... mejor: Enum.frequencies
+
+frec = Enum.frequencies(["hola", "mundo", "hola"])   # %{"hola" => 2}
+
+mapa = %{nombre: "Ana", edad: 30}
+Map.put(mapa, :ciudad, "Madrid")
+
+String.upcase("hola") |> String.split() |> Enum.join("-")
+
+# pipes: |&gt; encadena funciones limpiamente
+# pattern matching y inmutabilidad
+</code></pre>
+<blockquote class="aside aside-tip"><p>Enum+String+Map+List de la stdlib resuelven el 90% sin librerías: `|>` pipes, `Enum` para todo, pattern matching. Todo se ejecuta sobre la BEAM (Erlang VM).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="hex-mix">
+    <h2>Hex y Mix: gestión de paquetes <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># mix: build/task runner (a la vez bundler + rake)
+mix new mi_app && cd mi_app
+# Hex: package manager (hex.pm)
+mix hex.info json
+mix hex.install hex
+
+# En mix.exs:
+defp deps do
+  [
+    {:jason, "~&gt; 1.4"},
+    {:req, "~&gt; 0.5"}
+  ]
+end
+
+mix deps.get          # descarga
+mix deps.update jason # actualiza
+mix deps.clean
+</code></pre>
+<pre><code class="language-elixir"># mix.exs
+defmodule MiApp.MixProject do
+  use Mix.Project
+
+  def project do
+    [app: :mi_app, version: "0.1.0", elixir: "~&gt; 1.16"]
+  end
+
+  def application, do: [extra_applications: [:logger]]
+
+  defp deps do
+    [{:jason, "~&gt; 1.4"}, {:req, "~&gt; 0.5"}]
+  end
+end
+</code></pre>
+<blockquote class="aside aside-tip"><p>mix genera/escala el proyecto y gestiona deps vía Hex; `mix deps.get` + `mix test` son el ciclo normal. Hex trae docs y versionado semántico desde el primer día.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="open-source-esencial">
+    <h2>Librerías esenciales: jason, req, timex <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-elixir"># Jason: JSON rápido
+Jason.encode!(%{nombre: "Ana", edad: 30})
+Jason.decode!("{\"x\": 1}")
+
+# Req: cliente HTTP ergonómico
+Req.get!("https://api.github.com/users/octocat").body
+
+# Timex: fechas y zonas horarias (sobre DateTime)
+Timex.now()
+Timex.shift(Timex.now(), days: 3)
+
+# StreamData: generación de datos para test
+# ExUnit: testing nativo (ver frameworks en su sección)
+</code></pre>
+<blockquote class="aside aside-note"><p>jason (JSON), req (HTTP) y timex (fechas) son las tres más descargadas; jason y req son de la escena actual, timex para datetime. Extra: `floki` (HTML) y `ecto_sql` (BD).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-elixir">
+    <h2>Instalación de Elixir <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Comparar: asdf / mise (multiversión)
+asdf install erlang 27   # BEAM primero
+asdf install elixir 1.16
+asdf global elixir 1.16.2
+# O Windows: choco install elixir o scoop (flutter? no)
+# macOS/linux también con brew (brewmintake? no: brew install elixir)
+
+# Verificar
+elixir --version
+mix --version
+echo 'IO.puts("Hola desde Elixir")' &gt; hola.exs
+elixir hola.exs
+
+# iex: shell interactivo con tab-complete
+</code></pre>
+<blockquote class="aside aside-tip"><p>asdf/mise gestiona Erlang+Elixir como rbenv; brew en macOS; choco/scoop en Windows. `iex` es un REPL potente con inspect, rem y autocompletado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>En iex: Enum/Stream un pipeline que procese 1..1000 con pipes.</li>
+<li>Cuenta frecuencias de palabras con Enum.frequencies.</li>
+<li>Instala jason y req vía mix deps y úsalos en un script.</li>
+<li>Crea un proyecto mix y ejecuta `mix test` con dos tests.</li>
+<li>Con Req consume una API pública y parsea la respuesta con Jason.</li>
+</ol>
+    </div>
+  </section>

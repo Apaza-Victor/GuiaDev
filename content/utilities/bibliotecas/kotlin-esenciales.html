@@ -1,0 +1,127 @@
+<!-- 1. Librerías Esenciales de Kotlin - Bibliotecas (Utilidades) -->
+  <section id="kotlin-std">
+    <h2>Kotlin stdlib: lo que trae de serie <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-kotlin">// La stdlib de Kotlin extendió Java con sintaxis concisa
+fun main() {
+    // Colecciones con funciones de orden superior
+    val nums = listOf(3, 1, 4, 1, 5)
+    nums.filter { it % 2 == 0 }
+        .map { it * 10 }
+        .sortedDescending()
+        .forEach { println(it) }
+
+    val frec = mutableMapOf&lt;String, Int&gt;()
+    "hola mundo hola".split(" ").forEach { frec[it] = (frec[it] ?: 0) + 1 }
+
+    // String con trimm, lines, take/whatever
+    val saludo = """
+        Hola
+        desde
+        Kotlin
+    """.trimIndent()
+
+    // null-safety
+    var nombre: String? = null
+    nombre?.length          // null
+    nombre ?: "anónimo"     // anónimo
+}
+
+// Data class: equals/hashCode/toString/copy automáticos
+data class Usuario(val id: Int, val nombre: String, val edad: Int?)
+</code></pre>
+<blockquote class="aside aside-tip"><p>La stdlib añade a Java: mutable/immutable collections, `filter/map/forEach`, `data class`, null-safety (`?:`, `?.`), rangos y más. Sin dependencias extra.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="corutinas">
+    <h2>Corutinas: asincronía sencilla <span class="gd-badge gd-badge-note">Async</span></h2>
+    <div class="doc-content">
+<pre><code class="language-kotlin">// kotlinx-coroutines: async/await sin callbacks
+import kotlinx.coroutines.*
+
+suspend fun fetchUsuario(id: Int): String {
+    delay(500)              // simula red/API
+    return "Usuario $id"
+}
+
+fun main() = runBlocking {
+    val resultados = (1..5).map { id -&gt;
+        async { fetchUsuario(id) }   // lanzados en paralelo
+    }
+    println(resultados.map { it.await() })
+
+    // Dispatchers: IO, Default, Main
+    withContext(Dispatchers.IO) { /* I/O pesado */ }
+}
+</code></pre>
+<blockquote class="aside aside-note"><p>kotlinx-coroutines es la pieza clave de Kotlin para asincronía: `suspend`, `async/await`, `Dispatchers` y flujos (`Flow`). Es estándar para apps modernas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="librerias-utilidad">
+    <h2>ktor-client y kotlinx-serialization <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-kotlin">// ktor-client: HTTP multiplataforma
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.engine.cio.*
+
+suspend fun main() {
+    val client = HttpClient(CIO)
+    val body = client.get("https://api.github.com/users/octocat").bodyAsText()
+    println(body)
+}
+
+// kotlinx-serialization: JSON con generación de schema
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
+
+@Serializable
+data class Usuario(val nombre: String, val edad: Int)
+
+fun main() {
+    val json = Json.encodeToString(Usuario("Ana", 30))
+    val u = Json.decodeFromString&lt;Usuario&gt;(json)
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>ktor-client (multiplataforma: JVM/JS/Native) + kotlinx.serialization cubren HTTP y JSON. Ktor también sirve como servidor web completo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-kotlin">
+    <h2>Instalación de Kotlin <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Con SDKMAN (JVM/Linux/Mac)
+curl -s "https://get.sdkman.io" | bash
+sdk install kotlin
+# Owingetter Windows
+winget install JetBrains.Kotlin
+# IDE: IntelliJ IDEA Community (JetBrains) trae el plugin Kotlin
+
+# Verificar y probar
+kotlinc -version
+echo 'fun main() = println("Hola desde Kotlin")' &gt; hola.kt
+kotlinc hola.kt -include-runtime -d hola.jar
+java -jar hola.jar
+</code></pre>
+<blockquote class="aside aside-tip"><p>Kotlin corre en JVM (también compila a JS/Native). IntelliJ IDEA es el IDE natural; también funciona desde Gradle y Maven en proyectos Android/backend.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un data class `Producto` y usa copy() y equals() de serie.</li>
+<li>Filtra/mapea una lista de productos por precio con la stdlib.</li>
+<li>Con corutinas descarga 5 endpoints en paralelo y muestra resultados.</li>
+<li>Serializa y deserializa un objeto con kotlinx.serialization.</li>
+<li>Consume una API REST con ktor-client dentro de una coroutine.</li>
+</ol>
+    </div>
+  </section>

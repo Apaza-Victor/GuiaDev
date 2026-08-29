@@ -1,0 +1,168 @@
+<!-- 2. Frameworks Python: Django, FastAPI, Flask - Bibliotecas (Utilidades) -->
+  <section id="django">
+    <h2>Django: web completa y batteries included <span class="gd-badge gd-badge-note">Framework</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash">pip install django
+django-admin startproject mi_sitio .
+python manage.py startapp blog
+python manage.py runserver
+</code></pre>
+<pre><code class="language-python"># models.py
+from django.db import models
+
+class Post(models.Model):
+    titulo = models.CharField(max_length=200)
+    cuerpo = models.TextField()
+    publicado = models.DateTimeField(auto_now_add=True)
+
+# views.py
+from django.shortcuts import render
+from .models import Post
+
+def lista(request):
+    posts = Post.objects.order_by("-publicado")
+    return render(request, "blog/lista.html", {"posts": posts})
+# urls.py mapea ruta -&gt; view; admin/referencia/migraciones integrados.
+</code></pre>
+<blockquote class="aside aside-tip"><p>Django trae ORM, admin automático, auth, sesiones, migraciones y templates por defecto. Ideal para CRUDs, CMS y paneles de administración sin ensamblar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fastapi">
+    <h2>FastAPI: APIs modernas y asíncronas <span class="gd-badge gd-badge-note">API</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">pip install fastapi uvicorn pydantic
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class UsuarioIn(BaseModel):
+    nombre: str
+    edad: int
+
+@app.get("/usuarios/{id}")
+async def obtener(id: int):
+    if id &lt;= 0:
+        raise HTTPException(status_code=404, detail="No existe")
+    return {"id": id, "nombre": "Ana"}
+
+@app.post("/usuarios")
+def crear(u: UsuarioIn):
+    return {"recibido": u, "status": "ok"}
+
+# App en desarrollo:
+# uvicorn main:app --reload
+# Documentación interactiva automática en /docs y /redoc (Swagger UI)
+</code></pre>
+<blockquote class="aside aside-tip"><p>FastAPI valida con Pydantic, genera OpenAPI automáticamente y soporta async nativo. Es la elección moderna para APIs REST/JSON y apps de machine-learning serving.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="flask-otras">
+    <h2>Flask y alternativas ligeras <span class="gd-badge gd-badge-note">Micro</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.get("/hola")
+def hola():
+    return jsonify(mensaje="Hola mundo", version=1)
+
+@app.post("/eco")
+def eco():
+    datos = request.get_json()
+    return datos
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+# Otras: Bottle (micro), Starlette (async puro), Litestar,
+#        Pyramid (middlee el peso de Django sin rigidez),
+#        Tornado / aiohttp (websockets y protocolos),
+#        Streamlit/NiceGUI para dashboards internos rápidos.
+</code></pre>
+<blockquote class="aside aside-note"><p>Elige: Django (todo integrado), FastAPI (APIs veloz, validado), Flask/Bottle (micro y flexible), Starlette/aiohttp (async y websockets de bajo nivel).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="orm-sqlalchemy">
+    <h2>SQLAlchemy y SQLModel <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">pip install sqlalchemy
+
+from sqlalchemy import create_engine, Column, Integer, String, select
+from sqlalchemy.orm import declarative_base, Session
+
+engine = create_engine("sqlite:///app.db")
+Base = declarative_base()
+
+class Usuario(Base):
+    __tablename__ = "usuarios"
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(100), nullable=False)
+
+Base.metadata.create_all(engine)
+
+with Session(engine) as s:
+    s.add(Usuario(nombre="Ana"))
+    s.commit()
+    todos = s.scalars(select(Usuario)).all()
+
+# SQLModel (FastAPI + SQLAlchemy + Pydantic en uno) simplifica:
+# class Usuario(SQLModel, table=True): id: int | None; nombre: str
+</code></pre>
+<blockquote class="aside aside-tip"><p>SQLAlchemy es el ORM más usado (sync y async con `asyncpg`); SQLModel lo fusiona con Pydantic, perfecto junto a FastAPI.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-python">
+    <h2>Testing: pytest <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">pip install pytest
+
+# test_calculadora.py
+import pytest
+from calculadora import suma, divide
+
+def test_suma_basica():
+    assert suma(2, 3) == 5
+
+@pytest.mark.parametrize("a,b,esp", [
+    (1, 2, 3), (0, 0, 0), (-1, 1, 0)])
+def test_suma_param(a, b, esp):
+    assert suma(a, b) == esp
+
+def test_divide_por_cero_lanza():
+    with pytest.raises(ValueError):
+        divide(1, 0)
+
+# Fixtures limpian recursos repetidos
+@pytest.fixture
+def datos():
+    return {"a": 1, "b": 2}
+# Ejecutar: python -m pytest -v --cov=calculadora
+</code></pre>
+<blockquote class="aside aside-note"><p>pytest + fixtures + parametrize cubren el testing estándar. Añade `pytest-cov` y `pytest-httpx`/`responses` para mockear HTTP cuando hables de red.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una app FastAPI con GET/POST junto a Swagger en /docs y valida un modelo.</li>
+<li>Construye un modelo Django "Post", migra y crea una vista de lista.</li>
+<li>Con SQLAlchemy inserta 5 usuarios y consulta filtrando por nombre con `where`.</li>
+<li>Escribe tests pytest con 3 casos parametrizados para una clase Calculadora.</li>
+<li>Levanta un endpoint en Flask que devuelva JSON procesado de una petición.</li>
+</ol>
+    </div>
+  </section>

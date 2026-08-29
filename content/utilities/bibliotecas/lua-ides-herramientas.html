@@ -1,0 +1,103 @@
+<!-- 3. IDEs y Herramientas para Lua - Bibliotecas (Utilidades) -->
+  <section id="ide-lua">
+    <h2>Editores y LSP Lua <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># VS Code:
+#   extension "Lua" (sumneko? no: sumneko.lua → "Lua Language Server")
+code --install-extension sumneko.lua
+# Lua Language Server: autocompletado, tipos (annotations), lint
+#   → el LSP de facto de Lua (mantenido por LuaLS org)
+# Neovim: también con LuaLS; escribe config en lua
+# ZeroBrane Studio: IDE específico Lua (con debug integrado)
+
+# Config .luarc.json para project
+# El LSP es la base para todo editor
+</code></pre>
+<blockquote class="aside aside-tip"><p>El Lua Language Server (LuaLS) es el estándar: tipos con `---@type`, lint, autocompletado. VS Code+Ionide? no, VS Code+LuaLS; Neovim y LÖVE conviven con él.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="herramientas-cli-lua">
+    <h2>selene, stylua y tooling <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># stylua: formatter oficial de estilo Lua
+cargo install stylua         # desde Rustin (cómo cargo)
+stylua src/                  # o con prebuilt
+stylua --check src/          # CI
+# Alternativa: LuaFormatter (por luarocks)
+
+# selene: linter moderno (reglas de estilo)
+cargo install selene
+selene src/                  # o via luarocks selene
+
+# luacheck: linter clásico (integra números de línea)
+luarocks install luacheck
+luacheck src/
+
+# más: luac (compilador bytecode): luac -p file.lua
+</code></pre>
+<blockquote class="aside aside-tip"><p>StyLua (formato) y selene/luacheck (lints) son el trío de calidad en Lua. Ambos se instalan fácil y corren en CI; luac -p valida sintaxis a bytecode.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depuracion-lua">
+    <h2>Depurar Lua <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># En ZeroBrane Studio / LÖVE (love --debug) / VS Code (LuaLS debug)
+# breakpoints y watch: DAP integrado con LuaLS
+
+# Depurar a mano con pcall y error
+local ok, err = pcall(datos)
+if not ok then print("FALLO:", err) end
+
+# print/warn clásicos:
+print("[DEBUG]", variable)
+
+# Estructura de debug API: debug.getinfo, debug.traceback
+print(debug.traceback())
+-- En LuaJIT: jit.util y perf (Linux) para profiling
+</code></pre>
+<blockquote class="aside aside-caution"><p>ZeroBrane y LÖVE tienen debug visual conectado al engine; en servidor usa `pcall` + traceback y logs. `debug.traceback()` es tu amigo en errores imprevistos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-lua">
+    <h2>Empaquetar y desplegar Lua <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Script directo: solo necesita lua en runtime
+# Juegos LÖVE: love *.zip → .love ejecutable
+#   (zip del proyecto + love --fused)
+# Web: OpenResty se añade como imagen
+
+# Contenedor para scripts (imagen mínima)
+</code></pre>
+<pre><code class="language-docker">FROM lua:5.4-alpine
+WORKDIR /app
+COPY . .
+RUN luarocks install dkjson    # deps
+CMD ["lua", "app.lua"]
+</code></pre>
+<pre><code class="language-bash"># Ejecutables standalone: luastatic (compilea usando C compiler)
+luastatic app.lua deps -o app
+./app
+</code></pre>
+<blockquote class="aside aside-success"><p>`lua:alpine` a imagen pequeño (Lua es ~250KB). luastatic crea binarios standalone compilando el código con el C compiler; LÖVE para juegos usa .love zips.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala LuaLS y agrega anotaciones ---@type a una función.</li>
+<li>Formatea tu proyecto con stylua y haz `--check` en CI.</li>
+<li>Corre luacheck sobre tu código y corrige avisos.</li>
+<li>Añade pcall+traceback alrededor de una llamada a JSON.</li>
+<li>Construye con luastatic un binario standalone y ejecútalo.</li>
+</ol>
+    </div>
+  </section>

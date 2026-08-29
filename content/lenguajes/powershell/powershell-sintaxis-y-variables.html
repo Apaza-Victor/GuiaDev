@@ -1,0 +1,197 @@
+<!-- 2. Sintaxis y Variables - PowerShell (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="variables">
+    <h2>Variables</h2>
+    <div class="doc-content">
+<p>Las variables en PowerShell empiezan por <code>$</code> y son <strong>objetos .NET</strong> tipados dinámicamente. Puedes asignar cualquier cosa y, si quieres, forzar un tipo.</p>
+<pre><code class="language-powershell"># Asignación básica
+$nombre = "Ana"
+$edad = 30
+$pi = 3.14159
+
+# Interpolación directa
+"Mi nombre es $nombre y tengo $edad años"
+
+# Variables de entorno y automáticas
+$env:USERNAME            # usuario actual
+$HOME                    # home
+$PSVersionTable          # tabla de versión
+$_                      # objeto actual en pipeline
+
+# Tipar variable
+[datetime]$nacimiento = "1996-05-12"
+[int]$numero = "42"
+
+# Variable como objeto completo
+$proceso = Get-Process pwsh
+$proceso.Id
+
+# Multivalor simple (splatting después)
+$parametros = @{ Name = "pwsh"; ErrorAction = "SilentlyContinue" }
+Get-Process @parametros
+
+# Tipos de datos
+$texto = "texto"            # string
+$num = 42                   # int
+$decimal = 1.5              # double
+$bool = $true               # bool
+$list = @(1, 2, 3)          # array</code></pre>
+<blockquote class="aside aside-tip"><p>Con <code>$var.metodo()</code> accedes a los métodos .NET del objeto (ej: <code>$texto.ToUpper()</code>). El <strong>splatting</strong> (<code>@parametros</code>) pasa un has de parámetros a un comando — idioma profesional.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipos">
+    <h2>Tipos .NET y conversiones</h2>
+    <div class="doc-content">
+<p>Todo en PowerShell es un objeto .NET: strings, números, fechas, GUIDs, enums... Puedes convertir con cast `[tipo]valor` y consultar la clase con `GetType()`.</p>
+<pre><code class="language-powershell"># Ver el tipo
+("hola").GetType().FullName    # System.String
+(42).GetType().FullName        # System.Int32
+(1.5).GetType().FullName       # System.Double
+
+# Conversión explícita
+$json = '{"a": 1}'
+$numTexto = "123"
+[int]$n = $numTexto
+$n + 7                          # 130
+
+# Tipos comunes
+[guid]::NewGuid()
+[datetime]::Now.ToString("yyyy-MM-dd HH:mm")
+[math]::Round(3.14159, 2)       # System.Math estático
+
+# Enumeraciones
+[System.DayOfWeek]::Tuesday      # enum
+
+# Null - utilizar $null
+if ($nothing) { "no llegamos" }  # $null es falsy
+$varNull = $null
+[bool]$varNull                   # False</code></pre>
+<blockquote class="aside aside-caution"><p>La conversión no es "silenciosa" siempre: <code>[int]"abc"</code> lanza error. PowerShell 7 recomienda <code>$texto.Trim().ToInt32()</code> en .NET para evitar ambigüedades; y usa <code>$null</code> siempre en minúscula/así literal de comparación.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="arrays">
+    <h2>Arrays y "hashtables"</h2>
+    <div class="doc-content">
+<p>Los arrays (<code>@(...)</code>) y los hashtables (<code>@{...}</code>) son las dos colecciones que verás en el 90% de scripts.</p>
+<pre><code class="language-powershell"># Arrays
+$colores = @("rojo", "verde", "azul")
+$nums = 1,2,3,4,5                 # sintaxis coma
+$nums[0]                          # 1
+$nums[-1]                         # 5
+$nums[1..3]                       # 2,3,4
+$nums.Count                       # 5
+
+# Agregar (inmutable: crea nuevo)
+$colores += "amarillo"
+# Rango
+1..10                             # 1,2,...,10
+
+# Hashtables (diccionarios)
+$persona = @{ nombre = "Ana"; edad = 30; ciudad = "Lima" }
+$persona.nombre                   # Ana
+$persona["edad"]                  # 30
+$persona.email = "ana@guia.dev"   # agregar
+$persona.Remove("edad")
+$persona.Keys                     # keys (contenido desordenado)
+
+# Para pipeline mejor, usa objetos con propiedades
+
+# Acceder a una "lista" de objetos y proyectar
+Get-Process | Select-Object -First 3 -Property Id, ProcessName</code></pre>
+<blockquote class="aside aside-tip"><p>En arrays, un operador como <code>+</code> es lento en bucles grandes; prefiere <code>ArrayList</code> o lista. Los hashtables sirven para look-ups <code>$hash[$clave]</code> y para splatting.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="operadores">
+    <h2>Operadores</h2>
+    <div class="doc-content">
+<p>PowerShell tiene operadores de comparación, lógicos, aritméticos y de texto. Nota: los de comparación admiten <code>like</code>, <code>match</code> (regex), <code>contains</code> y no gustan de `==` (usa <code>-eq</code>).</p>
+<pre><code class="language-powershell"># Aritméticos
+$suma = 10 + 5
+$resto = 10 % 3
+$pot = [math]::Pow(2, 8)      # potencia (o 2 * 2 * ...)
+$div = 10 / 3                 # 3.333...
+
+# Comparación (no == ; usa -eq)
+5 -eq 5          # True
+5 -ne 3          # True
+5 -gt 3          # True
+5 -le 5          # True
+
+# Texto
+"hola" -eq "HOLA"          # False (case-sensitive)
+"hola" -ieq "HOLA"         # True (insensible)
+"PowerShell" -like "Power*"   # True
+"abc123" -match "\d+"      # True (regex)
+"lista de compras" -contains "lista"
+
+# Lógicos
+($true -and $false)         # False
+($true -or $false)          # True
+(-not $false)               # True
+
+# Coalescing y ternario (PowerShell 7)
+$a = $null
+$resultado = $a ?? "default"     # default
+$edad = 20
+$categoria = $edad -gt 18 ? "adulto" : "menor"   # 7+
+
+# Range y concatenación de string
+"a" + "b"   # ab
+"ab" * 3    # ababab</code></pre>
+<blockquote class="aside aside-tip"><p>El juego de operadores prefijado con <code>-</code> es lo más importante: <code>-eq</code>, <code>-match</code>, <code>-like</code>, <code>-contains</code>. En PowerShell 7 tienes además <code>??</code> y <code>? :</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="format">
+    <h2>Formato y salida</h2>
+    <div class="doc-content">
+<p>Dominar el formateo de salida hace que tu script sea legible: <code>Format-Table</code>, <code>Format-List</code>, <code>ToString()</code> con formatos, y <code>Out-File</code>/<code>ConvertTo-Json</code> para exportar.</p>
+<pre><code class="language-powershell"># Formatear en pantalla
+Get-Process | Format-Table -AutoSize Name, Id, CPU
+Get-Process | Format-List  Name, Path
+
+# Formato con ToString()
+$precio = 1234.5678
+$precio.ToString("C")          # moneda del locale
+( Get-Date ).ToString("dd-MM-yyyy HH:mm")
+
+# Números con formato
+"{0:N2}" -f 1234.5678          # 1.234,57 (usa -f, operador de formato)
+
+# Guardar a archivo
+Get-Process | Out-File procesos.txt
+Get-ChildItem | Export-Csv listado.csv -NoTypeInformation
+
+# JSON (automatización)
+@{ nombre = "Ana"; edad = 30 } | ConvertTo-Json
+
+# Sin truncar (importante para depurar)
+$null = 1
+"El valor es: $($null ?? 'nada')"   # con ?? de PS7</code></pre>
+<blockquote class="aside aside-tip"><p>Usa <code>ConvertTo-Json</code>/<code>ConvertFrom-Json</code> para hablar con APIs; <code>Export-Csv</code> para Excel/análisis; <code>Out-File</code> para logs. El operador <code>'{0:N2}' -f $valor</code> es el formateador universal.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Variables</strong>: crea variable de texto, número y fecha; muestralas interpoladas.</li>
+<li><strong>Conversión</strong>: convierte <code>"123"</code> a <code>[int]</code> y suma; convierte <code>"2026-08-29"</code> a <code>[datetime]</code>.</li>
+<li><strong>Arrays</strong>: construye <code>@(1..10)</code>, toma los pares (<code>Where-Object</code> o `% 2 -eq 0`) y muestra count.</li>
+<li><strong>Hashtable</strong>: crea tu perfil como hashtable, agrega keys, listala y accede por punto.</li>
+<li><strong>Formato</strong>: da formato a un precio con <code>-f</code> a 2 decimales y exporta un CSV de procesos.</li>
+</ol>
+<p>En la próxima lección entraremos en el corazón de PowerShell: el pipeline y los objetos.</p>
+    </div>
+  </section>

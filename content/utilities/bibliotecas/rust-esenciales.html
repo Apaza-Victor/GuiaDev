@@ -1,0 +1,125 @@
+<!-- 1. Librerías Esenciales de Rust - Bibliotecas (Utilidades) -->
+  <section id="std-rust">
+    <h2>std y core: las librerías base <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-rust">use std::collections::HashMap;
+use std::fs;
+use std::error::Error;
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn Error&gt;&gt; {
+    // Colecciones
+    let mut mapa = HashMap::new();
+    mapa.insert("a".to_string(), 1);
+    let v = vec![3, 1, 4, 1, 5];
+    let suma: i32 = v.iter().sum();
+
+    // Archivos y errores con ?
+    let contenido = fs::read_to_string("datos.txt")?;
+    for linea in contenido.lines() {
+        println!("{linea}");
+    }
+
+    // Fechas y opciones
+    let ahora = std::time::Instant::now();
+    let opcional: Option&lt;i32&gt; = Some(5);
+    if let Some(x) = opcional { println!("{x}"); }
+    Ok(())
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>La std de Rust: colecciones, I/O, threads (std::thread), error `Result`, protocols (`std::net`) y sistema. Todo tipado, sin runtime y eficiente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cargo-gestion">
+    <h2>Cargo: el gestor de paquetes <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash">cargo new mi_app && cd mi_app
+cargo add serde serde_json            # añade deps
+cargo build                           # compila (release:  --release)
+cargo run
+cargo test
+cargo fmt && cargo clippy             # formato y lint
+cargo doc --open                      # docs de tus deps
+</code></pre>
+<pre><code class="language-toml"># Cargo.toml
+[package]
+name = "mi_app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+criterion = "0.5"
+</code></pre>
+<blockquote class="aside aside-tip"><p>Cargo es build + dependency manager + test runner + documentación todo-en-uno. `cargo add` es lo equivalente a npm/pip y es la puerta al ecosistema crates.io.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="serde-anyhow">
+    <h2>serde, anyhow, thiserror <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-rust">use serde::{Deserialize, Serialize};
+use anyhow::{Context, Result};
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Usuario {
+    nombre: String,
+    edad: u8,
+}
+
+fn main() -&gt; Result&lt;()&gt; {
+    // Serializar
+    let u = Usuario { nombre: "Ana".into(), edad: 30 };
+    let json = serde_json::to_string(&amp;u)?;
+    println!("{json}");
+
+    // Deserializar y propagar errores con contexto
+    let texto = std::fs::read_to_string("usuario.json")
+        .context("no pude leer usuario.json")?;
+    let parsed: Usuario = serde_json::from_str(&amp;texto)
+        .context("formato JSON inválido")?;
+
+    // thiserror para enums de error con display
+    Ok(())
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>serde es el framework de serialización universal (JSON/YAML/TOML/imágenes con `serde_derive`); anyhow simplifica errores en binarios y thiserror en librerías.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-rust">
+    <h2>Instalación de Rust <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># rustup: gestor de toolchain
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# O con winget (Windows)
+winget install Rustlang.Rustup
+# update y versiones
+rustup update
+rustup show
+rustc --version
+cargo --version
+</code></pre>
+<blockquote class="aside aside-tip"><p>rustup instala `rustc`, `cargo`, `clippy`, `rustfmt` y las std de cada toolchain. Edita binariens y mantenlo actualizado mensualmente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un binario con cargo y añade serde_json; lee y escribe un JSON.</li>
+<li>Usa anyhow para propagar un error de lectura con contexto.</li>
+<li>Agrupa palabras de un texto en un HashMap&lt;String, u32&gt;.</li>
+<li>Ejecuta `cargo fmt` y `cargo clippy` y corrige 3 advertencias.</li>
+<li>Escribe un test unitario con `#[cfg(test)]` y pruébalo con `cargo test`.</li>
+</ol>
+    </div>
+  </section>

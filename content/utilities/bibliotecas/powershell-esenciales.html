@@ -1,0 +1,109 @@
+<!-- 1. Librerías Esenciales de PowerShell - Bibliotecas (Utilidades) -->
+  <section id="ps-core">
+    <h2>Módulos core: Microsoft.PowerShell.* <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-powershell"># Los módulos "Microsoft.PowerShell.*" son la base del shell
+Get-Command                    # cmdlets disponibles
+Get-Module -ListAvailable      # módulos instalados
+
+# Objects pipeline (no texto): el sello de PowerShell
+Get-Process | Sort-Object CPU -Descending | Select-Object -First 5
+Get-Service | Where-Object Status -eq 'Running'
+
+# Colecciones y utilidades
+Get-ChildItem -Recurse -Filter *.ps1 | Select-Object FullName, Length
+Read-Host -Prompt 'Nombre'
+Get-Date -Format 'yyyy-MM-dd HH:mm'
+ConvertTo-Json @{ nombre = 'Ana'; edad = 30 }
+
+# Strings, hash, comparaciones
+$saludo = "Hola, $(whoami)"
+'texto'.ToUpper()
+0 -eq 0 -and 'a' -eq 'a'
+</code></pre>
+<blockquote class="aside aside-tip"><p>PowerShell es object-oriented pipeline: casi todo devuelve objetos (no texto). Los módulos core traen cmdlets de archivos, procesos, servicios, JSON y red.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="powershellget">
+    <h2>PowerShellGet y PSGallery <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-powershell"># PowerShell Gallery: repositorio público de módulos
+Install-Module -Name Pester -Scope CurrentUser -Force
+Find-Module -Name '*Az*' | Select-Object -First 10
+Update-Module -Name Pester
+Uninstall-Module -Name Pester
+
+# Módulos clave del ecosistema:
+#   Pester (testing), PSReadLine (auto-completado),
+#   Az.* (Azure), AWS.Tools.* (AWS), Microsoft.Graph.* (M365),
+#   community: oh-my-posh (tema), posh-git
+# Módulos de sistema (ya incluidos):
+#   ActiveDirectory, Storage, Microsoft.PowerShell.Utility...
+</code></pre>
+<blockquote class="aside aside-note"><p>Install/Find/Update-Module gestionan PSGallery (NuGet por debajo). Para infra en cloud usa los SDK: Az.* / AWS.Tools.*; para shell, posh-git y oh-my-posh.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="io-json-objetos">
+    <h2>I/O, JSON y objetos <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-powershell"># Leer/escribir archivos
+$datos = Get-Content -Raw datos.json | ConvertFrom-Json
+$datos.nombre
+
+# JSON a objeto y de vuelta
+$obj = [pscustomobject]@{ nombre = 'Ana'; edad = 30 }
+$obj | ConvertTo-Json | Set-Content out.json
+
+# CSV y Excel
+Import-Csv datos.csv
+Export-Csv -NoTypeInformation datos.csv
+# ImportExcel (módulo) para Excel real: Install-Module ImportExcel
+
+# Red y web
+$r = Invoke-RestMethod -Uri 'https://api.github.com/users/octocat'
+$r.login
+
+# Regex y strings
+'solo-letras-y-num-123' -match '^[a-z-]+\d+$'
+</code></pre>
+<blockquote class="aside aside-tip"><p>ConvertFrom-Json/ConvertTo-Json, Import/Export-Csv, Invoke-RestMethod y la línea `-match` con regex cubren la mayoría de utilidades de scripting de datos y web.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-powershell">
+    <h2>Instalación de PowerShell 7 <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Windows: PowerShell 7+ (no el 5.1 integrado)
+winget install Microsoft.PowerShell   # pwsh en PATH
+# Linux/macOS
+sudo apt install powershell           # Microsoft repo (deb)
+brew install --cask powershell        # macOS
+# O descargar .tar.gz/.msi de github.com/PowerShell/PowerShell
+
+pwsh --version
+pwsh -c 'Write-Host "Hola desde PowerShell 7"'
+# Ejecutar scripts: pwsh ./script.ps1 (o .\ con Set-ExecutionPolicy)
+# Profile: $PROFILE define el auto-start personal
+</code></pre>
+<blockquote class="aside aside-tip"><p>Usa pwsh (PowerShell 7+, cross-platform). Para Windows legacy hay 5.1 presente solo en `powershell` (Widows PowerShell). en Linux/MAC es igual de potente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Recorre Get-Process y muestra el top 3 por CPU con pipeline.</li>
+<li>Convierte un pscustomobject a JSON y guárdalo en un archivo.</li>
+<li>Haz una petición REST a una API pública y muestra 2 campos.</li>
+<li>Instala Pester con Install-Module y lista sus comandos.</li>
+<li>Filtra archivos por extensión y tamaño con Get-ChildItem.</li>
+</ol>
+    </div>
+  </section>

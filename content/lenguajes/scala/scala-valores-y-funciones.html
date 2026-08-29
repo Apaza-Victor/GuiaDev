@@ -1,0 +1,143 @@
+<!-- 2. Valores y Funciones - Scala (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="val-vs-var">
+    <h2>val vs var y los tipos</h2>
+    <div class="doc-content">
+<p>Scala distingue dos formas de declarar datos: <strong>val</strong> crea un valor inmutable (recomendado siempre) y <strong>var</strong> crea una variable reasignable. La inmutabilidad es el pilar del estilo funcional: un <code class="inline-code">val</code> garantiza que un dato nunca cambia, lo que simplifica el razonamiento y evita errores en programas concurrentes.</p>
+<pre><code class="language-scala">val nombre = "Ada"          // String inmutable
+val vida: Int = 36          // El tipo se puede anotar tras los dos puntos
+var dias = 0                // var: reasignable, pero úsalo con moderación
+dias = dias + 1             // OK, var se puede reasignar
+
+// nombre = "Grace"          // ERROR: un val no se puede reasignar
+
+// El sistema de tipos es tipado estático, pero con inferencia
+val entero: Int = 42
+val doble = 3.14            // Double
+val booleano = true         // Boolean</code></pre>
+<blockquote class="aside aside-note"><p>Escribe siempre <code class="inline-code">val</code> salvo que tengas una razón clara para mutar. Esta disciplina es lo que hace a Scala funcional.</p></blockquote>
+<p>El REPL imprime el tipo inferido de cada valor: por ejemplo <code class="inline-code">1 + 1</code> devuelve <code class="inline-code">Int</code>. Los tipos numéricos de Scala son <code class="inline-code">Byte</code>, <code class="inline-code">Short</code>, <code class="inline-code">Int</code>, <code class="inline-code">Long</code>, <code class="inline-code">Float</code> y <code class="inline-code">Double</code>, con los mismos tamaños que en la JVM.</p>
+<table><thead><tr><th>Tipo</th><th>Descripción</th><th>Ejemplo</th></tr></thead><tbody><tr><td>Int</td><td>Entero de 32 bits</td><td><code class="inline-code">42</code></td></tr><tr><td>Long</td><td>Entero de 64 bits</td><td><code class="inline-code">4000000000L</code></td></tr><tr><td>Double</td><td>Decimal de doble precisión</td><td><code class="inline-code">3.1416</code></td></tr><tr><td>Boolean</td><td>Verdadero o falso</td><td><code class="inline-code">true</code></td></tr><tr><td>String</td><td>Cadena de caracteres</td><td><code class="inline-code">"scala"</code></td></tr><tr><td>Unit</td><td>Equivale a void</td><td><code class="inline-code">println(...)</code></td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="funciones">
+    <h2>Funciones y azúcar sintáctico</h2>
+    <div class="doc-content">
+<p>En Scala las funciones son <strong>ciudadanos de primera clase</strong>: se pueden guardar en valores, pasar como argumentos y devolver desde otras funciones. Se definen con <code class="inline-code">def</code>, y con la notación moderna de Scala 3 el cuerpo va después de <strong>dos puntos y un igual</strong> <code class="inline-code">=</code>, sin necesidad de llaves si es una única expresión.</p>
+<pre><code class="language-scala">def doble(x: Int): Int = x * 2
+
+def saludar(nombre: String): Unit = println(s"Hola $nombre")
+
+// Sin anotar el tipo de retorno (Scala lo infiere)
+def triple(x: Int) = x * 3
+
+// Función anónima (lambda) guardada en un val
+val cuadrado = (x: Int) => x * x
+
+@main def demo(): Unit =
+  println(doble(21))     // 42
+  saludar("GuiaDev")     // Hola GuiaDev
+  println(cuadrado(5))   // 25
+
+// La barra baja _ es un comodín para el parámetro
+val nums = List(1, 2, 3)
+println(nums.map(_ * 10)) // List(10, 20, 30)</code></pre>
+<blockquote class="aside aside-tip"><p>La flecha <code class="inline-code">=&gt;</code> separa la lista de parámetros del cuerpo de una lambda. En Scala 3, un bloque de varias líneas puede omitir las llaves usando la indentación, igual que en Python.</p></blockquote>
+<p>En Java hay interfaces como <code class="inline-code">Comparator</code>; en Scala escribes una lambda de una sola línea y listo. Esa diferencia de verbosidad es la mayor ventaja percibida del lenguaje en el día a día.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="expresiones">
+    <h2>Expresiones y sentencias</h2>
+    <div class="doc-content">
+<p>Casi todo en Scala es una <strong>expresión</strong>: algo que produce un valor. Un <code class="inline-code">if</code>, un bloque <code class="inline-code">{ }</code> y hasta <code class="inline-code">println</code> devuelven un resultado. Esta es la gran diferencia con Java/Python, donde todo es sentencia (instrucción que solo produce efectos).</p>
+<pre><code class="language-scala">// Un if es una expresión: devuelve un valor
+val dia = 3
+val diaNombre = if dia == 1 then "Lunes" else "Otro día"
+println(diaNombre)
+
+// El último valor de un bloque es su resultado (no hace falta return)
+def conDescuento(precio: Double): Double =
+  val descuento = if precio &gt; 100 then precio * 0.1 else 0.0
+  precio - descuento
+
+println(conDescuento(200)) // 180.0
+
+// Las expresiones se pueden anidar
+val nota = 85
+val calificacion = if nota &gt;= 60 then "Aprobado" else "Reprobado"
+println(calificacion)</code></pre>
+<blockquote class="aside aside-tip"><p>No escribas <code class="inline-code">return</code> en Scala. El último valor de cada bloque ya es lo que se devuelve, y usar <code class="inline-code">return</code> rompe el flujo funcional (los compiladores lo desaconsejan).</p></blockquote>
+<blockquote class="aside aside-note"><p>A diferencia de muchas sintaxis, en Scala 3 la palabra clave <code class="inline-code">then</code> y <code class="inline-code">else</code> son opcionales aunque se recomienda usarlas para legibilidad.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="operadores-y-prefijos">
+    <h2>Operadores y notación de prefijo</h2>
+    <div class="doc-content">
+<p>En la mayoría de lenguajes los operadores (<code class="inline-code">+</code>, <code class="inline-code">-</code>, <code class="inline-code">*</code>, <code class="inline-code">==</code>) son parte de la sintaxis. En Scala son <strong>métodos</strong>: <code class="inline-code">a + b</code> es azúcar sintáctico de <code class="inline-code">a.+(b)</code>. Esto permite inventar operadores propios cuando escribes métodos con símbolos.</p>
+<pre><code class="language-scala">val suma = 5 + 3          // Internamente: 5.+(3)
+val mezcla = "Scala" + " 3" // También es un método concatenador
+
+// Llamadas sin punto ni paréntesis (notación de infix)
+val list1 = List(1, 2)
+val list2 = list1 :+ 3    // List(1, 2, 3)
+val list3 = 0 :: list1    // List(0, 1, 2)
+
+// Los operadores de comparación son métodos también
+println(1.&lt;(2))            // true, usa paréntesis y punto
+println(1 &lt; 2)            // true, estilo normal
+println("a" == "a")       // true: == compara contenido, no referencia</code></pre>
+<blockquote class="aside aside-caution"><p>En Scala, <code class="inline-code">==</code> compara valores (como <code class="inline-code">equals</code> en Java), no referencias. Para comparar referencias se usa <code class="inline-code">eq</code>, que rara vez necesitarás.</p></blockquote>
+<table><thead><tr><th>Símbolo</th><th>Forma infija</th><th>Forma como método</th></tr></thead><tbody><tr><td>+</td><td><code class="inline-code">a + b</code></td><td><code class="inline-code">a.+(b)</code></td></tr><tr><td>es &lt;</td><td><code class="inline-code">a &lt; b</code></td><td><code class="inline-code">a.&lt;(b)</code></td></tr><tr><td>::</td><td><code class="inline-code">x :: xs</code></td><td><code class="inline-code">xs.::(x)</code></td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="strings-e-interpolacion">
+    <h2>Strings e interpolación</h2>
+    <div class="doc-content">
+<p>Los strings de Scala se basan en <code class="inline-code">String</code> de Java, pero la <strong>interpolación</strong> los hace mucho más cómodos: al anteponer <code class="inline-code">s</code> a las comillas, cualquier <code class="inline-code">$expresion</code> dentro del texto se evalúa y se inserta en su lugar.</p>
+<pre><code class="language-scala">val nombre = "Andrea"
+val edad = 28
+
+// Interpolación simple con s
+val texto = s"Me llamo $nombre y tengo $edad años"
+println(texto)
+
+// Interpolación de expresiones: se evalúa entre llaves
+println(s"El doble de $edad es ${edad * 2}")
+
+// Interpolador f: formato numérico estilo printf
+val pi = 3.14159265
+println(f"Pi con 3 decimales: $pi%.3f")
+
+// Triple comilla: strings en varias líneas sin escapar comillas
+val poema = """La JVM es el escenario
+               donde Scala baila su danza."""
+println(poema)</code></pre>
+<blockquote class="aside aside-tip"><p>Si tu string contiene muchos caracteres especiales, las <strong>triples comillas</strong> <code class="inline-code">"""..."""</code> evitan escapar cada comilla o barra. Excelentes para regex y SQL embebido.</p></blockquote>
+<blockquote class="aside aside-note"><p>Para un literal con <code class="inline-code">$</code> que no quieras interpolar, usa <code class="inline-code">$$</code> dentro de un string con prefijo <code class="inline-code">s</code>, o simplemente sin prefijo.</p></blockquote>
+<p>Con el interpolador <code class="inline-code">f</code> puedes formatear como en printf: <code class="inline-code">%d</code> para enteros, <code class="inline-code">%.2f</code> para dos decimales y <code class="inline-code">%s</code> para strings.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<ol>
+<li>Define un <code class="inline-code">val</code> para tu nombre, otro para tu edad y muestra ambos con un único <code class="inline-code">println</code> usando interpolación <code class="inline-code">s</code>.</li>
+<li>Escribe una función <code class="inline-code">esPar(n: Int): Boolean</code> usando la expresión <code class="inline-code">n % 2 == 0</code> y compruébala con 4 y con 5.</li>
+<li>Crea un <code class="inline-code">val</code> con una lambda que convierta grados Celsius a Fahrenheit y úsala con 0 y 100.</li>
+<li>Compara a mano qué devuelve <code class="inline-code">1 + 2 * 3</code> y verifica el resultado en el REPL; luego reescribe la expresión para obtener 9.</li>
+<li>Construye un texto con el interpolador <code class="inline-code">f</code> que muestre el número <code class="inline-code">2.0 / 3</code> con solo dos decimales.</li>
+</ol>
+<p>En la próxima lección dominarás el control de flujo: <code class="inline-code">if</code> como expresión, pattern matching con <code class="inline-code">match</code> y las poderosas for-comprehensions.</p>
+    </div>
+  </section>

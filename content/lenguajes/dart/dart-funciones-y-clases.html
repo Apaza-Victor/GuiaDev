@@ -1,0 +1,168 @@
+<!-- 4. Funciones y Clases - Dart (Lenguajes de Programación) -->
+
+  <section id="funciones">
+    <h2>Funciones y parámetros</h2>
+    <div class="doc-content">
+<p>Las <strong>funciones</strong> son bloques de código reutilizables que reciben parámetros y devuelven resultados. Dart permite parámetros posicionales obligatorios, <strong>parámetros nombrados</strong> opcionales (entre llaves) y valores por defecto. Además, una función es un valor más: puedes pasarla como argumento o guardarla en una variable.</p>
+<pre><code class="language-dart">// Parámetros posicionales y retorno tipado
+int sumar(int a, int b) {
+  return a + b;
+}
+
+// Parámetros nombrados, opcionales y con valores por defecto
+String saludar(String nombre, {String saludo = 'Hola', bool entusiasmo = false}) {
+  final exclamacion = entusiasmo ? '!' : '.';
+  return '$saludo, $nombre$exclamacion';
+}
+
+// Función flecha para cuerpos de una sola expresión
+int doble(int x) =&gt; x * 2;
+
+void main() {
+  print(sumar(3, 4));
+  print(saludar('GuiaDev'));
+  print(saludar('GuiaDev', saludo: 'Bienvenido', entusiasmo: true));
+  print(doble(21));
+}
+
+// Salida:
+// 7
+// Hola, GuiaDev.
+// Bienvenido, GuiaDev!
+// 42</code></pre>
+<blockquote class="aside aside-tip"><p>Los <strong>parámetros nombrados</strong> hacen que la llamada se lea sola: <code>saludar('Ana', saludo: 'Hey')</code> deja claro qué es cada valor. Usa posicionales para uno o dos argumentos imprescindibles y nombrados para los opcionales o los que describen un papel concreto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="clases-y-constructores">
+    <h2>Clases y constructores</h2>
+    <div class="doc-content">
+<p>Dart es un lenguaje <strong>orientado a objetos</strong>: casi todo lo que escribes vive dentro de una <code>class</code>. Una clase define propiedades (el estado) y métodos (el comportamiento). El constructor prepara el objeto y, como azúcar sintáctico, Dart permite declarar los campos directamente en los parámetros con <code>this</code>; también existen <strong>constructores con nombre</strong>, ideales cuando un objeto se puede crear de varias formas.</p>
+<pre><code class="language-dart">class Producto {
+  final String nombre;
+  final double precio;
+
+  // Constructor posicional con this
+  Producto(this.nombre, this.precio);
+
+  // Constructor con nombre y lista inicializadora
+  Producto.barato(this.nombre) : precio = 1.0;
+
+  double precioConIva([double porcentaje = 0.21]) =&gt; precio * (1 + porcentaje);
+}
+
+void main() {
+  final laptop = Producto('Laptop', 899.0);
+  final boligrafo = Producto.barato('Bolígrafo');
+
+  print('${laptop.nombre}: ${laptop.precioConIva().toStringAsFixed(2)}');
+  print('${boligrafo.nombre}: ${boligrafo.precio}');
+}
+
+// Salida:
+// Laptop: 1087.79
+// Bolígrafo: 1.0</code></pre>
+<table><thead><tr><th>Mecanismo</th><th>Qué hace</th><th>Ejemplo</th></tr></thead><tbody><tr><td>Constructor</td><td>Inicializa el objeto al crearlo</td><td><code>Producto(this.nombre, this.precio)</code></td></tr><tr><td>Constructor con nombre</td><td>Crea el objeto de otra forma</td><td><code>Producto.barato('Bolígrafo')</code></td></tr><tr><td>Lista inicializadora</td><td>Ajusta campos antes del cuerpo</td><td><code>Producto.barato(this.nombre) : precio = 1.0</code></td></tr><tr><td>Parámetro opcional</td><td>Valor por defecto en el argumento</td><td><code>[double p = 0.21]</code></td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>En <code>Producto('Laptop', 899.0)</code> el 899 es un <code>double</code> literal. Dart trata los números decimales con <code>double</code> siempre que aparezca el punto; recuerda usar <code>.0</code> si quieres forzar el tipo en un constructor.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="encapsulacion">
+    <h2>Getters, setters y campos privados</h2>
+    <div class="doc-content">
+<p>La <strong>encapsulación</strong> protege el estado interno de un objeto y expone solo lo necesario. En Dart los campos privados se marcan con un guion bajo (<code>_saldo</code>) y son privados <strong>a nivel de archivo</strong>, no de objeto. Los <strong>getters</strong> y <strong>setters</strong> controlan cómo se lee y se modifica una propiedad, añadiendo validaciones sin cambiar el punto de acceso desde fuera.</p>
+<pre><code class="language-dart">class Cuenta {
+  double _saldo;
+
+  Cuenta(this._saldo);
+
+  double get saldo =&gt; _saldo;
+
+  set saldo(double cantidad) {
+    if (cantidad &lt; 0) {
+      throw ArgumentError('El saldo no puede ser negativo');
+    }
+    _saldo = cantidad;
+  }
+
+  void depositar(double monto) {
+    _saldo += monto;
+  }
+}
+
+void main() {
+  final cuenta = Cuenta(100);
+  cuenta.depositar(50);
+  cuenta.saldo = 200;          // llamada transparente al setter
+  print('Saldo actual: ${cuenta.saldo}');
+}
+
+// Salida:
+// Saldo actual: 200</code></pre>
+<blockquote class="aside aside-caution"><p>El <code>_</code> hace privado a <strong>nivel de librería</strong>: otro <code>.dart</code> del mismo proyecto no puede nombrar a <code>_saldo</code>, pero dos clases dentro del mismo archivo sí. Si necesitas privacidad estricta para una API pública, separa las clases en sus propios archivos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="herencia-e-interfaces">
+    <h2>Herencia e interfaces</h2>
+    <div class="doc-content">
+<p>La <strong>herencia</strong> permite que una clase reutilice el comportamiento de otra con <code>extends</code>, y en Dart toda clase desciende de <code>Object</code> (herencia simple: una única clase padre). Además, Dart convierte a cada clase en una <strong>interfaz implícita</strong>: otra clase puede comprometerse a implementar su misma forma con <code>implements</code>. Las clases que no deben instanciarse se declaran <code>abstract</code>.</p>
+<table><thead><tr><th>Palabra clave</th><th>Qué hace</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>extends</code></td><td>Hereda los miembros de la clase padre</td><td><code>class Gato extends Animal</code></td></tr><tr><td><code>implements</code></td><td>Obliga a definir la misma superficie de la clase/interface</td><td><code>class Coche implements Vehiculo</code></td></tr><tr><td><code>abstract</code></td><td>Clase que solo puede heredarse, nunca instanciarse</td><td><code>abstract class Figura</code></td></tr><tr><td><code>@override</code></td><td>Marca un método que reemplaza al de la clase padre</td><td><code>@override String sonido()</code></td></tr></tbody></table>
+<p>En el constructor se llama al de la clase base con <code>super</code>:</p>
+<p><code>class Gato extends Animal { Gato(String nombre) : super(nombre); }</code></p>
+<p>Y un método se puede rediseñar respetando su contrato:</p>
+<p><code>@override String sonido() { return 'miau'; }</code></p>
+<blockquote class="aside aside-success"><p>Una jerarquía profunda de herencia se vuelve rígida con el tiempo. Antes de heredar pregúntate si necesitas «es un» (usa <code>extends</code>) o solo «se comporta como» (usa <code>implements</code> o un <em>mixin</em>, que verás a continuación).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="mixins">
+    <h2>Mixins</h2>
+    <div class="doc-content">
+<p>Un <strong>mixin</strong> reutiliza código sin necesidad de relación de herencia. Se define con <code>mixin</code> y la clase lo incorpora con <code>with</code>, obteniendo de inmediato sus métodos y propiedades. Como Dart solo permite un único padre, los mixins ofrecen la flexibilidad de la composición: puedes aplicar <strong>varios</strong> a la misma clase.</p>
+<pre><code class="language-dart">mixin Nadable {
+  void nadar() =&gt; print('Estoy nadando');
+}
+
+mixin Volador {
+  void volar() =&gt; print('Estoy volando');
+}
+
+class Pato with Nadable, Volador {
+  void cuac() =&gt; print('Cuac');
+}
+
+void main() {
+  final donald = Pato();
+  donald.nadar();
+  donald.volar();
+  donald.cuac();
+}
+
+// Salida:
+// Estoy nadando
+// Estoy volando
+// Cuac</code></pre>
+<blockquote class="aside aside-tip"><p>Los mixins son especialmente útiles para comportamientos transversales: serializar un objeto, registrarlo en logs, notificarlo a observadores. Se combinan con herencia sin problema: <code>class Perro extends Animal with Nadable</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuelve los ejercicios en <code>clases.dart</code> y ejecútalo con <code>dart run clases.dart</code>:</p>
+<ol>
+<li><strong>Funciones puras</strong>: Escribe <code>calcularArea(ancho, alto)</code> con parámetros posicionales y una función <code>presentar(String mensaje, {bool enMayusculas})</code> con parámetros nombrados y valor por defecto.</li>
+<li><strong>Clase propia</strong>: Define una clase <code>Libro</code> con título, autor y páginas. Añade un constructor normal y un constructor con nombre <code>Libro.desconocido()</code> que use una lista inicializadora.</li>
+<li><strong>Encapsulación</strong>: Añade a <code>Libro</code> un campo privado <code>_calificacion</code> con getter y setter, y rechaza en el setter los valores fuera del rango 0 a 5 lanzando <code>ArgumentError</code>.</li>
+<li><strong>Herencia</strong>: Crea <code>Cuento extends Libro</code> que agregue una propiedad <code>moraleja</code> y un método <code>@override</code> de descripción. Verifica que el constructor llame al padre con <code>super</code>.</li>
+<li><strong>Desafío mixin</strong>: Define un mixin <code>Resumible</code> con un método <code>resumen()</code> y aplícalo a dos clases completamente distintas para comprobar que el mismo comportamiento se comparte sin herencia.</li>
+</ol>
+<p>En la próxima lección profundizaremos en <strong>colecciones y null safety avanzado</strong>: operaciones útiles sobre listas, mapas y conjuntos, genéricos propios, tipos nullable avanzados y las funciones <code>map</code>, <code>where</code> y <code>fold</code>.</p>
+    </div>
+  </section>

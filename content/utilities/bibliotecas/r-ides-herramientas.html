@@ -1,0 +1,123 @@
+<!-- 3. IDEs y Herramientas para R - Bibliotecas (Utilidades) -->
+  <section id="rstudio">
+    <h2>RStudio / Posit: el IDE principal <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Descargar RStudio (gratuito) de posit.co o:
+winget install RStudio.RStudio  # Windows
+sudo apt install rstudio        # Debian/Ubuntu
+
+# Características clave
+#   - Consola + editor + environment + plots en pestañas
+#   - Data view y profiler integrado
+#   - Soporte de Quarto, Shiny (runApp) y Git
+# Alternativas: VS Code + R extension (R, R Studio Tailwind),
+#               Jupyter + r-irkernel, Neovim + languageserver
+</code></pre>
+<blockquote class="aside aside-tip"><p>RStudio (ahora Posit) incluye integración con renv, paquetes (devtools), Git y Shiny. Es lo primero que se instala tras R.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="renv-pak">
+    <h2>renv, pak y radian <span class="gd-badge gd-badge-note">Entorno</span></h2>
+    <div class="doc-content">
+<pre><code class="language-r"># renv: aislamiento de librerías por proyecto
+install.packages("renv")
+renv::init()          # crea .renv + lockfile
+renv::snapshot()      # guarda estado
+renv::restore()       # recrea entorno desde lockfile
+
+# pak: instalación rápida y consistente (paralela, binarios)
+install.packages("pak")
+pak::pak("tidyverse")
+pak::install_github("r-lib/conflicted")
+
+# radian: consola R mejorada para terminal (autocompletado, history)
+pip install radian
+radian
+</code></pre>
+<blockquote class="aside aside-note"><p>Mantén un lockfile con renv y compatívelo en git. `pak` acelera las instalaciones y `radian` hace el uso de R en terminal placentero.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="debug-perfilado">
+    <h2>Depuración y perfilado en R <span class="gd-badge gd-badge-note">Diagnóstico</span></h2>
+    <div class="doc-content">
+<pre><code class="language-r"># Depuración interactiva
+browser()             # pausa la ejecución y entra al debugger
+traceback()           # pila tras un error
+debug(función)        # ejecutar paso a paso esa función
+
+# Perfilado
+Rprof("perfil.out")
+# ... código lento ...
+Rprof(NULL)
+summaryRprof("perfil.out")
+
+# Alternativas
+# profvis::profvis({ ... }) gráfico de llamadas interactivo
+library(profvis)
+profvis({
+  for (i in 1:1000) { mean(rnorm(1000)) }
+})
+
+# Memoria: pryr::mem_used(), bench::mark() para microbenchmarks
+</code></pre>
+<blockquote class="aside aside-tip"><p>`profvis` visualiza cuellos de botella; `bench::mark()` compara implementaciones al instante. Depurar desde el botón "Debug" de RStudio es lo natural.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="estilo-lint">
+    <h2>Estilo y linting: styler y lintr <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-r">install.packages(c("styler", "lintr"))
+
+# Formateo automático (estilo tidyverse)
+styler::style_file("analisis.R")
+styler::style_active_file()      # en RStudio
+# pre-commit: precommit::use_precommit() para hooks de git
+
+# Linting
+lintr::lint("analisis.R")
+# RStudio: Addins -&gt; Style active file / Check with lintr
+</code></pre>
+<blockquote class="aside aside-note"><p>`styler` normaliza el código al estilo tidyverse y `lintr` señala problemas de base: espacios, longitud de línea y malas prácticas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue">
+    <h2>Despliegue de aplicaciones R <span class="gd-badge gd-badge-note">Cloud</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Publicar Shiny en Posit Connect / shinyapps.io / Shiny Server Open Source
+rsconnect::deployApp("app/")
+
+# Shiny Server (open source) estilo servidor local Docker
+docker run -p 3838:3838 rocker/shiny
+
+# Programar jobs: cron en Linux o Task Scheduler en Windows, con renv::restore()
+# Ejemplo de job:
+#   40 6 * * *  cd /srv/app && Rscript -e 'renv::restore(); source("job.R")'
+# API con plumber (servir funciones como endpoints REST)
+#   #* @get /saludo
+#   function(nombre) paste("Hola", nombre)
+</code></pre>
+<blockquote class="aside aside-note"><p>Shiny en shinyapps.io/Posit Connect, procesos programados con cron/Rscript, endpoints con plumber, y container con rocker para reproducibilidad.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Configura renv en un proyecto y congela el estado con snapshot.</li>
+<li>Da formato a un archivo con styler y ejecuta lintr para ver sus advertencias.</li>
+<li>Perfila un bucle de 5000 `mean(rnorm(1000))` con profvis y localiza el hotspot.</li>
+<li>Reemplaza un `for` por un pipeline dplyr y compara con bench::mark.</li>
+<li>Publica un pequeño dashboard Shiny en shinyapps.io (o simulalo localmente con runApp).</li>
+</ol>
+    </div>
+  </section>

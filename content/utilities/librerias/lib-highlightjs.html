@@ -1,0 +1,140 @@
+<!-- highlightjs - Librerías (Utilidades) -->
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install highlight.js
+</code></pre>
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" /&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-js">import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+hljs.registerLanguage('javascript', javascript);
+</code></pre>
+<blockquote class="aside aside-tip"><p>highlight.js resalta 190+ lenguajes con detección automática. Para producción se recomienda el `core` + registro manual de gramáticas: mucho más ligero que el bundle completo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="uso-basico">
+    <h2>Uso Básico <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-html">&lt;pre&gt;&lt;code class="language-javascript"&gt;
+  const saludar = (n) =&gt; `Hola ${n}`;
+&lt;/code&gt;&lt;/pre&gt;
+</code></pre>
+<pre><code class="language-js">// Resaltar todos los bloques con language-*
+document.querySelectorAll('pre code').forEach((block) =&gt; {
+  hljs.highlightElement(block);
+});
+
+// Por API directa (devuelve HTML escapado)
+const html = hljs.highlight('const x = 1;', { language: 'javascript' }).value;
+
+// Detección automática si no hay clase language-
+const resaltado = hljs.highlightAuto(codigo);
+</code></pre>
+<blockquote class="aside aside-tip"><p>Usa la clase `language-*` explícita siempre que sepas el lenguaje: la detección automática consume más CPU y puede fallar en fragmentos cortos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="lenguajes-parciales">
+    <h2>Lenguajes Parciales y Alias <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">import hljs from 'highlight.js/lib/core';
+import bash from 'highlight.js/lib/languages/bash';
+import python from 'highlight.js/lib/languages/python';
+import sql from 'highlight.js/lib/languages/sql';
+
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('sql', sql);
+
+// Alias: una misma gramática con otros nombres de clase
+hljs.registerAliases(['sh', 'shell'], { languageName: 'bash' });
+
+// Cargar una gramática bajo demanda (code splitting)
+async function highlight(bloque) {
+  const lang = bloque.className.match(/language-(\w+)/)?.[1];
+  if (lang &amp;&amp; !hljs.getLanguage(lang)) {
+    const mod = await import(`highlight.js/lib/languages/${lang}`);
+    hljs.registerLanguage(lang, mod.default);
+  }
+  hljs.highlightElement(bloque);
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>El registro bajo demanda permite mantener el bundle inicial pequeño y cargar solo las gramáticas que encuentres en la página.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="temas-y-estilos">
+    <h2>Temas y Personalización <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-css">/* Temas disponibles (styles/): github, atom-one-dark, dracula, nord, tokyo-night... */
+@import 'highlight.js/styles/atom-one-dark.css';
+
+/* Tema manual: sobrescribir variables de color */
+.hljs {
+  background: #1e1e2e;
+  color: #cdd6f4;
+}
+.hljs-keyword { color: #cba6f7; }
+.hljs-string  { color: #a6e3a1; }
+.hljs-number  { color: #fab387; }
+
+/* Cambiar tema claro/oscuro con media query */
+@media (prefers-color-scheme: dark) {
+  .hljs { background: #1e1e2e; color: #cdd6f4; }
+}
+</code></pre>
+<blockquote class="aside aside-note"><p>Los temas son archivos CSS: puedes alternarlos por media query, atributo `data-theme` o clase en el `<html>` sin tocar JavaScript.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="integracion-marcos">
+    <h2>Integración con Marcos y SEO <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// React: resaltar al montar (useEffect) y al cambiar contenido
+function CodeBlock({ code, lang }) {
+  const ref = useRef();
+  useEffect(() =&gt; {
+    const el = ref.current;
+    if (el) {
+      delete el.dataset.highlighted;
+      hljs.highlightElement(el);
+    }
+  }, [code]);
+  return &lt;pre&gt;&lt;code ref={ref} className={`language-${lang}`}&gt;{code}&lt;/code&gt;&lt;/pre&gt;;
+}
+
+// Contenido dinámico (SPA): re-resaltar los frentes nuevos
+function renderizado() {
+  document.querySelectorAll('pre code:not([data-highlighted])').forEach(hljs.highlightElement);
+}
+
+// Evitar doble resaltado
+// highlight.js marca `data-highlighted="yes"` automáticamente; respétalo en el selector
+</code></pre>
+<blockquote class="aside aside-success"><p>Marca con `data-highlighted` (lo pone la librería) y siempre re-ejecuta el resaltado tras cambios en el DOM. Evita el doble resaltado consultando `:not([data-highlighted])`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Registra las gramáticas de `javascript`, `python` y `bash` desde el core y resalta tres bloques.</li>
+<li>Crea un alias `js` hacía `javascript` y verifica que resalta con `class="language-js"`.</li>
+<li>Aplica dos temas distintos según tema claro/oscuro con un solo CSS media query.</li>
+<li>Implementa la carga bajo demanda de gramáticas con `import()` dinámico.</li>
+<li>En una SPA, re-resalta solo los bloques nuevos usando el selector `:not([data-highlighted])`.</li>
+</ol>
+    </div>
+  </section>

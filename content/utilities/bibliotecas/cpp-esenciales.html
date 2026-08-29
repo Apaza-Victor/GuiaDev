@@ -1,0 +1,165 @@
+<!-- 1. Librerías Esenciales de C++ - Bibliotecas (Utilidades) -->
+  <section id="libreria-estandar-cpp">
+    <h2>La librería estándar de C++ (STL) <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<p>La STL es el estándar de facto de C++: contenedores, iteradores, algoritmos, streams y utilidades modernas. Todo dentro de <code>std::</code> y sin coste adicional de enlace.</p>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+#include &lt;algorithm&gt;
+#include &lt;map&gt;
+
+int main() {
+  std::vector&lt;int&gt; v = {4, 1, 3, 2};
+  std::sort(v.begin(), v.end());     // {1,2,3,4}
+
+  std::map&lt;std::string, int&gt; edad;
+  edad["Ana"] = 30;
+  edad["Bruno"] = 25;
+
+  std::for_each(v.begin(), v.end(), [](int x) {
+    std::cout &lt;&lt; x &lt;&lt; " ";
+  });
+
+  std::string saludo = "Hola";
+  saludo += " mundo";
+  std::cout &lt;&lt; saludo &lt;&lt; '\n';
+  return 0;
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>La STL proporciona `vector`, `string`, `map`, `set`, `deque`, `array` y algoritmos como `sort`, `find`, `transform`. Es lo primero que hay que dominar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="moderno">
+    <h2>C++ moderno: smart pointers y utilidades <span class="gd-badge gd-badge-note">Moderno</span></h2>
+    <div class="doc-content">
+<pre><code class="language-cpp">#include &lt;memory&gt;
+#include &lt;optional&gt;
+#include &lt;variant&gt;
+#include &lt;tuple&gt;
+#include &lt;chrono&gt;
+
+// Gestión de memoria sin new/delete
+auto p = std::make_unique&lt;int&gt;(42);   // unique_ptr
+auto s = std::make_shared&lt;double&gt;(3.14);
+
+// Ausencia de valor sin punteros
+std::optional&lt;int&gt; buscar(const std::vector&lt;int&gt;&amp; v, int x) {
+  auto it = std::find(v.begin(), v.end(), x);
+  if (it == v.end()) return std::nullopt;
+  return *it;
+}
+
+// Unión segura de tipos
+std::variant&lt;int, std::string&gt; val = "texto";
+if (std::holds_alternative&lt;int&gt;(val)) {
+  std::get&lt;int&gt;(val);
+}
+
+// Cronometrado moderno
+using namespace std::chrono;
+auto t0 = steady_clock::now();
+// trabajo...
+auto ms = duration_cast&lt;milliseconds&gt;(steady_clock::now() - t0).count();
+</code></pre>
+<blockquote class="aside aside-tip"><p>Desde C++11/14/17/20: `unique_ptr`/`shared_ptr`, `optional`, `variant`, `string_view`, `filesystem` y `std::format` (C++20) eliminan gran parte del código manual.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fmt-spdlog">
+    <h2>fmt y spdlog: formato y logs <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-cpp">// fmt: formato seguro y rápido (base de std::format)
+#include &lt;fmt/core.h&gt;
+#include &lt;fmt/chrono.h&gt;
+
+fmt::print("Hola {}, tienes {} a\u00f1os\n", "Ana", 30);
+fmt::print("PI = {:.2f}\n", 3.14159);
+fmt::print("Fecha: {:%Y-%m-%d}\n", fmt::localtime(std::time(nullptr)));
+
+// spdlog: logging asíncrono multiplataforma
+#include &lt;spdlog/spdlog.h&gt;
+
+spdlog::info("Sistema iniciado");
+spdlog::warn("Disco al {}%", 92);
+spdlog::error("Error de red: {}", 503);
+// A rotación diaria
+auto file = spdlog::rotating_logger_mt("app", "logs/app.log", 5MB, 3);
+file-&gt;info("Evento {}", 1);
+</code></pre>
+<blockquote class="aside aside-tip"><p>fmt y spdlog son la pareja estándar moderna para texto y registro. `std::print` (C++23) adopta fmt nativamente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="nlohmann-json">
+    <h2>nldohmann/json: JSON fácil <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-cpp">#include &lt;nlohmann/json.hpp&gt;
+#include &lt;fstream&gt;
+using json = nlohmann::json;
+
+// Construir
+json j = {
+  {"nombre", "Ana"},
+  {"edad", 30},
+  {"habilidades", {"C++", "Linux", "Git"}},
+  {"activo", true}
+};
+
+// Leer con safe access
+auto nombre = j["nombre"].get&lt;std::string&gt;();
+int edad = j.value("edad", 0);
+for (auto&amp; h : j["habilidades"]) std::cout &lt;&lt; h &lt;&lt; '\n';
+
+// Serializar / deserializar desde archivo
+std::ofstream("datos.json") &lt;&lt; j.dump(2);
+std::ifstream f("datos.json");
+json cargado = json::parse(f);
+</code></pre>
+<blockquote class="aside aside-caution"><p>Usa `.value(key, default)` o comprueba `.contains()` antes de acceder por índice para evitar excepciones con datos desconocidos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="boost">
+    <h2>Boost: las utilidades de oro <span class="gd-badge gd-badge-note">Extra</span></h2>
+    <div class="doc-content">
+<pre><code class="language-cpp">#include &lt;boost/asio.hpp&gt;      // async I/O y red
+#include &lt;boost/regex.hpp&gt;     // regex potente
+#include &lt;boost/program_options.hpp&gt; // argumentos CLI
+
+// boost::asio: servidor TCP sencillo
+using boost::asio::ip::tcp;
+boost::asio::io_context io;
+
+tcp::acceptor acceptor(io, tcp::endpoint(tcp::v4(), 8080));
+tcp::socket socket(io);
+acceptor.accept(socket);
+// Leer / escribir en la conexión... (async lo hace escalable)
+
+// boost::program_options
+namespace po = boost::program_options;
+po::variables_map vm;
+// Definir opciones --puerto N --verbose y parsear
+</code></pre>
+<blockquote class="aside aside-tip"><p>Boost está "un paso" por delante del estándar (ASYNC, regex, filesystem, uenvolverse en telecomunicaciones y finanzas). Muchas piezas acaban migrando al estándar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Con `std::vector` y `std::sort` ordena un arreglo de enteros y muestra con rangos.</li>
+<li>Usa `std::optional` para una función de búsqueda que devuelva "sin valor" cuando no hay match.</li>
+<li>Escribe logs con spdlog en consola y a un archivo rotativo de 1MB.</li>
+<li>Crea y lee un JSON con nldohmann/json desde un archivo, con `.value()` y defaults.</li>
+<li>Levanta un servidor TCP mínimo con boost::asio que responda "OK" a cualquier cliente.</li>
+</ol>
+    </div>
+  </section>

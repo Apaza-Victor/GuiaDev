@@ -1,0 +1,144 @@
+<!-- 2. Frameworks Ruby: Rails, Sinatra, Roda - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework-ruby">
+    <h2>Elegir framework Ruby <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Rails: el framework por defecto (productividad + convenciones)
+gem install rails
+rails new mi_app -d postgresql
+# Sinatra: micro-framework para APIs y apps sencillas
+gem install sinatra
+# Roda: muy rápido, encadenando rutas, más "bajo nivel"
+gem install roda
+
+# Comparativa
+#  Rails:   todo incluido (MVC, ORM, views, jobs, action cable)
+#  Sinatra: unas rutas y middleware; déjate el resto tú
+#  Roda:    ruteador veloz, idea de "tree routing"
+</code></pre>
+<blockquote class="aside aside-tip"><p>Rails domina el ecosistema; Sinatra/Roda son ideales para APIs ligeras o widgets. Si vienes de Hotwire/Laravel, Rails te resultará familiar por convenciones.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="rails-core">
+    <h2>Rails: rutas, Active Record y vistas <span class="gd-badge gd-badge-note">Framework</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ruby"># Config/routes.rb
+Rails.application.routes.draw do
+  resources :usuarios
+  root "usuarios#index"
+end
+
+# Model: Active Record
+class Usuario &lt; ApplicationRecord
+  validates :email, presence: true, uniqueness: true
+  has_many :ordenes
+end
+
+# Controller
+class UsuariosController &lt; ApplicationController
+  def index
+    @usuarios = Usuario.order(:nombre).page(params[:page])
+  end
+end
+
+# Vistas: erb / slim + Turbolinks/Hotwire para UX rica
+bin/rails server
+</code></pre>
+<blockquote class="aside aside-tip"><p>Rails intenta que escribas menos: convenciones de nombres (`_controller`, plural para tablas), migraciones y generadores (`bin/rails generate scaffold`).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="sinatra-api">
+    <h2>Sinatra: micro-API en 10 líneas <span class="gd-badge gd-badge-note">API</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ruby">require "sinatra"
+require "json"
+
+set :port, 3000
+
+get "/saludo/:nombre" do
+  { saludo: "Hola #{params[:nombre]}" }.to_json
+end
+
+post "/usuarios" do
+  datos = JSON.parse(request.body.read)
+  { recibido: datos }.merge(guardado: true).to_json
+end
+
+# Roda (alternativa veloz)
+class MiApp &lt; Roda
+  route do |r|
+    r.get "saludo" do
+      "Hola"
+    end
+  end
+end
+</code></pre>
+<blockquote class="aside aside-note"><p>Sinatra/Roda se bastan para REST sin capas extras. Cuando el proyecto crezca, subeme a Rails o usa Sequel + Roda (stack "slim").</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="rspec-testing">
+    <h2>RSpec: testing en Ruby <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ruby"># spec/calculadora_spec.rb
+require "calculadora"
+
+RSpec.describe Calculadora do
+  describe ".suma" do
+    it "suma dos números" do
+      expect(Calculadora.suma(2, 3)).to eq(5)
+    end
+
+    it "funciona con negativos" do
+      expect(Calculadora.suma(-1, 1)).to eq(0)
+    end
+  end
+end
+
+# Ejecutar: bundle exec rspec
+# Rails: system tests con Capybara, factories con FactoryBot,
+#        respuestas JSON con json_matchers, fixtures de BD con use_transactional_fixtures
+</code></pre>
+<blockquote class="aside aside-tip"><p>RSpec es el estándar BDD. En Rails: FactoryBot para datos, Capybara para prueba E2E, y `rspec-rails` para controladores/modelos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="jobs-action-cable">
+    <h2>Extras del ecosistema: jobs y websockets <span class="gd-badge gd-badge-note">Extras</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ruby"># Active Job (Rails): colas de trabajo en segundo plano
+class ProcesarPedidoJob &lt; ApplicationJob
+  queue_as :default
+  def perform(pedido)
+    # trabajo pesado...
+  end
+end
+# ProcesarPedidoJob.perform_later(pedido)
+# Backends: Solid Queue (BD), Sidekiq (Redis), GoodJob
+
+# Action Cable: WebSockets
+# Hotwire+Stimulus: experiencia SPA sin escribir JS
+# Otras gemas: pundit (autorización), devise (auth), brakeman (seguridad)
+</code></pre>
+<blockquote class="aside aside-note"><p>Active Job + Sidekiq/Solid Queue y Hotwire son lo que hacen que Rails sea "completo": autenticación, jobs, websockets y seguridad en un mismo framework.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Genera un scaffold Rails de `Articulo` y personaliza la vista index.</li>
+<li>Crea en Sinatra un GET /saludo/:nombre y un POST que devuelva JSON.</li>
+<li>Escribe 3 specs RSpec para una clase `Precio` con IVA/descuento.</li>
+<li>Añade devise a un Rails app y restringe una acción con `authenticate_usuario!`.</li>
+<li>Define un Job que procese pendientes en segundo plano con perform_later.</li>
+</ol>
+    </div>
+  </section>

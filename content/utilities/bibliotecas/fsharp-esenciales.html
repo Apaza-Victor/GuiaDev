@@ -1,0 +1,112 @@
+<!-- 1. Librerías Esenciales de F# - Bibliotecas (Utilidades) -->
+  <section id="fsharp-std">
+    <h2>FSharp.Core: la base de F# <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-fsharp">// FSharp.Core lo trae todo: listas, sequence, option, resultado
+let nums = [ 3; 1; 4; 1; 5 ]
+let pares = nums |> List.filter (fun x -&gt; x % 2 = 0) |> List.map ((*) 10)
+let suma = List.sum nums
+
+// records y pattern matching
+type Persona = { Nombre: string; Edad: int }
+
+let ana = { Nombre = "Ana"; Edad = 30 }
+let describir p =
+    match p with
+    | { Edad = e } when e &gt; 18 -&gt; sprintf "%s es mayor" p.Nombre
+    | _ -&gt; sprintf "%s es menor" p.Nombre
+
+// option / result
+let op: int option = Some 5
+let dividir a b =
+    if b = 0 then Error "div por cero"
+    else Ok (a / b)
+
+// function composition |&gt;
+let add1 = (+) 1
+let dup = (*) 2
+let f = add1 &gt;&gt; dup     // f(3) = 8
+</code></pre>
+<blockquote class="aside aside-tip"><p>FSharp.Core da listas/secuencias, options/results, records/union, pattern matching y composición `|&gt;`/`&gt;&gt;`. Corre en .NET (interoperable con C#).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fsharp-deps">
+    <h2>Gestión de deps: Paket y NuGet <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># NuGet: el gestor de paquetes de .NET (shared con C#)
+dotnet add package FSharp.Data
+dotnet add package FsToolkit.ErrorHandling
+# Paket: alternativa para F#-first (con paket.dependencies)
+dotnet paket add FSharp.Data
+
+# Saber:
+#   FSharp.Data: type providers (JSON/CSV/HTML/XML tipados)
+#   Suave/Saturn (web), Giraffe (web)
+#   FsUnit es un wrapper de NUnit/Xunit para F#
+</code></pre>
+<blockquote class="aside aside-tip"><p>dotnet (SDK .NET) gestiona NuGet; Paket es la opción F#-primera. Todos interoperan con la rica librería de C# (System.*, EF Core, etc.).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fsharp-data">
+    <h2>FSharp.Data: Type Providers <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-fsharp">open FSharp.Data
+open FSharp.Data.JsonExtensions
+
+// Type provider de JSON: define tipos desde una muestra
+type Perfil = JsonProvider&lt;"https://api.github.com/users/octocat"&gt;
+
+let perfil = Perfil.GetSample()
+printfn "%s login=%s" perfil.Name perfil.Login
+
+// CSV
+type Datos = CsvProvider&lt;"https://ejemplo.com/datos.csv"&gt;
+let filas = Datos.GetSample().Rows
+
+// JsonNative para acceso dinámico sin tipos
+let j = JsonValue.Parse("""{"a": 1}""")
+let a = j?a.AsInteger()
+</code></pre>
+<blockquote class="aside aside-success"><p>FSharp.Data usa Type Providers: tipos generados en compilación desde una muestra (JSON/CSV/XML/HTML). Esa es la característica estrella de F# para datos externos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-fsharp">
+    <h2>Instalación de F# <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># .NET SDK incluye F# (fsc, dotnet fsi)
+# Windows: instalar .NET SDK desde dotnet.microsoft.com
+winget install Microsoft.DotNet.SDK.8
+# Linux/Mac: script dotnet-install.sh o distro packages
+
+dotnet --version
+# F# Interactive (REPL)
+dotnet fsi
+# Compilar/Ejecutar un script
+echo 'printfn "Hola desde F#"' &gt; hola.fsx
+dotnet fsi hola.fsx
+# Proyectos
+dotnet new console -lang "F#" -o MiProyecto
+</code></pre>
+<blockquote class="aside aside-tip"><p>El SDK .NET trae `dotnet fsi` (REPL), `fsc` y plantillas F#. VS Code + Ionide o Visual Studio con soporte F# son los editores comunes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Define un union type Forma (Circulo|Rectangulo) y area con pattern matching.</li>
+<li>Tuberiza un pipeline con |&gt; que lea lista -&gt; filtre -&gt; sume.</li>
+<li>Usa un Option y Result en una función de división segura.</li>
+<li>Con FSharp.Data creates un TypeProvider JSON y muestra un campo.</li>
+<li>Crea un console app F# con dotnet new y muéstrale un valor.</li>
+</ol>
+    </div>
+  </section>

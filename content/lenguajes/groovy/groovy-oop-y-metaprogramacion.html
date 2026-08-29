@@ -1,0 +1,199 @@
+<!-- 5. OOP y Metaprogramación - Groovy (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="clases">
+    <h2>Clases y propiedades</h2>
+    <div class="doc-content">
+<p>Las clases en Groovy son muy Java-like pero con menos ruido: propiedades automáticas (getters/setters), constructores con mapas y tracas de inicialización.</p>
+<pre><code class="language-groovy">class Persona {
+    String nombre
+    int edad
+    boolean activa = true
+
+    String saludar() { "Hola, soy $nombre" }
+    static String especie() { 'humana' }    // método estático
+}
+
+// Instanciar con mapa (constructor con mapa)
+def ana = new Persona(nombre: 'Ana', edad: 30)
+println ana.nombre                // Ana (getNombre)
+println ana.saludar()             // Hola, soy Ana
+println Persona.especie()         // humana
+
+// "propiedad" es campo + getter/setter: accedes como campo
+ana.edad = 31                     // setEdad(31)
+println ana.edad
+
+// instanceof y defaults
+assert ana instanceof Persona
+
+// toString desde getProperties
+println ana.properties     // [edad:31, nombre:Ana, activa:true, class:...]</code></pre>
+<blockquote class="aside aside-tip"><p>En Groovy, un campo sin `private` se convierte en <strong>propiedad</strong> (getter/setter automáticos). El constructor con mapa (<code>new Persona(nombre:...) </code>) y la deducción por omitir tipos en propiedades son los dos ahorros de escritura más grandes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="traits">
+    <h2>Traits e interfaces</h2>
+    <div class="doc-content">
+<p>Los <strong>traits</strong> son mezclas de métodos y estado que las clases pueden implementar (múltiples). Las interfaces Java se declaran igual.</p>
+<pre><code class="language-groovy">// Interface Java
+interface Volador {
+    void volar()
+}
+
+// Trait: métodos + campos con comportamiento
+trait Saludador {
+    String prefijo
+    String saludo(String n) { "$prefijo, $n!" }
+}
+
+trait Estadisticas {
+    int doble(int n) { n * 2 }
+}
+
+class Ave implements Saludador, Estadisticas {
+    String prefijo = 'Hola'
+}
+
+def a = new Ave()
+println a.saludo('Ana')        // Hola, Ana!
+println a.doble(21)            // 42
+
+// Un trait puede tener métodos abstractos (los implementa la clase)
+trait Motor {
+    abstract void arrancar()
+    void encender() { arrancar(); println 'Motor encendido' }
+}
+
+class Coche implements Motor {
+    void arrancar() { println 'run' }
+}
+new Coche().encender()</code></pre>
+<blockquote class="aside aside-success"><p>Con <code>trait</code> evitas la herencia única y compartes comportamiento con estado. Combinados con modificadores (<code>abstract</code>) son la forma idiomatica de "interfaces+diseño" en Groovy.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="metaprog">
+    <h2>Metaprogramación</h2>
+    <div class="doc-content">
+<p>La metaprogramación permite modificar el comportamiento de las clases <strong>en tiempo de ejecución</strong>: añadir métodos, interceptar llamadas y redefinir operadores. Es lo que hace posible el Magia de los DSL.</p>
+<pre><code class="language-groovy">// Expando: un objeto sin clase (diccionario de métodos)
+def exp = new Expando()
+exp.mensaje = 'hola'
+exp.decir = { println "mensaje: $mensaje" }
+exp.decir()                          // mensaje: hola
+
+// Proxy/métodos a clases existentes (metaClass)
+String.metaClass.masPalabra = { extra -> delegate + " " + extra }
+println 'hola'.masPalabra('mundo')   // hola mundo
+
+// Interceptar en clase propia
+class Config {
+    private mapa = [:]
+    def propertyMissing(String nombre, valor) { mapa[nombre] = valor }
+    def propertyMissing(String nombre) { mapa[nombre] }
+    String toString() { mapa.toString() }
+}
+
+def c = new Config()
+c.port = 8080                        // propertyMissing setter
+c.host = 'localhost'
+println c.port                       // 8080
+println c
+
+// methodMissing: interceptar métodos desconocidos
+class Robot {
+    def methodMissing(String nombre, args) {
+        println "Comando desconocido: $nombre con $args"
+    }
+}
+new Robot().hazAlgo(1, 2)            // Comando desconocido: hazAlgo con [1, 2]</code></pre>
+<blockquote class="aside aside-caution"><p>La metaprogramación es extremadamente potente y extremadamente peligrosa: si interceptas demasiado, pierdes legibilidad y el compilador ya no te ayuda. Úsala para DSLs y mocks, no vuelvas loco tu dominio de producción sin tests.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="categoria">
+    <h2>Categorías y categorías de clases</h2>
+    <div class="doc-content">
+<p>Las <strong>categorías</strong> y el mecanismo <code>use</code> permiten añadir comportamiento temporal a clases existentes (a diferencia de metaClass, con alcance controlado).</p>
+<pre><code class="language-groovy">// Definir categoría: métodos estáticos cuyo primer parámetro es decorado
+@Category(String)
+class StringMethods {
+    String invertida() { reverse() }
+    boolean esPalindromo() { this == reverse() }
+    String sinTildes() { replaceAll('[áéíóú]', [á:'a', é:'e', í:'i', ó:'o', ú:'u'][&it]) }
+}
+
+// Usarla dinámicamente
+// use(StringMethods) {
+//     println 'ana'.esPalindromo()       // true
+//     println 'hola'.invertida()         // aloh
+// }
+
+// Sin @Category, con clases normales:
+class Utilidades {
+    static String sinVocal(String s) { s.replaceAll('[aeiouAEIOU]', '') }
+}
+
+// El @Category + use es la forma "segura" de extender, con ámbito.</code></pre>
+<blockquote class="aside aside-tip"><p><code>@Category</code> + <code>use(Clase) { }</code> extiende métodos solo dentro del bloque. Para extrapolar a una frase latina: "con gran poder de metaprogramación viene gran responsabilidad"; <code>use</code> es más seguro que <code>metaClass</code> global.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="scripts">
+    <h2>Scripts y estructura de proyecto</h2>
+    <div class="doc-content">
+<p>Groovy alterna entre "script puro" (ejecución directa) y "compilación". Para proyectos, la estructura recomendada es similar a Java/Gradle.</p>
+<pre><code class="language-bash"># Script suelto (interpretado)
+groovy mi_script.groovy
+
+# Estructura de una app Groovy (Gradle)
+# miApp/
+#   build.gradle        # se verá en la próxima lección (Gradle)
+#   settings.gradle
+#   src/
+#     main/groovy/...   # código
+#     test/groovy/...   # tests Spock
+#   build/              # output
+
+# Compilar a bytecode en un solo paso
+groovyc -d out src/*.groovy
+java -cp "out;lib/groovy-*.jar" MiClase
+
+# Con Gradle ya incluimos el plugin 'groovy'</code></pre>
+<pre><code class="language-groovy">// Modularidad en script: clases y funciones
+// (los .groovy compilados en el mismo paquete se ven)
+
+class Calculadora {
+    int suma(int a, int b) { a + b }
+    int resta(int a, int b) { a - b }
+}
+
+def calc = new Calculadora()
+println calc.suma(3, 4)
+println calc.resta(9, 2)
+// Variables de script también — todo es un script en el mapa</code></pre>
+<blockquote class="aside aside-tip"><p>Para prototipar: `groovy script.groovy`. Para producción: Gradle con la carpeta `src/main/groovy`. La transición es suave porque el mismo código corre en ambos modos; solo varía la estructura del proyecto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Clases</strong>: crea <code>Producto</code> (nombre, precio, stock) con instanciación por mapa, métodos y propiedad derivada `totalValor()`.</li>
+<li><strong>Traits</strong>: define un trait <code>ConDescuento</code> que ofrezca <code>precioFinal(tasa)</code> y úsalo en <code>Producto</code>.</li>
+<li><strong>MetaClass</strong>: añade a <code>List</code> un método <code>segundo()</code> devolviendo el elemento 1.</li>
+<li><strong>propertyMissing</strong>: crea una clase <code>Almacen</code> que acepte propiedades dinámicas con <code>propertyMissing</code>.</li>
+<li><strong>Script a clase</strong>: convierte tu script de la lección 1 en una clase ejecutable desde <code>main</code>.</li>
+</ol>
+<p>En la última lección veremos el ecosistema: Gradle, Spock, Jenkins y servicios REST.</p>
+    </div>
+  </section>

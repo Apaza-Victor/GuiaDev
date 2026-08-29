@@ -1,0 +1,144 @@
+<!-- 1. Librerías Esenciales de R - Bibliotecas (Utilidades) -->
+  <section id="crone-tidyverse">
+    <h2>La base de R y tidyverse <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-r"># R base: estructuras, estadística y gráficos
+datos &lt;- c(3.1, 2.5, 4.0, 3.8)
+media &lt;- mean(datos)
+suma  &lt;- sum(datos)
+
+df &lt;- data.frame(
+  persona = c("Ana", "Bruno", "Carla"),
+  edad    = c(30, 25, 41)
+)
+df[df$edad &gt; 26, ]          # filtrar filas
+summary(df$edad)
+
+# tidyverse: el ecosistema estándar para datos
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+df |&gt;
+  filter(edad &gt; 26) |&gt;
+  arrange(desc(edad)) |&gt;
+  summarise(media_edad = mean(edad))
+</code></pre>
+<blockquote class="aside aside-tip"><p>`tidyverse` agrupa dplyr, tidyr, ggplot2, readr y purrr: el lenguaje de pipes `|&gt;` y la filosofía "data frames tidy" definen el flujo moderno en R.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="plots-ggplot2">
+    <h2>ggplot2: visualización <span class="gd-badge gd-badge-note">Gráficos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-r">library(ggplot2)
+
+# Gramática de gráficos: capas de datos, estética y geometría
+ggplot(mtcars, aes(x = wt, y = mpg, color = cyl)) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Peso vs consumo",
+       x = "Peso (1000 lbs)", y = "Mpg") +
+  theme_minimal()
+
+# Barras y cajas
+ggplot(diamonds, aes(x = cut)) + geom_bar()
+ggplot(iris, aes(x = Species, y = Sepal.Length)) + geom_boxplot()
+
+# Guardar y animar
+ggsave("grafico.png", width = 8, height = 5, dpi = 300)
+# gganimate + gifski para gráficos animados
+</code></pre>
+<blockquote class="aside aside-note"><p>ggplot2 separa datos, estética y geometría en capas; es el estándar para publicaciones. Para interactivos: `plotly::ggplotly()` convierte cualquier ggplot.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-paquetes">
+    <h2>Instalar R y gestionar paquetes <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Descargar R desde CRAN (macOS/Windows) o:
+sudo apt install r-base-core       # Debian/Ubuntu
+
+# Instalar paquetes desde CRAN
+install.packages(c("tidyverse", "data.table", "shiny"))
+# En el script:
+# library("tidyverse")
+
+# RStudio: el entorno principal (gratuito)
+# renv: aislamiento de proyectos (como venv de Python)
+renv::init()
+renv::restore()
+</code></pre>
+<blockquote class="aside aside-tip"><p>`renv` congela versiones por proyecto (lockfile) y `pak` acelera la instalación de dependencias desde CRAN/GitHub/binarios.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="data-table-confusem">
+    <h2>data.table y bases de datos <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-r">library(data.table)
+
+# data.table: velocidad en datasets grandes
+dt &lt;- data.table(id = 1:1e5, grupo = sample(letters[1:5], 1e5, TRUE), valor = rnorm(1e5))
+dt[grupo == "a", mean(valor)]              # filtro + agregación
+dt[, .(media = mean(valor)), by = grupo]   # agrupar en una línea
+
+# Conectar a BD: DBI + duckdb / odbc
+library(DBI)
+con &lt;- dbConnect(duckdb::duckdb(), dbdir = ":memory:")
+dbWriteTable(con, "ventas", dt)
+ventas &lt;- dbGetQuery(con, "SELECT grupo, AVG(valor) FROM ventas GROUP BY grupo")
+
+# Leer CSV fast: readr::read_csv (o fread de data.table)
+```
+</code></pre>
+<blockquote class="aside aside-caution"><p>`data.table` y `dplyr` coexisten bien; elige `data.table` para tablas enormes o sintaxis compacta y `dplyr` para claridad en pipelines.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="stringr-purrr">
+    <h2>purrr y stringr: funciones y texto <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-r">library(purrr)
+library(stringr)
+
+# purrr: aplica funciones por columnas/listas
+nums &lt;- list(1:3, 4:6, 7:9)
+nums |&gt; map(sum) |&gt; unlist()
+
+# map con tipos
+map_dbl(iris[1:4], mean)     # media de cada columna numérica
+
+# stringr: manipulacion moderna de texto
+frases &lt;- c("  Hola Mundo  ", "guia, de, desarrollo")
+str_trim(frases[1])                      # eliminar espacios
+str_to_title(frases[1])                  # " Hola Mundo "
+str_split(frases[2], ", ") |&gt; unlist()   # separar
+str_detect(frases, "guia")               # lógico
+
+# combo: glue escribe strings
+library(glue)
+nombre &lt;- "Ana"; edad &lt;- 30
+glue("Hola {nombre}, tienes {edad} años")
+</code></pre>
+<blockquote class="aside aside-note"><p>`purrr::map*`, `stringr::str_*` y `glue::glue` son la tríada funcional/texto del tidyverse con la que se escribe R idiomático moderno.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Con dplyr filtra, agrupa y resume `diamonds` (media por corte).</li>
+<li>Crea un ggplot de puntos con regresión para una variable de `mtcars`.</li>
+<li>Lee un CSV grande con `data.table::fread` y calcula agregaciones por grupo.</li>
+<li>Usa purrr para aplicar `mean` a cuatro columnas numéricas con `map_dbl`.</li>
+<li>Limpia los espacios y normaliza mayúsculas de un vector de nombres con stringr.</li>
+</ol>
+    </div>
+  </section>

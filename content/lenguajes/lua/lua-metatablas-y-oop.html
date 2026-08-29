@@ -1,0 +1,199 @@
+<!-- 5. Metatablas y POO - Lua (Lenguajes de Programación) -->
+  <section id="metatablas">
+    <h2>Metatablas y metamétodos</h2>
+    <div class="doc-content">
+<p>Una <strong>metatabla</strong> es una tabla normal asociada a otra tabla, que define cómo se comporta esa tabla ante operaciones que Lua no puede resolver por defecto: indexar campos inexistentes, sumar, comparar, concatenar o incluso llamarla como función. Los campos de la metatabla son <strong>metamétodos</strong>, funciones que Lua invoca automáticamente.</p>
+<p>Se asocia una metatabla con <code>setmetatable(tabla, meta)</code> y se lee con <code>getmetatable(tabla)</code>. El metamétodo más común es <code>__index</code>:</p>
+<pre><code class="language-lua">-- Una tabla base y su metatabla
+local perro = { nombre = "Rex" }
+
+local perro_meta = {}
+perro_meta.__index = function(tabla, clave)
+  if clave == "sonido" then
+    return tabla.nombre .. " dice guau"
+  end
+  return nil
+end
+
+setmetatable(perro, perro_meta)
+
+print(perro.nombre)       --> Rex  (existe: no usa __index)
+print(perro.sonido)       --> Rex dice guau  (no existe: __index lo resuelve)</code></pre>
+<table><thead><tr><th>Metamétodo</th><th>Cuándo se invoca</th></tr></thead><tbody><tr><td><code>__index</code></td><td>Al leer <code>tabla.clave_inexistente</code></td></tr><tr><td><code>__newindex</code></td><td>Al escribir en una clave inexistente</td></tr><tr><td><code>__add</code>, <code>__sub</code>...</td><td>Operaciones aritméticas</td></tr><tr><td><code>__concat</code></td><td>Concatenación con <code>..</code></td></tr><tr><td><code>__call</code></td><td>Llamar la tabla como función</td></tr><tr><td><code>__tostring</code></td><td>Al convertir la tabla en string</td></tr></tbody></table>
+<pre><code class="language-lua">-- __tostring para una salida legible
+local punto = { x = 2, y = 3 }
+setmetatable(punto, {
+  __tostring = function(t)
+    return "Punto(" .. t.x .. ", " .. t.y .. ")"
+  end,
+})
+print(punto)    --> Punto(2, 3)</code></pre>
+<blockquote class="aside aside-note"><p>Cada tabla puede tener <strong>una sola</strong> metatabla, asignada con <code>setmetatable</code>. Si llamas a <code>setmetatable</code> dos veces, la segunda reemplaza a la primera. Quitar una metatabla es posible con <code>setmetatable(t, nil)</code>.</p></blockquote>
+<blockquote class="aside aside-tip"><p>El metamétodo <code>__index</code> es la base de todo el sistema de objetos de Lua: cuando un método no se encuentra en el objeto, Lua lo busca en su metatabla (normalmente la «clase»). Eso es herencia, como verás pronto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="sobrecarga-de-operadores">
+    <h2>Sobrecarga de operadores</h2>
+    <div class="doc-content">
+<p>Los metamétodos permiten <strong>sobrecargar operadores</strong>: definir qué significa, por ejemplo, sumar dos de tus objetos o compararlos. Esto es ideal para valores matemáticos como puntos, vectores o números complejos. Lua busca el metamétodo en la metatabla del primer operando.</p>
+<pre><code class="language-lua">-- Una tabla de vector 2D con metatabla compartida
+local Vector = {}
+
+local meta = {
+  __add = function(a, b)
+    return Vector(a.x + b.x, a.y + b.y)
+  end,
+  __eq = function(a, b)
+    return a.x == b.x and a.y == b.y
+  end,
+  __lt = function(a, b)
+    return a.x * a.x + a.y * a.y &lt; b.x * b.x + b.y * b.y
+  end,
+  __tostring = function(t)
+    return string.format("(%.1f, %.1f)", t.x, t.y)
+  end,
+}
+
+function Vector(x, y)
+  local self = { x = x, y = y }
+  return setmetatable(self, meta)
+end
+
+local v1 = Vector(1, 2)
+local v2 = Vector(3, 4)
+local suma = v1 + v2          -- invoca __add
+print(suma)                   --> (4.0, 6.0)
+print(v1 == Vector(1, 2))     --> true   (__eq)
+print(v1 &lt; v2)                --> true   (__lt: 1+4 &lt; 9+16)</code></pre>
+<table><thead><tr><th>Operador</th><th>Metamétodo</th></tr></thead><tbody><tr><td><code>a + b</code></td><td><code>__add</code></td></tr><tr><td><code>a - b</code></td><td><code>__sub</code></td></tr><tr><td><code>a * b</code></td><td><code>__mul</code></td></tr><tr><td><code>a / b</code></td><td><code>__div</code></td></tr><tr><td><code>a % b</code></td><td><code>__mod</code></td></tr><tr><td><code>a == b</code></td><td><code>__eq</code></td></tr><tr><td><code>a &lt; b</code></td><td><code>__lt</code></td></tr><tr><td><code>a .. b</code></td><td><code>__concat</code></td></tr></tbody></table>
+<pre><code class="language-lua">-- __call: hacer que el objeto se comporte como función
+local calculadora = setmetatable({ factor = 3 }, {
+  __call = function(self, n)
+    return n * self.factor
+  end,
+})
+print(calculadora(10))    --> 30  (invoca __call)</code></pre>
+<blockquote class="aside aside-caution"><p>Cuando sobrecargas <code>__eq</code>, Lua ya no usa la comparación por referencia por defecto para ese par: tú decides qué significa «igual». Asegúrate de que <code>__eq</code> sea simétrico y coherente, o crearás bugs difíciles de rastrear.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="sistemas-de-objetos">
+    <h2>Sistemas de objetos con tablas</h2>
+    <div class="doc-content">
+<p>Con metatablas puedes construir <strong>sistemas de objetos</strong> sin sintaxis especial: una «clase» es una tabla que guarda métodos, y un «objeto» es una tabla cuya metatabla tiene <code>__index</code> apuntando a la clase. Así, cuando el objeto no tiene un campo, Lua lo busca en la clase.</p>
+<pre><code class="language-lua">-- Definir la "clase" Libro
+local Libro = {}
+Libro.__index = Libro
+
+-- Métodos de la clase (se invocan con self)
+function Libro.nuevo(self, titulo, autor)
+  local obj = setmetatable({}, self)
+  obj.titulo = titulo
+  obj.autor = autor
+  obj.prestado = false
+  return obj
+end
+
+function Libro.prestar(self)
+  if self.prestado then
+    print("El libro ya está prestado")
+  else
+    self.prestado = true
+    print("Prestado: " .. self.titulo)
+  end
+end
+
+-- Crear un objeto
+local miLibro = Libro.nuevo(Libro, "1984", "Orwell")
+print(miLibro.titulo)     --> 1984
+miLibro:prestar()         --> Prestado: 1984  (endulzado con :) 
+miLibro:prestar()         --> El libro ya está prestado</code></pre>
+<p>Fíjate en el operador <strong>dos puntos <code>:</code></strong>: <code>obj:metodo(args)</code> es azúcar sintáctico de <code>obj.metodo(obj, args)</code>. Inserta automáticamente el objeto como primer argumento <code>self</code>:</p>
+<pre><code class="language-lua">-- Equivalencia entre : y .
+function Libro.mostrar(self)
+  print(self.titulo .. " - " .. self.autor)
+end
+
+miLibro:mostrar()        -- 1984 - Orwell   (con :)
+miLibro.mostrar(miLibro) -- 1984 - Orwell   (sin :, manual)</code></pre>
+<table><thead><tr><th>Patrón</th><th>Descripción</th></tr></thead><tbody><tr><td>Clase</td><td>Tabla con métodos y <code>__index</code> que se apunta a sí misma</td></tr><tr><td>Instancia</td><td>Tabla creada con <code>setmetatable({}, Clase)</code></td></tr><tr><td>Constructor</td><td>Función que crea y devuelve la instancia</td></tr><tr><td>Método</td><td>Función que recibe <code>self</code> como primer argumento</td></tr><tr><td>Azúcar <code>:</code></td><td><code>obj:metodo(x)</code> = <code>obj.metodo(obj, x)</code></td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>El azúcar de los dos puntos <code>:</code> simplifica muchísimo la POO en Lua. Cada vez que veas <code>obj:metodo()</code>, recuerda que Lua está pasando <code>obj</code> como un parámetro oculto llamado <code>self</code>.</p></blockquote>
+<blockquote class="aside aside-success"><p>Este patrón manual de «clases» es ligero y transparente: puedes construirlo con tus propias convenciones. Es la base de la mayoría de librerías de Lua, incluidas las que emulan clases con un <code>class()</code> propio.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="herencia">
+    <h2>Herencia con metatablas</h2>
+    <div class="doc-content">
+<p>La herencia en Lua surge de forma natural encadenando <strong>metatablas</strong>: una subclase es una tabla cuyo <code>__index</code> apunta a la clase padre. Al buscar un método en un objeto, Lua lo busca en el objeto, luego en su metatabla (la subclase) y, si no está, en la metatabla de la subclase (la clase base).</p>
+<pre><code class="language-lua">-- Clase base Vehiculo
+local Vehiculo = {}
+Vehiculo.__index = Vehiculo
+
+function Vehiculo.nuevo(self, marca)
+  local obj = setmetatable({}, self)
+  obj.marca = marca
+  obj.velocidad = 0
+  return obj
+end
+
+function Vehiculo.acelerar(self, cantidad)
+  self.velocidad = self.velocidad + cantidad
+end
+
+function Vehiculo.describir(self)
+  return self.marca .. " a " .. self.velocidad .. " km/h"
+end
+
+-- Subclase Coche hereda de Vehiculo
+local Coche = setmetatable({}, { __index = Vehiculo })
+Coche.__index = Coche
+
+function Coche.nuevo(self, marca, puertas)
+  local obj = Vehiculo.nuevo(self, marca)   -- llama al constructor padre
+  obj.puertas = puertas
+  return obj
+end
+
+-- Sobrescribir un método en la subclase
+function Coche.describir(self)
+  return "Coche " .. Vehiculo.describir(self) .. " con " .. self.puertas .. " puertas"
+end
+
+local miCoche = Coche:nuevo("Seat", 5)
+miCoche:acelerar(60)                  -- heredado de Vehiculo
+print(miCoche:marca)                  -- Seat   (buscado en la cadena)
+print(miCoche:describir())            -- Coche Seat a 60 km/h con 5 puertas</code></pre>
+<p>La cadena de búsqueda de campos se encadena automáticamente, lo que permite lo que en POO clásica llamarías <strong>herencia múltiple de métodos</strong>:</p>
+<pre><code class="language-lua">-- Estructura de la cadena de herencia
+local objeto    = setmetatable({}, { __index = Coche })
+local padre     = Coche
+local abuelo    = getmetatable(Coche).__index   -- Vehiculo
+
+print(padre == Coche)                 --> true
+print(abuelo == Vehiculo)             --> true
+-- Al buscar objeto.metodo, Lua recorre: objeto -&gt; Coche -&gt; Vehiculo</code></pre>
+<table><thead><tr><th>Paso de búsqueda</th><th>Dónde mira Lua</th></tr></thead><tbody><tr><td>1</td><td>La propia tabla (objeto)</td></tr><tr><td>2</td><td>La metatabla del objeto (<code>__index</code> = clase)</td></tr><tr><td>3</td><td>La metatabla de la clase (<code>__index</code> = clase padre)</td></tr><tr><td>4</td><td>Y así sucesivamente por la cadena</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Al sobreescribir un método en la subclase, conserva la referencia al método padre (como <code>Vehiculo.describir(self)</code>). Esto respeta lo que en POO clásica se llama «llamar a <code>super</code>», y evita duplicar lógica.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Construye sistemas de objetos con metatablas. Crea cada solución en un archivo <code>.lua</code> y ejecútala para comprobar el comportamiento.</p>
+<ol>
+<li><strong>Punto 2D</strong>: Implementa una clase <code>Punto</code> con los campos <code>x</code> e <code>y</code>, el método <code>distancia</code> a otro punto, y sobrecarga <code>__add</code> y <code>__tostring</code>. Suma dos puntos y muéstralos.</li>
+<li><strong>Contador con metatabla</strong>: Crea un objeto contador con un método <code>incrementar</code> que aumente y devuelva el valor actual. Usa <code>__call</code> para que llamar al objeto equivalenta a incrementar.</li>
+<li><strong>Herencia de Animal</strong>: Define <code>Animal</code> con <code>nombre</code> y <code>sonido</code>, y subclase <code>Gato</code> que por defecto haga «miau». Instancia un gato, hazlo sonar y verifica que hereda el método de la clase base.</li>
+<li><strong>Banco con POO</strong>: Crea una clase <code>Cuenta</code> con saldo, <code>depositar</code> y <code>retirar</code> (con validación). Añade <code>__tostring</code> para mostrar el saldo formateado.</li>
+<li><strong>Desafío</strong>: Usa <code>__newindex</code> para registrar en un log cada vez que se crea una propiedad nueva en un objeto. Crea un objeto, añade varias propiedades y recorre el log para confirmar que todas se registraron.</li>
+</ol>
+<p>En el próximo capítulo, <code>modulos-y-aplicaciones</code>, llevarás tu código Lua al siguiente nivel con <strong>módulos, corrutinas y aplicaciones reales</strong> en juegos y sistemas embebidos.</p>
+    </div>
+  </section>

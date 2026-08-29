@@ -1,0 +1,133 @@
+<!-- aos - Librerías (Utilidades) -->
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install aos
+</code></pre>
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" /&gt;
+&lt;script src="https://unpkg.com/aos@2.3.4/dist/aos.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-js">import AOS from 'aos';
+import 'aos/dist/aos.css';
+</code></pre>
+<blockquote class="aside aside-tip"><p>AOS (Animate On Scroll) dispara animaciones cuando los elementos entran en el viewport al hacer scroll. Suma micro-interacciones a landing pages con solo atributos `data-aos`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primeros-pasos">
+    <h2>Activación y Atributos Básicos <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-html">&lt;!-- Inicializar al cargar la página --&gt;
+&lt;div data-aos="fade-up"&gt;Sección 1&lt;/div&gt;
+&lt;div data-aos="fade-right"&gt;Sección 2&lt;/div&gt;
+&lt;div data-aos="zoom-in"&gt;Cards&lt;/div&gt;
+</code></pre>
+<pre><code class="language-js">document.addEventListener('DOMContentLoaded', () =&gt; {
+  AOS.init({
+    duration: 700,          // duración en ms
+    easing: 'ease-in-out',  // curva
+    offset: 120,            // px antes de dispararse
+    once: true,             // animar una sola vez
+  });
+});
+
+// Con umbral y delay
+AOS.init({ offset: 80, delay: 60, once: false });
+</code></pre>
+<blockquote class="aside aside-tip"><p>`once: true` es lo más usado para landing: el elemento se anima la primera vez que entra y no vuelve a saltar al hacer scroll hacia arriba.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="animaciones-disponibles">
+    <h2>Animaciones Disponibles <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-html">&lt;!-- Deslizamientos --&gt;
+&lt;div data-aos="fade-up"&gt; fade-up &lt;/div&gt;
+&lt;div data-aos="fade-down"&gt; fade-down &lt;/div&gt;
+&lt;div data-aos="fade-left"&gt; fade-left &lt;/div&gt;
+&lt;div data-aos="fade-right"&gt; fade-right &lt;/div&gt;
+
+&lt;!-- Zoom --&gt;
+&lt;div data-aos="zoom-in"&gt; zoom-in &lt;/div&gt;
+&lt;div data-aos="zoom-in-up"&gt; zoom-in-up &lt;/div&gt;
+&lt;div data-aos="zoom-out"&gt; zoom-out &lt;/div&gt;
+
+&lt;!-- Giro y flip --&gt;
+&lt;div data-aos="flip-left"&gt; flip-left &lt;/div&gt;
+&lt;div data-aos="flip-right"&gt; flip-right &lt;/div&gt;
+
+&lt;!-- Variantes de fade con dirección --&gt;
+&lt;div data-aos="fade-up-right"&gt; fade-up-right &lt;/div&gt;
+</code></pre>
+<blockquote class="aside aside-note"><p>La nomenclatura es `efecto-dirección`: `fade`, `zoom`, `flip`, `slide` combinados con `up`, `down`, `left`, `right`. Revisa la documentación para el catálogo completo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="control-avanzado">
+    <h2>Control y Personalización <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-html">&lt;!-- Duración, delay y easing por elemento --&gt;
+&lt;div data-aos="fade-up" data-aos-duration="1000" data-aos-delay="200" data-aos-easing="linear"&gt;
+  Hero
+&lt;/div&gt;
+
+&lt;!-- Anclado a otro elemento (para EU en 2 ejes) --&gt;
+&lt;div data-aos="fade-right" data-aos-anchor="#titulo" data-aos-anchor-placement="top-center"&gt;
+  Trigger
+&lt;/div&gt;
+
+&lt;!-- Desactivar en móvil --&gt;
+&lt;div data-aos="fade-up" data-aos-disable="phone"&gt;Solo desktop&lt;/div&gt;
+</code></pre>
+<pre><code class="language-js">// Refrescar tras carga dinámica de contenido
+function cargarMas() {
+  renderContenido();
+  AOS.refresh();   // recalcular posiciones (clave tras SPA/fetch)
+}
+
+// Listener de estado
+AOS.init();
+document.querySelector('.aos-init').addEventListener('aos:in', (e) =&gt; console.log('entró'));
+</code></pre>
+<blockquote class="aside aside-caution"><p>Si añades elementos al DOM después de iniciar AOS (tabs, lazy load, routing), llama a `AOS.refresh()` para recalcular cuándo deben dispararse. Con `data-aos-disable` puedes apagarlo en móviles.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="produccion">
+    <h2>Rendimiento y Producción <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Usa IntersectionObserver (ya lo hace internamente AOS) pero limita el número de targets animados
+
+// Respetar prefers-reduced-motion
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  AOS.init({ disable: true });   // sin animaciones
+} else {
+  AOS.init({ once: true, duration: 600 });
+}
+
+// No animar todo: elige elementos clave (hero, cards, imágenes) y evita los que ya están 100% visibles
+</code></pre>
+<blockquote class="aside aside-success"><p>Regla práctica: `once: true` + animar solo secciones visibles + respetar `prefers-reduced-motion`. Así obtienes impacto visual sin penalizar el scroll de contenido largo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Activa AOS con `once: true` y aplica `fade-up` a tres secciones alternas.</li>
+<li>Usa `fade-left`/`fade-right` en una fila de dos columnas para dar sensación de entrada lateral.</li>
+<li>Dale a una tarjeta `data-aos-duration="800"` y `data-aos-delay="150"`.</li>
+<li>Carga contenido dinámico con fetch y refresca AOS con `AOS.refresh()`.</li>
+<li>Deshabilita animaciones en móviles con `data-aos-disable="phone"`.</li>
+</ol>
+    </div>
+  </section>

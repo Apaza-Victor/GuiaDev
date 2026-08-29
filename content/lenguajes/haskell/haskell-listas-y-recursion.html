@@ -1,0 +1,196 @@
+<!-- 4. Listas y Recursión - Haskell (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="listas">
+    <h2>Listas</h2>
+    <div class="doc-content">
+<p>Las listas son la estructura de datos principal de Haskell: homogéneas, inmutables, con construcción por <code>:</code> y concatenación por <code>++</code>.</p>
+<pre><code class="language-haskell">-- Construir
+lista = [1,2,3,4,5]
+rangos = [1..10]                -- [1..10]
+rangosPar = [2,4..20]           -- con paso
+ghci&gt; [1..5]
+[1,2,3,4,5]
+
+-- Cons: agregar al frente
+ghci&gt; 0 : [1,2]
+[0,1,2]
+
+-- Concatenación (costosa al final: O(n))
+ghci&gt; [1,2] ++ [3,4]
+[1,2,3,4]
+
+-- Otras operaciones
+ghci&gt; [3,1,2] |&gt; sort
+[1,2,3]
+ghci&gt; reverse [1,2,3]
+[3,2,1]
+ghci&gt; length [1..100]
+100
+
+-- Punto clave: ACCESS headers &lt;- O(1)
+ghci&gt; head [5,6,7]    -- 5
+ghci&gt; tail [5,6,7]    -- [6,7]
+ghci&gt; init [5,6,7]    -- [5,6]
+ghci&gt; last [5,6,7]    -- 7
+ghci&gt; take 2 [5,6,7]  -- [5,6]
+ghci&gt; drop 2 [5,6,7]  -- [7]</code></pre>
+<blockquote class="aside aside-tip"><p>Uso <code>[1..10]</code>, <code>[a..b..c]</code> y <code>take</code>/<code>drop</code> constantemente. Las operaciones de cabecera son O(1); las de cola O(n): solo concatenes al final si es inevitable.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="recursion-basica">
+    <h2>Recursión básica</h2>
+    <div class="doc-content">
+<p>Sin bucles en el lenguaje: la iteración se expresa con <strong>recursión</strong> estructural sobre listas. El patrón típico es la <strong>definición por dos casos</strong>: lista vacía y <code>x:xs</code>.</p>
+<pre><code class="language-haskell">-- Suma
+sumaLista :: [Int] -&gt; Int
+sumaLista []     = 0
+sumaLista (x:xs) = x + sumaLista xs
+
+ghci&gt; sumaLista [1..4]     -- 10
+
+-- Longitud
+longitud :: [a] -&gt; Int
+longitud []     = 0
+longitud (_:xs) = 1 + longitud xs
+
+-- Producto
+productoLista :: [Int] -&gt; Int
+productoLista []     = 1
+productoLista (x:xs) = x * productoLista xs
+
+-- Invertir (versión sencilla, O(n^2))
+invertir :: [a] -&gt; [a]
+invertir []     = []
+invertir (x:xs) = invertir xs ++ [x]
+
+-- Aplicar función a todos (reduce a map)
+duplicarLista :: [Int] -&gt; [Int]
+duplicarLista []     = []
+duplicarLista (x:xs) = 2*x : duplicarLista xs</code></pre>
+<blockquote class="aside aside-tip"><p>El patrón es siempre: caso base (<code>[]</code>) + caso recursivo (<code>x:xs</code>). Cuando lo interiorices, dejarás de pensar en "bucles" y todo se vuelve recursión estructural legible.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pattern">
+    <h2>Pattern matching profundo</h2>
+    <div class="doc-content">
+<p>Los <strong>patrones</strong> pueden ser anidados y con guards: descompone tuplas, listas y estructuras a la vez.</p>
+<pre><code class="language-haskell">-- Patrón de par
+sumaPar :: (Int, Int) -&gt; Int
+sumaPar (a, b) = a + b
+
+-- Patrón de lista con varios elementos
+tresPrimeros :: [a] -&gt; [a]
+tresPrimeros [a,b,c] = [a,b,c]
+tresPrimeros _       = []   -- menos de 3 elementos
+
+-- Anidados: lista de pares
+distancias :: [(Double, Double)] -&gt; [Double]
+distancias []     = []
+distancias ((x,y):resto) = sqrt (x*x + y*y) : distancias resto
+
+-- Patrón de terna / par + tripla
+nombre ::
+  (String, Int) -&gt; String
+nombre (n, _) = "Nombre: " ++ n
+
+-- Record syntax oculto: para The pattern, con:
+-- data Cliente = Cliente { nombre :: String, saldo :: Double }
+-- nombre (Cliente n _) = n  (o mejor: nombre = saldo = ...)</code></pre>
+<blockquote class="aside aside-success"><p>El pattern matching anidado hace que se lea "por casos", con el compilador verificando exhaustividad. Es hijo del mismo principio en Elixir/Rust: modelar datos, no lógica.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="funciones-listas">
+    <h2>Funciones clásicas de listas</h2>
+    <div class="doc-content">
+<p>La biblioteca <code>Prelude</code> y <code>Data.List</code> traen cientos de funciones; las siguientes son imprescindibles.</p>
+<pre><code class="language-haskell">import Data.List (sort, nub, group, sortOn, intersperse)
+
+-- Concat, zip, unzip
+ghci&gt; concat [[1],[2,3],[4]]
+[1,2,3,4]
+
+ghci&gt; zip [1,2,3] "abc"
+[(1,'a'),(2,'b'),(3,'c')]
+
+ghci&gt; unzip [(1,'a'),(2,'b')]
+([1,2],"ab")
+
+-- map y filter (GHC define; los veremos en la próxima)
+ghci&gt; map (+1) [1..5]
+[2,3,4,5,6]
+
+ghci&gt; filter even [1..10]
+[2,4,6,8,10]
+
+-- Control de evaluación perezosa
+ghci&gt; takeWhile (&lt; 100) [n^2 | n &lt;- [1..]]
+[1,4,9,16,25,36,49,64,81]
+
+-- Más de Data.List
+ghci&gt; sort [3,1,2]
+[1,2,3]
+ghci&gt; nub [1,1,2,3,3]    -- elimina duplicados
+[1,2,3]
+ghci&gt; intersperse ',' "abc"
+"a,b,c"</code></pre>
+<blockquote class="aside aside-note"><p><code>takeWhile</code> con listas infinitas es el ejemplo estrella de la pereza: corta cuando se cumple la condición y nunca evalúa el resto infinito.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="infinitas">
+    <h2>Listas infinitas</h2>
+    <div class="doc-content">
+<p>De la evaluación perezosa nace la posibilidad de tener <strong>listas infinitas</strong>: estructuras perezosas que solo se materializan al consumirlas.</p>
+<pre><code class="language-haskell">-- Infinitas pero manejables
+nats = [1..]
+pares = [2,4..]
+fibs  = 0 : 1 : zipWith (+) fibs (tail fibs)
+
+ghci&gt; take 6 nats
+[1,2,3,4,5,6]
+
+-- considerando el principio perezoso, informaticas "take" evita el resto
+ghci&gt; sum (take 100 pares)
+10100   -- 2+4+...+200
+
+-- Listas por compresión (list comprehension)
+cuadrados = [x*x | x &lt;- [1..]]
+ghci&gt; take 5 cuadrados
+[1,4,9,16,25]
+
+primos = [n | n &lt;- [2..], elem 2 [d | d &lt;- [2..ceil]], n `mod` d /= 0]
+ghci&gt; take 10 primos
+[2,3,5,7,11,13,17,19,23,29]
+
+-- cycle y repeat
+ghci&gt; take 7 (cycle "ab")
+"abababa"
+ghci&gt; take 4 (repeat 'x')
+"xxxx"</code></pre>
+<blockquote class="aside aside-tip"><p>El "truco" : <code>fibs = 0:1:zipWith (+) fibs (tail fibs)</code> es la definición de Fibonacci más elegante que verás, posible por la pereza (se auto-referencia). Tómate tu tiempo para entenderla.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Recursión</strong>: implementa <code>elementosN :: Int -&gt; [a] -&gt; [a]</code> (toma n) por recursión.</li>
+<li><strong>Pattern matching</strong>: escribe <code>maximaLista :: [Int] -&gt; Int</code> recursivo con patrón <code>x:xs</code>.</li>
+<li><strong>Función de listas</strong>: con <code>zip</code> y <code>map</code> o por compresión, calcula el producto punto de dos vectores.</li>
+<li><strong>Infinito</strong>: define <code>impares= [1,3..]</code> y usa <code>take</code>/<code>takeWhile</code> con &lt; 50.</li>
+<li><strong>Comprensión</strong>: genera los primeros 10 múltiplos de 7 con una list comprehension.</li>
+</ol>
+<p>En la próxima lección veamos las joyas de la casa: <code>map</code>, <code>filter</code>, <code>fold</code> y <code>Applicative</code>.</p>
+    </div>
+  </section>

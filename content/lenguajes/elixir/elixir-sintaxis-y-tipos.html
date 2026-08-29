@@ -1,0 +1,189 @@
+<!-- 2. Sintaxis y Tipos - Elixir (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="tipos">
+    <h2>Tipos básicos</h2>
+    <div class="doc-content">
+<p>Elixir tiene un pequeño conjunto de tipos: números, átomos, strings, listas, tuplas, maps, booleanos y <code>nil</code>. Todos los datos son inmutables y todo es una expresión que devuelve un valor.</p>
+<pre><code class="language-elixir"># Enteros y flotantes
+entero = 42
+flotante = 3.14
+
+# Átomos: constantes con nombre, del estilo "self describing"
+estado = :ok
+error = :error
+
+# Booleanos (son átomos :true / :false) y nil (que es :nil)
+activo = true
+nada = nil
+
+# Strings (UTF-8)
+texto = "Hola, Elixir"
+caracteres = String.length(texto)
+
+# Listas (enlazadas) y tuplas (acceso rápido por índice)
+lista = [1, 2, 3]
+tupla = {:ok, "resultado"}
+
+# Maps (diccionarios)
+mapa = %{"clave" =&gt; 1, nombre: "Ana"}   # mezcla claves string y atom
+
+# Inspeccionar tipo
+IO.inspect(is_integer(42))        # true
+IO.inspect(is_map(mapa))          # true</code></pre>
+<table><thead><tr><th>Tipo</th><th>Ejemplo</th><th>Uso típico</th></tr></thead><tbody><tr><td>Entero</td><td><code>42</code></td><td>Conteo, índices</td></tr><tr><td>Float</td><td><code>3.14</code></td><td>Cálculos</td></tr><tr><td>Átomo</td><td><code>:ok</code></td><td>Constantes, etiquetas</td></tr><tr><td>String</td><td><code>"texto"</code></td><td>Texto</td></tr><tr><td>Lista</td><td><code>[1, 2]</code></td><td>Colecciones de tamaño variable</td></tr><tr><td>Tupla</td><td><code>{:ok, 42}</code></td><td>Resultados y pares fijos</td></tr><tr><td>Map</td><td><code>%{a =&gt; 1}</code></td><td>Claves-valor</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pattern-matching">
+    <h2>Pattern Matching: el operador =</h2>
+    <div class="doc-content">
+<p>En Elixir, <code>=</code> NO es asignación: es <strong>pattern matching</strong>. <code>x = 10</code> liga <code>x</code> si no estaba ligada; si ya está ligada, compara. Si no coincide, lanza <code>MatchError</code>.</p>
+<pre><code class="language-elixir"># Ligar
+x = 10            # liga (nueva variable)
+IO.inspect(x)
+
+# Comparar (ya ligada): 10 = 10 funciona
+10 = 10
+IO.puts("ok")
+
+# NO funciona: 11 = x  -&gt; MatchError (boom) si x = 10
+
+# Extraer de estructuras
+{a, b, c} = {1, 2, 3}
+IO.inspect({a, b})                 # {1, 2}
+
+[primero | resto] = [10, 20, 30]
+IO.inspect(primero)                # 10
+IO.inspect(resto)                  # [20, 30]
+
+%{nombre: n} = %{nombre: "Ana", edad: 30}
+IO.inspect(n)                      # "Ana"
+
+# Patrón con desempate
+case {1, 2} do
+  {1, x} -&gt; "el segundo es #{x}"
+  {0, _} -&gt; "empieza por 0"
+  _ -&gt; "otra cosa"
+end
+
+# El patrón es la herramienta central de Elixir: se usa en case, fn, def</code></pre>
+<blockquote class="aside aside-tip"><p>Memoriza: <code>=</code> es "encaja el lado derecho con el izquierdo". Esta misma idea aparece en <code>case</code>, <code>def</code> (cabeceras) y <code>fn</code> (closures). Todo en Elixir "baila" sobre pattern matching.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="inmutabilidad">
+    <h2>Inmutabilidad</h2>
+    <div class="doc-content">
+<p>Todos los datos de Elixir son <strong>inmutables</strong>: una vez creados, jamás cambian. Las "actualizaciones" crean <strong>nuevos</strong> valores; las estructuras antiguas permanecen intactas.</p>
+<pre><code class="language-elixir">lista = [1, 2, 3]
+
+# "Agregar" al final NO modifica la lista original
+nueva = lista ++ [4]
+IO.inspect(lista)     # [1, 2, 3]  (¡original intacta!)
+IO.inspect(nueva)     # [1, 2, 3, 4]
+
+# Dar la vuelta tampoco la modifica
+reves = Enum.reverse(lista)
+IO.inspect(lista)     # [1, 2, 3]
+
+# Los maps tampoco son mutados
+mapa = %{a: 1}
+mapa2 = Map.put(mapa, :b, 2)
+IO.inspect(mapa)      # %{a: 1}
+IO.inspect(mapa2)     # %{a: 1, b: 2}
+
+# Ventaja: compartir y pasar datos sin miedo a efectos colaterales
+# La VM comparte el espacio si es posible (estructuras persistentes)</code></pre>
+<blockquote class="aside aside-success"><p>La inmutabilidad elimina toda una clase de bugs (carreras en concurrencia, efectos invisibles) y hace el código enorme de predecible. Phoenix utiliza esto para mantener estados sin bloqueos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="atomos">
+    <h2>Átomos y maps</h2>
+    <div class="doc-content">
+<p>Los <strong>átomos</strong> (<code>:nombre</code>) son constantes que se igualan a sí mismas; aparecen en todas partes (resultados <code>:ok</code>/<code>:error</code>, claves de config, estados). Los <strong>maps</strong> con claves de átomo admiten la sintaxis abreviada <code>%{clave: valor}</code> y acceso con <code>mapa.clave</code>.</p>
+<pre><code class="language-elixir"># Átomo como etiqueta de estado
+def es_par(n) do
+  if rem(n, 2) == 0, do: :par, else: :impar
+end
+IO.inspect(es_par(4))       # :par
+
+# Maps con claves átomo (sintaxis azúcar)
+persona = %{nombre: "Ana", edad: 30}
+IO.inspect(persona.nombre)          # "Ana"
+IO.inspect(persona[:edad])          # 30
+
+# Actualizar con pattern matching + |
+%{persona | edad: 31}
+IO.inspect(persona.edad)            # 30 (inmutable, no cambió)
+
+# Map con claves string / variable
+otro = %{"nombre" =&gt; "Pedro"}
+clave = "nombre"
+IO.inspect(otro[clave])             # "Pedro" (acceso dinámico)
+
+# Crear y actualizar
+nuevo = Map.put(persona, :ciudad, "Lima")
+IO.inspect(nuevo.ciudad)            # "Lima"
+
+# Listar claves
+IO.inspect(Map.keys(persona))       # [:nombre, :edad]</code></pre>
+<blockquote class="aside aside-tip"><p>Regla mental: claves de átomo para maps estáticos de tu propio código; claves string para datos externos (JSON). El operador <code>|</code> solo actualiza claves ya existentes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="strings">
+    <h2>Strings e interpolación</h2>
+    <div class="doc-content">
+<p>Los strings en Elixir son binarios UTF-8. La interpolación con <code>#{"..."}</code> es ubicua; se concatenan con <code>&lt;&gt;</code>.</p>
+<pre><code class="language-elixir">nombre = "Ana"
+edad = 30
+
+# Interpolación
+mensaje = "Hola, #{nombre}, tienes #{edad} años"
+IO.puts(mensaje)
+
+# Concatenación
+saludo = "Bienvenid" &lt;&gt; "a a " &lt;&gt; nombre
+IO.puts(saludo)
+
+# Módulo String
+IO.puts(String.upcase("elixir"))        # ELIXIR
+IO.puts(String.length("café"))          # 4 caracteres
+IO.puts(String.split("a,b,c", ","))     # ["a", "b", "c"]
+IO.puts(String.contains?("mundo", "do"))
+
+# CharLists (listas de códigos) aparecen en interop con Erlang
+chars = ~w(h o l a)                     # list of palabras
+IO.inspect(chars)
+
+# Heredoc / sigilos
+texto_largo = """
+Línea uno
+Línea dos
+"""
+IO.puts(texto_largo)</code></pre>
+<blockquote class="aside aside-caution"><p>No confundas <code>&lt;&gt;</code> (concat de strings) con <code>++</code> (concat de listas). Y not big deal: <code>[97, 98]</code> en TypeScript NO es "ab"; en Elixir una lista de enteros ≤255 se imprime como charlist (<code>'abc'</code>) solo al inspeccionar — para interop Erlang.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Tipos</strong>: en IEx crea un valor de cada tipo y muestralo con <code>IO.inspect</code> (incluye tupla y map).</li>
+<li><strong>Pattern matching</strong>: extrae <code>{:ok, dato}</code> en una variable <code>dato</code>, y separa <code>[cabeza | cola]</code> de una lista.</li>
+<li><strong>Inmutabilidad</strong>: crea una lista, agrega con <code>++</code>, e imprime ambas para comprobar que la original no cambió.</li>
+<li><strong>Mapa de perfil</strong>: construye tu <code>%{nombre:, edad:, ciudad:}</code>, actualiza con <code>|</code> y agrega una clave con <code>Map.put</code>.</li>
+<li><strong>Strings</strong>: escribe una función que devuelva la inicial en mayúscula de un nombre y la longitud de una frase.</li>
+</ol>
+<p>En la próxima lección veremos control de flujo: <code>case</code>, <code>cond</code>, funciones múltiples y guards.</p>
+    </div>
+  </section>

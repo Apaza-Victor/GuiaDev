@@ -1,0 +1,205 @@
+<!-- 2. Vectores y Data Frames - R (Lenguajes de Programación) -->
+  <section id="vectores">
+    <h2>Vectores y operaciones vectorizadas</h2>
+    <div class="doc-content">
+<p>El vector es la <strong>unidad mínima de R</strong>: una colección ordenada de valores del mismo tipo. No existen "escalares": incluso <code>x &lt;- 5</code> crea un vector de longitud 1. La gran ventaja es la <strong>vectorización</strong>: las operaciones se aplican a todos los elementos a la vez, sin necesidad de bucles explícitos.</p>
+<pre><code class="language-r"># Construcción de vectores
+a &lt;- c(1, 2, 3, 4)            # concatenar con c()
+b &lt;- 1:10                      # secuencia entera
+c &lt;- seq(0, 1, by = 0.25)      # secuencia con paso
+d &lt;- rep("tipoA", 3)           # repetir un valor
+mezcla &lt;- c("a", "b", 1, 2)    # coerción a character
+
+# Indexado: R empieza a contar en 1
+a[1]           # 1
+a[c(1, 3)]     # 1 3
+b[-3]          # todos menos el tercero</code></pre>
+<pre><code class="language-r"># Operaciones vectorizadas: sin bucles
+notas &lt;- c(7, 8, 5, 9, 6)
+notas + 1                  # sube 1 a cada nota
+notas * 2
+sqrt(notas)
+notas &gt; 6                   # comparación elemento a elemento
+
+# Reciclaje: el vector corto se repite
+c(1, 2, 3, 4) + c(10, 20)   # 11 22 13 24
+sum(notas)                  # suma total
+mean(notas)                 # promedio</code></pre>
+<table><thead><tr><th>Función</th><th>Qué hace</th><th>Ejemplo</th></tr></thead><tbody>
+<tr><td><code>c()</code></td><td>Combina valores en un vector</td><td><code>c(1, 2, 3)</code></td></tr>
+<tr><td><code>seq()</code></td><td>Secuencias con paso definido</td><td><code>seq(1, 10, by = 2)</code></td></tr>
+<tr><td><code>rep()</code></td><td>Replica un valor o vector</td><td><code>rep(TRUE, 4)</code></td></tr>
+<tr><td><code>length()</code></td><td>Cantidad de elementos</td><td><code>length(b)</code></td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>Los bucles <code>for</code> existen en R, pero casi siempre hay alternativa vectorizada más rápida y legible. Si te descubres llenando un vector elemento a elemento, pregúntate si <code>c()</code> o alguna función te lo ahorra.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="factores">
+    <h2>Factores y variables categóricas</h2>
+    <div class="doc-content">
+<p>Un factor es un vector con un conjunto fijo de <strong>niveles (levels)</strong>. Representa variables categóricas: sexo, departamento, escala de satisfacción. Internamente guarda los niveles como números y las etiquetas como textos, lo que permite que los modelos estadísticos traten cada categoría de forma correcta.</p>
+<pre><code class="language-r"># Crear un factor simple
+region &lt;- factor(c("norte", "sur", "norte", "este"))
+region
+levels(region)          # en qué categorías se organiza
+nlevels(region)         # cuántas hay
+table(region)           # recuento por nivel
+
+# Factores ordenados: categóricas con jerarquía
+satisfaccion &lt;- factor(c("baja", "alta", "media"),
+                       levels = c("baja", "media", "alta"),
+                       ordered = TRUE)
+satisfaccion &gt; "baja"   # compara jerarquías</code></pre>
+<pre><code class="language-r"># Importar un CSV y decidir qué será factor
+datos &lt;- read.csv("ventas.csv", stringsAsFactors = TRUE)
+
+# Recodificar un nivel
+levels(datos$region)[levels(datos$region) == "n"] &lt;- "norte"
+
+# Frecuencias y proporciones
+tabla &lt;- table(datos$region)
+tabla
+prop.table(tabla)        # porcentaje de cada nivel</code></pre>
+<table><thead><tr><th>Aspecto</th><th>Factor (no ordenado)</th><th>Factor (ordered)</th></tr></thead><tbody>
+<tr><td>Ejemplo</td><td>Sexo, ciudad</td><td>Nivel de estudios</td></tr>
+<tr><td>Comparación válida</td><td>Igualdad y pertenencia (<code>%in%</code>)</td><td><code>&lt;</code>, <code>&gt;</code>, <code>==</code></td></tr>
+<tr><td>En los modelos</td><td>Contrastes sin orden</td><td>Contrastes con jerarquía</td></tr>
+</tbody></table>
+<blockquote class="aside aside-note"><p>Desde R 4.0 el argumento <code>stringsAsFactors</code> viene en <code>FALSE</code> por defecto: los textos importados ya no se convierten solos a factor. Decídelo tú con <code>factor()</code> cuando la variable realmente sea categórica.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="matrices">
+    <h2>Matrices y arreglos</h2>
+    <div class="doc-content">
+<p>Una matriz es un vector con <strong>dos dimensiones</strong>: filas y columnas, todos del mismo tipo. Son la base de los cómputos lineales (álgebra, regresión) y de la lectura natural de grillas de datos. Se rellenan por columnas por defecto, una decisión que conviene conocer.</p>
+<pre><code class="language-r"># Crear matrices
+m &lt;- matrix(1:12, nrow = 3, ncol = 4)
+m
+
+# Rellena por filas si lo prefieres
+m2 &lt;- matrix(1:12, nrow = 3, byrow = TRUE)
+
+# Unir vectores como filas o columnas
+rbind(c(1, 2), c(3, 4))       # por filas
+cbind(c(1, 2), c(3, 4))       # por columnas
+
+# Dimensiones
+dim(m)          # 3 4
+nrow(m)         # 3
+ncol(m)         # 4</code></pre>
+<pre><code class="language-r"># Indexado con [fila, columna]
+m[2, 3]            # elemento fila 2, columna 3
+m[1, ]             # toda la fila 1 (devuelve vector)
+m[, 2]             # toda la columna 2
+m[2:3, c(1, 4)]    # submatriz
+
+# Álgebra matricial
+A &lt;- matrix(c(2, 1, 1, 3), nrow = 2)
+B &lt;- matrix(c(1, 0, 0, 1), nrow = 2)
+A %*% B            # producto matricial
+solve(A)           # inversa de A
+
+# Operaciones sobre dimensiones
+colSums(m)
+rowMeans(m)</code></pre>
+<blockquote class="aside aside-caution"><p><code>matrix()</code> rellena por columnas. Si tus datos vienen por filas, usa <code>byrow = TRUE</code>; la confusión con el orden de llenado es un clásico generador de bugs silenciosos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="data-frames">
+    <h2>Data frames: la estructura central</h2>
+    <div class="doc-content">
+<p>El data frame es la forma natural de las tablas de datos: <strong>columnas como variables y filas como observaciones</strong>. Cada columna puede tener su propio tipo, lo que lo vuelve perfecto para datasets reales. Es el objeto que ves con <code>View()</code> en RStudio y el que alimenta a <code>ggplot2</code>.</p>
+<pre><code class="language-r"># Crear un data frame a partir de vectores
+nombres &lt;- c("Ana", "Luis", "Eva", "Pablo")
+ventas &lt;- c(120, 95, 158, 88)
+region &lt;- factor(c("norte", "sur", "norte", "sur"))
+
+df &lt;- data.frame(nombre = nombres,
+                 ventas = ventas,
+                 region = region)
+df
+str(df)          # estructura: tipos y primeras filas
+summary(df)      # resumen numérico y de factores</code></pre>
+<pre><code class="language-r"># Acceso a columnas
+df$ventas                 # vector por nombre
+df[["ventas"]]            # equivalente con dobles corchetes
+df[, "ventas"]            # por índice de columnas
+df["ventas"]              # devuelve un data frame, no un vector
+
+# Filtrado de filas
+df[df$region == "norte", ]                    # solo norte
+df[df$ventas &gt; 100, ]                        # ventas mayores a 100
+df[order(df$ventas, decreasing = TRUE), ]     # ordenado descendente
+
+# Agregar una nueva columna
+df$venta_alta &lt;- df$ventas &gt; 100
+df</code></pre>
+<table><thead><tr><th>Forma</th><th>Devuelve</th><th>Uso</th></tr></thead><tbody>
+<tr><td><code>df$columna</code></td><td>Vector</td><td>El más habitual en análisis</td></tr>
+<tr><td><code>df[["columna"]]</code></td><td>Vector</td><td>Cuando el nombre viene en una variable</td></tr>
+<tr><td><code>df[, "columna"]</code></td><td>Vector</td><td>Estilo matriz</td></tr>
+<tr><td><code>df["columna"]</code></td><td>Data frame</td><td>Para encadenar más operaciones</td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>Antes de cualquier análisis ejecuta <code>head(df)</code>, <code>str(df)</code> y <code>summary(df)</code>: en segundos te enteras de qué variables tienes, sus tipos y si hay valores raros.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="listas">
+    <h2>Listas</h2>
+    <div class="doc-content">
+<p>Una lista es un <strong>contenedor heterogéneo</strong>: puede guardar vectores, matrices, data frames y hasta otras listas, cada uno con un nombre propio. No exige que los elementos sean del mismo tipo ni del mismo largo; por eso es el encargado de agrupar resultados complejos.</p>
+<pre><code class="language-r"># Crear una lista con nombres
+resultado &lt;- list(
+  media = 45.2,
+  tabla = table(c("a", "b", "a")),
+  resumen = c(min = 10, max = 90)
+)
+resultado             # muestra todos los componentes
+
+# Extraer elementos
+resultado$media            # por nombre con $
+resultado[["media"]]       # por nombre con dobles corchetes
+resultado[[1]]             # por posición
+
+# Ojo con [ frente a [[
+resultado[1]      # lista con 1 elemento
+resultado[[1]]    # el valor en sí (un numeric)</code></pre>
+<pre><code class="language-r"># Aplicar funciones a cada elemento con lapply
+numeros &lt;- list(a = 1:3, b = 4:6, c = 7:9)
+lapply(numeros, mean)      # devuelve lista con las medias
+sapply(numeros, mean)      # devuelve vector con las medias
+
+# Listas que anidan: los resultados de modelos estadísticos
+modelo &lt;- lm(ventas ~ region, data = df)
+class(modelo)              # "lm"
+modelo$coefficients        # accede a una parte del modelo
+
+# Longitudes y nombres
+length(resultado)
+names(resultado)</code></pre>
+<blockquote class="aside aside-success"><p>Regla mnemotécnica: <code>lista[[x]]</code> te da el <em>contenido</em>; <code>lista[x]</code> te da la <em>caja</em>. Si un resultado te sale <code>list()</code> donde esperabas un número, casi seguro usaste corchete simple.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuélvelos en tu script. Todo lo necesario está en esta lección.</p>
+<ol>
+<li><strong>Vector de ventas:</strong> crea un vector con 6 valores de ventas diarias, calcula su media, el valor máximo y las posiciones donde cada venta supera el promedio.</li>
+<li><strong>Factor ordenado:</strong> crea un factor con niveles <code>baja</code>, <code>media</code>, <code>alta</code> en orden, y cuenta cuántos casos caen en cada nivel con <code>table()</code>.</li>
+<li><strong>Matriz 3x4:</strong> construye una matriz de 12 números rellena por filas, extrae la segunda fila y la tercera columna, y calcula <code>colSums()</code>.</li>
+<li><strong>Data frame de nombres:</strong> arma un data frame con 5 personas (nombre, edad, ciudad) y filtra las mayores de 25 años.</li>
+<li><strong>Lista de resultados:</strong> guarda en una lista la media, la mediana y la desviación típica de un vector, y extrae la mediana con <code>[[</code> y con <code>$</code>.</li>
+</ol>
+<p>En la próxima lección aprenderás a transformar tablas de forma elegante y expresiva con el paquete <strong>dplyr</strong>.</p>
+    </div>
+  </section>

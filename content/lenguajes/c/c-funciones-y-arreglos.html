@@ -1,0 +1,143 @@
+<!-- 4. Funciones y Arreglos - C (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="declarar-funciones">
+    <h2>Declarar y definir funciones</h2>
+    <div class="doc-content">
+<p>Una <strong>función</strong> es un bloque de código con nombre que recibe parámetros opcionales, realiza una tarea y devuelve un resultado. Dividir el programa en funciones lo hace legible, reutilizable y fácil de probar. La sintaxis combina el tipo de retorno, el nombre y la lista de parámetros:</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+
+// Definición de la función sumar
+int sumar(int a, int b) {
+    return a + b;
+}
+
+double promedio(double a, double b, double c) {
+    return (a + b + c) / 3.0;
+}
+
+int main(void) {
+    int total = sumar(5, 7);
+    printf("Suma: %d\n", total);              // 12
+
+    double media = promedio(7.0, 8.5, 9.0);
+    printf("Promedio: %.2f\n", media);        // 8.17
+    return 0;
+}</code></pre>
+<table><thead><tr><th>Función</th><th>Parámetros</th><th>Retorna</th></tr></thead><tbody><tr><td>int sumar(int a, int b)</td><td>2 enteros</td><td>Entero con la suma</td></tr><tr><td>double promedio(double, double, double)</td><td>3 decimales</td><td>Decimal con el promedio</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>El <code class="inline-code">void</code> indica ausencia de valor: una función <code class="inline-code">void saludar(void)</code> no recibe parámetros y no devuelve nada.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="prototipos-y-ambito">
+    <h2>Prototipos, cabeceras y ámbito</h2>
+    <div class="doc-content">
+<p>En C, el compilador debe conocer una función antes de usarla. Una opción es definir la función antes de <code class="inline-code">main</code>; la otra es declarar un <strong>prototipo</strong>: una línea que anuncia la firma (tipo de retorno, nombre y parámetros) sin su cuerpo. Así puedes ubicar las definiciones después de <code class="inline-code">main</code> o repartirlas en otros archivos.</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+
+// Prototipo: le anuncia al compilador la firma de doble
+double doble(double x);
+
+int main(void) {
+    printf("%.1f\n", doble(3.5));   // 7.0
+    return 0;
+}
+
+// Definición de la función, después de main
+double doble(double x) {
+    return x * 2;
+}</code></pre>
+<p>El <strong>ámbito</strong> (o scope) define dónde vive una variable: una variable declarada dentro de una función es <em>local</em> y solo existe ahí. Una variable declarada fuera de todo bloque es <em>global</em> y es visible en todo el archivo.</p>
+<table><thead><tr><th>Ámbito</th><th>Dónde se declara</th><th>Visibilidad</th></tr></thead><tbody><tr><td>Global</td><td>Fuera de cualquier función</td><td>Todo el archivo</td></tr><tr><td>Local</td><td>Dentro de una función o bloque</td><td>Ese bloque y sus anidados</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>El <code class="inline-code">#include &lt;stdio.h&gt;</code> del inicio es un conjunto de prototipos listos para usar: la declaración de printf, scanf o fgets viene de ahí.</p></blockquote>
+<blockquote class="aside aside-caution"><p>Las variables globales facilitan errores difíciles de rastrear porque cualquier función puede modificarlas. Prefiere pasar datos por parámetros.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="arreglos">
+    <h2>Arreglos y su recorrido</h2>
+    <div class="doc-content">
+<p>Un <strong>arreglo</strong> (array) es una colección de elementos del mismo tipo, almacenados uno tras otro en memoria. Se declara indicando tipo, nombre y tamaño entre corchetes. El primer elemento siempre está en el índice 0.</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int main(void) {
+    int notas[5] = {15, 18, 12, 20, 17};
+    int i;
+    int suma = 0;
+
+    printf("Elementos: ");
+    for (i = 0; i &lt; 5; i++) {
+        printf("%d ", notas[i]);
+    }
+
+    for (i = 0; i &lt; 5; i++) {
+        suma += notas[i];
+    }
+    printf("\nPromedio: %.1f\n", suma / 5.0);   // 16.4
+    return 0;
+}</code></pre>
+<table><thead><tr><th>Característica</th><th>Detalle</th></tr></thead><tbody><tr><td>Índice inicial</td><td>0 (siempre)</td></tr><tr><td>Índice final</td><td>tamaño - 1 (nunca el tamaño)</td></tr><tr><td>Acceso</td><td>notas[2] accede al tercer elemento</td></tr><tr><td>Las llaves {}</td><td>Inicializan el arreglo al declararlo</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Acceder a <code class="inline-code">notas[5]</code> en un arreglo de tamaño 5 es <strong>fuera de límites</strong>: lee o escribe memoria que no te pertenece (comportamiento indefinido). La revisión de límites es responsabilidad tuya, no del compilador.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cadenas-char">
+    <h2>Cadenas: char[] y string.h</h2>
+    <div class="doc-content">
+<p>En C no existe un tipo string: una <strong>cadena</strong> es un arreglo de <code class="inline-code">char</code> que termina con el carácter nulo <code class="inline-code">'\0'</code>. La biblioteca <code class="inline-code">string.h</code> ofrece funciones para copiarlas, compararlas y medirlas.</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+int main(void) {
+    char saludo[20] = "Hola";
+    char nombre[20] = "Ana";
+
+    strcat(saludo, ", ");            // saludo ahora es "Hola, "
+    strcat(saludo, nombre);          // saludo ahora es "Hola, Ana"
+
+    printf("%s\n", saludo);
+    printf("Largo: %zu\n", strlen(saludo));       // 9
+    printf("Iguales: %d\n", strcmp("ana", "ana"));  // 0
+
+    // Recorrer carácter a carácter hasta el carácter nulo
+    int i;
+    for (i = 0; saludo[i] != '\0'; i++) {
+        putchar(saludo[i]);
+    }
+    putchar('\n');
+    return 0;
+}</code></pre>
+<table><thead><tr><th>Función</th><th>Qué hace</th></tr></thead><tbody><tr><td>strcpy(dest, src)</td><td>Copia src en dest</td></tr><tr><td>strcat(dest, src)</td><td>Agrega src al final de dest</td></tr><tr><td>strlen(s)</td><td>Longitud sin contar el carácter nulo</td></tr><tr><td>strcmp(a, b)</td><td>0 si son iguales; negativo o positivo según el orden</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Guarda siempre un carácter extra en el arreglo: <code class="inline-code">char ciudad[11]</code> guarda cadenas de hasta 10 letras, porque el carácter <code class="inline-code">'\0'</code> ocupa el último espacio.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="paso-de-parametros">
+    <h2>Paso por valor vs por referencia</h2>
+    <div class="doc-content">
+<p>En C, los argumentos se pasan por <strong>valor</strong>: la función recibe una copia y no puede modificar la variable original. Para modificar el original necesitas el paso por <strong>referencia</strong>, que se logra pasando la dirección de la variable con el operador <code class="inline-code">&amp;</code> y recibiéndola con un puntero en la función.</p>
+<table><thead><tr><th>Forma</th><th>Llamada</th><th>Firma</th><th>¿Modifica el original?</th></tr></thead><tbody><tr><td>Por valor</td><td>funcion(a)</td><td>void funcion(int x)</td><td>No</td></tr><tr><td>Por referencia</td><td>funcion(&amp;a)</td><td>void funcion(int *x)</td><td>Sí</td></tr></tbody></table>
+<p>Un ejemplo clásico es la función <code class="inline-code">intercambiar</code>: si recibes dos enteros por valor, el cambio se pierde al salir. Con punteros <code class="inline-code">(int *a, int *b)</code> y el operador <code class="inline-code">*x</code> para leer o escribir la dirección apuntada, el intercambio sí queda en el programa que llamó.</p>
+<blockquote class="aside aside-note"><p>Los arreglos se comportan distinto: al pasarlos a una función se pasa su dirección (el nombre del arreglo es un puntero), así que las funciones sí pueden modificar sus elementos.</p></blockquote>
+<blockquote class="aside aside-tip"><p>El paso por referencia con <code class="inline-code">&amp;</code> es exactamente lo que ya usas con <code class="inline-code">scanf("%d", &amp;edad);</code>: scanf necesita la dirección para escribir el valor leído en tu variable.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una función <code class="inline-code">int cuadrado(int n)</code> y úsala para imprimir los cuadrados del 1 al 10.</li>
+<li>Escribe una función <code class="inline-code">int es_par(int n)</code> que devuelva 1 si el número es par y 0 si no.</li>
+<li>Declara un arreglo de 10 notas, pídelas con scanf y calcula el promedio con un bucle <code class="inline-code">for</code>.</li>
+<li>Copia la cadena <code class="inline-code">"GuiaDev"</code> a un arreglo <code class="inline-code">char</code> adecuado y muéstrala carácter por carácter.</li>
+<li>Implementa una función <code class="inline-code">void incrementar(int *n)</code> usando paso por referencia; llámala desde main y verifica el cambio.</li>
+</ol>
+<p>En la próxima lección entrarás en el corazón de C: los punteros y la memoria dinámica.</p>
+    </div>
+  </section>

@@ -1,0 +1,101 @@
+<!-- 3. IDEs y Herramientas para Elixir - Bibliotecas (Utilidades) -->
+  <section id="ide-elixir">
+    <h2>IDEs y ElixirLS <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># ElixirLS: LSP para Elixir (completado, docs, definiciones)
+#   VS Code: extension elixir-lsp.elixir-ls
+code --install-extension elixir-lsp.elixir-ls
+# Neovim también con elixir-ls via lspconfig
+# IntelliJ: plugin "Elixir"
+# Emacs: lsp-mode
+
+# En el editor: mix format al guardar (configuración local .formatter.exs)
+# Validación: todo con mix compile/test
+</code></pre>
+<blockquote class="aside aside-tip"><p>ElixirLS es el LSP que habilita autocompletado y doctores desde la stdlib. VS Code + extensión es la vía más rápida; el server corre con tu mix project.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="mix-format-credo">
+    <h2>mix format, Credo y CLI <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># mix format: formatter oficial con .formatter.exs
+mix format
+mix format --check-formatted   # CI
+
+# Credo: linter de calidad (estilo + problemas)
+mix credo --strict
+# salida nivel: suggestion/refactor/warning
+
+# Extras
+mix hex.audit            # vulnerabilidades de deps
+mix deps.audit           # (nuevas versiones)
+mix dialyzer             # análisis de tipos 
+# Build/empaquetado: mix release (con etc)
+</code></pre>
+<blockquote class="aside aside-note"><p>`mix format` es obligatorio y tipado; Credo da juicios de calidad y refactores; Dialyzer (vía dialyxir) detecta errores de tipado en runtime; Hex audit para CVEs.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depuracion-elixir">
+    <h2>Depuración: IEx, observer y LSP debug <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># IEx: REPL profundo
+iex -S mix                  # arranca con el proyecto (módulos visibles)
+# dentro: h función (docs), i value (info), r módulo (reload)
+#   :observer.start   # GUI de BEAM/VM: procesos, memoria, ets
+
+# Inspección de procesos vivos
+Process.info(pid)
+:sys.get_state(pid)
+
+# Debug via breakpoints: elixir-ls "Debug ad def" - DAP
+# Tracing: :dbg.tracer() | | GenServer.call...
+
+# Extract common: pretty printing con "IO.inspect(term, label: :marcador)"
+</code></pre>
+<blockquote class="aside aside-caution"><p>`iex -S mix` es tu casa; `:observer` (BEAM GUI) te muestra procesos (GenServers). ElixirLS trae debug (DAP) en VS Code para breakpoints clásicos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-elixir">
+    <h2>Releases: mix release y contenedores <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># mix release: empaqueta BEAM+app+config en un tarball
+MIX_ENV=prod mix release
+# genera build/prod/rel/mi_app/bin/mi_app
+# ejecutar: ./mi_app start (foreground) / eval
+</code></pre>
+<pre><code class="language-docker">FROM elixir:1.16-slim AS build
+WORKDIR /app
+RUN mix local.hex --force && mix local.rebar --force
+COPY mix.exs mix.lock ./
+COPY lib lib
+RUN mix deps.get --only prod && MIX_ENV=prod mix release
+
+FROM debian:bookworm-slim
+WORKDIR /app
+COPY --from=build /app/_build/prod/rel/mi_app ./mi_app
+ENV PORT=4000
+CMD ["/app/mi_app/bin/mi_app", "start"]
+</code></pre>
+<blockquote class="aside aside-success"><p>`mix release` compila la BEAM y la app: despliegue como binario sin Erlang instalado. Distillery/Strombre quedaron obsoletos: `mix release` es el oficial y maduro desde Elixir 1.9.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala ElixirLS en VS Code y prueba h/i/r en IEx.</li>
+<li>Configura `.formatter.exs` y pasa `mix format --check-formatted`.</li>
+<li>Corre `mix credo --strict` y corrige 3 avisos.</li>
+<li>Levanta `:observer.start()` y examina 3 procesos de tu app.</li>
+<li>Construye `MIX_ENV=prod mix release` y ejecuta el binario.</li>
+</ol>
+    </div>
+  </section>

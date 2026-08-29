@@ -1,0 +1,193 @@
+<!-- 5. Ciencia de Datos - Julia (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="dataframes">
+    <h2>DataFrames.jl y estructuras</h2>
+    <div class="doc-content">
+<p><strong>DataFrames.jl</strong> es el equivalente de pandas en Julia: una tabla con columnas tipadas, ideal para análisis de datos. Se instala con <code>Pkg.add("DataFrames")</code>.</p>
+<pre><code class="language-julia">using Pkg
+# Pkg.add("DataFrames")
+# Pkg.add("CSV")
+# Pkg.add("Plots")
+
+using DataFrames
+
+df = DataFrame(
+    nombre = ["Ana", "Pedro", "Pau"],
+    edad   = [30, 25, 35],
+    ciudad = ["Lima", "Cusco", "Arequipa"],
+)
+println(df)
+
+# Inspección
+println(size(df))          # (3, 3)
+println(names(df))         # nombre, edad, ciudad
+println(eltype(df.edad))   # Int64
+println(first(df, 2))
+
+# Acceso por columna (símbolo) y fila (número)
+println(df.edad)           # Vector de edades
+println(df[1, :])          # primera fila (DataFrameRow)
+println(df[2, "ciudad"])   # "Cusco"
+
+# Agregar columna
+df.promedio = [8.5, 7.0, 9.2]
+println(df)</code></pre>
+<blockquote class="aside aside-note"><p>Los DataFrames en Julia son "column-oriented": las columnas son vectores homogéneos, lo que da rendimiento similar a un array plano. <code>DataFrameRow</code> y <code>SubDataFrame</code> permiten vistas sin copiar datos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="manipulacion-de-datos">
+    <h2>Manipulación de datos</h2>
+    <div class="doc-content">
+<p>DataFrames.jl incluye funciones de transformación: <code>filter</code>, <code>transform</code>, <code>select</code>, <code>groupby</code>, <code>combine</code> y la API con <code>@subset</code>, <code>@select</code>... (macros "query").</p>
+<pre><code class="language-julia">using DataFrames
+
+df = DataFrame(
+    producto = ["Lapiz", "Lapiz", "Lapiz", "Goma", "Goma"],
+    mes      = [1, 2, 3, 1, 2],
+    ventas   = [10, 12, 15, 6, 8],
+)
+
+# Filtrar filas (macro @subset: legible y rápido)
+mayores = @subset(df, ventas .&gt; 7)
+println(mayores)
+
+# Seleccionar columnas
+println(select(df, :producto, :ventas))
+
+# Transformar (agregar columna calculada)
+df_impuesto = transform(df, :ventas =&gt; (v -&gt; v * 0.18) =&gt; :impuesto)
+println(df_impuesto)
+
+# Agrupar y agregar
+g = groupby(df, :producto)
+resumen = combine(g, :ventas =&gt; sum =&gt; :total, :ventas =&gt; mean =&gt; :promedio)
+println(resumen)
+
+# Ordenar y valores únicos
+println(sort(df, :ventas, rev=true))
+println(unique(df.producto))
+
+# Operaciones tipo SQL con macros
+using DataFramesMeta   # Pkg.add("DataFramesMeta")
+res = @combine(groupby(df, :producto), suma = sum(:ventas))
+println(res)</code></pre>
+<blockquote class="aside aside-tip"><p>Con <strong>DataFramesMeta</strong> (macros <code>@select</code>, <code>@where</code>, <code>@transform</code>, <code>@combine</code>) escribir queries es casi tan cómodo como pandas o dplyr, y el rendimiento sigue siendo Julia puro.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="graficos-con-plots">
+    <h2>Gráficos con Plots.jl</h2>
+    <div class="doc-content">
+<p><strong>Plots.jl</strong> es un front-end unificado que funciona sobre backends (GR, PlotlyJS, UnicodePlots...). Con una línea cambias de backend y la API no cambia.</p>
+<pre><code class="language-julia">using Plots, Random
+
+Random.seed!(7)
+x = 1:10
+y = rand(10)
+
+# Line-plot básico
+plot(x, y, label="serie", title="Mi primer plot", xlabel="X", ylabel="Y")
+
+# Múltiples series y estilos
+plot(x, x.^2, label="cuadrática")
+plot!(x, x .* 2, label="lineal", linestyle=:dash)   # plot! agrega al mismo
+
+# Scatter
+scatter(x, y, label="puntos", markersize=6)
+
+# Histograma
+histogram(randn(1000), bins=30, label="normal", fillcolor=:steelblue)
+
+# Barplot desde un DataFrame
+using DataFrames
+df = DataFrame(cat = ["A", "B", "C"], val = [3, 7, 5])
+bar(df.cat, df.val, legend=false)
+
+# Guardar
+savefig("salida.png")</code></pre>
+<blockquote class="aside aside-tip"><p>Uso <code>plot</code> para crear y <code>plot!</code> para sobreescribir la figura actual. Con <code>UnicodePlots</code> puedes incluso renderizar "gráficos" ASCII en la terminal sin abrir ventana.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="estadistica">
+    <h2>Estadística</h2>
+    <div class="doc-content">
+<p>La estadística en Julia usa <strong>Statistics</strong> (núcleo) y <strong>HypothesisTests</strong>/<strong>Distributions</strong> para análisis inferencial.</p>
+<pre><code class="language-julia">using Statistics, Distributions
+
+datos = [2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0]
+
+println("media:   ", mean(datos))
+println("mediana: ", median(datos))
+println("varianza:", var(datos))
+println("desv.   :", std(datos))
+println("quantile75:", quantile(datos, 0.75))
+
+# Distribuciones
+n = Normal(0.0, 1.0)
+println(rand(n, 5))            # 5 muestras
+println(cdf(n, 1.96))          # P(Z &lt;= 1.96) ≈ 0.975
+
+# Correlación
+x = 1:10
+y = 2 .* x .+ randn(10)
+println(cor(x, y))             # cerca de 1
+
+# Test t de Student (comparar dos grupos)
+using HypothesisTests
+g1 = randn(30)
+g2 = randn(30)
+t = UnequalVarianceTTest(g1, g2)
+println("p-value: ", pvalue(t))</code></pre>
+<blockquote class="aside aside-success"><p>El ecosistema estadístico de Julia cubre desde estadística descriptiva (<code>Statistics</code>) hasta inferencia robusta (<code>HypothesisTests</code>, <code>GLM.jl</code>), a menudo con API coherente y multiplataforma.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="notebooks-jupyter-y-pluto">
+    <h2>Jupyter y Pluto.jl</h2>
+    <div class="doc-content">
+<p>Dos entornos "notebook" para Julia hacen la experiencia de data science mucho más fluida: <strong>Jupyter</strong> (vía IJulia) y <strong>Pluto.jl</strong>, este último con reactividad nativa: cuando editas una celda, todas las dependientes se recalculan solas.</p>
+<pre><code class="language-julia">using Pkg
+
+# Pluto: instalar y lanzar
+Pkg.add("Pluto")
+using Pluto
+Pluto.run()   # abre la interfaz web
+
+# En un notebook Pluto comienza así
+# using Pluto
+# using Plots, Statistics
+
+# Jupyter / IJulia (más clásico, con kernels)
+Pkg.add("IJulia")
+using IJulia
+notebook()   # lanza un Jupyter Notebook con kernel julia</code></pre>
+<pre><code class="language-bash"># También puedes conectar Julia a un JupyterLab existente
+julia -e 'using IJulia; installkernel("julia")'
+# o usar el ejecutable de julia como kernel directamente:
+# julia --project -e 'using IJulia; IJulia.install()'</code></pre>
+<blockquote class="aside aside-note"><p>Elegir Pluto vs Jupyter es de gusto: Pluto ofrece reproducibilidad y reactividad; Jupyter integra mejor con otros kernels (Python, R). Para proyectos serios y scripts de producción, usa archivos <code>.jl</code> con <code>--project</code> y ejecución por línea de comandos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>DataFrame inicial</strong>: crea un <code>DataFrame</code> con datos de 4 personas (nombre, edad, ciudad) y muestra sus columnas, tamaños y la fila 2.</li>
+<li><strong>Pipeline de transformación</strong>: sobre ese DataFrame agrega una columna de "mayoría de edad", filtra mayores de 18 con <code>@subset</code> y agrupa por ciudad con <code>groupby</code> + <code>combine(..., nrow)</code>.</li>
+<li><strong>Gráfico compuesto</strong>: crea un scatter de <code>x</code> vs <code>x.^2</code> con <code>plot</code> y una línea <code>plot!</code> a la vez; guarda PNG.</li>
+<li><strong>Estadística descriptiva</strong>: sobre un vector de 20 datos, imprime media, mediana, desviación y el cuantil 90.</li>
+<li><strong>Notebook</strong>: lanza <code>Pluto.run()</code>, crea una celda con datos, y evalúa si prefieres la reactividad de Pluto o el flujo clásico de Jupyter.</li>
+</ol>
+<p>En la última lección del módulo dominaremos el rendimiento literal de Julia: JIT, múltiple dispatch, Pkg y paralelismo.</p>
+    </div>
+  </section>

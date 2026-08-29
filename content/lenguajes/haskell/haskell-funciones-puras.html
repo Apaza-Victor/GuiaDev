@@ -1,0 +1,172 @@
+<!-- 2. Funciones Puras - Haskell (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="funciones">
+    <h2>Funciones puras</h2>
+    <div class="doc-content">
+<p>En Haskell todo es una <strong>función pura</strong>: mismos argumentos, mismo resultado, sin efectos externos. La definición más simple es <code>nombre arg1 arg2 = expresión</code>, con espacio (no paréntesis) para llamar.</p>
+<pre><code class="language-haskell">-- Definición con prefijo
+sumar a b = a + b
+
+-- Llamar con espacio: sumar 2 3  ⟶  5
+-- Llamar con paréntesis para agrupar: sumar (sumar 1 2) 3
+
+duplicar x = 2 * x
+areaCirculo r = pi * r * r
+esPar n = n `mod` 2 == 0      -- notación infija con `nombre`
+
+-- las funciones se tratan como valores: se pasan, se retornan
+aplicar f x = f x
+ghci&gt; aplicar duplicar 5
+10
+
+-- Todas las funciones de Haskell están "currificadas":
+sumar a b = a + b    -- es realmente  (+ b) = (\b -&gt; a + b)
+
+-- Razonar: sumar 2 3 == (sumar 2) 3
+-- ✓ transparencia referencial</code></pre>
+<blockquote class="aside aside-note"><p>La "currificación" significa que una función de dos argumentos es una función de uno que devuelve otra función de uno. Eso es lo que abre la puerta a aplicación parcial y composición.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="firma">
+    <h2>Firmas de tipo</h2>
+    <div class="doc-content">
+<p>Cada función tiene una <strong>firma</strong>: <code>nombre :: tipoEntrada -&gt; tipoSalida</code>. Haskell infiere los tipos, pero escribir la firma documenta mejor y ayuda al compilador.</p>
+<pre><code class="language-haskell">-- Tipos básicos: Int, Integer, Double, Bool, Char, String
+saluda :: String -&gt; String
+saluda nombre = "Hola, " ++ nombre
+
+dobleInt :: Int -&gt; Int
+dobleInt x = 2 * x
+
+suma :: Int -&gt; Int -&gt; Int      -- dos entradas, una salida
+suma a b = a + b
+
+-- Genéricos: letras minúsculas son "tipo variables"
+miIdentidad :: a -&gt; a
+miIdentidad x = x
+
+ghci&gt; :t miIdentidad
+miIdentidad :: a -&gt; a
+
+-- Tuplas y listas en firmas
+par :: (Int, Char) -&gt; String
+par (n, c) = show n ++ [c]</code></pre>
+<blockquote class="aside aside-tip"><p>La flecha <code>-&gt;</code> es asociativa a la derecha: <code>suma :: Int -&gt; (Int -&gt; Int)</code>. Por eso <code>suma 2</code> es una función que espera un <code>Int</code>. GHCi te devuelve <code>suma 2 :: Int -&gt; Int</code> — lo verás seguido.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="guardas">
+    <h2>Guardas (guards) y casos</h2>
+    <div class="doc-content">
+<p>Para decidir se usan <strong>guardas</strong> (<code>| condición = resultado</code>) o <strong>pattern matching</strong> en la definición. Todo se expresa con funciones, no con sentencias <code>if</code>.</p>
+<pre><code class="language-haskell">-- Guardas
+clasificar :: Int -&gt; String
+clasificar n
+  | n &gt;= 18                          = "adulto"
+  | n &gt;= 0                           = "menor"
+  | otherwise                        = "inválido"
+
+-- otherwise ≡ True
+
+-- Pattern matching en argumentos
+diaTipo :: String -&gt; String
+diaTipo "sábado" = "fin de semana"
+diaTipo "domingo" = "fin de semana"
+diaTipo _ = "laboral o desconocido"
+
+-- if ... then ... else (expresión, no sentencia)
+paridad :: Int -&gt; String
+paridad n = if even n then "par" else "impar"
+
+ghci&gt; paridad 7
+"impar"
+ghci&gt; clasificar 20
+"adulto"</code></pre>
+<blockquote class="aside aside-tip"><p>Los patrones con <code>_</code> (comodín) capturan "todo lo demás". El orden importa: el compilador evalúa de arriba a abajo. Por eso el caso genérico va al final.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="secciones">
+    <h2>Operator sections</h2>
+    <div class="doc-content">
+<p>Los operadores también son funciones. Una <strong>sección</strong> (<code>+1</code>, <code>(&gt;3)</code>, <code>(`div` 7)</code>) fija un argumento y devuelve una función parcialmente aplicada: ideal para pasar a <code>map</code>/<code>filter</code>.</p>
+<pre><code class="language-haskell">-- Secciones: aplicar parcialmente con paréntesis
+sumaDiez = (+ 10)
+ghci&gt; sumaDiez 5
+15
+
+-- Aplicación parcial de una función cualquiera (currificación)
+dobleLista = map (* 2)
+ghci&gt; dobleLista [1,2,3]
+[2,4,6]
+
+-- Secciones útiles con filtros
+mayoresDe10 = filter (&gt; 10)
+ghci&gt; mayoresDe10 [5, 12, 3, 20]
+[12,20]
+
+-- Uso de operadores como valores
+ghci&gt; :t (+)   -- (+) :: Num a =&gt; a -&gt; a -&gt; a
+ghci&gt; foldl (+) 0 [1..5]
+15
+
+-- Sección con función infija
+multiplicarPor7 = (* 7)</code></pre>
+<blockquote class="aside aside-caution"><p><code>(- 3)</code> es AMBIGUO (número negativo o sección); Haskell lo interpreta como número. Para una sección que resta usa <code>subtract 3</code>. Esa es la única excepción famosa.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="composicion">
+    <h2>Composición de funciones</h2>
+    <div class="doc-content">
+<p>El operador <code>(.)</code> compone dos funciones: <code>(f . g) x = f (g x)</code>. La composición permite expresar pipelines declarativos "de derecha a izquierda".</p>
+<pre><code class="language-haskell">doble :: Int -&gt; Int
+doble x = 2 * x
+
+masUno :: Int -&gt; Int
+masUno x = x + 1
+
+-- Composición
+funcion = doble . masUno
+ghci&gt; funcion 3
+8    -- doble (masUno 3) = doble 4 = 8
+
+-- Pipeline "natural": (f . g) x = f(g x)
+siguienteCuadrado = cuadrado . masUno
+  where cuadrado x = x * x
+ghci&gt; siguienteCuadrado 4
+25
+
+-- Aplicación con $ (menor precedencia)
+ghci&gt; doble (masUno (masUno 3))
+10
+ghci&gt; doble $ masUno $ masUno 3
+10    -- $ evita paréntesis
+
+-- $ es "aplicar con baja precedencia": x $ f  ==  f x
+-- Común: print $ f $ g 3</code></pre>
+<blockquote class="aside aside-success"><p><code>.</code> compone funciones (como la pipa de operaciones); <code>$</code> evita paréntesis. Juntos te permiten escribir pipelines sin anidamiento. Práctica recomendada: <code>map (f . g)</code> no <code>map (\x -&gt; f (g x))</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Funciones puras</strong>: define <code>esDivisible n d = n `mod` d == 0</code> y apruébala en GHCi.</li>
+<li><strong>Firmas</strong>: escribe firmas completas para <code>saluda</code>, <code>suma</code> y una genérica <code>swapPair (a,b) = (b,a)</code>.</li>
+<li><strong>Guardas</strong>: implementa <code>nota :: Int -&gt; Char</code> con guardas (A: &gt;=18, B: &gt;=14, C: &gt;=10, D: otro).</li>
+<li><strong>Secciones</strong>: por secciones, <code>filter (== 5)</code>, <code>map (+1)</code>, <code>map (`div` 2)</code> sobre una lista.</li>
+<li><strong>Composición</strong>: define <code>procesa = sort . filter (&gt; 5)</code> y pruébala en GHCi.</li>
+</ol>
+<p>En la próxima lección exploraremos el sistema de tipos: typeclasses, <code>Maybe</code>, parámetros y <code>newtype</code>.</p>
+    </div>
+  </section>

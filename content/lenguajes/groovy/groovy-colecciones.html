@@ -1,0 +1,196 @@
+<!-- 3. Colecciones - Groovy (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="listas">
+    <h2>Listas</h2>
+    <div class="doc-content">
+<p>Las listas en Groovy son <code>ArrayList</code> de Java en el fondo (a menos que indiques otra impl). La sintaxis es concisa: <code>[a, b, c]</code>, y traen todo el GDK: <code>collect</code>, <code>findAll</code>, <code>sum</code>... sobre la marcha.</p>
+<pre><code class="language-groovy">// Crear listas
+def lista = [1, 2, 3]
+def mixta = [1, 'dos', 3.0]         // cualquier tipo (List<Object>)
+def vacia = []
+def conTipo = [] as List<Integer>   // tipada
+
+// Acceso y modificación
+println lista[0]            // 1
+println lista[-1]           // 3 (negativos desde el final)
+println lista[1..2]         // [2, 3] (rango)
+lista << 4                  // agregar al final (operador <<)
+lista += 5
+lista.remove(0)
+println lista               // [2, 3, 4, 5]
+
+// Métodos GDK
+println [1, 2, 3].sum()                 // 6
+println [3, 1, 2].sort()                // [1, 2, 3]
+println [1, 2, 3].collect { it * 2 }    // [2, 4, 6]
+println [1, 2, 3, 4].findAll { it % 2 == 0 }  // [2, 4]
+println [1, 2, 2, 3].unique()           // [1, 2, 3]
+println [1, 2, 3].join('-')             // 1-2-3
+
+// Con closures: la joya
+def cuadrados = [1..5].collect { it * it }
+println cuadrados</code></pre>
+<blockquote class="aside aside-tip"><p>El operador <code>&lt;&lt;</code> agrega al final devolviendo la lista (encadenable). Los índices aceptan rangos y negativos. Y el GDK añade a toda lista Java métodos como <code>collect</code>, <code>findAll</code>, <code>every</code>...</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="mapas">
+    <h2>Mapas</h2>
+    <div class="doc-content">
+<p>Los maps de Groovy son <code>LinkedHashMap</code> con sintaxis de tipo <code>[clave: valor]</code>. La clave <code>string</code> se abrevia sin comillas si es identificador.</p>
+<pre><code class="language-groovy">// Crear
+def usuario = [nombre: 'Ana', edad: 30]
+def conStr = ['clave con espacio': 1]     // con comillas si hace falta
+
+// Acceso
+println usuario.nombre             // Ana (punto)
+println usuario['edad']            // 30
+println usuario.edad == null ? 'no' : 'sí'
+
+// Modificar y agregar
+usuario.ciudad = 'Lima'
+usuario['email'] = 'ana@guia.dev'
+usuario.edad = 31
+println usuario
+
+// Métodos GDK
+println usuario.keySet()                 // [nombre, edad, ciudad, email]
+println usuario.values()                 // [Ana, 31, Lima, ana@guia.dev]
+println usuario.containsKey('edad')      // true
+println usuario.findAll { k, v -> k != 'email' }
+println usuario.collect { k, v -> v }    // valores
+
+// Maps con closures
+def ventas = [q1: 100, q2: 150, q3: 80]
+def total = ventas.values().sum()
+println total                            // 330
+
+// each
+usuario.each { k, v -> println "$k = $v" }</code></pre>
+<blockquote class="aside aside-tip"><p>Dos formas de acceso (<code>map.clave</code> y <code>map['clave']</code>) son equivalentes. Para claves dinámicas usa los corchetes. El GDK ofrece <code>findAll</code>, <code>collect</code>, <code>each</code> también sobre maps, pasando <code>(k, v)</code> a la closure.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="rangos">
+    <h2>Rangos</h2>
+    <div class="doc-content">
+<p>Los <strong>rangos</strong> (<code>1..5</code>, <code>'a'..'e'</code>) son objetos <code>Range</code> con inmutabilidad y métodos.</p>
+<pre><code class="language-groovy">def nums = 1..5
+def letras = 'a'..'e'
+def descend = 5..1
+
+println nums.size()             // 5
+println nums.contains(3)        // true
+println letras                     // a,b,c,d,e
+println nums.sum()              // 15
+println nums.reverse()          // 5,4,3,2,1
+
+// Iterar
+for (n in 1..3) print n         // 123
+println()
+
+// Aplicar a listas
+print (1..3).collect { it * 10 }   // [10, 20, 30]
+println()
+
+// Rangos con paso
+def pares = 0..10 step 2
+println pares                    // [0, 2, 4, 6, 8, 10]
+
+// El operador ..< (rango abierto)
+println (1..<5)                  // [1, 2, 3, 4]</code></pre>
+<blockquote class="aside aside-tip"><p>Los rangos sustituyen a los vectores de índices en bucles <code>for</code>, y con <code>collect</code>/<code>findAll</code> puedes construir listados completos sin crear arrays intermedios. Son de los tipos más queridos de Groovy.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="gdk">
+    <h2>El GDK</h2>
+    <div class="doc-content">
+<p>El <strong>Groovy Development Kit</strong> amplía las clases de Java (String, List, Map, File, java.time...) con cientos de métodos. Por ejemplo, las operaciones sobre archivos, tiempo y streams se vuelven de una sola línea.</p>
+<pre><code class="language-groovy">import java.time.LocalDate
+
+// Archivos con GDK
+def fich = new File('ejemplo.txt')
+fich.write('contenido línea 1\nalgo más')     // escribe
+println fich.text                             // lee todo
+println fich.readLines()                      // lista de líneas
+
+// Fechas (java.time en Groovy)
+def hoy = LocalDate.now()
+println hoy.plusDays(7)
+println hoy.year
+
+// Timers/duration
+def tresDias = 3.days                         // GDK TimeCategory (Groovy tiempo)
+// con groovy.time.TimeCategory
+def en = 10.minutes
+
+// getters/setters automáticos
+class Usuario { String nombre; int edad }
+def u = new Usuario()
+u.nombre = 'Ana'          // u.setNombre('Ana')
+assert u.nombre == 'Ana'  // u.getNombre()
+
+// JSON (GroovyJSON)
+import groovy.json.JsonOutput
+println JsonOutput.toJson([nombre: 'Ana', tags: ['a', 'b']])
+// {"nombre":"Ana","tags":["a","b"]}</code></pre>
+<blockquote class="aside aside-success"><p>Gracias al GDK, en muchas ocasiones una línea de Groovy hace el trabajo de 10 líneas de Java: leer archivos (<code>.text</code>), colecciones (<code>.collect</code>), tiempo (<code>.days</code>), y generar JSON con <code>JsonOutput</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cadenas">
+    <h2>Cadenas avanzadas y templating</h2>
+    <div class="doc-content">
+<p>Groovy tiene además <strong>templating</strong> (<code>SimpleTemplateEngine</code>) y trata cadenas con métodos potentes de GDK.</p>
+<pre><code class="language-groovy">// Interpolación en GString (repaso)
+def nombre = 'Ana'
+def saludo = "Hola ${nombre}, son las ${new Date().hours} h"
+println saludo
+
+// Métodos GDK de String
+println 'a,b,c'.split(',')          // [a, b, c]
+println 'hola'.padLeft(8, '-')     // '---hola'
+println 'Hola Mundo'.tokenize()     // [Hola, Mundo]
+println 'Hola'.reverse()            // aloH
+println '123'.isInteger()           // true
+println 'ABC'.equalsIgnoreCase('abc') // true
+
+// Template engine
+import groovy.text.SimpleTemplateEngine
+
+def plantilla = '''
+Hola ${nombre},
+Tu pedido ${pedido.id} está ${pedido.estado}.
+'''
+def engine = new SimpleTemplateEngine()
+def binding = [nombre: 'Ana', pedido: [id: 42, estado: 'en camino']]
+def render = engine.createTemplate(plantilla).make(binding)
+println render.toString()
+
+// Regex de nuevo con slashy
+println ('abc123' =~ /\d+/).findAll()   // [123]</code></pre>
+<blockquote class="aside aside-tip"><p>Ese ejemplo de templating en 4 líneas es representativo: Groovy brilla para generar configs, correos, código y reportes desde plantillas con binding. Combination from "Texto de GitHub Actions" listo en tu script.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Lista</strong>: crea [1..10], filtra pares con <code>findAll</code>, súmalos y muéstralo.</li>
+<li><strong>Mapa</strong>: define tus datos personales en un map y extrae nombre y edad; agregar un hobby.</li>
+<li><strong>Rango</strong>: genera <code>-5..5</code>, inviértelo y aplica <code>collect { it.abs() }</code>.</li>
+<li><strong>GDK</strong>: escribe un archivo `notas.txt` con `write`, léelo con `.text` y cuenta líneas.</li>
+<li><strong>Templating</strong>: construye una plantilla para un correo de confirmación y renderízala con tus datos.</li>
+</ol>
+<p>En la próxima lección entraremos en las closures: el corazón de Groovy.</p>
+    </div>
+  </section>

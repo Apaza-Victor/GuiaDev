@@ -1,0 +1,95 @@
+<!-- 3. IDEs y Herramientas para Kotlin - Bibliotecas (Utilidades) -->
+  <section id="ide-kotlin">
+    <h2>IDEs Kotlin: IntelliJ y Android Studio <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># IntelliJ IDEA (Community/Ultimate): el de JetBrains para JVM/Kotlin
+#   - plugin Kotlin integrado (o automático)
+#   - refactorizaciones, debugging, convertidor Java-&gt;Kotlin
+# Android Studio (basado en IntelliJ): para apps Android
+#   incluye emulador, Gradle Android y Jetpack Compose preview
+# VS Code: extensión "Kotlin (Multiplatform)" para edición ligera
+# Kotlin Multiplatform: JetBrains ofrece "Fleet" (de pago) reciente
+</code></pre>
+<blockquote class="aside aside-tip"><p>IntelliJ es la sede de Kotlin: soporte más profundo. Android Studio imprescindible si trabajas en móvil. Ambos compatibles con todo el tooling de JetBrains.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="kotlinc-gradle">
+    <h2>kotlinc, Gradle y herramientas CLI <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Compilar directamente
+kotlinc Main.kt -include-runtime -d app.jar
+# Gradle: build estándar (Kotlin DSL build.gradle.kts)
+./gradlew build
+./gradlew test
+# Maven también soporte con kotlin-maven-plugin
+
+# ktlint: linter de código Kotlin
+ktlint src/**/*.kt
+# detekt: análisis estático con reglas (como spotbugs)
+detekt
+# kover: cobertura de código (de JetBrains)
+./gradlew koverMergedReport
+</code></pre>
+<blockquote class="aside aside-note"><p>Gradle+Kotlin DSL es el build del ecosistema; ktlint (formato/lint) y detekt (reglas estáticas) se integran como plugins de Gradle.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="android-herramientas">
+    <h2>Herramientas Android específicas <span class="gd-badge gd-badge-note">Android</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># adb: conectar/depurar dispositivos y emuladores
+adb devices
+adb install app-debug.apk
+adb logcat                  # logs del dispositivo
+adb shell dumpsys          # servicios del sistema
+
+# Emulador: avdmanager / Android Studio Device Manager
+# Herramientas de UI: Layout Inspector, Compose Preview
+# Performance: Android Profiler (CPU/mem/red/batería)
+# Tamaño/bugs: R8 (shrinker), ProGuard (minifier)
+
+# CI Android: Gradle Managed Devices + GitHub Actions (ReactiveCircus/android-emulator-runner)
+</code></pre>
+<blockquote class="aside aside-note"><p>Android trae su propia caja de herramientas: adb, emulador, profiler. La CI con emulador GitHub Actions cubre tests de instrumentación automática.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="multiplataforma-despliegue">
+    <h2>Kotlin Multiplatform y despliegue <span class="gd-badge gd-badge-note">KMP</span></h2>
+    <div class="doc-content">
+<pre><code class="language-kotlin">// KMP (Kotlin Multiplatform): compartir lógica Android+iOS+web+desktop
+//   - kotlin-multiplatform plugin en Gradle
+//   - expect/actual para APIs de plataforma
+expect fun currentPlatform(): String
+actual fun currentPlatform() = "Android"
+
+// Uso típico: compartir modelos, networking, lógica de negocio
+// publicar (Android): assembleRelease, track a/b en Google Play
+// iOS: Kotlin/Native + Compose Multiplatform para UI compartida
+</code></pre>
+<pre><code class="language-bash"># Despliegue backend (Spring Boot/Ktor) en contenedor
+./gradlew bootJar
+docker build -t mi-api .
+docker run -p 8080:8080 mi-api
+</code></pre>
+<blockquote class="aside aside-success"><p>KMP permite compartir lógica entre plataformas con `expect/actual`. Para apps nuevas: un backend JVM + app Android (y KMP cuando llegues a iOS).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Convierte una clase Java existente a Kotlin usando el conversor de IntelliJ.</li>
+<li>Configura ktlint+détect en Gradle y hazlo fallar en CI si hay lints.</li>
+<li>Instala y usa adb para ver bugs de logcat de una app propia.</li>
+<li>Crea un módulo KMP `shared` con `expect/actual currentPlatform`.</li>
+<li>Genera `bootJar` de Spring Boot y desplega en Docker (healthcheck).</li>
+</ol>
+    </div>
+  </section>

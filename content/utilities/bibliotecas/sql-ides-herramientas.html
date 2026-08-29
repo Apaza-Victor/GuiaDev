@@ -1,0 +1,109 @@
+<!-- 3. IDEs y Herramientas para SQL - Bibliotecas (Utilidades) -->
+  <section id="clientes-sql">
+    <h2>Clientes y editores SQL <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Gráficos multiplataforma
+# DBeaver: excelente, gratuito, soporta casi todas las BD y diagrama ER
+winget install DBeaver.DBeaver
+# DataGrip (JetBrains): el más potente de pago (refactorización, visual)
+# Beekeeper Studio: ligero moderno; TablePlus (Mac); HeidiSQL (Windows/MySQL)
+
+# CLIs nativos
+psql -h host -U ana -d app
+mysql -u ana -p
+sqlite3 mi.db "SELECT * FROM usuarios"
+
+# IDE junto a código (VS Code)
+code --install-extension mtxr.sqltools
+code --install-extension ms-mssql.mssql   # para SQL Server
+</code></pre>
+<blockquote class="aside aside-tip"><p>DBeaver cubre el 90% (multibase, ER, import/export). Si ya usas JetBrains, DataGrip se integra con el resto. Los CLIs siguen siendo insustituibles en scripts.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="explicador-formateo">
+    <h2>EXPLAIN y herramientas de tuning <span class="gd-badge gd-badge-note">Rendimiento</span></h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- PostgreSQL: explica el plan de ejecución con costo y "loops"
+EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
+SELECT * FROM ordenes o JOIN clientes c ON c.id = o.cliente_id;
+
+-- PG también expone estadísticas de uso
+SELECT schemaname, relname, seq_scan, idx_scan
+FROM pg_stat_user_tables ORDER BY seq_scan DESC;
+-- MySQL
+EXPLAIN ANALYZE SELECT ...
+SHOW PROFILE; SET profiling = 1;
+-- SQL Server
+SET STATISTICS IO ON; SET STATISTICS TIME ON; SELECT ...;
+-- SQLite
+EXPLAIN QUERY PLAN SELECT ...;
+</code></pre>
+<blockquote class="aside aside-caution"><p>Si un `EXPLAIN` muestra "Seq Scan" enorme en la unión pero esperabas un índice, revisa condiciones, juntos de tipo o falta de índice en la FK.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="bd-local-dev">
+    <h2>BD local de desarrollo vía Docker <span class="gd-badge gd-badge-note">Dev</span></h2>
+    <div class="doc-content">
+<pre><code class="language-yaml"># docker-compose.yml: PostgreSQL + Adminer para desarrollo
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ana
+      POSTGRES_PASSWORD: local
+      POSTGRES_DB: miapp
+    ports: ["5432:5432"]
+    volumes: [db_data:/var/lib/postgresql/data]
+  adminer:
+    image: adminer
+    ports: ["8080:8080"]
+volumes:
+  db_data:
+</code></pre>
+<pre><code class="language-bash">docker compose up -d
+# O una instancia aislada para tests: testcontainers en tus languages
+# (Java/Go/Python/.NET) para levantar la BD solo cuando hay tests
+</code></pre>
+<blockquote class="aside aside-note"><p>Correr la BD en Docker estandariza el entorno local; Testcontainers crea BD efímeras en cada suite de tests para pruebas aisladas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="observabilidad-sql">
+    <h2>Backups, observabilidad y seguridad <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Backups
+pg_dump -Fc miapp &gt; miapp.dump      # formato comprimido
+createdb copia &amp;&amp; pg_restore -d copia miapp.dump
+# Automatizar con cron + retención (ej: 7 días)
+# MySQL: mysqldump; SQL Server: BACKUP DATABASE ... TO DISK
+
+# Monitoreo
+#   pg_stat_activity    (PostgreSQL): consultas concurrentes bloqueadas
+#   Percona PMM / pgAdmin dashboard / Grafana + exporters
+# Seguridad:
+#   - Parámetros preparados contra SQL injection
+#   - Usuarios con mínimo privilegio (GRANT/SELECT/...)
+#   - encriptar en reposo: PostgreSQL: pgcrypto / parámetros TLS
+</code></pre>
+<blockquote class="aside aside-note"><p>Optimiza: `pg_stat_activity` muestra bloqueos entre transacciones largas; reporteros de bloqueos e índices sobran al detectar los hotspots antes de que llegue a producción.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Con DBeaver conecta una BD local y genera el diagrama ER de 3 tablas.</li>
+<li>Provoca una consulta lenta y analízala con `EXPLAIN (ANALYZE, BUFFERS)`.</li>
+<li>Levanta PostgreSQL con docker-compose y conéctate vía psql y Adminer.</li>
+<li>Crea un nightly que haga pg_dump y lo restaure sobre una BD `copia`.</li>
+<li>Revisa `pg_stat_activity` y detecta una sesión bloqueada (inténtalo con dos transacciones conflictivas).</li>
+</ol>
+    </div>
+  </section>

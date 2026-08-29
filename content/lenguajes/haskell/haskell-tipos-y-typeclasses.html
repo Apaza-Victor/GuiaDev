@@ -1,0 +1,196 @@
+<!-- 3. Tipos y Typeclasses - Haskell (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="tipos">
+    <h2>Sistema de tipos</h2>
+    <div class="doc-content">
+<p>Haskell tiene <strong>tipado estático, fuerte e inferido</strong>: el compilador deduce tipos y rechaza el programa si no cuadran. Tipos básicos: números integrales (<code>Int</code>, <code>Integer</code>), punto flotante (<code>Double</code>, <code>Float</code>), booleanos, caracteres y cadenas, tuplas, listas y funciones.</p>
+<pre><code class="language-haskell">ghci&gt; :t 42
+42 :: Num p =&gt; p
+
+ghci&gt; :t 3.14
+3.14 :: Fractional p =&gt; p
+
+ghci&gt; :t 'a'
+'a' :: Char
+
+ghci&gt; :t "abc"
+"abc" :: [Char]      -- String es sinónimo de [Char]
+
+ghci&gt; :t (1, "dos")
+(1, "dos") :: (Num b, Num a) =&gt; (a, b)
+
+ghci&gt; :t [1,2,3]
+[1,2,3] :: Num a =&gt; [a]
+
+-- Inferencia en definiciones
+sumaLista [] = 0
+sumaLista (x:xs) = x + sumaLista xs
+ghci&gt; :t sumaLista
+sumaLista :: Num a =&gt; [a] -&gt; a</code></pre>
+<blockquote class="aside aside-note"><p>Cuando ves <code>Num a =&gt;</code> significa "para CUALQUIER tipo <code>a</code> que sea instancia de Num". Hacemos sobrecarga por typeclasses en lugar de coercion.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="typeclasses">
+    <h2>Typeclasses (sobrecarga segura)</h2>
+    <div class="doc-content">
+<p>Una <strong>typeclass</strong> es una interfaz de funciones aplicable a tipos: <code>Eq</code> (comparación), <code>Ord</code> (orden), <code>Show</code> (convertir a string), <code>Read</code> (parsear), <code>Num</code>, <code>Fractional</code>... Definen el comportamiento en firma.</p>
+<pre><code class="language-haskell">-- Eq
+ghci&gt; (== 3) 5
+False
+ghci&gt; 5 &gt;= 3
+True
+
+-- Show / Read
+ghci&gt; show 42
+"42"
+ghci&gt; read "42" :: Int
+42
+
+-- Num / Fractional
+ghci&gt; 10 / 4        -- divide en Fractional: 2.5
+2.5
+ghci&gt; 10 `div` 4    -- div es Integral: 2 (sin resto)
+
+-- Ord: compare, sort, min, max
+ghci&gt; compare 3 5
+LT
+ghci&gt; max 3 5
+5
+
+-- Definir tu propia typeclass
+class TodoA string where
+  hablar :: a -&gt; String
+
+instance TodoA Int where
+  hablar n = "Número: " ++ show n
+
+instance TodoA String where
+  hablar s = "Text: " ++ s
+
+ghci&gt; hablar (5 :: Int)
+"Número: 5"</code></pre>
+<table><thead><tr><th>Typeclass</th><th>Funciones clave</th></tr></thead><tbody><tr><td><code>Eq</code></td><td><code>==</code>, <code>/=</code></td></tr><tr><td><code>Ord</code></td><td><code>&lt;</code>, <code>&gt;=</code>, <code>compare</code>, <code>sort</code></td></tr><tr><td><code>Show</code></td><td><code>show</code></td></tr><tr><td><code>Read</code></td><td><code>read</code></td></tr><tr><td><code>Num</code></td><td><code>+</code>, <code>*</code>, <code>abs</code>, <code>fromInteger</code></td></tr><tr><td><code>Integral</code></td><td><code>div</code>, <code>mod</code>, <code>even</code></td></tr><tr><td><code>Fractional</code></td><td><code>/</code>, <code>recip</code></td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="maybe">
+    <h2>Maybe: no más null</h2>
+    <div class="doc-content">
+<p>Adiós al <code>null</code>. <code>Maybe a</code> es <code>Just valor</code> o <code>Nothing</code>; el compilador te obliga a tratar la ausencia. Es la base de la seguridad de Haskell.</p>
+<pre><code class="language-haskell">-- Definir un tipo de datos
+data Color = Rojo | Verde | Azul deriving (Show, Eq)
+
+-- Maybe como contenedor
+ghci&gt; Just 5
+Just 5
+ghci&gt; Nothing
+Nothing
+
+-- Función que puede fallar
+findIndex :: (a -&gt; Bool) -&gt; [a] -&gt; Maybe Int
+findIndex p lista =
+  go 0 lista
+  where
+    go _ []       = Nothing
+    go i (x:xs)
+      | p x       = Just i
+      | otherwise = go (i+1) xs
+
+ghci&gt; findIndex (&gt; 4) [1,4,6]
+Just 2
+ghci&gt; findIndex (&gt; 10) [1,4,6]
+Nothing
+
+-- Extraer con seguridad
+ghci&gt; case (findIndex (&gt;4) [1,4,6]) of
+  |   Just i -&gt; "índice " ++ show i
+  |   Nothing -&gt; "no existe"</code></pre>
+<blockquote class="aside aside-tip"><p>Los tipos propios se crean con <code>data Nombre = Constructor1 | Constructor2 ...</code>. <code>deriving (Show, Eq)</code> genera automáticamente su representación y comparación.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="parametros">
+    <h2>Tipos polimórficos y parámetros</h2>
+    <div class="doc-content">
+<p>Los <strong>tipos paramétricos</strong> (<code>Maybe a</code>, <code>Either e a</code>, <code>[a]</code>) funcionan para cualquier tipo <code>a</code>. La combinación de parámetros y typeclasses produce genéricos muy potentes.</p>
+<pre><code class="language-haskell">-- Either: resultado o error
+ghci&gt; :t Left "algo falló"
+"algo falló" :: Either [Char] b
+
+ghci&gt; :t Right 42
+Right 42 :: Num a =&gt; Either b a
+
+-- Uso típico: validación
+validarEdad :: Int -&gt; Either String Int
+validarEdad n
+  | n &lt; 0    = Left "edad negativa"
+  | n &gt; 120  = Left "edad imposible"
+  | otherwise = Right n
+
+-- Tipos paramétricos definidos por ti
+data Arbol a = Vacio | Nodo a (Arbol a) (Arbol a) deriving (Show)
+
+altura :: Arbol a -&gt; Int
+altura Vacio         = 0
+altura (Nodo _ l r)  = 1 + max (altura l) (altura r)
+
+ghci&gt; altura (Nodo 1 (Nodo 2 Vacio Vacio) Vacio)
+2
+
+-- newtype: envolver un tipo para darle significado
+newtype Edad = Edad Int deriving (Show, Num)</code></pre>
+<blockquote class="aside aside-tip"><p><code>Either a b</code> es como un <code>Maybe</code> que puede explicar el fallo en <code>Left</code>. Los <code>data</code> pueden ser recursivos (árboles) y polimórficos. La firma lo dice todo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="newtype">
+    <h2>newtype, deriving y seguridad</h2>
+    <div class="doc-content">
+<p>Con <code>newtype</code> enriqueces tipos básicos con significado sin coste en run-time, y con <code>deriving</code> generas instancias de typeclass automáticamente: así construyes "tipos que no se pueden confundir".</p>
+<pre><code class="language-haskell">newtype Precio = Precio Double deriving (Show, Eq, Num)
+newtype Unidades = Unidades Int deriving (Show, Eq, Num)
+
+-- No puedes asignar un Precio a una Unidades sin convertir:
+-- la firma lo prohíbe → error en compilación
+total :: Precio -&gt; Unidades -&gt; Precio
+total (Precio p) (Unidades u) = Precio (p * fromIntegral u)
+
+ghci&gt; total (Precio 2.5) (Unidades 3)
+Precio 7.5
+
+-- deriving genera instancias de Eq, Ord, Show, Read, Enum, Bounded...
+data Semana = Lun | Mar | Mie deriving (Show, Eq, Ord, Enum)
+
+ghci&gt; show Lun
+"Lun"
+ghci&gt; Lun == Lun
+True
+ghci&gt; succ Lun
+Mar
+
+-- Tests tipados con "quickCheck" más adelante;</code></pre>
+<blockquote class="aside aside-success"><p>"Make illegal states unrepresentable": que el compilador impida usar el tipo incorrecto es lo que hace confiables los programas Haskell. Es el mismo espíritu que luego verás en Rust y otros lenguajes de tipos "advanced" modernos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asumo lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Tipos</strong>: consulta <code>:t</code> de <code>head</code>, <code>init</code>, <code>(:)</code> y <code>read</code>; escribe su significado.</li>
+<li><strong>Typeclass</strong>: usa <code>sort</code>, <code>maximum</code>, <code>show</code> y <code>read</code> sobre valores Num y desciende qué typeclass requieren.</li>
+<li><strong>Maybe</strong>: escribe <code>saferoot :: Double -&gt; Maybe Double</code> (Nothing si es negativo).</li>
+<li><strong>Either</strong>: valida un <code>Int</code> con <code>Either String Int</code> y maneja ambos casos.</li>
+<li><strong>newtype</strong>: define <code>newtype Celsius</code> y <code>newtype Farenheit</code> con <code>deriving</code> y una conversión segura.</li>
+</ol>
+<p>En la próxima lección veremos listas y recursión: el patrón <code>x:xs</code>, funciones de listas y listas infinitas.</p>
+    </div>
+  </section>

@@ -1,0 +1,166 @@
+<!-- 2. Frameworks y Librerías Populares de C++ - Bibliotecas (Utilidades) -->
+  <section id="frameworks-gui">
+    <h2>Frameworks de GUI: Qt y GTK <span class="gd-badge gd-badge-note">Ecosistema</span></h2>
+    <div class="doc-content">
+<pre><code class="language-cpp">// Qt Widgets: aplicaciones de escritorio multiplataforma
+#include &lt;QApplication&gt;
+#include &lt;QPushButton&gt;
+#include &lt;QLabel&gt;
+#include &lt;QVBoxLayout&gt;
+
+int main(int argc, char *argv[]) {
+  QApplication app(argc, argv);
+
+  auto *ventana = new QWidget;
+  auto *boton = new QPushButton("Hacer clic");
+  auto *etiqueta = new QLabel("Texto");
+  auto *lay = new QVBoxLayout;
+
+  QObject::connect(boton, &amp;QPushButton::clicked, [boton, etiqueta] {
+    etiqueta-&gt;setText("¡Clic!");
+  });
+
+  lay-&gt;addWidget(etiqueta);
+  lay-&gt;addWidget(boton);
+  ventana-&gt;setLayout(lay);
+  ventana-&gt;show();
+  return app.exec();
+}
+// qmake: gcc -fPIC $(pkg-config --cflags --libs Qt5Widgets) app.cpp
+</code></pre>
+<blockquote class="aside aside-tip"><p>Qt es el framework de escritorio más completo para C++: widgets, QML, networking, multimedia y herramientas (Qt Creator, Designer). GTKmm es la alternativa construida sobre GTK.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="graficos-juegos">
+    <h2>Gráficos y juegos: SDL2, Raylib y Vulkan <span class="gd-badge gd-badge-note">Media</span></h2>
+    <div class="doc-content">
+<pre><code class="language-cpp">// SDL2: ventanas, input y renderizado 2D
+#include &lt;SDL.h&gt;
+
+int main(int argc, char* argv[]) {
+  SDL_Init(SDL_INIT_VIDEO);
+  SDL_Window* win = SDL_CreateWindow("Ventana", SDL_WINDOWPOS_UNDEFINED,
+    SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_SHOWN);
+  SDL_Renderer* ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+
+  SDL_Rect rect = { 100, 100, 50, 50 };
+  SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
+  SDL_RenderClear(ren);
+  SDL_SetRenderDrawColor(ren, 0, 0, 255, 255);
+  SDL_RenderFillRect(ren, &amp;rect);
+  SDL_RenderPresent(ren);
+
+  SDL_Delay(2000);
+  SDL_DestroyRenderer(ren); SDL_DestroyWindow(win); SDL_Quit();
+  return 0;
+}
+// Raylib: aún más simple para aprender; Vulkan/OpenGL para juegos AAA.
+</code></pre>
+<blockquote class="aside aside-tip"><p>SDL2 es el estándar de facto para juegos 2D independientes; Raylib por su simplicidad; Vulkan/OpenGL/DirectX para 3D de alto rendimiento.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="multithreading">
+    <h2>Multithreading: OpenMP, TBB y std::async <span class="gd-badge gd-badge-note">Concurrencia</span></h2>
+    <div class="doc-content">
+<pre><code class="language-cpp">// OpenMP: pragmas simples para paralelismo en bucle
+#include &lt;omp.h&gt;
+#include &lt;vector&gt;
+
+std::vector&lt;double&gt; datos(1000000, 1.5);
+long double suma = 0.0;
+#pragma omp parallel for reduction(+:suma)
+for (int i = 0; i &lt; (int)datos.size(); ++i) {
+  suma += datos[i] * datos[i];
+}
+
+// std::async (estándar, sin dependencias)
+#include &lt;future&gt;
+auto f = std::async(std::launch::async, [] {
+  return 40 + 2;   // corre en otro hilo
+});
+int resultado = f.get();   // espera el futuro
+
+// TBB (Intel): tasks más finos y escalables
+#include &lt;tbb/parallel_for.h&gt;
+tbb::parallel_for(0, (int)datos.size(), [&amp;](int i) {
+  datos[i] = datos[i] * 2.0;
+});
+</code></pre>
+<blockquote class="aside aside-caution"><p>Paralelizar sin entender la carrera de datos corrompe silenciosamente la memoria. Comienza con reducciones (suma) y evita mutar la misma variable en varios hilos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="test-frameworks">
+    <h2>Frameworks de testing y profiling <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-cpp">// GoogleTest (gtest): el estándar de la industria
+#include &lt;gtest/gtest.h&gt;
+
+int suma(int a, int b) { return a + b; }
+
+TEST(Matematica, SumaBasica) {
+  EXPECT_EQ(suma(2, 3), 5);
+  EXPECT_GT(suma(1, 1), 1);
+}
+
+TEST(Matematica, SumaNegativos) {
+  EXPECT_EQ(suma(-1, 1), 0);
+}
+// Compilar con CMake + gtest_discover_tests, luego ./test
+
+// Catch2: solo cabecera, más exprés
+#include &lt;catch2/catch_test_macros.hpp&gt;
+TEST_CASE("Suma funciona") {
+  REQUIRE(suma(2, 2) == 4);
+}
+
+// Perfiles: perf, gprof, Valgrind --tool=callgrind; Timing con std::chrono
+</code></pre>
+<blockquote class="aside aside-note"><p>gtest/Catch2 + CMake/CTest es la base de testing en C++. Añade Coverage (gcov/lcov) si quieres medir ramas no probadas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="red-y-redes">
+    <h2>Red y networking: HPPE y C++ REST SDK <span class="gd-badge gd-badge-note">Comm¿net</span></h2>
+    <div class="doc-content">
+<pre><code class="language-cpp">// C++ REST SDK (cpprestsdk): cliente HTTP con promesas
+#include &lt;cpprest/http_client.h&gt;
+#include &lt;cpprest/filestream.h&gt;
+using namespace web; using namespace web::http; using namespace web::http::client;
+
+http_client cliente(U("https://api.example.com"));
+auto req = cliente.request(methods::GET, U("/usuarios"))
+  .then([](http_response resp) {
+    return resp.extract_json();
+  })
+  .then([](json::value cuerpo) {
+    auto nombre = cuerpo[U("nombre")].as_string();
+    return nombre;
+  });
+// Atención: hay que esperar .wait() en main para no destruir el io
+
+// HPPE (High Performance Protocol Engine): más bajó nivel para latencia extrema
+</code></pre>
+<blockquote class="aside aside-caution"><p>Las promesas no bloquean: sin `.wait()` o `.get()` al final el programa termina antes de que llegue la respuesta. Para APIs REST ligeras también puedes usar libcurl con C++.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una ventana Qt con un botón Que cambie el texto de un label.</li>
+<li>Renderiza en SDL2 dos rectángulos y una imagen; cierra con la tecla ESC.</li>
+<li>Paraleliza con OpenMP la suma de un vector de 1M de elementos y mide el speedup.</li>
+<li>Escribe 5 tests con gtest sobre una clase Calculadora que sume/rest/mult/or/divida.</li>
+<li>Con cpprestsdk obtén usuarios de una API pública (jsonplaceholder) y muestra nombres.</li>
+</ol>
+    </div>
+  </section>

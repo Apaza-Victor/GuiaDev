@@ -1,0 +1,150 @@
+<!-- 2. Frameworks Elixir: Phoenix, Plug, Ecto - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework-elixir">
+    <h2>El stack de Elixir <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Phoenix: el framework web de facto (MVC, LiveView, WebSocket)
+#   - full stack (HTML+channels) y también API JSON
+# Plug: capa HTTP mínima sobre Cowboy/bandit (como Rack)
+# Ecto: base de datos + validador (schema/query) junto con Phoenix
+# LiveView: UI en tiempo real sin escribir JS (server-rendered)
+# Alternative: Absinthe (GraphQL oficial de Elixir)
+</code></pre>
+<blockquote class="aside aside-note"><p>Phoenix lo cubre todo (rutas+channels+json); Ecto la persistencia; LiveView te da interactividad en servidor. Absinthe para GraphQL.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="phoenix">
+    <h2>Phoenix: web completo y LiveView <span class="gd-badge gd-badge-note">Framework</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Generar un proyecto
+mix phx.new mi_app --no-assets --database sqlite3
+cd mi_app && mix deps.get
+mix phx.server            # localhost:4000
+</code></pre>
+<pre><code class="language-elixir"># lib/mi_app_web/router.ex (ejemplo)
+defmodule MiAppWeb.Router do
+  use MiAppWeb, :router
+  pipeline :api do
+    plug :accepts, ["json"]
+  end
+  scope "/api", MiAppWeb do
+    pipe_through :api
+    get "/saludo/:nombre", SaludoController, :index
+  end
+end
+
+# Controlador
+defmodule MiAppWeb.SaludoController do
+  use MiAppWeb, :controller
+  def index(conn, %{"nombre" =&gt; nombre}) do
+    json(conn, %{saludo =&gt; "Hola #{nombre}"})
+  end
+end
+
+# LiveView: render diffs por websocket
+#   def render(assigns) ... live components
+</code></pre>
+<blockquote class="aside aside-note"><p>Phoenix separa router/controller/view; LiveView reutiliza el servidor para diffs en tiempo real. Con `--no-assets` incluso encuentras todo lo mínimo. Es el stack estándar de Elixir.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ecto">
+    <h2>Ecto: esquemas y queries <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-elixir">defmodule MiApp.Usuario do
+  use Ecto.Schema
+  import Ecto.Changeset
+  schema "usuarios" do
+    field :nombre, :string
+    field :edad, :integer
+    timestamps()
+  end
+  def cambios(usuario, params) do
+    usuario
+    |&gt; cast(params, [:nombre, :edad])
+    |&gt; validate_required([:nombre])
+    |&gt; validate_number(:edad, greater_than: 0)
+  end
+end
+
+# Y en el contexto/repo:
+# Ecto.Query: Usuario |&gt; where([u], u.edad &gt; 18) |&gt; Repo.all()
+# Repo.insert! / Repo.get! / update_all...
+# Migraciones con mix ecto.migrate
+</code></pre>
+<blockquote class="aside aside-tip"><p>Ecto es ORM+changesets: esquema (schema), changeset para validar/cast, y el DSL Ecto.Query. Con `mix ecto.setup` creas BD y la migración inicial.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="gen-server-otp">
+    <h2>OTP: GenServer y supervisores <span class="gd-badge gd-badge-note">OTP</span></h2>
+    <div class="doc-content">
+<pre><code class="language-elixir">defmodule Contador do
+  use GenServer
+
+  def start_link(init \\ 0), do: GenServer.start_link(__MODULE__, init)
+
+  def incrementar(pid), do: GenServer.call(pid, :incrementar)
+
+  @impl true
+  def init(n), do: {:ok, n}
+
+  @impl true
+  def handle_call(:incrementar, _from, n), do: {:reply, n + 1, n + 1}
+
+  @impl true
+  def handle_info(:reset, _n), do: {:noreply, 0}
+end
+
+# Supervisores: OTPSupervisor para auto-restart de procesos
+# children = [{Contador, []}]
+# OTP da aislamiento de fallos y concurrencia del sistema
+</code></pre>
+<blockquote class="aside aside-tip"><p>GenServer encapsula estado+concurrencia y supervisores reinician procesos; esa robustez OTP es la razón principal de elegir Elixir/Erlang para sistemas de alto tráfico.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-exunit">
+    <h2>Testing: ExUnit y doctest <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-elixir">defmodule CalculadoraTest do
+  # test "suma" do assert ... end
+  use ExUnit.Case, async: true
+
+  test "suma correcta" do
+    assert Calculadora.suma(2, 3) == 5
+  end
+
+  test "división por cero lanza error" do
+    assert_raise ArithmeticError, fn -&gt; Calculadora.divide(1, 0) end
+  end
+end
+
+# doctest: pruebas de documentación dentro de @doc
+# @doc """
+#   iex&gt; Calculadora.suma(1, 2)
+#   3
+# """
+# Correr: mix test ; mix test --trace ; cover: mix test --cover
+</code></pre>
+<blockquote class="aside aside-success"><p>ExUnit es simple y potente (async, corre en clúster); `doctest` prueba ejemplos del @doc; `--cover` calcula cobertura. Para fuzz: StreamData. Todo con `mix test`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Genera un Phoenix nuevo con sqlite3 y levanta el server.</li>
+<li>Añade un endpoint /api/saludo/:nombre JSON.</li>
+<li>Define un schema Ecto con changeset y validaciones.</li>
+<li>Crea un GenServer Contador con supervisión.</li>
+<li>Escribe 3 tests ExUnit + un doctest y corre `mix test --cover`.</li>
+</ol>
+    </div>
+  </section>

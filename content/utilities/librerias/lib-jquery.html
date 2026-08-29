@@ -1,0 +1,153 @@
+<!-- jquery - Librerías (Utilidades) -->
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;script src="https://code.jquery.com/jquery-3.7.1.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install jquery
+</code></pre>
+<h4 class="tab-label">Webpack import</h4>
+<pre><code class="language-js">import $ from 'jquery';
+</code></pre>
+<blockquote class="aside aside-tip"><p>jQuery domina la manipulación del DOM, eventos, animaciones y AJAX con una sintaxis concisa y amplia compatibilidad con navegadores antiguos. Sigue presente en miles de proyectos legacy y plugins.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="selectores-y-manipulacion">
+    <h2>Selectores y Manipulación DOM <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Selección
+const $lista = $('.lista');          // todos los .lista
+const $item = $('#item1');           // por id
+const $combinado = $('div.menu, a.btn');
+
+// Iteración implícita
+$('.tarjeta').css('border', '1px solid #ddd');
+$('.tarjeta').addClass('activa').removeClass('inactiva');
+
+// Contenido
+$('#titulo').text('Nuevo título');
+$('#caja').html('&lt;strong&gt;HTML&lt;/strong&gt; en vivo');
+$('#input').val('valor inicial');
+$('#enlace').attr('href', '/destino');
+
+// Crear y anexar elementos
+const $nuevo = $('&lt;li&gt;').text('Item nuevo').addClass('item');
+$('#lista').append($nuevo);
+</code></pre>
+<blockquote class="aside aside-tip"><p>Todo selector devuelve una colección: los métodos se aplican a todos los elementos seleccionados y permiten encadenar operaciones.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="eventos">
+    <h2>Eventos <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Eventos básicos
+$('#btnGuardar').on('click', function () {
+  console.log('Guardado');
+});
+
+// Delegación de eventos (funciona con elementos creados después)
+$('#tabla').on('click', 'tr.fila-activa', function () {
+  alert($(this).data('id'));
+});
+
+// Eventos de formulario
+$('#miForm').on('submit', function (e) {
+  e.preventDefault();
+  const datos = $(this).serialize();
+  enviarDatos(datos);
+});
+
+// Keyboard / mouse
+$(document).on('keydown', (e) =&gt; {
+  if (e.key === 'Escape') cerrarModal();
+});
+$('.cards').on('mouseenter', function () {
+  $(this).toggleClass('hover');
+});
+</code></pre>
+<blockquote class="aside aside-note"><p>La delegación con `$(contenedor).on(evento, selector, handler)` es la forma correcta de manejar listas dinámicas sin re-bindear eventos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="efectos-y-animaciones">
+    <h2>Efectos y Animaciones <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Mostrar / ocultar
+$('#panel').show();
+$('#panel').hide('slow');
+$('#panel').toggle(400);
+
+// Desvanecido y deslizamiento
+$('#aviso').fadeIn(300);
+$('#sidenav').slideDown(300);
+
+// Animación de propiedades CSS
+$('#caja').animate({ left: '300px', opacity: 0.5 }, 600);
+
+// Cola de animaciones
+$('#caja')
+  .animate({ opacity: 0 }, 300)
+  .animate({ width: '50%' }, 300)
+  .slideUp();
+
+// Con callback al terminar
+$('#panel').fadeOut(400, () =&gt; {
+  console.log('Terminó la animación');
+});
+</code></pre>
+<blockquote class="aside aside-caution"><p>Para UI importante prefiere CSS transitions/`requestAnimationFrame` en proyectos modernos. jQuery animate es útil en bases legacy y prototipos rápidos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ajax">
+    <h2>AJAX con jQuery <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// GET
+$.get('/api/usuarios', { rol: 'admin' })
+  .done((data) =&gt; renderTabla(data))
+  .fail(() =&gt; mostrarError());
+
+// POST
+$.post('/api/usuarios', { nombre: 'Ana' })
+  .done((nuevo) =&gt; console.log('Creado', nuevo.id));
+
+// Config completa con $.ajax
+$.ajax({
+  url: '/api/perfil',
+  method: 'PUT',
+  contentType: 'application/json',
+  data: JSON.stringify({ edad: 31 }),
+  timeout: 5000,
+}).done((r) =&gt; toast('Perfil actualizado'))
+  .fail((xhr) =&gt; {
+    if (xhr.status === 401) location.href = '/login';
+  });
+
+// Cargar HTML parcial en un contenedor
+$('#contenido').load('/secciones/intro.html');
+</code></pre>
+<blockquote class="aside aside-tip"><p>`.done`/`.fail` devuelven el objeto de promesa propio de jQuery; para proyectos nuevos se recomienda `fetch`, pero en proyectos jQuery existentes `$.ajax` sigue siendo la vía natural.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Selecciona todas las celdas con clase `.dato` y añádeles un borde y fondo claro en una sola línea encadenada.</li>
+<li>Maneja clics en botones dentro de una lista dinámica usando delegación de eventos.</li>
+<li>Crea un acordeón: al hacer clic en un título, el panel hermano hace `slideToggle`.</li>
+<li>Envía un POST con `$.post` y renderiza el ID retornado en pantalla.</li>
+<li>Añade un spinner: muestra `fadeIn`, espera la respuesta AJAX y oculta con `fadeOut`.</li>
+</ol>
+    </div>
+  </section>

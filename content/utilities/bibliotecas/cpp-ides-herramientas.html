@@ -1,0 +1,108 @@
+<!-- 3. IDEs y Herramientas para C++ - Bibliotecas (Utilidades) -->
+  <section id="compiladores-build">
+    <h2>Compiladores y sistemas de build <span class="gd-badge gd-badge-note">Herramienta</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># GCC 13+/Clang 17+: C++20/23 listo
+g++ -std=c++20 -Wall -Wextra prog.cpp -o prog
+clang++ -std=c++20 -Wall -Wextra prog.cpp -o prog
+
+# CMake: el estándar de build multiplataforma
+cmake_minimum_required(VERSION 3.24)
+project(mi_proyecto CXX)
+set(CMAKE_CXX_STANDARD 20)
+add_executable(main main.cpp)
+
+# Con vcpkg (gestor de dependencias en Windows/Linux/Mac)
+vcpkg install fmt spdlog nlohmann-json gtest
+cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=$VCPKG/scripts/buildsystems/vcpkg.cmake
+cmake --build build
+
+# Conan (otro gestor, docker-first)
+conan install . --output-folder=build
+</code></pre>
+<blockquote class="aside aside-tip"><p>Usa CMake + un gestor de paquetes (vcpkg o Conan) para dependencias externas. Nunca copies librerías a mano dentro del repo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ides">
+    <h2>IDEs y editores C++ <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># CLion (JetBrains, de pago): CMake + depurador + refactorización potentes
+# Qt Creator: ideal si usas Qt (gratis, con diseño visual)
+# Visual Studio (Windows): el referente en MSVC y profiler integrado
+
+# VS Code gratuito (recomendado light)
+code --install-extension ms-vscode.cpptools
+code --install-extension llvm-vs-code-extensions.vscode-clangd
+
+# Vim/Neovim + clangd + generic-lsp, Emacs + LSP-mode
+</code></pre>
+<blockquote class="aside aside-note"><p>Elige IDE según ecosistema: Qt Creator para Qt, CLion para CMake puro, VS Code/Neovim como liviano multiplataforma con clangd.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="debugger-prefile">
+    <h2>Depuración y perfilado <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Compilar con símbolos y sanitizers
+g++ -g -fsanitize=address,undefined prog.cpp -o prog
+
+# gdb (igual que C, pero con conocimiento de tipos STL)
+gdb ./prog
+(gdb) break main
+(gdb) run
+(gdb) print vector                # con pretty-printers de STL
+(gdb) bt                          # backtrace en crash
+(gdb) up / down                   # navegar entre frames
+
+# Perfiles de demanda: perf o AMD uProf en Linux, xperf en Windows
+cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+perf record ./build/prog
+perf report                       # ver embudos de CPU (hot spots)
+</code></pre>
+<blockquote class="aside aside-tip"><p>Pedir `RelWithDebInfo` con símbolos nos permite más fácilmente analizar con perf. gcc -g también funciona para gdb.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="herramientas-calidad">
+    <h2>Análisis estático y formato <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># clang-tidy: linting y análisis avanzado
+clang-tidy prog.cpp -checks='*,-cppcoreguidelines-*' -- -std=c++20
+
+# clang-format: formato automático
+clang-format -i *.cpp *.hpp
+
+# cppcheck: detecta bugs clásicos
+cppcheck --enable=warning,performance,portability .
+
+# include-what-you-use
+iwyu prog.cpp
+
+# Cobertura
+#   gcov + lcov + genhtml tras ejecutar tests
+lcov --capture --directory build --output-file cov.info
+genhtml cov.info -o coverage
+
+# Integración CI: GitHub Actions + build + tests + clang-tidy
+</code></pre>
+<blockquote class="aside aside-success"><p>En CI deja que clang-tidy y cppcheck fallen el build si hay críticas; clang-format que resuelva formato. Así el estilo queda blindado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un proyecto CMake con dos archivos fuentes y configúralo con `-std=c++20`.</li>
+<li>Añade fmt y gtest mediante vcpkg y compila un test de ejemplo.</li>
+<li>Coloca un breakpoint, inspecciona un `std::vector` completo y navega 2 frames del stack.</li>
+<li>Ejecuta clang-tidy sobre un archivo y corrige 3 advertencias de rendimiento.</li>
+<li>Genera un reporte de cobertura con lcov para un módulo con 5 tests.</li>
+</ol>
+    </div>
+  </section>

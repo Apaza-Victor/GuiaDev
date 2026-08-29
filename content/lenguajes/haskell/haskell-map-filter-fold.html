@@ -1,0 +1,173 @@
+<!-- 5. map, filter y fold - Haskell (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="mapa">
+    <h2>map y filter</h2>
+    <div class="doc-content">
+<p>Las dos funciones de orden superior más usadas: <code>map</code> aplica una función a cada elemento; <code>filter</code> conserva los que cumplen un predicado. Se definen recursivamente en el Prelude.</p>
+<pre><code class="language-haskell">-- map: aplicar una función a cada elemento
+ghci&gt; map (+1) [1..5]
+[2,3,4,5,6]
+ghci&gt; map (*2) [1..5]
+[2,4,6,8,10]
+ghci&gt; map toUpper "hola"    -- "HOLA"
+
+-- filter: conservar los que cumplen
+ghci&gt; filter even [1..10]
+[2,4,6,8,10]
+ghci&gt; filter (&gt; 5) [1..10]
+[6,7,8,9,10]
+
+-- Combinarlas
+ghci&gt; map (^2) (filter odd [1..10])
+[1,9,25,49,81]
+
+-- Sus definiciones (así trabajan)
+miMap :: (a -&gt; b) -&gt; [a] -&gt; [b]
+miMap _ []     = []
+miMap f (x:xs) = f x : miMap f xs
+
+miFilter :: (a -&gt; Bool) -&gt; [a] -&gt; [a]
+miFilter _ []     = []
+miFilter p (x:xs)
+  | p x       = x : miFilter p xs
+  | otherwise = miFilter p xs</code></pre>
+<blockquote class="aside aside-tip"><p>Las firmas lo dicen todo:<br/><code>map :: (a -&gt; b) -&gt; [a] -&gt; [b]</code><br/><code>filter :: (a -&gt; Bool) -&gt; [a] -&gt; [a]</code><br/>Suele ser más eficiente y legible que un bucle manual.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="lambda">
+    <h2>Funciones anónimas (lambda)</h2>
+    <div class="doc-content">
+<p>Con <code>\x -&gt; ...</code> defines funciones sin nombre (ϵ-cálculo). Se usan "inline" donde necesitas una función corta que no merece definición propia.</p>
+<pre><code class="language-haskell">-- Lambda básica
+ghci&gt; (\x -&gt; x * x) 5
+25
+
+-- Usadas con map/filter
+ghci&gt; map (\x -&gt; x * x) [1..4]
+[1,4,9,16]
+ghci&gt; filter (\x -&gt; x `mod` 3 == 0) [1..20]
+[3,6,9,12,15,18]
+
+-- Dos argumentos
+ghci&gt; (\a b -&gt; a + b) 2 3
+5
+
+-- Son la forma de "expr" de construir funciones al vuelo
+mayores10 = map (\x -&gt; if x &gt; 10 then x else 0) [5, 15, 3]</code></pre>
+<blockquote class="aside aside-caution"><p>Si una lambda crece más de una línea, mejor definirla en un <code>where</code>. Pero para casos cortos, son perfectas: no gastan un nombre y despliegan la firma en uso.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="foldr">
+    <h2>fold: términos de reducción</h2>
+    <div class="doc-content">
+<p><code>foldr</code> y <code>foldl</code> reducen una lista a un valor con un acumulador. <code>foldr</code> procesa de derecha a izquierda (perezoso, ideal para listas infinitas); <code>foldl'</code> (estricto) para sumas de muchos datos.</p>
+<pre><code class="language-haskell">-- foldr f z [a,b,c] = f a (f b (f c z))
+ghci&gt; foldr (+) 0 [1,2,3,4]
+10
+
+ghci&gt; foldr (*) 1 [1,2,3,4]
+24
+
+-- Los dos argumentos de f: elemento y acumulador
+sumaUsandoFold' = foldr (+)
+ghci&gt; sumaUsandoFold' 0 [1..100]
+5050
+
+-- foldl': variante estricta para acumular números
+import Data.List (foldl')
+ghci&gt; foldl' (+) 0 [1..1000]
+500500
+
+-- ¡construir!! Cons dor fold entregan reverse con foldl
+ghci&gt; foldl' (flip (:)) [] [1,2,3]
+[3,2,1]
+
+-- Reduce (sin valor inicial; errores en lista vacía)
+ghci&gt; foldr1 max [3,1,4,1,5]
+5</code></pre>
+<blockquote class="aside aside-success"><p>En GHC moderno, <code>foldr</code> es "composable" y funde con map/filter gracias a las reglas de fusión (<code>map f . map g == map (f . g)</code>). No te preocupes por el rendimiento en la mayoría de casos: el compilador optimiza.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="zip">
+    <h2>zip y combinaciones</h2>
+    <div class="doc-content">
+<p><code>zip</code> agrupa dos listas en pares (trunca a la menor), y se combina con <code>map</code>/comprensiones para operaciones pareadas.</p>
+<pre><code class="language-haskell">ghci&gt; zip [1,2,3] ['a','b','c']
+[(1,'a'),(2,'b'),(3,'c')]
+
+ghci&gt; zip [1,2,3] [10,20]
+[(1,10),(2,20)]     -- 3 excedente: se trunca
+
+-- zipWith aplica la función a cada par
+ghci&gt; zipWith (+) [1,2,3] [10,20,30]
+[11,22,33]
+
+-- Suma de vectores
+sumaVectores v w = zipWith (+) v w
+
+-- Índices
+ghci&gt; zip [0..] "abc"
+[(0,'a'),(1,'b'),(2,'c')]
+
+-- Pdto punto (azúcar con zipWith)
+punto a b = sum (zipWith (*) a b)
+ghci&gt; punto [1,2,3] [4,5,6]
+32</code></pre>
+<blockquote class="aside aside-tip"><p><code>zipWith</code> es <code>zip</code> + <code>map desempacar</code>: en la práctica prefieres <code>zipWith</code> directo. Para "enumerar" listas usa <code>zip [0..]</code>, un truco clásico.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="applicative">
+    <h2>Aplicativos en listas</h2>
+    <div class="doc-content">
+<p>La lista es un <strong>Applicative</strong> (<code>pure x = [x]</code>, <code>&lt;*&gt;</code> = producto de funciones). Esto generaliza map: aplicar funciones a múltiples listas a la vez.</p>
+<pre><code class="language-haskell">-- &lt;$&gt; es fmap de aplicativos: f &lt;$&gt; xs  ==  map f xs
+ghci&gt; (*2) &lt;$&gt; [1,2,3]
+[2,4,6]
+
+-- &lt;*&gt;: combinar lista de funciones y de valores
+ghci&gt; [(+1), (*2)] &lt;*&gt; [1,2,3]
+[2,3,4, 2,4,6]
+
+-- En la práctica: todas las combinaciones
+ghci&gt; (\x y -&gt; x + y) &lt;$&gt; [1,2] &lt;*&gt; [10,20]
+[11,21, 12,22]
+
+-- Comprensiones vs aplicativos
+-- [x + y | x &lt;- [1,2], y &lt;- [10,20]]  el mismo resultado
+
+-- Aplicativos sobre Maybe: propagan Nothing
+ghci&gt; (+) &lt;$&gt; Just 2 &lt;*&gt; Just 3
+Just 5
+ghci&gt; (+) &lt;$&gt; Nothing &lt;*&gt; Just 3
+Nothing
+
+-- Y sobre funciones (Reader): toda función es aplicativa
+-- (e -&gt; a) es aplicativo; &lt;*&gt; compone por argumento común</code></pre>
+<blockquote class="aside aside-tip"><p>Los <strong>Aplicativos</strong> son la generalización de "aplicar una función a un valor dentro de un contexto". Listas (no determinismo), Maybe (posible ausencia) y IO los usan. Es el escalón previo a las mónadas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>map/filter</strong>: con una lista de edades, conserva mayores de 18 y muéstralos duplicados.</li>
+<li><strong>Lambda</strong>: pasa a mayúsculas las vocales de un string usando <code>map (\c -&gt; ...)</code>.</li>
+<li><strong>foldr</strong>: implementa <code>sumaCuadrados = foldr</code> que sume los cuadrados; verifies con una lista.</li>
+<li><strong>zipWith</strong>: calcula el promedio de cada par <code>(a,b)</code> con <code>zipWith</code>.</li>
+<li><strong>Aplicativos</strong>: genera todas las sumas de <code>[1,2]</code> y <code>[10,20]</code> usando <code>(+) &lt;$&gt; ... &lt;*&gt; ...</code>.</li>
+</ol>
+<p>En la última lección conectaremos todo con IO, proyectos <code>cabal</code> y testing (QuickCheck).</p>
+    </div>
+  </section>

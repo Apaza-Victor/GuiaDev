@@ -1,0 +1,101 @@
+<!-- 3. IDEs y Herramientas para Haskell - Bibliotecas (Utilidades) -->
+  <section id="ide-haskell">
+    <h2>IDEs y GHCi <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># VS Code: extensión "Haskell" (haskell-language-server LSP)
+code --install-extension haskell.haskell
+# haskell-language-server: completado, tipos, refactors, full LSP
+# Opción alternativa: Neovim con haskell-language-server
+# IntelliJ Haskell plugin (alternativo)
+
+# GHCi: REPL potente
+ghci
+#   :t expresion   (tipo)
+#   :i función     (info)
+#   :reload        (cargar de nuevo)
+#   :set -Wall     (warnings)
+# Config de formato se delega a ormolu
+</code></pre>
+<blockquote class="aside aside-tip"><p>haskell-language-server es el LSP de referencia y otorga HLS, refactors, types via GHC. GHCi con `:t`/`:i` sigue siendo el maestro para explorar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalar-herramientas-haskell">
+    <h2>ormolu, fourmolu y herramientas CLI <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Formato: ormolu (moderno) / Fourmolu (fork configurable)
+cabal install ormolu
+ormolu -i -m inplace src/Main.hs
+ormolu --mode check src/**/*.hs   # CI
+
+# hlint: linter de sugerencias (definitiva)
+cabal install hlint
+hlint src/                       # muestra sugerencias (no reescribe)
+
+# análisis de tipos
+cabal build --ghc-options="-Wall -Werror"
+# profiling trabaja con la RTS del binario compilado
+# haskell-language-server integra ormolu+hlint en el editor
+</code></pre>
+<blockquote class="aside aside-note"><p>ormolu es el estilo oficial; hlint recomienda refactors; GHC con `-Wall -Werror` convierte advertencias en errores en el build (CI ideal).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depuracion-haskell">
+    <h2>Depurar y perfilar Haskell <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># GHCi debugger integrado
+ghci -d Debug
+#   :break function, :trace, :backtrace, :print var
+# tracer más simple: DuckDebug / liftIO (print intermedia)
+# Debug sencillo intermedio: imprimir en IO (liftIO . print)
+# profiling con RTS flags (uso de heap)
+cabal build --enable-profiling
+./app +RTS -p -RTS           # genera app.prof
+ghc-prof-flamegraph app.prof # representa visualmente
+
+# memory: +RTS -hT ; hp2ps profiler
+</code></pre>
+<blockquote class="aside aside-caution"><p>Con `:break`/`:trace` de GHCi puedes depurar; para rendimiento/uso de memoria la combinación profiling (+RTS -p/-hT) y flamegraph del profiler es lo habitual.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-haskell">
+    <h2>Compilar y desplegar <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Binario estático con GHC
+cabal build
+ghc --make -O2 src/Main.hs -o mi-app
+# static linking a glibc en Linux (GHC) para binario portable
+</code></pre>
+<pre><code class="language-docker">FROM haskell:9.6 AS build
+WORKDIR /app
+COPY . .
+RUN cabal update && cabal build --offline
+
+FROM ubuntu:22.04
+WORKDIR /app
+COPY --from=build /app/dist-newstyle/build/*/*/x/mi-app/build/mi-app/mi-app .
+EXPOSE 8080
+CMD ["./mi-app"]
+</code></pre>
+<blockquote class="aside aside-success"><p>GHC con `-O2` y linking estático produce binarios standalone; la imagen final (Ubuntu base + binario) es pequeña. La etapa build lleva stack completo (GHC).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala haskell-language-server y explora autocompletado en un script.</li>
+<li>Corre hlint sobre tu proyecto y aplica 3 sugerencias.</li>
+<li>Formatea con ormolu y revisa el diff (-mode check en CI).</li>
+<li>Perfilea el uso de memoria de una función recursiva con -hT.</li>
+<li>Compila con -O2 y prueba el binario estático en Docker.</li>
+</ol>
+    </div>
+  </section>

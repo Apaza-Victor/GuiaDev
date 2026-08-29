@@ -1,0 +1,101 @@
+<!-- 3. IDEs y Herramientas para F# - Bibliotecas (Utilidades) -->
+  <section id="ide-fsharp">
+    <h2>Editores y F# IDE <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># VS Code + Ionide (el LSP de F#)
+code --install-extension ionide.ionide-fsharp
+# ionide: FS (LSP), debugging, FSI, formateo
+# Visual Studio (Windows): soporte F# incluido (excepcional)
+# Rider (JetBrains): plugin F# opcional
+# dotnet fsi (REPL) está siempre disponible en terminal
+
+# Config: formatter Fantomas integrado en Ionide
+# CI: dotnet build / test
+</code></pre>
+<blockquote class="aside aside-tip"><p>Ionide (LSP) es el estándar en VS Code; VS Studio en Windows es de facto para .NET. `dotnet fsi` para probar scripts; Fantomas para formatear.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fantomas-dotnet-cli">
+    <h2>Fantomas, dotnet tools y calidad <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Fantomas: formatter oficial de F# (configurable)
+dotnet tool install -g fantomas
+fantomas *.fs *.fsx
+fantomas --check src/        # CI
+
+# Herramientas de calidad en .NET
+dotnet tool install -g dotnet-ef          # Entity Framework CLI
+dotnet tool install -g sonarscanner       # SonarQube análisis
+dotnet build --no-restore
+dotnet test
+# FSharpCompiler.Service para analizar; Ionide cubre IDE
+
+# BenchmarkDotNet para microbenchmarks (es de C#, funciona igual)
+</code></pre>
+<blockquote class="aside aside-tip"><p>`dotnet tool` instala utilidades globales (Fantomas, ef, sonarscanner). Fantomas es obligatorio en proyectos serios; `dotnet build/test` el ciclo básico.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depuracion-fsharp">
+    <h2>Depuración y FSI <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># FSI (F# Interactive) como laboratorio
+dotnet fsi
+#   enviar línea, revisar tipos (;; separa envíos)
+# In Ionide/VS: envía a FSI con atajo (Alt+Enter)
+
+# Debugger completo: VS/Rider/Ionide ponen breakpoints
+#   (xx: junto con .NET: watch, callstack)
+# Logs con Logger/printfn; props:
+#   #time "on" | #quieton
+
+# Profiling .NET : dotnet-trace / dotnet-counters
+dotnet tool install -g dotnet-trace
+dotnet-trace collect -- dotnet run
+</code></pre>
+<blockquote class="aside aside-caution"><p>FSI es tu mejor amigo: envía fragmentos y pregúntale tipos. Para perfiles reales: usa dotnet-trace (contador, sampling) y `#time` para experimentos rápidos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-fsharp">
+    <h2>Publicar y desplegar <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Publicar binario autocontenido (Giraffe/console)
+dotnet publish -c Release -r linux-x64 --self-contained
+# genera binario native plugin runtime (puede caber ~50-100MB)
+# para menor tamaño: selfcontained false + runtime de la imagen
+</code></pre>
+<pre><code class="language-docker">FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /app
+COPY *.fsproj ./
+RUN dotnet restore
+COPY . .
+RUN dotnet publish -c Release -r linux-x64 --self-contained false -o out
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
+COPY --from=build /app/out .
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "MiApp.dll"]
+</code></pre>
+<blockquote class="aside aside-success"><p>`dotnet publish` autocontenido = sin runtime instalado en el destino; o multi-stage con imagen aspnet. Kestrel (ASP.NET) escucha en 0.0.0.0:8080 con UseUrls/ASPNETCORE_URLS.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala Ionide y envía un fragmento a FSI en VS Code.</li>
+<li>Formatea tu proyecto con Fantomas y corre `--check` en CI.</li>
+<li>Usa dotnet-trace para perfilar la arrancada de tu app.</li>
+<li>Publica autocontenido para linux-x64 y mide el tamaño.</li>
+<li>Despliega con multi-stage aspnet y prueba el healthcheck.</li>
+</ol>
+    </div>
+  </section>

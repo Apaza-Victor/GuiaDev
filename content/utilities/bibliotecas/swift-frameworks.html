@@ -1,0 +1,166 @@
+<!-- 2. Frameworks Swift: Vapor, SwiftUI/Combine - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework-swift">
+    <h2>Elegir stack Swift <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Apple (apps iOS/macOS): SwiftUI + Combine + Xcode, sin librerías de más
+# Servidor:
+#   Vapor (de facto) / Hummingbird (ligero y rápido) / Kitura (legacy IBM)
+# Compartir lógica móvil+servidor: Foundation + Codable en ambos lados
+# Tests: XCTest (Apple) como estándar
+</code></pre>
+<blockquote class="aside aside-note"><p>Para apps Apple: SwiftUI+Combine y sin más. Para backend: Vapor. Compartir modelos Codable entre tu app y tu API es gratis porque ambos son Swift.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="swiftui">
+    <h2>SwiftUI y Combine <span class="gd-badge gd-badge-note">UI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-swift">import SwiftUI
+
+struct ContadorView: View {
+    @State private var cuenta = 0
+    @Environment(\.colorScheme) var esquema
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Cuenta: \(cuenta)")
+                .font(.largeTitle.bold())
+            HStack {
+                Button("+") { cuenta += 1 }
+                Button("−") { cuenta -= 1 }
+            }
+        }
+        .padding()
+    }
+}
+
+// Combine: @State/@ObservableObject, @Published, .sink
+import Combine
+final class VM: ObservableObject {
+    @Published var items: [String] = []
+}
+
+struct MiApp: App {
+    var body: some Scene { WindowGroup { ContadorView() } }
+}
+</code></pre>
+<blockquote class="aside aside-note"><p>SwiftUI es declarativo y es el mantenedor de la UI moderno (iOS 13+). Combine o el nuevo Observation gestionan estado reactivo con `@Published`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="vapor">
+    <h2>Vapor: servidor Swift <span class="gd-badge gd-badge-note">Backend</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Crear proyecto Vapor
+curl -sL https://templates.vapor.cloud/template.tar.gz | tar -xz
+# o app generator: vapor new mi-api
+</code></pre>
+<pre><code class="language-swift">import Vapor
+
+func routes(_ app: Application) throws {
+    app.get { req in
+        "Bienvenido a mi API Swift"
+    }
+    app.get("saludo", ":nombre") { req -&gt; String in
+        let nombre = try req.parameters.require("nombre")
+        return "Hola \(nombre)"
+    }
+    app.post("usuarios") { req in
+        let u = try req.content.decode(Usuario.self)
+        return u
+    }
+}
+
+@main
+struct AppMain {
+    static func main() async throws {
+        var env = try Environment.detect()
+        let app = Application(env)
+        defer { app.shutdown() }
+        try routes(app)
+        try await app.execute()
+    }
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>Vapor trae routing, middlewares, Fluent (ORM async), WebSockets y corutinas async/await. Hummingbird es la alternativa ligera. `req.content.decode` con Codable.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fluent-bd">
+    <h2>Fluent y persistencia <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-swift">import Fluent
+import FluentSQLiteDriver
+
+final class Usuario: Model {
+    static let schema = "usuarios"
+    @ID(key: .id) var id: UUID?
+    @Field(key: "nombre") var nombre: String
+    @Field(key: "edad") var edad: Int
+    @Timestamp(key: "creado_en", on: .create) var creadoEn: Date?
+}
+
+// Migraciones + SQLiteDriver
+final class CrearUsuario: AsyncMigration {
+    func prepare(on db: Database) async throws {
+        try await db.schema("usuarios")
+            .id()
+            .field("nombre", .string, .required)
+            .field("edad", .int, .required)
+            .create()
+    }
+    func revert(on db: Database) async throws {
+        try await db.schema("usuarios").delete()
+    }
+}
+
+// En ruta: Usuario.query(on: req.db).filter(\.$edad &gt; 18).all()
+</code></pre>
+<blockquote class="aside aside-tip"><p>Fluent es el ORM de Vapor (async, multiplataforma: SQLite/Postgres/MySQL). `@Field/@ID/@Timestamp` decoran el modelo y las migraciones controlan el esquema.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-xctest">
+    <h2>Testing con XCTest <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-swift">import XCTest
+
+final class MiAppTests: XCTestCase {
+    override func setUp() async throws { super.setUp() }
+
+    func testSuma() {
+        XCTAssertEqual(suma(2, 3), 5)
+    }
+
+    func testJSON() throws {
+        let json = #"{"nombre":"Ana","edad":30}"#
+        let u = try JSONDecoder().decode(Usuario.self,
+            from: json.data(using: .utf8)!)
+        XCTAssertEqual(u.nombre, "Ana")
+    }
+}
+// swift test (SPM) o ⌘U en Xcode
+// Cobertura: Xcode Coverage (esquema de test) / Codecov
+// UI tests: XCUITest en Xcode para flows de la app
+</code></pre>
+<blockquote class="aside aside-success"><p>XCTest es el framework nativo (unit + UI). `swift test` lo corre desde CLI; Xcode muestra cobertura. Para APIs de Vapor puedes testear con método `app.test()`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una vista SwiftUI con @State y un par de botones.</li>
+<li>Levanta un Vapor con GET /saludo/:nombre y prueba con curl.</li>
+<li>Define dos modelos Fluent con migración y usa .query().</li>
+<li>Escribe 3 tests XCTest sobre una función de negocio.</li>
+<li>Comparte un struct Codable entre tu app y tu API Vapor.</li>
+</ol>
+    </div>
+  </section>

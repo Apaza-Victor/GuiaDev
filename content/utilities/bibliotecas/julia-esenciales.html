@@ -1,0 +1,126 @@
+<!-- 1. Librerías Esenciales de Julia - Bibliotecas (Utilidades) -->
+  <section id="julia-base">
+    <h2>Base y estándar: arrays y múltiple dispatch <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-julia"># Julia Base: arrays, math, I/O, Unicode, types fuertes
+v = [3, 1, 4, 1, 5]
+sort!(v)
+sum(v)
+filter(isodd, v)
+map(x -&gt; x^2, v)
+println(join(v, ", "))
+
+# lineal: matrices y operaciones vectorizadas vienen de Base (BLAS)
+A = [1 2; 3 4]
+b = [5, 6]
+x = A \ b          # resuelve el sistema lineal
+
+# multiple dispatch (el lenguaje central)
+area(radio::Float64) = π * radio^2
+area(base::Float64, altura::Float64) = 0.5 * base * altura
+
+# comprehensions y ranges
+cuadrados = [n^2 for n in 1:10 if iseven(n)]
+aproximar_pi = sum(1/n^2 for n in 1:10_000)
+</code></pre>
+<blockquote class="aside aside-tip"><p>Base de Julia es completa: matrices, funciones matemáticas, missings, docstrings y `@show`. El rendimiento viene del compilador LLVM y del multiple dispatch.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pkg-general">
+    <h2>Pkg: el gestor de paquetes de Julia <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-julia">import Pkg
+Pkg.add("DataFrames")
+Pkg.add(["JSON", "HTTP", "Plots"])
+Pkg.rm("Plots")
+Pkg.update()
+Pkg.status()
+
+# project/package := Project.toml + Manifest.toml
+# Desarrollar un paquete:
+Pkg.activate("MiPack")         # entorno nuevo
+Pkg.generate("MiPack")         # genera módulo
+Pkg.develop(path="MiPack")     # modo dev
+</code></pre>
+<pre><code class="language-toml"># Project.toml (ejemplo)
+name = "MiApp"
+uuid = "xxxxxxxx-...-xxx"
+authors = ["ana"]
+version = "0.1.0"
+
+[deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+
+[compat]
+DataFrames = "1"
+julia = "1.10"
+</code></pre>
+<blockquote class="aside aside-tip"><p>Pkg maneja Project.toml (declarado) + Manifest.toml (lock de versiones). Julia tiene un registry de producción: General (general.julialang.org) con miles de paquetes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="librerias-populares-julia">
+    <h2>Librerías populares: DataFrames, JSON, HTTP <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-julia">import Pkg
+Pkg.add(["DataFrames", "JSON", "HTTP"])
+
+using DataFrames, JSON
+
+# DataFrames: tablas como pandas
+df = DataFrame(nombre = ["Ana", "Luis"], edad = [30, 25])
+df[df.edad .&gt; 26, :]
+push!(df, ("Rosa", 40))
+println(df)
+
+# JSON
+j = JSON.parse("{\"clave\": 1, \"lista\": [1,2,3]}")
+JSON.json(Dict("a" =&gt; [1,2,3]))
+
+# HTTP (cliente simple)
+resp = HTTP.get("https://api.github.com/users/octocat")
+JSON.parse(resp.body)
+</code></pre>
+<blockquote class="aside aside-note"><p>El ecosistema de datos: DataFrames (tablas), JSON para serializar, HTTP para red. Además Plots/Plots.jl para gráficos, CSV.jl para archivos, GLM.jl para modelos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-julia">
+    <h2>Instalación de Julia <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Download del installer (julialang.org)
+#   Windows .exe, macOS .dmg, Linux tar.gz
+# Recomendado: juliaup (version manager multiplataforma)
+curl -fsSL https://install.julialang.org | sh
+juliaup add release
+juliaup default release
+
+# Verificar
+julia --version
+echo 'println("Hola desde Julia")' &gt; hola.jl
+julia hola.jl
+
+# REPL: julia, ? para ayuda, ] para Pkg, ; para shell
+</code></pre>
+<blockquote class="aside aside-tip"><p>juliaup es el instalador oficial multi-versión (recomendado). El REPL es clave: `]` abre el modo Pkg, `?` busca docs de funciones.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>En el REPL, prueba sort/filter/map sobre un vector grande (compila la segunda llamada).</li>
+<li>Resuelve A\x para una matriz 3x3 en Base.</li>
+<li>Con Pkg crea un proyecto MiPack y `Pkg.precompile`.</li>
+<li>Instala y usa DataFrames para agrupar y filtrar una tabla.</li>
+<li>Consume una API con HTTP.get + JSON.parse y haz summary.</li>
+</ol>
+    </div>
+  </section>

@@ -1,0 +1,107 @@
+<!-- 3. IDEs y Herramientas para Dart - Bibliotecas (Utilidades) -->
+  <section id="ide-dart">
+    <h2>IDEs de Dart y Flutter <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># VS Code es la opción gratuita estándar
+code --install-extension Dart-Code.dart-code
+code --install-extension Dart-Code.flutter
+# Incluye: hot reload, widget inspector, debug, snippets
+
+# Android Studio / IntelliJ (con plugin Flutter): flujo completo móvil
+#   - emulador, devices manager, plugin dart de JetBrains
+# Android Studio: importantísimo para Android SDK (adb, emulador)
+# Neovim: dart LSP + iOS/macOS clave solo en editores tradicionales
+
+# hot reload:  Estándar para iterar UI en segundos
+flutter run --profile   # modo profiling
+flutter run --release  # binario de liberación
+</code></pre>
+<blockquote class="aside aside-tip"><p>VS Code + Flutter es suficiente para la mayoría; Android Studio es necesario por el Android SDK/emulador aunque escribas el código en VS Code/IDEA.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="herramientas-cli">
+    <h2>CLI: dart format, analyze, doc <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Formato
+dart format lib test
+dart fix --apply              # aplica fixes automáticos de analysis_options
+
+# Análisis estático
+dart analyze                  # verifica analysis_options.yaml
+# analysis_options.yaml
+include: package:lints/recommended.yaml
+linter:
+  rules:
+    - prefer_final_locals
+    - avoid_print                 # usa debugPrint/logger en Flutter
+
+# Docs
+dart doc                       # genera documentación API local
+# Tests
+dart test --coverage=coverage
+dart run coverage:format_coverage --in=coverage --out=coverage/lcov.info
+</code></pre>
+<blockquote class="aside aside-tip"><p>mantén `dart analyze` sin errores y `dart format` en la CI. Los `lints` recomendados de `package:lints` son el punto de partida estándar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="diagnostico-flutter">
+    <h2>Diagnóstico: DevTools y profile <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># DevTools (viene con Flutter)
+flutter run
+# presiona "o" o: flutter run --devtools para abrir suite:
+#  - Widget tree / Layout inspector
+#  - CPU profiler, Memory, Network, Timeline
+#  - Performance Overlay (widgets que piden render)
+
+# Depuración
+debugPrint('...')        # no se pierde en consola (vs print)
+# assert() para invariantes en modo debug
+# breakpoints en VS Code/Android Studio con soporte Dart
+
+# Logcat Android: flutter logs ; flutter run -v detalla
+# llama a flutter analyze --fatal-infos si quieres exigir cero info
+</code></pre>
+<blockquote class="aside aside-caution"><p>`print` en release se conserva; usa `debugPrint` o logger (package:logger) y evita logs sensibles. DevTools es tu mejor aliado para UI y rendimiento.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-flutter">
+    <h2>Build y despliegue multilenguaje <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Android APK/AAB
+flutter build apk --release
+flutter build appbundle --release   # para Google Play
+# iOS
+flutter build ipa
+# Web/escritorio
+flutter build web
+flutter build windows / macos / linux
+
+# CI recomendada (GitHub Actions): melos (workspaces monorepo)
+#   orta/codemagic/buildkite para flutter
+# Tamaño: --split-debug-info, --obfuscate para reducir
+# Entorno: --dart-define=API_URL=... para variables por entorno
+</code></pre>
+<blockquote class="aside aside-note"><p>Flutter compila a nativo con un solo flujo: `flutter build <plataforma>`. Codemagic/Codemagic y las acciones de la comunidad publican a Play/App Store automáticamente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala VS Code + plugins Dart/Flutter y ejecuta la app contador.</li>
+<li>Usa `dart format` y `dart analyze` hasta tener cero warnings.</li>
+<li>Abra DevTools y navega el widget tree de tu app.</li>
+<li>Genera un APK release y compruébalo en un emulador.</li>
+<li>Crea una GitHub Action que corra `dart analyze` y `flutter test`.</li>
+</ol>
+    </div>
+  </section>

@@ -1,0 +1,195 @@
+<!-- 5. Administración de Sistema - PowerShell (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="archivos">
+    <h2>Trabajar con archivos</h2>
+    <div class="doc-content">
+<p>PowerShell expone el sistema de archivos con cmdlets <code>Get-ChildItem</code>, <code>Copy-Item</code>, <code>Move-Item</code>, <code>Remove-Item</code>, <code>New-Item</code> y <code>Set-Content</code>.</p>
+<pre><code class="language-powershell"># Listar
+Get-ChildItem .\docs
+
+# Filtros y comodines
+Get-ChildItem *.txt
+Get-ChildItem -Recurse -Filter "*.log"
+
+# Crear archivos y carpetas
+New-Item -Path .\backup -ItemType Directory
+New-Item -Path .\nota.txt -ItemType File
+Set-Content .\nota.txt -Value 'Contenido inicial'
+
+# Leer
+Get-Content .\nota.txt
+Get-Content .\log.txt -Tail 20          # últimas líneas (como tail -f)
+Get-Content .\nombre.txt | Measure-Object -Line   # contar líneas
+
+# Copiar / mover / renombrar
+Copy-Item .\nota.txt .\backup\nota-copia.txt
+Move-Item .\nota.txt .\backup\nueva-ubicacion.txt
+Rename-Item .\backup\nueva-ubicacion.txt .\final.txt
+
+# Eliminar
+Remove-Item .\backup\final.txt
+
+# Buscar dentro de archivos
+Select-String -Path .\*.log -Pattern "ERROR"
+Get-ChildItem -Recurse | Where-Object { $_.Length -gt 10MB }</code></pre>
+<blockquote class="aside aside-tip"><p><code>-Recurse</code> + <code>-Filter</code> escanean árboles completos de forma eficiente. <code>-Tail</code> en <code>Get-Content</code> es la forma moderna de monitorear logs.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="procesos">
+    <h2>Gestionar procesos</h2>
+    <div class="doc-content">
+<p>Cmdlets <code>Get-Process</code>, <code>Start-Process</code>, <code>Stop-Process</code> y <code>Wait-Process</code> cubren el ciclo de vida de los procesos.</p>
+<pre><code class="language-powershell"># Listar procesos
+Get-Process | Sort-Object CPU -Descending | Select-Object -First 10
+
+# Buscar por nombre
+Get-Process -Name "pwsh","chrome"
+
+# Información útil
+Get-Process -Name pwsh | Select-Object Id, CPU, WorkingSet, StartTime
+
+# Iniciar procesos
+Start-Process notepad
+Start-Process https://example.com          # abre el navegador
+Start-Process -FilePath "cmd" -ArgumentList "/c dir"
+
+# Esperar a que termine
+Start-Process ping -ArgumentList "8.8.8.8 -n 3" -NoNewWindow -Wait
+
+# Detener procesos
+Stop-Process -Name notepad
+Stop-Process -Id 1234 -Force
+
+# Matar todo lo que coincide (con cuidado)
+Get-Process chrome -ErrorAction SilentlyContinue |
+    Stop-Process -Force
+
+# Procesos asociados a servicios
+Get-Process -Id (Get-NetTCPConnection -LocalPort 8080).OwningProcess</code></pre>
+<blockquote class="aside aside-caution"><p><code>Stop-Process -Force</code> cierra sin dar la oportunidad de guardar. Usa <code>-Force</code> solo cuando el proceso realmente no responda o en entornos de prueba.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="registro">
+    <h2>Trabajar con el registro</h2>
+    <div class="doc-content">
+<p>El registro de Windows se maneja como un árbol de carpetas con <code>Get-Item</code>, <code>Get-ItemProperty</code>, <code>New-Item</code> y <code>Set-ItemProperty</code>. Los psuedodrivos son <code>HKLM:</code>, <code>HKCU:</code>, <code>HKCR:</code> y <code>HKU:</code>.</p>
+<pre><code class="language-powershell"># Leer un valor
+Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion"
+Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion" -Name ProgramFilesDir
+
+# Listar subclaves
+Get-ChildItem "HKCU:\Software"
+
+# Crear una clave
+New-Item -Path "HKCU:\Software\MiApp" -Force
+
+# Escribir un valor (string)
+Set-ItemProperty -Path "HKCU:\Software\MiApp" -Name Version -Value "1.0"
+
+# Escribir valor hexadecimal (DWORD)
+New-ItemProperty -Path "HKCU:\Software\MiApp" -Name Puerto `
+    -PropertyType DWord -Value 8080
+
+# Eliminar
+Remove-ItemProperty -Path "HKCU:\Software\MiApp" -Name Puerto
+Remove-Item -Path "HKCU:\Software\MiApp" -Recurse
+
+# Buscar en el registro
+Get-ChildItem "HKLM:\Software" -Recurse -ErrorAction SilentlyContinue |
+    Where-Object { $_.PSChildName -like "*MiApp*" }</code></pre>
+<blockquote class="aside aside-caution"><p>Editar <code>HKLM:</code> requiere permisos de administrador. Prueba siempre en <code>HKCU:\Software</code> o en una máquina virtual antes de tocar producción.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="red">
+    <h2>Red y conectividad</h2>
+    <div class="doc-content">
+<p>Un set completo de cmdlets (<code>Test-Connection</code>, <code>Test-NetConnection</code>, <code>Get-NetIPAddress</code>, <code>Resolve-DnsName</code>, <code>Get-NetTCPConnection</code>) diagnostica la red sin recurrir a utilidades externas.</p>
+<pre><code class="language-powershell"># Ping básico
+Test-Connection -ComputerName 8.8.8.8 -Count 2
+
+# Comprobar puerto abierto
+Test-NetConnection -ComputerName ejemplo.com -Port 443
+# TcpTestSucceeded : True
+
+# IP y adaptadores
+Get-NetIPAddress -AddressFamily IPv4 | Select-Object InterfaceAlias, IPAddress
+
+# Resolver DNS
+Resolve-DnsName google.com -Type A
+
+# Puertos en escucha en tu máquina
+Get-NetTCPConnection -State Listen | Select-Object LocalPort, LocalAddress
+
+# Conexiones establecidas
+Get-NetTCPConnection -State Established | Select-Object RemoteAddress, RemotePort
+
+# Ver rutas
+Get-NetRoute -DestinationPrefix "0.0.0.0/0"
+
+# Prueba automatizada: timeout en segundos
+Test-NetConnection -ComputerName 10.0.0.1 -Port 3389 -InformationLevel Detailed -WarningAction SilentlyContinue</code></pre>
+<blockquote class="aside aside-tip"><p><code>Test-NetConnection</code> combina ping + resolución DNS + prueba de puerto. Es el swiss-army-knife del diagnóstico de red en PowerShell.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="remoting">
+    <h2>Remoting y Automatización</h2>
+    <div class="doc-content">
+<p>PowerShell Remoting (WinRM) ejecuta comandos y scripts en máquinas remotas con <code>Invoke-Command</code>. Conviene combinarlo con <code>PSSession</code> y <code>Enter-PSSession</code>.</p>
+<pre><code class="language-powershell"># Ejecutar en una máquina remota
+Invoke-Command -ComputerName server01 -ScriptBlock { Get-Service }
+
+# Con credenciales
+$cred = Get-Credential
+Invoke-Command -ComputerName server01 -Credential $cred `
+    -ScriptBlock { Get-Process }
+
+# Sesión persistente (varias llamadas a la misma máquina)
+$s = New-PSSession -ComputerName server01
+Invoke-Command -Session $s -ScriptBlock { $env:COMPUTERNAME }
+Invoke-Command -Session $s -ScriptBlock { Get-ChildItem C:\ }
+Remove-PSSession $s
+
+# Remoting en paralelo (varias máquinas)
+$servidores = "web01","web02","db01"
+Invoke-Command -ComputerName $servidores -ScriptBlock {
+    $env:COMPUTERNAME
+}
+
+# Trabajos en segundo plano (jobs)
+Start-Job -ScriptBlock { 1..10 | Measure-Object -Sum }
+Get-Job
+Receive-Job -Name Job1 -Wait
+
+# ForEach-Object -Parallel (PS7)
+1..4 | ForEach-Object -Parallel {
+    Start-Sleep 2
+    "Tarea $_ terminada"
+} -ThrottleLimit 4</code></pre>
+<blockquote class="aside aside-note"><p><code>ForEach-Object -Parallel</code> llegó con PowerShell 7: paraleliza bucles con una sintaxis sencilla. Para remoting a varias máquinas, <code>Invoke-Command -ComputerName</code> ya reparte la carga.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Archivos</strong>: crea una carpeta `log`, escribe 10 líneas en un archivo y muestra solo las últimas 3 con <code>-Tail</code>.</li>
+<li><strong>Procesos</strong>: lista los 5 procesos que más CPU consumen y guarda la salida en un CSV.</li>
+<li><strong>Registro</strong>: crea en <code>HKCU:\Software\GuiaDev</code> una clave con dos propiedades (string y DWord) y verifica que existen.</li>
+<li><strong>Red</strong>: comprueba con <code>Test-NetConnection</code> que el puerto 443 está abierto en una web pública e imprime el resultado.</li>
+<li><strong>Remoting</strong>: lanza un <code>Start-Job</code> que sume los números del 1 al 100 y recoge el resultado con <code>Receive-Job</code>.</li>
+</ol>
+<p>En la próxima lección montaremos scripts completos: parámetros, módulos, programación de tareas y mejores prácticas.</p>
+    </div>
+  </section>

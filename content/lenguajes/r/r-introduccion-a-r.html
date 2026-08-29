@@ -1,0 +1,176 @@
+<!-- 1. Introducción a R - R (Lenguajes de Programación) -->
+  <section id="que-es-r">
+    <h2>¿Qué es R y por qué usarlo?</h2>
+    <div class="doc-content">
+<p>R es un lenguaje de programación diseñado para <strong>estadística, análisis de datos y visualización</strong>. Nació en 1993 de la mano de Ross Ihaka y Robert Gentleman en Nueva Zelanda, y hoy es el estándar en disciplinas como la bioestadística, la econometría o la ciencia de datos. Su sintaxis recuerda a S, pero su verdadero poder está en el ecosistema de paquetes: desde la manipulación de tablas (<code>dplyr</code>) hasta el aprendizaje automático (<code>tidymodels</code>), pasando por gráficos de alta calidad (<code>ggplot2</code>).</p>
+<pre><code class="language-r"># R funciona como una calculadora muy potente
+2 + 2
+10 / 4
+sqrt(81)
+
+# La asignación se hace con la flecha:
+precio &lt;- 1200
+descuento &lt;- 0.15
+precio_final &lt;- precio * (1 - descuento)
+precio_final</code></pre>
+<table><thead><tr><th>Herramienta</th><th>Enfoque</th><th>Ventaja de R frente a ella</th></tr></thead><tbody>
+<tr><td>Excel</td><td>Hojas de cálculo</td><td>Reproducibilidad: tu análisis es código, no clics manuales</td></tr>
+<tr><td>Python</td><td>Programación general</td><td>Ecosistema estadístico maduro y gráficos de <code>ggplot2</code></td></tr>
+<tr><td>SPSS / Stata</td><td>Software estadístico de pago</td><td>Gratuito, abierto y con comunidad científica enorme</td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>No necesitas memorizar todo R. La clave es entender la lógica: casi todo se reduce a objetos (datos), funciones y paquetes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-de-r">
+    <h2>Instalación de R y RStudio</h2>
+    <div class="doc-content">
+<p>Para trabajar necesitas dos piezas: el <strong>motor de R</strong> (los binarios que ejecutan el código) y un <strong>IDE agradable</strong>. RStudio, hoy de Posit, es la opción más popular: integra consola, editor de scripts, visor de datos y panel de gráficos. Instala primero R y después RStudio, siempre en ese orden.</p>
+<pre><code class="language-bash"># Debian/Ubuntu: agregar el repositorio oficial de CRAN
+wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc \
+  | gpg --dearmor | sudo tee /usr/share/keyrings/cran.gpg
+
+# En Windows descarga el instalador .exe en https://cloud.r-project.org
+# En macOS descarga el instalador .pkg de la misma página (R base), y luego RStudio</code></pre>
+<pre><code class="language-r"># Verifica la versión instalada y carga el IDE
+version
+version$version.string
+
+# Paquetes fundamentales: se instalan UNA vez desde CRAN
+install.packages("tidyverse")
+install.packages("rio")      # importar/exportar casi cualquier formato</code></pre>
+<table><thead><tr><th>Componente</th><th>Rol</th><th>Cuándo lo necesitas</th></tr></thead><tbody>
+<tr><td>R base</td><td>Motor de ejecución</td><td>Siempre, es obligatorio</td></tr>
+<tr><td>RStudio</td><td>Interfaz de desarrollo</td><td>Recomendado para productividad</td></tr>
+<tr><td>Rtools</td><td>Compilador para Windows</td><td>Sin él, ciertos paquetes fallan al instalarse</td></tr>
+<tr><td>Quarto / LaTeX</td><td>Generación de informes PDF</td><td>Al exportar documentos RMarkdown</td></tr>
+</tbody></table>
+<blockquote class="aside aside-note"><p>Los paquetes se descargan del <strong>CRAN</strong>, una red mundial de espejos. Si la descarga es lenta, elige otro espejo pasado el argumento <code>repos</code> de <code>install.packages()</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primer-script">
+    <h2>Tu primer script y la consola</h2>
+    <div class="doc-content">
+<p>En R hay dos lugares donde escribir código: la <strong>consola</strong> (ejecuta y olvida) y un <strong>script</strong> (archivo <code>.R</code> con tu análisis, guardado y reproducible). En los scripts los comentarios con <code>#</code> son tus aliados: documentan qué hace cada bloque y, sobre todo, por qué.</p>
+<pre><code class="language-r"># Este es tu primer script: se lee de arriba hacia abajo
+set.seed(2026)             # hace "aleatorios" reproducibles
+n &lt;- 30                    # tamaño de muestra
+
+# Genera una muestra simulada: 30 puntajes entre 50 y 100
+puntajes &lt;- round(runif(n, min = 50, max = 100))
+
+# Resumen en la consola
+print(puntajes)
+summary(puntajes)</code></pre>
+<pre><code class="language-r"># Reglas de la consola: todo lo que escribes "contesta"
+x &lt;- 5
+x * 2                       # R imprime el resultado al instante
+mensaje &lt;- "hola mundo"
+print(mensaje)              # imprime con etiquetas
+cat(mensaje)                # imprime "limpio", sin etiquetas
+
+# Guardar el historial para retomarlo después
+savehistory("mi_historia.Rhistory")</code></pre>
+<table><thead><tr><th>Criterio</th><th>Consola</th><th>Script</th></tr></thead><tbody>
+<tr><td>Persistencia</td><td>Se pierde al cerrar</td><td>Se guarda en el archivo</td></tr>
+<tr><td>Uso típico</td><td>Explorar, probar</td><td>Análisis final</td></tr>
+<tr><td>Ejecución</td><td>Enter, línea a línea</td><td><code>Ctrl + Enter</code> por bloque</td></tr>
+</tbody></table>
+<blockquote class="aside aside-caution"><p>La flecha <code>&lt;-</code> es la asignación idiomática de R. El signo <code>=</code> también asigna, pero dentro de las llamadas a funciones significa <em>argumentos con nombre</em>; su abuso confunde a otros lectores.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="navegar-la-ayuda">
+    <h2>Navegar la ayuda y los paquetes</h2>
+    <div class="doc-content">
+<p>La documentación de R es extensa y está integrada. Cualquier función tiene su página de ayuda con <strong>descripción, argumentos, ejemplos reproducibles y referencias</strong>. Dominar la ayuda (en inglés, como casi toda la documentación técnica) te vuelve autodidacta de verdad.</p>
+<pre><code class="language-r"># Formas equivalentes de pedir ayuda
+?mean              # atajo más usado
+help("mean")       # la forma explícita
+args(mean)         # solo la firma de la función
+
+# Buscar en todas las funciones instaladas
+??"correlacion"    # búsqueda por tema
+help.search("regression")
+
+# Ejemplos reproducibles sin salir de la ayuda
+example(mean)
+demo(graphics)     # una galería de gráficos base</code></pre>
+<pre><code class="language-r"># Los paquetes son extensiones: instalar una vez, cargar siempre
+install.packages("datos")     # datasets con nombres en español
+
+library(datos)                # carga el paquete en la sesión
+?millas                       # documentación del dataset interno
+vignette("datos")             # tutorial largo del paquete</code></pre>
+<table><thead><tr><th>Función</th><th>Qué hace</th><th>Ejemplo</th></tr></thead><tbody>
+<tr><td><code>?</code></td><td>Ayuda de una función</td><td><code>?mean</code></td></tr>
+<tr><td><code>??</code></td><td>Búsqueda en la documentación instalada</td><td><code>??"t.test"</code></td></tr>
+<tr><td><code>args()</code></td><td>Firma de argumentos</td><td><code>args(seq)</code></td></tr>
+<tr><td><code>vignette()</code></td><td>Tutorial completo de un paquete</td><td><code>vignette("dplyr")</code></td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>¿Una función no hace lo que esperabas? Ejecuta <code>example(nombre)</code>: los ejemplos funcionan siempre y te muestran el uso correcto sin adivinanzas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipos-de-datos">
+    <h2>Tipos de datos básicos</h2>
+    <div class="doc-content">
+<p>En R todo lo que guardas es un <strong>objeto</strong> con un tipo subyacente (<code>typeof</code>) y una clase (cómo se comporta). Los tipos básicos son pocos: numéricos, enteros, <em>character</em> (texto), lógicos y factores para categorías. Con estos cinco construyes todo lo demás.</p>
+<pre><code class="language-r"># Crear objetos de cada tipo atómico
+n_preciso &lt;- 3.1416          # numeric (doble precisión)
+n_entero &lt;- 42L              # integer (sufijo L)
+texto &lt;- "ciencia de datos"  # character
+logico &lt;- TRUE               # logical (TRUE / FALSE)
+
+# Inspeccionar tipo y clase
+typeof(n_preciso)            # "double"
+typeof(n_entero)             # "integer"
+class(texto)                 # "character"
+is.numeric(n_preciso)        # TRUE
+is.logical(logico)           # TRUE</code></pre>
+<pre><code class="language-r"># NA (Not Available) es especial: representa el dato faltante
+x &lt;- c(1, 2, NA, 4)
+mean(x)                        # NA: la media con faltantes no es fiable
+mean(x, na.rm = TRUE)          # 2.333333, ignora el NA de forma explícita
+is.na(x)                       # nos dice dónde faltan datos
+
+# Comparaciones lógicas
+edad &lt;- 25
+edad &lt;= 30                     # TRUE
+edad &gt; 18 &amp; edad &lt; 65        # TRUE (ambas condiciones)
+
+# Coerción automática hacia el tipo "más capaz"
+c(1, "dos")        # character: el texto gana
+c(TRUE, 1)         # numeric: TRUE pasa a 1</code></pre>
+<table><thead><tr><th>Tipo</th><th>Cómo crearlo</th><th>Uso típico</th></tr></thead><tbody>
+<tr><td><code>numeric</code> (double)</td><td><code>3.14</code></td><td>Decimales y operaciones estadísticas</td></tr>
+<tr><td><code>integer</code></td><td><code>3L</code></td><td>Índices, recuentos exactos</td></tr>
+<tr><td><code>character</code></td><td><code>"R"</code></td><td>Textos, nombres, etiquetas</td></tr>
+<tr><td><code>logical</code></td><td><code>TRUE</code> / <code>FALSE</code></td><td>Filtros y condiciones</td></tr>
+<tr><td><code>factor</code></td><td><code>factor("bajo")</code></td><td>Categorías con niveles</td></tr>
+<tr><td><code>NA</code></td><td>valor faltante</td><td>Datos incompletos</td></tr>
+</tbody></table>
+<blockquote class="aside aside-caution"><p>Un <code>42</code> a secas es <em>double</em>, no entero. Si un paquete exige entero puro, agrega la <code>L</code>: <code>42L</code>. En el 99% de los análisis no hace falta, pero conviene saber por qué ocurre.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuélvelos en tu propio script de RStudio. Todo lo necesario está en esta lección.</p>
+<ol>
+<li><strong>Calculadora personal:</strong> asigna tu peso y tu altura en variables claras, y calcula con R tu imc (peso dividido entre la altura al cuadrado).</li>
+<li><strong>Tipos delator:</strong> crea un objeto para cada tipo básico y verifica su tipo con <code>typeof()</code>; confirma que <code>3.5</code> es double.</li>
+<li><strong>Caza del NA:</strong> construye un vector con un <code>NA</code> y calcula su media con y sin <code>na.rm = TRUE</code>, explicando la diferencia entre los dos resultados.</li>
+<li><strong>Explorador de ayuda:</strong> usa <code>?</code> y <code>example()</code> sobre <code>runif</code> y <code>seq</code>, y anota en un comentario qué hace cada una.</li>
+<li><strong>Hola mundo con clase:</strong> crea un script que guarde tu nombre como objeto <em>character</em>, lo imprima y muestre su <code>class()</code> y <code>length()</code>.</li>
+</ol>
+<p>En la próxima lección dominarás las estructuras de datos que organizan toda la información: vectores, matrices, listas y los poderosos <strong>data frames</strong>.</p>
+    </div>
+  </section>

@@ -1,0 +1,130 @@
+<!-- 2. Frameworks y Web en Perl - Bibliotecas (Utilidades) -->
+  <section id="elegir-web-perl">
+    <h2>Opciones web en Perl <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Web en Perl:
+#   CGI (legacy, no usar para nuevos)
+#   Plack/PSGI (estándar moderno: como WSGI de Python)
+#   Mojolicious (moderno, completo, MVC, WebSocket, CLI)
+#   Catalyst (MVC clásico robusto) / Dancer2 (sencillo estilo Flask)
+#   CGI::Application (en desuso)
+# Recomendado nuevo: Mojolicious o Dancer2 sobre Plack
+</code></pre>
+<blockquote class="aside aside-note"><p>PSGI/Plack es la base común; Mojolicious es completo y moderno; Dancer2 minimalista; Catalyst MVC grande. Todos corren en Plack para producción.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="mojolicious">
+    <h2>Mojolicious: web moderno <span class="gd-badge gd-badge-note">Web</span></h2>
+    <div class="doc-content">
+<pre><code class="language-perl"># cpanm Mojolicious
+
+use Mojolicious::Lite;
+
+get '/' =&gt; sub { shift-&gt;render(text =&gt; 'Bienvenido') };
+
+get '/saludo/:nombre' =&gt; sub {
+  my $c = shift;
+  $c-&gt;render(json =&gt; { saludo =&gt; "Hola $c-&gt;stash('nombre')" });
+};
+
+post '/usuarios' =&gt; sub {
+  my $c = shift;
+  my $datos = $c-&gt;req-&gt;json;
+  $c-&gt;render(json =&gt; { recibido =&gt; $datos });
+};
+
+app-&gt;start;
+# Ejecutar: perl app.pl daemon -l http://*:3000
+</code></pre>
+<blockquote class="aside aside-tip"><p>Mojolicious trae todo de serie (router, JSON, templates, WebSocket, tests) sin depender Plack para desarrollarlo; producción con `daemon -l` o Starman+Gunilla.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="dancer-y-catalyst">
+    <h2>Dancer2 y Catalyst <span class="gd-badge gd-badge-note">Frameworks</span></h2>
+    <div class="doc-content">
+<pre><code class="language-perl"># cpanm Dancer2
+
+# Dancer2 (estilo Python Flask: simple)
+use Dancer2;
+
+get '/saludo/:nombre' =&gt; sub {
+    my $nombre = route_parameters-&gt;get('nombre');
+    return { saludo =&gt; "Hola $nombre" };
+};
+
+set(serializer =&gt; 'JSON');   # respuestas JSON automáticas
+start;
+
+# Catalyst (MVC): más estructura
+#   cpan Catalyst::Runtime Catalyst::Devel
+#    catalyst.pl MyApp ; cd MyApp ; MyApp\cgi\app.pl
+#   rutas via MyApp::Controller::Root (Action + View TT)
+</code></pre>
+<blockquote class="aside aside-tip"><p>Dancer2: micro-framework con serializer JSON y templates (Template Toolkit); Catalyst: MVC con Model/View/Controller completo, plugin de admin y Auth.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="persistencia-perl">
+    <h2>Persistencia: DBI, DBIx::Class <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-perl">use DBI;
+
+my $dbh = DBI-&gt;connect("dbi:mysql:database=app", "root", "",
+                       { mysql_enable_utf8 =&gt; 1 });
+$dbh-&gt;do("INSERT INTO users (name) VALUES (?)", undef, 'Ana');
+my $sth = $dbh-&gt;prepare("SELECT id, name FROM users WHERE id &gt; ?");
+$sth-&gt;execute(2);
+while (my @row = $sth-&gt;fetchrow_array) { print "@row\n"; }
+$dbh-&gt;disconnect;
+
+# DBIx::Class (ORM): esquema declarativo estilo Active Record
+#   cpanm DBIx::Class::Schema::Loader
+</code></pre>
+<blockquote class="aside aside-tip"><p>DBI es el driver universal a BD (SQLite, MySQL, Postgres) con prepared statements. DBIx::Class construye un ORM con esquema declarativo si quieres OO.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-perl">
+    <h2>Testing Perl: prove y Test::More <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-perl"># t/basica.t
+use strict; use warnings;
+use Test::More;
+
+sub suma { $_[0] + $_[1] }
+
+is(suma(2, 3), 5, 'suma correcta');
+ok(suma(1, 1) &gt; 0, 'positivo');
+
+done_testing;
+</code></pre>
+<pre><code class="language-bash"># Correr: prove -l (dale a tests/ y lib/) o distbuild
+prove -l t/
+# Cobertura: Devel::Cover (cpanm Devel::Cover)
+perl -MDevel::Cover -e1
+prove -l && cover -report html
+# TDD con TAP (Test Anything Protocol): interoperable entre lenguajes
+</code></pre>
+<blockquote class="aside aside-success"><p>Perl inventó TAP y `Test::More`; `prove` corre todos los tests de `t/`; Devel::Cover da informes de cobertura. Pruebas a HTTP: Test::Mojo (Mojolicious).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Monta un microservicio Mojolicious con GET y POST JSON.</li>
+<li>Rehaz con Dancer2 y cuenta las diferencias API.</li>
+<li>Inserta y consulta con DBI usando prepared statements.</li>
+<li>Escribe 4 tests con Test::More y corre con prove.</li>
+<li>Genera cobertura con Devel::Cover y revisa el HTML.</li>
+</ol>
+    </div>
+  </section>

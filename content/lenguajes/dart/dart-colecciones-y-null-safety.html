@@ -1,0 +1,157 @@
+<!-- 5. Colecciones y Null Safety avanzado - Dart (Lenguajes de Programación) -->
+
+  <section id="listas">
+    <h2>Listas: operaciones útiles</h2>
+    <div class="doc-content">
+<p>La <code>List</code> es la colección más usada de Dart: una secuencia ordenada indexada desde <strong>cero</strong>. Se crea con corchetes y ofrece operaciones para añadir, eliminar, buscar, ordenar y recorrer. Desde Dart 2.3 además existen los operadores de <em>spread</em> (<code>...</code>) y los elementos condicionales (<code>if</code>) dentro de la propia lista.</p>
+<pre><code class="language-dart">void main() {
+  var numeros = [3, 1, 2];
+  numeros.add(5);          // añade al final
+  numeros.insert(0, 0);    // añade al principio
+  numeros.removeAt(1);     // elimina el índice 1
+
+  print(numeros);          // [0, 1, 2, 5]
+
+  // Spread: une listas en una nueva
+  var todas = [...numeros, 9, 10];
+  print(todas);
+
+  // Acceso por índice y tamaño
+  print('Primer elemento: ${todas[0]}');
+  print('Tamaño: ${todas.length}');
+}
+
+// Salida:
+// [0, 1, 2, 5]
+// [0, 1, 2, 5, 9, 10]
+// Primer elemento: 0
+// Tamaño: 6</code></pre>
+<table><thead><tr><th>Método</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>add(valor)</code></td><td>Añade un elemento al final</td></tr><tr><td><code>addAll(otra)</code></td><td>Añade todos los elementos de otra lista</td></tr><tr><td><code>insert(pos, valor)</code></td><td>Inserta en una posición concreta</td></tr><tr><td><code>removeWhere(predicado)</code></td><td>Elimina los elementos que cumplen la condición</td></tr><tr><td><code>contains(valor)</code></td><td>Comprueba si existe el elemento</td></tr><tr><td><code>sort()</code></td><td>Ordena la lista en el lugar</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p><code>sort()</code> modifica la lista original y devuelve <code>void</code>. Si quieres conservar la anterior, copia primero con <code>List.of(original)</code> o usa <code>[...original]</code> y ordena la copia.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="maps-y-sets">
+    <h2>Mapas y Sets</h2>
+    <div class="doc-content">
+<p>El <code>Map</code> agrupa datos como <strong>pares clave-valor</strong> y el <code>Set</code> guarda elementos <strong>únicos sin orden</strong>. Ambos comparten sintaxis con llaves (<code>{}</code>) y son tan habituales como la lista en las aplicaciones reales: el mapa para buscar por clave y el conjunto para deduplicar o comprobar pertenencia.</p>
+<table><thead><tr><th>Colección</th><th>Sintaxis</th><th>Clave</th><th>Uso típico</th></tr></thead><tbody><tr><td><code>Map&lt;K, V&gt;</code></td><td><code>{'clave': valor}</code></td><td>Acceso por clave: <code>mapa['clave']</code></td><td>Diccionarios, configuración, índices</td></tr><tr><td><code>Set&lt;T&gt;</code></td><td><code>{'a', 'b'}</code></td><td>Solo pertenencia: <code>set.contains(x)</code></td><td>Tags, listas negras, duplicados</td></tr><tr><td><code>Iterable</code></td><td>Derivada de listas y conjuntos</td><td>Recorrido: <code>for (x in it)</code></td><td>Base común de todas las colecciones</td></tr></tbody></table>
+<p>Un ejemplo rápido: <code>final mapa = {'uno': 1, 'dos': 2};</code> se consulta con <code>mapa['dos']</code>, y <code>final conjunto = {'a', 'b'};</code> ignora duplicados: repetir <code>conjunto.add('a')</code> no añade nada nuevo.</p>
+<blockquote class="aside aside-note"><p>Un <code>Map</code> vacío y un <code>Set</code> vacío se escriben igual, con <code>{}</code>. Para desambiguar, Dart exige el tipo: <code>Map&lt;String, int&gt;()</code> o <code>Set&lt;String&gt;()</code>. Si escribes <code>var x = {}</code> el analizador se quejará de que no puede inferir el tipo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="genericos">
+    <h2>Genéricos</h2>
+    <div class="doc-content">
+<p>Los <strong>genéricos</strong> permiten escribir código que funciona con varios tipos manteniendo la seguridad del tipo en cada uso. En vez de duplicar una clase para cada tipo posible, escribes una sola con un parámetro entre ángulos (<code>&lt;T&gt;</code>) y el compilador comprueba que todo encaje. Las colecciones de Dart los usan de forma masiva.</p>
+<pre><code class="language-dart">class Caja&lt;T&gt; {
+  final T contenido;
+
+  Caja(this.contenido);
+
+  String etiqueta() =&gt; 'Caja con $contenido';
+}
+
+// Función genérica con inferencia de tipos
+T primero&lt;T&gt;(List&lt;T&gt; lista) =&gt; lista.first;
+
+void main() {
+  final cajaTexto = Caja&lt;String&gt;('libro');
+  final cajaNumero = Caja&lt;int&gt;(42);
+
+  print(cajaTexto.etiqueta());
+  print(cajaNumero.etiqueta());
+  print('Primero: ${primero([10, 20, 30])}');
+}
+
+// Salida:
+// Caja con libro
+// Caja con 42
+// Primero: 10</code></pre>
+<blockquote class="aside aside-tip"><p>A diferencia de Java, en Dart los genéricos <strong>se conservan en tiempo de ejecución</strong> (reificación): <code>lista is List&lt;int&gt;</code> se puede comprobar en caliente. Eso hace que las colecciones del lenguaje se comporten con precisión cuando recibes datos dinámicos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="null-safety-avanzado">
+    <h2>Tipos nullable y late</h2>
+    <div class="doc-content">
+<p>Cuando trabajas con un tipo nullable solo tienes tres caminos: comprobarlo con <code>if</code>, prometer con el asertor <code>!</code> que hay valor, u ofrecer una alternativa con el operador <code>??</code>. Además, <code>late</code> permite declarar una variable no nula que se inicializará más adelante, perfecta para situaciones como cargar una conexión o leer un archivo.</p>
+<pre><code class="language-dart">void main() {
+  String? nombre;                 // nullable
+  String apodo = 'El Profe';      // no nulo
+
+  // ?? : usa el valor alternativo si el primero es null
+  final saludo = nombre ?? apodo;
+  print('Eh, $saludo');
+
+  // ! : promesa de que hay valor (¡cuídala!)
+  nombre = 'Dart';
+  print(nombre!.length);          // 4
+
+  // late: se asigna después de la declaración
+  late String contenido;
+  contenido = 'cargado desde la API';
+  print(contenido);
+}
+
+// Salida:
+// Eh, El Profe
+// 4
+// cargado desde la API</code></pre>
+<blockquote class="aside aside-caution"><p>El asertor <code>!</code> es un compromiso contigo mismo: si la variable es <code>null</code> en ese punto, Dart lanzará <code>NullCheckError</code> y el programa se detendrá. Úsalo solo cuando hayas razonado (y probado) que el valor siempre existe.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="funciones-sobre-colecciones">
+    <h2>Funciones sobre colecciones</h2>
+    <div class="doc-content">
+<p>La programación funcional condensa en una línea lo que antes exigía un bucle manual. Los métodos <code>map</code>, <code>where</code>, <code>any</code> y <code>fold</code> reciben funciones como argumento y producen listas nuevas o respuestas booleanas, sin tocar la colección original. Como devuelven <code>Iterable</code>, funcionan igual sobre listas, conjuntos y otras fuentes de datos.</p>
+<pre><code class="language-dart">void main() {
+  final numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+  // map: transforma cada elemento
+  final cuadrados = numeros.map((n) =&gt; n * n).toList();
+
+  // where: filtra
+  final pares = numeros.where((n) =&gt; n % 2 == 0).toList();
+
+  // any y every: consultas booleanas
+  print('¿Hay un múltiplo de 10? ${numeros.any((n) =&gt; n % 10 == 0)}');
+
+  // fold: reduce la colección a un solo valor
+  final total = numeros.fold&lt;int&gt;(0, (acumulado, n) =&gt; acumulado + n);
+
+  print(cuadrados);
+  print(pares);
+  print('Suma: $total');
+}
+
+// Salida:
+// [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
+// [2, 4, 6, 8, 10]
+// ¿Hay un múltiplo de 10? true
+// Suma: 55</code></pre>
+<blockquote class="aside aside-success"><p>Estas funciones devuelven <code>Iterable</code> perezoso: el trabajo se ejecuta solo cuando lo consumes (con <code>toList()</code> o en un <code>for</code>). Encadenar <code>map</code> y <code>where</code> no crea listas intermedias, así que son baratas aunque las cadenas sean largas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuelve los ejercicios en <code>colecciones.dart</code> con <code>dart run colecciones.dart</code>:</p>
+<ol>
+<li><strong>Operaciones de lista</strong>: Crea una lista con diez números, elimina los impares con <code>removeWhere</code>, añade tres más con <code>addAll</code> y muéstrala ordenada con <code>sort</code>.</li>
+<li><strong>Frecuencia con Map</strong>: Toma una frase, sepárala en palabras con <code>split(' ')</code> y cuenta cuántas veces aparece cada una guardándolo en un <code>Map&lt;String, int&gt;</code>.</li>
+<li><strong>Set único</strong>: Crea dos conjuntos, añade elementos repetidos a propósito y comprueba con <code>contains</code> la pertenencia de un elemento. Explica qué pasó con los duplicados.</li>
+<li><strong>Genérico propio</strong>: Escribe una clase <code>Pareja&lt;A, B&gt;</code> con dos campos tipados y un método que invierta sus valores. Instánciala dos veces con tipos distintos.</li>
+<li><strong>Pipeline funcional</strong>: Partiendo de una lista del 1 al 50, filtra los múltiplos de 3 con <code>where</code>, eleva al cuadrado con <code>map</code> y suma todo con <code>fold</code>. Comprueba qué número obtienes.</li>
+</ol>
+<p>La próxima lección abre la puerta al mundo real de Dart: <strong>asincronía y ecosistema</strong>, con <code>Future</code>, <code>async/await</code>, <code>Stream</code>, aplicaciones de consola con argumentos, el administrador de paquetes <code>pub</code> y un primer vistazo a Flutter.</p>
+    </div>
+  </section>

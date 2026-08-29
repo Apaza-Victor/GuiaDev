@@ -1,0 +1,105 @@
+<!-- 3. IDEs y Herramientas para CSS - Bibliotecas (Utilidades) -->
+  <section id="css-linters">
+    <h2>stylelint: lint y reglas de calidad <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># stylelint: el linter de CSS estándar
+npm i -D stylelint stylelint-config-standard
+# .stylelintrc.json
+# { "extends": ["stylelint-config-standard"] }
+npx stylelint "src/**/*.css"
+# --fix corrige automático lo seguro
+npx stylelint "src/**/*.css" --fix
+
+# Reglas destacadas: selector-class-pattern (nombrado),
+#   declaration-block-no-shorthand-property-overrides,
+#   order/properties-alphabetical-order, a11y/media-feature-range
+# Extensión: stylelint-config-prettier para evitar conflicto con prettier
+</code></pre>
+<blockquote class="aside aside-tip"><p>stylelint + config-standard asegura consistencia y errores tipográficos de CSS. Con `--fix` y su asociación a pre-commit te olvidas de revisarlo a mano.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="prettier-format">
+    <h2>Prettier y formato CSS <span class="gd-badge gd-badge-note">Formato</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Prettier: formatter universal (html/css/js/md)
+npm i -D prettier
+npx prettier --write "src/**/*.{css,scss}"
+npx prettier --check "src/**/*.css"   # en CI
+
+# Config .prettierrc:
+# {
+#   "semi": false,
+#   "singleQuote": true,
+#   "printWidth": 100
+# }
+
+# Formateo automático al guardar en VS Code:
+#   ext: esbenp.prettier-vscode; editor.formatOnSave
+# Si usas stylelint: instala stylelint-config-prettier y apaga reglas de formato
+</code></pre>
+<blockquote class="aside aside-note"><p>Prettier unifica el estilo (espacios, comillas, saltos). Su conflicto con stylelint se resuelve con `stylelint-config-prettier` apagando las reglas de formato.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="devtools-css">
+    <h2>DevTools y autoprefixer: depurar y desplegar <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Chrome DevTools (F12) para CSS:
+#   - Elements → styles: editar en vivo, ver css variables
+#   - Computed: qué regla gana (especificidad)
+#   - El botón "force state" (:hover/:focus)
+#   - Rendering → mostrar FPS/layout shifts; Performance rec
+# Autoprefixer: prefijos -webkit-/moz- según caniuse
+npm i -D postcss autoprefixer cssnano
+# en build (vite/postcss) automático
+# Vaciar caché/el deploy: hashes en filenames (vite lo hace)
+</code></pre>
+<blockquote class="aside aside-tip"><p>DevTools = taller en vivo; `autoprefixer` evita diseñar por navegador; Vite añade hashes al build. Un flujo sano: editar→lint→build (prefijos+min)→deploy.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ci-css">
+    <h2>Pipeline CSS: CI, cobertura y presupuestos <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-yaml"># .github/workflows/css.yml
+name: CSS quality
+on: [push]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - run: npx prettier --check "src/**/*.css"
+      - run: npx stylelint "src/**/*.css"
+      - run: npm run build
+</code></pre>
+<pre><code class="language-bash"># Presupuestos de performance (paquete size) con Lighthouse CI:
+npm i -D @lhci/cli
+npx lhci autorun    # mide performance/LCP/CLS
+# CSS tamaño meta: nuevo cssbudget: cssnano ya minifica
+# Rules de a11y: stylelint-config-recommended / axe en el HTML check
+</code></pre>
+<blockquote class="aside aside-success"><p>El pipeline ideal: prettier + stylelint + build + lighthouse en CI. No publicas regresiones de CSS ni de performance. `lhci` define presupuestos para parar el deploy.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Configura stylelint en tu proyecto y resuelve 5 avisos.</li>
+<li>Aplica prettier con tus preferencias (`.prettierrc`).</li>
+<li>Depura una regla de especificidad con los Computed de DevTools.</li>
+<li>Añade autoprefixer al build y compara el CSS de salida.</li>
+<li>Sube el workflow de de calidad CSS + lighthouse a tu repo.</li>
+</ol>
+    </div>
+  </section>

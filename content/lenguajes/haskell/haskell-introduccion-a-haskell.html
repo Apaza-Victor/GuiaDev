@@ -1,0 +1,159 @@
+<!-- 1. Introducción a Haskell - Haskell (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="que-es-haskell">
+    <h2>¿Qué es Haskell?</h2>
+    <div class="doc-content">
+<p><strong>Haskell</strong> es un lenguaje <strong>funcional puro</strong> de tipado estático y fuerte, nombrado por Haskell Curry. Nacido en la academia (1990), es el estándar de facto de la programación funcional: evalúa las funciones como matemáticas (sin efectos ocultos), usa <strong>evaluación perezosa</strong> y un sistema de tipos hoy envidiable.</p>
+<p>Todo es inmutable, todas las funciones son puras (dados los mismos argumentos, devuelven el mismo resultado), y los efectos (IO) están aislados. Empresas como Standard Chartered, GitHub (semántica), Facebook (Mason/Haxl) o IOHK (Cardano) usan Haskell para sistemas donde fallar no es opción.</p>
+<blockquote class="aside aside-note"><p>"Avoid success at all costs" bromea la comunidad: Haskell prioriza la pureza y la abstracción sobre la popularidad. Quien aprende Haskell mejora para siempre su forma de programar.</p></blockquote>
+<table><thead><tr><th>Característica</th><th>Detalle</th></tr></thead><tbody><tr><td>Paradigma</td><td>Funcional puro</td></tr><tr><td>Evaluación</td><td>Perezosa (lazy)</td></tr><tr><td>Tipado</td><td>Estático, fuerte, inferido (Hindley-Milner)</td></tr><tr><td>Efectos</td><td>Aislados en el tipo <code>IO</code></td></tr><tr><td>Compilador</td><td>GHC (Glasgow Haskell Compiler)</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion">
+    <h2>Instalación (GHC + cabal/stack)</h2>
+    <div class="doc-content">
+<p>Necesitas el <strong>GHC</strong> (compilador), <strong>cabal</strong> (gestor de paquetes/entorno) y opcionalmente <strong>stack</strong>. La vía más cómoda en 2026 es <strong>GHCup</strong> (como rustup para Haskell).</p>
+<pre><code class="language-bash"># Linux y macOS: GHCup (instala GHC + cabal + stack)
+curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+
+# Windows: descarga el instalador de GHCup
+# https://www.haskell.org/ghcup/install/#windows
+
+# Verificar
+ghc --version
+cabal --version
+
+# Instalar también el paquete "glot" o crear tu primer proyecto
+cabal update
+
+# Proyecto mínimo
+cabal init --interactive   # responde y crea un .cabal
+mkdir holamundo
+# -> me recuerda que la estructura clásica es:
+#   src/Main.hs
+#   holamundo.cabal
+#   cabal.project</code></pre>
+<blockquote class="aside aside-tip"><p><code>cabal</code> instala paquetes de <strong>Hackage</strong> (el "npm" de Haskell). Con <code>cabal repl</code> obtienes GHCi (el REPL) con dependencias; con <code>cabal run</code> compilas y ejecutas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ghci">
+    <h2>GHCi: el intérprete</h2>
+    <div class="doc-content">
+<p><strong>GHCi</strong> es el REPL de Haskell: evalúa expresiones y te muestra su tipo, doc, etc. Es donde experimentarás el 80% del aprendizaje.</p>
+<pre><code class="language-haskell">-- ghci
+ghci
+
+Prelude&gt; 1 + 1
+2
+
+Prelude&gt; :t 42
+42 :: Num p =&gt; p
+
+Prelude&gt; :t "hola"
+"hola" :: [Char]
+
+Prelude&gt; :t map
+map :: (a -&gt; b) -&gt; [a] -&gt; [b]
+
+Prelude&gt; :info Maybe
+(data Maybe a = Nothing | Just a)
+
+Prelude&gt; let cuadrados = map (^2) [1..5]
+Prelude&gt; cuadrados
+[1,4,9,16,25]
+
+-- Comandos útiles
+-- :t expr   (tipo)
+-- :i Nombre (info)
+-- :q        (salir)
+-- :r        (recargar módulo)
+-- :l archivo.hs</code></pre>
+<blockquote class="aside aside-tip"><p>La evaluación perezosa se nota aquí: <code>[1..]</code> es una lista infinita, pero <code>take 10 [1..]</code> devuelve los 10 primeros sin colapsar. Eso solo es posible por el lazy.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primer-programa">
+    <h2>Tu primer programa</h2>
+    <div class="doc-content">
+<p>Un programa Haskell declara <strong>definiciones</strong> (no asignaciones) y un <code>main</code> de tipo <code>IO ()</code>. La composición es por expresión: todo es una función que produce un valor.</p>
+<pre><code class="language-haskell">-- Main.hs
+module Main where
+
+main :: IO ()
+main = do
+  let nombre = "Haskell"
+  putStrLn ("Hola, " ++ nombre ++ "!")
+  putStrLn "Bienvenido a GuiaDev"
+
+  let anio = 2026
+  print anio            -- imprime y muestra el valor
+
+-- Definiciones puras (sin IO)
+doble :: Int -&gt; Int
+doble x = 2 * x
+
+-- main puede usar funciones puras
+-- main = print (doble 21)   -- 42</code></pre>
+<pre><code class="language-bash"># Ejecutar
+runghc Main.hs
+# o compilar
+ghc -o hola Main.hs
+./hola
+
+# En un script (sin compilar)
+# runghc Main.hs</code></pre>
+<blockquote class="aside aside-caution"><p>El bloque <code>do</code> NO es azúcar de funciones; es sintaxis para encadenar acciones IO. Las funciones puras van como definiciones puras (sin <code>do</code>). Distinguir "valor puro" de "acción IO" es el primer gran salto conceptual.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="evaluacion">
+    <h2>Evaluación perezosa y funciones puras</h2>
+    <div class="doc-content">
+<p>Haskell evalúa <strong>perezosamente</strong>: solo calcula lo que se necesita, cuando se necesita. Esto permite estructuras infinitas y compone funciones de forma eficiente. La <strong>pureza</strong> garantiza transparencia referencial.</p>
+<pre><code class="language-haskell">-- Lista infinita (se evalúa perezosamente)
+nats :: [Int]
+nats = [1..]
+
+-- Infinito pero finito de usar
+primeros :: [Int]
+primeros = take 5 nats
+-- [1,2,3,4,5] ; el resto NO se calcula
+
+-- Fibonaccis infinitos como función
+fibs :: [Integer]
+fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
+
+ghci&gt; take 10 fibs
+[0,1,1,2,3,5,8,13,21,34]
+
+-- Transparencia referencial
+cuadrado x = x * x
+-- reemplazar cuadrado(3) por 9 no cambia el resultado; no hay efectos
+
+-- Si fuera impura, habría posibilidad de resultados distintos</code></pre>
+<blockquote class="aside aside-success"><p>Gracias a la pereza, <code>zipWith</code> + listas infinitas son recursión "corecircular": elegante y veloz. Y gracias a la pureza, razonar y refactorizar es trivial: nada cambia fuera de la función.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Instalación</strong>: instala GHCup/GHC y verifica <code>ghc --version</code>.</li>
+<li><strong>GHCi</strong>: consulta <code>:t</code> de <code>length</code>, <code>sum</code> y <code>(.)</code>, y usa <code>:info</code> con <code>Integer</code>.</li>
+<li><strong>Hola</strong>: escribe <code>Main.hs</code> con <code>main</code> que use <code>putStrLn</code> y <code>print</code>; ejecuta con <code>runghc</code>.</li>
+<li><strong>Infinito</strong>: define <code>paresInf = [n | n &lt;- [0..], n `mod` 2 == 0]</code> y toma 20.</li>
+<li><strong>Memo de la pureza</strong>: explica con comentarios por qué <code>cuadrado(3)</code> siempre da 9.</li>
+</ol>
+<p>En la próxima lección veremos funciones puras en profundidad: firmas, guardas, composición y secciones.</p>
+    </div>
+  </section>

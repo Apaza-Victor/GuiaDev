@@ -1,0 +1,149 @@
+<!-- 2. Frameworks Groovy: Grails, Ratpack, Micronaut - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework-groovy">
+    <h2>Frameworks Groovy/Grails <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># En el mundo Groovy:
+#   Grails (MVC completo, igual Spring bajo el hood) - el "Rails de Groovy"
+#   Ratpack (ligero, microservicios, reactor)
+#   Micronaut (soporta Groovy, compilación nativa)
+#   Spring Boot funciona con Groovy también
+# Scripting: Jenkins pipelines también usan Groovy (no framework web)
+</code></pre>
+<blockquote class="aside aside-note"><p>Grails es el framework web integrador (GORM + plugins); Ratpack ligero para micro; Micronaut+Groovy para cloud nativo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="grails">
+    <h2>Grails: MVC completo <span class="gd-badge gd-badge-note">Framework</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Crear proyecto
+grails create-app mi-app
+cd mi-app
+grails run-app         # dev en :8080
+</code></pre>
+<pre><code class="language-groovy">// Dominios (Domain/GORM)
+package mi.app
+class Usuario {
+    String nombre
+    Integer edad
+    static constraints = { nombre blank:false; edad min: 0 }
+}
+
+// Controlador (Controller)
+package mi.app
+class UsuarioController {
+    def index() {
+        render view: 'index', model: [usuarios: Usuario.list()]
+    }
+    def guardar() {
+        Usuario u = new Usuario(nombre: params.nombre, edad: params.int('edad'))
+        u.save()
+        redirect action: 'index'
+    }
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>Grails da convención-sobre-configuración: GORM (persistencia sobre Hibernate), plugins, GSP (templates) y scaffolding. Común en empresas que usan Groovy.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ratpack-micronaut">
+    <h2>Ratpack y Micronaut <span class="gd-badge gd-badge-note">Micro</span></h2>
+    <div class="doc-content">
+<pre><code class="language-groovy">// Ratpack
+import ratpack.groovy.Groovy
+import static ratpack.groovy.Groovy.ratpack
+
+ratpack {
+    handlers {
+        get('saludo/:nombre') { ctx -&gt;
+            ctx.render "Hola ${ctx.pathTokens['nombre']}"
+        }
+        post('usuarios') { ctx -&gt;
+            def body = ctx.request.body.text()
+            ctx.render(body)
+        }
+    }
+}
+// run: ratpack.main / gradle run
+</code></pre>
+<pre><code class="language-groovy">// Micronaut + Groovy
+import io.micronaut.http.annotation.*
+
+@Controller('/saludo')
+class SaludoController {
+    @Get('/{nombre}')
+    String saludo(String nombre) { "Hola $nombre" }
+}
+// gradle run / micronaut-cli
+</code></pre>
+<blockquote class="aside aside-tip"><p>Ratpack: handler-based y non-blocking (Netty). Micronaut: DI + compilación a native con GraalVM; ambos por debajo de 100MB y ideales para cloud.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="gorm-persistencia">
+    <h2>GORM y persistencia <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-groovy">// GORM (Grails Object Relational Mapping) sobre Hibernate
+def lista = Usuario.where { edad &gt; 18 }.list(sort: 'nombre')
+
+// create/read/update/delete de dominio
+def nuevo = new Usuario(nombre: 'Ana', edad: 30).save(flush: true)
+def existente = Usuario.get(1)
+existente.edad = 31
+existente.save()
+existente.delete()
+
+// Consultas: criteria, HQL (Usuario.executeQuery), 
+//   findBy / findAllBy (magia de métodos):
+def ana = Usuario.findByNombre('Ana')
+// sácale más: en GORM también .withCriteria { like 'nombre', 'A%' }
+</code></pre>
+<blockquote class="aside aside-tip"><p>GORM añade finders mágicos (findByNombre), criteria DSL y validaciones del dominio. Fuera de Grails también hay `GORM standalone` para Spring.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="spock-tests">
+    <h2>Spock: testing especificación <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-groovy">import spock.lang.Specification
+
+class CalculadoraSpec extends Specification {
+    def "suma correcta"() {
+        expect:
+        Calculadora.suma(a, b) == resultado
+
+        where:
+        a | b | resultado
+        2 | 3 | 5
+        0 | 0 | 0
+        -1| 1 | 0
+    }
+
+    def "lanza error"() {
+        when: Calculadora.divide(1, 0)
+        then: thrown(ArithmeticException)
+    }
+}
+// Correr: gradle test o con grails test-app
+</code></pre>
+<blockquote class="aside aside-success"><p>Spock es la joya de Groovy: tests tipo BDD con tablas `where`, bloques given/when/then. Corre sobre JUnit en CI (Gradle) y con mocks integrados.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un Grails con dominio Usuario y listado en index.</li>
+<li>Implementa GET/POST en Ratpack y prueba con curl.</li>
+<li>Declara un @Controller Micronaut y explora `/saludo/:nombre`.</li>
+<li>Con GORM haz CRUD completo y usa findByNombre.</li>
+<li>Escribe una Spec de Spock con tabla where de 4 casos.</li>
+</ol>
+    </div>
+  </section>

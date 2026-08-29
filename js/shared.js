@@ -97,7 +97,10 @@ const GuiaDev = {
     bash: 'Bash', shell: 'Shell', sh: 'Shell', csharp: 'C#', cs: 'C#', cpp: 'C++', c: 'C',
     go: 'Go', rust: 'Rust', kotlin: 'Kotlin', swift: 'Swift', json: 'JSON',
     yaml: 'YAML', yml: 'YAML', toml: 'TOML', ini: 'INI', markdown: 'Markdown', md: 'Markdown',
-    dockerfile: 'Dockerfile', plaintext: 'Texto', text: 'Texto'
+    dockerfile: 'Dockerfile', plaintext: 'Texto', text: 'Texto',
+    ruby: 'Ruby', dart: 'Dart', scala: 'Scala', perl: 'Perl', lua: 'Lua',
+    julia: 'Julia', fsharp: 'F#', elixir: 'Elixir', haskell: 'Haskell',
+    groovy: 'Groovy', powershell: 'PowerShell', ps1: 'PowerShell', pwsh: 'PowerShell', f: 'F#'
   },
 
   highlightCode(block) {

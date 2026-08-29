@@ -1,0 +1,180 @@
+<!-- 6. RMarkdown y Buenas Prácticas - R (Lenguajes de Programación) -->
+  <section id="rmarkdown">
+    <h2>Informes reproducibles con RMarkdown</h2>
+    <div class="doc-content">
+<p><strong>RMarkdown</strong> combina prosa y código en un único documento que se <em>compila</em> a HTML, PDF o Word gracias a <code>knitr</code>. El resultado es un informe reproducible: cada vez que lo renderizas se vuelve a ejecutar el código y se regeneran números, tablas y gráficas. Es la manera estándar de comunicar análisis en la ciencia de datos.</p>
+<pre><code class="language-r"># Instalar los motores una sola vez
+install.packages("rmarkdown")
+install.packages("knitr")
+
+# Renderizar un documento informe.Rmd a HTML
+rmarkdown::render("informe.Rmd", output_format = "html_document")</code></pre>
+<pre><code class="language-r">---
+title: "Analisis de ventas 2026"
+author: "Maria Garcia"
+date: "agosto 2026"
+output: html_document
+---</code></pre>
+<blockquote class="aside aside-note"><p>El botón <em>Knit</em> de RStudio equivale a <code>rmarkdown::render()</code>. Cada compilación corre en un entorno casi limpio; si tu script dependía de variables de sesión que nunca guardaste, fallará justo ahí: eso es reproducibilidad en acción.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="chunks-de-codigo">
+    <h2>Chunks de código y texto inline</h2>
+    <div class="doc-content">
+<p>El documento mezcla <strong>markdown</strong> y <strong>chunks</strong>: bloques delimitados por triples comillas inversas con opciones que controlan si se muestra el código, los resultados o solo las gráficas. El <strong>texto inline</strong> permite insertar valores de R dentro de la prosa.</p>
+<pre><code class="language-r"># Un chunk sin opciones: muestra código y resultados
+```{r}
+notas &lt;- c(7, 8, 9)
+mean(notas)
+```
+
+# Chunk con opción echo = FALSE: esconde el código
+```{r, echo = FALSE}
+summary(mpg$hwy)
+```
+
+# Chunk con etiqueta y caché (reutiliza el cálculo)
+```{r carga, cache = TRUE}
+grande &lt;- read.csv("datos/censo.csv")
+```</code></pre>
+<pre><code class="language-r"># Texto inline: pega el resultado dentro de la prosa
+#  -&gt; "La media de millas por galon es `r mean(mtcars$mpg)`"
+#  -&gt; Se renderiza como: "La media de millas por galon es 20.090625"
+
+# Chunk con tamaño de figura y mensajes silenciados
+# ```{r, fig.height = 4, message = FALSE}
+# ggplot(mpg, aes(x = hwy, fill = drv)) + geom_histogram()
+# ```</code></pre>
+<table><thead><tr><th>Opción</th><th>Efecto</th><th>Valores típicos</th></tr></thead><tbody>
+<tr><td><code>echo</code></td><td>Muestra el código o no</td><td><code>TRUE</code> / <code>FALSE</code></td></tr>
+<tr><td><code>eval</code></td><td>Si ejecuta el chunk</td><td><code>TRUE</code> / <code>FALSE</code></td></tr>
+<tr><td><code>fig.width / fig.height</code></td><td>Tamaño de las gráficas</td><td>pulgadas (3 a 8)</td></tr>
+<tr><td><code>message / warning</code></td><td>Oculta mensajes de paquetes</td><td><code>FALSE</code> al cargar librerías</td></tr>
+<tr><td><code>cache</code></td><td>Reutiliza cálculos costosos</td><td><code>TRUE</code> para cargas pesadas</td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>Configura el primer chunk del documento con <code>knitr::opts_chunk$set(echo = TRUE, message = FALSE)</code> y olvídate de repetir esas opciones en cada bloque.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="proyectos-rstudio">
+    <h2>Proyectos RStudio y rutas relativas</h2>
+    <div class="doc-content">
+<p>Un <strong>Proyecto RStudio</strong> (archivo <code>.Rproj</code>) fija la raíz de trabajo e independiza tus rutas del sistema operativo. Al abrir el proyecto, la sesión arranca en esa carpeta; tú escribes rutas relativas como <code>datos/ventas.csv</code> y el código funciona igual en tu máquina y en la del equipo.</p>
+<pre><code class="language-r"># La pesadilla de setwd: rutas absolutas que solo sirven en tu equipo
+setwd("C:/Users/algo/Descargas/proyecto")      # evita esto
+
+# Con un proyecto, ya estás en la raíz correcta
+getwd()                 # .../MiProyecto
+list.files()            # ves los archivos del proyecto</code></pre>
+<pre><code class="language-r"># Rutas relativas explícitas y el paquete here
+install.packages("here")
+library(here)
+here()                  # raíz del proyecto, sin importar la carpeta
+
+ventas &lt;- read.csv(here("datos", "ventas.csv"))
+productos &lt;- read.csv(here("datos", "productos.csv"))
+
+# Escribir siempre con la misma raíz
+write.csv(ventas, here("salidas", "ventas_limpias.csv"), row.names = FALSE)</code></pre>
+<blockquote class="aside aside-caution"><p>Nunca uses <code>setwd()</code> en un script compartido: rompe el código en cualquier otra máquina. Emplea proyectos y <code>here</code>. Evita también los espacios en los nombres de carpetas cuando colaboras en equipo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="estilo-y-buenas-practicas">
+    <h2>Estilo y buenas prácticas</h2>
+    <div class="doc-content">
+<p>El código se lee más veces de las que se escribe. Seguir convenciones (<code>snake_case</code> para nombres, pipes encadenados legibles, comentarios que expliquen el <strong>porqué</strong> y no el qué) vuelve tus análisis mantenibles y revisables. Los equipos de datos viven de esto.</p>
+<pre><code class="language-r"># Nombres claros y consistentes
+ingresos_2026 &lt;- 250000                       # snake_case para datos
+calcular_margen &lt;- function(x) x * 0.35       # verbos al nombrar funciones
+
+# Mala elección: no dicen nada
+x &lt;- 250000
+func1 &lt;- function(a) a * 0.35</code></pre>
+<pre><code class="language-r"># Estructura tipo de un script analitico
+# 0) Cargar librerías
+library(tidyverse)
+
+# 1) Importar datos (rutas relativas)
+datos &lt;- read_csv("datos/ventas.csv")
+
+# 2) Limpiar y transformar con dplyr en cadena
+limpio &lt;- datos %&gt;%
+  filter(!is.na(region)) %&gt;%
+  mutate(total_bruto = cantidad * precio)
+
+# 3) Analizar
+por_region &lt;- limpio %&gt;%
+  group_by(region) %&gt;%
+  summarize(total = sum(total_bruto))
+
+# 4) Visualizar y exportar
+por_region %&gt;%
+  ggplot(aes(x = region, y = total)) +
+  geom_col()
+ggsave("salidas/total_por_region.png")</code></pre>
+<table><thead><tr><th>Malo</th><th>Bueno</th><th>Por qué</th></tr></thead><tbody>
+<tr><td>df1, df2</td><td>ventas_2026, clientes_ref</td><td>El nombre dice qué contiene</td></tr>
+<tr><td>x, y, z</td><td>precio, cantidad</td><td>Sin adivinar en el resto del código</td></tr>
+<tr><td>CALCULO()</td><td>calcular_margen()</td><td>snake_case es el estándar de R</td></tr>
+<tr><td>Mis Datos.csv</td><td>mis_datos.csv</td><td>Espacios complican rutas y versiones</td></tr>
+</tbody></table>
+<blockquote class="aside aside-success"><p>Comenta el <em>porqué</em> (decisiones y supuestos), no el <em>qué</em> (eso ya lo dice el código). Un futuro tú, y cualquier auditoría, te lo agradecerá.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="funciones-propias">
+    <h2>Crear y usar funciones propias</h2>
+    <div class="doc-content">
+<p>Cuando repites un bloque tres veces, conviértelo en <strong>función</strong>: encapsulas lógica, ganas consistencia y pruebas el código una sola vez. Una función recibe argumentos, hace algo y devuelve el último objeto evaluado (o el marcado con <code>return()</code>).</p>
+<pre><code class="language-r"># Sintaxis: nombre &lt;- function(argumentos) { cuerpo }
+imc &lt;- function(peso, altura) {
+  valor &lt;- peso / altura^2
+  return(valor)             # explícito, aunque opcional
+}
+
+imc(70, 1.75)               # 22.85714
+imc(peso = 55, altura = 1.6)  # 21.48
+
+# Argumentos con valores por defecto
+redondear2 &lt;- function(x, digitos = 2) round(x, digits = digitos)
+redondear2(pi)
+redondear2(pi, 4)</code></pre>
+<pre><code class="language-r"># Funciones que reciben y devuelven data frames
+resumen_grupo &lt;- function(datos, grupos) {
+  datos %&gt;%
+    group_by({{ grupos }}) %&gt;%
+    summarize(media = mean(ventas, na.rm = TRUE),
+              n = n())
+}
+resumen_grupo(mpg, manufacturer)
+
+# Documentar para equipos (sintaxis roxygen2)
+#' @title Calcula el margen bruto
+#' @param precio Precio unitario
+#' @return Margen en unidades monetarias
+margen &lt;- function(precio) precio * 0.35</code></pre>
+<blockquote class="aside aside-tip"><p>Escribe funciones pequeñas con una sola responsabilidad y nómbralas con un verbo (<code>calcular_x</code>, <code>leer_datos</code>). Cuando una función supera 20 líneas, probablemente conviene dividirla.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Construye tu primer informe reproducible de principio a fin.</p>
+<ol>
+<li><strong>Informe mínimo:</strong> crea un <code>.Rmd</code> con título y un texto que cite inline el valor <code>r mean(mtcars$mpg)</code>; compílalo a HTML.</li>
+<li><strong>Tres chunks:</strong> agrega uno de carga de paquetes con <code>message = FALSE</code>, otro con <code>echo = FALSE</code> y un tercero que dibuje con ggplot2 la gráfica de ventas por región.</li>
+<li><strong>Purgando setwd:</strong> convierte un script que empiece por <code>setwd()</code> a rutas relativas usando <code>here()</code> o un proyecto <code>.Rproj</code>.</li>
+<li><strong>Limpieza de nombres:</strong> renombra tres variables que se llamen <code>x</code>, <code>y</code>, <code>z</code> en tu script de ejercicios a nombres descriptivos en snake_case.</li>
+<li><strong>Función reutilizable:</strong> escribe <code>graficar_hist(datos, variable)</code> que devuelva un histograma de ggplot2 y pruébala con <code>hwy</code> del dataset mpg.</li>
+</ol>
+<p>Felicidades: ya tienes el ciclo completo de ciencia de datos en R — describir, visualizar, modelar y comunicar. Sigue explorando el ecosistema.</p>
+    </div>
+  </section>

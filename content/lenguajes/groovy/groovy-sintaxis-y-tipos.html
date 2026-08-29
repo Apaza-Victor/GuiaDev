@@ -1,0 +1,203 @@
+<!-- 2. Sintaxis y Tipos - Groovy (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="variables">
+    <h2>Variables y ámbito</h2>
+    <div class="doc-content">
+<p>Groovy distingue declaraciones con <code>def</code>, tipos Java explícitos, y la ausencia de declaración (variables globales del script con <code>@Field</code> en scripts de clase). La declaración clara evita confusión.</p>
+<pre><code class="language-groovy">// def: dinámico, ámbito de bloque
+def numero = 42
+{
+    def numeroLocal = 1       // ámbito de bloque
+    println numeroLocal       // 1
+}
+// println numeroLocal        // Error: fuera de ámbito
+
+// Tipos Java
+int entero = 10
+String texto = "hola"
+double d = 1.5
+
+// Global en scripts (utilitaria): con @Field
+import groovy.transform.Field
+@Field String global = "visible en todo el script"
+println global
+
+// Multiples declaraciones
+def a = 1, b = 2, c = 3
+println a + b + c       // 6
+
+// Los tipos primitivos "boxean" automáticamente
+def n = 5
+println n.getClass()    // java.lang.Integer (boxed)</code></pre>
+<blockquote class="aside aside-tip"><p>En Groovy casi nunca necesitas <code>public/private</code> en scripts. Dentro de clases usa modificadores Java normales. El ámbito de <code>def</code> es el bloque; para scripts largos sobre todo usa <code>@Field</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="strings">
+    <h2>Strings y GStrings</h2>
+    <div class="doc-content">
+<p>Groovy tiene cuatro tipos de cadenas (simples, dobles, slashy y con triple comillas) y las <strong>GStrings</strong> para interpolación.</p>
+<pre><code class="language-groovy">// Strings simples: sin interpolación
+def simple = 'Hola $nombre'        // literal: 'Hola $nombre'
+
+// Strings dobles: interpolación con ${...} o $var
+def nombre = 'Ana'
+def doble = "Hola $nombre"
+def conExpr = "Suma: ${1 + 2}"
+println doble
+println conExpr
+
+// Triple comillas para multilínea
+def poema = """Hola,
+soy un texto
+multilínea."""
+println poema
+
+// Slashy: para regex sin escape
+def path = /C:\carpeta\archivo/
+def regex = /ab+c/
+
+// Métodos de cadena
+println 'groovy'.capitalize()      // Groovy
+println 'a b c'.split(' ')         // [a, b, c]
+println '   hola   '.trim()
+println 'abc'.reverse()            // cba</code></pre>
+<blockquote class="aside aside-caution"><p><code>'$var'</code> con comilla simple NO interpola; la triple <code>'''...'''</code> tampoco. Para regex (<code>/.../</code>) se anula la necesidad de escapar barras. Aprende a distinguir SimpleString (no interpola) de GString (interpola).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipos">
+    <h2>Números, booleanos y conversiones</h2>
+    <div class="doc-content">
+<p>Groovy es generoso con los números: la mitad de tus operaciones ni piensa en tipos. También tiene literales binarios/octales/hex y rangos.</p>
+<pre><code class="language-groovy">// Números
+def entero = 100
+def largo = 100L
+def flotante = 1.5f
+def doble = 1.5d
+def hexa = 0x1F           // 31
+def binario = 0b1010      // 10
+def notacion = 1_000_000  // 1000000 (guiones bajos válidos)
+
+// Rangos (son objetos Range)
+def rango = 1..5
+def rangoInvertido = 5..1
+println rango.contains(4)         // true
+println (1..10).sum()             // 55
+
+// Booleanos
+def verdad = true
+def falso = false
+println !verdad                   // false
+
+// Coerción automática
+def textoNum = '42'
+def n = textoNum as int           // as cast
+println n + 8                     // 50
+println textoNum.toInteger() + 8  // 50
+
+// toBoolean / truth
+def futuro = 'true'
+println futuro.toBoolean()</code></pre>
+<table><thead><tr><th>Operación</th><th>Sintaxis Groovy</th></tr></thead><tbody><tr><td>Cast</td><td><code>x as int</code> / <code>x.toInteger()</code></td></tr><tr><td>Rango</td><td><code>1..5</code> (rango cerrado), <code>1..&lt;5</code> (abierto)</td></tr><tr><td>Division</td><td><code>/</code> devuelve BigDecimal (no int truncado)</td></tr><tr><td>Potencia</td><td><code>2 ** 10</code></td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="operadores">
+    <h2>Operadores</h2>
+    <div class="doc-content">
+<p>Groovy añade operadores potentes y seguros sobre los de Java: Elvis, safe navigation, spread, lambdas y más.</p>
+<pre><code class="language-groovy">// Operadores básicos (igual que Java)
+def suma = 10 + 5
+def resto = 10 % 3
+def pot = 2 ** 8                  // 256 (Groovy)
+
+// Operadores de comparación (== es equals en Groovy)
+println 5 == 5                    // true
+println 'a' == new String('a')    // true (igualdad de valor)
+
+// Elvis: valor por defecto
+def nombre = null
+def saludar = nombre ?: 'Invitado'
+println saludar                   // Invitado
+
+// Safe navigation: no más NullPointer
+def lista = null
+println lista?.size()             // null (en vez de NPE)
+def usu = [nombre: 'Ana']
+println usu.ciudad?.toUpperCase() // null
+
+// Spread: aplicar a cada elemento
+def nums = [1, 2, 3]
+println nums*.multiply(2)         // [2, 4, 6]
+println nums*.toInteger()
+
+// CompareTo spaceship
+println 5 <=> 3                   // 1 (mayor)
+println 3 <=> 5                   // -1
+
+// Acceso por rangos a strings/listas
+println 'abcdef'[1..3]            // 'bcd'</code></pre>
+<blockquote class="aside aside-tip"><p>Los operadores <code>?:</code> (Elvis), <code>?.</code> (safe navigation) y <code>*.</code> (spread) son las tres joyas de Groovy: eliminan NPEs y los "if (x != null)" repetidos. La sintaxis <code>a+b=c</code> es la de Kotlin con otro nombre.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="safe-navigation">
+    <h2>Navegación segura y operadores avanzados</h2>
+    <div class="doc-content">
+<p>Más operadores que simplifican la vida en datos anidados, cadenas y closures.</p>
+<pre><code class="language-groovy">// Catch-all: dato anidado sin NPE
+def config = [db: [host: 'localhost']]
+def host = config?.db?.host ?: 'default'
+println host
+
+// with: contexto para encadenar
+def writer = new StringWriter()
+with(writer) {
+    write 'Hola'
+    write ' !'
+}
+println writer.toString()
+
+// transform con dump
+def usuario = [nombre: 'Ana', edad: 30]
+println usuario.dump()        // detalle de la clase (para debug)
+
+// Coerción con as y método
+def resultado = '3.5' as Double
+println resultado * 2         // 7.0
+
+// Operadores de bit (Java igual)
+println 5 & 3                  // 1 (bitwise and)
+println 5 | 3                  // 7
+
+// Regex
+def patrón = ~'\\d+'
+println (patrón =~ 'abc123def').find()
+
+// En /.../ slashy: (como regex m eta)
+if ('a1b2' ==~ /[a-z]\d[a-z]\d/) println 'encaja'</code></pre>
+<blockquote class="aside aside-caution"><p><code>==~</code> hace match completo de la cadena; <code>=~</code> devuelve un <code>Matcher</code> (busca en cualquier parte). Con <code>==~</code> y <code>=~</code> en slashy no tienes que escapar backslashes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Variables</strong>: declara <code>def local</code>, un <code>int</code> y un <code>String</code>; muestra sus tipos con <code>getClass()</code>.</li>
+<li><strong>GStrings</strong>: construye una frase con <code>${}</code> interpolando un cálculo y probar la triple comilla.</li>
+<li><strong>Elvis + safe</strong>: escribe <code>def country = cliente?.direccion?.pais ?: 'desconocido'</code> y pruébalo con null.</li>
+<li><strong>Operadores</strong>: usa <code>2 ** 8</code>, <code>1..&lt;5</code>, <code>*.toUpperCase()</code> y <code>&lt;=&gt;</code>.</li>
+<li><strong>Regex</strong>: valida un email básico con <code>==~</code> y busca dígitos con <code>=~</code>.</li>
+</ol>
+<p>En la próxima lección dominaremos las colecciones: listas, maps, rangos y la genericidad del GDK.</p>
+    </div>
+  </section>

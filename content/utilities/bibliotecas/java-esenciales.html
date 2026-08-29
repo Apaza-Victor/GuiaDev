@@ -1,0 +1,146 @@
+<!-- 1. Librerías Esenciales de Java - Bibliotecas (Utilidades) -->
+  <section id="jdk-librerias">
+    <h2>JDK y las librerías principales <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<p>El JDK trae librerías suficientes para la mayoría de proyectos: colecciones, streams, I/O, fecha, concurrencia, archivos y red.</p>
+<pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+// Colecciones e inmutables
+List&lt;String&gt; lista = List.of("a", "b", "c");          // inmutable
+List&lt;Integer&gt; nums = new ArrayList&lt;&gt;(List.of(3, 1, 2));
+Map&lt;String, Integer&gt; edad = new HashMap&lt;&gt;();
+edad.put("Ana", 30);
+
+// Streams: pipelines funcionales
+int total = nums.stream()
+    .filter(n -&gt; n &amp;gt; 1)
+    .mapToInt(Integer::intValue)
+    .sum();
+
+// Fecha/hora moderno (java.time)
+LocalDate hoy = LocalDate.now();
+LocalDate navidad = hoy.withMonth(12).withDayOfMonth(25);
+long dias = ChronoUnit.DAYS.between(hoy, navidad);
+
+// Archivos
+List&lt;String&gt; lineas = Files.readAllLines(Path.of("datos.txt"));
+Files.writeString(Path.of("out.txt"), String.join("\n", lineas));
+</code></pre>
+<blockquote class="aside aside-tip"><p>Desde Java 8+ el JDK cubre el 80% de las necesidades. `java.time`, `Files` y los streams modernizan el código sin dependencias externas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="gestion-dependencias">
+    <h2>Gestión de dependencias: Maven y Gradle <span class="gd-badge gd-badge-note">Build</span></h2>
+    <div class="doc-content">
+<pre><code class="language-xml">&lt;!-- pom.xml (Maven): declara dependencias automáticamente --&gt;
+&lt;dependency&gt;
+  &lt;groupId&gt;com.google.guava&lt;/groupId&gt;
+  &lt;artifactId&gt;guava&lt;/artifactId&gt;
+  &lt;version&gt;33.0.0-jre&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<pre><code class="language-gradle">// build.gradle (Gradle: declarativo y flexible)
+dependencies {
+  implementation 'com.google.guava:guava:33.0.0-jre'
+}
+</code></pre>
+<pre><code class="language-bash">mvn dependency:resolve          # descarga las deps
+mvn compile                     # compila
+mvn package                     # empaqueta jar/war
+./gradlew build                 # versionado de Gradle
+</code></pre>
+<blockquote class="aside aside-tip"><p>Maven (XML) y Gradle (Groovy/Kotlin) resuelven dependencias desde Maven Central. Nunca bajes JARs a mano: usa el ecosistema.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="guava-commons">
+    <h2>Guava y Apache Commons <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-java">// Guava (Google): utilidades que faltan en el JDK
+import com.google.common.collect.*;
+
+ImmutableList&lt;String&gt; inmut = ImmutableList.of("x", "y");
+Multimap&lt;String, Integer&gt; mm = ArrayListMultimap.create();
+mm.put("Frutas", 1); mm.put("Frutas", 2);   // clave con varios valores
+
+// Apache Commons Lang3: strings y objetos
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+
+String abrev = StringUtils.abbreviate("Guía de desarrollo muy larga", 12);
+boolean vacio = StringUtils.isBlank("   ");
+String clave = RandomStringUtils.randomAlphanumeric(16);
+
+// Commons IO
+import org.apache.commons.io.FileUtils;
+List&lt;String&gt; lineas = FileUtils.readLines(new File("datos.txt"), "UTF-8");
+</code></pre>
+<blockquote class="aside aside-tip"><p>Guava (colecciones inmutables, cache, hashing) y Commons (strings, math, io) son las dos librerías de utilidad más usadas de Java juntas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="logging-json">
+    <h2>Logging (SLF4J + Log4j2) y JSON (Jackson) <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-java">// SLF4J: fachada de logging estándar
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+Logger log = LoggerFactory.getLogger(MiClase.class);
+log.info("Servidor en puerto {}", 8080);
+log.warn("Uso de memoria {}%", 91);
+log.error("Error de conexión", exception);
+
+// Jackson: JSON la "más usada"
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+// Clase: record Usuario(String nombre, int edad) {}
+ObjectMapper mapper = new ObjectMapper();
+String json = mapper.writeValueAsString(new Usuario("Ana", 30));
+Usuario u = mapper.readValue(json, Usuario.class);
+</code></pre>
+<blockquote class="aside aside-note"><p>Jackson domina el JSON (valida, convierte, ignora desconocidas con config). SLF4J hace tus logs intercambiables entre Log4j2, Logback y java.util.logging.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion">
+    <h2>Instalación del JDK <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Adoptium Temurin LTS (recomendado) o Microsoft OpenJDK
+winget install EclipseAdoptium.Temurin.21.JDK     # Windows
+# sdkman para Linux/Mac
+curl -s "https://get.sdkman.io" | bash
+sdk install java 21-tem
+
+# Verificar
+java --version
+javac --version
+
+# Primer proyecto
+mkdir demo &amp;&amp; cd demo
+echo 'public class Hola { public static void main(String[] a){System.out.println("Hola");} }' > Hola.java
+javac Hola.java &amp;&amp; java Hola
+</code></pre>
+<blockquote class="aside aside-tip"><p>Usa una distribución LTS (17 o 21) de Temurin/Adoptium. IntelliJ IDEA Community y Maven/Gradle completan el flujo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Con streams filtra y agrupa una lista de personas por ciudad.</li>
+<li>Crea un proyecto Maven y usa Guava ImmutableList + Multimap.</li>
+<li>Serializa y lee un `record` Usuario con Jackson desde un archivo JSON.</li>
+<li>Configura SLF4J+Logback y loguea con niveles en consola y archivo.</li>
+<li>Lee un CSV con Files/Commons IO y convierte bajo el JDK a objetos.</li>
+</ol>
+    </div>
+  </section>

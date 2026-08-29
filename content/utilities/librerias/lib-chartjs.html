@@ -1,0 +1,164 @@
+<!-- chartjs - Librerías (Utilidades) -->
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install chart.js
+</code></pre>
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-js">import Chart from 'chart.js/auto';
+</code></pre>
+<blockquote class="aside aside-tip"><p>Chart.js renderiza gráficos en canvas (HTML5) con HTML/CSS para títulos y leyendas. Soporta barras, líneas, doughnut, radar, polar y scatter con animaciones por defecto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primer-grafico-paso-2">
+    <h2>Primer Gráfico <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-html">&lt;canvas id="ventas"&gt;&lt;/canvas&gt;
+</code></pre>
+<pre><code class="language-js">const ctx = document.getElementById('ventas');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: ['Ene', 'Feb', 'Mar', 'Abr'],
+    datasets: [{
+      label: 'Ventas 2026',
+      data: [120, 190, 140, 210],
+      backgroundColor: 'rgba(59,130,246,0.7)',
+    }],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' },
+    },
+  },
+});
+</code></pre>
+<blockquote class="aside aside-tip"><p>Un `<canvas>` de cada gráfico con un único `id`. Con `responsive: true` y un contenedor con altura fija se adapta a cualquier pantalla.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipos-de-graficos">
+    <h2>Tipos de Gráficos Comunes <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Línea con dos series
+new Chart(ctxLinea, {
+  type: 'line',
+  data: {
+    labels: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+    datasets: [
+      { label: 'Visitantes', data: [30, 45, 40, 60, 55, 80, 70], borderColor: '#10b981' },
+      { label: 'Registros',  data: [2, 5, 4, 9, 7, 12, 11], borderColor: '#f59e0b' },
+    ],
+  },
+});
+
+// Doughnut para proporciones
+new Chart(ctxDonut, {
+  type: 'doughnut',
+  data: {
+    labels: ['Frontend', 'Backend', 'DevOps'],
+    datasets: [{ data: [52, 34, 14], backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'] }],
+  },
+});
+
+// Dispersión (scatter)
+new Chart(ctxScatter, {
+  type: 'scatter',
+  data: {
+    datasets: [{
+      label: 'Datos',
+      data: [{ x: 1, y: 2 }, { x: 2, y: 5 }, { x: 3, y: 3 }],
+    }],
+  },
+});
+</code></pre>
+<blockquote class="aside aside-note"><p>Para cada dataset se definen datos y colores. Los ejes, herramientas de tooltip y legendas se personalizan desde el bloque `options`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="datos-dinamicos">
+    <h2>Datos Dinámicos y Actualización <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">const grafico = new Chart(ctx, { /* ... */ });
+
+// Actualizar datos en caliente
+grafico.data.datasets[0].data = [200, 180, 240, 300];
+grafico.data.labels.push('May');
+grafico.update();
+
+// Añadir datos (gráfico en tiempo real)
+function pushRealTime(valor) {
+  grafico.data.labels.push(new Date().toLocaleTimeString());
+  grafico.data.datasets[0].data.push(valor);
+  grafico.update();
+}
+setInterval(pushRealTime, 1000, Math.random() * 100);
+
+// Filtros por fecha/periodo: recarga el dataset
+function cambiarPeriodo(desde, hasta) {
+  grafico.data.datasets[0].data = obtenerDatos(desde, hasta);
+  grafico.update();
+}
+
+// Destruir antes de reutilizar el canvas
+grafico.destroy();
+</code></pre>
+<blockquote class="aside aside-caution"><p>Nunca crees un nuevo `Chart` sobre el mismo canvas sin `destroy()`, o acumularás gráficos invisibles y mermas de rendimiento.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="plugins-y-produccion">
+    <h2>Plugins, RWD y Producción <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Importar módulos bajo demanda (tree-shaking)
+import { Chart, BarController, BarElement } from 'chart.js';
+
+// Registro manual de componentes
+Chart.register(BarController, BarElement);
+
+// Tooltip personalizado en formato dinero
+options: {
+  plugins: {
+    tooltip: {
+      callbacks: {
+        label: (item) =&gt; `${item.dataset.label}: S/ ${item.parsed.y.toLocaleString()}`,
+      },
+    },
+  },
+}
+
+// Modo escalable en un contenedor con altura
+// .grafico-wrap { height: 320px; }
+</code></pre>
+<pre><code class="language-html">&lt;div class="grafico-wrap"&gt;
+  &lt;canvas id="kpi"&gt;&lt;/canvas&gt;
+&lt;/div&gt;
+</code></pre>
+<blockquote class="aside aside-success"><p>En producción registra solo los componentes que usas (`chart.js` completo incluye todos los tipos). Combinado con árbol de contenidos (imports), reduce el bundle.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Renderiza un gráfico de barras con 4 meses y formato de moneda en el tooltip.</li>
+<li>Crea un gráfico de líneas con dos series (ventas y gastos) y leyenda en la parte inferior.</li>
+<li>Usa un doughnut para mostrar la distribución de tecnologías de un proyecto.</li>
+<li>Implementa un gráfico en tiempo real que reciba datos cada 2 segundos sin fugas de memoria.</li>
+<li>Haz el gráfico responsive dentro de un contenedor de 300px de alto y verifícalo al rotar el dispositivo.</li>
+</ol>
+    </div>
+  </section>

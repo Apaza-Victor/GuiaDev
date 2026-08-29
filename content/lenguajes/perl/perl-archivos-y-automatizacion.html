@@ -1,0 +1,198 @@
+<!-- 6. Archivos y Automatización - Perl (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="leer-y-escribir-archivos">
+    <h2>Leer y escribir archivos</h2>
+    <div class="doc-content">
+<p>Perl maneja archivos con descriptores (<code>FILEHANDLE</code>), normalmente abiertos con <code>open</code> y siempre cerrados con <code>close</code>. La banda <code>my $fh</code> con <code>open my $fh, '&gt;', $archivo</code> introduce la variable como manejador (recomendado en Perl moderno).</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+# Escribir (modo '&gt;' sobrescribe, '&gt;&gt;' agrega)
+my $ruta = "salida.txt";
+open my $fh, "&gt;", $ruta or die "No puedo escribir $ruta: $!";
+print $fh "Línea uno\n";
+print $fh "Línea dos\n";
+close $fh;
+
+# Leer línea a línea
+open my $in, "&lt;", $ruta or die "No puedo leer $ruta: $!";
+my @lineas;
+while (my $linea = &lt;$in&gt;) {
+    chomp $linea;                     # quita el \n final
+    push @lineas, $linea;
+}
+close $in;
+print join(" / ", @lineas), "\n";     # Línea uno / Línea dos
+
+# Leer TODO de golpe
+open my $in2, "&lt;", $ruta or die "error: $!";
+my $todo = do { local $/; &lt;$in2&gt; };  # modo slurp
+close $in2;
+print "Longitud: ", length $todo, "\n";</code></pre>
+<blockquote class="aside aside-caution"><p>La variable <code>$!</code> contiene el error del sistema: úsala siempre en el <code>or die</code>. Después de <code>open</code> comprueba la falla; Perl lo silencia si no lo pides.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="el-operador-diamante">
+    <h2>El operador diamante &lt;&gt;</h2>
+    <div class="doc-content">
+<p>El <strong>operador diamante</strong> <code>&lt;&gt;</code> (sin manejador) es la forma idiomática de procesar archivos pasados como argumentos en la línea de comandos, igual que hacen <code>cat</code>, <code>sed</code> o <code>awk</code>.</p>
+<pre><code class="language-perl">#!/usr/bin/perl
+use strict;
+use warnings;
+
+# cat archivo1 archivo2 | perl conteo.pl
+# perl conteo.pl a.txt b.txt   ->  procesa ambos en orden
+while (&lt;&gt;) {
+    chomp;
+    my @campos = split /\t/;
+    print "N:", scalar @campos, " -> $fields[0]\n" if @campos;
+}
+
+# Con banderas propias
+my $verbose = 0;
+while (&lt;&gt;) {
+    $verbose = 1 if /^--verbose/;
+    print "VERBOSE: $_" if $verbose;
+}</code></pre>
+<pre><code class="language-bash"># Uso típico en la terminal
+perl -ne 'print if /ERROR/' app.log
+perl -ane 'print $F[1]' datos.csv
+
+# También con el diamante en un script
+perl procesa.pl entradas/*.txt</code></pre>
+<blockquote class="aside aside-tip"><p>El diamante es lo que da a los one-liners de Perl su poder de "filtro Unix": recibe archivos de la línea de comandos o de <code>STDIN</code> por pipa. Cada vuelta del <code>while (&lt;&gt;)</code> trae la siguiente línea y la guarda en <code>$_</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tareas-de-sysadmin">
+    <h2>Tareas de administración de sistemas</h2>
+    <div class="doc-content">
+<p>Con <code>-e</code>, <code>-f</code>, <code>-d</code> (entre otros "filetests") y las funciones estándar de Perl (<code>rename</code>, <code>unlink</code>, <code>mkdir</code>, glob) automatizamos tareas del sistema sin instalar nada.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+# Filetests: operador -X
+for my $archivo (&lt;*.log&gt;) {
+    print "$archivo: ",
+      (-f $archivo ? "archivo" : "especial"),
+      (-s $archivo ? sprintf(" %d bytes", -s $archivo) : ""),
+      "\n";
+}
+
+# Condicionales de existencia
+die "Falta datos.txt" unless -e "datos.txt";
+
+# Crear directorios recursivamente
+system("mkdir", "-p", "logs/2026/08") if !-d "logs/2026/08";
+
+# Renombrar y borrar
+rename "backup.tar", "backup_2026.tar" or warn "no se pudo renombrar: $!";
+unlink "temporal.tmp" if -e "temporal.tmp";
+
+# Copiar usando módulo estándar
+use File::Copy;
+copy("datos.txt", "copia.txt") or die "copia falló: $!";</code></pre>
+<table><thead><tr><th>Filetest</th><th>¿Qué comprueba?</th></tr></thead><tbody><tr><td><code>-e</code></td><td>Existe</td></tr><tr><td><code>-f</code></td><td>Archivo regular</td></tr><tr><td><code>-d</code></td><td>Directorio</td></tr><tr><td><code>-s</code></td><td>Tamaño en bytes</td></tr><tr><td><code>-r</code> / <code>-w</code> / <code>-x</code></td><td>Legible / escribible / ejecutable</td></tr><tr><td><code>-M</code></td><td>Días desde su modificación</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="procesamiento-de-texto">
+    <h2>Procesamiento de texto</h2>
+    <div class="doc-content">
+<p>Un caso real: analizar un archivo de log y generar un resumen. Combinamos lectura, regex, hashes para conteos y órdenes de salida.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+# Simulamos contenido de log
+my $log = &lt;&lt;'LOG';
+2026-08-29 INFO user=ana accion=login
+2026-08-29 INFO user=pedro accion=login
+2026-08-29 WARN user=ana accion=retry
+2026-08-29 ERROR user=ana accion=disk_full
+2026-08-30 INFO user=pau accion=logout
+LOG
+
+my %nivel;
+my %por_usuario;
+open my $fh, "&lt;", \$log or die "error";    # lectura desde escalar
+
+while (my $linea = &lt;$fh&gt;) {
+    chomp $linea;
+    # nivel = segundo token, usuario = primer token tras user=
+    my ($nivel) = $linea =~ /^\d{4}-\d{2}-\d{2} (\w+)/;
+    my ($usuario) = $linea =~ /user=(\w+)/;
+    $nivel{$nivel}++        if defined $nivel;
+    $por_usuario{$usuario}++ if defined $usuario;
+}
+close $fh;
+
+print "Conteo por nivel (ordenado):\n";
+for my $n (sort keys %nivel) {
+    printf "  %-6s %d\n", $n, $nivel{$n};
+}
+
+print "Actividad por usuario:\n";
+for my $u (sort { $por_usuario{$b} &lt;=&gt; $por_usuario{$a} } keys %por_usuario) {
+    printf "  %-8s %d eventos\n", $u, $por_usuario{$u};
+}</code></pre>
+<blockquote class="aside aside-tip"><p><code>sort keys %hash</code> ordena alfabéticamente; <code>sort { $h{$b} &lt;=&gt; $h{$a} } keys %hash</code> ordena por valor numérico descendente. Ese patrón (conteo → orden → printf) cubre el 90% del análisis ad-hoc.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="perl-moderno">
+    <h2>Perl moderno y buenas prácticas</h2>
+    <div class="doc-content">
+<p>El ecosistema Perl 5 maduró hacia un estilo más limpio. Algunas recomendaciones aceptadas en 2026:</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+# 1. Declarar todo con my (nunca "our" sin necesidad del ámbito global)
+# 2. Soporte de Unicode desde el "use utf8" para el código fuente
+use utf8;
+
+# 3. Modernas firmas de subrutinas (Perl 5.20+ / feature 'signatures')
+# (en un futuro cercano con 'use feature "signatures";' o cu declarativo)
+my $nombre = "GuíaDev";
+print "Bienvenido a $nombre\n";
+
+# 4. Preferir expresiones declarativas (map, grep, each) sobre bucles manuales
+my @numeros = map { $_ * 2 } grep { $_ &gt; 2 } (1..5);   # (6, 8, 10)
+
+# 5. Usar @INC correcto y CPAN local (perlbrew / cpanm)
+# 6. Documentar con POD: =head1, =item, =cut (y perldoc)
+=head1 DOCUMENTACIÓN
+
+=head2 Descripción
+
+Este script ejemplifica las buenas prácticas de Perl moderno.
+
+=cut
+
+print "Fin\n";</code></pre>
+<p>Herramientas de calidad que siempre recomendaré:</p>
+<table><thead><tr><th>Herramienta</th><th>Uso</th></tr></thead><tbody><tr><td><code>perltidy</code></td><td>Formatea el código automáticamente</td></tr><tr><td><code>perlcritic</code></td><td>Analiza el código y sugiere mejoras de estilo</td></tr><tr><td><code>Test::More</code> + <code>prove</code></td><td>Suite de pruebas unitarias</td></tr><tr><td><code>Devel::NYTProf</code></td><td>Perfilador de rendimiento</td></tr><tr><td><code>Carton</code> / <code>cpanfile</code></td><td>Dependencias reproducibles por aplicación</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p>Felicidades: has completado la base de Perl con GuiaDev. Recuerda que la fuente de verdad es <code>perldoc</code>, la comunidad <code>perlmonks.org</code> y CPAN. Sigue con esta secuencia: <code>perl_intro</code> terminada.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Backup en una línea</strong>: escribe un script que copie <code>datos.txt</code> a <code>datos_2026-08-29.txt</code> usando <code>File::Copy</code>.</li>
+<li><strong>Contador de líneas</strong>: con <code>while (&lt;&gt;)</code> cuenta las líneas de un archivo y las que no están vacías.</li>
+<li><strong>Filtro de logs</strong>: procesa un log con el diamante y muestra solo las líneas <code>ERROR</code> junto con su usuario, anclando con regex.</li>
+<li><strong>Informe de archivos</strong>: lista los <code>*.log</code> del directorio con size en KB usando <code>-s</code> y <code>-d</code>; ordena de menor a mayor.</li>
+<li><strong>Automatización completa</strong>: escribe un script que: filtre <code>ERROR</code>, cuente por nivel, genere un resumen <code>resumen.txt</code> y lo imprima ordenado.</li>
+</ol>
+<p>Has terminado el módulo de Perl. Si te interesa la automatización de sistemas en profundidad, el próximo paso natural es PowerShell para tareas de Windows.</p>
+    </div>
+  </section>

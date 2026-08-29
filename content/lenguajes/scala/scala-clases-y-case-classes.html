@@ -1,0 +1,143 @@
+<!-- 4. Clases y Case Classes - Scala (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="clases-y-constructores">
+    <h2>Clases y constructores</h2>
+    <div class="doc-content">
+<p>Las clases de Scala se declaran igual que en Java, pero son mucho más compactas: los parámetros del constructor se escriben directamente en la <strong>definición de la clase</strong>. Si llevan <code class="inline-code">val</code> o <code class="inline-code">var</code> se convierten automáticamente en campos públicos; sin la palabra clave solo son parámetros del constructor.</p>
+<pre><code class="language-scala">class Persona(val nombre: String, val edad: Int):
+  def presentarse(): String = s"Soy $nombre y tengo $edad años"
+
+  def esMayorDeEdad(): Boolean = edad &gt;= 18
+
+@main def demo(): Unit =
+  val ana = Persona("Ana", 30) // No hace falta "new"
+  println(ana.nombre)          // Ana
+  println(ana.presentarse())   // Soy Ana y tengo 30 años
+  println(ana.esMayorDeEdad()) // true</code></pre>
+<blockquote class="aside aside-tip"><p>En Scala 3 puedes omitir <code class="inline-code">new</code> al instanciar: <code class="inline-code">Persona("Ana", 30)</code> es válido para clases regulares y case classes.</p></blockquote>
+<blockquote class="aside aside-note"><p>El constructor de Scala no usa llaves como Java: el cuerpo de la clase <em>es</em> el constructor, y se ejecuta en orden de declaración al instanciar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="metodos-y-sobrecarga">
+    <h2>Métodos y sobrecarga</h2>
+    <div class="doc-content">
+<p>Los métodos Scala se declaran con <code class="inline-code">def</code> y pueden tener <strong>valores por defecto</strong>, parámetros de nombre y sobrecarga (dos métodos con el mismo nombre pero distinta firma). También puedes declarar parámetros por nombre para no recordar el orden.</p>
+<pre><code class="language-scala">class Calculadora:
+  // Sobrecarga: mismo nombre, diferentes parámetros
+  def area(largo: Double, ancho: Double): Double = largo * ancho
+  def area(radio: Double): Double = math.Pi * radio * radio
+
+  // Parámetros con valor por defecto
+  def conImpuesto(precio: Double, impuesto: Double = 0.19): Double =
+    precio + precio * impuesto
+
+@main def demo2(): Unit =
+  val c = Calculadora()
+  println(c.area(4.0, 2.0))      // 8.0
+  println(c.area(1.0))           // 3.141592653589793
+  println(c.conImpuesto(100))    // 119.0
+  println(c.conImpuesto(100, 0.05)) // 105.0</code></pre>
+<blockquote class="aside aside-tip"><p>Al llamar con parámetros de nombre (<code class="inline-code">c.conImpuesto(impuesto = 0.05, precio = 100)</code>) el orden ya no importa, y el código se lee solo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="case-classes">
+    <h2>Case classes</h2>
+    <div class="doc-content">
+<p>Una <strong>case class</strong> es la herramienta estrella para modelar datos inmutables. Con una sola línea obtienes: constructor automático, <code class="inline-code">equals</code> por valor, <code class="inline-code">toString</code> legible, <code class="inline-code">hashCode</code> consistente, acceso a sus campos con <code class="inline-code">val</code> y desestructuración en pattern matching.</p>
+<pre><code class="language-scala">case class Producto(nombre: String, precio: Double, stock: Int)
+
+@main def demo3(): Unit =
+  val p1 = Producto("Laptop", 899.99, 10)
+  val p2 = Producto("Laptop", 899.99, 10)
+
+  // equals por valor: dos instancias idénticas son iguales
+  println(p1 == p2) // true
+
+  // toString legible sin escribir nada
+  println(p1) // Producto(Laptop,899.99,10)
+
+  // copy crea una copia con campos cambiados (inmutabilidad)
+  val p3 = p1.copy(stock = 0, precio = 799.99)
+  println(p3)
+
+  // Desestructuración directa en match
+  p3 match
+    case Producto(n, pre, s) if s == 0 =&gt; println(s"$n sin stock ($pre)")
+    case _ =&gt; println("Con stock")</code></pre>
+<blockquote class="aside aside-tip"><p>Usa case classes para representar datos (pedidos, usuarios, eventos) y clases regulares para comportamiento con estado.</p></blockquote>
+<table><thead><tr><th>Ventaja</th><th>Qué te da gratis</th></tr></thead><tbody><tr><td>equals/hashCode</td><td>Igualdad por valor, no por referencia</td></tr><tr><td>toString</td><td><code class="inline-code">Producto(Laptop,899.99,10)</code></td></tr><tr><td>copy</td><td>Copia inmutable con campos cambiados</td></tr><tr><td>pattern matching</td><td>Desestructuración automática con case</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="objects-y-companion">
+    <h2>object y companion objects</h2>
+    <div class="doc-content">
+<p>Un <strong>object</strong> es un singleton. Cuando lleva el mismo nombre que una clase y vive en el mismo archivo, se llama <strong>companion object</strong> y puede alojar métodos de fábrica, constantes y lógica estática: en Java dirías <code class="inline-code">static</code>, aquí simplemente pertenece al <code class="inline-code">object</code>.</p>
+<pre><code class="language-scala">class Coordenada(val x: Int, val y: Int)
+
+object Coordenada:
+  // Métodos de fábrica disponibles sin instanciar
+  def origen(): Coordenada = new Coordenada(0, 0)
+
+  val nombreEje: String = "coordenadas XY"
+
+// Uso típico: constantes y configuración en el object
+object Config:
+  val version = "1.0.0"
+  val puerto = 8080
+
+@main def demo4(): Unit =
+  val o = Coordenada.origen()
+  println(o.x)                  // 0
+  println(Config.version)       // 1.0.0
+  println(Config.puerto)        // 8080</code></pre>
+<blockquote class="aside aside-caution"><p>Un <code class="inline-code">object</code> no se instancia ni recibe parámetros: <code class="inline-code">Config()</code> no tiene sentido. Cualquier estado que guardes en él es global, así que úsalo para datos de solo lectura.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="traits">
+    <h2>Traits</h2>
+    <div class="doc-content">
+<p>Un <strong>trait</strong> es como una interfaz de Java pero con implementación: puede declarar métodos abstractos y concretos, campos, y mezclarse con <code class="inline-code">with</code>. Un trait no se instancia; describe comportamiento que las clases heredan o mezclan, lo que permite composición múltiple (una clase puede usar varios traits).</p>
+<pre><code class="language-scala">trait Hable:
+  def hablar(): String
+
+trait Caminable:
+  val piernas: Int                                              // campo abstracto
+  def pasos(metros: Double): Double = metros * 1.2              // método concreto
+
+class Robot(nombre: String) extends Hable, Caminable:
+  val piernas = 2
+  def hablar(): String = s"$nombre dice: hola humano"
+
+@main def demo5(): Unit =
+  val bot = Robot("R2D2")
+  println(bot.hablar())   // R2D2 dice: hola humano
+  println(bot.piernas)    // 2
+  println(bot.pasos(50))  // 60.0</code></pre>
+<blockquote class="aside aside-note"><p>Usa <code class="inline-code">extends</code> para un solo trait (heredar también puede extenderse para una clase) y <code class="inline-code">with</code> para mezclar varios traits adicionales en Scala 2; en Scala 3 la coma resuelve lo mismo.</p></blockquote>
+<p>Combinar traits es la práctica favorita de Scala: se obtiene comportamiento reutilizable sin la rigidez de la herencia múltiple del estilo C++.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una clase <code class="inline-code">Cuenta(val numero: String, var saldo: Double)</code> con un método <code class="inline-code">depositar(monto: Double)</code> que actualice el saldo.</li>
+<li>Sobrecarga un método <code class="inline-code">imprimir</code> que reciba un <code class="inline-code">Int</code>, un <code class="inline-code">Double</code> y una <code class="inline-code">String</code> e imprima cada uno con un prefijo.</li>
+<li>Define la case class <code class="inline-code">Producto(nombre, precio)</code>; crea dos instancias iguales y comprueba que <code class="inline-code">==</code> da <code class="inline-code">true</code>. Luego usa <code class="inline-code">copy</code>.</li>
+<li>Crea el companion object de <code class="inline-code">Cuenta</code> con una fábrica <code class="inline-code">cuentaBase()</code> que devuelva una cuenta con saldo 0.</li>
+<li>Haz un trait <code class="inline-code">Sonoro</code> con método abstracto <code class="inline-code">sonido(): String</code> y hazlo implementar por dos clases distintas para modelar un perro y un gato.</li>
+</ol>
+<p>En la próxima lección te enfrentarás a las colecciones inmutables: List, Vector, Map, Set y sus combinadores funcionales.</p>
+    </div>
+  </section>

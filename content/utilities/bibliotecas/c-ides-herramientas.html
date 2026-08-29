@@ -1,0 +1,140 @@
+<!-- 3. IDEs y Herramientas para C - Bibliotecas (Utilidades) -->
+  <section id="compiladores">
+    <h2>Compiladores: GCC, Clang y MSVC <span class="gd-badge gd-badge-note">Herramienta</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># GCC (GNU): el estándar popular en Linux
+gcc -std=c17 -Wall -Wextra -pedantic prog.c -o prog
+
+# Clang (LLVM): diagnóstico claro y MVs rápidas
+clang -std=c17 -Wall -Wextra prog.c -o prog
+
+# MSVC (Windows): dentro de Developer Command Prompt
+cl /std:c17 /W4 prog.c
+
+# Advertencias y sanitizers (imprescindibles en desarrollo)
+gcc -fsanitize=address,undefined -g prog.c -o prog
+./prog        # detecta fugas de memoria y UB en tiempo real
+</code></pre>
+<blockquote class="aside aside-caution"><p>Compila SIEMPRE con <code>-Wall -Wextra</code> y ejecuta con <code>-fsanitize=address</code> mientras desarrollas: atrapa la mayoría de fugas y lecturas inválidas antes de producción.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="build-systems">
+    <h2>Sistemas de build: Make y CMake <span class="gd-badge gd-badge-note">Build</span></h2>
+    <div class="doc-content">
+<pre><code class="language-makefile"># Makefile básico
+CC = gcc
+CFLAGS = -std=c17 -Wall -Wextra
+
+prog: main.o util.o
+	$(CC) $(CFLAGS) main.o util.o -o prog
+
+main.o: main.c util.h
+	$(CC) $(CFLAGS) -c main.c
+
+util.o: util.c util.h
+	$(CC) $(CFLAGS) -c util.c
+
+clean:
+	rm -f *.o prog
+</code></pre>
+<pre><code class="language-cmake"># CMakeLists.txt (portátil y moderno)
+cmake_minimum_required(VERSION 3.20)
+project(mi_app C)
+
+set(CMAKE_C_STANDARD 17)
+add_executable(prog main.c util.c)
+</code></pre>
+<pre><code class="language-bash">cmake -S . -B build &amp;&amp; cmake --build build
+</code></pre>
+<blockquote class="aside aside-tip"><p>CMake genera los Makefiles (o proyectos de IDE) automáticamente y detecta librerías. Es el estándar para librerías y proyectos grandes modernos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depuradores">
+    <h2>Depuradores: gdb y LLDB <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Compilar con símbolos
+gcc -g -Wall prog.c -o prog
+
+# gdb: breakpoints, pasos e inspección
+gdb ./prog
+(gdb) break main          # breakpoint en main
+(gdb) run                 # ejecutar
+(gdb) next                # siguiente paso
+(gdb) print variable      # inspeccionar valor
+(gdb) bt                  # backtrace (pila de llamadas)
+(gdb) quit
+
+# LLDB (Clang)
+lldb ./prog
+(lldb) breakpoint set -n main
+(lldb) run
+(lldb) frame variable
+(lldb) bt
+</code></pre>
+<blockquote class="aside aside-tip"><p>Localiza crash con <code>bt</code> para ver la pila, e inspecciona variables con <code>print</code>. Combinar gdb + sanitizers cubre la mayoría de bugs de C.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ides">
+    <h2>Editores y IDEs recomendados <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># VS Code (gratuito y ligero) con extensiones clave:
+#   C/C++ (Microsoft), CMake Tools, clangd
+code --install-extension ms-vscode.cpptools
+code --install-extension mesonbuild.cmake-tools
+
+# CLion (JetBrains, de pago): CMake integrado y depuración visual
+# Code::Blocks, Dev-C++, Kate, Geany: alternativas gratuitas gráficas
+# Eclipse CDT: plugins C/C++
+
+# Editores de texto: Vim/Neovim + ctags, Emacs + c-mode
+</code></pre>
+<blockquote class="aside aside-tip"><p>Con <code>clangd</code> (LSP) VS Code añade autocompletado, ir-a-definición y refactorización de nivel IDE, sin pagar licencia.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ferramientas-extra">
+    <h2>Herramientas de análisis y testing <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Análisis estático
+clang --analyze prog.c            # detectar bugs sin ejecutar
+# Valgrind: memoria y rendimiento (Linux)
+valgrind --leak-check=full ./prog
+# cppcheck
+cppcheck .                         # patrón de bugs avanzado
+
+# Formato y linting
+clang-format -i prog.c             # aplicar formato automáticamente
+# include-what-you-use detecta #includes sobrantes
+
+# Testing
+#    CMake + CTest (nativo de CMake)
+#    Unity / CMocka / Check (frameworks unitarios)
+./build/ctest
+# Perfilado
+gprof ./prog                       # profiler por funciones
+perf record ./prog ; perf report   # profiler del kernel Linux
+</code></pre>
+<blockquote class="aside aside-success"><p>Con clang-format + clang-tidy + sanitizers + valgrind + un framework de tests ("Unity" o el que elijas) tienes una pipeline de calidad completa en C.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Compila un programa con <code>-Wall -Wextra</code> y corrige todas las advertencias que aparezcan.</li>
+<li>Introduce una fuga de memoria y detecta con <code>-fsanitize=address</code>; luego valgrind.</li>
+<li>Define un <code>Makefile</code> para un proyecto de 3 archivos con reglas de dependencia.</li>
+<li>Coloca un breakpoint en gdb, ejecuta y muestra el backtrace de una función en profundidad.</li>
+<li>Instala clang-format y aplica formato a un archivo existente sin romper nada.</li>
+</ol>
+    </div>
+  </section>

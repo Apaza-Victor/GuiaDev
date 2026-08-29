@@ -1,0 +1,156 @@
+<!-- 1. Introducción a Groovy - Groovy (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="que-es-groovy">
+    <h2>¿Qué es Groovy?</h2>
+    <div class="doc-content">
+<p><strong>Groovy</strong> es un lenguaje dinámico para la JVM, creado por James Strachan (2003) y hoy mantenido por Apache. Se ejecuta sobre Java con una sintaxis más concisa: soporta <strong>scripting</strong>, <strong>closures</strong>, tipado opcional, builders y metaprogramación. Además, es 100% compatible con Java.</p>
+<p>Su uso más famoso es <strong>Gradle</strong> (build scripts), los pipelines de <strong>Jenkins</strong>, y DSLs de pruebas (<strong>Spock</strong>). Si trabajas en la JVM y quieres scripts, prototipos rápidos o automatizar tu build, Groovy es la opción natural junto a Kotlin.</p>
+<blockquote class="aside aside-note"><p>La idea central: "Java para personas" — mantiene el rendimiento y las librerías de la JVM, pero con mucho menos código y más dinamismo.</p></blockquote>
+<table><thead><tr><th>Característica</th><th>Detalle</th></tr></thead><tbody><tr><td>Runtime</td><td>JVM (también compila a bytecode)</td></tr><tr><td>Paradigma</td><td>OOP + scripting + funcional (closures)</td></tr><tr><td>Tipado</td><td>Opcional (dinámico o estático con @CompileStatic)</td></tr><tr><td>Uso típico</td><td>Gradle, Jenkins, Spock, scripting</td></tr><tr><td>Interop</td><td>Total con Java/Java libraries</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion">
+    <h2>Instalación</h2>
+    <div class="doc-content">
+<p>Necesitas una JVM (JDK 8+ funciona; se recomienda 17+ en 2026). Luego instalas la distribución Groovy.</p>
+<pre><code class="language-bash"># 1. Verificar JVM
+java -version
+
+# 2. Instalar Groovy
+# Windows (choco)
+choco install groovy
+# o descargar binario de https://groovy.apache.org/download.html
+
+# Linux/macOS (sdkman recomendable)
+curl -s "https://get.sdkman.io" | bash
+source ~/.bashrc
+sdk install groovy
+sdk current groovy
+
+# 3. Verificar
+groovy --version
+groovyc --version
+
+# 4. REPL / shell interactivo (Groovy Shell)
+groovysh
+
+# 5. Ejecutar un script
+groovy hola.groovy</code></pre>
+<blockquote class="aside aside-tip"><p>Con SDKMAN gestionas versiones de Groovy y de JVM sin fricción. El ejecutable <code>groovy</code> interpreta archivos <code>.groovy</code>; <code>groovyc</code> compila a clases si lo necesitas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primer-script">
+    <h2>Tu primer script</h2>
+    <div class="doc-content">
+<p>En Groovy, un script <code>.groovy</code> se ejecuta directamente: sin clase obligatoria, con semicolons opcionales y paréntesis opcionales al llamar funciones.</p>
+<pre><code class="language-groovy">println "Hola, GuiaDev!"          // se omiten paréntesis
+def nombre = "Groovy"             // def = tipado dinámico
+int anio = 2026                    // también puedes fijar tipo
+
+println "Aprendiendo ${nombre} en ${anio}"   // interpolación
+
+// TODO devuelve un valor: incluso el if
+def clasifica = 20
+def tipo = clasifica >= 18 ? "adulto" : "menor"
+println tipo
+
+// Closures, listas, maps en una sola idea
+def datos = [1, 2, 3]
+println datos.sum()                  // 6
+println datos.collect { it * 2 }     // [2, 4, 6]</code></pre>
+<pre><code class="language-bash">groovy hola.groovy
+# Salida:
+# Hola, GuiaDev!
+# Aprendiendo Groovy en 2026
+# adulto
+# 6
+# [2, 4, 6]
+
+# También por consola
+groovy -e "println 'inline'"</code></pre>
+<blockquote class="aside aside-tip"><p>El acceso libre a la variable <code>it</code> (parámetro implícito en closures de un argumento) y la interpolación <code>"${x}"</code> hacen que Groovy sea rapidísimo de escribir. Es la vía fácil para prototipar en la JVM.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="dinamismo">
+    <h2>Dinamismo y tipado</h2>
+    <div class="doc-content">
+<p>Groovy es dinámico por defecto: las variables con <code>def</code> pueden cambiar de tipo en tiempo de ejecución. También permite anotar tipos (Java-like) o activar compilación estática con <code>@CompileStatic</code>.</p>
+<pre><code class="language-groovy">// def: tipado dinámico
+def valor = 42
+println valor.getClass()          // java.lang.Integer
+valor = "ahora soy texto"
+println valor.getClass()          // java.lang.String
+
+// Tipado estático (opcional)
+int numero = 7
+// numero = "texto"   // esto fallaría al compilar en modo estático
+
+// Coerciones e igualdades flexibles (Groovy Truth)
+def archivo = "hola"
+if (archivo) println "no vacío (Groovy Truth)"   // todo "no false/null/vacío" es true
+
+// '==' en Groovy es .equals (con safe equality null-safe)
+println ('a' == 'a')                    // true (content)
+println new Integer(1) == 1L            // true (valor, no referencia)</code></pre>
+<table><thead><tr><th>Modo</th><th>Uso</th></tr></thead><tbody><tr><td><code>def x</code></td><td>Dinámico total (default)</td></tr><tr><td><code>int/String/List q</code></td><td>Tipado estático "javoso" en esa variable</td></tr><tr><td><code>@CompileStatic</code></td><td>Todo el método compila estáticamente (rendimiento y seguridad de tipos)</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>El dinamismo es cómodo pero lento en bucles "calientes" y puede ocultar typos. Para código de producción con restricciones de rendimiento, añade <code>@CompileStatic</code> en los métodos críticos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="compatibilidad">
+    <h2>Compatibilidad con Java</h2>
+    <div class="doc-content">
+<p>Groovy corre en la JVM y puede usar <strong>cualquier clase de Java</strong>: ArrayList, HashMap, java.nio, frameworks... sin peaje. El código Java suele ser válido Groovy casi siempre.</p>
+<pre><code class="language-groovy">// Usar clases de Java directamente
+import java.time.LocalDateTime
+
+def ahora = LocalDateTime.now()
+println ahora.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+
+// Colecciones de Java desde Groovy
+def lista = new java.util.ArrayList()
+lista.add "uno"
+lista.add "dos"
+println lista                         // [uno, dos]
+
+// Propiedades Java accesibles como atributos
+class Cliente { String nombre; int edad }
+def c = new Cliente(nombre: 'Ana', edad: 30)   // constructor con mapa
+println c.nombre                              // Ana (getNombre)
+c.edad = 31                                    // setEdad
+println c.edad
+
+// Llamar a métodos estáticos y estándar
+println Math.max(3, 7)
+println('hola'.toUpperCase())
+
+// Closures a interfaces Java (como lambda)
+def tarea = { println "hola" } as Runnable
+new Thread(tarea).run()</code></pre>
+<blockquote class="aside aside-success"><p>Puedes mezclar Groovy y Java en el mismo proyecto sin problemas: los .groovy compilan a .class. Esa interoperación invisible es tu seguro para migrar scripts a aplicaciones y viceversa.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Instalación</strong>: verifica <code>java -version</code>, instala Groovy (sdkman o choco) y ejecuta <code>groovy --version</code>.</li>
+<li><strong>Hola</strong>: escribe <code>hola.groovy</code> con tu nombre y edad interpolados y ejecútalo.</li>
+<li><strong>Dinamismo</strong>: crea una variable <code>def</code>, cambia su tipo varias veces e imprime su clase con <code>getClass()</code>.</li>
+<li><strong>Groovy Truth</strong>: comprueba cuáles de <code>''</code>, <code>[]</code>, <code>0</code>, <code>null</code> y <code>'0'</code> son verdaderos en un if.</li>
+<li><strong>Java interop</strong>: usa <code>java.nio.file.Path</code> para mostrar la ruta actual y listar archivos.</li>
+</ol>
+<p>En la próxima lección veremos la sintaxis fina: variables, strings GString, tipos y operadores.</p>
+    </div>
+  </section>

@@ -1,0 +1,164 @@
+<!-- 1. Librerías Estándar de C - Bibliotecas (Utilidades) -->
+  <section id="que-es-la-libreria-estandar">
+    <h2>¿Qué es la librería estándar? <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<p>La librería estándar de C es el conjunto de librerías que todo compilador (GCC, Clang, MSVC) incluye. Se dividen en cabeceras con responsabilidades definidas:</p>
+<table>
+<thead><tr><th>Cabecera</th><th>Función</th><th>Apodos</th></tr></thead>
+<tbody>
+<tr><td><code>&lt;stdio.h&gt;</code></td><td>Entrada/salida: <code>printf</code>, <code>fopen</code>, <code>fscanf</code></td><td>I/O</td></tr>
+<tr><td><code>&lt;stdlib.h&gt;</code></td><td>Memoria dinámica y conversiones</td><td><code>malloc</code>, <code>qsort</code></td></tr>
+<tr><td><code>&lt;string.h&gt;</code></td><td>Manipulación de cadenas y memoria</td><td><code>strcpy</code>, <code>memcpy</code></td></tr>
+<tr><td><code>&lt;math.h&gt;</code></td><td>Funciones matemáticas</td><td><code>sqrt</code>, <code>pow</code></td></tr>
+<tr><td><code>&lt;time.h&gt;</code></td><td>Fecha, hora y temporizadores</td><td><code>time</code>, <code>clock</code></td></tr>
+<tr><td><code>&lt;ctype.h&gt;</code></td><td>Clasificación de caracteres</td><td><code>isdigit</code>, <code>isalpha</code></td></tr>
+<tr><td><code>&lt;assert.h&gt;</code></td><td>Verificaciones en tiempo de ejecución</td><td><code>assert</code></td></tr>
+<tr><td><code>&lt;errno.h&gt;</code></td><td>Códigos de error de las llamadas al sistema</td><td><code>errno</code></td></tr>
+</tbody>
+</table>
+<blockquote class="aside aside-tip"><p>La estándar es portátil: el mismo código compila en Windows, Linux o Mac si solo usas estas cabeceras. Las librerías del sistema operativo (POSIX/WinAPI) ya no lo son.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="stdio-y-stdlib">
+    <h2>&lt;stdio.h&gt; y &lt;stdlib.h&gt;: las imprescindibles <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-c">// stdio.h: I/O formateada y archivos
+#include &lt;stdio.h&gt;
+
+int main(void) {
+  printf("Hola %s, tienes %d a%os\n", "Ana", 30);
+
+  FILE *f = fopen("datos.txt", "r");
+  if (f) {
+    char linea[256];
+    while (fgets(linea, sizeof linea, f)) puts(linea);
+    fclose(f);
+  }
+  return 0;
+}
+
+// stdlib.h: memoria, conversiones y ordenamiento
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+int comparar(const void *a, const void *b) {
+  return *(const int *)a - *(const int *)b;
+}
+
+int main(void) {
+  int *arr = malloc(5 * sizeof(int));   // arreglo dinámico
+  if (!arr) return 1;
+  arr[0] = 5; arr[1] = 1; arr[2] = 4;
+  qsort(arr, 3, sizeof(int), comparar); // ordenar con qsort
+
+  int n = atoi("123");                  // string -&gt; int
+  free(arr);
+  return 0;
+}
+</code></pre>
+<blockquote class="aside aside-caution"><p>Siempre verifica el retorno de <code>malloc</code> (puede devolver <code>NULL</code>) y libera la memoria con <code>free</code>. Compila con <code>gcc -Wall -Wextra</code> para detectar olvidos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="string-math-time">
+    <h2>string, math y time <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-c">// string.h: cadenas y memoria
+#include &lt;string.h&gt;
+
+char destino[64];
+strcpy(destino, "Hola");          // copia (¡cuidado con el tamaño!)
+strcat(destino, " mundo");
+int len  = strlen(destino);
+int igual = strcmp("abc", "abd"); // &lt;0: primero es menor
+
+// math.h: operaciones numéricas (vincular con -lm)
+#include &lt;math.h&gt;
+
+double r = sqrt(16.0);            // 4.0
+double p = pow(2.0, 10.0);        // 1024
+double sup = fabs(-3.5);          // 3.5
+long   fi = floor(3.9);           // 3
+
+// time.h: medición de tiempo
+#include &lt;time.h&gt;
+
+clock_t inicio = clock();
+// ... trabajo ...
+clock_t fin = clock();
+double seg = (double)(fin - inicio) / CLOCKS_PER_SEC;
+</code></pre>
+<blockquote class="aside aside-tip"><p>Las funciones matemáticas requieren enlazar la biblioteca: <code>gcc prog.c -lm</code>. En MSVC no hace falta ese flag.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ctype-assert-errno">
+    <h2>ctype, assert y errno <span class="gd-badge gd-badge-note">Utilidades</span></h2>
+    <div class="doc-content">
+<pre><code class="language-c">// ctype.h: clasificar caracteres
+#include &lt;ctype.h&gt;
+
+int es_digito = isdigit('5');   // 1
+int es_letra  = isalpha('a');   // 1
+int es_espacio = isspace(' ');  // 1
+char may = toupper('a');        // 'A'
+
+// assert.h: precondiciones en desarrollo
+#include &lt;assert.h&gt;
+
+int divide(int a, int b) {
+  assert(b != 0);               // falla y aborta en binarios debug
+  return a / b;
+}
+
+// errno.h: códigos de error
+#include &lt;errno.h&gt;
+#include &lt;math.h&gt;
+
+errno = 0;
+double r = sqrt(-1.0);          // NaN y errno == EDOM
+if (errno) perror("sqrt falló");
+</code></pre>
+<blockquote class="aside aside-note"><p><code>assert</code> se elimina compilando con <code>-DNDEBUG</code> en producción. <code>errno</code> es la forma clásica de propagar errores en APIs de C; revisa <code>perror</code>/<code>strerror</code> para mensajes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-rapida">
+    <h2>Descargar e instalar <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Linux (apt / pacman / dnf)
+sudo apt install gcc make
+
+# macOS: clang vienen con Command Line Tools
+xcode-select --install
+
+# Windows: MinGW-w64 (msys2 o installer) o MSVC Build Tools
+winget install -e --id MSYS2.MSYS2
+
+# Verificar
+gcc --version
+printf '#include &lt;stdio.h&gt;\nint main(){puts("ok");}\n' &gt; t.c
+gcc t.c -o t &amp;&amp; ./t
+</code></pre>
+<blockquote class="aside aside-tip"><p>Para proyectos pequeños basta con GCC/Clang; para Windows nativo suele preferirse MSVC con Visual Studio Build Tools.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Lee un archivo de texto con <code>fopen</code>/<code>fgets</code> y cuenta sus líneas.</li>
+<li>Reserva memoria para 10 enteros, rellena con 1..10 y ordénalos con <code>qsort</code>.</li>
+<li>Usa <code>time.h</code> para medir cuánto tarda un bucle de un millón de iteraciones.</li>
+<li>Valida con <code>isdigit</code> que una entrada de usuario sea numérica antes de <code>atoi</code>.</li>
+<li>Añade <code>assert</code> a una función que reciba un puntero no nulo y úsala con <code>-DNDEBUG</code> y sin él.</li>
+</ol>
+    </div>
+  </section>

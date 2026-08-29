@@ -1,0 +1,186 @@
+<!-- 5. Estadística y Modelos - R (Lenguajes de Programación) -->
+  <section id="estadistica-descriptiva">
+    <h2>Estadística descriptiva</h2>
+    <div class="doc-content">
+<p>Antes de modelar hay que <strong>describir</strong>. La estadística descriptiva resume datos con medidas de tendencia central (media, mediana) y de dispersión (desviación típica, rango, cuantiles). R trae todo esto de serie y <code>summary()</code> lo condensa en una sola línea de salida.</p>
+<pre><code class="language-r"># Una muestra numérica de ejemplo
+x &lt;- c(12, 15, 15, 18, 21, 22, 24, 27, 30, 42)
+
+# Medidas de tendencia central
+mean(x)          # media aritmética
+median(x)        # mediana: el valor del centro
+table(x)[table(x) == max(table(x))]   # moda (en R nativo se calcula así)
+
+# Medidas de dispersión
+sd(x)            # desviación típica muestral
+var(x)           # varianza
+range(x)         # mínimo y máximo
+diff(range(x))   # recorrido</code></pre>
+<pre><code class="language-r"># Cuantiles y resumen rápido
+quantile(x, probs = c(0.25, 0.5, 0.75))
+IQR(x)                       # rango intercuartílico
+summary(x)                   # min, cuartiles, media, max
+
+# Aplicar mediciones a todo un dataset
+data(iris)
+summary(iris)
+apply(iris[, 1:4], 2, mean)  # media de las 4 columnas numéricas
+
+# Ojo con los NA
+x_con_na &lt;- c(x, NA)
+mean(x_con_na, na.rm = TRUE)   # sin na.rm devolvería NA</code></pre>
+<table><thead><tr><th>Medida</th><th>Función</th><th>Qué responde</th></tr></thead><tbody>
+<tr><td>Media</td><td>mean()</td><td>El valor promedio "típico"</td></tr>
+<tr><td>Mediana</td><td>median()</td><td>Centro robusto ante outliers</td></tr>
+<tr><td>Desviación típica</td><td>sd()</td><td>Qué tan separados caen los datos</td></tr>
+<tr><td>Cuantiles</td><td>quantile()</td><td>Posición dentro de la distribución</td></tr>
+<tr><td>Frecuencias</td><td>table() / prop.table()</td><td>Distribución de variables categóricas</td></tr>
+</tbody></table>
+<blockquote class="aside aside-note"><p>La media "se asusta" ante un valor extremo: un ingreso de 100.000 en un barrio de ingresos normales dispara la media pero no la mediana. Compara siempre ambas para detectar datos atípicos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="correlacion-y-regresion">
+    <h2>Correlación y regresión lineal</h2>
+    <div class="doc-content">
+<p>La <strong>correlación</strong> mide fuerza y dirección de la asociación lineal entre dos variables, en una escala de -1 a 1. La <strong>regresión</strong> va un paso más allá: modela esa relación para predecir. En R base, <code>cor()</code>, <code>cor.test()</code> y <code>lm()</code> cubren ambos mundos.</p>
+<pre><code class="language-r"># Datos: temperatura en la calle y precio de la cerveza
+temp &lt;- c(21, 26, 18, 30, 24, 27, 20, 29, 23, 25)
+precio &lt;- c(3.1, 3.8, 2.9, 4.2, 3.4, 4.0, 2.8, 4.4, 3.5, 3.9)
+
+# Coeficiente de correlación de Pearson
+cor(temp, precio)                      # cercano a 1: fuerte y positiva
+round(cor(temp, precio), 3)
+
+# Alternativa no paramétrica
+cor(temp, precio, method = "spearman")
+
+# Prueba formal de significancia
+cor.test(temp, precio)</code></pre>
+<pre><code class="language-r"># Matriz de correlaciones para muchas variables
+datos_nums &lt;- iris[, 1:4]
+round(cor(datos_nums), 3)
+
+# Visualizarla ayuda a intuir patrones
+cor(datos_nums) %&gt;%
+  as.data.frame() %&gt;%
+  mutate(variable = rownames(.)) %&gt;%
+  pivot_longer(-variable, names_to = "con", values_to = "r") %&gt;%
+  ggplot(aes(x = variable, y = con, fill = r)) +
+  geom_tile()</code></pre>
+<blockquote class="aside aside-note"><p>Correlación no implica causalidad: la altura de los pingüinos correlaciona con su peso, pero no "causa" el peso. La correlación describe asociación; la causa requiere diseño experimental o teoría.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="modelos-lineales">
+    <h2>Modelos lineales con lm()</h2>
+    <div class="doc-content">
+<p>La regresión lineal ajusta una recta (o un plano) a tus datos. La función <code>lm()</code> estima los coeficientes por mínimos cuadrados usando la notación de fórmulas <code>y ~ x1 + x2</code>. Los resultados se inspeccionan con <code>summary()</code> y se proyectan a nuevos casos con <code>predict()</code>.</p>
+<pre><code class="language-r"># Regresión simple: un predictor
+modelo &lt;- lm(precio ~ temp)
+modelo                    # coeficientes estimados
+coef(modelo)              # (Intercept) y pendiente
+
+# Regresión múltiple con datos clásicos
+data(mtcars)
+m &lt;- lm(mpg ~ wt + hp, data = mtcars)
+coef(m)</code></pre>
+<pre><code class="language-r"># Predecir para valores nuevos
+nuevos &lt;- data.frame(temp = c(22, 28, 35))
+predict(modelo, nuevos)
+
+# Diagnóstico básico: ajustados y residuales
+fitted(modelo)
+residuales &lt;- resid(modelo)
+
+# Fórmula con todos los predictores excepto "mpg"
+m_todo &lt;- lm(mpg ~ ., data = mtcars)
+
+# Interacciones entre variables
+m2 &lt;- lm(mpg ~ wt * hp, data = mtcars)   # wt + hp + su interacción</code></pre>
+<blockquote class="aside aside-caution"><p><code>lm()</code> usa por defecto las filas completas: si una observación tiene <code>NA</code> en alguna variable del modelo, se descarta entera en silencio. Revisa cuántas filas eliminas y documéntalo en tu análisis.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pruebas-de-hipotesis">
+    <h2>Pruebas de hipótesis</h2>
+    <div class="doc-content">
+<p>Las <strong>pruebas de hipótesis</strong> responden con criterio estadístico a la pregunta "¿esta diferencia es real o pudo ser azar?". Declaramos una hipótesis nula (<em>H0</em>, por defecto "no hay efecto") y el <em>p-valor</em> indica qué tan raros son los datos si H0 fuera cierta. R trae las pruebas clásicas listas.</p>
+<pre><code class="language-r"># t de Student: ¿difieren dos medias?
+grupo_a &lt;- c(5.2, 6.1, 5.8, 6.4, 5.9)
+grupo_b &lt;- c(6.8, 7.2, 6.5, 7.0, 6.6)
+t.test(grupo_a, grupo_b)               # dos muestras independientes
+t.test(hwy ~ drv, data = mpg)          # usando fórmula y dataset</code></pre>
+<pre><code class="language-r"># Chi-cuadrado: ¿están asociadas dos categóricas?
+tabla &lt;- table(mpg$drv, mpg$class)
+chisq.test(tabla)
+
+# Prueba no paramétrica: Wilcoxon (no asume normalidad)
+wilcox.test(grupo_a, grupo_b)
+
+# Una media contra un valor de referencia
+t.test(grupo_a, mu = 6)   # H0: la media es 6</code></pre>
+<table><thead><tr><th>Prueba</th><th>Pregunta que responde</th><th>Tipo de dato</th></tr></thead><tbody>
+<tr><td><code>t.test()</code></td><td>¿Difieren dos medias?</td><td>Numérico, 2 grupos</td></tr>
+<tr><td><code>wilcox.test()</code></td><td>¿Difieren dos distribuciones sin asumir normalidad?</td><td>Numérico, no normal</td></tr>
+<tr><td><code>chisq.test()</code></td><td>¿Están asociadas dos categóricas?</td><td>Frecuencias en tabla</td></tr>
+<tr><td><code>cor.test()</code></td><td>¿La correlación es distinta de cero?</td><td>2 variables numéricas</td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>El p-valor no es "la probabilidad de que la hipótesis nula sea cierta": es la probabilidad de ver datos tan extremos bajo H0. Lo que se evalúa es el <em>proceso</em>, no la verdad absoluta.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="interpretar-resumen">
+    <h2>Interpretar el resumen de un modelo</h2>
+    <div class="doc-content">
+<p>El <code>summary()</code> de un <code>lm()</code> parece críptico, pero cada bloque tiene un mensaje: los <strong>coeficientes</strong> con su significancia, los <strong>residuales</strong> como diagnóstico de calidad y el <strong>R cuadrado</strong> como proporción de varianza explicada. Saber leerlo distingue a quien modela de quien solo corre código.</p>
+<pre><code class="language-r">m &lt;- lm(mpg ~ wt + hp, data = mtcars)
+resumen &lt;- summary(m)
+resumen
+
+# Extraer valores concretos
+coef(m)                     # estimaciones de los coeficientes
+resumen$r.squared           # R cuadrado
+resumen$adj.r.squared       # R cuadrado ajustado
+resumen$coefficients        # tabla completa de coeficientes
+confint(m)                  # intervalos de confianza al 95%</code></pre>
+<pre><code class="language-r"># Diagnóstico gráfico del modelo en 4 paneles
+plot(m)
+
+# Métricas de error de la predicción
+rmse &lt;- sqrt(mean(resid(m)^2))
+rmse
+
+# Residuos: la diferencia entre lo real y lo predicho
+head(residuals(m))
+mean(abs(residuals(m)))    # error absoluto medio</code></pre>
+<table><thead><tr><th>Bloque del summary()</th><th>Qué informa</th></tr></thead><tbody>
+<tr><td>Residuals</td><td>Mínimo, cuartiles y máximo del error del modelo</td></tr>
+<tr><td>Coefficients</td><td>Estimación, error estándar, t y p-valor de cada predictor</td></tr>
+<tr><td>Residual standard error</td><td>Dispersión típica de los errores</td></tr>
+<tr><td>Multiple / Adjusted R-squared</td><td>Varianza explicada (el ajustado penaliza por más variables)</td></tr>
+<tr><td>F-statistic</td><td>Prueba global de que el modelo predice mejor que la media</td></tr>
+</tbody></table>
+<blockquote class="aside aside-success"><p>Prioriza el <strong>R cuadrado ajustado</strong> al comparar modelos con distinto número de predictores: premia la simplicidad y castiga meter variables que no aportan.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Usa los datasets <code>iris</code> y <code>mtcars</code>, incluidos en R base.</p>
+<ol>
+<li><strong>Retrato descriptivo:</strong> calcula media, mediana, sd e IQR de las 4 variables de <code>iris</code> y comenta cuál especie tiene el pétalo más variable.</li>
+<li><strong>Correlaciones:</strong> construye la matriz de correlación de <code>iris[, 1:4]</code> e identifica con <code>cor.test()</code> el par más asociado.</li>
+<li><strong>Regresión de consumo:</strong> modela <code>mpg</code> en función de <code>wt</code> con mtcars, interpreta el coeficiente y predice el consumo de un auto de 3 toneladas.</li>
+<li><strong>Prueba de hipótesis:</strong> compara el largo del sépalo entre <code>setosa</code> y <code>versicolor</code> con <code>t.test()</code> y escribe la conclusión en una frase.</li>
+<li><strong>Lector de resumen:</strong> ajusta <code>lm(mpg ~ wt + hp + qsec, mtcars)</code>, extrae R cuadrado ajustado, coeficientes e intervalos de confianza, e interpreta en qué predictor tienes más confianza.</li>
+</ol>
+<p>En la próxima lección empaquetarás todo: informes reproducibles con <strong>RMarkdown</strong>, proyectos ordenados y funciones propias.</p>
+    </div>
+  </section>

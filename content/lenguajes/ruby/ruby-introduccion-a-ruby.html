@@ -1,0 +1,142 @@
+<!-- 1. Introducción a Ruby - Ruby (Lenguajes de Programación) -->
+  <section id="que-es-ruby">
+    <h2>¿Qué es Ruby?</h2>
+    <div class="doc-content">
+<p>Ruby es un lenguaje de programación interpretado, de propósito general y de código abierto, creado por <strong>Yukihiro "Matz" Matsumoto</strong> en 1995. Su filosofía principal es que <strong>la programación debe ser natural y divertida</strong>, priorizando la productividad del desarrollador por encima de la velocidad de ejecución.</p>
+<p>Ruby combina lo mejor de varios paradigmas: es <strong>orientado a objetos</strong> (todo es un objeto), <strong>imperativo</strong> y <strong>funcional</strong>. Su sintaxis es elegante y cercana al inglés, gracias a su regla de <strong>convención sobre configuración</strong>.</p>
+<pre><code class="language-ruby"># Hola mundo en Ruby, una sola línea
+puts "Hola, mundo"
+
+# Ruby es muy expresivo: mirá cuán legible es esto
+5.times { |i| puts "Iteración número #{i + 1}" }
+</code></pre>
+<table>
+<thead><tr><th>Característica</th><th>Detalle</th></tr></thead>
+<tbody><tr><td>Paradigma</td><td>Orientado a objetos, funcional e imperativo</td></tr><tr><td>Tipado</td><td>Dinámico y fuerte</td></tr><tr><td>Rendimiento</td><td>Interpretado (CRuby), con JIT desde la versión 3</td></tr><tr><td>Usos</td><td>Web (Rails), scripting, automatización, data science</td></tr></tbody>
+</table>
+<blockquote class="aside aside-tip"><p>El lema oficial de Ruby (escrito en japonés) es "el lenguaje de la felicidad del programador". Matz diseñó el lenguaje pensando en minimizar el esfuerzo mental para quienes lo usan.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="instalacion-y-versiones">
+    <h2>Instalación y gestión de versiones (rbenv/RVM)</h2>
+    <div class="doc-content">
+<p>Para instalar Ruby lo más recomendable es usar un <strong>gestor de versiones</strong> como <strong>rbenv</strong> o <strong>RVM</strong>. Así podrás instalar varias versiones de Ruby y cambiar entre ellas sin afectar el sistema. En Linux y macOS el flujo típico es el siguiente.</p>
+<p>Con <strong>rbenv</strong> podés <strong>instalar versiones</strong>, <strong>establecer una versión global</strong> y una <strong>versión local por proyecto</strong> de forma limpia y sin permisos de administrador.</p>
+<pre><code class="language-bash"># Instalar rbenv (macOS con Homebrew)
+brew install rbenv
+
+# Instalar una versión de Ruby
+rbenv install 3.3.0
+
+# Establecer la versión global
+rbenv global 3.3.0
+
+# Verificar la instalación
+ruby -v
+</code></pre>
+<blockquote class="aside aside-note"><p>En Windows se recomienda <strong>RubyInstaller</strong> (con DevKit) o usar WSL. El gestor de versiones nativo de Windows es menos maduro, aunque rbenv ya funciona bien bajo WSL.</p></blockquote>
+<table>
+<thead><tr><th>Herramienta</th><th>Ventaja principal</th><th>Ideal para</th></tr></thead>
+<tbody><tr><td>rbenv</td><td>Ligero, sin scripts en el shell</td><td>Proyectos que necesitan versiones distintas</td></tr><tr><td>RVM</td><td>Gestiona gemsets por proyecto</td><td>Entornos con muchos gems y aislamiento</td></tr><tr><td>RubyInstaller</td><td>Instalador gráfico para Windows</td><td>Usuarios de Windows sin WSL</td></tr></tbody>
+</table>
+<blockquote class="aside aside-caution"><p>No instales Ruby con <code class="inline-code">sudo apt-get install ruby</code> en distribuciones de Linux si pensás usar bundler para proyectos serios: la versión del repositorio suele estar desactualizada y puede traer conflictos con librerías nativas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="irb-y-pry">
+    <h2>El REPL: irb y pry</h2>
+    <div class="doc-content">
+<p>Un <strong>REPL</strong> (Read-Eval-Print Loop) es una consola interactiva que lee código, lo ejecuta y muestra el resultado de inmediato. El REPL por defecto de Ruby se llama <strong>irb</strong> (Interactive Ruby) y viene incluido con la instalación estándar.</p>
+<p><strong>irb</strong> es ideal para probar expresiones, <strong>explorar métodos</strong> y <strong>depurar</strong> fragmentos de código sin crear archivos.</p>
+<pre><code class="language-bash">$ irb
+irb(main):001:0&gt; 2 + 3
+=&gt; 5
+irb(main):002:0&gt; "ruby".upcase
+=&gt; "RUBY"
+irb(main):003:0&gt; Time.now
+=&gt; 2026-08-28 12:00:00 -0300
+</code></pre>
+<p><strong>pry</strong> es una alternativa más potente a irb, con <strong>resaltado de sintaxis</strong>, <strong>autocompletado</strong>, <strong>navegación de código</strong> y soporte para ver documentación al instante.</p>
+<pre><code class="language-bash"># Instalar pry como gem
+gem install pry
+
+# Usarlo como reemplazo de irb
+pry
+[1] pry(main)&gt; %w[hola mundo].join(" ")
+=&gt; "hola mundo"
+</code></pre>
+<blockquote class="aside aside-tip"><p>En <code class="inline-code">irb</code>, presioná <strong>Tabulador</strong> dos veces tras un objeto y un punto para explorar todos sus métodos disponibles. Es la forma más rápida de descubrir la API del lenguaje.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="primer-programa">
+    <h2>Tu primer programa</h2>
+    <div class="doc-content">
+<p>Vamos a crear un programa real. Guardá el siguiente código en un archivo llamado <strong>saludo.rb</strong> y ejecutalo con <code class="inline-code">ruby saludo.rb</code>.</p>
+<p>Este programa <strong>solicita un nombre</strong>, <strong>lo guarda en una variable</strong> y <strong>muestra un saludo personalizado</strong> con la hora actual.</p>
+<pre><code class="language-ruby"># saludo.rb
+puts "¿Cuál es tu nombre?"
+nombre = gets.chomp
+
+hora = Time.now.hour
+if hora &lt; 12
+  saludo = "Buenos días"
+elsif hora &lt; 19
+  saludo = "Buenas tardes"
+else
+  saludo = "Buenas noches"
+end
+
+puts "#{saludo}, #{nombre}. Bienvenido a Ruby!"
+</code></pre>
+<p>Al ejecutarlo, el programa <strong>espera que ingreses tu nombre</strong> y luego responde según la franja horaria del día.</p>
+<pre><code class="language-bash">$ ruby saludo.rb
+¿Cuál es tu nombre?
+María
+Buenas noches, María. Bienvenido a Ruby!
+</code></pre>
+<blockquote class="aside aside-note"><p><code class="inline-code">gets</code> lee una línea de la terminal (incluyendo el salto de línea) y <code class="inline-code">.chomp</code> elimina ese salto de línea final. Al ejecutar el archivo, la salida real es similar a la mostrada arriba, dependiendo de la hora del día.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="puts-p-y-print">
+    <h2>puts, p y print</h2>
+    <div class="doc-content">
+<p>Ruby ofrece varias formas de <strong>mostrar datos en pantalla</strong>, y cada una tiene un comportamiento distinto. Conocer la diferencia es clave para <strong>leer la salida</strong> y para <strong>depurar</strong> tu código.</p>
+<p><strong>puts</strong> imprime el valor y agrega un salto de línea al final. <strong>print</strong> imprime sin salto de línea. <strong>p</strong> imprime una representación "técnica" (incluye comillas en strings y tipos) y agrega salto de línea.</p>
+<pre><code class="language-ruby"># Cada forma muestra el valor de manera distinta
+puts "hola"     # =&gt; hola
+print "hola"    # =&gt; hola (sin salto de línea)
+p "hola"        # =&gt; "hola" (con comillas)
+
+puts 10         # =&gt; 10
+p 10            # =&gt; 10
+</code></pre>
+<table>
+<thead><tr><th>Método</th><th>Salto de línea</th><th>Representación</th><th>Uso típico</th></tr></thead>
+<tbody><tr><td>puts</td><td>Sí</td><td>Legible</td><td>Mostrar mensajes al usuario</td></tr><tr><td>print</td><td>No</td><td>Legible</td><td>Construir texto sin saltos</td></tr><tr><td>p</td><td>Sí</td><td>Técnica (inspección)</td><td>Depurar y ver tipos</td></tr></tbody>
+</table>
+<blockquote class="aside aside-tip"><p>Usá <code class="inline-code">p</code> en lugar de <code class="inline-code">puts</code> cuando depures code: <code class="inline-code">p</code> te muestra las comillas de los strings y hasta objetos anidados, lo que hace evidente el tipo real del valor.</p></blockquote>
+<pre><code class="language-ruby"># Diferencia con arrays y objetos
+puts [1, 2, 3]   # imprime cada elemento en una línea
+p [1, 2, 3]      # =&gt; [1, 2, 3]
+</code></pre>
+<blockquote class="aside aside-success"><p>Regla mental rápida: <code class="inline-code">puts</code> es para el usuario final, <code class="inline-code">p</code> es para el programador que está depurando. Elegí uno según quién va a leer esa salida.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practicá los conceptos de esta lección ejecutando cada programa con <code class="inline-code">ruby archivo.rb</code>.</p>
+<ol>
+<li>Creá un programa que pida tu edad con <code class="inline-code">gets</code> y muestre cuántos días has vivido aproximadamente.</li>
+<li>Usá <code class="inline-code">p</code> y <code class="inline-code">puts</code> para mostrar el mismo string y explicá en un comentario la diferencia visible.</li>
+<li>Escribí un script que imprima una tabla de multiplicar con <code class="inline-code">puts</code> y sin usar bucles explícitos.</li>
+<li>Instalá <code class="inline-code">pry</code> con gem y hacé cinco operaciones distintas dentro del REPL.</li>
+<li>Creá un programa que salude con "hola" usando <code class="inline-code">print</code> repetido para formar la palabra sin saltos de línea.</li>
+</ol>
+<p>En la próxima lección, "Sintaxis y Tipos de Datos", aprenderás a manejar variables, números, strings, símbolos y el valor especial nil con profundidad.</p>
+    </div>
+  </section>

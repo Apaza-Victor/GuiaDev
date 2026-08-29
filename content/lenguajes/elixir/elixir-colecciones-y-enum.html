@@ -1,0 +1,196 @@
+<!-- 5. Colecciones y Enum - Elixir (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="listas">
+    <h2>Listas</h2>
+    <div class="doc-content">
+<p>Las listas en Elixir son <strong>enlazadas</strong> e inmutables: agregar al frente es barato (<code>[nueva | lista]</code>); recorrerlas es la operación natural. El pattern matching extrae cabeza y cola.</p>
+<pre><code class="language-elixir">lista = [1, 2, 3]
+
+# Construcción: cons y concatenación
+con = 0 :: [1, 2]        # [0, 1, 2]
+concat = [1, 2] ++ [3]   # [1, 2, 3]
+IO.inspect(con)
+IO.inspect(concat)
+
+# Acceso por índice y head/tail
+IO.inspect(hd([9, 8, 7]))        # 9
+IO.inspect(tl([9, 8, 7]))        # [8, 7]
+IO.inspect(List.first([5, 6]))   # 5
+
+# Patrón cabeza|cola
+defmodule Demo do
+  def primera([h | _]), do: h
+end
+IO.inspect(Demo.primera([10, 20]))   # 10
+
+# Otras utilidades
+IO.inspect(Enum.take([1,2,3,4], 2))   # [1, 2]
+IO.inspect(List.zip([[1,2],[10,20]])) # [{1,10},{2,20}]
+IO.inspect(List.delete([1,2,3], 2))   # [1, 3]</code></pre>
+<blockquote class="aside aside-tip"><p>La cabeza es O(1); el final (<code>++</code>) es O(n), costoso en bucles. Si necesitas agregar al final muchas veces, usa <code>Enum.reverse</code> o acumula al frente y revierte al terminar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="mapas">
+    <h2>Maps, keywords y conjuntos</h2>
+    <div class="doc-content">
+<p>Los <code>Map</code> son diccionarios con claves cualquier tipo; los <code>Keyword</code> son listas de pares átomo-valor (usadas para opciones); y <code>MapSet</code> es el conjunto sin duplicados.</p>
+<pre><code class="language-elixir"># Map
+usuario = %{nombre: "Ana", edad: 30, ciudad: "Lima"}
+IO.inspect(Map.get(usuario, :edad))           # 30
+IO.inspect(Map.get(usuario, :pais, "?)"))     # "no existe"
+IO.inspect(Map.keys(usuario))                 # [:nombre, :edad, :ciudad]
+IO.inspect(Map.has_key?(usuario, :nombre))    # true
+
+# Actualizar / agregar (nuevo map, inmutable)
+nuevo = Map.put(usuario, :edad, 31)
+IO.inspect(usuario.edad)                      # 30 (no cambió)
+IO.inspect(nuevo.edad)                        # 31
+
+# Keyword list (ops de funciones, orden importa)
+ops = [ancho: 100, color: "azul", ancho: 200]
+IO.inspect(Keyword.fetch!(ops, :color))       # "azul"
+IO.inspect(Keyword.get(ops, :ancho))          # 100 (primero)
+IO.inspect(Keyword.get_values(ops, :ancho))   # [100, 200] todos
+
+# MapSet
+conj = MapSet.new([1, 2, 2, 3])
+IO.inspect(MapSet.to_list(conj))              # [1, 2, 3]
+IO.inspect(MapSet.member?(conj, 2))           # true
+
+# Enum opera sobre todos: map, lista, keyword, mapset</code></pre>
+<blockquote class="aside aside-tip"><p>¿Map o Keyword? Si la opción aparece una vez y el orden importa (caso típico: config de funciones) usa Keyword; para datos asociativos opacos usa Map (claves no solo átomos, y acceso O(log n)).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="enum">
+    <h2>El módulo Enum</h2>
+    <div class="doc-content">
+<p><code>Enum</code> es la caja de herramientas para todo iterable: <code>map</code>, <code>filter</code>, <code>reduce</code>, <code>sort</code>, <code>group_by</code>, <code>count</code>... Combinado con pipes es la forma natural de transformar datos.</p>
+<pre><code class="language-elixir">nums = [1, 2, 3, 4, 5]
+
+# transformar
+IO.inspect(Enum.map(nums, &amp;(&amp;1 * 10)))        # [10,20,30,40,50]
+IO.inspect(Enum.filter(nums, &amp;(&amp;1 &gt; 2)))      # [3,4,5]
+IO.inspect(Enum.reject(nums, &amp;rem(&amp;1, 2) == 0))  # [1,3,5]
+
+# reducir
+IO.inspect(Enum.reduce(nums, 0, &amp;(&amp;1 + &amp;2)))  # 15
+IO.inspect(Enum.sum(nums))                     # 15
+IO.inspect(Enum.product([1,2,3]))              # 6
+IO.inspect(Enum.count(nums))                   # 5
+
+# seleccionar
+IO.inspect(Enum.find(nums, &amp;(&amp;1 &gt; 3)))        # 4 (primero que cumple)
+IO.inspect(Enum.max(nums))                     # 5
+IO.inspect(Enum.min(nums))                     # 1
+
+# agrupar
+IO.inspect(Enum.group_by([1,2,3,4,5], &amp;rem(&amp;1, 2)))
+# %{0 =&gt; [2,4], 1 =&gt; [1,3,5]}
+
+# ordenar y tomar
+IO.inspect(Enum.sort([3,1,2], :desc))          # [3,2,1]
+IO.inspect(Enum.take([1..5], 3))               # toma 3 primeros
+
+# trampa: with_enumerable? y enumerables perezosos (Stream)
+enum_pipe =
+  [1, 2, 3, 4]
+  |&gt; Enum.filter(&amp;(&amp;1 &gt; 1))
+  |&gt; Enum.map(&amp;(&amp;1 * 100))
+IO.inspect(enum_pipe)                          # [200,300,400]</code></pre>
+<blockquote class="aside aside-success"><p>Memoriza estos cinco: <code>map</code>, <code>filter</code>, <code>reduce</code>, <code>find</code>, <code>sort</code>. Cubren casi todo análisis de datos. Para datos INFINITOS o muy grandes, la versión perezosa es <code>Stream</code> (misma API).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="comprehensions">
+    <h2>Comprehensions: for</h2>
+    <div class="doc-content">
+<p>El <code>for</code> de Elixir es una <strong>comprensión</strong>: genera listas combinando generadores, filtros (<code>when</code>) y una expresión de salida. Es el otro gran pilar para construir colecciones.</p>
+<pre><code class="language-elixir"># Comprensión básica
+cuadrados = for n &lt;- [1, 2, 3, 4], do: n * n
+IO.inspect(cuadrados)               # [1, 4, 9, 16]
+
+# Con filtro when
+pares = for n &lt;- 1..20, rem(n, 2) == 0, do: n
+IO.inspect(pares)                   # [2,4,...,20]
+
+# Múltiples generadores (producto cartesiano)
+pares_cart = for x &lt;- 1..3, y &lt;- 1..2, do: {x, y}
+IO.inspect(pares_cart)
+
+# Con opcion into: generar otros tipos
+mapa = for {k, v} &lt;- [a: 1, b: 2], into: %{}, do: {k, v * 10}
+IO.inspect(mapa)                    # %{a: 10, b: 20}
+
+# String generado con into
+texto = for c &lt;- "abc", into: "", do: String.upcase(&lt;&lt; c &gt;&gt;)
+IO.inspect(texto)                   # "ABC"
+
+# Filtrar por dos condiciones
+nums_validos =
+  for x &lt;- 1..10,
+      rem(x, 2) == 0,
+      x &lt; 8,
+      do: x * x
+IO.inspect(nums_validos)            # [4, 16, 36]</code></pre>
+<blockquote class="aside aside-tip"><p>Los generadores usan <code>&lt;-</code> (flecha hacia el contenedor), y la opción <code>into:</code> permite recolectar en Maps, Strings, Listas... En comparaciones, "for" en Elixir SIEMPRE devuelve una colección.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="estructuras">
+    <h2>Structs y su integración con Enum</h2>
+    <div class="doc-content">
+<p>Las <strong>Structs</strong> son maps con esquema fijo (campos por defecto + nombre de módulo). Se definen con <code>defstruct</code>, y el pattern matching + Enum funcionan igual.</p>
+<pre><code class="language-elixir">defmodule Producto do
+  defstruct nombre: "sin nombre", precio: 0.0
+
+  def con_impuesto(p, tasa), do: %{p | precio: p.precio * (1 + tasa)}
+end
+
+# Crear
+lapiz = %Producto{nombre: "Lápiz", precio: 1.5}
+IO.inspect(lapiz.nombre)                 # "Lápiz"
+IO.inspect(lapiz)                        # %Producto{nombre: ..., precio: 1.5}
+
+# Update
+lapiz_caro = Producto.con_impuesto(lapiz, 0.18)
+IO.inspect(lapiz_caro.precio)            # 1.77
+
+# Pattern matching sobre struct
+case lapiz do
+  %Producto{precio: p} when p &gt; 1 -&gt; IO.puts("caro")
+  %Producto{} -&gt; IO.puts("barato")
+end
+
+# Enumerables también sirven con structs (es copy de map)
+precios = [%Producto{nombre: "e", precio: 3}, %Producto{precio: 5}]
+total = Enum.map(precios, &amp; &amp;1.precio) |&gt; Enum.sum
+IO.inspect(total)                        # 8.0
+
+# En Structs no puedes poner claves que no existan: estricto
+# %Producto{extra: 1}  →  KeyError en tiempo de compilación</code></pre>
+<blockquote class="aside aside-tip"><p>Los Structs son a los Maps lo que las "clases sin métodos" a los diccionarios: esquema garantizado. Encima el campo <code>__struct__</code> del map permite polimorfismo vía protocols cuando avances.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Manipulación de listas</strong>: crea <code>[1..10]</code>, toma los pares con <code>Enum.filter</code>, cuadradalos y suma con <code>Enum.reduce</code>.</li>
+<li><strong>Maps</strong>: carga un <code>%{nombre:, edad:}</code> y haz <code>Map.get</code> con fallback, <code>Map.put</code> y <code>Map.keys</code>.</li>
+<li><strong>Pipeline Enum</strong>: sobre una lista de strings, filtra los de longitud &gt; 4, pasa a mayúsculas y ordénalos por longitud.</li>
+<li><strong>Comprensión</strong>: genera con <code>for</code> los pares <code>(x, y)</code> de 1..3 y 1..2 con <code>into:</code> para kawa a Map.</li>
+<li><strong>Struct</strong>: define <code>Pedido</code> con campos <code>items</code> y <code>total</code>, crea una función <code>agregar/2</code> que actualice el total.</li>
+</ol>
+<p>En la última lección entraremos al mundo concurrente de Elixir: procesos, mensajes, OTP y Phoenix.</p>
+    </div>
+  </section>

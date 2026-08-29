@@ -1,0 +1,102 @@
+<!-- 3. IDEs y Herramientas para PHP - Bibliotecas (Utilidades) -->
+  <section id="ide-php">
+    <h2>IDEs y editores PHP <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># PhpStorm (JetBrains): el estándar profesional (refactorización, test db, debug)
+# VS Code (gratuito) con extensiones:
+code --install-extension bmewburn.vscode-intelephense-client   # inteligencia PHP
+code --install-extension xdebug.php-debug                     # debug con Xdebug
+code --install-extension neilbrayfield.php-docblocker
+# PHP Tools / Sublime y NeoVim + LSP (intelephense)
+# Laravel Idea (plugin PhpStorm) potencia el DX de Laravel
+</code></pre>
+<blockquote class="aside aside-tip"><p>PhpStorm para productividad máxima; VS Code + Intelephense/Xdebug cubre el trabajo gratuito. Xdebug es imprescindible para el paso de depuración real.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="phpstan-psalm">
+    <h2>Análisis estático: PHPStan y Psalm <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-php">&lt;?php
+// PHPStan: análisis profundo por niveles (0..9)
+function sumar(array $nums): int {
+  return array_sum($nums);
+}
+// $ composer require --dev phpstan/phpstan
+// vendor/bin/phpstan analyse src --level=8
+</code></pre>
+<pre><code class="language-bash"># Configuración (phpstan.neon)
+parameters:
+  level: 8
+  paths: [src]
+# Psalm: alternativa, con supresión por anotación
+# Rector: refactorización automática (PHP 7 a 8, modernizar código)
+vendor/bin/rector process src
+# Pint (de Laravel): formateador basado en PHP-CS-Fixer
+vendor/bin/pint
+</code></pre>
+<blockquote class="aside aside-tip"><p>PHPStan/Psalm encuentra bugs antes de ejecutar. Rector automatiza migraciones. Todos corren en CI sin fricción.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="xdebug-glaze">
+    <h2>Xdebug y herramientas de debug <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Xdebug: depurador y profiler de PHP
+pecl install xdebug        # o apt php-xdebug
+# php.ini
+zend_extension=xdebug.so
+xdebug.mode=debug,develop
+
+# Cómos increibles de depuración
+xdebug_break();            # breakpoint en código
+xdebug_error_log();
+# Profiler: xdebug.mode=profile + Webgrind/cachegrind
+# var_dump() y print_r() siguen siendo tus amigos rápidos
+
+# Herramientas de CLI: Laravel Telescope en dev (inspección de requests)
+# php -d error_reporting=E_ALL script.php para ver advertencias
+</code></pre>
+<blockquote class="aside aside-caution"><p>Xdebug en modo `debug` ralentiza; actívalo solo en desarrollo/local. Para CI usa `--no-debug` y errores de PHPUnit.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="docker-dev-team">
+    <h2>Entornos de desarrollo con Docker <span class="gd-badge gd-badge-note">Dev</span></h2>
+    <div class="doc-content">
+<pre><code class="language-docker"># Imagen oficial: configurar 3 servicios (php, mysql, nginx)
+FROM php:8.3-cli
+RUN docker-php-ext-install pdo_mysql \
+    &amp;&amp; apt-get update \
+    &amp;&amp; apt-get install -y git unzip \
+    &amp;&amp; curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+WORKDIR /app
+COPY . .
+RUN composer install
+CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]
+</code></pre>
+<pre><code class="language-bash"># Laravel Sail (docker-compose ya configurado para Laravel)
+curl -s "https://laravel.build/example-app" | bash
+./vendor/bin/sail up -d
+# Laravel Herd/Laragon (Windows/Mac) para Apache/nginx local con una UI
+</code></pre>
+<blockquote class="aside aside-tip"><p>Docker + Composer hacen al equipo idéntico; Laravel Sail envuelve el Dockerfile de Laravel listo para usar. Xampp/Laragon para prototipos rápidos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala Intelephense en VS Code y repasa autocompletado/ir-a-definición.</li>
+<li>Analiza tu `src/` con PHPStan nivel 8 y corrige 3 errores de tipo.</li>
+<li>Coloca un `xdebug_break()` en un endpoint y depura paso a paso desde el editor.</li>
+<li>Configura rector para modernizar una función de PHP 5 a PHP 8.</li>
+<li>Levanta tu proyecto con Docker multi-servicio (php+mysql+nginx) y navega.</li>
+</ol>
+    </div>
+  </section>

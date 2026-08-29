@@ -1,0 +1,99 @@
+<!-- 3. IDEs y Herramientas para Groovy - Bibliotecas (Utilidades) -->
+  <section id="ide-groovy">
+    <h2>IDEs para Groovy <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># IntelliJ IDEA: soporte Groovy nativo (interpolación, upstream)
+#   (el mismo JetBrains que desarrolla Groovy and Grails)
+# VS Code: extensión "Groovy" (syntax + Groovy-Lint)
+# groovyConsole: REPL incluido con jars de Groovy
+# Eclipse: plugin Groovy (GROOVY_TOOLS)
+
+# Configuración: JDK + GROOVY_HOME en el build
+# CI: ejecutar con gradle (Groovy DSL) de primera clase
+</code></pre>
+<blockquote class="aside aside-note"><p>IntelliJ IDEA es la casa de Groovy (JetBrains) con mejor tooling; para scripting/lints VS Code+Lint es suficiente. la extensión Groovy-Lint enlaza con codelint.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="herramientas-cli-groovy">
+    <h2>Gradle, groovylint y CLI <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Gradle usa Groovy como DSL de build por defecto
+gradle init --type groovy-library
+./gradlew build
+# groovy (launcher CLI con deps en classpath)
+groovy -cp lib/*.jar script.groovy
+# groovyc - compila a .class
+groovyc -d build src/main/groovy/*.groovy
+
+# groovylint: linter (CodeNarc-rewrite)
+npm i -g groovy-lint
+groovy-lint script.groovy --output console
+
+# CodeNarc: análisis estático pesado de reglas
+# Jenkinsfile code son Groovy: usa Identity/JTES sdk
+</code></pre>
+<blockquote class="aside aside-note"><p>Gradle alberga Groovy como lenguaje de builds; `groovylint` (npm) y CodeNarc entregan reglas de calidad; si editas Jenkinsfiles, la sintaxis también es Groovy.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depuracion-groovy">
+    <h2>Depurar Groovy <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Console inspect y println!
+println "MEDIDA: $valor"
+groovyConsole -i (REPL rápido)
+
+# debugger JVM clásico: IntelliJ/IDE points
+#   (groovy compila a clases) por eso breakpoints valen igual
+# herramienta turca poter: groovyDebug (VM debug scripts)
+
+# shell interactivo para probar fragmentos:
+groovyConsole --debug         # evalúa con vigilancia de stack
+# adicional: grails -debug (Grails) y kotlin? no, esto es groovy
+</code></pre>
+<blockquote class="aside aside-caution"><p>Como Groovy es JVM, los debuggers de IDE (IntelliJ) funcionan directamente; el `groovyConsole` hace de scratchpad rápido. Para Grails usa `-debug` en run-app.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-groovy">
+    <h2>Empaquetar y desplegar <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Rapps/-jar con Gradle: shadowJar (fat jar)
+plugins {
+  id 'groovy'
+  id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+./gradlew shadowJar
+java -jar build/libs/mi-app-all.jar
+</code></pre>
+<pre><code class="language-docker">FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY build/libs/mi-app-all.jar app.jar
+EXPOSE 8080
+CMD ["java", "-jar", "app.jar"]
+</code></pre>
+<pre><code class="language-bash"># Script sencillo: empaquetar con zip y un launcher
+# Grails apps: war (grails war) o usable en Tomcat
+# CI by Jenkins/GitHub Actions con JDK + Gradle cache
+</code></pre>
+<blockquote class="aside aside-success"><p>Fat jar (shadowJar) + una imagen temurin es el deploy mínimo; Grails además genera WAR para Tomcat. Groovy en contenedores es idéntico a Java: JRE + jar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un Gradle groovy-library y ejecuta su test de ejemplo.</li>
+<li>Corre groovy-lint y corrige 5 reglas reportadas.</li>
+<li>Empaqueta un script con shadowJar y ejecútalo con java -jar.</li>
+<li>Depura un breakpoint en IntelliJ sobre un script Groovy.</li>
+<li>Arma un Dockerfile temurin para un servicio Ratpack/Micronaut.</li>
+</ol>
+    </div>
+  </section>

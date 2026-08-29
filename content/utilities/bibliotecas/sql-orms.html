@@ -1,0 +1,114 @@
+<!-- 2. ORMs y Librerías SQL por Ecosistema - Bibliotecas (Utilidades) -->
+  <section id="orms-general">
+    <h2>Elegir el ORM correcto <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<table>
+<thead><tr><th>Lenguaje</th><th>ORM principal</th><th>Alternativa</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>SQLAlchemy / SQLModel</td><td>Django ORM (dentro de Django)</td></tr>
+<tr><td>JavaScript</td><td>Prisma ORM / TypeORM</td><td>Sequelize, Knex (query builder)</td></tr>
+<tr><td>Java</td><td>Hibernate (JPA)</td><td>MyBatis, jOOQ</td></tr>
+<tr><td>C#</td><td>EF Core</td><td>Dapper (micro-ORM)</td></tr>
+<tr><td>PHP</td><td>Eloquent (Laravel)</td><td>Doctrine (Symfony)</td></tr>
+<tr><td>Go</td><td>GORM</td><td>sqlx / database/sql</td></tr>
+<tr><td>Rust</td><td>Diesel</td><td>sqlx, SeaORM</td></tr>
+</tbody>
+</table>
+<blockquote class="aside aside-tip"><p>ORM (mapeo objeto-relacional) acelera el CRUD; si tus consultas son complejas, complementa con un query builder (Knex, jOOQ, mybatis) o SQL directo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejemplos-orm">
+    <h2>Ejemplo: las mismas tablas en tres ORMs <span class="gd-badge gd-badge-note">Ejemplo</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python"># SQLAlchemy (Python)
+class Usuario(Base):
+    __tablename__ = "usuarios"
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(100))
+    ordenes = relationship("Orden")
+
+sesion.add(Usuario(nombre="Ana"))
+sesion.commit()
+adultos = sesion.query(Usuario).filter(Usuario.nombre.like("A%")).all()
+</code></pre>
+<pre><code class="language-js">// Prisma (TypeScript)
+const usuario = await prisma.usuario.create({
+  data: { nombre: "Ana", email: "ana@x.com" },
+});
+const mayores = await prisma.usuario.findMany({
+  where: { ordenes: { some: { total: { gt: 100 } } } },
+  orderBy: { id: "desc" },
+});
+</code></pre>
+<pre><code class="language-go">// GORM (Go)
+db.Create(&Usuario{Nombre: "Ana"})
+var adultos []Usuario
+db.Where("nombre LIKE ?", "A%").Find(&adultos)
+</code></pre>
+<blockquote class="aside aside-note"><p>La lógica es similar en todos: definir el modelo, crear, consultar con condición. Cada ORM tiene su dialecto; aprender uno facilita los demás.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="query-builders">
+    <h2>Query builders para control fino <span class="gd-badge gd-badge-note">Consulta</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Knex (JS): las mismas consultas pero con build programático
+const usuarios = await knex("usuarios")
+  .join("ordenes", "ordenes.usuario_id", "usuarios.id")
+  .where("ordenes.total", ">", 100)
+  .select("usuarios.nombre", knex.raw("SUM(ordenes.total) AS total"))
+  .groupBy("usuarios.id")
+  .orderBy("total", "desc");
+</code></pre>
+<pre><code class="language-java">// jOOQ (Java): SQL tipado en Java
+List&lt;Usuario&gt; u = dsl
+  .selectFrom(USUARIO)
+  .where(USUARIO.NOMBRE.like("A%"))
+  .orderBy(USUARIO.ID.desc())
+  .fetch();
+</code></pre>
+<pre><code class="language-python"># PyDAL / peewee son alternativas ligeras a SQLAlchemy
+from peewee import *
+db = SqliteDatabase("app.db")
+class Usuario(Model):  # select con sintaxis similar
+    db.connect()
+</code></pre>
+<blockquote class="aside aside-tip"><p>Los query builders dan el control del SQL sin perder la construcción tipada/programática. Perfectos para consultas dinámicas complejas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="no-sql-hibridos">
+    <h2>Más allá del SQL puro: hibridos y NoSQL <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- PostgreSQL con JSONB: mezclar documental y relacional
+CREATE TABLE eventos (id SERIAL PRIMARY KEY, payload JSONB);
+CREATE INDEX ON eventos USING GIN (payload);
+SELECT * FROM eventos WHERE payload @&gt; '{"tipo": "login"}';
+</code></pre>
+<pre><code class="language-bash"># Alternativas NoSQL según caso
+#  - MongoDB/Redis: documentos/caché                                                                  - caso clave
+#  - Elastic/OpenSearch: búsqueda full-text y logs
+#  - ClickHouse/ TimescaleDB: series temporales y OLAP
+# Patrón poliglota: SQL para transacciones + una herramienta dedicada para lo demás
+</code></pre>
+<blockquote class="aside aside-note"><p>JSONB de PostgreSQL cubre muchos usos "documentales" sin cambiar de base. Añade Redis para caché/contadores y Elastic para búsqueda en texto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Define un modelo con SQLAlchemy y has consultas de filtrado y join.</li>
+<li>Crea el mismo modelo en Prisma y genera la migración con `prisma migrate dev`.</li>
+<li>Traduce una consulta JOIN compleja a Knex y compara con SQL directo.</li>
+<li>Almacena eventos en una columna JSONB de PostgreSQL con índice GIN.</li>
+<li>(Opcional) Crea un micro-ORM equivalente con Dapper en C# para una consulta.</li>
+</ol>
+    </div>
+  </section>

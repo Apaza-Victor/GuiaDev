@@ -1,0 +1,206 @@
+<!-- 4. Módulos y Pipelines - Elixir (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="modulos">
+    <h2>Módulos y funciones con nombre</h2>
+    <div class="doc-content">
+<p>El código se organiza en <strong>módulos</strong> (<code>defmodule</code>) que contienen funciones con nombre (<code>def</code>), funciones privadas (<code>defp</code>) y, si quieres, atributos de módulo.</p>
+<pre><code class="language-elixir">defmodule Matematica do
+  # Atributo de módulo (constante compilada)
+  @pi 3.14159
+
+  def area_circulo(radio), do: @pi * radio * radio
+
+  # Función privada no accesible fuera del módulo
+  defp doble(x), do: 2 * x
+
+  def publico(x) do
+    doble(x)   # llamo a la privada
+  end
+
+  # Funciones con aridad distinta son funciones distintas
+  def area_base(:circulo, r), do: @pi * r * r
+  def area_base(:cuadrado, lado), do: lado * lado
+end
+
+IO.inspect(Matematica.area_circulo(2.0))    # 12.56636
+IO.inspect(Matematica.publico(5))           # 10
+IO.inspect(Matematica.area_base(:cuadrado, 4))  # 16
+
+# Los módulos se pueden anidar con atributos
+defmodule App do
+  defmodule Repositorio do
+    def get(id), do: {:ok, %{id: id}}
+  end
+end
+IO.inspect(App.Repositorio.get(1))</code></pre>
+<blockquote class="aside aside-tip"><p>En Elixir la función se identifica por <em>nombre</em> y <em>aridad</em>: <code>area_base/2</code> es distinta de <code>area_base/3</code>. Por eso la herramienta <code>h</code> de IEx muestra <code>nombre/aridad</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pipes">
+    <h2>El operador pipe</h2>
+    <div class="doc-content">
+<p>El operador <code>|&gt;</code> pasa el resultado de la izquierda como <strong>primer argumento</strong> de la función de la derecha. Es el estilo de encadenado que hace Elixir legible y "fluyente".</p>
+<pre><code class="language-elixir"># Sin pipe: anidado, se lee de dentro hacia fuera
+sl=String.upcase(String.trim(" hola  "))
+IO.puts(sl)
+
+# Con pipe: lineal, izquierda → derecha
+resultado =
+  "  hola  "
+  |&gt; String.trim()
+  |&gt; String.upcase()
+  |&gt; String.split()
+
+IO.inspect(resultado)    # ["HOLA"]
+
+# Pipes con funciones de módulos (String, Enum, Map)
+datos =
+  [1, 2, 3, 4]
+  |&gt; Enum.filter(fn x -&gt; rem(x, 2) == 0 end)
+  |&gt; Enum.map(&amp;(&amp;1 * 10))
+  |&gt; Enum.sort(:desc)
+IO.inspect(datos)        # [40, 20]
+
+# Capturas: &amp;(&amp;1)
+dobles = Enum.map([1, 2, 3], &amp;(&amp;1 * 2))
+IO.inspect(dobles)       # [2, 4, 6]
+
+# Pipe con capturas
+texto = "ana,pedro,pau"
+nombres =
+  texto
+  |&gt; String.split(",")
+  |&gt; Enum.map(&amp;String.capitalize/1)
+IO.inspect(nombres)      # ["Ana", "Pedro", "Pau"]</code></pre>
+<blockquote class="aside aside-note"><p>Los pipes reemplazan al anidamiento de paréntesis: cada función recibe como primer argumento el valor anterior. <code>String.capitalize/1</code> es una "referencia a función" usable con <code>&amp;</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="aridad">
+    <h2>Aridad y referencias a funciones</h2>
+    <div class="doc-content">
+<p>La <strong>aridad</strong> (número de argumentos) forma parte del nombre de la función. Capturas <code>&amp;modulo.fun/aridad</code> permiten pasar funciones como argumentos.</p>
+<pre><code class="language-elixir">defmodule Util do
+  def suma(a, b), do: a + b    # Util.suma/2
+  def suma(a, b, c), do: a + b + c   # Util.suma/3 <- distinta
+end
+
+IO.inspect(Util.suma(1, 2))          # 3
+IO.inspect(Util.suma(1, 2, 3))       # 6
+
+# Referencia a función: &amp;Modulo.funcion/aridad
+mi_funcion = &amp;String.upcase/1
+IO.inspect(mi_funcion.("hola"))      # "HOLA"
+
+# Funciones de orden superior reciben funciones
+nums = [1, 2, 3, 4]
+
+# Captura con &amp;1 (&amp;2...) de forma abreviada
+agregar1 = &amp;(&amp;1 + 1)
+IO.inspect(Enum.map(nums, agregar1))          # [2,3,4,5]
+IO.inspect(Enum.map(nums, &amp;(&amp;1 * 2)))         # [2,4,6,8]
+
+# Pasar una función definida en módulo con aridad
+IO.inspect(Enum.map(nums, &amp;Integer.to_string/1))  # ["1","2","3","4"]
+
+# Compose de funciones: no es pipe, es composición
+doble_y_texto = nums |&gt; Enum.map(&amp;(&amp;1 * 2)) |&gt; Enum.map(&amp;Integer.to_string/1)
+IO.inspect(doble_y_texto)</code></pre>
+<blockquote class="aside aside-tip"><p>Cuando pases <code>&amp;f/1</code>, la aridad debe coincidir con lo que espera la función de orden superior. <code>&amp;(&amp;1 + 1)</code> crea una función anónima de un argumento automáticamente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="named">
+    <h2>Funciones con nombre, defaults y capturas</h2>
+    <div class="doc-content">
+<p>Elixir permite argumentos con valores por defecto <code>\\</code>, argumentos con nombre (keywords) y la sintaxis de "do block". Veamos el abanico de firma.</p>
+<pre><code class="language-elixir">defmodule Saludos do
+  # Defaults
+  def saludar(nombre, saludo \\ "Hola") do
+    "#{saludo}, #{nombre}"
+  end
+
+  # Cuando hay defaults, la aridad "extra" aparece automáticamente:
+  # saludar/1 y saludar/2
+
+  # Con keywords (opciones) al final
+  def configurar(datos, opciones \\ []) do
+    ancho = Keyword.get(opciones, :ancho, 100)
+    color = Keyword.get(opciones, :color, "negro")
+    "#{datos} en #{ancho}px y #{color}"
+  end
+
+  # El do-block es azúcar: def f() do ... end  es  def f(), do: ...
+  def adios(nombre) do
+    "chao #{nombre}"
+  end
+end
+
+IO.inspect(Saludos.saludar("Ana"))                 # "Hola, Ana"
+IO.inspect(Saludos.saludar("Ana", "Buen día"))     # "Buen día, Ana"
+IO.inspect(Saludos.configurar("panel", ancho: 400))
+IO.inspect(Saludos.configurar("panel"))</code></pre>
+<blockquote class="aside aside-caution"><p>Los defaults (<code>\\</code>) generan múltiples cláusulas automáticamente; evita conflictos con cláusulas manuales de la misma aridad. Los <code>Keyword</code> son listas de tuplas con átomos primero.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="docs">
+    <h2>Docs y metaprogramación</h2>
+    <div class="doc-content">
+<p>Elixir integra la documentación en el código con <code>@doc</code>, <code>@moduledoc</code> y atributos. Esas cadenas son consultables desde IEx con <code>h</code>.</p>
+<pre><code class="language-elixir">defmodule DocEjemplo do
+  @moduledoc """
+  Módulo de ejemplo para documentación integrada.
+
+  Se usa para demostrar cómo consultar `h DocEjemplo` e IEx.
+  """
+
+  @doc """
+  Suma dos números enteros.
+
+  ## Ejemplos
+
+      iex&gt; DocEjemplo.sumar(2, 3)
+      5
+  """
+  def sumar(a, b), do: a + b
+
+  @doc "Invierte una cadena."
+  def invertir(cadena), do: cadena |&gt; String.reverse()
+end
+
+IO.inspect(DocEjemplo.sumar(2, 3))
+IO.inspect(DocEjemplo.invertir("ola"))    # "alo"
+
+# Desde IEx:
+# iex&gt; h DocEjemplo
+# iex&gt; h DocEjemplo.sumar/2
+
+# Los atributos @doc/@spec/@type son la base de 'mix docs' (ExDoc)
+# y del dialyzer para tipos
+</code></pre>
+<blockquote class="aside aside-success"><p>Metaprogramación (macros) es un tema avanzado, pero saber que <code>def</code>, <code>case</code>, <code>if</code> son <strong>macros</strong> (no keywords) te da el poder de crear DSLs (quizá no ahora, pero anótalo). ExDoc genera la web de documentación de tu librería.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Módulo</strong>: crea <code>Formatos</code> con una función privada y una pública que la use.</li>
+<li><strong>Pipeline</strong>: toma "  elixir | es | genial  ", haz <code>String.split</code>, <code>Enum.filter</code> (no vacías) y <code>Enum.map</code> con captura.</li>
+<li><strong>Aridad</strong>: define <code>concatenar/2</code> y <code>concatenar/3</code>, y pruébalas en IEx con referencia <code>&amp;concatenar/2</code>.</li>
+<li><strong>Defaults</strong>: implementa <code>rombo_form(jerarquia, tam \\ 4)</code> con tamaño por defecto.</li>
+<li><strong>Documentación</strong>: añade <code>@moduledoc</code> y <code>@doc</code> a un módulo y consulta <code>h</code> desde IEx.</li>
+</ol>
+<p>En la próxima lección profundizaremos en colecciones: listas, maps, el módulo Enum y comprehensions.</p>
+    </div>
+  </section>

@@ -1,0 +1,155 @@
+<!-- 6. Programación Funcional y Ecosistema - Scala (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="inmutabilidad-y-efectos">
+    <h2>Inmutabilidad y efectos</h2>
+    <div class="doc-content">
+<p>La <strong>inmutabilidad</strong> es la base de la programación funcional de Scala: los datos nunca cambian, y las funciones puras (sin efectos colaterales) solo calculan un resultado a partir de sus entradas. Esto hace tu código más predecible, testable y seguro para concurrencia. Lo que "hace algo al mundo" (imprimir, leer un archivo) sí se expresa, pero aislado del cálculo.</p>
+<pre><code class="language-scala">// Función pura: misma entrada, misma salida, sin efectos
+def precioConIva(precio: Double, iva: Double = 0.21): Double =
+  precio + precio * iva
+
+// Sin mutación: cada transformación devuelve un nuevo valor
+def procesar(compras: List[Double]): Double =
+  compras
+    .filter(_ &gt; 0)              // ignora precios inválidos
+    .map(precioConIva(_))       // aplica IVA
+    .sum
+
+@main def demo(): Unit =
+  val total = procesar(List(10.0, -5.0, 20.0, 15.0))
+  println(f"Total con IVA: $total%.2f")
+
+  // El efecto (println) queda en el punto de entrada, separado del cálculo</code></pre>
+<blockquote class="aside aside-tip"><p>Si una función no produce efectos externos y su resultado es derivable solo de sus parámetros, es una función pura: la más fácil de probar y paralelizar.</p></blockquote>
+<table><thead><tr><th>Concepto</th><th>Ventaja clave</th></tr></thead><tbody><tr><td>val inmutable</td><td>Nunca cambia, razonamiento simple</td></tr><tr><td>Función pura</td><td>Determinista y fácil de probar</td></tr><tr><td>Datos inmutables</td><td>Seguros para hilos/concurrencia</td></tr><tr><td>Transformaciones</td><td>Descomponen problemas en pasos</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pattern-matching-avanzado">
+    <h2>Pattern matching avanzado</h2>
+    <div class="doc-content">
+<p>El pattern matching no se limita a números: permite <strong>desestructurar case classes</strong>, listas, tuplas y usar <strong>guards</strong> con condiciones. En Scala 3 además es extensible con extracciones personalizadas. Lo verás en casos reales con datos de negocio y estructuras recursivas.</p>
+<pre><code class="language-scala">enum Estado:
+  case Activo, Inactivo, Suspendido
+
+case class Usuario(nombre: String, estado: Estado)
+
+def estadoDel(usuario: Usuario): String = usuario match
+  case Usuario(_, Estado.Activo)     =&gt; "Operativo"
+  case Usuario(n, Estado.Suspendido) =&gt; s"$n suspendido"
+  case _                             =&gt; "Inactivo"
+
+@main def demo2(): Unit =
+  val lista = List(1, 2, 3)
+  // Desestructurar listas: head :: tail como patrón
+  val res = lista match
+    case Nil         =&gt; "vacía"
+    case x :: rest   =&gt; s"primero $x y el resto tiene ${rest.length}"
+  println(res) // primero 1 y el resto tiene 2
+
+  println(estadoDel(Usuario("Luis", Estado.Suspendido))) // Luis suspendido</code></pre>
+<blockquote class="aside aside-caution"><p>Recuerda el caso <code class="inline-code">Nil</code> para listas vacías cuando desestructuras con <code class="inline-code">::</code>: si lo olvidas, una lista vacía lanza <code class="inline-code">MatchError</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="for-comprehensions">
+    <h2>for-comprehensions</h2>
+    <div class="doc-content">
+<p>En Scala 2 las for-comprehensions y las cadenas de <code class="inline-code">map</code>/<code class="inline-code">flatMap</code>/<code class="inline-code">filter</code> son intercambiables: <code class="inline-code">for</code> con <code class="inline-code">yield</code> es simplemente azúcar sintáctico de esos combinadores, y con Option permite encadenar operaciones que pueden fallar sin null-checks. Hemos usado esta equivalencia para calcular datos de negocio.</p>
+<pre><code class="language-scala">val usuarioDb = Map(1 -&gt; "Ana", 2 -&gt; "Luis")
+val edadesDb = Map("Ana" -&gt; 28, "Luis" -&gt; 34)
+
+// Encadenando Option con for: si cualquier paso da None, todo da None
+val resultado = for
+  usuarioId &lt;- Some(1)
+  nombre     &lt;- usuarioDb.get(usuarioId)
+  edad       &lt;- edadesDb.get(nombre)
+yield s"$nombre tiene $edad años"
+
+println(resultado) // Some(Ana tiene 28 años)
+
+val fallo = for
+  usuarioId &lt;- Some(99)
+  nombre     &lt;- usuarioDb.get(usuarioId)
+yield nombre
+println(fallo) // None: la cadena se corta limpiamente</code></pre>
+<blockquote class="aside aside-tip"><p>Una for-comprehension sobre Option reemplaza docenas de <code class="inline-code">if (x != null) ...</code>. Es la forma idiomática de encadenar pasos que pueden faltar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="akka">
+    <h2>Concurrencia con Akka</h2>
+    <div class="doc-content">
+<p><strong>Akka</strong> es el framework de concurrencia distribuida más conocido de Scala y Java. Se basa en el <strong>modelo de actores</strong>: unidades que procesan mensajes de forma aislada y sin compartir estado mutable, comunicándose por buzones. Por eso es natural combinarlo con la inmutabilidad de Scala. Se añade como dependencia de sbt.</p>
+<pre><code class="language-bash">// En build.sbt, añade las dependencias de Akka
+libraryDependencies ++= Seq(
+  "com.typesafe.akka" %% "akka-actor-typed" % "2.8.5"
+)</code></pre>
+<pre><code class="language-scala">import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
+import akka.actor.typed.scaladsl.Behaviors
+
+object Saludo:
+  // Mensaje que un actor procesa
+  final case class Saluda(nombre: String)
+
+  def apply(): Behavior[Saluda] = Behaviors.receive { (contexto, mensaje) =&gt;
+    contexto.log.info(s"Hola ${mensaje.nombre} desde Akka")
+    Behaviors.same
+  }
+
+@main def demo3(): Unit =
+  // Crea el actor system y envía un mensaje
+  val sistema = ActorSystem(Saludo(), "mi-sistema")
+  val ref: ActorRef[Saludo.Saluda] = sistema
+  ref ! Saludo.Saluda("GuiaDev")
+
+  Thread.sleep(500)
+  sistema.terminate()</code></pre>
+<blockquote class="aside aside-note"><p>Akka llegó a ser el estándar de hecho para sistemas reactivos, aunque proyectos nuevos a menudo prefieren Pekko (su fork mantenido por Apache). El modelo de actores visto aquí es el mismo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="spark">
+    <h2>Big data con Apache Spark</h2>
+    <div class="doc-content">
+<p><strong>Apache Spark</strong> es el motor de procesamiento big data más usado, y su API principal se escribe en Scala. Procesa conjuntos masivos de datos en memoria y en paralelo mediante RDDs y DataFrames inmutables. Gracias a las higher-order functions de Scala, escribir una pipeline de datos parece trabajar con una colección normal.</p>
+<pre><code class="language-scala">// Analogía funcional de un DataFrame en Spark (el pipeline es funcional)
+val ventas = Seq(
+  ("Lima", 150.0), ("Lima", 200.0), ("Cusco", 90.0)
+)
+
+// Análogo funcional: agrupar por ciudad y sumar con fold
+val porCiudad = ventas.foldLeft(Map.empty[String, Double]) { (acc, venta) =&gt;
+  val (ciudad, monto) = venta
+  acc + (ciudad -&gt; (acc.getOrElse(ciudad, 0.0) + monto))
+}
+println(porCiudad) // Map(Lima -&gt; 350.0, Cusco -&gt; 90.0)</code></pre>
+<pre><code class="language-bash"># Spark se gestiona como librería. En build.sbt:
+# libraryDependencies += "org.apache.spark" %% "spark-sql" % "3.5.0"
+#
+# El binario spark-submit lanza el trabajo en un clúster:
+# spark-submit --class com.guiadev.Analisis mi-app.jar</code></pre>
+<blockquote class="aside aside-tip"><p>Spark y Akka comparten la filosofía funcional de Scala: datos inmutables que se procesan con transformaciones funcionales, en vez de mutar estado compartido entre hilos.</p></blockquote>
+<blockquote class="aside aside-success"><p>Has completado el ciclo completo: de la sintaxis e inmutabilidad a las for-comprehensions, los actores de Akka y los DataFrames de Spark. Scala es un lenguaje de la JVM que domina tanto la orientación a objetos como el paradigma funcional.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<ol>
+<li>Escribe una función pura que calcule el promedio de una <code class="inline-code">List[Double]</code> y otra impura que además lo imprima. Comprueba que la primera da siempre el mismo resultado.</li>
+<li>Desestructura <code class="inline-code">List("Scala", "Java", "Rust")</code> con pattern matching e imprime cuál es el primero y cuántos quedan después.</li>
+<li>Con una for-comprehension sobre Option, combina dos Maps (por nombre) y devuelve la edad si ambos tienen datos, o <code class="inline-code">None</code> en otro caso.</li>
+<li>Investiga (o simula) un actor de Akka que responda "pong" a un mensaje "ping" aplicando el mismo patrón de <code class="inline-code">Behaviors.receive</code>.</li>
+<li>Implementa con <code class="inline-code">foldLeft</code> el total de ventas por ciudad en una estructura que imite un agrupamiento de Spark.</li>
+</ol>
+<p>Has terminado la introducción completa a Scala. En próximos módulos podrás profundizar en collections avanzadas, Tipos, efectos puros con bibliotecas como Cats o ZIO, y despliegue de aplicaciones con sbt y Scala.js.</p>
+    </div>
+  </section>

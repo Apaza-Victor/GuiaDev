@@ -1,0 +1,147 @@
+<!-- 2. Frameworks .NET: ASP.NET Core, EF Core - Bibliotecas (Utilidades) -->
+  <section id="aspnet-core">
+    <h2>ASP.NET Core: web y APIs <span class="gd-badge gd-badge-note">Framework</span></h2>
+    <div class="doc-content">
+<pre><code class="language-csharp">// API mínima (minimal APIs)
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+if (app.Environment.IsDevelopment()) app.UseSwagger();
+
+var usuarios = new List&lt;Usuario&gt; { new(1, "Ana") };
+
+app.MapGet("/usuarios", () =&gt; usuarios);
+app.MapGet("/usuarios/{id}", (int id) =&gt; usuarios.FirstOrDefault(u =&gt; u.Id == id));
+app.MapPost("/usuarios", (Usuario u) =&gt; { usuarios.Add(u); return Results.Created($"/usuarios/{u.Id}", u); });
+
+app.Run();
+record Usuario(int Id, string Nombre);
+
+// MVC clásico para apps más complejas:
+// app.MapControllers(); + [ApiController] [Route("api/[controller]")]
+</code></pre>
+<blockquote class="aside aside-tip"><p>Minimal APIs (C# 9+) son compactas para REST; MVC para proyectos grandes. Swagger/OpenAPI se añade con un paquete y da documentación interactiva.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="entity-framework">
+    <h2>EF Core: ORM principal <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-csharp">// EF Core: mapeo objeto-relacional
+using System.ComponentModel.DataAnnotations;
+
+public class Usuario {
+  public int Id { get; set; }
+  [Required, MaxLength(100)]
+  public string Nombre { get; set; } = "";
+  public List&lt;Orden&gt; Ordenes { get; set; } = new();
+}
+
+public class AppDbContext : DbContext {
+  public DbSet&lt;Usuario&gt; Usuarios =&gt; Set&lt;Usuario&gt;();
+  public AppDbContext(DbContextOptions&lt;AppDbContext&gt; o) : base(o) { }
+}
+
+// Migraciones (CLI)
+//   dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+//   dotnet ef migrations add Inicial
+//   dotnet ef database update
+
+// Uso
+var user = new Usuario { Nombre = "Ana" };
+await ctx.Usuarios.AddAsync(user);
+await ctx.SaveChangesAsync();
+</code></pre>
+<blockquote class="aside aside-tip"><p>EF Core soporta SQL Server, PostgreSQL, MySQL, SQLite e InMemory. Migraciones versionan el esquema; `AsNoTracking()` y `Include()` son los dos ajustes que más rinden.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="blazor">
+    <h2>Blazor: UI interactiva en C# <span class="gd-badge gd-badge-note">UI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-razor">@page "/contador"
+
+&lt;h3&gt;Contador&lt;/h3&gt;
+&lt;p&gt;Valor: @valor&lt;/p&gt;
+&lt;button class="btn btn-primary" @onclick="Incrementar"&gt;+1&lt;/button&gt;
+
+@code {
+    private int valor = 0;
+    private void Incrementar() =&gt; valor++;
+}
+</code></pre>
+<pre><code class="language-bash"># Crear proyecto
+dotnet new blazorwasm -o AppBlazor     # WebAssembly (en el navegador)
+dotnet new blazorserver -o AppServer   # Server (SignalR)
+</code></pre>
+<blockquote class="aside aside-note"><p>Blazor WebAssembly ejecuta C# en el navegador (WASM); Blazor Server lo hace desde el servidor con SignalR. Mismo lenguaje y componentes para toda la stack.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="xunit-testing">
+    <h2>xUnit y Testing en .NET <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-csharp">// xUnit: framework de testing preferido
+using Xunit;
+
+public class CalculadoraTests {
+  [Fact]
+  public void Suma_DevuelveCorrecta() {
+    Assert.Equal(5, Calculadora.Suma(2, 3));
+  }
+
+  [Theory]
+  [InlineData(1, 2, 3)]
+  [InlineData(0, 0, 0)]
+  [InlineData(-1, 1, 0)]
+  public void Suma_ConTeoria(int a, int b, int expected) {
+    Assert.Equal(expected, Calculadora.Suma(a, b));
+  }
+}
+
+// Mocking con Moq / NSubstitute
+var repo = new Mock&lt;IRepositorio&gt;();
+repo.Setup(r =&gt; r.Find(1)).Returns(new Usuario(1, "Ana"));
+
+// Correr: dotnet test
+// Cobertura: dotnet coverlet o visual studio
+</code></pre>
+<blockquote class="aside aside-tip"><p>xUnit + Moq son la pareja más extendida en .NET. Usa `[Theory]`+`[InlineData]` para parametrizar casos y disminuir duplicación de tests.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="beyond-frameworks">
+    <h2>Más allá: mensajería, gRPC y nube <span class="gd-badge gd-badge-note">Extras</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Mensajería: Microsoft.Extensions + MassTransit (abstracción sobre RabbitMQ/Kafka)
+# grpc-dotnet: Protocol Buffers en .NET (rendimiento en servicios internos)
+
+# Nube (Azure SDK / AWS SDK for .NET)
+dotnet add package Azure.Storage.Blobs
+dotnet add package AWSSDK.S3
+# Caché distribuida: Microsoft.Extensions.Caching.StackExchangeRedis
+# Quartz.NET: jobs programados; Hangfire: jobs en background con dashboard
+</code></pre>
+<blockquote class="aside aside-tip"><p>Para escalar: MassTransit (RabbitMQ/Kafka), gRPC en el bus de servicios, y caché Redis con el cliente oficial. Azure/AWS SDK directos para recursos nube.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una API mínima con GET/POST sobre una lista en memoria y añade Swagger.</li>
+<li>Define un modelo `Producto` y su `DbContext`, crea migración y aplica la BD SQLite.</li>
+<li>Escribe 5 tests xUnit (2 con `[Theory]`) sobre una clase `Carrito` con descuentos.</li>
+<li>Construye un componente Blazor de lista con añadir/eliminar sin recargar la página.</li>
+<li>Integra MassTransit con un publish/consume de un mensaje `PedidoCreado`.</li>
+</ol>
+    </div>
+  </section>

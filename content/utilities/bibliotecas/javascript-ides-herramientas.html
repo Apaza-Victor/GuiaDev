@@ -1,0 +1,124 @@
+<!-- 3. IDEs y Herramientas para JavaScript - Bibliotecas (Utilidades) -->
+  <section id="editor-tools-js">
+    <h2>Editores y herramientas <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># VS Code: el estándar (con ESLint + Prettier)
+code --install-extension dbaeumer.vscode-eslint
+code --install-extension esbenp.prettier-vscode
+# WebStorm (pago), Sublime, Neovim + LSP (eslint lsp)
+
+# Babel / ESM: hoy Vite/tsup/esbuild reemplazan a Babel en la mayoría
+# (para navegadores antiguos Babel sigue siendo el polifill "transform")
+
+# npm scripts canónicos
+#  "dev": "vite", "build": "vite build",
+#  "test": "vitest", "lint": "eslint . --fix"
+</code></pre>
+<blockquote class="aside aside-tip"><p>ESLint (lint) + Prettier (formato) menos el mismo día; ejecútalos también en CI. Vite/esbuild son hoy el transform más usado sobre Babel.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="eslint-prettier-config">
+    <h2>ESLint + Prettier bien configurados <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-json">// eslint.config.js (flat config moderno)
+import js from "@eslint/js";
+export default [
+  js.configs.recommended,
+  {
+    files: ["src/**/*.js"],
+    rules: {
+      "no-unused-vars": "warn",
+      "eqeqeq": ["error", "always"],
+      "quotes": ["error", "double"],
+      "curly": "error",
+    },
+  },
+];
+</code></pre>
+<pre><code class="language-json">// .prettierrc
+{
+  "semi": true,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "printWidth": 100
+}
+</code></pre>
+<blockquote class="aside aside-note"><p>ESLint flat config (9+) con `recommended` + tus reglas; Prettier para formato "opinionado" sin discusiones. Evita que ambos se pisen (reglas de formato fuera de ESLint).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="debug-perfilado-js">
+    <h2>Debug y rendimiento <span class="gd-badge gd-badge-note">Diagnóstico</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Navegador: DevTools -&gt; Sources con breakpoints, watch &amp; call stack
+# Performance panel: graba y busca "long tasks"
+# Node: node --inspect y attach del editor
+node --inspect dist/server.js
+
+# CPU: node --prof
+node --prof app.js &amp;&amp; node --prof-process isolate-*.log
+# Memoria: (DevTools Memory) o en Node --heapsnapshot
+# npm runs: `node --trace-gc` para ver ciclos de GC
+</code></pre>
+<blockquote class="aside aside-tip"><p>El profiler del navegador muestra "long tasks" y el panel Performance; para bibliotecas grandes, chrome.devtools "Memory" con heap snapshot. Todo gratis.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="bundlers-modernos">
+    <h2>Bundlers: Vite, esbuild, Webpack <span class="gd-badge gd-badge-note">Build</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Vite: arranque instantáneo, HMR y bundle final con Rollup (lo recomendado)
+npm create vite@latest
+# esbuild: transformador rápido para libraries/tooling
+npx esbuild src/main.js --bundle --minify --outfile=dist/main.js
+# Webpack/Rspack: completo y configurable (legacy en muchos proyectos)
+# tsup: wrappers sobre esbuild para librerías (genera CJS/ESM/d.ts)
+# Yet another: Parcel (zero-config), Rollup (librerías puras)
+# knip: detecta dependencias y exports sin usar
+npx knip
+</code></pre>
+<blockquote class="aside aside-note"><p>Para apps nuevas: Vite. Para librerías: tsup/Rollup. Webpack sigue existiendo en proyectos heredados; Rspack es su sucesor en velocidad.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="contenedor-js-deploy">
+    <h2>Guardas de despliegue JS <span class="gd-badge gd-badge-note">Cloud</span></h2>
+    <div class="doc-content">
+<pre><code class="language-yaml"># GitHub Actions típico para un paquete Node
+- uses: actions/setup-node@v4
+  with: { node-version: 20, cache: 'npm' }
+- run: npm ci
+- run: npm run lint
+- run: npm test -- --coverage
+- run: npm run build
+</code></pre>
+<pre><code class="language-docker">FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+CMD ["node", "dist/index.js"]
+</code></pre>
+<blockquote class="aside aside-success"><p>CI: `npm ci` (lockfile) + lint + test + build. Deploy: multi-stage con `--omit=dev` y solo el dist. Para Vite/SPA, sirve el dist estático desde cualquier CDN o con Nginx.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Configura ESLint flat + Prettier en un proyecto Vite y corrige un "no-unused-vars".</li>
+<li>Usa DevTools Performance para identificar una "long task" en tu app.</li>
+<li>Genera el bundle con Vite y con `npx esbuild` y compara tamaños.</li>
+<li>Añade knip para eliminar deps sin uso y exportaciones muertas.</li>
+<li>Monta la pipeline CI (ciar, lint, test, build) en un repo tuyo.</li>
+</ol>
+    </div>
+  </section>

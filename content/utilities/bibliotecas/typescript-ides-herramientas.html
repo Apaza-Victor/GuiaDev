@@ -1,0 +1,124 @@
+<!-- 3. IDEs y Herramientas para TypeScript - Bibliotecas (Utilidades) -->
+  <section id="editor-tools">
+    <h2>Editores y herramientas de CI <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># VS Code es el predilecto (typescript + vuelve al LSP tsserver nativo)
+code --install-extension dbaeumer.vscode-eslint
+code --install-extension esbenp.prettier-vscode
+# JetBrains WebStorm / IntelliJ: potentes pero de pago
+# Neovim + typescript-language-server
+
+# Pipeline de calidad obligatoría en TS
+npm run typecheck     # tsc --noEmit
+npm run lint          # eslint
+npx prettier --check .   # formato
+npm run test
+# Fails en CI si cualquiera falla; usa npm scripts centralizados
+</code></pre>
+<blockquote class="aside aside-tip"><p>Integra `tsc --noEmit`, ESLint (para TS) y Prettier como scripts; el editor y el CI comparten la misma configuración y no hay sorpresas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="typescript-language-server">
+    <h2>El LSP (tsserver/typescript-language-server) <span class="gd-badge gd-badge-note">Editor</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># El editor habla con TS mediante el protocolo LSP:
+#   - autocompletado, ir a definición, renombrar, refactorización
+#   - "quick fix" de errores directamente en el editor
+# VS Code trae el TS nativo (no tsserver aparte)
+# Tip: usa "typescript.tsdk" para apuntar a un SDK concreto
+
+# Herramientas CLI derivadas del LSP
+npx ts-node script.ts          # ejecutar TS al vuelo
+npx tsx script.ts              # esd moderna, rápido
+node --experimental-strip-types script.ts   # Node 22.6+ con stripping
+</code></pre>
+<blockquote class="aside aside-note"><p>Node moderno puede ejecutar TS directo con strip-types (sin typecheck). Para apps: los bundlers (Vite/tsup) se encargan de la transformación.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="monorepos-paquete">
+    <h2>Monorepos y empaquetado <span class="gd-badge gd-badge-note">Escala</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Monorepos con workspaces (pnpm / npm / yarn)
+# pnpm-workspace.yaml
+packages:
+  - packages/*
+
+# Turborepo pnpm dev/test/build con caché
+npx create-turbo@latest
+pnpm add turbo --save-dev
+
+# Empaquetar librerías TS
+# tsup (esbuild): rápido, genera CJS+ESM+d.ts
+npx tsup src/index.ts --dts --format esm,cjs
+# alternatives: rollup/tsup, esbuild, tsc --declaration
+# Publicar a npm: npm run build && npm publish --access public
+</code></pre>
+<blockquote class="aside aside-success"><p>Con pnpm workspaces + Turborepo gestionas múltiples paquetes en un repo con caché de builds. tsup empaqueta librerías en segundos con tipos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="debugging-ts">
+    <h2>Debugging y rendimiento <span class="gd-badge gd-badge-note">Diagnóstico</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># En el navegador: DevTools (sources maps de Vite/Rollup)
+# en Node: node --inspect y attach del editor
+node --inspect dist/server.js
+
+# Node --prof
+node --prof dist/server.js &amp;&amp; node --prof-process v8.log &gt; perfil.txt
+
+# source maps: output estándar "inlineSourceMap" en tsconfig para debug
+# - Memoria: chrome devtools profile/heap snapshot (SPA)
+#   o --inspect + Chrome DevTools en Node
+# - Otros: `npx tsx --inspect script.ts`  (script sin compilar)
+</code></pre>
+<blockquote class="aside aside-note"><p>source maps hacen que el debug de TS sea transparente; en Node usa `node --inspect` con el editor para breakpoints con tipado correcto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="contenedores-ts">
+    <h2>Despliegue: contenedores y edge <span class="gd-badge gd-badge-note">Cloud</span></h2>
+    <div class="doc-content">
+<pre><code class="language-docker">FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package*.json ./
+RUN npm ci --omit=dev
+EXPOSE 3000
+CMD ["node", "dist/index.js"]
+</code></pre>
+<pre><code class="language-bash"># Edge y funciones serverless (Hono/Workers)
+# Vercel/Netlify: deploy directo de Next.js
+# Cloudflare Workers: Hono o Workers frameworks
+# Render/Fly/Linode: cualquier proceso Node
+</code></pre>
+<blockquote class="aside aside-tip"><p>Compila con multi-stage, instala `--omit=dev` en la imagen final y expone solo el `dist`. El edge + Hono reduce la latencia en funciones serverless.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Configura typecheck + lint + prettier con npm scripts y ejecútalos en CI.</li>
+<li>Refactoriza un componente con renombrado automático vía LSP en el editor.</li>
+<li>Añade tsup y empaqueta una función suelta a CJS+ESM con d.ts.</li>
+<li>Dépura un bug de flujo de datos mirando los sources maps de DevTools.</li>
+<li>Escribe el Dockerfile multi-stage de una app con Vite/Next y desplegala en Render/Vercel.</li>
+</ol>
+    </div>
+  </section>

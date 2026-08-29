@@ -6,7 +6,7 @@ Plataforma web de documentación técnica para aprender y consultar conceptos de
 
 ## Características
 
-- **497 lecciones** organizadas en **10 categorías** temáticas
+- **666 lecciones** organizadas en **10 categorías** temáticas
 - Navegación SPA basada en hash con scroll-spy y tabla de contenidos automática
 - **Hub de acceso rápido en Recursos**: todo el directorio de enlaces en una sola vista con filtro instantáneo, sin navegar lección por lección
 - Tema claro/oscuro con persistencia en `localStorage`
@@ -84,17 +84,17 @@ Luego abre `http://localhost:8080`.
 
 | Categoría | Subcategorías | Lecciones |
 |:---|:---|:---|
-| Lenguajes | SQL (8), PHP (13), Java (11), Python (11), HTML (10), CSS (11), JavaScript (20), TypeScript (8), C# (8), C++ (8), Go (8), Rust (8), Kotlin (8), Swift (8), Bash (6) | 146 |
+| Lenguajes | SQL (8), PHP (13), Java (11), Python (11), HTML (10), CSS (11), JavaScript (20), TypeScript (8), C# (8), C++ (8), Go (8), Rust (8), Kotlin (8), Swift (8), Bash (6), C (6), R (6), Ruby (6), Dart (6), Scala (6), Perl (6), Lua (6), Julia (6), F# (6), Elixir (6), Haskell (6), Groovy (6), PowerShell (6) | 224 |
 | Frameworks | React (16), Astro (12), Vue 3 (18), Java Swing (6), Alpine.js (10), Laravel (17), Inertia (12), FastAPI (11), Spring (26) | 128 |
 | Base de Datos | Oracle (12), MySQL (9), SQL Server (15) | 36 |
 | UML | Fundamentos (2), Clases (5), Casos de Uso (5), Secuencia (5), Actividades (4), Componentes (5), Despliegue (5), Entidad-Relación (5), Objetos (2), Estados (2), Paquetes (2), Comunicación (2), Tiempos (2), Herramientas (3) | 49 |
 | Entrevistas Laborales | JavaScript, React, Java, Spring, TypeScript | 15 |
 | Ingeniería de Software | Fundamentos (4), Requerimientos (5), Ciclo de Vida (3) | 12 |
-| Utilidades | Librerías (9), Ziggy (6), NPM (1), PNPM (1) | 17 |
+| Utilidades | Librerías (16), Bibliotecas (84), Ziggy (6), NPM (1), PNPM (1) | 108 |
 | Inglés | Básico A1-A2 (12), Intermedio B1-B2 (10), Avanzado C1-C2 (5), Habilidades Clave (6), Para Devs (6) | 39 |
 | Control de Versiones | GitHub (7), GitLab (4), Bitbucket (3), Azure DevOps (4), Gitea (3), Clientes Gráficos (5), GitHub CLI (3), Git LFS (2), Calidad de Commits (3), CI/CD (4) | 38 |
 | Recursos | Docs oficiales (2), Herramientas (2), Práctica (2), Comunidades (3), Aprendizaje (1), Software Gratuito (1), Multimedia (1), Hosting y Despliegue (1), APIs y Datos (1), Inteligencia Artificial (1), Referencia Rápida (2) | 17 |
-| **Total** | | **497** |
+| **Total** | | **666** |
 
 ## Fondos animados por sección
 

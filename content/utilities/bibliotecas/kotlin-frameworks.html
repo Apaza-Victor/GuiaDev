@@ -1,0 +1,148 @@
+<!-- 2. Frameworks Kotlin: Ktor, Spring Boot Kotlin - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework-kotlin">
+    <h2>Elegir backend Kotlin <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Principal: Spring Boot (Java, con soporte Kotlin total)
+#  → https://start.spring.io (elige Kotlin + Gradle)
+#
+# Ktor: framework propio de Kotlin, async y multiplataforma
+#  → excelente para APIs Kotlin-first
+#
+# Otros: Micronaut (Kotlin soporta), Vert.x (multilenguaje)
+# Android apps: de facto Jetpack Compose + Android SDK
+</code></pre>
+<blockquote class="aside aside-note"><p>Spring Boot si buscas el ecosistema empresarial JVM; Ktor si quieres una API Kotlin-first ligera y asíncrona. Android: Jetpack Compose.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ktor-servidor">
+    <h2>Ktor: servidor Kotlin-first <span class="gd-badge gd-badge-note">Backend</span></h2>
+    <div class="doc-content">
+<pre><code class="language-kotlin">import io.ktor.server.application.*
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
+import io.ktor.server.routing.*
+import io.ktor.server.response.*
+import io.ktor.server.request.*
+
+fun main() {
+    embeddedServer(Netty, port = 8080) {
+        routing {
+            get("/saludo/{nombre}") {
+                call.respondText("Hola ${call.parameters["nombre"]}")
+            }
+            post("/usuarios") {
+                val body = call.receive&lt;String&gt;()
+                call.respond("recibido: $body")
+            }
+        }
+    }.start(wait = true)
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>Ktor (Netty/CIO engines) da rutas, middleware (frac), auto-doc con OpenAPI y se integra con corutinas de serie. Empieza con Generador `start.ktor.io`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="spring-boot-kotlin">
+    <h2>Spring Boot con Kotlin <span class="gd-badge gd-badge-note">Framework</span></h2>
+    <div class="doc-content">
+<pre><code class="language-kotlin">import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.runApplication
+import org.springframework.web.bind.annotation.*
+
+@SpringBootApplication
+class MiApp
+
+fun main(args: Array&lt;String&gt;) {
+    runApplication&lt;MiApp&gt;(*args)
+}
+
+@RestController
+@RequestMapping("/api/usuarios")
+class UsuarioController {
+    @GetMapping("/{id}")
+    fun obtener(@PathVariable id: Long) = Usuario(id, "Ana")
+}
+
+data class Usuario(val id: Long, val nombre: String)
+</code></pre>
+<blockquote class="aside aside-tip"><p>Kotlin se integra nativo en Spring: data classes para DTO, null-safety para campos y corutinas (`suspend` en endpoints) con `spring-webflux`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="exposed-persistencia">
+    <h2>Exposed y persistencia <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-kotlin">// Exposed (JetBrains): DSL SQL-céntrico para Kotlin
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.transaction
+
+object Usuarios : Table("usuarios") {
+    val id = integer("id").autoIncrement()
+    val nombre = varchar("nombre", 100)
+    override val primaryKey = PrimaryKey(id)
+}
+
+fun main() {
+    Database.connect("jdbc:sqlite:app.db", "org.sqlite.JDBC")
+    transaction {
+        SchemaUtils.create(Usuarios)
+        Usuarios.insert { it[nombre] = "Ana" }
+        Usuarios.selectAll().forEach { println(it[Usuarios.nombre]) }
+    }
+}
+// Alternativas: Spring Data JPA (con Kotlin), Exposed DAO,
+//              jdbi para SQL directo, R2DBC para reactive
+</code></pre>
+<blockquote class="aside aside-note"><p>Exposed es el ORM de JetBrains con DSL tipado; Spring Data JPA es el estándar sino; para SQL directo jdbi. Elige según tu framework.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-kotlin">
+    <h2>Testing: kotest y JUnit <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-kotlin">// JUnit 5: el estándar interoperable con Java
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+
+class CalculadoraTest {
+    @Test
+    fun sumaEsCorrecta() {
+        assertEquals(5, Calculadora.suma(2, 3))
+    }
+}
+
+// Kotest: estilo funcional con muchos matchers
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+
+class CalcSpec : StringSpec({
+    "suma dos números" {
+        Calculadora.suma(2, 3) shouldBe 5
+    }
+})
+
+// MockK: framework de mocks para Kotlin (alternativa a Mockito)
+// Correr con Gradle: ./gradlew test
+</code></pre>
+<blockquote class="aside aside-tip"><p>kotest es el framework favorito de Kotlin; MockK para mocks; JUnit 5 para compartir test con Java. `kotest` + `MockK` + Gradle es el stack común.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un servidor Ktor con una ruta GET /saludo/:nombre.</li>
+<li>Rehaz el endpoint en Spring Boot con Kotlin y un data class.</li>
+<li>Con Exposed crea una tabla, inserta y consulta en SQLite.</li>
+<li>Escribe 3 tests kotest para una función `fizzBuzz`.</li>
+<li>Levanta los dos servers y prueba los endpoints con curl.</li>
+</ol>
+    </div>
+  </section>

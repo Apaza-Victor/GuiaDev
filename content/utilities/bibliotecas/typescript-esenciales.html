@@ -1,0 +1,149 @@
+<!-- 1. Librerías Esenciales de TypeScript - Bibliotecas (Utilidades) -->
+  <section id="typescript-tooling">
+    <h2>TypeScript y su ecosistema de tipos <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ts">// npm init -y && npm install -D typescript
+// npx tsc --init  =>  tsconfig.json
+
+interface Usuario {
+  id: number;
+  nombre: string;
+  email: string;
+  edad?: number;          // opcional
+}
+
+type Resultado&lt;T&gt; =
+  | { ok: true; valor: T }
+  | { ok: false; error: string };
+
+function guardar(u: Usuario): Resultado&lt;Usuario&gt; {
+  if (!u.email.includes("@")) {
+    return { ok: false, error: "email inválido" };
+  }
+  return { ok: true, valor: u };
+}
+
+const r = guardar({ id: 1, nombre: "Ana", email: "ana@x.com" });
+if (r.ok) console.log(r.valor.nombre);   // narrowing de tipo
+</code></pre>
+<blockquote class="aside aside-tip"><p>Los tipos (interfaces, uniones discriminadas, genéricos) son comprobados en compilación. El ecosistema ofrece utilidades: `Partial`, `Pick`, `ReturnType`, `Record`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="zod-validation">
+    <h2>Zod: validación en runtime <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ts">import { z } from "zod";
+
+const UsuarioSchema = z.object({
+  id: z.number().int().positive(),
+  nombre: z.string().min(3).max(100),
+  email: z.string().email(),
+  edad: z.number().min(18).optional(),
+});
+
+// Infiere el tipo desde el schema
+type Usuario = z.infer&lt;typeof UsuarioSchema&gt;;
+
+const dato = JSON.parse('{"id":1,"nombre":"Ana","email":"ana@x.com"}');
+const resultado = UsuarioSchema.safeParse(dato);
+if (resultado.success) {
+  console.log(resultado.data.email);
+} else {
+  console.error(resultado.error.flatten());
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>Zod valida datos que llegan en runtime (API, archivos): `safeParse` nunca lanza excepción y te da errores legibles por campo. Ideal junto a tRPC/formularios.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="lodash-fp-ts">
+    <h2>lodash-es y fp-ts <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ts">import { groupBy, sortBy, uniqBy, debounce } from "lodash-es";
+
+const usuarios = [{ciudad:"Madrid",edad:30},{ciudad:"Valencia",edad:25}];
+const porCiudad = groupBy(usuarios, "ciudad");
+const ordenado   = sortBy(usuarios, ["edad"]);
+const unicos     = uniqBy(usuarios, "email");
+const busqueda   = debounce(() =&gt; cargarUsuarios(), 300);
+
+// fp-ts: programación funcional con tipos
+import { pipe } from "fp-ts/function";
+import * as O from "fp-ts/Option";
+import * as E from "fp-ts/Either";
+
+const dividir = (a: number, b: number): E.Either&lt;string, number&gt; =
+  b === 0 ? E.left("División por cero") : E.right(a / b);
+
+const r = pipe(
+  E.right(10),
+  E.chain((n) =&gt; dividir(n, 2)),
+);
+</code></pre>
+<blockquote class="aside aside-note"><p>`lodash-es` trae utilidades con tree-shaking (imports por función). fp-ts añade Option/Either para manejo funcional sin excepciones.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="moment-date-fns">
+    <h2>Fechas y números: date-fns e innecesarios <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-ts">import { format, addDays, isAfter, differenceInDays, isValid } from "date-fns";
+
+format(new Date(), "dd/MM/yyyy");
+const dentroDosSemanas = addDays(new Date(), 14);
+const dias = differenceInDays(dentroDosSemanas, new Date());
+
+// Intl (librería estándar para fechas y números i18n)
+new Intl.DateTimeFormat("es-ES", { dateStyle: "full" }).format(new Date());
+new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(1234.5);
+
+// BigDecimal (JS nativo desde ES2025) para dinero
+// @total-typescript/ts-reset mejora los tipos del DOM/TS
+</code></pre>
+<blockquote class="aside aside-tip"><p>date-fns es ligera y modular (importar solo lo que usas). El API `Intl` del navegador evita dependencias para formato localizado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="configuracion-lint">
+    <h2>tsconfig, ESM y eslint-typescript <span class="gd-badge gd-badge-note">Herramienta</span></h2>
+    <div class="doc-content">
+<pre><code class="language-json">// tsconfig.json: estricto de fábrica
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true
+  },
+  "include": ["src"]
+}
+</code></pre>
+<pre><code class="language-bash"># Paquetes de tipo para librerías JS
+npm i -D @types/node @types/express
+# Generación de tipos: npx tsc --noEmit
+# npm run typecheck   (script: "tsc --noEmit")
+</code></pre>
+<blockquote class="aside aside-caution"><p>`strict: true` es obligatorio hoy. Emite true sólo cuando compiles a JS distinto (bundlers como Vite/Rollup se encargan del compile con `noEmit`).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Define una unión discriminada `Resultado&lt;T&gt;` y funciona narrowing en un if.</li>
+<li>Valida un payload JSON con Zod usando `safeParse` y muestra errores por campo.</li>
+<li>Agrupa y ordena una lista con lodash-es e importa solo las funciones usadas.</li>
+<li>Formatea fecha y moneda con date-fns e Intl para tu locale.</li>
+<li>Configura tsconfig estricto + script typecheck en un proyecto real.</li>
+</ol>
+    </div>
+  </section>

@@ -1,0 +1,126 @@
+<!-- 1. Librerías Esenciales de Go - Bibliotecas (Utilidades) -->
+  <section id="stdlib-go">
+    <h2>La librería estándar de Go <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-go">// Go brilla con su stdlib: http, json, io, contexto, testing
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
+	"time"
+)
+
+func main() {
+	// HTTP server con net/http
+	http.HandleFunc("/saludo", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"saludo": "Hola"})
+	})
+	go http.ListenAndServe(":8080", nil)
+
+	// Cliente HTTP
+	resp, err := http.Get("https://api.github.com/users/octocat")
+	if err != nil { fmt.Fprintln(os.Stderr, err); return }
+	defer resp.Body.Close()
+
+	// Tipado de JSON a struct
+	var u struct{ Name string `json:"name"` }
+	json.NewDecoder(resp.Body).Decode(&u)
+	fmt.Println("usuario:", u.Name)
+
+	// time con formatos limpios
+	fmt.Println(time.Now().Format(time.RFC3339))
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>net/http (server más sencillo de producción), encoding/json, context, io y testing vienen en el SDK. En Go casi no necesitas frameworks "web" para servicios.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="gestion-go-modules">
+    <h2>go mod, go get y dependencias <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash">go mod init mi_app          # crear módulo (go.mod)
+go get github.com/gorilla/mux
+go get -u ./...             # actualizar
+go mod tidy                 # añade/quita lo necesario según el código
+go vet ./...                # análisis estático
+
+# go.mod (compatible/versionado con sum)
+module mi_app
+go 1.22
+require github.com/gorilla/mux v1.8.1
+</code></pre>
+<blockquote class="aside aside-caution"><p>Corre `go mod tidy` antes de commitear para que go.mod/go.sum reflejen exactamente lo que importa el código.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="librerias-populares-go">
+    <h2>librerías populares: chi, cobra, viper <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-go">// chi: router para net/http delgado y componible
+import "github.com/go-chi/chi/v5"
+
+r := chi.NewRouter()
+r.Get("/usuarios/{id}", func(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	w.Write([]byte("usuario " + id))
+})
+
+// cobra: CLI apps (kubectl, gh, docker usan cobra)
+// viper: configuración (JSON, YAML, env...)
+import "github.com/spf13/viper"
+viper.SetConfigFile("config.yaml")
+viper.AutomaticEnv()
+
+// Otros favoritos
+//  - sqlx: filas a structs sobre database/sql
+//  - gorm: ORM (en la guía SQL)
+//  - uber-go/zap o slog (estándar): logging
+//  - google/uuid
+</code></pre>
+<blockquote class="aside aside-tip"><p>chi es el router favorito para net/http. Cobra + Viper son la pareja estándar de herramientas CLI y config. `slog` es el logging oficial desde Go 1.21.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-go">
+    <h2>Instalación de Go <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Descargar binario oficial o:
+winget install GoLang.Go         # Windows
+brew install go                  # macOS
+sudo apt install golang-go       # Debian/Ubuntu (versión puede atrasar)
+golang.org/dl/ → instalador
+
+# Verificar y hola mundo
+go version
+mkdir hola && cd hola
+go mod init hola
+# main.go
+package main
+import "fmt"
+func main() { fmt.Println("Hola desde Go") }
+go run .
+</code></pre>
+<blockquote class="aside aside-note"><p>Prefiere el instalador oficial o las últimas majors. Define `GOPATH`/`GOBIN` o usa el default `~/go`; el editor (VS Code) necesita el extension de Go.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un servidor HTTP con net/http y una ruta JSON /saludo.</li>
+<li>Decodifica una petición POST como JSON en un struct con tags.</li>
+<li>Añade chi y haz una ruta con URL param `/usuarios/{id}`.</li>
+<li>Crea una CLI simple con cobra que lea un flag --nombre.</li>
+<li>Usa `go vet` y `go fmt` en tu módulo y corrige las observaciones.</li>
+</ol>
+    </div>
+  </section>

@@ -1,0 +1,103 @@
+<!-- 3. IDEs y Herramientas para Swift - Bibliotecas (Utilidades) -->
+  <section id="ide-xcode">
+    <h2>Xcode: el IDE de Apple <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Xcode (App Store, macOS): IDE oficial de Apple
+xcode-select --install        # CLI tools con swift y clang
+xcodebuild -version
+# componentes: editor+debug+Interface Builder+Simulator
+# scheme/workspace para maquetar; pruebas ⌘U; perfiles ⌘I
+
+# Desde terminal: trae swiftc, swift, xcrun (wrappers, sign)
+xcrun simctl list
+# crear un simulador iOS y lanzar la app
+</code></pre>
+<blockquote class="aside aside-note"><p>Xcode es obligatorio para apps Apple: editor, debugger (LLDB), Interface Builder, perfiles (Instruments) e integración con Xcode Cloud (CI).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="swift-cli-herramientas">
+    <h2>Herramientas CLI: swift build, test y format <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Con SPM
+swift build
+swift test
+swift run MiApp
+
+# swift-format: el formateador oficial
+swift-format format -i -r Sources
+swift-format lint -r Sources --strict
+
+# herramientas de calidad
+brew install swiftlint        # linter de estilo (comunidad/muy usado)
+swiftlint
+brew install swiftformat      # formatter alternativo configurable
+# Bitrise demo / GitHub Actions con swift-lint-setup
+# DocC: documentación (docc / --documentation-target de Xcode)
+</code></pre>
+<blockquote class="aside aside-tip"><p>`swift-format` es el oficial; SwiftLint es el guardián de estilo de facto; `swift test --enable-code-coverage` + xccov para métricas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depurar-swift">
+    <h2>Depuración: LLDB y puntos de ruptura <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Debugger LLDB integrado en Xcode
+lldb ./mi_app
+# comandos útiles: breakpoint, run, continue, frame variable, bt
+# en Xcode: breakpoints gestionados, Watch, po (print object)
+
+# logs y tiempos
+print("debug: \(valor)")
+// os_log (sistema) / Logger (framework moderno)
+import os
+let logger = Logger(subsystem: "app", category: "net")
+logger.log("respuesta: \(status)")
+
+# Performance profiling en Xcode Instruments:
+#   Time Profiler, Allocations, Leaks, Energy
+</code></pre>
+<blockquote class="aside aside-caution"><p>LLDB es potente pero crudo; en Xcode se usa vía GUI. `Logger`/`os_log` estructuran los logs; Instruments detecta leaks y energía en la fase de perfiles.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-swift">
+    <h2>Despliegue y CI Swift <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Backend Vapor en contenedor
+</code></pre>
+<pre><code class="language-docker">FROM swift:6.0 AS build
+WORKDIR /app
+COPY . .
+RUN swift build -c release --static-swift-stdlib
+
+FROM swift:6.0-jammy AS runtime
+WORKDIR /app
+COPY --from=build /app/.build/release/Run .
+EXPOSE 8080
+CMD ["./Run", "serve", "--hostname", "0.0.0.0", "--port", "8080"]
+</code></pre>
+<pre><code class="language-bash"># Apps iOS: App Store Connect + Xcode Cloud / Fastlane
+#   fastlane lane deploy (beta/release), firma, TestFlight
+# CI en GitHub Actions: usar macos-14 runner con Xcode
+</code></pre>
+<blockquote class="aside aside-success"><p>Backend Swift corre en servidores Linux sin problema (Docker con swift-slim). Apps Apple necesitan macOS runner + firma; Fastlane automatiza certificados y subida.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala swiftlint y ponlo estricto en tu proyecto SPM.</li>
+<li>Configura un pipeline de GitHub Actions que haga `swift test`.</li>
+<li>Depura con lldb un crash (backtrace) y explica la causa.</li>
+<li>Crea un Dockerfile para un servidor Vapor y haz healthcheck.</li>
+<li>Integra json̂ coverage de `swift test --enable-code-coverage`.</li>
+</ol>
+    </div>
+  </section>

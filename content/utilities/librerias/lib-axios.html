@@ -1,0 +1,161 @@
+<!-- axios - Librerías (Utilidades) -->
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install axios
+</code></pre>
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;script src="https://cdn.jsdelivr.net/npm/axios@1.7.2/dist/axios.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-js">import axios from 'axios';
+</code></pre>
+<blockquote class="aside aside-tip"><p>Axios es un cliente HTTP basado en Promesas, compatible con Node y navegador. Aporta interceptors, cancelación, progreso de descarga y transformación de datos sobre la API de `fetch`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="peticiones-basicas-paso-2">
+    <h2>Peticiones Básicas <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// GET con promesa
+axios.get('https://api.example.com/usuarios')
+  .then(r =&gt; console.log(r.data))
+  .catch(e =&gt; console.error(e.message));
+
+// GET con async/await
+async function cargarUsuarios() {
+  const { data } = await axios.get('/usuarios');
+  return data;
+}
+
+// POST con cuerpo
+const res = await axios.post('/usuarios', {
+  nombre: 'Ana', edad: 30,
+});
+
+// PUT / PATCH / DELETE
+await axios.put('/usuarios/1', { edad: 31 });
+await axios.delete('/usuarios/1');
+
+// Parámetros de query
+axios.get('/usuarios', { params: { rol: 'admin', page: 2 } });
+
+// Encabezados personalizados
+axios.get('/protegido', {
+  headers: { Authorization: 'Bearer token' },
+});
+</code></pre>
+<blockquote class="aside aside-note"><p>En GET los datos viajan en `params` (axios los serializa a query string). El cuerpo ya viene parseado en `res.data`; con fetch habría que hacer `res.json()`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instancia-y-config">
+    <h2>Instancia y Configuración Global <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Cliente con baseURL y defaults
+const api = axios.create({
+  baseURL: 'https://api.example.com/v2',
+  timeout: 10000,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+api.get('/dashboard');   // =&gt; https://api.example.com/v2/dashboard
+
+// Configuración global
+axios.defaults.baseURL = 'https://api.example.com';
+axios.defaults.withCredentials = true;
+
+// Manejo común de errores
+api.interceptors.response.use(
+  (r) =&gt; r,
+  (error) =&gt; {
+    if (error.response?.status === 401) redirectToLogin();
+    return Promise.reject(error);
+  }
+);
+</code></pre>
+<blockquote class="aside aside-tip"><p>Crear una instancia con `baseURL` evita repetir la URL a cada llamada y facilita apuntar a un entorno distinto (dev/staging/prod) cambiando una sola línea.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="interceptors-y-error">
+    <h2>Interceptors y Manejo de Errores <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Interceptor de petición: añadir token dinámicamente
+api.interceptors.request.use((config) =&gt; {
+  const token = sessionStorage.getItem('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// Estructura del objeto de error
+try {
+  await api.get('/usuarios');
+} catch (error) {
+  if (error.response) {
+    // el servidor respondió con un status fuera de 2xx
+    console.log(error.response.status, error.response.data);
+  } else if (error.request) {
+    // no hubo respuesta (red caída, timeout)
+    console.log('Sin respuesta del servidor', error.request);
+  } else {
+    console.log('Error configurando la petición', error.message);
+  }
+}
+
+// Error con respuesta esperada (ej. 404)
+axios.isAxiosError(error);
+</code></pre>
+<blockquote class="aside aside-caution"><p>Diferencia los tres escenarios de error: respuesta con status (server reachable), sin respuesta (problema de red/timeout) y error de configuración. Trátalos por separado y muestra UX distinta.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cancelacion-concurrencia">
+    <h2>Cancelación y Concurrencia <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Cancelar peticiones con AbortController
+const controller = new AbortController();
+axios.get('/grande', { signal: controller.signal });
+
+setTimeout(() =&gt; controller.abort(), 2000);
+
+// Peticiones en paralelo
+const [user, posts] = await Promise.all([
+  api.get('/usuario'),
+  api.get('/posts'),
+]);
+
+// Cancelar búsquedas antiguas (patrón usa de tipoahead)
+let current = null;
+async function buscar(term) {
+  current?.abort();
+  current = new AbortController();
+  const { data } = await api.get('/search', {
+    params: { q: term },
+    signal: current.signal,
+  });
+  showResults(data);
+}
+</code></pre>
+<blockquote class="aside aside-success"><p>El patrón de cancelar la petición anterior es la forma correcta de implementar autocompletado sin carreras (respuestas fuera de orden). `signal` funciona igual en `fetch`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una instancia de axios con `baseURL` a `https://jsonplaceholder.typicode.com` y haz un GET a `/users` mostrando nombres.</li>
+<li>Implementa un post con `axios.post` enviando un JSON y lee la respuesta con `status` 201.</li>
+<li>Agrega un interceptor de petición que inyecte el token de `sessionStorage`.</li>
+<li>Simula un error 404 y captura `error.response.status` para mostrar "recurso no encontrado".</li>
+<li>Usa `AbortController` para cancelar una búsqueda de largo tiempo y evita carreras.</li>
+</ol>
+    </div>
+  </section>

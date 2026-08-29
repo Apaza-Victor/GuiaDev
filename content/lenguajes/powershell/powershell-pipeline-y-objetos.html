@@ -1,0 +1,177 @@
+<!-- 3. Pipeline y Objetos - PowerShell (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="pipeline">
+    <h2>El pipeline</h2>
+    <div class="doc-content">
+<p>El <strong>pipeline</strong> (<code>|</code>) es el corazón de PowerShell: cada comando pasa su salida como <strong>objetos</strong> al siguiente comando, no texto plano. Por eso puedes encadenar operaciones sin parsear nada.</p>
+<pre><code class="language-powershell"># Uso básico: filtrar procesos por memoria
+Get-Process | Where-Object { $_.WorkingSet -gt 100MB }
+
+# $_ representa cada objeto del pipeline
+Get-Service | Where-Object { $_.Status -eq 'Running' }
+
+# Seleccionar propiedades
+Get-Process | Select-Object -First 5 Name, Id, CPU
+
+# Ordenar
+Get-Process | Sort-Object CPU -Descending | Select-Object -First 3
+
+# Transformar archivos
+Get-ChildItem *.txt | ForEach-Object { $_.Name }
+
+# Encadenar acumulaciones
+1..10 | Where-Object { $_ % 2 -eq 0 } | Measure-Object -Sum</code></pre>
+<blockquote class="aside aside-tip"><p>Mentalidad clave: <code>Get-Proceso</code> devuelve objetos; <code>Where-Object</code> filtra, <code>Select-Object</code> proyecta y <code>Sort-Object</code> ordena. Casi todo se resuelve encadenando estos cuatro.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="filtros">
+    <h2>Filtrar resultados</h2>
+    <div class="doc-content">
+<p><code>Where-Object</code> aplica condiciones sobre cada objeto. Las propiedades se evalúan con <code>$_.propiedad</code>, y comparan con operadores de PowerShell (<code>-eq</code>, <code>-like</code>, <code>-gt</code>...).</p>
+<pre><code class="language-powershell"># Filtros por propiedad
+Get-Process | Where-Object { $_.CPU -gt 10 -and $_.ProcessName -like "*pw*" }
+Get-Service | Where-Object { $_.Status -eq 'Stopped' }
+
+# Sintaxis abreviada (llaves opcionales en expresiones simples)
+Get-Service | Where-Object Status -eq 'Running'
+Get-Process | Where-Object Name -match '^(p|w)'
+
+# Filtros con regex y like
+Get-ChildItem | Where-Object { $_.Name -like "*.log" }
+Get-ChildItem | Where-Object { $_.Name -match "\d{4}" }
+
+# Combinar condiciones
+Get-Process | Where-Object {
+    $_.CPU -gt 5 -or $_.WorkingSet -gt 200MB
+}
+
+# Nota: algunos cmdlets tienen filtro nativo (-Name term)
+Get-Service -Name "*sql*"</code></pre>
+<blockquote class="aside aside-caution"><p><code>-and</code>/<code>-or</code> requieren los paréntesis de <code>{ ... }</code>. Cuando el filtro es simple, prefiere el parámetro nativo del cmdlet (<code>-Name</code>, <code>-Status</code>): es mucho más rápido que pasar por todos los objetos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="objetos">
+    <h2>Trabajar con objetos</h2>
+    <div class="doc-content">
+<p>PowerShell trata todo como objetos .NET: escribe, lee y manipula gracias a propiedades y métodos, no a cadenas.</p>
+<pre><code class="language-powershell"># Inspeccionar un objeto
+$p = Get-Process pwsh | Select-Object -First 1
+$p | Get-Member                    # lista propiedades y métodos
+
+# Propiedades típicas
+$p.Name
+$p.Id
+$p.Path
+
+# Crear tu propio objeto (para salidas limpias)
+[PSCustomObject]@{
+    Nombre = 'Ana'
+    Edad   = 30
+    Ciudad = 'Lima'
+}
+
+# Objetos propios dentro de un pipeline
+Get-Process -First 3 |
+    ForEach-Object {
+        [PSCustomObject]@{
+            Nombre = $_.Name
+            ConsumoMB = [math]::Round($_.WorkingSet / 1MB, 2)
+        }
+    }
+
+# Hashtables (estructuras clave-valor)
+$config = @{ Host = 'localhost'; Puerto = 8080 }
+$config.Host
+$config['Puerto']
+
+# Colecciones de objetos
+$procesos = Get-Process
+$procesos.Count
+$procesos[0]</code></pre>
+<blockquote class="aside aside-tip"><p><code>[PSCustomObject]@{}</code> crea objetos con propiedades nombradas: perfecto para generar reportes, CSV o JSON listos para exportar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="formato">
+    <h2>Formatear y mostrar</h2>
+    <div class="doc-content">
+<p>El formato de salida se controla con cmdlets <code>Format-Table</code>, <code>Format-List</code> y <code>Format-Wide</code>, además de <code>Out-*</code> para archivos y <code>ConvertTo-*</code> para serialización.</p>
+<pre><code class="language-powershell"># Tabla (por defecto)
+Get-Process | Select-Object -First 5 |
+    Format-Table Name, Id, CPU -AutoSize
+
+# Lista (todas las propiedades)
+Get-Service | Select-Object -First 2 | Format-List *
+
+# Ancho (columnas de nombres)
+Get-ChildItem | Format-Wide Name -Column 4
+
+# A archivo
+Get-Process | Out-File procesos.txt
+Get-Service | Export-Csv servicios.csv -NoTypeInformation
+
+# A JSON (para APIs y configs)
+Get-Process -First 2 | Select-Object Name, Id | ConvertTo-Json
+
+# A HTML
+Get-ChildItem | ConvertTo-Html -Property Name, Length | Out-File lista.html
+
+# Texto con formato de anchos
+'{0,-10} {1,6}' -f 'Nombre', 'Edad'
+'{0,10:N2}' -f 1234.5678</code></pre>
+<blockquote class="aside aside-tip"><p><code>Export-Csv</code>, <code>ConvertTo-Json</code> y <code>ConvertTo-Html</code> son la salida "estructurada" de PowerShell: intercambian datos entre scripts, reportes y sistemas, manteniendo los objetos lo más fieles posible.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="comparar">
+    <h2>Comparar y medir</h2>
+    <div class="doc-content">
+<p>Para comparar colecciones de objetos y obtener estadísticas rápidas, PowerShell trae <code>Compare-Object</code> y <code>Measure-Object</code>.</p>
+<pre><code class="language-powershell"># Comparar dos listas
+$a = 1..10
+$b = 5..15
+Compare-Object $a $b
+# &lt;=&gt; izquierda, =&gt; derecha, &lt;= solo en a
+
+# Comparar procesos en dos máquinas (útil en auditorías)
+Get-Process | Select-Object Name -Unique | Sort Name &gt; local.txt
+Compare-Object (Get-Content remoto.txt) (Get-Content local.txt)
+
+# Medir estadísticas
+1..100 | Measure-Object -Sum -Average -Minimum -Maximum
+
+# Contar
+Get-Service | Where-Object Status -eq 'Running' | Measure-Object
+
+# Agrupar
+Get-Process | Group-Object ProcessName | Sort-Object Count -Descending |
+    Select-Object -First 5
+
+# Propiedades de la agrupación
+Get-ChildItem | Group-Object Extension</code></pre>
+<blockquote class="aside aside-tip"><p><code>Compare-Object</code> con archivos de procesos es un truco clásico de auditoría: detecta qué procesos difieren entre servidores o entre antes/después de un cambio.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Filtrar procesos</strong>: lista los 5 procesos que más memoria consumen, con nombre y consumo en MB.</li>
+<li><strong>Pipeline</strong>: cuenta cuántos servicios están en ejecución usando <code>Where-Object</code> + <code>Measure-Object</code>.</li>
+<li><strong>Objetos propios</strong>: crea un <code>[PSCustomObject]</code> de tu perfil con 4 propiedades y muéstralo en tabla.</li>
+<li><strong>Formato</strong>: exporta un CSV con los nombres y tamaños de los archivos de una carpeta.</li>
+<li><strong>Comparación</strong>: compara <code>1..20</code> con <code>15..30</code> con <code>Compare-Object</code> y explica cada símbolo de resultado.</li>
+</ol>
+<p>En la próxima lección dominaremos el control de flujo: condicionales, bucles, funciones y manejo de errores.</p>
+    </div>
+  </section>

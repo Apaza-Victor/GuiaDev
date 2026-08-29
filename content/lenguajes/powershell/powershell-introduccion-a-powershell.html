@@ -1,0 +1,153 @@
+<!-- 1. Introducción a PowerShell - PowerShell (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="que-es-powershell">
+    <h2>¿Qué es PowerShell?</h2>
+    <div class="doc-content">
+<p><strong>PowerShell</strong> es un shell y lenguaje de scripting basado en .NET, creado por Microsoft (Jeffrey Snover, 2006). Su gran diferencia con los shells clásicos: trabaja con <strong>objetos</strong> (no solo texto), lo que permite componer comandos de formas mucho más potentes.</p>
+<p>Desde 2016, <strong>PowerShell Core</strong> es <strong>multi-plataforma</strong> (Windows, Linux y macOS) y open source. Es la base de la automatización en Windows (AD, Exchange, Azure, Microsoft 365) y cada vez más en entornos de infraestructura general.</p>
+<blockquote class="aside aside-note"><p>Su lema: "Make IT simple, automate the world". Todo es un objeto .NET: puedes filtrar, ordenar, formatear y reutilizar la salida de un comando sin parsear texto.</p></blockquote>
+<table><thead><tr><th>Característica</th><th>Detalle</th></tr></thead><tbody><tr><td>Runtime</td><td>.NET (Windows PowerShell 5.1 / PowerShell 7+)</td></tr><tr><td>Paradigma</td><td>Orientado a objetos + scripting</td></tr><tr><td>Punto fuerte</td><td>Automatización de sistemas y administración</td></tr><tr><td>Tipado</td><td>Dinámico con tipos .NET</td></tr><tr><td>Uso típico</td><td>Administración, CI/CD, automatización</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion">
+    <h2>Instalación</h2>
+    <div class="doc-content">
+<p>En Windows 10/11 ya viene la edición "Windows PowerShell 5.1"; la recomendada en 2026 es <strong>PowerShell 7+</strong> (core). En Linux/macOS se instala con el gestor de paquetes.</p>
+<pre><code class="language-powershell"># Windows (elevado)
+winget install Microsoft.PowerShell
+
+# O desde el MSI de GitHub releases
+# https://github.com/PowerShell/PowerShell/releases
+
+# Linux (Ubuntu/Debian)
+sudo apt update
+sudo apt install -y powershell
+
+# macOS
+brew install --cask powershell
+
+# Linux (paquete directo de Microsoft, distro genérica)
+# Download PRE-RELEASE tar.gz y extrae:
+# tar -xzf powershell-*.tar.gz
+# chmod +x pwsh
+
+# Verificar
+pwsh --version
+
+# Ejecutar la consola
+pwsh
+# o
+powershell   # (Windows PowerShell 5.1, si lo quieres)</code></pre>
+<blockquote class="aside aside-tip"><p>El ejecutable moderno es <code>pwsh</code> (PowerShell 7). En Windows conviene tener ambos: 5.1 para módulos legacy, 7 para desarrollo moderno. Puedes ejecutar scripts .ps1 con ambos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="consola">
+    <h2>La consola interactiva</h2>
+    <div class="doc-content">
+<p>El REPL de PowerShell es tu laboratorio: escribir comandos, ver resultados, navegar por el historial y explorar ayuda.</p>
+<pre><code class="language-powershell"># Comandos básicos
+Get-Location                  # ruta actual (pwd)
+Get-Date                      # fecha y hora
+Write-Output "Hola GuiaDev"   # imprimir (o "Hola" directamente)
+
+# Alias típicos (de otros shells)
+ls, dir, cd, pwd, echo, cat, grep (≡ Select-String)
+
+# Ayuda
+Get-Help Get-Process
+Get-Help Get-Process -Examples
+Get-Help -Name Get-*          # lista de comandos que empiezan por
+
+# Descubrir comandos
+Get-Command -Noun Process
+Get-Command -Verb Get
+
+# Tab auto-completado y Ctrl+R historial
+# Calculadora inline
+1 + 2                          # 3</code></pre>
+<blockquote class="aside aside-tip"><p>Nombres <code>Verbo-Sustantivo</code>: <code>Get-</code>, <code>Set-</code>, <code>New-</code>, <code>Remove-</code>, <code>Test-</code>... uniformidad total. Si conoces el sustantivo, adivinas el verbo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cmdlets">
+    <h2>Cmdlets: los comandos</h2>
+    <div class="doc-content">
+<p>Las <strong>cmdlets</strong> son el equivalente de los "comandos" de bash pero orientados a objetos y con parámetros tipados. Veamos las más imprescindibles para empezar.</p>
+<pre><code class="language-powershell"># Procesos
+Get-Process                     # lista de procesos (objetos)
+Get-Process -Name pwsh          # filtrar por nombre
+
+# Servicios
+Get-Service                      # servicios del sistema
+Get-Service -Name wuauserv       # uno concreto
+
+# Archivos
+Get-ChildItem                    # listar (ls)
+Get-ChildItem -Filter *.ps1      # con patrón
+Test-Path C:\Windows             # existe?
+
+# Fecha / entorno
+Get-Date -Format "yyyy-MM-dd"
+$env:USERNAME                    # variable de entorno
+
+# Ayuda por ejemplo
+Get-Help Get-ChildItem -Examples
+
+# Algunos ejemplos filtrados
+Get-Process | Where-Object { $_.CPU -gt 100 }</code></pre>
+<blockquote class="aside aside-note"><p>Casi todo "Get-*" produce un objeto; puedes pasarlo a <code>Select-Object</code>, <code>Where-Object</code>, <code>Sort-Object</code> o <code>Format-Table</code>. Ese es el ecosistema: objetos en lugar de cadenas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="versiones">
+    <h2>Versiones y perfil</h2>
+    <div class="doc-content">
+<p>PowerShell 5.1 vs 7+: compatibilidad con módulos, operadores ternarios, pipelines mejorados y null-coalescing.</p>
+<pre><code class="language-powershell"># Tu versión
+$PSVersionTable.PSVersion
+# Majors: 5.1 (Windows PowerShell) vs 7.x (Core)
+
+# Perfil (se carga al abrir pwsh)
+$PROFILE                          # ruta del perfil
+Test-Path $PROFILE
+New-Item -Path $PROFILE -Force   # crear (con mkdir -Force)
+
+# Añadir al perfil: aliases, prompt, funciones
+# notepad $PROFILE
+
+# Protocolo de correcto:
+# - Validar con "script analysis" (PSScriptAnalyzer)
+# - PowerShell Gallery: PSResourceGet (7.4+)
+#   Install-PSResource -Name PSScriptAnalyzer
+
+# Diferencias rápidas que notarás:
+# - &lt;&lt; (append) OK
+# - Operador ?? (null-coalescing) en 7
+# - @(...) listas automáticas
+# - Parallel: ForEach-Object -Parallel (7+)</code></pre>
+<blockquote class="aside aside-success"><p>Mantén el perfil ligero (no cargues miles de funciones en cada arranque) y usa PSScriptAnalyzer para que el código de tus scripts cumpla buenas prácticas desde el principio.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Instalación</strong>: instala/verifica <code>pwsh --version</code> y abre la consola.</li>
+<li><strong>Explora</strong>: usa <code>Get-Command -Verb Get</code> y elige 3 cmdlets desconocidos para leer su ayuda con <code>Get-Help</code>.</li>
+<li><strong>Objetos</strong>: muestra <code>Get-Process</code> formateado como tabla con <code>Format-Table Name, Id, CPU</code>.</li>
+<li><strong>Perfil</strong>: localiza <code>$PROFILE</code>, crea el archivo y añade un alias favorito.</li>
+<li><strong>Filtro</strong>: lista solo los servicios en ejecución (<code>Get-Service | Where-Object Status -eq 'Running'</code>).</li>
+</ol>
+<p>En la próxima lección veremos la sintaxis: variables, tipos, arrays y operadores.</p>
+    </div>
+  </section>

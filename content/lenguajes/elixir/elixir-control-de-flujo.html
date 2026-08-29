@@ -1,0 +1,202 @@
+<!-- 3. Control de Flujo - Elixir (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="case">
+    <h2>case: pattern matching como flujo</h2>
+    <div class="doc-content">
+<p><code>case</code> es la herramienta primaria de control de flujo: evalúa una expresión y la compara con varios patrones. No hay <code>if/else if</code> masivo: se modela con patrones.</p>
+<pre><code class="language-elixir">defmodule Clasificador do
+  def tipo_dia(dia) do
+    case dia do
+      "sábado" -&gt; "fin de semana"
+      "domingo" -&gt; "fin de semana"
+      "lunes" -&gt; "laboral"
+      "viernes" -&gt; "laboral"
+      _ -&gt; "día arbitrario"
+    end
+  end
+
+  def duplicar(lista) do
+    case lista do
+      [] -&gt; []
+      [head | tail] -&gt; [head * 2 | duplicar(tail)]
+    end
+  end
+
+  def clasificar_resultado(result) do
+    case result do
+      {:ok, valor} -&gt; "éxito: #{valor}"
+      {:error, motivo} -&gt; "error: #{motivo}"
+      nil -&gt; "sin resultado"
+      _ -&gt; "resultado desconocido"
+    end
+  end
+end
+
+IO.inspect(Clasificador.tipo_dia("domingo"))
+IO.inspect(Clasificador.duplicar([1, 2, 3]))
+IO.inspect(Clasificador.clasificar_resultado({:ok, 42}))</code></pre>
+<blockquote class="aside aside-tip"><p>El comodín <code>_</code> captura todo. Elixir con patrón <code>[head | tail]</code> + recursión sustituye a los bucles. Es la forma pura de recorrer listas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cond-if">
+    <h2>if, unless y cond</h2>
+    <div class="doc-content">
+<p><code>if</code>/<code>unless</code> cubren condicionales simples; <code>cond</code> permite una cadena de condiciones (como un <code>case</code> de booleanos) y siempre termina con <code>true</code> categoría default.</p>
+<pre><code class="language-elixir">edad = 16
+
+# if/unless básicos
+if edad &gt;= 18 do
+  IO.puts("Mayor")
+else
+  IO.puts("Menor")
+end
+
+unless edad &gt;= 18 do
+  IO.puts("Todavía menor")
+end
+
+# Forma abreviada (do: ...)
+etiqueta = if edad &gt;= 18, do: "adulto", else: "menor"
+IO.puts(etiqueta)
+
+# cond: cadena de condiciones
+defmodule Clasifica do
+  def nota(n) do
+    cond do
+      n &gt;= 18 -&gt; "A"
+      n &gt;= 14 -&gt; "B"
+      n &gt;= 10 -&gt; "C"
+      true -&gt; "D"
+    end
+  end
+end
+
+IO.puts(Clasifica.nota(16))     # B
+
+# IMPORTANTE: if/unless/cond son funcionales: devuelven valor</code></pre>
+<blockquote class="aside aside-caution"><p>En Elixir, únicamente <code>false</code> y <code>nil</code> son falsos: <code>0</code>, <code>""</code> y <code>[]</code> son VERDADEROS. No escribas <code>if lista</code> para saber si está vacía; usa <code>case</code> o <code>Enum.empty?</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="funciones-multiples">
+    <h2>Funciones con múltiples cláusulas</h2>
+    <div class="doc-content">
+<p>La característica más elixirseca: puedes definir <strong>varias cabeceras</strong> de la misma función con patrones distintos; Elixir elige la primera que coincida. Esto reemplaza a <code>if</code>/<code>case</code> y a la herencia por completo.</p>
+<pre><code class="language-elixir">defmodule Forma do
+  # Misma función, varias cláusulas, patrones en los argumentos
+  def area_circulo({:circulo, radio}), do: 3.14159 * radio * radio
+  def rectangulo({:rectangulo, base, altura}), do: base * altura
+  def desconocida(_), do: {:error, :no_soporta}
+
+  # Cláusulas numéricas (pattern matching literal)
+  def fizzbuzz(n) when rem(n, 15) == 0, do: "FizzBuzz"
+  def fizzbuzz(n) when rem(n, 3) == 0, do: "Fizz"
+  def fizzbuzz(n) when rem(n, 5) == 0, do: "Buzz"
+  def fizzbuzz(n), do: n
+
+  # Cláusula de lista: base y recursión
+  def suma([]), do: 0
+  def suma([h | t]), do: h + suma(t)
+end
+
+IO.inspect(Forma.area_circulo({:circulo, 2.0}))    # 12.56636
+IO.inspect(Forma.rectangulo({:rectangulo, 3, 4}))  # 12
+IO.inspect(Forma.rectangulo({:otra, 1}))           # {:error, :no_soporta}
+IO.inspect(Forma.fizzbuzz(15))                     # "FizzBuzz"
+IO.inspect(Forma.suma([1, 2, 3, 4]))               # 10</code></pre>
+<blockquote class="aside aside-success"><p>Ordenar las cláusulas de la más específica a la más general. Este estilo elimina los <code>if</code>/<code>else</code> a favor de patrones descriptivos y es difícil de leer en otros lenguajes: es el corazón de Elixir.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="guards">
+    <h2>Guards: when</h2>
+    <div class="doc-content">
+<p>Los <strong>guards</strong> (<code>when</code>) añaden condiciones a una cláusula con un conjunto permitido de predicados. Se usan en <code>case</code>, <code>def</code>, <code>fn</code> y <code>cond</code> para acotar cuándo encaja un patrón.</p>
+<pre><code class="language-elixir">defmodule Guardado do
+  def tipo(n) when is_integer(n) and n &gt; 0, do: "entero positivo"
+  def tipo(n) when is_integer(n), do: "entero no positivo"
+  def tipo(s) when is_binary(s) and String.length(s) &gt; 5, do: "string largo"
+  def tipo(_), do: "otro"
+
+  # Guard en case
+  def describe_resultado(x) do
+    case x do
+      {:ok, v} when v &gt; 100 -&gt; "grande éxito: #{v}"
+      {:ok, v} -&gt; "éxito: #{v}"
+      {:error, _} -&gt; "falló"
+      _ -&gt; "desconocido"
+    end
+  end
+
+  # Guard con longitud
+  def corto_o_largo(cadena) when byte_size(cadena) &lt; 5, do: :corto
+  def corto_o_largo(_), do: :largo
+end
+
+IO.inspect(Guardado.tipo(5))                     # "entero positivo"
+IO.inspect(Guardado.tipo(-1))                    # "entero no positivo"
+IO.inspect(Guardado.tipo("abcdefg"))             # "string largo"
+IO.inspect(Guardado.describe_resultado({:ok, 150}))</code></pre>
+<table><thead><tr><th>Predicado</th><th>Significado</th></tr></thead><tbody><tr><td><code>is_integer/1</code>, <code>is_float/1</code>, <code>is_number/1</code></td><td>Tipo numérico</td></tr><tr><td><code>is_binary/1</code></td><td>Es string</td></tr><tr><td><code>is_list/1</code>, <code>is_map/1</code>, <code>is_tuple/1</code></td><td>Estructura</td></tr><tr><td><code>is_atom/1</code>, <code>is_boolean/1</code></td><td>Átomo / booleano</td></tr><tr><td><code>length/1</code>, <code>byte_size/1</code></td><td>Longitudes</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="recurrencia">
+    <h2>Recurrencia (recursión) en práctica</h2>
+    <div class="doc-content">
+<p>En Elixir no hay bucles con variables mutables: la iteración es <strong>recursión</strong> (optimizada con <em>tail call</em>) o, mejor, funciones de <code>Enum</code>. Veamos la recursión directa y sus patrones.</p>
+<pre><code class="language-elixir">defmodule Recursivo do
+  # Suma
+  def suma([]), do: 0
+  def suma([h | t]), do: h + suma(t)
+
+  # Longitud
+  def longitud([]), do: 0
+  def longitud([_h | t]), do: 1 + longitud(t)
+
+  # Tail recursion con acumulador (no crece la pila)
+  def suma_tail(lista), do: aux(lista, 0)
+  defp aux([], acc), do: acc
+  defp aux([h | t], acc), do: aux(t, acc + h)
+
+  # Números de Fibonacci
+  def fib(0), do: 0
+  def fib(1), do: 1
+  def fib(n), do: fib(n - 1) + fib(n - 2)
+
+  # Invertir lista
+  def inversa(lista), do: inv(lista, [])
+  defp inv([], acc), do: acc
+  defp inv([h | t], acc), do: inv(t, [h | acc])
+end
+
+IO.inspect(Recursivo.suma([1, 2, 3]))          # 6
+IO.inspect(Recursivo.suma_tail([10, 20, 30]))  # 60
+IO.inspect(Recursivo.longitud([1, 2, 3, 4]))   # 4
+IO.inspect(Recursivo.fib(10))                  # 55
+IO.inspect(Recursivo.inversa([1, 2, 3]))       # [3, 2, 1]</code></pre>
+<blockquote class="aside aside-note"><p>La "tail call" hace que la recursión con acumulador sea tan eficiente como un bucle. Aun así, para el 90% de los casos usa <code>Enum.map</code>/<code>Enum.reduce</code>. Aprende ambas: la recursión te da las bases de cómo funciona.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>case de estados</strong>: escribe una función que con <code>case</code> describa <code>:conectado</code>, <code>:desconectado</code> y otros estados.</li>
+<li><strong>cond</strong>: clasifica un número en negativo/cero/positivo/uno con <code>cond</code>.</li>
+<li><strong>Múltiples cláusulas</strong>: implementa <code>saludar/1</code> para <code>:mañana</code>, <code>:noche</code> y cualquier <code>_</code>.</li>
+<li><strong>Guardas</strong>: crea <code>clasifica(n)` que con guards devuelva "grande", "mediano" o "pequeño" según rangos.</li>
+<li><strong>Tail recursion</strong>: implementa <code>cuenta_impares(lista)</code> acumulando con tail call.</li>
+</ol>
+<p>En la próxima lección veremos módulos, el operador pipe <code>|&gt;</code> y las funciones con nombre/documentación.</p>
+    </div>
+  </section>

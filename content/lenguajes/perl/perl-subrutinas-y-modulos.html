@@ -1,0 +1,196 @@
+<!-- 5. Subrutinas y Módulos (CPAN) - Perl (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="subrutinas">
+    <h2>Subrutinas y @_</h2>
+    <div class="doc-content">
+<p>Las <strong>subrutinas</strong> en Perl se declaran con <code>sub</code> y se invocan con <code>&amp;nombre()</code> o simplemente <code>nombre()</code>. Todos los argumentos llegan en el arreglo especial <code>@_</code>.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+sub saludar {
+    my ($nombre, $edad) = @_;
+    return "Saludos, $nombre ($edad años)";
+}
+
+print saludar("Ana", 30), "\n";
+
+# Con valores por defecto
+sub config {
+    my ($clave, $valor) = @_;
+    $valor //= "default";     # // es "defined or"
+    print "$clave = $valor\n";
+}
+
+config("idioma");
+config("zona", "Lima");
+
+# Tipado no estricto: recibe lo que sea
+sub suma {
+    my $total = 0;
+    $total += $_ foreach @_;
+    return $total;
+}
+print "Suma: ", suma(1, 2, 3, 4), "\n";   # 10</code></pre>
+<blockquote class="aside aside-tip"><p>Siempre copia los argumentos al inicio: <code>my ($a, $b) = @_;</code>. Modificar <code>$_[-1]</code> modificaría el original del llamador, y con <code>@_</code> "aliasing" es un clásico de bugs.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="retorno-y-contexto">
+    <h2>Retorno y contexto</h2>
+    <div class="doc-content">
+<p>El <code>return</code> devuelve una lista o un escalar; en ausencia de <code>return</code>, la subrutina devuelve el resultado de la última expresión. Como el resto de Perl, respeta el contexto del llamador.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+sub datos {
+    return ("Ana", 30, "Lima");
+}
+
+# Contexto de lista: los tres valores
+my ($nombre, $edad, $ciudad) = datos();
+print "$nombre, $edad, $ciudad\n";
+
+# Contexto escalar: el último valor
+my $solo_ultimo = datos();
+print "Escalar: $solo_ultimo\n";     # Lima
+
+# Sin return explícito: devuelve la última expresión
+sub ultima {
+    "valor devuelto";
+}
+print ultima(), "\n";
+
+# Prototipos: restricción de aridad (opcional y poco usado)
+sub dos { my ($a, $b) = @_; "$a+$b" }
+print dos(1, 2), "\n";</code></pre>
+<blockquote class="aside aside-caution"><p>En contexto escalar, una subrutina con <code>return @lista;</code> devuelve el número de elementos, y con <code>return (1,2,3);</code> devuelve 3 (el último). Si necesitas forzar lista en contexto escalar usa una referencia; verás por qué en la sección de referencias.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="referencias">
+    <h2>Referencias</h2>
+    <div class="doc-content">
+<p>Las <strong>referencias</strong> son "punteros" a otras variables: un escalar que apunta a un arreglo, hash o subrutina. Son indispensables para: pasar estructuras grandes a subrutinas, crear estructuras anidadas y abrir el camino al orientado a objetos.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my @frutas = ("manzana", "pera");
+my $ref_lista = \@frutas;              # referencia a arreglo
+print $ref_lista-&gt;[1], "\n";           # pera
+
+my %datos = (a =&gt; 1, b =&gt; 2);
+my $ref_hash = \%datos;
+print $ref_hash-&gt;{a}, "\n";            # 1
+
+# Referencias anónimas
+my $lista_corta = [10, 20, 30];
+my $hash_corto  = { x =&gt; "ex" };
+print "$lista_corta-&gt;[0] $hash_corto-&gt;{x}\n";
+
+# Estructuras anidadas (listas de listas)
+my $matriz = [
+    [1, 2, 3],
+    [4, 5, 6],
+];
+print "elemento: $matriz-&gt;[1][2]\n";   # 6
+
+# Pasar por referencia a una subrutina (eficiente, y respeta el original)
+sub primera {
+    my $r = shift;
+    return $r-&gt;[0];
+}
+print "Primera: ", primera(\@frutas), "\n";
+
+# Desreferenciar: @$ref_lista, %$ref_hash
+my @copia = @$ref_lista;
+print "@copia\n";</code></pre>
+<blockquote class="aside aside-tip"><p>El operador <code>-&gt;</code> es "flecha de desreferencia": <code>$ref_lista-&gt;[1]</code> equivale a <code>${$ref_lista}[1]</code>. Con <code>Data::Dumper</code> verás estructuras anidadas con claridad: <code>print Dumper($matriz)</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cpan">
+    <h2>CPAN y cpanminus</h2>
+    <div class="doc-content">
+<p><strong>CPAN</strong> (Comprehensive Perl Archive Network) es el repositorio de módulos de Perl: más de 200.000 distribuciones reutilizables. La forma más cómoda de instalar módulos es con <code>cpanm</code> (cpanminus).</p>
+<pre><code class="language-bash"># Instalar cpanm
+cpan App::cpanminus
+
+# Instalar un módulo
+cpanm Moose
+cpanm JSON::PP
+
+# Instalar desde un archivo rentable (una lista de dependencias)
+cpanm --installdeps .
+
+# Buscar un módulo
+perl -MCPAN -e 'CPAN::Shell-&gt;autobundle'
+
+# Verificar que un módulo está instalado
+perl -MJSON::PP -e 'print JSON::PP::true, "\n"'</code></pre>
+<pre><code class="language-perl"># Usar módulos de CPAN
+use JSON::PP qw(encode_json decode_json);
+use Data::Dumper;
+
+my $perl_hash = { nombre =&gt; "Ana", apta =&gt; JSON::PP::true };
+my $json      = encode_json($perl_hash);
+print "$json\n";                    # {"apta":true,"nombre":"Ana"}
+
+my $vueltas = decode_json($json);
+print Dumper($vueltas);</code></pre>
+<blockquote class="aside aside-note"><p><code>use Módulo qw(lista de exports);</code> importa funciones al espacio actual. Los módulos en Perl empezaron como "pragmas" (<code>strict</code>, <code>warnings</code>) y luego llegaron las CPAN dists. El ecosistema Perl "no incluye baterías": casi todo útil está en CPAN.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="modulos-utiles">
+    <h2>Módulos útiles</h2>
+    <div class="doc-content">
+<p>Un puñado de módulos resolverá la mayoría de necesidades cotidianas en Perl moderno.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+use JSON::PP;                 # JSON
+use Data::Dumper;             # depuración
+use Path::Tiny;               # rutas y archivos (+ PerlIO)
+use Time::Piece;              # fechas
+use LWP::Simple qw(get);      # peticiones HTTP (con LWP o lwp-request)
+use File::Basename;           # manejo de nombres de ruta
+
+# Fecha
+my $t = localtime;
+print $t-&gt;strftime("%Y-%m-%d"), "\n";
+
+# Rutas
+use Path::Tiny;
+my $dir = path("logs")-&gt;mkpath;
+say "Directorio: ", $dir;     # logs
+
+# Leer un archivo entero (Path::Tiny)
+my $contenido = path("datos.txt")-&gt;slurp_utf8;
+print "Primeras 30 chars: ", substr($contenido, 0, 30), "\n";
+
+say "Listo.";</code></pre>
+<table><thead><tr><th>Módulo</th><th>Para qué</th></tr></thead><tbody><tr><td><code>JSON::PP</code> / <code>Cpanel::JSON::XS</code></td><td>Codificar/decodificar JSON</td></tr><tr><td><code>Path::Tiny</code></td><td>Lectura/escritura de archivos y rutas</td></tr><tr><td><code>Time::Piece</code></td><td>Fecha y hora de forma humana</td></tr><tr><td><code>LWP::Simple</code></td><td>GET/POST HTTP</td></tr><tr><td><code>Mojolicious</code></td><td>Framework web y utilidades (<code>ojo</code> para una línea)</td></tr><tr><td><code>DBI + DBD::SQLite</code></td><td>Acceso a bases de datos</td></tr><tr><td><code>Test::More</code></td><td>Pruebas unitarias</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Con `use Mojolicious::Lite` construyes un servicio web en 10 líneas. Con `Test::More` + `prove` pruebas tu módulo en segundos. El módulo `Modern::Perl` activa <code>strict</code>, <code>warnings</code> y características de la versión actual en una sola línea.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Librería de utilidades</strong>: crea subrutinas <code>saludo</code>, <code>suma</code> y <code>area_circulo</code>; usa valores por defecto con <code>//=</code>.</li>
+<li><strong>Contexto controlado</strong>: escribe una subrutina que devuelva una lista de 3 elementos y llámala en contexto lista, escalar y con <code>scalar</code>; explica cada salida.</li>
+<li><strong>Estructuras anidadas</strong>: construye una agenda (refs anidadas: día → listas de tareas) y muestra una tarea por cada día.</li>
+<li><strong>Primer módulo</strong>: instala <code>JSON::PP</code> (o verifica que existe) y codifica/decodifica un hash con un array interno.</li>
+<li><strong>Agenda con Time::Piece</strong>: muestra la fecha actual en formato <code>YYYY-MM-DD HH:MM</code> y suma un día.</li>
+</ol>
+<p>En la próxima lección dominaremos el manejo de archivos, el operador diamante y la automatización de tareas del sistema.</p>
+    </div>
+  </section>

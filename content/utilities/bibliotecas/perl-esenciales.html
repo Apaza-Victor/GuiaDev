@@ -1,0 +1,116 @@
+<!-- 1. Librerías Esenciales de Perl - Bibliotecas (Utilidades) -->
+  <section id="core-modulos">
+    <h2>Módulos core de Perl <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-perl">use strict;
+use warnings;
+use Data::Dumper;
+use List::Util qw(sum max shuffle);
+use Scalar::Util qw(blessed);
+use POSIX qw(strftime);
+
+my @nums = (3, 1, 4, 1, 5);
+my $total = sum(@nums);
+my $maximo = max(@nums);
+
+my %hash = (nombre =&gt; 'Ana', edad =&gt; 30);
+print Dumper(\%hash);
+
+my $fecha = strftime('%Y-%m-%d', localtime);
+print "Fecha: $fecha\n";
+print "suma=$total max=$maximo\n";
+</code></pre>
+<blockquote class="aside aside-tip"><p>
+La biblioteca estándar de Perl: `strict`/`warnings` para escribenlo bien, `Data::Dumper` depura, `List::Util` para listas, `POSIX` utilidades del sistema.
+</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cpan">
+    <h2>CPAN: el gigante de módulos <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># CPAN: repositorio de ~200k módulos
+cpan install JSON            # instalar directo
+cpanm JSON PPI DBI           # cpanminus (recomendado, rápido)
+# o con App::cpanminus:
+curl -L https://cpanmin.us | perl - App::cpanminus
+
+# local::lib para installar en ~/perl5 sin privilegios
+cpan App::cpanminus local::lib
+# Configuración por proyecto: cpanfile + Carton
+cpanfile:
+requires 'JSON', '2.90';
+requires 'DBI';
+</code></pre>
+<blockquote class="aside aside-tip"><p>CPAN fue el primer ejemplo histórico de repos de paquetes. cpanm + cpanfile + Carton te dan gestión de dependencias moderna en Perl.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="librerias-populares">
+    <h2>Librerías populares: JSON, DBI, MIME <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-perl">use JSON;
+use DBI;
+use File::Slurp qw(read_file write_file);
+use Time::Piece;
+
+# JSON
+my $json = encode_json({name =&gt; 'Ana', age =&gt; 30});
+print $json, "\n";
+
+# DBI (base de datos)
+my $dbh = DBI-&gt;connect("dbi:SQLite:dbname=app.db", "", "", {});
+$dbh-&gt;do("CREATE TABLE IF NOT EXISTS users (id INTEGER, name TEXT)");
+$dbh-&gt;do("INSERT INTO users VALUES (1, 'Ana')");
+my $rows = $dbh-&gt;selectall_arrayref("SELECT * FROM users");
+
+# Fechas
+my $t = Time::Piece-&gt;new;
+print $t-&gt;strftime('%Y-%m-%d %H:%M:%S'), "\n";
+
+# Archivos
+write_file('salida.txt', "datos\n");
+print read_file('salida.txt');
+</code></pre>
+<blockquote class="aside aside-note"><p>JSON/DBI/Time::Piece/File::Slurp son la dupla esencial: JSON, acceso a BD (DBI es el driver genérico), fechas y archivos. `DBI`+DBD es la vieja escuela robusta.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-perl">
+    <h2>Instalación de Perl <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Perl viene en Linux/macOS casi siempre; verifica:
+perl --version
+# Compilar desde source (si lo necesitas) o usar:
+#   ActiveState / Strawberry Perl (Windows, trae cpan)
+#   plenv / perlbrew (gestores de versión)
+curl -L https://install.perlbrew.pl | bash   # perlbrew
+perlbrew install perl-5.40.0
+perlbrew switch perl-5.40.0
+
+# Instalar módulos base
+cpanm JSON DBI DBI::SQLite
+
+# Ejecutar
+perl script.pl
+</code></pre>
+<blockquote class="aside aside-caution"><p>En Windows usa Strawberry Perl (con `cpanm` incluido); en Unix/Linux ya viene. perlbrew para versionar Perl como rbenv/nvm.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Escribe un script con strict/warnings que cuente palabras de un archivo.</li>
+<li>Usa List::Util (sum/lmax/shuffle) sobre un array de 10 números.</li>
+<li>Instala JSON con cpanm y codifica/decodifica un hash.</li>
+<li>Con DBI:SQLite crea una tabla, inserta y consulta.</li>
+<li>Escribe y lee un archivo con File::Slurp.</li>
+</ol>
+    </div>
+  </section>

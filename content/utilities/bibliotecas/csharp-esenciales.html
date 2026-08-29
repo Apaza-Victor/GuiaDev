@@ -1,0 +1,143 @@
+<!-- 1. Librerías Esenciales de C# - Bibliotecas (Utilidades) -->
+  <section id="bcl-net">
+    <h2>BCL y .NET: la librería base <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<p>La BCL (Base Class Library) incluye colecciones, LINQ, I/O, JSON, HTTP, DateOnly, Reflection y mucho más dentro del SDK.</p>
+<pre><code class="language-csharp">using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+
+// Colecciones y LINQ
+var lista = new List&lt;int&gt; { 5, 1, 4, 2, 3 };
+var pares = lista.Where(n =&gt; n % 2 == 0).OrderBy(n =&gt; n).ToList();
+var promedio = lista.Average();
+
+var dict = new Dictionary&lt;string, int> { ["Ana"] = 30, ["Bruno"] = 25 };
+dict.TryGetValue("Ana", out int edadAna);
+
+// JSON nativo (System.Text.Json)
+var json = JsonSerializer.Serialize(new { Nombre = "Ana", Edad = 30 });
+var doc   = JsonDocument.Parse(json);
+string nombre = doc.RootElement.GetProperty("Nombre").GetString()!;
+
+// I/O moderno
+string texto = File.ReadAllText("datos.txt");
+File.WriteAllLines("out.txt", lista.Select(x =&gt; x.ToString()));
+</code></pre>
+<blockquote class="aside aside-tip"><p>.NET (BCL) te da casi todo: LINQ para pipelines, System.Text.Json para JSON y System.Net.Http para peticiones. Con lo que trae el SDK resuelves el 80% de tareas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="configuracion-appsettings">
+    <h2>Configuración y logging con Microsoft.Extensions <span class="gd-badge gd-badge-note">Utilidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-json">// appsettings.json
+{
+  "Conexion": "Server=db;Database=app;User Id=sa;",
+  "DominiosPermitidos": ["localhost", "guia.dev"]
+}
+</code></pre>
+<pre><code class="language-csharp">using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
+var config = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
+    .AddEnvironmentVariables()
+    .Build();
+
+string? conexion = config["Conexion"];
+var dominios     = config.GetSection("DominiosPermitidos").Get&lt;string[]&gt;();
+
+// Logging: abstracción estándar (Microsoft.Extensions.Logging)
+ILogger&lt;Program&gt; log = ...;   // llega inyectado en ASP.NET Core
+log.LogInformation("Servicio en puerto {Puerto}", 8080);
+log.LogWarning("Memoria al {Porcentaje}%", 87);
+log.LogError(ex, "Falló el inicio");
+// En consola: builder.Services.AddConsole(); AddDebug(); Aplicar a file (Serilog)
+</code></pre>
+<blockquote class="aside aside-tip"><p>La configuración tipada con strong-typed Options + logging por abstracción son el estándar ASP.NET Core, reutilizables en cualquier app .NET.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="nuget">
+    <h2>NuGet: el gestor de paquetes <span class="gd-badge gd-badge-note">Deps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># CLI de .NET SDK
+dotnet add package Newtonsoft.Json
+dotnet add package FluentValidation
+dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
+dotnet restore        # descarga todas las dependencias del .csproj
+</code></pre>
+<pre><code class="language-xml">&lt;!-- .csproj con package references --&gt;
+&lt;PackageReference Include="Newtonsoft.Json" Version="13.0.3" /&gt;
+&lt;PackageReference Include="Serilog" Version="4.0.0" /&gt;
+</code></pre>
+<blockquote class="aside aside-tip"><p>NuGet (aka nuget.org) es el repositorio central. Prefiere System.Text.Json nativo si puedes y NuGet solo para lo que falta.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fluentvalidation-automapper">
+    <h2>FluentValidation y AutoMapper <span class="gd-badge gd-badge-note">Diseño</span></h2>
+    <div class="doc-content">
+<pre><code class="language-csharp">// FluentValidation: validación declarativa
+using FluentValidation;
+
+public class UsuarioValidator : AbstractValidator&lt;Usuario&gt; {
+  public UsuarioValidator() {
+    RuleFor(u =&gt; u.Email).NotEmpty().EmailAddress();
+    RuleFor(u =&gt; u.Edad).InclusiveBetween(18, 120)
+      .WithMessage("Edad inválida");
+  }
+}
+var resultado = new UsuarioValidator().Validate(usuario);
+
+// AutoMapper: mapeo DTO ↔ entidad
+using AutoMapper;
+
+var config = new MapperConfiguration(cfg =&gt;
+    cfg.CreateMap&lt;Usuario, UsuarioDTO&gt;()
+       .ForMember(d =&gt; d.EdadEn, o =&gt; o.MapFrom(s =&gt; DateTime.Now.Year - s.AnioNacimiento)));
+var mapper = config.CreateMapper();
+UsuarioDTO dto = mapper.Map&lt;UsuarioDTO&gt;(usuario);
+</code></pre>
+<blockquote class="aside aside-tip"><p>FluentValidation se integra con ASP.NET.Core (validación automática en controllers). AutoMapper evita mapeos manuales repetitivos en capas DTO/Entity.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion">
+    <h2>Instalación del SDK de .NET <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Windows: instalador dotnet cli
+winget install Microsoft.DotNet.SDK.8
+
+# Linux/macOS
+curl -fsSL https://dot.net/v1/dotnet-install.sh | bash
+# o: sudo apt install dotnet-sdk-8.0 (Debian/Ubuntu)
+
+# Verificar y hola mundo
+dotnet --list-sdks
+dotnet new console -o Hola && cd Hola && dotnet run
+dotnet new webapi -o Api          # API mínima ASP.NET Core
+</code></pre>
+<blockquote class="aside aside-tip"><p>Elige la versión LTS (8 actualmente). Visual Studio o VS Code + C# Dev Kit son los editores; Rider alternativa potente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Con LINQ agrupa una lista de personas por rango de edad y cuenta cada grupo.</li>
+<li>Agrega un archivo appsettings.json con una sección tipada y léela con Options.</li>
+<li>Añade por NuGet FluentValidation y valida un modelo Usuario (email, edad, nombre mínimo).</li>
+<li>Crea un mapeo AutoMapper entre Entidad y un DTO con una propiedad calculada.</li>
+<li>Loguea el inicio y un error con la abstracción Microsoft.Extensions.Logging.</li>
+</ol>
+    </div>
+  </section>

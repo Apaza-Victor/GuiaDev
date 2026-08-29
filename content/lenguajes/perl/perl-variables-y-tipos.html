@@ -1,0 +1,162 @@
+<!-- 2. Variables y Tipos de Datos - Perl (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="escalares">
+    <h2>Escalares: $var</h2>
+    <div class="doc-content">
+<p>En Perl, todos los datos viven en <strong>tres tipos de variables</strong>: escalares (<code>$</code>), arreglos (<code>@</code>) y hashes (<code>%</code>). Los <strong>escalares</strong> representan un valor único: un número, una cadena o una referencia. Se identifican con el prefijo <code>$</code>.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my $nombre  = "Ana";          # cadena
+my $edad    = 30;             # entero
+my $pi      = 3.14159;        # decimal
+my $activo  = 1;              # booleano (1/0 o 'true'/'false')
+my $vacio   = undef;          # valor indefinido
+
+print "$nombre tiene $edad años\n";
+print "El valor es $vacio\n";    # aviso: uso de variable no definida</code></pre>
+<p>A diferencia de otros lenguajes, el prefijo <code>$</code> forma parte del nombre de la variable: <code>$nombre</code> y <code>nombre</code> son cosas distintas. Las variables declaradas con <code>my</code> tienen <strong>ámbito léxico</strong> (local al bloque donde se declaran).</p>
+<blockquote class="aside aside-note"><p>Perl convierte automáticamente entre número y cadena según el contexto. No necesitas declarar el tipo; la variable "es" lo que se le asigna.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="arreglos">
+    <h2>Arreglos: @arr</h2>
+    <div class="doc-content">
+<p>Un <strong>arreglo</strong> es una lista ordenada de valores que se indexa desde <code>0</code>. Se identifica con el prefijo <code>@</code>, pero cada elemento individual es un escalar y se accede con <code>$</code>.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my @frutas = ("manzana", "pera", "uva");
+my @numeros = (10, 20, 30);
+
+print $frutas[0];      # manzana
+print $frutas[-1];     # uva (índice negativo: desde el final)
+print scalar @frutas;  # 3 (número de elementos)
+
+# Agregar y quitar
+push @frutas, "kiwi";       # agrega al final
+unshift @frutas, "mango";   # agrega al inicio
+my $ultimo = pop @frutas;   # quita del final
+my $primero = shift @frutas; # quita del inicio
+
+# Recorrer con índices
+for my $i (0 .. $#frutas) {
+    print "$i: $frutas[$i]\n";
+}</code></pre>
+<blockquote class="aside aside-tip"><p><code>@frutas</code> es la lista completa; <code>$frutas[0]</code> es un elemento. El prefijo <code>$</code> indica que estás usando "un escalar", y Perl entiende que viene del arreglo por los corchetes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="hashes">
+    <h2>Hashes: %hash</h2>
+    <div class="doc-content">
+<p>Un <strong>hash</strong> (o "diccionario") es una colección de pares <strong>clave → valor</strong>, ideal para datos asociativos. Se identifica con el prefijo <code>%</code> y se accede a cada valor con llaves <code>{}</code>.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my %usuario = (
+    nombre  =&gt; "Ana",
+    edad    =&gt; 30,
+    ciudad  =&gt; "Lima",
+);
+
+print $usuario{nombre};   # Ana
+$usuario{edad} = 31;      # modificar
+delete $usuario{ciudad};  # eliminar
+
+# Verificar existencia
+print exists $usuario{edad} ? "sí" : "no";
+
+# Recorrer pares clave-valor
+while (my ($clave, $valor) = each %usuario) {
+    print "$clave = $valor\n";
+}
+
+# Listar claves y valores
+my @claves = keys %usuario;
+my @valores = values %usuario;</code></pre>
+<blockquote class="aside aside-caution"><p>El operador <code>=&gt;</code> (fat comma) es solo azúcar sintáctico: <code>nombre =&gt; "Ana"</code> equivale a <code>"nombre", "Ana"</code>. Uso combinado con <code>%hash</code> dentro de llaves: <code>$hash{clave}</code>.</p></blockquote>
+<table><thead><tr><th>Símbolo</th><th>Contenedor</th><th>Acceso a un elemento</th></tr></thead><tbody><tr><td><code>$var</code></td><td>Escalar (un valor)</td><td><code>$var</code></td></tr><tr><td><code>@arr</code></td><td>Arreglo (lista ordenada)</td><td><code>$arr[0]</code></td></tr><tr><td><code>%hash</code></td><td>Hash (pares clave/valor)</td><td><code>$hash{clave}</code></td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="contexto">
+    <h2>Contexto: el concepto clave</h2>
+    <div class="doc-content">
+<p>El <strong>contexto</strong> es la característica que diferencia a Perl de casi cualquier otro lenguaje: la MISMA expresión produce resultados distintos según dónde se use. Cuando asignas a un escalar, Perl usa <strong>contexto escalar</strong>; cuando asignas a una lista o arreglo, usa <strong>contexto de lista</strong>.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my @frutas = ("manzana", "pera", "uva");
+
+my $cantidad   = @frutas;   # contexto escalar: cuenta ELEMENTOS (= 3)
+my @copia      = @frutas;   # contexto de lista: copia la lista
+my $como_lista = (10, 20, 30); # contexto escalar: toma el ÚLTIMO (= 30)
+
+print "$cantidad\n";     # 3
+print "$como_lista\n";   # 30
+
+# Operadores sensibles al contexto:
+# - En escalar, la coma "encadena" y devuelve el último valor
+# - En lista, la coma crea la lista
+
+# Contexto vacío: el resultado se descarta
+@frutas = ();            # vacía el arreglo</code></pre>
+<blockquote class="aside aside-tip"><p>El operador <code>scalar</code> fuerza contexto escalar. Es la forma típica de contar elementos: <code>scalar @arr</code>. Entender el contexto te evita la mayoría de sorpresas de Perl.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="operadores">
+    <h2>Operadores</h2>
+    <div class="doc-content">
+<p>Perl ofrece operadores aritméticos, de comparación (dos juegos: numérico y de cadena) y lógicos.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+# Aritméticos
+my $suma  = 10 + 5;
+my $resta = 10 - 5;
+my $mult  = 10 * 5;
+my $div   = 10 / 3;      # 3.333...
+my $modulo = 10 % 3;     # 1
+my $pot   = 2 ** 8;      # 256
+my $inc   = 5; $inc++;   # incremento
+
+# Comparación numérica:  ==  !=  <   &lt;=  >   &gt;=
+# Comparación de cadenas: eq  ne  lt  le  gt  ge
+my $a = "10";
+my $b = "9";
+print "numérico: ", ($a &gt; $b ? "10 &gt; 9" : "?"), "\n";   # 10 &gt; 9
+print "cadena:   ", ($a gt $b ? "10 gt 9" : "?"), "\n"; # '10' gt '9'
+
+# Lógicos y de cadena
+my $nombre = "Perl";
+my $saludo = "Hola, " . $nombre;      # concatenación
+my $repetido = "ab" x 3;              # "ababab"
+my $ok = ($a == 10 &amp;&amp; $b eq "9") || die "algo falló";</code></pre>
+<table><thead><tr><th>Tipo de comparación</th><th>Numérica</th><th>De cadenas</th></tr></thead><tbody><tr><td>Igual</td><td><code>==</code></td><td><code>eq</code></td></tr><tr><td>Distinto</td><td><code>!=</code></td><td><code>ne</code></td></tr><tr><td>Menor</td><td><code>&lt;</code></td><td><code>lt</code></td></tr><tr><td>Mayor</td><td><code>&gt;</code></td><td><code>gt</code></td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Mezclar ambos juegos es un error clásico: <code>if ($a == $b)</code> convierte a número (<code>"9"</code> == <code>9</code> funciona), pero la intención muchas veces es comparar texto. Usa el operador correcto según el tipo de dato.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Perfil escalar</strong>: crea variables con tu nombre, edad, peso y booleano de "estudia"; imprime un párrafo que las use todas.</li>
+<li><strong>Lista de compras</strong>: crea un <code>@items</code> para tu lista de compras; agrega con <code>push</code>, quita con <code>pop</code> y el primero con <code>shift</code>; imprime el tamaño con <code>scalar</code>.</li>
+<li><strong>Diccionario de datos</strong>: crea un <code>%persona</code> con 4 claves; modifica una, borra otra y comprueba con <code>exists</code>; recorre con <code>each</code>.</li>
+<li><strong>Contexto experto</strong>: experimenta con <code>@frutas</code> en contexto escalar vs lista; explica con comentarios qué devuelve cada asignación y por qué.</li>
+<li><strong>Doble comparación</strong>: escribe un script que compare <code>"10"</code> y <code>"9"</code> con operadores numéricos y con operadores de cadena, mostrando ambos resultados.</li>
+</ol>
+<p>En la próxima lección veremos el control de flujo: condicionales <code>if/unless</code>, bucles y las sentencias <code>last</code>/<code>next</code>/<code>redo</code>.</p>
+    </div>
+  </section>

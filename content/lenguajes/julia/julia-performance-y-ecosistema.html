@@ -1,0 +1,203 @@
+<!-- 6. Rendimiento y Ecosistema - Julia (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="jit-y-dispatch">
+    <h2>Compilación JIT y múltiple dispatch</h2>
+    <div class="doc-content">
+<p>Julia usa <strong>compilación just-in-time (JIT)</strong>: cada función se compila a código máquina especializado para los tipos de los argumentos con los que la llamas por primera vez. Por eso Julia se siente como intérprete pero rinde como compilado.</p>
+<pre><code class="language-julia"># La primera llamada compila; verás el tiempo en la primera ejecución
+function fib(n)
+    n &lt;= 2 ? 1 : fib(n-1) + fib(n-2)
+end
+
+for _ in 1:3
+    t = @elapsed fib(30)
+    println("fib(30) en ", round(t * 1000, digits=1), " ms")
+end
+# NOTA: tras la primera, el tiempo cae drásticamente
+
+# Agregar método a una función (no "sobrecarga": es dispatch)
+f(x::Float64) = "flotante: $x"
+f(x::Int)     = "entero: $x"
+f(x::String)  = "texto: $x"
+
+println(f(1))      # entero
+println(f(2.5))    # flotante
+println(f("hola")) # texto
+
+# El dispatch elige por TODOS los argumentos (multiple dispatch)
+g(a::Int, b::Int)      = "int+int"
+g(a::Int, b::Float64)  = "int+float"
+g(a::Float64, b::Int)  = "float+int"
+println(g(1, 2))       # int+int
+println(g(1, 2.0))     # int+float</code></pre>
+<blockquote class="aside aside-tip"><p>El "secreto" del rendimiento de Julia: denotar los tipos de los argumentos para que el compilador genere código especializado. Las funciones sin anotar caen al tipo base y pueden ir lentas en bucles calientes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="multiple-dispatch">
+    <h2>Múltiple dispatch en profundidad</h2>
+    <div class="doc-content">
+<p>El <strong>múltiple dispatch</strong> es el paradigma central de Julia: el método a ejecutar se decide en tiempo de ejecución según los <strong>tipos de todos los argumentos</strong>. Reemplaza por completo los patrones de "herencia" y "casting" típicos de otros lenguajes.</p>
+<pre><code class="language-julia">abstract type Figura end
+
+struct Circulo &lt;: Figura
+    radio :: Float64
+end
+
+struct Rectangulo &lt;: Figura
+    ancho :: Float64
+    alto  :: Float64
+end
+
+# Misma función "area", métodos por tipo
+area(f::Circulo)     = π * f.radio^2
+area(r::Rectangulo)  = r.ancho * r.alto
+
+c = Circulo(2.0)
+r = Rectangulo(3.0, 4.0)
+println(area(c))   # 12.566...
+println(area(r))   # 12.0
+
+# Dispatch sobre tipos abstractos también funciona
+function describe(f::Figura)
+    "Figura con área $(area(f))"
+end
+println(describe(c))
+
+# Subtipado de números y búsqueda
+println(1.0 isa Real)   # true
+println(1 isa Real)     # true
+println("x" isa Real)   # false</code></pre>
+<blockquote class="aside aside-note"><p>Con el múltiple dispatch no necesitas interfaces explícitas: basta definir métodos con el mismo nombre para tipos distintos. Es la base de todo el ecosistema matriz/estadístico de Julia.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="paquetes-y-registro">
+    <h2>El registro de paquetes y Pkg</h2>
+    <div class="doc-content">
+<p><strong>Pkg</strong> es el gestor de paquetes integrado de Julia. Instala, actualiza y "precompila" librerías con total reproducibilidad (los entornos pueden fijarse con manifiestos <code>Project.toml</code>/<code>Manifest.toml</code>).</p>
+<pre><code class="language-julia">using Pkg
+
+# Comandos básicos
+Pkg.add("DataFrames")          # instala una librería
+Pkg.add(["Plots", "CSV"])      # varias a la vez
+Pkg.rm("Plots")                # desinstala
+Pkg.update()                   # actualiza todo del entorno activo
+Pkg.status()                   # lista con versiones
+Pkg.precompile()               # precompila (acelera el primer uso)</code></pre>
+<pre><code class="language-bash"># Desde la terminal
+julia -e 'using Pkg; Pkg.add("DataFrames")'
+julia --project=. -e 'using Pkg; Pkg.instantiate()'   # instala Manifest
+
+# Estado de salida de un proyecto reproducible
+# cat Project.toml
+# [deps]
+# DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"</code></pre>
+<table><thead><tr><th>Comando</th><th>Efecto</th></tr></thead><tbody><tr><td><code>Pkg.add</code></td><td>Instalar dependencia</td></tr><tr><td><code>Pkg.update</code></td><td>Actualizar dependencias</td></tr><tr><td><code>Pkg.status</code></td><td>Ver versión instalada</td></tr><tr><td><code>Pkg.precompile</code></td><td>Precompilar paquetes</td></tr><tr><td><code>Pkg.instantiate</code></td><td>Reconstituir entorno desde Manifest</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="paralelismo">
+    <h2>Paralelismo y computación en clúster</h2>
+    <div class="doc-content">
+<p>Julia trae paralelismo por procesos (<code>@everywhere</code>, <code>@spawnat</code>, <code>@distributed</code>) y por hilos (<code>Threads.@threads</code>), además de <strong>Task</strong> para concurrencia ligera. En datos grandes el soporte a JuliaGPU es excelente.</p>
+<pre><code class="language-julia"># PARALELISMO POR HILOS (dentro de un proceso)
+function sumar_hilos(n)
+    sum = zeros(Int, 8)
+    Threads.@threads for i in 1:8
+        s = 0
+        for j in 1:n
+            s += j
+        end
+        sum[i] = s
+    end
+    sum
+end
+
+# ACTIVAR HILOS: lanzar julia con -t 4, o desde REPL:
+# julia -t 4
+
+# PARALELISMO POR PROCESOS (Distributed)
+using Distributed
+addprocs(4)                      # agrega 4 procesos workers
+@everywhere using Statistics     # necesita cargar en cada worker
+
+resultado = @distributed (+) for i in 1:100
+    i^2
+end
+println(resultado)   # suma de cuadrados
+
+# TAREAS ASÍNCRONAS (concurrencia ligera)
+t = @async begin
+    sleep(0.5)
+    println("tarea terminada")
+end
+println("principal inmediato")
+wait(t)
+
+# CHANNELS: comunicación entre tareas
+ch = Channel{Int}(10)
+@async for i in 1:5
+    put!(ch, i)
+end
+for _ in 1:5
+    print(take!(ch), " ")
+end
+println()</code></pre>
+<blockquote class="aside aside-caution"><p>Con <code>@distributed</code> la reducción usa el operador que pongas (aquí <code>+</code>); con hilos, ojo con la seguridad de hilos en mutaciones compartidas usa <code>Threads.@threads</code> solo para loops "pure".</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="proyectos-y-entornos">
+    <h2>Proyectos y entornos</h2>
+    <div class="doc-content">
+<p>La mejor práctica para aplicaciones Julia es crear un <strong>proyecto</strong> por aplicación: un directorio con <code>Project.toml</code> que declara dependencias y <code>Manifest.toml</code> que fija versiones. <code>--project</code> activa el entorno.</p>
+<pre><code class="language-bash"># Estructura recomendada
+# miapp/
+#   Project.toml
+#   Manifest.toml
+#   src/miapp.jl
+#   test/runtests.jl
+
+# Crear el entorno desde la terminal
+julia --project=. -e 'using Pkg; Pkg.add(["DataFrames", "CSV"])'
+julia --project=. -e 'using Pkg; Pkg.status()'
+
+# Ejecutar el código del proyecto
+julia --project=. src/miapp.jl
+
+# Entornos aislados con juliaup / JULIA_PROJECT
+export JULIA_PROJECT="$(pwd)"   # activa el proyecto actual
+export JULIA_DEPOT_PATH=$HOME/.julia</code></pre>
+<pre><code class="language-julia"># Declaración dentro de Julia
+module Miapp
+export duplicar
+duplicar(x) = 2x
+end
+
+using .Miapp
+println(duplicar(21))   # 42</code></pre>
+<blockquote class="aside aside-tip"><p><strong>juliaup</strong> es el instalador/versionador oficial de Julia (gestiona múltiples versiones como rustup). Separa "entorno de usuario" de "entornos de proyecto" automáticamente; <code>Project.toml</code> + <code>Manifest.toml</code> garantiza reproducibilidad total.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Múltiple dispatch</strong>: define una <code>abstract type Animal</code> con subtipos <code>Perro</code> y <code>Gato</code>, y un método <code>sonido(a)</code> distinto para cada uno.</li>
+<li><strong>JIT</strong>: ejecuta <code>fib(30)</code> tres veces y documenta la mejora de la primera a la tercera ejecución.</li>
+<li><strong>Pkg</strong>: crea un entorno de proyecto, agrega <code>CSV</code>, muestra <code>Pkg.status()</code> y exporta el <code>Project.toml</code>.</li>
+<li><strong>Paralelo</strong>: con <code>Threads.@threads</code> calcula la suma de cuadrados de <code>1:10^6</code> y compara en tiempo frente a la versión secuencial.</li>
+<li><strong>Proyecto reproducible</strong>: estructura un <code>miapp</code> con module, <code>Project.toml</code> y un <code>test/runtests.jl</code> mínimo; ejecuta con <code>--project</code>.</li>
+</ol>
+<p>Has completado el módulo de Julia en GuiaDev: del REPL a la computación paralela.</p>
+    </div>
+  </section>

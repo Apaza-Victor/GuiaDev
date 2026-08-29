@@ -1,0 +1,113 @@
+<!-- 2. Ecosistema HTML: HTMX, Alpine, Web Components - Bibliotecas (Utilidades) -->
+  <section id="ecosistema-html">
+    <h2>El ecosistema HTML en 2025 <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># HTML puro + librerías de markup (sin framework completo):
+#   HTMX: interactividad con atributos en el HTML (AJAX declarativo)
+#   Alpine.js: comportamientos ligeros en el markup
+#   Web Components: etiquetas personalizadas (custom elements + Shadow DOM)
+#   Stimulus (Rails) / Petite-Vue  | Liquid/Jinja (templates del server)
+# Complementos para usar HTML en el servidor: templating
+#   (Handlebars, EJS, Mustache, Twig en backend)
+# Recomendación: HTMX o Alpine antes de meter React/Vue/Svelte
+</code></pre>
+<blockquote class="aside aside-note"><p>HTMX/Alpine añaden interactividad sin framework de JS; los Web Components multiplican el HTML. Si solo necesitas actualizar fragmentos, van a tu rescate.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="htmx">
+    <h2>HTMX: interactividad en el HTML <span class="gd-badge gd-badge-note">HTMX</span></h2>
+    <div class="doc-content">
+<pre><code class="language-html">&lt;script src="https://unpkg.com/htmx.org@2.0.4"&gt;&lt;/script&gt;
+
+&lt;!-- Cargar fragmentos vía AJAX --&gt;
+&lt;button hx-get="/recientes" hx-target="#lista" hx-swap="innerHTML"&gt;
+  Cargar recientes
+&lt;/button&gt;
+&lt;ul id="lista"&gt;&lt;/ul&gt;
+
+&lt;!-- Enviar formularios sin recargar --&gt;
+&lt;form hx-post="/guardar" hx-target="#respuesta"&gt;
+  &lt;input name="nombre" /&gt;
+  &lt;button type="submit"&gt;Guardar&lt;/button&gt;
+&lt;/form&gt;
+&lt;div id="respuesta"&gt;&lt;/div&gt;
+
+&lt;!-- Transiciones y polling --&gt;
+&lt;div hx-trigger="every 30s" hx-get="/status"&gt;estado...&lt;/div&gt;
+</code></pre>
+<blockquote class="aside aside-success"><p>HTMX hace que el servidor devuelva HTML y el cliente lo intercambie con atributos. Menos JS, mismo resultado dinámico; ideal sobre backends tipo Rails, Laravel o Django.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="alpine-webcomponents">
+    <h2>Alpine.js y Web Components <span class="gd-badge gd-badge-note">Ligero</span></h2>
+    <div class="doc-content">
+<pre><code class="language-html">&lt;script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"&gt;&lt;/script&gt;
+
+&lt;!-- Alpine: estado y eventos en el markup --&gt;
+&lt;div x-data="{ abierto: false }"&gt;
+  &lt;button @click="abierto = !abierto"&gt;Toggle&lt;/button&gt;
+  &lt;p x-show="abierto" x-transition&gt;Contenido que aparece&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;!-- Web Components: etiquetas propias encapsuladas --&gt;
+&lt;script&gt;
+  class TarjetaUsuario extends HTMLElement {
+    connectedCallback() {
+      this.innerHTML = `&lt;article class="card"&gt;
+        &lt;h2&gt;${this.getAttribute('nombre')}&lt;/h2&gt;
+        &lt;slot&gt;&lt;/slot&gt;&lt;/article&gt;`;
+    }
+  }
+  customElements.define('tarjeta-usuario', TarjetaUsuario);
+&lt;/script&gt;
+&lt;tarjeta-usuario nombre="Ana"&gt;&lt;p&gt;perfil popular&lt;/p&gt;&lt;/tarjeta-usuario&gt;
+</code></pre>
+<blockquote class="aside aside-tip"><p>Alpine te da reactividad mínima; Web Components encapsulan y reutilizan UI abstracta con Shadow DOM. Ambos sin dependencias fuertes y perfectos con HTML vanilla.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="templates-abuse">
+    <h2>Templating: server-side vs client-side <span class="gd-badge gd-badge-note">Templates</span></h2>
+    <div class="doc-content">
+<pre><code class="language-html">&lt;!-- Client-side: Handlebars (lógica suave) --&gt;
+&lt;script src="https://cdn.jsdelivr.net/npm/handlebars@4.7.8/dist/handlebars.min.js"&gt;&lt;/script&gt;
+&lt;script id="plantilla" type="text/x-handlebars-template"&gt;
+  &lt;li&gt;{{nombre}} — {{edad}} años&lt;/li&gt;
+&lt;/script&gt;
+&lt;script&gt;
+  const src = document.getElementById('plantilla').innerHTML;
+  const templ = Handlebars.compile(src);
+  document.getElementById('lista').innerHTML = datos.map(templ).join('');
+&lt;/script&gt;
+
+&lt;!-- Server-side: EJS / Twig / Jinja2 (en backend) --&gt;
+</code></pre>
+<pre><code class="language-ejs">&lt;!-- ejemplo EJS (Node) --&gt;
+&lt;ul&gt;
+  &lt;% datos.forEach(u =&gt; { %&gt;
+    &lt;li&gt;&lt;%= u.nombre %&gt;&lt;/li&gt;
+  &lt;% }) %&gt;
+&lt;/ul&gt;
+</code></pre>
+<blockquote class="aside aside-tip"><p>Templates en client (Handlebars/Mustache) pintan datos obtenidos vía AJAX; en server (EJS/Twig/Jinja) se pintan al renderizar. En HTML puro ambos son fáciles de adicionar por CDN.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Añade HTMX con hx-get/hx-target para simular carga de una lista.</li>
+<li>Migra un toggle de JS manual a Alpine (x-data/x-show).</li>
+<li>Define un web component tarjeta-usuario con slot.</li>
+<li>Crea una plantilla Handlebars y renderiza 5 elementos.</li>
+<li>Combina hx-polling para un estado auto-refrescado.</li>
+</ol>
+    </div>
+  </section>

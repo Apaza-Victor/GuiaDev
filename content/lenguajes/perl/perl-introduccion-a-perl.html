@@ -1,0 +1,134 @@
+<!-- 1. Introducción a Perl - Perl (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="que-es-perl">
+    <h2>¿Qué es Perl?</h2>
+    <div class="doc-content">
+<p><strong>Perl</strong> es un lenguaje de programación creado por <strong>Larry Wall</strong> en 1987, diseñado originalmente para procesamiento de texto y administración de sistemas en Unix. Su lema dice mucho de su filosofía: <em>"There's more than one way to do it"</em> (TIMTOWTDI), es decir, hay varias maneras de hacer las cosas.</p>
+<p>Perl destaca por su potencia con <strong>expresiones regulares</strong>, su sintaxis flexible y su capacidad para pasar de "one-liner" de terminal a programas completos. Durante los años 90 fue el lenguaje dominante en desarrollo web (CGI) y hoy sigue siendo fundamental en administración de sistemas, automatización y análisis de logs.</p>
+<blockquote class="aside aside-note"><p>Perl es un lenguaje "pragmático": prefiere la utilidad sobre la elegancia. Si puedes expresar una tarea, Perl suele tener una forma casi natural de hacerlo.</p></blockquote>
+<table><thead><tr><th>Característica</th><th>Detalle</th></tr></thead><tbody><tr><td>Creador</td><td>Larry Wall (1987)</td></tr><tr><td>Paradigma</td><td>Multiparadigma: procedural, orientado a objetos, funcional</td></tr><tr><td>Fortaleza</td><td>Texto y expresiones regulares</td></tr><tr><td>Tipado</td><td>Dinámico con inferencia de contexto</td></tr><tr><td>Versión actual</td><td>Perl 5.4x (Perl 7 en desarrollo)</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-y-versiones">
+    <h2>Instalación y versiones (perlbrew)</h2>
+    <div class="doc-content">
+<p>Perl viene preinstalado en casi todos los sistemas Unix/Linux y macOS. Para instalarlo a mano o gestionar varias versiones, la herramienta recomendada es <strong>perlbrew</strong>, que te permite tener versiones aisladas sin tocar el Perl del sistema.</p>
+<pre><code class="language-bash"># Verificar instalación existente
+perl -v
+
+# Windows: Strawberry Perl (recomendado) o ActivePerl
+# https://strawberryperl.com/ - instalador con CPAN incluido
+
+# macOS / Linux: instalar perlbrew
+curl -L https://install.perlbrew.pl | bash
+perlbrew init
+echo 'source ~/perl5/perlbrew/etc/bashrc' &gt;&gt; ~/.bashrc
+source ~/.bashrc
+
+# Instalar la última versión estable de Perl 5
+perlbrew install perl-5.40.0
+perlbrew switch perl-5.40.0
+
+# Verificar
+perl -v</code></pre>
+<blockquote class="aside aside-tip"><p>En Windows, Strawberry Perl incluye un compilador C y el cliente cpanm listos para usar. Es la forma más cómoda de trabajar con Perl y CPAN en Windows.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primer-script">
+    <h2>Tu primer script</h2>
+    <div class="doc-content">
+<p>Un script Perl es un archivo de texto con extensión <code class="inline-code">.pl</code>. La primera línea con <code class="inline-code">#!/usr/bin/perl</code> es el <strong>shebang</strong>, que indica al sistema qué intérprete usar cuando el archivo es ejecutable.</p>
+<pre><code class="language-perl">#!/usr/bin/perl
+use strict;
+use warnings;
+
+print "Hola, GuiaDev!\n";
+
+my $nombre = "Perl";
+my $anio   = 2026;
+print "Bienvenido a $nombre ($anio)\n";</code></pre>
+<pre><code class="language-bash"># Ejecutar
+perl hola.pl
+# Salida:
+# Hola, GuiaDev!
+# Bienvenido a Perl (2026)
+
+# También como archivo ejecutable
+chmod +x hola.pl
+./hola.pl</code></pre>
+<blockquote class="aside aside-tip"><p>Siempre escribes <code>use strict;</code> y <code>use warnings;</code> en tus scripts. Son pragmas que activan restricciones y avisos: detectan errores típicos como variables mal escritas u operaciones poco seguras.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="one-liners">
+    <h2>One-liners con perl -e</h2>
+    <div class="doc-content">
+<p>Una de las mayores fortalezas de Perl es ejecutar <strong>one-liners</strong>: programas completos en una sola línea desde la terminal, perfectos para procesar texto, logs y archivos de configuración sin escribir un script.</p>
+<pre><code class="language-bash"># Imprimir un texto
+perl -e 'print "Hola desde un one-liner\n";'
+
+# Sustituir texto en un archivo (in-place, con respaldo)
+perl -i.bak -pe 's/cat/gato/g' archivo.txt
+
+# Imprimir las líneas que coinciden con un patrón
+perl -ne 'print if /ERROR/' app.log
+
+# Imprimir la columna 3 de un CSV
+perl -F',' -ane 'print $F[2], "\n"' datos.csv
+
+# Sumar una columna de números
+perl -ane '$sum += $F[2]; END { print "Total: $sum\n" }' datos.csv</code></pre>
+<p>Las banderas más usadas son:</p>
+<table><thead><tr><th>Flag</th><th>Significado</th></tr></thead><tbody><tr><td><code>-e</code></td><td>Ejecutar el código que sigue (el "one-liner")</td></tr><tr><td><code>-p</code></td><td>Iterar líneas, ejecutar código e imprimir cada línea</td></tr><tr><td><code>-n</code></td><td>Iterar líneas sin imprimirlas automáticamente</td></tr><tr><td><code>-i</code></td><td>Editar archivos in-place (edición directa, opcional .bak)</td></tr><tr><td><code>-a</code></td><td>Dividir en columnas (con -F para el separador)</td></tr><tr><td><code>-F','</code></td><td>Usar coma como separador de campos</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="perldoc">
+    <h2>Documentación con perldoc</h2>
+    <div class="doc-content">
+<p>Perl incluye una documentación completa y navegable en tu propia máquina. El comando <code class="inline-code">perldoc</code> es tu mejor amigo para consultar manuales, funciones y módulos.</p>
+<pre><code class="language-bash"># Guía general del lenguaje
+perldoc perlintro
+
+# Referencia rápida de funciones integradas
+perldoc perlfunc
+
+# Manual de una función concreta
+perldoc -f length
+perldoc -f map
+
+# Documentación de un módulo de CPAN
+perldoc Data::Dumper
+
+# Tutorial de expresiones regulares
+perldoc perlretut
+
+# Buscar en la documentación
+perldoc -q "split"</code></pre>
+<blockquote class="aside aside-tip"><p>Además de <code>perldoc</code>, la librería <code>Data::Dumper</code> es imprescindible para depurar: imprime cualquier estructura de datos de forma legible con solo <code>use Data::Dumper;</code> y <code>print Dumper($variable);</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Instalación verificada</strong>: ejecuta <code>perl -v</code> y comprueba la versión. Si estás en Windows, instala Strawberry Perl.</li>
+<li><strong>Primer script</strong>: escribe <code>hola.pl</code> que imprima tu nombre, tu lenguaje favorito y el año con <code>use strict</code> y <code>use warnings</code>.</li>
+<li><strong>One-liner de sustitución</strong>: crea un archivo <code>texto.txt</code> y usa <code>perl -i.bak -pe 's/.../.../'</code> para reemplazar una palabra; verifica el respaldo generado.</li>
+<li><strong>Filtro de logs</strong>: con <code>perl -ne 'print if /patrón/'</code> filtra las líneas con "ERROR" de un archivo de log de ejemplo.</li>
+<li><strong>Resumen de columnas</strong>: con <code>-F',' -ane</code> suma numéricamente una columna de un CSV inventado.</li>
+<li><strong>Documentación</strong>: usa <code>perldoc perlintro</code> y <code>perldoc -f length</code>; apunta tres funciones nuevas que hayas descubierto.</li>
+</ol>
+<p>En la próxima lección dominaremos los tres tipos de variables de Perl: escalares, arreglos y hashes, incluido el concepto más importante del lenguaje: el contexto.</p>
+    </div>
+  </section>

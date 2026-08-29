@@ -1,0 +1,145 @@
+<!-- lodash - Librerías (Utilidades) -->
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install lodash
+# con importación por módulos
+npm install lodash-es
+</code></pre>
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-js">import _ from 'lodash';
+// o selectivo (mejor para bundles)
+import { map, filter, groupBy } from 'lodash-es';
+</code></pre>
+<blockquote class="aside aside-tip"><p>Lodash aporta funciones de utilidad que suavizan la API de `Array`, `Object` y `String`. Importa solo lo que usas (importación por path) para reducir el tamaño final del bundle.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="operaciones-arrays">
+    <h2>Operaciones con Arrays <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">const usuarios = [
+  { nombre: 'Ana', edad: 30, rol: 'admin' },
+  { nombre: 'Bruno', edad: 17, rol: 'user' },
+  { nombre: 'Carla', edad: 22, rol: 'user' },
+];
+
+// chaining
+const menores = _(usuarios)
+  .filter(u =&gt; u.edad &gt;= 18)
+  .map(u =&gt; u.nombre)
+  .sortBy()
+  .value();
+
+// utilidades frecuentes
+_.uniq([1, 2, 2, 3]);            // [1, 2, 3]
+_.groupBy(usuarios, 'rol');
+_.orderBy(usuarios, ['edad'], ['desc']);
+_.chunk([1, 2, 3, 4, 5], 2);     // [[1,2],[3,4],[5]]
+
+// búsqueda y filtrado
+_.find(usuarios, { nombre: 'Ana' });
+_.remove(usuarios, u =&gt; u.edad &lt; 18);
+_.difference([1, 2, 3], [2]);    // [1, 3]
+</code></pre>
+<blockquote class="aside aside-tip"><p>`_.chain` (o el wrapper `_(...)`) permite encadenar transformaciones con `.value()` al final. Ideal para pipelines de datos legibles.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="colecciones-objetos">
+    <h2>Colecciones y Objetos <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">const user = { nombre: 'Ana', direccion: { ciudad: 'Lima' } };
+
+// acceso seguro con path o default
+_.get(user, 'direccion.ciudad', 'Desconocida');
+_.get(user, 'telefono.codigo', null);
+_.has(user, 'direccion.ciudad');
+
+// clonado profundo y merge
+const copia = _.cloneDeep(user);
+const combinado = _.merge({}, user, { perfil: 'dev' });
+
+// pick / omit: seleccionar o excluir campos
+_.pick(user, ['nombre', 'direccion']);
+_.omit(user, ['direccion']);
+
+// transformaciones
+_.keyBy(usuarios, 'nombre');     // objeto indexado por nombre
+_.mapValues({ a: 1, b: 2 }, n =&gt; n * 2);
+_.invert({ a: 1, b: 2 });        // { 1: 'a', 2: 'b' }
+</code></pre>
+<blockquote class="aside aside-caution"><p>Prefiere `Object.hasOwn` y el spread nativo (`{...obj}`) cuando no necesites clonado profundo: lodash solo brilla en deep clone/merge, paths de acceso y utilidades de colección.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="strings-y-utilidades">
+    <h2>Strings y Utilidades <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// strings
+_.camelCase('hola-mundo');     // 'holaMundo'
+_.kebabCase('Hola Mundo');     // 'hola-mundo'
+_.snakeCase('Hola Mundo');     // 'hola_mundo'
+_.startCase('holaMundo');      // 'Hola Mundo'
+_.truncate('Texto muy largo...', { length: 10, omission: '...' });
+_.padStart('42', 5, '0');      // '00042'
+
+// números y fechas (utilidades sueltas)
+_.clamp(15, 0, 10);            // 10
+_.random(1, 6);                // entero aleatorio 1..6
+_.round(3.14159, 2);           // 3.14
+_.sum([1, 2, 3]);              // 6
+
+// funciones
+const saludo = _.debounce(() =&gt; console.log('guardar'), 300);
+const throttled = _.throttle(() =&gt; scrbar(), 200);
+_.once(() =&gt; iniciar();)       // ejecuta solo la primera vez
+</code></pre>
+<blockquote class="aside aside-tip"><p>`_.debounce` y `_.throttle` siguen siendo enormemente útiles para búsquedas en vivo, autoguardado o eventos de scroll/resize.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="produccion-paso-5">
+    <h2>Optimización para Producción <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Importación selectiva (tree-shaking)
+import { groupBy } from 'lodash-es';
+
+// o por path directo (muy pequeño)
+import debounce from 'lodash/debounce';
+import get from 'lodash/get';
+
+// Análisis del bundle
+npm i -D lodash-webpack-plugin
+// babel-plugin-lodash convierte imports completos en parciales automáticamente
+</code></pre>
+<pre><code class="language-js">// Alternativa moderna: Array y Object nativos ya cubren mucho
+const uniq = (a) =&gt; [...new Set(a)];
+const groupBy = (arr, key) =&gt;
+  arr.reduce((acc, item) =&gt; ((acc[item[key]] ??= []).push(item), acc), {});
+</code></pre>
+<blockquote class="aside aside-note"><p>En ES2020+ muchas operaciones se resuelven con primitivas de JavaScript. Usa lodash solo donde aporte valor real: deep clone, throttle/debounce, paths dinámicos y utilidades de colección complejas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Dado un array de pedidos, usa `_.groupBy` para agruparlos por cliente y `_.sumBy` para totalizar.</li>
+<li>Implementa un autocompletado con `_.debounce` que consulte una API solo 400ms después de teclear.</li>
+<li>Con `_.get`, accede de forma segura a `usuario.perfil.permisos[0]` sin lanzar errores.</li>
+<li>Convierte varios títulos (ej. "Guía de programación") a `kebab-case` y a `snake_case`.</li>
+<li>Reduce el peso de tu bundle importando solo `debounce`, `get` y `cloneDeep` por path.</li>
+</ol>
+    </div>
+  </section>

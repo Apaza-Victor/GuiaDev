@@ -1,0 +1,156 @@
+<!-- 5. Colecciones y Datos Funcionales - Scala (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="list">
+    <h2>List y ListBuffer</h2>
+    <div class="doc-content">
+<p>La <strong>List</strong> inmutable es la colección más icónica de Scala: una lista enlazada persistente cuya construcción y desestructuración se apoya en <code class="inline-code">Nil</code> y el operador <code class="inline-code">::</code> (cons). Por el contrario, <strong>ListBuffer</strong> es mutable y sirve para acumular datos de forma eficiente antes de congelarlos en una lista inmutable.</p>
+<pre><code class="language-scala">// Lista inmutable: todos los valores están ya definidos
+val numeros = List(1, 2, 3, 4, 5)
+val vacia: List[Int] = Nil
+
+// Cons: agrega al inicio, la lista original NO se modifica
+val conCero = 0 :: numeros
+println(numeros)   // List(1, 2, 3, 4, 5)
+println(conCero)   // List(0, 1, 2, 3, 4, 5)
+
+// Unir listas con ++
+val muchas = numeros ++ List(6, 7)
+println(muchas)    // List(1, 2, 3, 4, 5, 6, 7)
+
+// Para construir listas al vuelo: ListBuffer mutable
+import scala.collection.mutable.ListBuffer
+val buf = ListBuffer(10, 20)
+buf += 30
+buf ++= List(40, 50)
+val finalBuf = buf.toList // se congela en una List
+println(finalBuf)         // List(10, 20, 30, 40, 50)</code></pre>
+<table><thead><tr><th>Colección</th><th>Mutabilidad</th><th>Uso típico</th></tr></thead><tbody><tr><td>List</td><td>Inmutable</td><td>Es el tipo por defecto para secuencias</td></tr><tr><td>ListBuffer</td><td>Mutable</td><td>Acumular datos y luego convertir con toList</td></tr><tr><td>Vector</td><td>Inmutable</td><td>Acceso aleatorio eficiente por índice</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Con List se accede rápido al inicio del listado; para accesos aleatorios frecuentes prefiere Vector, que combina buen acceso a cualquier índice con inmutabilidad.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="vectores-mapas-y-sets">
+    <h2>Vector, Map y Set inmutables</h2>
+    <div class="doc-content">
+<p>Las colecciones inmutables por defecto de Scala son las elegantes para programación funcional. <strong>Vector</strong> da acceso casi constante a cualquier índice, <strong>Map</strong> asocia claves a valores y <strong>Set</strong> almacena elementos únicos. Ninguna modifica la estructura base: cada operación devuelve una versión actualizada.</p>
+<pre><code class="language-scala">import scala.collection.immutable.Vector
+
+// Vector: acceso rápido por índice
+val v = Vector("a", "b", "c")
+println(v(1))            // b
+println(v.updated(1, "B")) // Vector(a, B, c)
+
+// Map: asocia claves a valores
+val capitales = Map("Perú" -&gt; "Lima", "Chile" -&gt; "Santiago")
+println(capitales("Perú"))        // Lima
+println(capitales.getOrElse("Brasil", "desconocida"))
+
+// Set: elementos únicos, sin duplicados y sin orden garantizado
+val conjunto = Set(1, 2, 2, 3, 3, 3)
+println(conjunto)        // Set(1, 2, 3)
+println(Set(1, 2) ++ Set(2, 3))   // Set(1, 2, 3)
+println(Set(1, 2, 3) -- Set(2))   // Set(1, 3)</code></pre>
+<blockquote class="aside aside-caution"><p>Acceder con paréntesis a un Map (<code class="inline-code">capitales("X")</code>) lanza <code class="inline-code">NoSuchElementException</code> si la clave no existe. Usa <code class="inline-code">get</code> (devuelve Option) o <code class="inline-code">getOrElse</code> para un componente seguro.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="option">
+    <h2>Option: Some y None</h2>
+    <div class="doc-content">
+<p><strong>Option[A]</strong> modela la presencia o ausencia de un valor, eliminando el null-checking manual. Es una clase genérica con dos subclases: <code class="inline-code">Some(valor)</code> cuando existe el valor y <code class="inline-code">None</code> cuando no. Así el compilador te fuerza a gestionar el caso vacío.</p>
+<pre><code class="language-scala">def buscar(usuarioId: Int, db: Map[Int, String]): Option[String] =
+  db.get(usuarioId)
+
+@main def demo(): Unit =
+  val db = Map(1 -&gt; "Ana", 2 -&gt; "Luis")
+
+  val r1 = buscar(1, db)
+  val r2 = buscar(99, db)
+
+  println(r1)            // Some(Ana)
+  println(r2)            // None
+
+  // Patrón combinado: decisión sobre el Option en una expresión
+  r1 match
+    case Some(nombre) =&gt; println(s"Encontrado: $nombre")
+    case None          =&gt; println("No existe")
+
+  // Seguro y elegante: getOrElse y map sobre el interior
+  println(r2.getOrElse("inventario vacío"))
+  println(r1.map(_.toUpperCase)) // Some(ANA)</code></pre>
+<blockquote class="aside aside-tip"><p>Nunca desreferencies <code class="inline-code">None</code> con <code class="inline-code">.get</code>: lanza una excepción. Prefiere usar siempre <code class="inline-code">getOrElse</code>, <code class="inline-code">map</code>, <code class="inline-code">fold</code> o pattern matching.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="higher-order-functions">
+    <h2>Higher-order functions</h2>
+    <div class="doc-content">
+<p>Las <strong>higher-order functions</strong> (map, filter, flatMap, etc.) reciben funciones como argumento y las aplican a cada elemento. Convierte todo tu trabajo sobre colecciones en expresiones declarativas: describes el "qué", no el "cómo" con bucles.</p>
+<pre><code class="language-scala">val numeros = List(1, 2, 3, 4, 5, 6, 7, 8)
+
+// map: transforma cada elemento
+val alCuadrado = numeros.map(n =&gt; n * n)
+println(alCuadrado) // List(1, 4, 9, 16, 25, 36, 49, 64)
+
+// filter: selecciona elementos que cumplen una condición
+val pares = numeros.filter(_ % 2 == 0)
+println(pares)      // List(2, 4, 6, 8)
+
+// flatMap: map + aplanar listas anidadas en un solo nivel
+val palabras = List("hola", "ada")
+val letras = palabras.flatMap(_.toList)
+println(letras)     // List(h, o, l, a, a, d, a)
+
+// La barra baja _ es el atajo para el parámetro de la lambda
+val dobles = List(1, 2, 3).map(_ * 2) // List(2, 4, 6)
+println(dobles)</code></pre>
+<blockquote class="aside aside-tip"><p>Cada combinador devuelve una nueva colección; puedes encadenarlos: <code class="inline-code">numeros.filter(_ % 2 == 0).map(_ * 10)</code>. El resultado es legible de izquierda a derecha.</p></blockquote>
+<blockquote class="aside aside-note"><p>La sintaxis <code class="inline-code">_.campo</code> equivale a <code class="inline-code">x =&gt; x.campo</code>. Es idónea para one-liners: <code class="inline-code">.map(_.precio)</code> extrae precios de una lista de productos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fold-y-reduce">
+    <h2>foldLeft, reduceLeft y agregación</h2>
+    <div class="doc-content">
+<p>Para acumular una colección en un único valor, Scala ofrece <strong>foldLeft</strong> (recibe un valor inicial y una función binaria) y <strong>reduceLeft</strong> (usa automáticamente el primer elemento como acumulador inicial). Ambos van por la izquierda, procesando la lista de principio a fin.</p>
+<pre><code class="language-scala">val precios = List(9.99, 14.50, 3.25, 19.99)
+
+// foldLeft: empieza en 0.0 y acumula sumando con función anónima
+val total = precios.foldLeft(0.0)((acumulado, precio) =&gt; acumulado + precio)
+println(total) // 47.73
+
+// con notación abreviada usando comodines
+val total2 = precios.foldLeft(0.0)(_ + _)
+println(total2)
+
+// reduceLeft: mismo resultado sin valor inicial (la lista no debe ser vacía)
+val max = precios.reduceLeft((a, b) =&gt; if a &gt; b then a else b)
+println(max) // 19.99
+
+// foldLeft sobre una List de cases para construir un String
+val nombres = List("Ada", "Grace", "Barbara")
+val cadena = nombres.foldLeft("Intro: ")((acc, n) =&gt; acc + n + ", ")
+println(cadena)</code></pre>
+<blockquote class="aside aside-caution"><p><code class="inline-code">reduceLeft</code> lanza una excepción si la colección está vacía, porque no hay primer elemento que usar. Prefiere <code class="inline-code">foldLeft</code> cuando el resultado pueda ser vacío.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<ol>
+<li>Dada <code class="inline-code">List(1, 2, 3, 4)</code>, construye con <code class="inline-code">::</code> una lista que agregue el 0 al inicio y otra con un 5 al final usando <code class="inline-code">:+</code> o <code class="inline-code">++</code>.</li>
+<li>Crea un Map de nombre de país con su capital, para tres países; consulta dos claves con <code class="inline-code">getOrElse</code>.</li>
+<li>Escribe una función que reciba <code class="inline-code">List[Int]</code> y con <code class="inline-code">foldLeft</code> devuelva la suma de los cuadrados de todos sus elementos.</li>
+<li>Usa <code class="inline-code">map</code> y <code class="inline-code">filter</code> encadenados para obtener los nombres con más de 5 caracteres de <code class="inline-code">List("Scala", "Java", "Rust", "Haskell")</code>.</li>
+<li>Define una función <code class="inline-code">buscar: Map[String, Int] =&gt; Option[Int]</code> que en vez de null devuelva <code class="inline-code">None</code> cuando no encuentre la clave, y compruébala con pattern matching.</li>
+</ol>
+<p>En la próxima lección cerraremos el curso con programación funcional avanzada y el ecosistema que hace a Scala poderoso: for-comprehensions, Akka y Apache Spark.</p>
+    </div>
+  </section>

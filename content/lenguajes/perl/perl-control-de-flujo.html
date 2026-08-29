@@ -1,0 +1,165 @@
+<!-- 3. Control de Flujo - Perl (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="condicionales">
+    <h2>if, unless y ternario</h2>
+    <div class="doc-content">
+<p>Perl usa <code>if</code>/<code>elsif</code>/<code>else</code> igual que otros lenguajes, pero añade <code>unless</code> (el negativo de <code>if</code>) y soporta notación de sufijo para frases cortas y legibles.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my $edad = 30;
+
+if ($edad &gt;= 18) {
+    print "Mayor de edad\n";
+} elsif ($edad &gt;= 0) {
+    print "Menor de edad\n";
+} else {
+    die "Edad inválida\n";
+}
+
+# unless: "salvo que"
+my $archivo = "datos.txt";
+die "No existe $archivo\n" unless -e $archivo;   # muere salvo que exista
+
+# Notación de sufijo (frases cortas)
+print "Es par\n" if $edad % 2 == 0;
+print "Es impar\n" unless $edad % 2 == 0;
+
+# Ternario
+my $tipo = $edad &gt;= 18 ? "adulto" : "menor";
+print "$tipo\n";</code></pre>
+<blockquote class="aside aside-tip"><p>Las condiciones en Perl son "verdaderas" para casi todo excepto: <code>0</code>, <code>"0"</code>, la cadena vacía <code>""</code>, <code>undef</code> y listas vacías. Todo lo demás (incluida la cadena <code>"0.0"</code> y el valor <code>"false"</code>) es verdadero.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="bucles">
+    <h2>Bucles: for, foreach, while, until</h2>
+    <div class="doc-content">
+<p>Perl proporciona varios bucles. <code>for</code> y <code>foreach</code> son sinónimos y suelen usarse para recorrer listas; <code>while</code> y <code>until</code> (el opuesto de <code>while</code>) repiten mientras o hasta que una condición se cumpla.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my @frutas = ("manzana", "pera", "uva");
+
+# foreach: recorrer una lista (el alias $fruta es temporal)
+foreach my $fruta (@frutas) {
+    print "$fruta\n";
+}
+
+# for con índice
+for my $i (0 .. $#frutas) {
+    print "$i: $frutas[$i]\n";
+}
+
+# while
+my $n = 1;
+while ($n &lt;= 5) {
+    print "$n ";
+    $n++;
+}
+print "\n";
+
+# until: repite HASTA que se cumpla (es el "while not")
+my $c = 3;
+until ($c == 0) {
+    print "c=$c ";
+    $c--;
+}
+print "\n";
+
+# do/while: ejecuta al menos una vez
+my $x = 100;
+do {
+    print "entro al menos una vez ($x)\n";
+    $x--;
+} while ($x &gt; 100);</code></pre>
+<table><thead><tr><th>Bucle</th><th>Cuándo usarlo</th></tr></thead><tbody><tr><td><code>foreach my $e (@lista)</code></td><td>Recorrer una lista/arreglo</td></tr><tr><td><code>for ($i=0; $i&lt;n; $i++)</code></td><td>Iterar con índice numérico</td></tr><tr><td><code>while (cond)</code></td><td>Repetir mientras se cumpla (throat común para leer archivos)</td></tr><tr><td><code>until (cond)</code></td><td>Repetir hasta que se cumpla</td></tr><tr><td><code>do { } while (cond)</code></td><td>Ejecutar siempre al menos una vez</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="control-de-bucles">
+    <h2>last, next y redo</h2>
+    <div class="doc-content">
+<p>Para controlar la ejecución dentro de un bucle, Perl ofrece tres sentencias:</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my @nums = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+
+foreach my $num (@nums) {
+
+    next if $num % 2 == 0;      # salta los pares (sigue con el siguiente)
+    print "$num ";              # imprime solo impares
+
+    last if $num &gt;= 7;          # detiene el bucle cuando num &gt;= 7
+}
+print "\n";                     # Salida: 1 3 5 7
+
+# redo: repite la iteración ACTUAL sin re-evaluar la condición
+my $intento = 0;
+while ($intento &lt; 5) {
+    $intento++;
+    if ($intento == 3) {
+        redo;    # vuelve a ejecutar esta iteración (intento sigue siendo 3)
+    }
+    print "intento: $intento\n";
+}</code></pre>
+<blockquote class="aside aside-tip"><p><code>last</code> equivale al <code>break</code> de otros lenguajes, <code>next</code> al <code>continue</code>, y <code>redo</code> es único de Perl: vuelve al inicio de la misma iteración. En bucles anidados, puedes etiquetarlos: <code>EXTERIOR: while (...) { ... last EXTERIOR; }</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="recorridos-de-hash">
+    <h2>Recorrer hashes y listas</h2>
+    <div class="doc-content">
+<p>Recorrer un hash se hace con <code>each</code>, <code>keys</code> o <code>values</code>. Con arreglos, <code>map</code> y <code>grep</code> son los transformadores idiomáticos.</p>
+<pre><code class="language-perl">use strict;
+use warnings;
+
+my %poblacion = (
+    lima  =&gt; 10,
+    cusco =&gt; 1,
+    arequipa =&gt; 2,
+);
+
+# each: devuelve clave-valor (recorrido eficiente)
+while (my ($ciudad, $millones) = each %poblacion) {
+    print "$ciudad: $millones millones\n";
+}
+
+# keys / values
+my @cidades = keys %poblacion;         # lista de claves (orden arbitrario)
+my @millones = values %poblacion;
+print join(", ", @cidades), "\n";
+
+# map: transforma cada elemento
+my @mayus = map { uc }
+            grep { /^c/ }
+            keys %poblacion;
+print "Empiezan con 'c': @mayus\n";     # CUSCO
+
+# Ejemplo map/grep con números
+my @dobles = map { $_ * 2 } (1, 2, 3);      # (2, 4, 6)
+my @pares  = grep { $_ % 2 == 0 } (1..10);  # (2, 4, 6, 8, 10)</code></pre>
+<blockquote class="aside aside-note"><p>En <code>map</code>/<code>grep</code>, la variable especial <code>$_</code> es el elemento actual. Son el corazón del estilo funcional de Perl y suelen sustituir bucles manuales.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Clasificador</strong>: pide un número (o usa uno fijo) y clasifícalo como par/impar y positivo/negativo usando <code>if/elsif/else</code> y sufijos.</li>
+<li><strong>Tabla del 7</strong>: imprime la tabla de multiplicar del 7 usando un <code>for</code> con índice.</li>
+<li><strong>FizzBuzz</strong>: con <code>foreach</code> del 1 al 20, imprime "Fizz" en múltiplos de 3, "Buzz" en múltiplos de 5 y "FizzBuzz" en ambos, usando <code>next</code>.</li>
+<li><strong>Índice de población</strong>: con un <code>%poblacion</code>, usa <code>each</code> para imprimir todas las entradas y <code>keys</code>/<code>values</code> para dos listas.</li>
+<li><strong>Pipeline funcional</strong>: crea un arreglo de ciudades y usa <code>grep</code> + <code>map</code> para obtener las que empiecen por una letra, en mayúsculas.</li>
+</ol>
+<p>En la próxima lección nos centraremos en la joya de Perl: las expresiones regulares con <code>=~</code>, <code>m//</code> y <code>s///</code>.</p>
+    </div>
+  </section>

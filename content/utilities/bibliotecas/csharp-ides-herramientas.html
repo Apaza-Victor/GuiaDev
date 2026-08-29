@@ -1,0 +1,127 @@
+<!-- 3. IDEs y Herramientas para C# / .NET - Bibliotecas (Utilidades) -->
+  <section id="ides-dotnet">
+    <h2>IDEs y editores .NET <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Visual Studio (Windows): el estándar completo de .NET
+#   - Editores, debug visual, Entity Framework designer, Team de built
+# Visual Studio Code + C# Dev Kit (multiplataforma, ligero)
+code --install-extension ms-dotnettools.csdevkit
+code --install-extension ms-dotnettools.csharp
+
+# Rider (JetBrains): potente, multiplataforma, de pago
+# Neovim + omnisharp/roslyn LSP: minimalista
+# JetBrains dotCover para cobertura dentro de Rider
+
+# Verificador de versiones SDK en cada proyecto: global.json
+# {"sdk": {"version": "8.0.100"}}
+</code></pre>
+<blockquote class="aside aside-tip"><p>Visual Studio es completo en Windows; VS Code con C# Dev Kit la opción gratuita multiplataforma. Rider es la alternativa comercial potente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cli-herramientas">
+    <h2>La CLI: dotnet <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash">dotnet new sln -o Solucion
+dotnet new classlib -o Lib &amp;&amp; dotnet new console -o App
+dotnet sln add Lib App            # organiza proyectos en como .sln
+dotnet add App reference Lib      # referencia entre proyectos
+dotnet build                      # compila
+dotnet run --project App          # ejecuta
+dotnet test                       # corre tests
+dotnet publish -c Release -o dist # publica una carpeta desplegable
+dotnet tool install --global dotnet-ef   # EF Core CLI
+
+# Templates propios
+dotnet new install /ruta/mi-plantilla
+</code></pre>
+<blockquote class="aside aside-note"><p>Todo en .NET puede hacerse con la CLI: crear, compilar, testear, publicar. Es el primer comando que debes dominar antes de abrir el IDE.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="perfilado-diagnostico">
+    <h2>Diagnóstico y perfilado <span class="gd-badge gd-badge-note">Diagnóstico</span></h2>
+    <div class="doc-content">
+<pre><code class="language-csharp">// dotnet-counters: métricas de proceso en vivo
+dotnet tool install --global dotnet-counters
+dotnet-counters monitor --process-id 1234
+// Muestra CPU, GC, memoria, excepciones en tiempo real.
+
+// dotnet-dump: snapshot de una app en ejecución
+dotnet tool install --global dotnet-dump
+dotnet-dump collect -p 1234 -o mem.dump
+dotnet-dump analyze mem.dump   # "clrstack", "dumpheap -stat"
+
+// dotnet-trace: perfilado de eventos
+dotnet tool install --global dotnet-trace
+dotnet-trace collect -p 1234 --format speedscope
+</code></pre>
+<pre><code class="language-bash"># Visual Studio: profiler de CPU, asignaciones y snapshot de memoria integrados
+# jetBrains dotMemory / dotTrace: alternativas multiplataforma de pago
+# PerfView: deep-dive de eventos (gratuito, de Microsoft)
+</code></pre>
+<blockquote class="aside aside-tip"><p>Los comandos `dotnet-counters` + `dotnet-dump` + `dotnet-trace` cubren el diagnóstico sin necesidad de IDE: métricas, dump de memoria y eventos de rendimiento.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="contenedores">
+    <h2>Contenedores y despliegue <span class="gd-badge gd-badge-note">Cloud</span></h2>
+    <div class="doc-content">
+<pre><code class="language-docker"># Dockerfile para ASP.NET Core (multi-stage)
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY . .
+RUN dotnet publish -c Release -o /app
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
+COPY --from=build /app .
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "App.dll"]
+</code></pre>
+<pre><code class="language-bash"># Publicación en Azure/AWS/locales
+dotnet publish -c Release -o publish
+# Azure: "az webapp deploy"; AWS: "dotnet-aws-lambda" tool
+# AOT nativo: dotnet publish -c Release -r win-x64 -p:PublishAot=true
+#   (arranque instantáneo y binario sin JIT/Runtime instalado)
+</code></pre>
+<blockquote class="aside aside-note"><p>AOT (NativeAOT) compila a nativo con `PublishAot`, reduciendo arranque y memoria; útil en serverless. Pesa en tamaño y no soporta toda la reflexión dinámica.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="calidad-codigo">
+    <h2>Calidad de código: analyzers y formato <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-csharp">// analizadores de .NET (EditorConfig + CodeAnalysis)
+// .editorconfig activa reglas por severidad:
+[*.cs]
+dotnet_diagnostic.CA1801.severity = warning   # parámetro no usado
+dotnet_diagnostic.IDE0090.severity = warning  # evitar 'new Tipo()' con var
+
+// formato automático
+dotnet format whitespace --folder .   # solo espacios
+dotnet format style --folder .
+dotnet format analyzers --folder .    # reglas de análisis
+// o al estilo global: dotnet format --verify-no-changes (CI friendly)
+</code></pre>
+<blockquote class="aside aside-success"><p>Vigila que `dotnet format` y `dotnet build` en CI fallen si hay problemas: tienes calidad automática sin depender del criterio individual en cada PR.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Con la CLI crea solución + librería + consola y compila desde terminal.</li>
+<li>Arranca tu App con `dotnet-counters` y observa el GC mientras haces peticiones.</li>
+<li>Configura un `.editorconfig` con 5 reglas y ejecuta `dotnet format`.</li>
+<li>Escribe el Dockerfile de un WebAPI y compila/ejecuta en contenedor.</li>
+<li>Publica con AOT una consola simple y mide la diferencia de arranque.</li>
+</ol>
+    </div>
+  </section>

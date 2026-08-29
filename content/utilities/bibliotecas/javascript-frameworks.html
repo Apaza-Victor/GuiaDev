@@ -1,0 +1,145 @@
+<!-- 2. Frameworks JavaScript: React, Vue, Express - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework">
+    <h2>Elegir framework de UI <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># React (con Vite): el más usado, ecosistema enorme
+npm create vite@latest mi-app -- --template react
+# Vue: accesible, con SFC y excelente DX
+npm create vue@latest
+# Svelte: compila a JS minimalista
+npm create svelte@latest
+# Angular: completo para equipos grandes, TypeScript de serie
+npm init @angular@latest
+
+# SSR/full-stack: Next.js (React), Nuxt (Vue), SvelteKit
+# Metaframeworks: muchos de estos ya usan TypeScript por defecto
+</code></pre>
+<blockquote class="aside aside-tip"><p>React por ecosistema, Vue/Svelte por sencillez, Angular para control corporativo. Todos renderizan en el navegador y escalan con metaframeworks.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="react-flujo">
+    <h2>React + hooks y estado <span class="gd-badge gd-badge-note">UI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-jsx">import { useState, useEffect } from "react";
+
+function Contador() {
+  const [valor, setValor] = useState(0);
+
+  useEffect(() =&gt; {
+    document.title = `Valor: ${valor}`;
+  }, [valor]);
+
+  return (
+    &lt;button onClick={() =&gt; setValor((v) =&gt; v + 1)}&gt;
+      Pulsado {valor} veces
+    &lt;/button&gt;
+  );
+}
+
+// Estado global: Zustand (ligero) / Redux Toolkit (clásico) / Jotai
+import { create } from "zustand";
+const useStore = create((set) =&gt; ({
+  usuario: null,
+  setUsuario: (u) =&gt; set({ usuario: u }),
+}));
+</code></pre>
+<blockquote class="aside aside-note"><p>Hooks + Zustand cubren la mayoría de apps modernas. Para datos remotos, React Query (TanStack Query) maneja caché y revalidación.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="express-backend">
+    <h2>Backend: Express y Fastify <span class="gd-badge gd-badge-note">Backend</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Express: clásico y minimal
+const express = require("express");
+const app = express();
+app.use(express.json());   // middleware de JSON
+
+app.get("/usuarios", (req, res) =&gt; {
+  res.json([{ id: 1, nombre: "Ana" }]);
+});
+
+app.post("/usuarios", (req, res) =&gt; {
+  console.log(req.body);
+  res.status(201).json({ ok: true });
+});
+
+app.listen(3000);
+</code></pre>
+<pre><code class="language-js">// Fastify: más rápido, schema JSON y plugins
+const fastify = require("fastify")({ logger: true });
+fastify.get("/hola", async () =&gt; ({ mensaje: "hola" }));
+fastify.listen({ port: 3000 });
+</code></pre>
+<blockquote class="aside aside-note"><p>Express domina por inercia y tutoriales; Fastify rinde más y valida payloads. Para empresas: NestJS (está en la ficha de TypeScript).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="sequelize-mongoose">
+    <h2>Persistence: Sequelize y Mongoose <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Sequelize (SQL)
+const { Sequelize, DataTypes } = require("sequelize");
+const db = new Sequelize("postgres://usuario:pass@localhost:5432/app");
+
+const Usuario = db.define("Usuario", {
+  nombre: { type: DataTypes.STRING, allowNull: false },
+  email:  { type: DataTypes.STRING, unique: true },
+});
+await Usuario.sync();
+await Usuario.create({ nombre: "Ana", email: "ana@x.com" });
+
+// Mongoose (MongoDB)
+const mongoose = require("mongoose");
+await mongoose.connect("mongodb://localhost:27017/app");
+const User = mongoose.model("User", new mongoose.Schema({ name: String, age: Number }));
+await User.create({ name: "Ana", age: 30 });
+</code></pre>
+<blockquote class="aside aside-tip"><p>Sequelize/TypeORM/Prisma para SQL; Mongoose para MongoDB directo. Elige en función de tu BD y de si quieres tipos (Prisma brilla en TS).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-jest">
+    <h2>Testing: Jest y Vitest <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Vitest (o Jest)
+import { describe, it, expect, vi } from "vitest";
+import { suma } from "./math.js";
+
+describe("matemáticas", () =&gt; {
+  it("suma", () =&gt; expect(suma(2, 3)).toBe(5));
+});
+
+// Mockear módulos
+vi.mock("./mailer", () =&gt; ({ enviarMail: vi.fn() }));
+
+// Supertest: probar endpoints HTTP
+import request from "supertest";
+import app from "./server.js";
+it("GET /", async () =&gt; {
+  const res = await request(app).get("/");
+  expect(res.statusCode).toBe(200);
+});
+</code></pre>
+<blockquote class="aside aside-success"><p>Vitest/Supertest + React Testing Library (para UI) es el stack más fino de testing JS. Cobertura integrada con `--coverage`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una to-do con React + Zustand y persistela en localStorage.</li>
+<li>Mueve el contador a un endpoint Fastify y consume con fetch.</li>
+<li>Añade Sequelize con una tabla `tareas` y CRUD básico.</li>
+<li>Escribe 2 tests de endpoint con Supertest comprobando el JSON de respuesta.</li>
+<li>Con React Query haz un fetch de una API con estados de carga/error/éxito.</li>
+</ol>
+    </div>
+  </section>

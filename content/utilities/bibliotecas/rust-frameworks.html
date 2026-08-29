@@ -1,0 +1,144 @@
+<!-- 2. Frameworks Rust: Axum, Actix, Rocket - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework-rust">
+    <h2>Elegir framework web en Rust <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Ecosistema principal de web HTTP
+#   Axum:  de tokio, moderno y engranado con el ecosistema async
+#   Actix Web: maduro y muy veloz
+#   Rocket: ergonómico (macros), buen DX
+#   warp / hyper (bajo nivel) / salvo (para APIs) / poem
+# Comparativa real (benchmarks contemporáneos):
+#   Axum y Actix están en el top; Rocket sencillo; salvo en plan rápido
+</code></pre>
+<blockquote class="aside aside-tip"><p>Axum es la opción recomendada hoy (mantenido por tokio, composición por capas); Actix Web para máximo rendimiento; Rocket si prefieres macros ergonómicas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="axum">
+    <h2>Axum: servidor con tokio <span class="gd-badge gd-badge-note">Framework</span></h2>
+    <div class="doc-content">
+<pre><code class="language-rust">use axum::{
+    routing::get, Json, Router, extract::Path,
+};
+use serde_json::{json, Value};
+
+async fn saludo(Path(nombre): Path&lt;String&gt;) -&gt; Json&lt;Value&gt; {
+    Json(json!({ "saludo": format!("Hola {nombre}") }))
+}
+
+#[tokio::main]
+async fn main() {
+    let app = Router::new()
+        .route("/", get(|| async { "Bienvenido" }))
+        .route("/saludo/{nombre}", get(saludo));
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
+}
+// Cargo add axum tokio serde serde_json
+</code></pre>
+<blockquote class="aside aside-note"><p>Axum usa `Router` + handlers async; con tokio de fondo para concurrencia de alto rendimiento. `axum::serve` gestiona el listener.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="actix">
+    <h2>Actix Web y Rocket <span class="gd-badge gd-badge-note">Alternativas</span></h2>
+    <div class="doc-content">
+<pre><code class="language-rust">// Actix Web
+use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
+
+#[get("/saludo/{nombre}")]
+async fn saludo(nombre: web::Path&lt;String&gt;) -&gt; impl Responder {
+    HttpResponse::Ok().body(format!("Hola {nombre}"))
+}
+
+#[actix_web::main]
+async fn main() -&gt; std::io::Result&lt;()&gt; {
+    HttpServer::new(|| App::new().service(saludo))
+        .bind(("0.0.0.0", 8080))?
+        .run().await
+}
+
+// Rocket: macros ergonómicas
+use rocket::{get, routes};
+
+#[get("/saludo/&lt;nombre&gt;")]
+fn saludo(nombre: &amp;str) -&gt; String {
+    format!("Hola {nombre}")
+}
+// #[launch] fn app() -&gt; _ { rocket::build().mount("/", routes![saludo]) }
+</code></pre>
+<blockquote class="aside aside-tip"><p>Actix Web destaca en rendimiento; Rocket en DX (rutas con macro `#[get]`, extractores inline). Ambos resuelven APIs REST completas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="persistencia-rust">
+    <h2>Datos: diesel, sqlx y sea-orm <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-rust">// sqlx: consultas SQL verificadas en compilación
+use sqlx::Row;
+
+#[tokio::main]
+async fn main() -&gt; sqlx::Result&lt;()&gt; {
+    let pool = sqlx::postgres::PgPoolOptions::new()
+        .connect("postgres://app:pass@localhost/app").await?;
+
+    let fila: (i64,) = sqlx::query_as("SELECT count(*) FROM usuarios")
+        .fetch_one(&amp;pool).await?;
+    println!("usuarios: {}", fila.0);
+    Ok(())
+}
+
+// Alternativas:
+//   diesel: ORM del tipo "query builder" síncrono
+//   sea-orm: async, con semejanza a Spring Data
+//   rusqlite: driver SQLite directo
+</code></pre>
+<blockquote class="aside aside-tip"><p>sqlx valida la SQL en tiempo de compilación (con la BD conectada en dev); diesel es el veterano typed; sea-orm async moderno para apps grandes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-servicio">
+    <h2>Testing en Rust <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-rust">#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn suma_es_correcta() {
+        assert_eq!(suma(2, 3), 5);
+    }
+
+    #[test]
+    #[should_panic]
+    fn divide_por_cero_panica() {
+        let _ = divide(1, 0);
+    }
+}
+
+// Integración: tests/ en otra carpeta
+// Pruebas de endpoints: tower::ServiceExt + oneshot
+// cargo test ; cargo test -- --nocapture ; cargo tarpaulin (cobertura)
+</code></pre>
+<blockquote class="aside aside-success"><p>Rust trae testing nativo (`#[test]`), doc-tests y herramientas (`cargo test`). Para HTTP: `tower::ServiceExt::oneshot` sobre el Router de Axum.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea con Axum una API con GET y POST (handlers async), JSON de serde.</li>
+<li>Migra el mismo endpoint a Actix Web y compara la sintaxis.</li>
+<li>Con sqlx consulta una tabla real y valida la query en compilación.</li>
+<li>Escribe 3 tests (uno #[should_panic]) y corre con `cargo test`.</li>
+<li>Prueba tu Router de Axum con `tower::ServiceExt::oneshot`.</li>
+</ol>
+    </div>
+  </section>

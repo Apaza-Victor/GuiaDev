@@ -1,0 +1,155 @@
+<!-- 3. Control de Flujo - F# (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="if">
+    <h2>if / then / else</h2>
+    <div class="doc-content">
+<p>En F#, <code>if</code> es una <strong>expresión</strong> que siempre devuelve un valor. No existe <code>else if</code>: se anidada o se usa <code>elif</code>. Todo <code>if</code> sin <code>else</code> que produzca un valor genera error de tipo (debe devolver <code>unit</code>).</p>
+<pre><code class="language-fsharp">let edad = 20
+
+let resultado =
+    if edad &gt;= 18 then
+        "Mayor"
+    elif edad &gt;= 0 then
+        "Menor"
+    else
+        "Inválido"
+printfn "%s" resultado
+
+// if como expresión en una asignación
+let categoría = if edad &gt; 65 then "Adulto mayor" else "Adulto"
+printfn "%s" categoría
+
+// if para efecto (debe devolver unit: imprimir, no valor)
+if edad % 2 = 0 then
+    printfn "Edad par"
+else
+    printfn "Edad impar"
+
+// Operador ternario "funcional"
+let permitido = if edad &gt;= 18 then "sí" else "no"</code></pre>
+<blockquote class="aside aside-tip"><p>Para decisiones donde devuelves valores distintos, <code>match</code> es más expresión y se lee mejor. <code>if</code> está bien para casos simples o lógica de filtrado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="match">
+    <h2>Pattern matching: match</h2>
+    <div class="doc-content">
+<p><code>match ... with</code> es la instrucción estrella de F#: compara un valor contra patrones y ejecuta la primera rama que encaje. Cubre constantes, rangos, guards (<code>when</code>), tuplas y uniones.</p>
+<pre><code class="language-fsharp">let dia = "lunes"
+
+let tipo =
+    match dia with
+    | "sábado" | "domingo" -&gt; "Fin de semana"
+    | "lunes" | "viernes"  -&gt; "Laboral"
+    | _ -&gt; "Otro"            // comodín: cubre el resto
+
+printfn "%s" tipo
+
+// Guardas con when
+let califica nota =
+    match nota with
+    | n when n &gt;= 18 -&gt; "A"
+    | n when n &gt;= 14 -&gt; "B"
+    | n when n &gt;= 10 -&gt; "C"
+    | _ -&gt; "D"
+printfn "%s" (califica 15)
+
+// Matching sobre tuplas y rangos
+let (a, b) = (2, 5)
+let suma =
+    match (a, b) with
+    | (0, _) | (_, 0) -&gt; 0
+    | (x, y) when x = y -&gt; x * 2
+    | (x, y) -&gt; x + y
+printfn "%d" suma
+
+// Cubrir TODAS las ramas es requerido por el compilador:
+// ventaja de seguridad total</code></pre>
+<blockquote class="aside aside-success"><p>El compilador de F# verifica exhaustividad: si el <code>match</code> no cubre todas las posibilidades (y no tiene comodín <code>_</code>), dará advertencia/aviso. Patrones + tipos = código casi a prueba de estado inválido.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="bucles">
+    <h2>Bucles: for y while</h2>
+    <div class="doc-content">
+<p>F# tiene bucles convencionales (<code>for</code>, <code>while</code>) pero la comunidad prefiere <code>List.map</code>/<code>List.iter</code>/recursión. Los bucles existen para cuando la iteración se necesita con efecto o rangos.</p>
+<pre><code class="language-fsharp">// for con rango (incluye 1..3)
+for i in 1..3 do
+    printfn "Número %d" i
+
+// for descendente y con paso
+for i in 10 .. -2 .. 2 do
+    printf "%d " i
+printfn ""
+
+// for sobre un arreglo o lista
+let frutas = [ "manzana"; "pera"; "uva" ]
+for f in frutas do
+    printfn "Fruta: %s" f
+
+// while (úselo con cuidado; antes prefiere recursión)
+let mutable n = 1
+while n &lt;= 5 do
+    printfn "%d" n
+    n &lt;- n + 1
+
+// break/continue no existen directamente: se simulan con flags
+let mutable encontrado = false
+for i in 1..10 do
+    if not encontrado &amp;&amp; i &lt;= 5 then
+        printfn "i=%d" i
+        if i = 3 then encontrado &lt;- true   // "break" en i=3</code></pre>
+<blockquote class="aside aside-note"><p>List.iterate/mapear es lo idiomático; el imperativo <code>for</code> queda para operar con índices o interop. F# no tiene <code>break</code>/<code>continue</code> nativos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="comprensiones">
+    <h2>List / Seq comprehension</h2>
+    <div class="doc-content">
+<p>Las <strong>comprensiones</strong> construyen colecciones con la combinación de una expresión + <code>for</code> (<code>yield</code>/<code>-&gt;</code>) y filtros <code>when</code>. Son la vía más expresiva para generar secuencias.</p>
+<pre><code class="language-fsharp">// Lista de cuadrados
+let cuadrados = [ for i in 1..10 -&gt; i * i ]
+printfn "%A" cuadrados
+
+// Con filtro
+let pares = [ for i in 1..20 when i % 2 = 0 -&gt; i ]
+printfn "%A" pares
+
+// Secuencia (perezosa) — we push data
+let cuad1m = seq { for n in 1L .. 1_000_000L do yield n * n }
+printfn "%A" (Seq.head cuad1m)     // 1
+
+// yield dentro de un cuerpo
+let letras =
+    seq {
+        for c in 'a'..'e' do
+            yield System.Char.ToUpper(c)
+    }
+printfn "%A" (List.ofSeq letras)
+
+// Comprensiones sobre tuplas
+let parejas = [ for x in 1..3 do for y in 1..2 do yield (x, y) ]
+printfn "%A" parejas</code></pre>
+<blockquote class="aside aside-tip"><p>De estas tres familias:<br/>- <code>List</code>: materializada (corta)<br/>- <code>Seq</code>: perezosa, ideal para streams/grandes<br/>- <code>Array</code>: mutable/posicional<br/>Elige <code>seq ... do yield</code> cuando los datos sean muchos o no sepas el tamaño final.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Nivel de usuario</strong>: con <code>if</code>, clasifica una edad en "niño/adolescente/adulto/adulto mayor".</li>
+<li><strong>Día laboral</strong>: con <code>match</code> y comodín, decide si un día es fin de semana usando <code>|</code> para varios casos.</li>
+<li><strong>Clasificador de notas</strong>: con <code>when</code> en match, devuelve la letra (A-F) de una nota de 0-20.</li>
+<li><strong>Secuencia de Fibonacci</strong>: genera los primeros 10 con una comprensión <code>seq</code> (usa mutable en el cuerpo).</li>
+<li><strong>Feature matrix</strong>: imprime <code>(i, j)</code> para <code>i</code> en 1..3 y <code>j</code> en 1..2 usando un bucle anidado.</li>
+</ol>
+<p>En la próxima lección implementaremos tipos de datos propios: Records y Uniones Discriminadas con <code>Option</code> y <code>Result</code>.</p>
+    </div>
+  </section>

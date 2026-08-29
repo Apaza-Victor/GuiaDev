@@ -1,0 +1,158 @@
+<!-- 5. Colecciones y Bloques - Ruby (Lenguajes de Programación) -->
+  <section id="arreglos">
+    <h2>Arreglos y operaciones</h2>
+    <div class="doc-content">
+<p>Un <strong>arreglo</strong> (<code class="inline-code">Array</code>) es una colección ordenada de elementos que puede mezclar tipos. Se crea con corchetes y se accede a sus elementos con índices enteros, donde <strong>el primer elemento es el índice 0</strong>.</p>
+<p>Los arreglos en Ruby son <strong>dinámicos</strong>: crecen según se agregan elementos y ofrecen decenas de métodos para manipularlos.</p>
+<pre><code class="language-ruby">frutas = ["manzana", "banana", "pera"]
+puts frutas[0]        # =&gt; manzana
+puts frutas[-1]       # =&gt; pera (último)
+puts frutas.first     # =&gt; manzana
+puts frutas.last      # =&gt; pera
+
+frutas &lt;&lt; "uva"        # agregar al final
+frutas.push("kiwi")
+puts frutas.inspect   # =&gt; ["manzana", "banana", "pera", "uva", "kiwi"]
+
+puts frutas.length    # =&gt; 5
+puts frutas.include?("uva")   # =&gt; true
+puts frutas.sort.inspect      # =&gt; ["banana", "kiwi", "manzana", "pera", "uva"]
+</code></pre>
+<pre><code class="language-ruby">numeros = [3, 1, 4, 1, 5]
+puts numeros.sum       # =&gt; 14
+puts numeros.max       # =&gt; 5
+puts numeros.min       # =&gt; 1
+puts (numeros &lt;&lt; 9).inspect  # =&gt; [3, 1, 4, 1, 5, 9]
+</code></pre>
+<table>
+<thead><tr><th>Método</th><th>Descripción</th><th>Ejemplo</th></tr></thead>
+<tbody><tr><td>&lt;&lt;</td><td>Agrega al final</td><td>arr &lt;&lt; x</td></tr><tr><td>push/pop</td><td>Agregar/quitar al final</td><td>arr.pop</td></tr><tr><td>first/last</td><td>Primer/último elemento</td><td>arr.last</td></tr><tr><td>sort</td><td>Ordena (devuelve copia)</td><td>arr.sort</td></tr></tbody>
+</table>
+<blockquote class="aside aside-note"><p>El índice negativo cuenta desde el final: <code class="inline-code">arr[-1]</code> es el último elemento y <code class="inline-code">arr[-2]</code> el penúltimo. Es una de las comodidades que más se agradecen en Ruby.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="hashes">
+    <h2>Hashes y símbolos</h2>
+    <div class="doc-content">
+<p>Un <strong>hash</strong> es una colección de <strong>pares clave-valor</strong>, similar a un diccionario. Se define con llaves y cada entrada asocia una clave (suele ser un símbolo) con un valor.</p>
+<p>Como los <strong>símbolos</strong> se comparan rápido y son inmutables, se usan muchísimo como claves de hash. Desde Ruby 1.9 existe una sintaxis concisa con <code class="inline-code">clave:</code>.</p>
+<pre><code class="language-ruby">persona = { nombre: "Ana", edad: 30, ciudad: "Córdoba" }
+
+puts persona[:nombre]         # =&gt; Ana
+puts persona[:edad]           # =&gt; 30
+
+persona[:profesion] = "Médica"
+puts persona.keys.inspect     # =&gt; [:nombre, :edad, :ciudad, :profesion]
+puts persona.values.inspect   # =&gt; ["Ana", 30, "Córdoba", "Médica"]
+puts persona.key?(:edad)      # =&gt; true
+puts persona.fetch(:pais, "Argentina")   # =&gt; Argentina (default)
+</code></pre>
+<pre><code class="language-ruby"># Iterar sobre un hash
+persona.each do |clave, valor|
+  puts "#{clave}: #{valor}"
+end
+# =&gt; nombre: Ana
+# =&gt; edad: 30
+# =&gt; ciudad: Córdoba
+</code></pre>
+<blockquote class="aside aside-tip"><p>Preferí <strong>símbolos como claves</strong> (<code class="inline-code">persona[:edad]</code>) en lugar de strings (<code class="inline-code">persona["edad"]</code>): son más rápidos y la sintaxis <code class="inline-code">clave:</code> resulta más limpia.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="bloques-y-procs">
+    <h2>Bloques, Proc y lambdas</h2>
+    <div class="doc-content">
+<p>Un <strong>bloque</strong> es un fragmento de código que se pasa a un método entre <code class="inline-code">do...end</code> o llaves <code class="inline-code">{ }</code>. Muchísimos métodos de Ruby aceptan bloques para ejecutar acciones sobre cada elemento.</p>
+<p>Para <strong>guardar un bloque y reutilizarlo</strong> se convierten a <strong>Proc</strong> (objeto Proc) o a <strong>lambda</strong>. La diferencia clave es que la lambda <strong>valida la cantidad de argumentos</strong> y su <code class="inline-code">return</code> solo sale de la lambda.</p>
+<pre><code class="language-ruby">[1, 2, 3].each { |n| puts n * 2 }
+# =&gt; 2
+# =&gt; 4
+# =&gt; 6
+
+[1, 2, 3].each do |n|
+  puts "Valor: #{n}"
+end
+# =&gt; Valor: 1
+# =&gt; Valor: 2
+# =&gt; Valor: 3
+</code></pre>
+<pre><code class="language-ruby">doble = Proc.new { |x| x * 2 }
+puts doble.call(5)      # =&gt; 10
+
+triple = lambda { |x| x * 3 }
+puts triple.call(4)     # =&gt; 12
+</code></pre>
+<blockquote class="aside aside-caution"><p>Un <code class="inline-code">Proc</code> no verifica la cantidad de argumentos (<code class="inline-code">doble.call</code> sin argumentos pone <code class="inline-code">nil</code>), mientras que una <strong>lambda</strong> sí lanza error. Usá lambdas si necesitás esa validación.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="enumerables">
+    <h2>Enumerable: map, select, reduce</h2>
+    <div class="doc-content">
+<p>El módulo <strong>Enumerable</strong> provee métodos de itera­ción potentes a todas las colecciones (arrays, hashes y rangos). Los más usados son <code class="inline-code">map</code> (transformar), <code class="inline-code">select</code> (filtrar) y <code class="inline-code">reduce</code> (acumular).</p>
+<p>Estos métodos <strong>no modifican</strong> el arreglo original, sino que <strong>devuelven un nuevo arreglo</strong> con el resultado. Es el estilo <strong>funcional</strong> de Ruby.</p>
+<pre><code class="language-ruby">numeros = [1, 2, 3, 4, 5]
+
+cuadrados = numeros.map { |n| n * n }
+puts cuadrados.inspect      # =&gt; [1, 4, 9, 16, 25]
+
+pares = numeros.select { |n| n.even? }
+puts pares.inspect          # =&gt; [2, 4]
+
+suma = numeros.reduce(0) { |acc, n| acc + n }
+puts suma                   # =&gt; 15
+</code></pre>
+<pre><code class="language-ruby">nombres = ["ana", "juan", "maria"]
+puts nombres.map(&amp;:capitalize).inspect   # =&gt; ["Ana", "Juan", "Maria"]
+
+mas_de_3 = nombres.select { |n| n.length &gt; 3 }
+puts mas_de_3.inspect                      # =&gt; ["juan", "maria"]
+</code></pre>
+<blockquote class="aside aside-success"><p>Dominá <code class="inline-code">map</code>, <code class="inline-code">select</code> y <code class="inline-code">reduce</code> y resolverás la mayoría de los algoritmos sobre colecciones sin escribir bucles manuales. Son la base de la programación funcional en Ruby.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="metodos-destructivos">
+    <h2>Métodos con y sin bang (!)</h2>
+    <div class="doc-content">
+<p>Muchos métodos de Ruby tienen dos variantes: una <strong>no destructiva</strong> que devuelve un nuevo objeto sin tocar el original, y una <strong>destructiva</strong> con un signo de exclamación (<code class="inline-code">!</code>) que <strong>modifica el objeto en el lugar</strong>.</p>
+<p>El "bang" indica que el método <strong>cambia el receptor</strong>. Es importante distinguirlos para no alterar datos sin querer.</p>
+<pre><code class="language-ruby">a = [3, 1, 2]
+
+b = a.sort
+puts a.inspect   # =&gt; [3, 1, 2]  (original intacto)
+puts b.inspect   # =&gt; [1, 2, 3]
+
+a.sort!
+puts a.inspect   # =&gt; [1, 2, 3]  (ahora sí modificado)
+</code></pre>
+<pre><code class="language-ruby">texto = "ruby"
+puts texto.upcase      # =&gt; "RUBY" (nuevo string)
+puts texto             # =&gt; "ruby" (original intacto)
+
+texto.upcase!
+puts texto             # =&gt; "RUBY" (modificado en el lugar)
+</code></pre>
+<table>
+<thead><tr><th>Sin bang</th><th>Con bang (!)</th><th>Efecto</th></tr></thead>
+<tbody><tr><td>sort</td><td>sort!</td><td>Modifica el arreglo en el lugar</td></tr><tr><td>upcase</td><td>upcase!</td><td>Modifica el string en el lugar</td></tr><tr><td>reverse</td><td>reverse!</td><td>Modifica el arreglo en el lugar</td></tr></tbody>
+</table>
+<blockquote class="aside aside-caution"><p>No todos los métodos con <code class="inline-code">!</code> son destructivos, ni todos los destructivos llevan <code class="inline-code">!</code> (como <code class="inline-code">push</code>). El bang es una <strong>convención de aviso</strong>, no una garantía. Leé la documentación cuando tengas dudas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Afianzá colecciones y bloques resolviendo estos ejercicios y ejecutándolos con <code class="inline-code">ruby archivo.rb</code>.</p>
+<ol>
+<li>Creá un arreglo de números y usá <code class="inline-code">map</code> para obtener sus cuadrados.</li>
+<li>Filtrá con <code class="inline-code">select</code> los números divisibles por 3 de un rango <code class="inline-code">1..30</code>.</li>
+<li>Usá <code class="inline-code">reduce</code> para calcular el producto de todos los números del 1 al 5.</li>
+<li>Creá un hash de productos con precios y mostrá el total usando <code class="inline-code">sum</code> o <code class="inline-code">reduce</code>.</li>
+<li>Diferenciá un método con bang modificando un arreglo con <code class="inline-code">sort!</code> y mostrá el original antes y después.</li>
+</ol>
+<p>En la próxima lección, "Gems y Ecosistema", aprenderás a empaquetar y distribuir código con gems, gestionar dependencias con Bundler y explorar el ecosistema de Ruby.</p>
+    </div>
+  </section>

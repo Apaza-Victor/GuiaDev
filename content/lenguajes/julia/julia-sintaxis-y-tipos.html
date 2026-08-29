@@ -1,0 +1,192 @@
+<!-- 2. Sintaxis y Tipos - Julia (Lenguajes de Programación) -->
+  <section id="variables-y-convenciones">
+    <h2>Variables y convenciones</h2>
+    <div class="doc-content">
+<p>En Julia <strong>toda variable es dinamica</strong>: no declaras el tipo al crearla, el runtime lo infiere por el valor. La asignacion usa <code class="inline-code">=</code> y una variable puede reasignarse libremente. El lenguaje ademas permite nombres unicode completos, lo que acerca el codigo a la notacion matematica.</p>
+<pre><code class="language-julia">x = 10                 # entero
+x = 10.0               # reasignada: ahora es Float64
+nombre = "GuiaDev"
+es_activo = true
+
+# Nombres unicode muy usados en computo cientifico
+alpha = 0.05
+sigma2 = 2.5
+velocidad_media = 120  # snake_case, el estilo recomendado
+
+# Comprobar el tipo con typeof
+typeof(x)              # Float64
+typeof(nombre)         # String</code></pre>
+<table><thead><tr><th>Convencion</th><th>Ejemplo</th><th>Uso</th></tr></thead><tbody><tr><td><strong>snake_case</strong></td><td><code class="inline-code">temperatura_promedio</code></td><td>Variables y funciones</td></tr><tr><td><strong>Unicode/letras griegas</strong></td><td><code class="inline-code">mu</code>, <code class="inline-code">lambda</code></td><td>Parametros estadisticos y fisicos</td></tr><tr><td><strong>Termina en <code class="inline-code">!</code></strong></td><td><code class="inline-code">sort!</code>, <code class="inline-code">push!</code></td><td>Funciones que MUTAN su argumento</td></tr><tr><td><strong>UPPER_CASE</strong></td><td><code class="inline-code">CONST_PI</code></td><td>Constantes (<code class="inline-code">const</code>)</td></tr></tbody></table>
+<pre><code class="language-julia"># const bloquea el cambio de tipo, no el valor
+const ACELERACION = 9.81
+ACELERACION = 10.0       # Warning: constant redefinition, se permite (con aviso)
+# ACELERACION = "texto"  # ERROR si intentas cambiar de tipo
+
+# La funcion mutante sort! ordena "en su lugar" y devuelve el mismo vector
+v = [3, 1, 2]
+sort!(v)                 # [1, 2, 3]  (v quedo modificado)
+sort([3, 1, 2])          # [1, 2, 3]  (v original intacto)</code></pre>
+<blockquote class="aside aside-tip"><p>Usa <code class="inline-code">const</code> para valores que jamas cambian de tipo: ademas de expresar intencion, mejora el rendimiento porque el compilador JIT no recompila ante nuevos tipos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipos-numericos">
+    <h2>Tipos numéricos</h2>
+    <div class="doc-content">
+<p>Julia tiene una jerarquia de tipos numericos excepcionalmente rica: enteros con y sin signo de cualquier ancho, flotantes, racionales exactos, complejos y numeros de precision arbitraria. Casi todo es un subtipo de <code class="inline-code">Real</code> o <code class="inline-code">Complex</code>.</p>
+<pre><code class="language-julia">entero   = 42                # Int64 (entero nativo de 64 bits)
+flotante = 3.14              # Float64
+racional = 1//3              # Rational{Int64}: fraccion EXACTA
+complejo = 2 + 3im           # Complex{Int64}: la unidad imaginaria es im
+
+typeof(entero)               # Int64
+typeof(racional)             # Rational{Int64}
+racional + 1//3              # 2//3 (las fracciones se suman exactas)
+
+# Divisiones
+7 / 2                        # 3.5  (division real)
+div(7, 2)                    # 3    (division entera)
+mod(7, 2)                    # 1    (residuo)
+7 % 2                        # 1    (alias de mod)</code></pre>
+<p>El ejemplo anterior muestra el detalle determinante de los racionales: <code class="inline-code">1//3 + 1//3</code> devuelve <code class="inline-code">2//3</code> exacto, mientras que <code class="inline-code">1/3 + 1/3</code> en punto flotante produce <code class="inline-code">0.6666666666666666</code>. Las fracciones exactas nunca pierden precision.</p>
+<table><thead><tr><th>Tipo</th><th>Ejemplo</th><th>Descripcion</th><th>Uso classico</th></tr></thead><tbody><tr><td><code class="inline-code">Int64</code> / <code class="inline-code">Int32</code></td><td><code class="inline-code">42</code></td><td>Enteros de 64 o 32 bits</td><td>Contadores, indices</td></tr><tr><td><code class="inline-code">Float64</code></td><td><code class="inline-code">3.14</code></td><td>Double IEEE 754</td><td>Calculo numerico estandar</td></tr><tr><td><code class="inline-code">Rational</code></td><td><code class="inline-code">1//3</code></td><td>Fraccion exacta</td><td>Teoria, algebra exacta</td></tr><tr><td><code class="inline-code">Complex</code></td><td><code class="inline-code">2 + 3im</code></td><td>Numeros complejos</td><td>Ingenieria, fisica de ondas</td></tr><tr><td><code class="inline-code">BigInt</code> / <code class="inline-code">BigFloat</code></td><td><code class="inline-code">big(2)^100</code></td><td>Precision arbitraria</td><td>Criptografia, exactitud</td></tr><tr><td><code class="inline-code">Bool</code></td><td><code class="inline-code">true</code></td><td>Valores logicos</td><td>Condiciones</td></tr></tbody></table>
+<pre><code class="language-julia"># Precision arbitraria y flotantes grandes
+big(2)^100                  # 1267650600228229401496703205376
+sum(1:100)                  # 5050 (Int64)
+typeof(sum(1:100))          # Int64
+
+# Complejos: todas las operaciones matematicas funcionan
+z = 3 + 4im
+abs(z)                      # 5.0 (modulo)
+conj(z)                     # 3 - 4im
+z^2                         # -7 + 24im</code></pre>
+<blockquote class="aside aside-caution"><p>Los flotantes IEEE 754 no son exactos: <code class="inline-code">0.1 + 0.2</code> no da <code class="inline-code">0.3</code> sino <code class="inline-code">0.30000000000000004</code>. Usa <code class="inline-code">Rational</code> o <code class="inline-code">BigFloat</code> cuando la exactitud sea critica, y nunca compares flotantes con <code class="inline-code">==</code>; usa <code class="inline-code">isapprox</code> o <code class="inline-code">≈</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="strings-y-caracteres">
+    <h2>Strings y caracteres</h2>
+    <div class="doc-content">
+<p>Los <strong>strings</strong> inmutables en Julia se escriben entre comillas dobles; los <strong>caracteres</strong> simples en comillas simples. La interpolacion con <code class="inline-code">$</code> integra variables y expresiones dentro de un string, y el alfabeto completo puede vivir en cualquier codigo.</p>
+<pre><code class="language-julia">saludo = "Hola"
+lenguaje = "Julia"
+println("$saludo, $lenguaje!")          # Hola, Julia!
+println("Suma: $(2 + 3)")               # Suma: 5
+
+# Caracteres y comprobaciones
+letra = 'a'
+isdigit('5')                            # true
+isletter(letra)                         # true
+
+# Operaciones utiles sobre strings
+uppercase("julia")                      # "JULIA"
+lowercase("JULIA")                      # "julia"
+"Julia " ^ 3                            # "Julia Julia Julia "
+length("Julia " ^ 3)                    # 18
+split("a,b,c", ",")                     # ["a", "b", "c"]
+join(["a", "b", "c"], "-")              # "a-b-c"
+replace("hola mundo", "mundo" => "julia")  # "hola julia"</code></pre>
+<h3>Indexacion y substrings</h3>
+<pre><code class="language-julia">palabra = "GuiaDev"
+palabra[1]                  # 'G'
+palabra[2:4]                # "uia"
+length(palabra)             # 7
+lastindex(palabra)          # 7
+
+# Iterar caracter por caracter
+for c in "abc"
+    print(c, "-")
+end                         # a-b-c-</code></pre>
+<blockquote class="aside aside-note"><p>Julia indexa strings por <strong>codepoints</strong>: el indice 1 es el primer caracter, no el primer byte. Ante un caracter multibyte como <code class="inline-code">"olá"[4]</code> obtendras el caracter, mientras que explorar bytes ciegamente con <code class="inline-code">codeunits</code> puede recorrer el interior de un caracter. Usa <code class="inline-code">eachindex(s)</code> en genericos.</p></blockquote>
+<table><thead><tr><th>Funcion</th><th>Resultado sobre "julia "</th></tr></thead><tbody><tr><td><code class="inline-code">uppercase</code></td><td><code class="inline-code">"JULIA "</code></td></tr><tr><td><code class="inline-code">length</code></td><td><code class="inline-code">6</code></td></tr><tr><td><code class="inline-code">reverse</code></td><td><code class="inline-code">" ailuj"</code></td></tr><tr><td><code class="inline-code">"julia" * "SQL"</code></td><td><code class="inline-code">"juliaSQL"</code> (concatenacion)</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="operadores">
+    <h2>Operadores y funciones matemáticas</h2>
+    <div class="doc-content">
+<p>Julia soporta operadores aritmeticos clasicos, <strong>encadenamiento de comparaciones</strong> al estilo matematico y un conjunto enorme de funciones matematicas nativas en <code class="inline-code">Base</code>, sin importar ninguna biblioteca.</p>
+<pre><code class="language-julia"># Aritmetica
+5 + 3 * 2            # 11
+2^10                 # 1024
+17 % 5               # 2
+-7^2                 # -49  (la potencia une antes que el menos)
+
+# Comparaciones encadenadas: se lee como en matematicas
+3 &lt; 5 &lt; 7            # true
+5 &gt; 3 &gt; 1            # true
+1 &lt; 3 &gt; 5            # false
+
+# Logicos de cortocircuito
+true &amp;&amp; false        # false
+true || false        # true
+!true                # false</code></pre>
+<h3>Funciones matematicas</h3>
+<pre><code class="language-julia">sqrt(144)                 # 12.0
+cbrt(27)                  # 3.0
+exp(1)                    # 2.718281828459045
+log(exp(1))               # 1.0
+round(sqrt(2); digits = 5) # 1.41421
+abs(-5)                   # 5
+clamp(15, 0, 10)          # 10
+gcd(12, 18)               # 6
+lcm(4, 6)                 # 12
+sign(-8)                  # -1
+max(3, 7, 2)              # 7
+min(3, 7, 2)              # 2</code></pre>
+<table><thead><tr><th>Categoria</th><th>Operadores / funciones</th></tr></thead><tbody><tr><td><strong>Aritmeticos</strong></td><td><code class="inline-code">+</code>, <code class="inline-code">-</code>, <code class="inline-code">*</code>, <code class="inline-code">/</code>, <code class="inline-code">^</code>, <code class="inline-code">div</code>, <code class="inline-code">mod</code>, <code class="inline-code">%</code></td></tr><tr><td><strong>Comparacion</strong></td><td><code class="inline-code">==</code>, <code class="inline-code">!=</code>, <code class="inline-code">&lt;</code>, <code class="inline-code">&lt;=</code>, <code class="inline-code">&gt;</code>, <code class="inline-code">&gt;=</code></td></tr><tr><td><strong>Logicos</strong></td><td><code class="inline-code">&amp;&amp;</code>, <code class="inline-code">||</code>, <code class="inline-code">!</code></td></tr><tr><td><strong>Matematicas</strong></td><td><code class="inline-code">sqrt</code>, <code class="inline-code">exp</code>, <code class="inline-code">log</code>, <code class="inline-code">sin</code>, <code class="inline-code">cos</code>, <code class="inline-code">tan</code>, <code class="inline-code">gcd</code>, <code class="inline-code">lcm</code></td></tr><tr><td><strong>Redondeo</strong></td><td><code class="inline-code">round</code>, <code class="inline-code">floor</code>, <code class="inline-code">ceil</code>, <code class="inline-code">trunc</code></td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>No confundas <code class="inline-code">==</code> (igualdad de valor, devuelve <code class="inline-code">true</code>/<code class="inline-code">false</code>) con <code class="inline-code">===</code> (igualdad estricta que compara identidad en memoria y tipo). Para numeros coinciden; para vectores no.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="composicion-con-pipes">
+    <h2>Composición con pipes</h2>
+    <div class="doc-content">
+<p>Julia permite <strong>componer funciones</strong> de tres maneras complementarias: el operador pipe <code class="inline-code">|&gt;</code>, la composicion matematica <code class="inline-code">circ</code> y, opcionalmente, la macro <code class="inline-code">@chain</code> del paquete Chain.jl para cadenas largas. Asi el codigo se lee en el orden natural de las transformaciones, como haria un analista.</p>
+<pre><code class="language-julia"># El pipe pasa el valor de la izquierda como primer argumento
+[1, 2, 3, 4, 5] |&gt; sum                # 15
+[1, 2, 3, 4, 5] |&gt; sum |&gt; x -&gt; x^2   # 225
+
+# Para argumentos multiples se envuelve en una funcion anonima
+"hola mundo" |&gt; s -&gt; split(s, " ")    # ["hola", "mundo"]
+[1, 2, 3, 4, 5] |&gt; x -&gt; filter(iseven, x)  # [2, 4]</code></pre>
+<pre><code class="language-julia"># Composicion con el operador circ (Base)
+doblado  = x -&gt; 2x
+cuadrado = x -&gt; x^2
+
+f = cuadrado ∘ doblado      # f(x) = cuadrado(doblado(x)) = (2x)^2
+f(5)                        # 100
+
+g = doblado ∘ cuadrado      # g(x) = doblado(cuadrado(x)) = 2x^2
+g(5)                        # 50</code></pre>
+<pre><code class="language-julia"># Chain.jl para pipelines tipo tidyverse (Pkg.add("Chain"))
+using Chain
+@chain [3, 1, 4, 1, 5] begin
+    sort                 # [1, 1, 3, 4, 5]
+    reverse              # [5, 4, 3, 1, 1]
+    sum                  # 14
+end</code></pre>
+<table><thead><tr><th>Mecanismo</th><th>Sintaxis</th><th>Mejor para</th></tr></thead><tbody><tr><td><strong>Pipe</strong></td><td><code class="inline-code">x |&gt; f</code></td><td>Transformaciones de 1 a 3 pasos</td></tr><tr><td><strong>Composicion</strong></td><td><code class="inline-code">f ∘ g</code></td><td>Definir una nueva funcion reutilizable</td></tr><tr><td><strong>Macro chain</strong></td><td><code class="inline-code">@chain x begin ... end</code></td><td>Pipelines largos y legibles de datos</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>El pipe <code class="inline-code">|&gt;</code> solo pasa un argumento; para pasar mas, envuelve en una funcion anonima <code class="inline-code">x -&gt; f(x, 10)</code>. Alternativamente, <code class="inline-code">@chain</code> entiende el marcador <code class="inline-code">_</code>, de modo que puedes escribir <code class="inline-code">|&gt; f(_, 10)</code> de forma natural.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Variables dinamicas</strong>: crea <code class="inline-code">cotizacion = 125.5</code>, imprime <code class="inline-code">typeof</code>, reasignala a <code class="inline-code">"alza"</code> y vuelve a imprimir el tipo. Responde: pueden convivir valores numericos y texto en una misma variable?</li>
+<li><strong>Precision</strong>: calcula <code class="inline-code">1//3 + 1//6</code>, <code class="inline-code">0.1 + 0.2</code> y <code class="inline-code">1/3 + 1/6</code>; compara los tres resultados y explica en el REPL por que difieren.</li>
+<li><strong>Strings</strong>: usa <code class="inline-code">split</code> y <code class="inline-code">join</code> para transformar <code class="inline-code">"guia;dev;julia"</code> en <code class="inline-code">"guia-dev-julia"</code>, y <code class="inline-code">uppercase</code> para gritar tu lenguaje favorito.</li>
+<li><strong>Operadores</strong>: en una sola linea con pipes, toma <code class="inline-code">[16, 0, -9, 25, 4]</code>, aplica <code class="inline-code">sqrt</code> con <code class="inline-code">.</code> (broadcasting), redondea con <code class="inline-code">round</code> y suma todo. Debe dar 10.0.</li>
+<li><strong>Composicion</strong>: define <code class="inline-code">f = x -&gt; 3x</code> y <code class="inline-code">g = x -&gt; x + 1</code>, calcula <code class="inline-code">(f ∘ g)(4)</code> y <code class="inline-code">(g ∘ f)(4)</code>, y verifica a mano cual da 15 y cual 13.</li>
+</ol>
+<p>En la proxima leccion aprenderas a tomar decisiones y repetir trabajo: condicionales, bucles, funciones y comprensiones, los ladrillos de todo algoritmo.</p>
+    </div>
+  </section>

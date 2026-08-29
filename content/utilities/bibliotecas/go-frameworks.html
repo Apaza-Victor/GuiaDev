@@ -1,0 +1,161 @@
+<!-- 2. Frameworks Go: Gin, Echo, Fiber - Bibliotecas (Utilidades) -->
+  <section id="elegir-framework-go">
+    <h2>Elegir framework web para Go <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># La regla de oro: muchas apps no necesitan framework (net/http + chi)
+# Si necesitas más, elige según:
+#   Gin:   el más popular, render+ validación + docs
+#   Echo:  rendimiento y middleware cómodo
+#   Fiber: inspirado en Express JS (extremadamente rápido)
+#   chi:   delgado, clásico junto a net/http
+#   Buffalo: framework "full Rails-like"
+#   net/http puro: para servicios y microservicios simples
+</code></pre>
+<blockquote class="aside aside-tip"><p>Empieza con net/http + chi y crece cuando lo necesites. Gin es la opción más común si quieres un marco web completo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="gin">
+    <h2>Gin: validación, JSON y middleware <span class="gd-badge gd-badge-note">Framework</span></h2>
+    <div class="doc-content">
+<pre><code class="language-go">package main
+
+import (
+	"net/http"
+	"github.com/gin-gonic/gin"
+)
+
+type Usuario struct {
+	Nombre string `json:"nombre" binding:"required,min=3"`
+	Email  string `json:"email" binding:"required,email"`
+}
+
+func main() {
+	r := gin.Default()                     // logging + recovery integrados
+	r.Use(gin.Logger(), gin.Recovery())
+
+	r.GET("/usuarios", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"usuarios": []string{}})
+	})
+
+	r.POST("/usuarios", func(c *gin.Context) {
+		var u Usuario
+		if err := c.ShouldBindJSON(&u); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusCreated, u)
+	})
+
+	r.Run(":8080")                          // http.ListenAndServe
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>Gin agrupa routing, validación de structs (binding), middleware y JSON con mínima ceremonia. Los códigos de error se asignan con helper de estado claro.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fiber-echo">
+    <h2>Fiber y Echo <span class="gd-badge gd-badge-note">Alternativas</span></h2>
+    <div class="doc-content">
+<pre><code class="language-go">// Fiber: sintaxis "Express-like"
+import "github.com/gofiber/fiber/v2"
+
+app := fiber.New()
+app.Get("/hola/:nombre", func(c *fiber.Ctx) error {
+	return c.JSON(fiber.Map{"saludo": "Hola " + c.Params("nombre")})
+})
+app.Listen(":3000")
+
+// Echo: middlewares ricos y context sensitivo a errores
+import "github.com/labstack/echo/v4"
+e := echo.New()
+e.GET("/ping", func(c echo.Context) error {
+	return c.JSON(200, map[string]string{"pong": "ok"})
+})
+e.Logger.Fatal(e.Start(":1323"))
+</code></pre>
+<blockquote class="aside aside-note"><p>Fiber (similar a Express) y Echo (middlewares + routing paramétrico) son alternativas con excelente rendimiento; elijan el estilo que tu equipo lea mejor.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="database-gorm">
+    <h2>Datos: GORM, sqlx y migraciones <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-go">import "gorm.io/gorm"
+import "gorm.io/driver/postgres"
+
+// Modelo + migración automática
+type Usuario struct {
+	ID    uint   `gorm:"primaryKey"`
+	Nombre string
+	Email  string `gorm:"unique"`
+}
+
+db, _ := gorm.Open(postgres.Open("host=localhost user=app password=x dbname=app"), &gorm.Config{})
+db.AutoMigrate(&Usuario{})
+
+// CRUD
+db.Create(&Usuario{Nombre: "Ana"})
+var u Usuario
+db.First(&u, 1)
+db.Where("email = ?", "ana@x").Find(&usuarios)
+
+// sqlx: para SQL explícito con mapeo a struct
+rows, _ := dbx.Queryx("SELECT * FROM usuarios WHERE id=$1", 1)
+for rows.Next() { rows.StructScan(&u) }
+// migraciones: golang-migrate / atlas
+</code></pre>
+<blockquote class="aside aside-tip"><p>GORM es el ORM más cómodo; sqlx cuando quieres SQL crudo con mapeo a structs. Usa golang-migrate para versionar el esquema como SQL/Go.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testing-go">
+    <h2>Testing: testing estándar y testify <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-go">// testing estándar
+package calc
+
+import "testing"
+
+func TestSuma(t *testing.T) {
+	got := suma(2, 3)
+	if got != 5 {
+		t.Errorf("suma() = %d; want 5", got)
+	}
+}
+
+// tabla + subtests
+func TestDivide(t *testing.T) {
+	casos := []struct{ a, b, want int }{{6, 2, 3}, {10, 2, 5}}
+	for _, c := range casos {
+		t.Run(fmt.Sprintf("%d/%d", c.a, c.b), func(t *testing.T) {
+			if got := divide(c.a, c.b); got != c.want {
+				t.Errorf(...)
+			}
+		})
+	}
+}
+// Correr: go test ./... ; Cobertura: go test -cover ./...
+// Sobre HTTP: httptest + httptest.NewRequest
+</code></pre>
+<blockquote class="aside aside-tip"><p>El paquete `testing` nativo + tablas de casos cubre la mayoría. `testify` añade asserts/aserciones y mocks cuando lo necesites.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Rehaz tu API net/http con Gin y añade validación en el POST.</li>
+<li>Migra a Fiber o Echo y compara la sintaxis en una ruta.</li>
+<li>Define un modelo GORM `Producto` con AutoMigrate y haz un CRUD.</li>
+<li>Escribe tests con tabla de casos para una función `calcularIVA`.</li>
+<li>Prueba un endpoint con httptest y verifica el código y el body JSON.</li>
+</ol>
+    </div>
+  </section>

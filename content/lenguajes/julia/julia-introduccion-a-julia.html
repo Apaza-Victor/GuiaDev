@@ -1,0 +1,147 @@
+<!-- 1. Introducción a Julia - Julia (Lenguajes de Programación) -->
+  <section id="que-es-julia">
+    <h2>¿Qué es Julia? Ciencia + velocidad</h2>
+    <div class="doc-content">
+<p><strong>Julia</strong> es un lenguaje de programación de alto nivel y de <strong>tipado dinámico</strong>, creado para resolver el famoso "problema de los dos lenguajes": la comunidad científica prototipa en Python o R (fáciles pero lentos) y luego reescribe todo en C o Fortran (rápidos pero difíciles). Julia nació en 2012 en el MIT con una promesa ambiciosa: <strong>rendimiento de C con la productividad de Python</strong>, gracias a la compilación JIT y al <strong>múltiple dispatch</strong>.</p>
+<pre><code class="language-julia"># Estimacion de pi por Monte Carlo, sin ninguna libreria extra
+function estimar_pi(n)
+    dentro = 0
+    for _ in 1:n
+        x, y = rand(), rand()
+        if x^2 + y^2 &lt;= 1
+            dentro += 1
+        end
+    end
+    return 4 * dentro / n
+end
+
+estimar_pi(1_000_000)   # aprox. 3.1416, en menos de un segundo</code></pre>
+<table><thead><tr><th>Caracteristica</th><th>Julia</th><th>Python / R</th><th>C / Fortran</th></tr></thead><tbody><tr><td><strong>Velocidad</strong></td><td>Alta (JIT)</td><td>Media o baja</td><td>Muy alta</td></tr><tr><td><strong>Productividad</strong></td><td>Alta</td><td>Alta</td><td>Baja</td></tr><tr><td><strong>Tipado</strong></td><td>Dinamico con tipado opcional</td><td>Dinamico</td><td>Estatico</td></tr><tr><td><strong>Objetivo</strong></td><td>Computo cientifico nativo</td><td>Uso general / analisis</td><td>Sistemas</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Indices base 1, sintaxis legible e interoperabilidad directa con C y Python: llega a Julia desde Python sin friccion, y lo primero que notaras es que los bucles dejan de doler.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-con-juliaup">
+    <h2>Instalación y gestión de versiones (juliaup)</h2>
+    <div class="doc-content">
+<p>La forma oficial y recomendada de instalar Julia es <strong>juliaup</strong>, un gestor de toolchains inspirado en <code class="inline-code">rustup</code>. Permite instalar, actualizar y cambiar entre versiones (<code class="inline-code">1.11</code>, <code class="inline-code">1.12</code>, nightly...) con un solo comando.</p>
+<pre><code class="language-bash"># Windows (PowerShell): instalador oficial de juliaup
+irm https://install.julialang.org | iex
+
+# Windows alternativo con winget
+winget install julia -s msstore
+
+# macOS y Linux
+curl -fsSL https://install.julialang.org | sh
+
+# Verificar la instalacion
+julia --version   # julia version 1.12.0
+
+# Instalar una version especifica y cambiarse
+juliaup add 1.11
+juliaup default 1.11
+
+# Ver el estado y actualizar
+juliaup status
+juliaup update</code></pre>
+<table><thead><tr><th>Comando juliaup</th><th>Que hace</th></tr></thead><tbody><tr><td><code class="inline-code">juliaup add 1.11</code></td><td>Instala la version 1.11 de Julia</td></tr><tr><td><code class="inline-code">juliaup default 1.11</code></td><td>Fija 1.11 como version por defecto</td></tr><tr><td><code class="inline-code">juliaup status</code></td><td>Lista versiones instaladas y la activa</td></tr><tr><td><code class="inline-code">juliaup update</code></td><td>Actualiza todas las toolchains</td></tr><tr><td><code class="inline-code">juliaup add nightly</code></td><td>Instala la build nightly en desarrollo</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>La instalacion descarga varios cientos de megabytes; si usas un proxy corporativo o tienes red limitada, revisa la documentacion de juliaup para configurar el registro de paquetes y el servidor de descarga.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="el-repl">
+    <h2>El REPL de Julia</h2>
+    <div class="doc-content">
+<p>Al escribir <code class="inline-code">julia</code> en la terminal se abre el <strong>REPL</strong> (Read-Eval-Print Loop): el entorno interactivo donde se escribe codigo y se ve el resultado al instante. El REPL de Julia tiene <strong>modos especiales</strong> que se activan con una sola tecla y que agilizan muchisimo el trabajo.</p>
+<pre><code class="language-julia">julia&gt; 2 + 2
+4
+
+julia&gt; nombre = "Julia"
+"Julia"
+
+julia&gt; uppercase(nombre)
+"JULIA"
+
+julia&gt; 1 / 3
+0.3333333333333333</code></pre>
+<h3>Los cuatro modos del REPL</h3>
+<table><thead><tr><th>Modo</th><th>Tecla</th><th>Uso</th></tr></thead><tbody><tr><td><strong>Julia</strong> (<code class="inline-code">julia&gt;</code>)</td><td>(por defecto)</td><td>Evaluar expresiones y codigo Julia</td></tr><tr><td><strong>Ayuda</strong> (<code class="inline-code">help?&gt;</code>)</td><td><code class="inline-code">?</code></td><td>Buscar documentacion de una funcion</td></tr><tr><td><strong>Shell</strong> (<code class="inline-code">shell&gt;</code>)</td><td><code class="inline-code">;</code></td><td>Ejecutar comandos del sistema</td></tr><tr><td><strong>Paquetes</strong> (<code class="inline-code">pkg&gt;</code>)</td><td><code class="inline-code">]</code></td><td>Gestionar paquetes con Pkg</td></tr></tbody></table>
+<pre><code class="language-julia"># En modo ayuda escribimos ? y luego el nombre
+help?&gt; rand
+# search: rand
+#  rand([rng], [S], [dims...])
+#  ...
+
+# En modo shell podemos listar archivos
+shell&gt; ls
+# datos.csv  scripts/  README.md
+
+# En modo pkg gestionamos dependencias
+(@v1.12) pkg&gt; add DataFrames</code></pre>
+<blockquote class="aside aside-tip"><p>En el prompt de Julia los simbolos unicode se escriben con barras: <code class="inline-code">\pi</code> + <code class="inline-code">TAB</code> inserta <code class="inline-code">pi</code>, <code class="inline-code">\alpha</code> + <code class="inline-code">TAB</code> inserta <code class="inline-code">alpha</code>. Pruebalo en el REPL.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primer-programa">
+    <h2>Tu primer programa</h2>
+    <div class="doc-content">
+<p>Como la mayoria de lenguajes, Julia se puede ejecutar escribiendo un archivo de texto con extension <code class="inline-code">.jl</code> y lanzandolo con <code class="inline-code">julia archivo.jl</code>. El punto de arranque de todo programa es, sin excepciones, la ejecucion secuencial de las lineas del archivo.</p>
+<pre><code class="language-bash"># Crear el archivo y ejecutarlo
+nano hola.jl
+julia hola.jl</code></pre>
+<h3>hola.jl</h3>
+<pre><code class="language-julia"># hola.jl
+println("Hola desde Julia")
+
+x = 42
+y = 3.14
+println("x + y = ", x + y)   # x + y = 45.14
+
+# La interpolacion con $ integra expresiones dentro del string
+lenguaje = "Julia"
+println("Estoy aprendiendo $lenguaje en $(2026)")   # Estoy aprendiendo Julia en 2026</code></pre>
+<p>Observa dos detalles: los comentarios usan <code class="inline-code">#</code>, y la funcion <code class="inline-code">println()</code> imprime con salto de linea final. Tambien existe <code class="inline-code">print()</code> (sin salto) y, para salida formateada, el macro <code class="inline-code">@printf</code>.</p>
+<pre><code class="language-julia"># Arimetica basica: la sintaxis es matematica pura
+(5 + 3) * 2    # 16
+2^10           # 1024
+7 / 2          # 3.5
+7 ÷ 2          # 3  (division entera)
+
+# Admite literales cientificos y notacion rapida de vectores
+velocidad = 3e8            # 3.0e8 metros por segundo
+precios = [19.9, 24.5, 9.0]  # vector literal</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="julia-y-el-ecosistema">
+    <h2>Julia y su ecosistema científico</h2>
+    <div class="doc-content">
+<p>El ecosistema de Julia esta pensado para la <strong>computacion cientifica de punta</strong>: simulacion numerica, machine learning, bioinformatica, astrofisica y finanzas cuantitativas. La organizacion <code class="inline-code">JuliaLang</code> mantiene el registro <code class="inline-code">General</code> con miles de paquetes, todos instalables con un comando.</p>
+<pre><code class="language-julia"># Instalar varios paquetes de golpe en el REPL (modo pkg) o en codigo
+using Pkg
+Pkg.add(["Plots", "DataFrames", "Statistics", "DifferentialEquations"])</code></pre>
+<table><thead><tr><th>Paquete</th><th>Campo</th><th>Uso habitual</th></tr></thead><tbody><tr><td><code class="inline-code">DataFrames</code></td><td>Ciencia de datos</td><td>Tablas y manipulacion tipo pandas</td></tr><tr><td><code class="inline-code">Plots</code></td><td>Visualizacion</td><td>Graficos estadisticos y cientificos</td></tr><tr><td><code class="inline-code">Statistics</code></td><td>Estadistica</td><td>Media, mediana, correlacion (stdlib)</td></tr><tr><td><code class="inline-code">LinearAlgebra</code></td><td>Algebra lineal</td><td>Matrices, eigenvalores, SVD (stdlib)</td></tr><tr><td><code class="inline-code">DifferentialEquations</code></td><td>Ecuaciones diferenciales</td><td>ODEs, PDEs y simulacion</td></tr><tr><td><code class="inline-code">Flux</code></td><td>Machine learning</td><td>Redes neuronales en Julia puro</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>La filosofia "small specialized universe" (Universe.jl) permite encadenar paquetes ultraespecializados para campos como astronomia (AstroLib) o quimica (QuantumOptics), manteniendo composicion total: si dos paquetes reciben el mismo tipo, se pueden combinar sin adaptadores.</p></blockquote>
+<blockquote class="aside aside-success"><p>Comodo de donde vengas, la comunidad ofrece traductores automaticos: <code class="inline-code">PythonCall.jl</code> y <code class="inline-code">RCall.jl</code> permiten llamar Python o R desde Julia, de modo que puedes migrar por partes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Instalacion verificada</strong>: instala juliaup, ejecuta <code class="inline-code">julia --version</code>, abre el REPL con <code class="inline-code">julia</code> y escribe <code class="inline-code">2 + 2</code> para confirmar que responde.</li>
+<li><strong>Modos del REPL</strong>: escribe <code class="inline-code">?</code> y consulta la ayuda de <code class="inline-code">round</code>, luego escribe <code class="inline-code">;</code> y ejecuta <code class="inline-code">ls</code> o <code class="inline-code">dir</code>, y por ultimo entra en modo pkg con <code class="inline-code">]</code> y ejecuta <code class="inline-code">status</code>.</li>
+<li><strong>Primer archivo</strong>: crea <code class="inline-code">presentacion.jl</code> que imprima tu nombre, tu ciudad y el anio actual usando interpolacion <code class="inline-code">$(...)</code>, y ejecutalo con <code class="inline-code">julia presentacion.jl</code>.</li>
+<li><strong>Monte Carlo</strong>: copia la funcion <code class="inline-code">estimar_pi</code> de esta leccion, pruebala con <code class="inline-code">n = 1_000</code>, <code class="inline-code">n = 1_000_000</code> y anota cuanto se acerca a <code class="inline-code">3.141592653</code>.</li>
+<li><strong>Explora el ecosistema</strong>: desde el modo pkg instala <code class="inline-code">Statistics</code> y <code class="inline-code">LinearAlgebra</code>, verifica con <code class="inline-code">status</code> y escribe <code class="inline-code">using Statistics</code> y <code class="inline-code">mean([1, 2, 3, 4])</code> en el REPL.</li>
+</ol>
+<p>En la proxima leccion dominaremos la sintaxis de Julia: variables, tipos numericos, strings y operadores, la base de todo codigo cientifico.</p>
+    </div>
+  </section>

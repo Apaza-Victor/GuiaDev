@@ -1,0 +1,128 @@
+<!-- 3. Control de Flujo - Scala (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="if-como-expresion">
+    <h2>if como expresión</h2>
+    <div class="doc-content">
+<p>A diferencia de Java, donde <code class="inline-code">if</code> es una instrucción que no produce valor, en Scala el <code class="inline-code">if</code> es una <strong>expresión</strong>: siempre devuelve uno de los dos valores posibles. Esto permite asignar directamente un resultado a un <code class="inline-code">val</code> y pensar el código como datos, no como pasos.</p>
+<pre><code class="language-scala">val nota = 7.5
+
+// if como expresión: el resultado se guarda en un val
+val estado = if nota &gt;= 6.0 then "Aprobado" else "Reprobado"
+println(estado) // Aprobado
+
+// Comparación con Java: no hay operador ternario, el if ya lo es
+val descuento = if nota &gt; 8.0 then 20 else 5
+println(s"Descuento del $descuento%")
+
+// if anidados devuelven el valor de la rama que se ejecuta
+val puntaje = 92
+val nivel = if puntaje &gt;= 90 then "Experto"
+            else if puntaje &gt;= 70 then "Intermedio"
+            else "Básico"
+println(nivel) // Experto</code></pre>
+<blockquote class="aside aside-tip"><p>Al ser una expresión, <code class="inline-code">if</code> debe tener sus dos ramas del mismo tipo. Si una rama no devuelve nada útil, el tipo se combina con <code class="inline-code">Unit</code> y pierdes el valor.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pattern-matching-con-match">
+    <h2>Pattern matching con match</h2>
+    <div class="doc-content">
+<p>El <strong>pattern matching</strong> es el <code class="inline-code">switch</code> de Scala llevado al extremo: empareja valores contra <em>patrones</em> (constantes, tipos, estructuras) y desestructura datos. Con <code class="inline-code">case</code> y el guard <code class="inline-code">if</code> puedes crear lógica compleja en una sola expresión limpia.</p>
+<pre><code class="language-scala">def clasificar(n: Int): String = n match
+  case 0                =&gt; "Cero"
+  case 1 | 2 | 3        =&gt; "Pequeño"
+  case x if x &lt; 0       =&gt; "Negativo"
+  case n if n % 2 == 0  =&gt; "Par grande"
+  case _                =&gt; "Positivo impar"
+
+println(clasificar(0))   // Cero
+println(clasificar(2))   // Pequeño
+println(clasificar(-7))  // Negativo
+println(clasificar(100)) // Par grande
+println(clasificar(99))  // Positivo impar
+
+// match también desestructura tuplas
+val punto = (3, -2)
+val eje = punto match
+  case (0, _) =&gt; "Sobre el eje Y"
+  case (_, 0) =&gt; "Sobre el eje X"
+  case (x, y) =&gt; s"En ($x, $y)"
+println(eje) // En (3, -2)</code></pre>
+<blockquote class="aside aside-caution"><p>El patrón <code class="inline-code">case _</code> es el comodín que captura el resto. Si lo omites y un valor no encuentra caso, se lanza una <code class="inline-code">MatchError</code> en tiempo de ejecución.</p></blockquote>
+<table><thead><tr><th>Patrón</th><th>Qué empareja</th></tr></thead><tbody><tr><td><code class="inline-code">case 5</code></td><td>El valor exacto 5</td></tr><tr><td><code class="inline-code">case x</code></td><td>Cualquier valor ligado a x</td></tr><tr><td><code class="inline-code">case x if cond</code></td><td>Valores que cumplen el guard cond</td></tr><tr><td><code class="inline-code">case (a, b)</code></td><td>Desestructura una tupla de dos</td></tr><tr><td><code class="inline-code">case _</code></td><td>Comodín: captura cualquier cosa</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="bucles-y-comprehension">
+    <h2>Bucles y for-comprehensions</h2>
+    <div class="doc-content">
+<p>Scala tiene los clásicos bucles <code class="inline-code">for</code>/<code class="inline-code">while</code>, pero su joya son las <strong>for-comprehensions</strong>: expresiones que transforman colecciones sin mutar estado. En lugar de "para cada elemento haz algo", piensas en "para cada elemento genera una salida", y se usan con <code class="inline-code">yield</code> para construir una nueva colección.</p>
+<pre><code class="language-scala">// for estilo imperativo (aceptable, pero menos funcional)
+for i &lt;- 1 to 3 do
+  println(s"vuelta $i")
+
+// for-comprehension con yield: crea una nueva colección con resultados
+val dobles = for i &lt;- List(1, 2, 3, 4) yield i * 2
+println(dobles) // List(2, 4, 6, 8)
+
+// Filtros con guards y rangos de dos dimensiones
+val tabla = for
+  i &lt;- 1 to 3
+  j &lt;- 1 to 3
+  if i != j
+yield s"$i-$j"
+println(tabla) // Vector(1-2, 1-3, 2-1, 3-1, 2-3, 3-2)
+
+// Los rangos 1 to 5 producen Range; usar 1 until 5 excluye el último
+(1 until 5).foreach(x =&gt; print(x)) // 1234
+println()</code></pre>
+<blockquote class="aside aside-tip"><p>La flecha <code class="inline-code">&lt;-</code> en un <code class="inline-code">for</code> se lee como "recorre" o "procede de". <code class="inline-code">1 to 5</code> es inclusivo y <code class="inline-code">1 until 5</code> exclusivo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="mientras-y-control">
+    <h2>while y control de flujo</h2>
+    <div class="doc-content">
+<p>Para bucles con condición desconocida se usa <strong>while</strong>, igual que en Java. Usar <code class="inline-code">while</code> implica mutar variables externas para llevar el estado: mejor limítalo a leer entrada de usuario u otros casos donde el estado variable sea inevitable.</p>
+<pre><code class="language-scala">var intentos = 0
+var adivinado = false
+var secreto = "sbt"
+
+while !adivinado do
+  intentos += 1
+  if intentos &gt;= 3 then
+    adivinado = true
+    println(s"Usaste $intentos intentos. El secreto era $secreto")
+  else
+    println(s"Intento $intentos fallido")
+
+// while con un contador (versión no recursiva de un for)
+var suma = 0
+var i = 1
+while i &lt;= 5 do
+  suma += i
+  i += 1
+println(suma) // 15</code></pre>
+<blockquote class="aside aside-caution"><p>Un <code class="inline-code">while</code> devuelve <code class="inline-code">Unit</code>, no un valor. Si necesitas acumular resultados, piensa en funciones recursivas o <code class="inline-code">fold</code>, que verás en las próximas lecciones.</p></blockquote>
+<blockquote class="aside aside-note"><p>En Scala 3 los bucles <code class="inline-code">do</code> separan la condición del cuerpo: <code class="inline-code">while cond do cuerpo</code>. Scala 2 usaba llaves siempre.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<ol>
+<li>Escribe una función <code class="inline-code">clasificarEdad(edad: Int)</code> con ifs anidados que devuelvan valores distintos: <code class="inline-code">"Menor"</code> si es menor de 18, <code class="inline-code">"Adulto"</code> si está entre 18 y 64, y <code class="inline-code">"Mayor"</code> si supera 64.</li>
+<li>Usa <code class="inline-code">match</code> con un guard para clasificar un número: <code class="inline-code">"Múltiplo de 5"</code> cuando sea divisible entre 5, y otro mensaje si no lo es.</li>
+<li>Con una for-comprehension, genera la lista de los cuadrados de <code class="inline-code">1 to 10</code> y de esa lista filtra los impares.</li>
+<li>Usa <code class="inline-code">1 to 5</code> y <code class="inline-code">1 until 5</code> en un <code class="inline-code">for</code> e imprime ambos para ver la diferencia de límites.</li>
+<li>Escribe un <code class="inline-code">while</code> que sume los números pares del 1 al 20 y comprueba que el resultado sea 110.</li>
+</ol>
+<p>En la próxima lección pasarás al corazón orientado a objetos de Scala: clases, case classes, objects y traits.</p>
+    </div>
+  </section>

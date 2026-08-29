@@ -1,0 +1,180 @@
+<!-- 4. Arrays y Matrices - Julia (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="arrays">
+    <h2>Arrays unidimensionales</h2>
+    <div class="doc-content">
+<p>El tipo <code>Vector{T}</code> (alias de <code>Array{T,1}</code>) es el arreglo básico de Julia. Es <strong>homogéneo por defecto</strong> pero puedes crear vectores de tipos mixtos con <code>Vector{Any}</code>. Los índices empiezan en 1.</p>
+<pre><code class="language-julia">v = [1, 2, 3, 4]                 # Vector{Int64}
+println(v[1])                    # 1 (índices desde 1)
+println(v[end])                  # 4 (end = último)
+println(v[2:3])                  # [2, 3] (rebanada: copia)
+
+# Crear vectores con funciones
+rango   = 1:10 |> collect         # Collect convierte el rango
+zeros   = zeros(4)               # [0.0, 0.0, 0.0, 0.0]
+ones    = ones(3)                # [1.0, 1.0, 1.0]
+vfill   = fill(7, 3)             # [7, 7, 7]
+
+# Operaciones elementales: mutan con ! (bang)
+push!(v, 5)                    # agrega al final
+pop!(v)                        # quita del final
+pushfirst!(v, 0)               # agrega al inicio
+append!(v, [10, 20])           # agrega una lista
+sort!(v)                       # ordena destructivamente
+
+# Buscar
+println(findfirst(==(3), v))   # índice del 3 o nothing
+println(3 in v)                # true
+
+# Rebanadas con step
+println(1:2:10 |> collect)     # [1, 3, 5, 7, 9]</code></pre>
+<blockquote class="aside aside-tip"><p>Julia distingue funciones con <code>!</code> (mutantes: <code>push!</code>, <code>sort!</code>) de las puras (<code>sort</code>, <code>reverse</code>). La convención <code>!</code> es parte del idioma y la respetas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="matrices">
+    <h2>Matrices y álgebra lineal</h2>
+    <div class="doc-content">
+<p>Una <code>Matrix{T}</code> es un arreglo bidimensional. La notación <code>M[i, j]</code> accede con dos índices; <code>M[i, :]</code> toma una fila o columna completa.</p>
+<pre><code class="language-julia">A = [1 2 3; 4 5 6]             # 2x3 (espacio columnas, ; filas)
+println(size(A))               # (2, 3)
+println(A[1, 2])               # 2
+println(A[2, :])               # fila 2: [4, 5, 6]
+println(A[:, 1])               # columna 1: [1, 4]
+
+B = [7 8; 9 10; 11 12]        # 3x2
+C = A * B                      # producto (2x3)*(3x2) = 2x2
+println(C)
+
+# Matrices cuadradas utiles
+I3 = Matrix{Int}(I, 3, 3)      # identidad
+Z  = zeros(2, 2)
+println(I3)
+
+# Operaciones de álgebra lineal
+M  = [2.0 1.0; 1.0 3.0]
+println(M' * M)                 # M' = traspuesta conjugada
+println(inv(M))                 # inversa
+println(det(M))                 # determinante
+println(eigvals(M))             # valores propios (LinearAlgebra)
+
+# Concatenar
+Bajo  = vcat(A, zeros(1, 3))    # apilar vertical (2+1 filas)
+Lado  = hcat(A, ones(2, 1))     # horizontal
+println(size(Bajo))             # (3, 3)</code></pre>
+<blockquote class="aside aside-tip"><p>Para álgebra lineal avanzada se usa <code>using LinearAlgebra</code>: trae <code>eigvals</code>, <code>svd</code>, <code>qr</code>, <code>norm</code>, etc. Multiplica matrices con <code>*</code>; multiplica elemento a elemento con <code>.*</code> (broadcasting).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="funciones-sobre-arrays">
+    <h2>Funciones sobre arrays</h2>
+    <div class="doc-content">
+<p>Julia incluye un conjunto de funciones de alto nivel sobre contenedores: <code>map</code>, <code>filter</code>, <code>reduce</code>, <code>sum</code>, y las abreviaturas con sufijo <code>-!</code>.</p>
+<pre><code class="language-julia">nums = [1, 2, 3, 4, 5]
+
+println(map(x -&gt; x^2, nums))      # [1, 4, 9, 16, 25]
+println(filter(iseven, nums))     # [2, 4]
+println(reduce(+, nums))          # 15
+println(sum(nums))                # 15
+println(minimum(nums), maximum(nums))   # (1, 5)
+
+# Funciones anónimas cortas
+println(map(impar -&gt; impar * 10, filter(isodd, nums)))  # [10, 30, 50]
+
+# Tambien: sort, reverse, unique, count(cond, colección)
+println(unique([1, 1, 2, 3, 3]))  # [1, 2, 3]
+println(count(x -&gt; x &gt; 3, nums))  # 2
+
+# Con diccionarios (pares clave/valor)
+d = Dict("a" =&gt; 1, "b" =&gt; 2)
+println(mapvalues = map(v -&gt; v * 10, values(d)))
+println(map((k, v) -&gt; "$k=$v", keys(d), values(d)))  # ["a=1","b=2"]</code></pre>
+<blockquote class="aside aside-note"><p>La sintaxis <code>x -&gt; expresión</code> define una función anónima. Julia anima a usar funciones puras de alto nivel: son más memorables y el compilador las optimiza bien.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="broadcasting">
+    <h2>Broadcasting: el punto .</h2>
+    <div class="doc-content">
+<p>El <strong>broadcasting</strong> (operador <code>.</code>) aplica una función o un operador a TODOS los elementos de un array a la vez, sin escribir bucles. Es el superpoder de Julia para el estilo vectorizado.</p>
+<pre><code class="language-julia">x = [1.0, 2.0, 3.0]
+
+println(x .+ 1)       # [2.0, 3.0, 4.0] (suma escalar: broadcast)
+println(x .* x)       # [1.0, 4.0, 9.0] (elemento a elemento)
+println(sin.(x)       # seno de cada elemento)
+
+# Con función propia: f.(array)
+f(x) = x^2 + 2x + 1
+println(f.(x))        # [4.0, 9.0, 16.0]
+
+# Broadcast entre dos arreglos
+a = [1, 2, 3]
+b = [10, 20, 30]
+println(a .+ b)       # [11, 22, 33]
+
+# La regla del punto: se aplica a TODA la línea (dotted call fusionado)
+resultado = 2 .* x .^ 2 .+ 3 .* x .+ 1   # polinomio vectorizado
+println(resultado)
+
+# Comparaciones y lógica vectorizada
+println(x .&gt; 1.5)                    # [false, true, true]
+println((x .&gt; 1.0) .&amp;&amp; (x .&lt; 3.0))   # [false, true, false]</code></pre>
+<blockquote class="aside aside-caution"><p>Confundir <code>*</code> con <code>.*</code> es el error clásico de Julia: en una matriz, <code>*</code> hace álgebra lineal; en un vector, <code>.*</code> combina elemento a elemento. El broadcast <code>.</code> "envuelve" también funciones: <code>Map(f, v)</code> ≈ <code>f.(v)</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="rendimiento-y-tipado">
+    <h2>Rendimiento y tipado</h2>
+    <div class="doc-content">
+<p>Julia alcanza velocidad de lenguaje compilado porque el código es <strong>JIT</strong>: se especializa según los TIPOS de las variables. Para rendir bien, evita "type instability" (fluctuar de tipo dentro de una función) y usa arreglos de tipo concreto.</p>
+<pre><code class="language-julia"># Arreglos tipados: siempre que sea posible elige el tipo concreto
+v_float = Float64[1.0, 2.0, 3.0]  # Vector{Float64}
+v_any   = Any[1, "dos", 3.0]      # Vector{Any}: lento (no elijas por comodidad)
+
+# Pre-asignar en lugar de push! en bucles calientes
+function suma_n(n)
+    s = 0                     # Int (estable)
+    for i in 1:n
+        s += i
+    end
+    s
+end
+
+@time suma_n(10^7)          # @time desde el workspace
+
+# Anotar tipos ayuda al compilador (y documenta la intención)
+function hipotenusa(a::Float64, b::Float64)::Float64
+    sqrt(a^2 + b^2)
+end
+println(hipotenusa(3.0, 4.0))   # 5.0
+
+# El truco de los benchmarks: Julia se "calienta" con la primera llamada
+# La primera ejecución compila; las siguientes vuelan
+for _ in 1:3
+    t = @elapsed suma_n(10^6)
+    println("tiempo: ", round(t, digits=6))
+end</code></pre>
+<blockquote class="aside aside-tip"><p>Regla de oro: "performance in Julia is about types". Con <code>string(@code_warntype f(...))</code> puedes ver si hay inestabilidad. El rendimiento típico de Julia ronda C/Fortran en operaciones numéricas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Vector básico</strong>: crea <code>v = [3, 1, 4, 1, 5]</code>, agrega y quita elementos con <code>push!</code>/<code>pop!</code>, y ordénalo con <code>sort!</code>.</li>
+<li><strong>Matriz de mejor</strong>: crea una 3x3 de enteros al azar, extrae la diagonal (<code>diag(M)</code>), calcula <code>det</code> e <code>inv</code> si es invertible.</li>
+<li><strong>Funciones de orden superior</strong>: sobre <code>[1..10]</code> aplica <code>map</code> con una anónima, <code>filter(isodd, ...)</code> y <code>reduce(+, ...)</code>.</li>
+<li><strong>Broadcasting</strong>: vectoriza la fórmula del área <code>r .^ 2 .* π</code> para radios <code>[1.0, 2.0, 3.0, 5.0]</code>.</li>
+<li><strong>Benchmark</strong>: escribe <code>suma(n)</code> pura; mide con <code>@elapsed</code> su ejecución repetida y comenta si mejora tras el calentamiento del JIT.</li>
+</ol>
+<p>En la próxima lección llevaremos Julia al terreno de la ciencia de datos: DataFrames, Plots y estadística.</p>
+    </div>
+  </section>

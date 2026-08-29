@@ -1,0 +1,125 @@
+<!-- 2. Frameworks e infraestructura con PowerShell - Bibliotecas (Utilidades) -->
+  <section id="devops-powershell">
+    <h2>PowerShell en DevOps <span class="gd-badge gd-badge-note">Guía</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># No es un framework web, es automatización:
+#   - Despliegues (DSC, ARM/Bicep, Terraform con ejecutor)
+#   - Pipelines CI/CD (GitHub Actions: pwsh; Azure DevOps: ps)
+#   - Gestión cloud (Az PowerShell / AWS.Tools)
+#   - Automatización local (WMI/CIM, tareas, eventos)
+# Para "web" dentro de PS: usar módulo Pode (servidor HTTP)
+# Josése de estructura: functions modules → standard para scripts
+</code></pre>
+<blockquote class="aside aside-note"><p>PowerShell es el lenguaje de automatización de Windows + DevOps. Para APIs HTTP internas: el módulo Pode. Pero su valor real: configurar y desplegar todo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pode-y-http">
+    <h2>Pode y Invoke-RestMethod: web con PS <span class="gd-badge gd-badge-note">Web</span></h2>
+    <div class="doc-content">
+<pre><code class="language-powershell"># Pode: framework web en PS (server con rutas)
+Install-Module Pode
+
+# server.ps1
+Import-Module Pode
+Start-PodeServer {
+    Add-PodeEndpoint -Address * -Port 8080 -Protocol Http
+    Add-PodeRoute -Method Get -Path '/saludo/:nombre' -ScriptBlock {
+        Write-PodeJsonResponse -Value @{ saludo = "Hola $($args[0])" }
+    }
+    Add-PodeRoute -Method Post -Path '/datos' -ScriptBlock {
+        $body = Read-PodeRequestJson
+        Write-PodeJsonResponse -Value @{ recibido = $body.nombre }
+    }
+}
+# pwsh ./server.ps1
+
+# Desde otros scripts el cliente: Invoke-RestMethod (ya visto)
+</code></pre>
+<blockquote class="aside aside-tip"><p>Pode sirve APIs HTTP/WebSocket en PowerShell puro; ideal para tools internas o mock servers. `Invoke-RestMethod` es el cliente universal para consumir cualquier API.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="azure-aws">
+    <h2>Az PowerShell y AWS.Tools <span class="gd-badge gd-badge-note">Cloud</span></h2>
+    <div class="doc-content">
+<pre><code class="language-powershell"># Azure: Az module
+Install-Module -Name Az -Scope CurrentUser -Force
+# Login y tareas
+Connect-AzAccount
+New-AzResourceGroup -Name mi-grupo -Location 'eastus'
+New-AzVM -ResourceGroupName mi-grupo -Name mi-vm -Location 'eastus' `
+    -Image 'Win2022Datacenter' -Credential (Get-Credential) -OpenPorts 3389
+Get-AzVM | Select-Object Name, Location
+
+# AWS: AWS.Tools (modulares)
+Install-Module -Name AWS.Tools.EC2
+Set-AWSCredential -ProfileName default
+New-EC2Instance -ImageId ami-... -InstanceType t3.micro -KeyName mi-llave
+Get-EC2Instance
+
+# ambos interoperan con pipeline y secreto en vault
+</code></pre>
+<blockquote class="aside aside-tip"><p>Az.* e AWS.Tools.* permiten orquestar toda la nube desde PS: crear infra, funciones, secretos. Identidad: Connect-AzAccount / Set-AWSCredential con perfiles.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="dsc-despliegue">
+    <h2>DSC y automatización de config <span class="gd-badge gd-badge-note">Config</span></h2>
+    <div class="doc-content">
+<pre><code class="language-powershell"># DSC (Desired State Configuration): declarativo
+Configuration WebServerCFG {
+    Node 'localhost' {
+        WindowsFeature IIS { Ensure = 'Present'; Name = 'Web-Server' }
+        Service Spooler { Ensure = 'Running'; Name = 'Spooler' }
+        File AppDir { Ensure = 'Present'; DestinationPath = 'C:\App' }
+    }
+}
+Compress-Archive -Path .\WebServerCFG -DestinationPath cfg.zip
+# Aplicar: Start-DSCConfiguration -Path .\WebServerCFG -Wait -Force
+# Alternativas modernas: Ansible/Chef para Windows con PS Remoting
+
+# Tasks: SchTasks, CronJobs en Linux/MAC con pwsh
+</code></pre>
+<blockquote class="aside aside-note"><p>DSC marca el estado deseado de Windows de forma declarativa. En la práctica moderna, Ansible/Chef invocan módulos PS por WinRM; el enfoque es el mismo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pester-tests">
+    <h2>Pester: testing de scripts <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-powershell"># Pester 5
+Describe 'Calculadora' {
+    It 'suma correcta' {
+        Calculadora::Suma 2 3 | Should -Be 5
+    }
+    It 'lanza con división por cero' {
+        { Calculadora::Divide 1 0 } | Should -Throw
+    }
+}
+# Correr: Invoke-Pester ./tests/
+# Tests de funciones: puede mockear:
+Mock Get-Content { return '{"a": 1}' }
+# Cobertura: Invoke-Pester -CodeCoverage ./mi-module.psm1
+</code></pre>
+<blockquote class="aside aside-success"><p>Pester es el framework de tests de PS (BDD: Describe/It/Should). Mockea cmdlets externos para tests aislados; se integra en GitHub Actions (pwsh) y Azure DevOps.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Monta un Pode con /saludo/:nombre y pruébalo con Invoke-RestMethod.</li>
+<li>Lista tus VMs en Azure o EC2 con los módulos cloud (si tienes credenciales).</li>
+<li>Crea una config DSC que garantice dos servicios.</li>
+<li>Escribe 3 It de Pester con un Mock.</li>
+<li>Agrega un paso pwsh a un run de GitHub Actions.</li>
+</ol>
+    </div>
+  </section>

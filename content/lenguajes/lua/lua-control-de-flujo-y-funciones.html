@@ -1,0 +1,253 @@
+<!-- 4. Control de Flujo y Funciones - Lua (Lenguajes de Programación) -->
+  <section id="condicionales">
+    <h2>if, elseif y else</h2>
+    <div class="doc-content">
+<p>Las estructuras de control de Lua deciden qué bloque de código se ejecuta según las condiciones. La sintaxis de <code>if</code> sigue el patrón clásico, pero con la palabra clave <code>then</code> y el cierre <code>end</code>. Puedes encadenar tantos <code>elseif</code> como necesites, y terminar con un <code>else</code> opcional.</p>
+<pre><code class="language-lua">local nota = 7.5
+
+if nota &gt;= 9 then
+  print("Sobresaliente")
+elseif nota &gt;= 7 then
+  print("Notable")
+elseif nota &gt;= 5 then
+  print("Aprobado")
+else
+  print("Suspenso")
+end
+--> Notable</code></pre>
+<p>Recuerda la regla de veracidad de Lua: solo <code>nil</code> y <code>false</code> son falsos. Por eso <code>if tabla.clave then</code> comprueba a la vez que la clave existe y que no es falsa:</p>
+<pre><code class="language-lua">local usuario = { nombre = "Mario" }
+
+if usuario.nombre then
+  print("Hola, " .. usuario.nombre)
+end
+--> Hola, Mario
+
+if not usuario.admin then
+  print("No eres administrador")
+end
+--> No eres administrador
+
+-- Combinar condiciones
+if usuario.nombre and usuario.edad then
+  print("Perfil completo")
+else
+  print("Falta información")
+end</code></pre>
+<table><thead><tr><th>Estructura</th><th>Comportamiento</th></tr></thead><tbody><tr><td><code>if c then ... end</code></td><td>Ejecuta si <code>c</code> es verdadero</td></tr><tr><td><code>elseif c2 then ...</code></td><td>Prueba la siguiente condición si la anterior falló</td></tr><tr><td><code>else ... end</code></td><td>Ejecuta si ninguna condición se cumplió</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Como en Lua no existe un operador ternario (<code>cond ? a : b</code>), se suele usar la expresión lógica <code>cond and a or b</code>. Úsala con cuidado: si <code>a</code> es <code>false</code> o <code>nil</code> puede comportarse mal, así que es más seguro escribir un <code>if</code> normal.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="bucles">
+    <h2>Bucles: for, while y repeat</h2>
+    <div class="doc-content">
+<p>Lua ofrece tres formas de repetir código. El <code>for</code> numérico itera sobre un rango con un paso opcional; <code>while</code> repite mientras la condición sea verdadera; y <code>repeat...until</code> garantiza al menos una ejecución porque comprueba la condición al final.</p>
+<pre><code class="language-lua">-- for numérico: del 1 al 5
+for i = 1, 5 do
+  io.write(i, " ")
+end
+print()  --> 1 2 3 4 5
+
+-- for con paso: pares del 0 al 10
+for i = 0, 10, 2 do io.write(i, " ") end
+print()  --> 0 2 4 6 8 10
+
+-- for descendente
+for i = 3, 1, -1 do io.write(i, " ") end
+print()  --> 3 2 1</code></pre>
+<pre><code class="language-lua">-- while: repite mientras se cumpla la condición
+local n = 5
+while n &gt; 0 do
+  io.write(n, " ")
+  n = n - 1
+end
+print()  --> 5 4 3 2 1
+
+-- repeat...until: se ejecuta al menos una vez
+local intentos = 0
+repeat
+  intentos = intentos + 1
+  print("Intento", intentos)
+until intentos &gt;= 3</code></pre>
+<p>Para salir de un bucle antes de tiempo se usa <code>break</code>; <code>continue</code> no existe, así que para «saltar» una iteración se envuelve el cuerpo en un <code>if</code>:</p>
+<pre><code class="language-lua">-- break: detener el bucle
+for i = 1, 10 do
+  if i == 4 then break end
+  io.write(i, " ")
+end
+print()  --> 1 2 3
+
+-- Simular continue con if/else
+for i = 1, 5 do
+  if i == 3 then
+    -- saltamos esta iteración
+  else
+    io.write(i, " ")
+  end
+end
+print()  --> 1 2 4 5</code></pre>
+<table><thead><tr><th>Bucle</th><th>Cuándo usarlo</th><th>Comprobación</th></tr></thead><tbody><tr><td><code>for i = a, b, p</code></td><td>Rango numérico conocido</td><td>Al inicio de cada iteración</td></tr><tr><td><code>while c do ... end</code></td><td>Condición evaluada antes de cada vuelta</td><td>Antes de ejecutar el cuerpo</td></tr><tr><td><code>repeat ... until c</code></td><td>Garantizar al menos una ejecución</td><td>Después de ejecutar el cuerpo</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Ten cuidado con los bucles infinitos en <code>while</code> y <code>repeat</code>: olvidar actualizar la variable que controla la condición los bloquea para siempre. Cuando escribas un <code>while</code>, revisa siempre que la condición llegará a volverse falsa.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="funciones">
+    <h2>Funciones y múltiples retornos</h2>
+    <div class="doc-content">
+<p>Una <strong>función</strong> es un bloque de código reutilizable que recibe argumentos y (opcionalmente) devuelve valores. En Lua la sintaxis es <code>function nombre(args) ... end</code>, y las funciones se consideran valores de primera clase: puedes guardarlas en variables, pasarlas a otras funciones o devolverlas desde una función.</p>
+<pre><code class="language-lua">-- Declaración con nombre
+local function cuadrado(n)
+  return n * n
+end
+
+-- Función anónima guardada en una variable
+local duplicar = function(n)
+  return n * 2
+end
+
+print(cuadrado(4))    --> 16
+print(duplicar(5))    --> 10</code></pre>
+<p>Una característica distintiva de Lua son los <strong>múltiples valores de retorno</strong>: una función puede devolver varios resultados separados por comas. También pueden recibirse con asignación múltiple o con <code>select</code>:</p>
+<pre><code class="language-lua">-- Múltiples retornos
+local function dividir(a, b)
+  local cociente = a // b
+  local resto = a % b
+  return cociente, resto
+end
+
+local c, r = dividir(17, 5)
+print(c, r)      --> 3	2</code></pre>
+<pre><code class="language-lua">-- select('#', ...) cuenta cuántos argumentos llegan
+local function sumar_todo(...)
+  local total = 0
+  for i = 1, select("#", ...) do
+    total = total + select(i, ...)
+  end
+  return total
+end
+
+print(sumar_todo(1, 2, 3, 4))   --> 10
+
+-- Argumentos con valor por defecto
+local function saludar(nombre, apodo)
+  apodo = apodo or "Desconocido"
+  print(nombre .. ", también conocido como " .. apodo)
+end
+saludar("Ana", "La veloz")
+saludar("Luis")</code></pre>
+<table><thead><tr><th>Concepto</th><th>Sintaxis</th><th>Detalle</th></tr></thead><tbody><tr><td>Función con nombre</td><td><code>local function f(a)</code></td><td>Declaración local común</td></tr><tr><td>Función anónima</td><td><code>local f = function(a)</code></td><td>Como valor de primera clase</td></tr><tr><td>Retorno múltiple</td><td><code>return a, b, c</code></td><td>Devuelve varios valores</td></tr><tr><td>Varargs</td><td><code>function f(...)</code></td><td>Recibe argumentos variables</td></tr><tr><td>Retorno único</td><td><code>return a</code> o <code>return nil</code></td><td>Sin retorno → devuelve <code>nil</code></td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Usar <code>local function</code> en lugar de <code>function</code> (sin <code>local</code>) envuelve la definición en el ámbito local y evita ensuciar el entorno global. En programas modernos verás casi siempre <code>local function</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="closures">
+    <h2>Closures y funciones de orden superior</h2>
+    <div class="doc-content">
+<p>Como las funciones son valores de primera clase, Lua soporta <strong>closures</strong> — funciones que «capturan» variables de su entorno externo — y <strong>funciones de orden superior</strong> que reciben o devuelven funciones. Estos conceptos abren la puerta a un estilo de programación muy expresivo.</p>
+<pre><code class="language-lua">-- Closure: la función interna recuerda 'contador'
+local function crear_contador(inicio)
+  local contador = inicio
+  return function()
+    contador = contador + 1
+    return contador
+  end
+end
+
+local c1 = crear_contador(10)
+print(c1())   --> 11
+print(c1())   --> 12
+
+local c2 = crear_contador(0)   -- cada closure tiene su propio estado
+print(c2())   --> 1</code></pre>
+<p>Una <strong>función de orden superior</strong> recibe funciones como argumentos o las devuelve. Este es el mecanismo detrás de <code>table.sort</code>, los iteradores y las utilidades tipo <code>filter</code>/<code>map</code>:</p>
+<pre><code class="language-lua">-- Aplicar una función a cada elemento (map)
+local function mapear(lista, fn)
+  local resultado = {}
+  for i, v in ipairs(lista) do
+    resultado[i] = fn(v)
+  end
+  return resultado
+end
+
+-- Filtrar elementos según una condición (filter)
+local function filtrar(lista, predicado)
+  local resultado = {}
+  for _, v in ipairs(lista) do
+    if predicado(v) then
+      table.insert(resultado, v)
+    end
+  end
+  return resultado
+end
+
+local nums = { 1, 2, 3, 4, 5, 6 }
+local pares = filtrar(nums, function(n) return n % 2 == 0 end)
+local dobles = mapear(pares, function(n) return n * 2 end)
+print(table.concat(dobles, ", "))   --> 4, 8, 12</code></pre>
+<table><thead><tr><th>Closure</th><th>Funciones de orden superior</th></tr></thead><tbody><tr><td>Función que captura variables externas</td><td>Función que recibe/retorna otras funciones</td></tr><tr><td>Mantiene estado privado entre llamadas</td><td>Habilita <code>map</code>, <code>filter</code>, <code>sort</code></td></tr><tr><td>Se crea al ejecutar la función externa</td><td>Uso típico: callbacks y callbacks</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p>Dominar closures es clave para escribir código Lua idiomático: te permiten contadores privados, memorización, generadores de funciones y callbacks. Cada llamada a la función externa crea <strong>una nueva copia</strong> de las variables capturadas, como muestran <code>c1</code> y <code>c2</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="manejo-de-errores">
+    <h2>Manejo de errores con pcall</h2>
+    <div class="doc-content">
+<p>Lua maneja errores con dos herramientas: <code>error()</code> lanza un error y <code>pcall()</code> (protected call) lo captura. <code>pcall</code> ejecuta una función de forma «protegida» y devuelve dos valores: un booleano (<code>true</code> si no hubo error) y, en caso de éxito, el retorno de la función, o bien el mensaje de error.</p>
+<pre><code class="language-lua">-- Lanzar un error personalizado
+local function depositar(saldo, cantidad)
+  if cantidad &lt; 0 then
+    error("La cantidad no puede ser negativa")
+  end
+  return saldo + cantidad
+end
+
+-- Capturar el error con pcall
+local exito, resultado = pcall(depositar, 100, -5)
+if exito then
+  print("Nuevo saldo:", resultado)
+else
+  print("Error:", resultado)   --> Error: La cantidad no puede ser negativa
+end</code></pre>
+<p>También existe <code>xpcall</code>, que permite capturar el error y ejecutar una función de tratamiento que recibe el mensaje:</p>
+<pre><code class="language-lua">-- xpcall con función de manejo de errores
+local ok, err = xpcall(function()
+  error("algo salió mal")
+end, function(msg)
+  return "Se detectó: " .. msg
+end)
+
+print(err)   --> Se detectó: algo salió mal</code></pre>
+<table><thead><tr><th>Función</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>error(msg)</code></td><td>Lanza un error con el mensaje dado</td></tr><tr><td><code>pcall(f, args...)</code></td><td>Ejecuta <code>f</code> protegida; devuelve <code>true</code>/<code>false</code> y resultado o mensaje</td></tr><tr><td><code>xpcall(f, h, args...)</code></td><td>Como <code>pcall</code>, pero <code>h</code> recibe el error</td></tr><tr><td><code>assert(cond, msg)</code></td><td>Lanza <code>msg</code> si <code>cond</code> es falsa</td></tr></tbody></table>
+<pre><code class="language-lua">-- assert: conveniente para validar contratos internos
+local function raiz(x)
+  assert(x &gt;= 0, "La raíz requiere un número no negativo")
+  return x ^ 0.5
+end
+
+print(raiz(16))     --> 4.0
+-- print(raiz(-4))   -- error: assertion failed!</code></pre>
+<blockquote class="aside aside-tip"><p>Usa <code>pcall</code> para proteger operaciones que pueden fallar (I/O, redes, módulos de terceros) de bloquear el programa entero. En Lua, un error no capturado en un script principal interrumpe la ejecución por completo.</p></blockquote>
+<blockquote class="aside aside-note"><p>En el próximo curso verás metatablas y POO; conocer ya <code>pcall</code>/<code>xpcall</code> te servirá cuando quieras ejecutar código de forma segura dentro de sistemas más grandes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Integra condicionales, bucles y funciones en programas completos. Ejecuta cada solución con <code>lua</code> y verifica las salidas.</p>
+<ol>
+<li><strong>Clasificador</strong>: Escribe una función <code>clasificar(edad)</code> que devuelva <code>"menor"</code>, <code>"adulto"</code> o <code>"mayor"</code> usando <code>if/elseif/else</code>. Prueba con 12, 25 y 70.</li>
+<li><strong>Suma de pares</strong>: Usa un bucle <code>for</code> para sumar todos los números pares entre 1 y 100. Imprime el resultado.</li>
+<li><strong>Tabla de multiplicar</strong>: Crea un script que imprima la tabla del 7 (de 1 a 10) usando un bucle <code>for</code>.</li>
+<li><strong>Contador con closure</strong>: Implementa <code>crear_contador</code> como en la lección y demuestra que dos contadores llevan estados independientes. Añade una función <code>crear_limite</code> que cuente hata un máximo.</li>
+<li><strong>Desafío: ordenar con callbacks</strong>: Escribe una función <code>ordenar_por(lista, campo)</code> que use <code>table.sort</code> con un comparador para ordenar un arreglo de objetos por un campo elegido. Úsala con <code>{edad}</code> y prueba con <code>{nombre}</code>.</li>
+</ol>
+<p>En el próximo capítulo, <code>metatablas-y-oop</code>, elevarás el nivel con <strong>metatablas</strong> para sobrecargar operadores y construir sistemas de <strong>programación orientada a objetos</strong>.</p>
+    </div>
+  </section>

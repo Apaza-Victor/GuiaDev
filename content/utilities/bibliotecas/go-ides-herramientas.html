@@ -1,0 +1,110 @@
+<!-- 3. IDEs y Herramientas para Go - Bibliotecas (Utilidades) -->
+  <section id="ide-go">
+    <h2>IDEs y editores Go <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># VS Code + extensión oficial de Go (gopls)
+code --install-extension golang.go
+# Incluye: gopls (LSP), gofmt, dlv debug, test runner
+
+# GoLand (JetBrains): el IDE más completo (refactorizaciones, integraciones)
+# Neovim/Emacs: gopls vía LSP
+# Alternativas: Vim, JetBrains Todo, Sourcetrail...
+
+# Config típica en VS Code
+# "go.useLanguageServer": true,
+# formato al guardar: "editor.formatOnSave": true
+</code></pre>
+<blockquote class="aside aside-tip"><p>Los editores usan `gopls` (language server oficial). VS Code cubre el 99%; GoLand para productividad extrema en proyectos grandes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="herramientas-cli-go">
+    <h2>Herramientas CLI: fmt, vet y más <span class="gd-badge gd-badge-note">CLI</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Formatting: gofmt (obligatorio) — no configuración estilo
+gofmt -w ./src
+# gofmt -l .  lista archivos que difieren
+
+# Analysis
+go vet ./...                   # detecta problemas comunes
+go build ./...                 # compila todo
+go test -race ./...            # raza de datos en tests
+
+# Otros
+go env   # variables de entorno de Go
+go list -m all                 # dependencias directas y transitivas
+# Herramientas comunitarias
+# staticcheck (más lint), golangci-lint (runner de lints)
+golangci-lint run
+</code></pre>
+<blockquote class="aside aside-caution"><p>`gofmt` no tiene opciones de estilo: es obligatorio e innegociable. Suma `go vet` y `-race` en los tests de CI para calidad real.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="debug-perfilado-go">
+    <h2>Depuración y perfilado: dlv y pprof <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-go">// pprof: profiling nativo integrado en net/http
+import _ "net/http/pprof"
+
+// Luego: go tool pprof http://localhost:6060/debug/pprof/profile
+// y ahí obtienes CPU profiles vectorizados.
+// go tool pprof ratos:  top, web, list MiFunción
+</code></pre>
+<pre><code class="language-bash"># dlv (Delve): debugger CLI
+dlv debug main.go
+(dlv) break main.main
+(dlv) next / print variable / continue
+
+# VS Code: usa dlv implícito con breakpoints visuales
+# proprafiles de memoria: go tool pprof .../heap
+# -race en producción no; en CI sí
+</code></pre>
+<blockquote class="aside aside-tip"><p>`net/http/pprof` da perfiles de CPU/memoria sin instalar nada. Delve desde el editor (VS Code/GoLand) para el día a día del debug.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-go">
+    <h2>Compilar estáticamente y desplegar <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Binario estático (sin runtime): ideal para contenedores
+CGO_ENABLED=0 GOOS=linux go build -o app .
+# GOOS/GOARCH para cross-compile: linux, windows/amd64, darwin/arm64
+
+# CLI en producción con actualización
+go install github.com/...@latest   # instala binarios en GOBIN
+</code></pre>
+<pre><code class="language-docker">FROM golang:1.22 AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app
+
+# Imagen minimalista
+FROM scratch
+COPY --from=build /app /app
+EXPOSE 8080
+ENTRYPOINT ["/app"]
+# libs necesarios: usa alpine si tocas red/DNS con DNS puro
+</code></pre>
+<blockquote class="aside aside-success"><p>Con CGO_ENABLED=0 compilas estático: la imagen `scratch` queda de ~10MB. El deploy de un binario Go es de los más simples que existen.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala la extensión de Go en VS Code y usa `go to definition` en stdlib.</li>
+<li>Corre `go vet`, `gofmt -l` y `go test -race ./...` en tu módulo.</li>
+<li>Expón pprof, genera un profile 10s y analiza "top" y "list".</li>
+<li>Compila estático para Linux y ejecuta dentro de una imagen scratch</li>
+<li>Crea una CLI con cobra, compílala con `go install` y úsala desde terminal.</li>
+</ol>
+    </div>
+  </section>

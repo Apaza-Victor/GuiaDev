@@ -1,0 +1,223 @@
+<!-- 3. Control de Flujo y Funciones - Julia (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="condicionales">
+    <h2>if, elseif, else y ternario</h2>
+    <div class="doc-content">
+<p>En Julia, <code>if</code>/<code>elseif</code>/<code>else</code> funcionan de forma parecida a Python pero con sintaxis al estilo C. La palabra clave <code>end</code> cierra el bloque. A diferencia de C/Java, el <code>elseif</code> es sin espacio.</p>
+<pre><code class="language-julia">edad = 30
+
+if edad &gt;= 18
+    println("Mayor de edad")
+elseif edad &gt;= 0
+    println("Menor de edad")
+else
+    error("Edad inválida")
+end
+
+# El if se puede usar como EXPRESIÓN: devuelve un valor
+tipo = if edad &gt;= 18
+    "adulto"
+else
+    "menor"
+end
+println(tipo)
+
+# Ternario
+paridad = edad % 2 == 0 ? "par" : "impar"
+println(paridad)
+
+# Comparaciones encadenadas (nativas en Julia)
+println(0 &lt;= edad &lt;= 120)         # true
+
+# Valores truthy/falsy: solo false y nothing son falsos
+if 0
+    println("0 es verdadero en Julia")   # sí: true (pero es mala práctica)
+end</code></pre>
+<blockquote class="aside aside-caution"><p>En Julia, <code>0</code>, <code>""</code> y <code>[]</code> son <strong>verdaderos</strong>: solo <code>false</code> y <code>nothing</code> son falsos. No escribas condiciones numéricas esperando el comportamiento de C o Python.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="bucles">
+    <h2>Bucles for y while</h2>
+    <div class="doc-content">
+<p>Julia tiene <code>for</code> (inclusivo en rangos), <code>while</code>, y sentencias <code>break</code> y <code>continue</code>. La instrucción <code>for</code> puede recorrer rangos, arreglos y hasta varias variables a la vez.</p>
+<pre><code class="language-julia"># for con rango (1:5 incluye el 5)
+for i in 1:5
+    println(i)
+end
+
+# Paso: 1:2:10 va de 1 a 10 de 2 en 2
+for i in 1:2:10
+    print(i, " ")
+end
+println()
+
+# Recorrer un vector
+frutas = ["manzana", "pera", "uva"]
+for f in frutas
+    print(f, " ")
+end
+println()
+
+# Con índice (eachindex es el idiomático)
+for i in eachindex(frutas)
+    println(i, ": ", frutas[i])
+end
+
+# Varias variables a la vez (producto cartesiano)
+for x in 1:3, y in 1:2
+    println((x, y))
+end
+
+# while
+n = 1
+while n &lt;= 5
+    print(n, " ")
+    n += 1
+end
+println()
+
+# break / continue
+for i in 1:20
+    i % 2 == 0 &amp;&amp; continue      # salta pares (estilo Julia)
+    i &gt; 7 &amp;&amp; break              # se detiene en 7
+    print(i, " ")
+end
+println()   # 1 3 5 7</code></pre>
+<blockquote class="aside aside-tip"><p>El patrón <code>condición &amp;&amp; acción</code> (y su hermano <code>accion_uso || error(...)</code>) es el equivalente Julia del one-liner if: elegancia con side-effect mínimo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="funciones">
+    <h2>Funciones y argumentos</h2>
+    <div class="doc-content">
+<p>Las funciones se declaran con <code>function ... end</code> o con la forma corta <code>f(x) = ...</code>. El valor devuelto es el de la última expresión (no hace falta <code>return</code>). Julia combina esto con <strong>múltiple dispatch</strong> para crear funciones sobrecargadas por tipos.</p>
+<pre><code class="language-julia"># Forma larga
+function area_circulo(r)
+    π * r^2
+end
+
+# Forma corta (azúcar sintáctico)
+area_rect(l, a) = l * a
+
+println(area_circulo(2.0))      # 12.5663...
+println(area_rect(3, 4))        # 12
+
+# Argumentos con valores por defecto y opcionales
+saludar(nombre; saludo="Hola", mayus=false) = 
+    mayus ? uppercase("$saludo, $nombre") : "$saludo, $nombre"
+
+println(saludar("Ana"))
+println(saludar("Ana"; saludo="Buen día", mayus=true))
+
+# Argumento tipo en la firma (múltiple dispatch básico)
+doble(x::Int)   = 2x
+doble(x::Float64) = 2.0x
+doble(x::String)  = x * x
+
+println(doble(4))        # 8, usa Int
+println(doble(2.5))      # 5.0, usa Float64
+println(doble("ya"))     # "yaya", usa String
+
+# return explícito (útil en guardas tempranas)
+function clamp(x, lo, hi)
+    x &lt; lo &amp;&amp; return lo
+    x &gt; hi &amp;&amp; return hi
+    x
+end
+println(clamp(15, 0, 10))   # 10</code></pre>
+<blockquote class="aside aside-note"><p>El argumento aparece con <code>tipo::</code> para anotar, y las funciones con el mismo nombre pero distinto tipo por argumento son <strong>métodos</strong>. Es la base del múltiple dispatch que veremos en la lección 6.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="comprensiones">
+    <h2>Comprensiones y generadores</h2>
+    <div class="doc-content">
+<p>Una <strong>comprensión</strong> construye un arreglo evaluando una expresión para cada valor de un iterable, con filtros opcionales. Es una de las formas más idiomas de Julia para transformar datos.</p>
+<pre><code class="language-julia"># Comprensión básica: cuadrados
+cuadrados = [n^2 for n in 1:10]
+println(cuadrados)
+
+# Con filtro (palabra clave if)
+pares = [n for n in 1:20 if n % 2 == 0]
+println(pares)      # [2,4,...,20]
+
+# Doble iteración
+pares_cart = [(x, y) for x in 1:3, y in 1:3 if x != y]
+println(pares_cart)
+
+# Mapas de comprensión sobre vectores
+usuario = ["ana", "pedro"]
+mayus = [uppercase(u) for u in usuario]
+println(mayus)      # ["ANA","PEDRO"]
+
+# Generador: igual pero con (...) → sin almacenar, iterable perezoso
+suma = sum(n^2 for n in 1:100)
+println(suma)       # 338350, sin crear el arreglo
+
+# La comprensión clásica es normalmente más rápida que map+filter
+resultado = [n^2 for n in 1:100 if n % 3 == 0]</code></pre>
+<blockquote class="aside aside-tip"><p>Prefiere comprensiones sobre <code>map(f, args)</code> acumulado: en Julia son legibles, eficientes y no generan arreglos temporales si las combinas con <code>sum</code>/<code>minimum</code> vía generador.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="excepciones">
+    <h2>Excepciones y try/catch</h2>
+    <div class="doc-content">
+<p>Julia lanza errores con <code>error</code>, <code>ArgumentError</code>, <code>DomainError</code>, etc. y los captura con <code>try/catch</code>, además de <code>finally</code>.</p>
+<pre><code class="language-julia">function dividir(a, b)
+    b == 0 &amp;&amp; throw(ArgumentError("división por cero"))
+    a / b
+end
+
+# Captura con mensaje
+try
+    println(dividir(10, 0))
+catch e
+    println("Error capturado: ", e)   # ArgumentError: división por cero
+end
+
+# Verificar tipo del error
+try
+    sqrt(-1)
+catch e
+    if e isa DomainError
+        println("Dominio inválido")
+    else
+        rethrow()                     # relanza si no es el esperado
+    end
+finally
+    println("Esto corre siempre")
+end
+
+# Estrategia devuelve-valor: try como expresión
+resultado = try
+    parse(Int, "abc")
+catch
+    -1
+end
+println(resultado)   # -1</code></pre>
+<blockquote class="aside aside-caution"><p>En Julia las excepciones son lentas en comparación a la vía feliz: úsalas para errores reales, no como control de flujo normal. Si esperas fallos frecuentes, prefiere devolver <code>nothing</code> o un <code>Union{T, Nothing}</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Clasificador</strong>: escribe un programa que clasifique un número como par/impar y positivo/negativo/cero.</li>
+<li><strong>FizzBuzz</strong>: imprime del 1 al 20 con Fizz para múltiplos de 3, Buzz para múltiplos de 5 y FizzBuzz para ambos, usando un <code>for</code>.</li>
+<li><strong>Funciones puras</strong>: crea <code>factorial(n)</code>, <code>es_primo(n)</code> y <code>suma_digitos(n)</code> con la forma corta.</li>
+<li><strong>Comprensión experta</strong>: usa una comprensión doble con filtro para generar los pares <code>(a,b)</code> con <code>a+b == 10</code>.</li>
+<li><strong>Manejo de errores</strong>: una función que intente <code>parse(Float64, ...)</code> y devuelva <code>nothing</code> si falla; prueba con <code>"3.14"</code> y <code>"uvw"</code>.</li>
+</ol>
+<p>En la próxima lección nos enfocamos en el corazón de Julia para la computación numérica: arrays y matrices.</p>
+    </div>
+  </section>

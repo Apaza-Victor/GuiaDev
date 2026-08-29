@@ -1,0 +1,110 @@
+<!-- 3. IDEs y Herramientas para Bash - Bibliotecas (Utilidades) -->
+  <section id="editores-bash">
+    <h2>Editores de scripts Bash <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># VS Code con extensiones
+code --install-extension timonweng.shellcheck
+code --install-extension mads-hartmann.bash-ide-vscode
+code --install-extension foxundermoon.shell-format
+
+# Terminal propia de Windows: Windows Terminal + WSL
+# tmux/zellij permiten split panes y persistencia de sesiones
+
+# Neovim: syntax + lint (ale/lspconfig + bash-language-server)
+# Vim puro con 'set shellcheck' o la opción de lint de fugitive
+# Zsh + oh-my-zsh para consola agradable
+</code></pre>
+<blockquote class="aside aside-tip"><p>Visual Studio Code + ShellCheck es lo más práctico: resalta errores al escribir y automatiza formato con shell-format. Windows: usa WSL para un entorno Unix real.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="debug-bash">
+    <h2>Depuración y trazas <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -x          # imprime cada comando expandido ANTES de ejecutarlo
+# o a nivel de línea: bash -x script.sh
+# con local:  set +x ; set -x  temporal alrededor
+
+# trace de variables con PS4 (indica nivel de anidación)
+export PS4='+ ${BASH_SOURCE[0]}:${LINENO}: '
+
+# Depuración dirigida
+[[ -n "${DEBUG:-}" ]] &amp;&amp; set -x
+# búsqueda del sujeto: echo y 'return' antes de cada if problemático
+# bash -n script.sh  valida sintaxis sin ejecutar
+bash -n deploy.sh
+</code></pre>
+<blockquote class="aside aside-caution"><p>`set -x` imprime comandos y valores reales (¡ojo con secretos!). Cuando solo quieras ver una parte, abrézalo con `set +x` y vuelve a `set -x`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="control-versiones-profile">
+    <h2>Git y el entorno del desarrollador <span class="gd-badge gd-badge-note">GitOps</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Control de versiones de scripts: mis .bashrc / .zshrc / funciones
+# separados en ficheros (dotfiles) versionados para portabilidad
+git init dotfiles &amp;&amp; cd dotfiles
+ln -sf ~/dotfiles/.bashrc ~/.bashrc
+# o con stow documentados en el README
+
+# Enlaces: alias útiles
+alias gs='git status'
+alias gd='git diff'
+alias la='ls -lah'
+# Prefieres lazygit para Git interactivo con colores
+</code></pre>
+<blockquote class="aside aside-tip"><p>Versiona tus dotfiles y funciones personales: tus scripts se portan a cualquier máquina en segundos. lazygit/fzf agilizan el control de versiones diario.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pruebas-crossplatform">
+    <h2>Bash en Windows y CI multiplataforma <span class="gd-badge gd-badge-note">Multi</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># WSL (Windows Subsystem for Linux) para entorno Unix completo
+wsl --install        # WSL2 + Ubuntu por defecto
+wsl -d Ubuntu        # abrir distro
+
+# Git Bash (de Git para Windows) para scripts ligeros
+# --- CI en GitHub Actions: matriz Linux/macOS/Windows ---
+- runs-on: ${{ matrix.os }}
+  strategy:
+    matrix: { os: [ubuntu-latest, macos-latest, windows-latest] }
+- run: bash scripts/verificar.sh   # que además verifica portabilidad
+</code></pre>
+<blockquote class="aside aside-caution"><p>Prueba tus scripts en CI con matriz de SO; los caminos (`C:\` vs `/tmp`) y `sed -i` varían entre shells. Usa variables de entorno que difieran el menos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="completar-y-terminal">
+    <h2>Productividad en terminal <span class="gd-badge gd-badge-note">DX</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># autocompletado e historial potente
+#   - bash-completion + fzf (Ctrl-R historial fuzzy)
+#   - zsh + oh-my-zsh/p10k para correrlo bonito
+# Multiplexores: tmux / zellij — separar, reanudar, compartir
+# Filtros/selects: fzf (selección fuzzy de archivos/commits)
+# Otros: hyper/lite saoke x-platform, kitty/alacritty/ghostty modernos
+# ChDB/detail para CSV, glow para markdown en terminal
+</code></pre>
+<blockquote class="aside aside-success"><p>Combinación ganadora: WSL o Mac/Linux + zsh con fzf + tmux/zellij + bat/rg/fd. Multiplica tu velocidad en la terminal sin coste.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Activa `set -x` en un bucle y observa cómo se expanden los comandos.</li>
+<li>Configura shell-format en VS Code y haz formato+lint de un script.</li>
+<li>Versiona tus alias en un repo dotfiles con stow o symlinks.</li>
+<li>Ejecuta el mismo script en Linux (WSL) y Git Bash y ajusta la portabilidad.</li>
+<li>Instala fzf y úsalo para buscar historial, archivos y commits interactivamente.</li>
+</ol>
+    </div>
+  </section>

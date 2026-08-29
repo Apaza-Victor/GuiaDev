@@ -2987,6 +2987,1106 @@ const DOCS_DATA = {
             "contentFile": "content/lenguajes/bash/bash-pipes-y-herramientas.html"
           }
         ]
+      },
+      {
+        "id": "c",
+        "title": "C",
+        "icon": "fa-solid fa-microchip",
+        "lessons": [
+          {
+            "id": "c-introduccion-a-c",
+            "title": "1. Introducción a C",
+            "content": "El lenguaje de sistemas por excelencia: historia, instalación de GCC y tu primer programa.",
+            "sections": [
+              "¿Qué es C y dónde se usa hoy?",
+              "Historia: de Bell Labs al kernel",
+              "Instalación de un compilador (GCC/Clang)",
+              "Tu primer programa: hola.c",
+              "Anatomía del programa y printf",
+              "Errores comunes del principiante"
+            ],
+            "contentFile": "content/lenguajes/c/c-introduccion-a-c.html"
+          },
+          {
+            "id": "c-variables-tipos-y-operadores",
+            "title": "2. Variables, Tipos y Operadores",
+            "content": "Variables y constantes, tipos básicos, operadores y entrada/salida con printf y scanf.",
+            "sections": [
+              "Variables y constantes",
+              "Tipos de datos básicos (int, float, char)",
+              "Operadores aritméticos, relacionales y lógicos",
+              "Entrada y salida: printf y scanf",
+              "Conversiones y casting de tipos"
+            ],
+            "contentFile": "content/lenguajes/c/c-variables-tipos-y-operadores.html"
+          },
+          {
+            "id": "c-control-de-flujo",
+            "title": "3. Control de Flujo",
+            "content": "if/else y switch, bucles for/while/do-while y las sentencias break y continue.",
+            "sections": [
+              "Condicionales: if, else if, switch",
+              "Bucles: for, while, do-while",
+              "break, continue y goto",
+              "Bucles y condiciones anidadas"
+            ],
+            "contentFile": "content/lenguajes/c/c-control-de-flujo.html"
+          },
+          {
+            "id": "c-funciones-y-arreglos",
+            "title": "4. Funciones y Arreglos",
+            "content": "Declarar funciones, prototipos, arreglos, cadenas char y el paso por valor o referencia.",
+            "sections": [
+              "Declarar y definir funciones",
+              "Prototipos, cabeceras y ámbito",
+              "Arreglos y su recorrido",
+              "Cadenas: char[] y string.h",
+              "Paso por valor vs por referencia"
+            ],
+            "contentFile": "content/lenguajes/c/c-funciones-y-arreglos.html"
+          },
+          {
+            "id": "c-punteros-y-memoria",
+            "title": "5. Punteros y Memoria Dinámica",
+            "content": "Punteros, aritmética de punteros, memoria dinámica con malloc/free y structs.",
+            "sections": [
+              "¿Qué es un puntero?",
+              "Aritmética de punteros y arreglos",
+              "Memoria dinámica: malloc, calloc y free",
+              "Estructuras (struct) y punteros a struct",
+              "Fugas de memoria y buenas prácticas"
+            ],
+            "contentFile": "content/lenguajes/c/c-punteros-y-memoria.html"
+          },
+          {
+            "id": "c-archivos-y-compilacion",
+            "title": "6. Archivos y Compilación",
+            "content": "Manejo de archivos, argumentos CLI, compilación multiarchivo con Makefile y depuración.",
+            "sections": [
+              "Manejo de archivos: fopen, fread, fwrite",
+              "Argumentos por línea de comandos: argc y argv",
+              "Compilar múltiples archivos y Makefile",
+              "El preprocesador y las cabeceras",
+              "Depuración con gdb y sanitizers"
+            ],
+            "contentFile": "content/lenguajes/c/c-archivos-y-compilacion.html"
+          }
+        ]
+      },
+      {
+        "id": "r",
+        "title": "R",
+        "icon": "fa-solid fa-chart-line",
+        "lessons": [
+          {
+            "id": "r-introduccion-a-r",
+            "title": "1. Introducción a R",
+            "content": "Qué es R, instalación con RStudio, tu primer script y navegar su ayuda.",
+            "sections": [
+              "¿Qué es R y por qué usarlo?",
+              "Instalación de R y RStudio",
+              "Tu primer script y la consola",
+              "Navegar la ayuda y los paquetes",
+              "Tipos de datos básicos"
+            ],
+            "contentFile": "content/lenguajes/r/r-introduccion-a-r.html"
+          },
+          {
+            "id": "r-vectores-y-data-frames",
+            "title": "2. Vectores y Data Frames",
+            "content": "Vectores vectorizados, factores, matrices, data frames y listas.",
+            "sections": [
+              "Vectores y operaciones vectorizadas",
+              "Factores y variables categóricas",
+              "Matrices y arreglos",
+              "Data frames: la estructura central",
+              "Listas"
+            ],
+            "contentFile": "content/lenguajes/r/r-vectores-y-data-frames.html"
+          },
+          {
+            "id": "r-manipulacion-de-datos",
+            "title": "3. Manipulación de Datos con dplyr",
+            "content": "El tidyverse: filter, select, mutate, group_by/summarize y joins.",
+            "sections": [
+              "El tidyverse y los pipes %>%",
+              "filter y select",
+              "mutate, arrange y rename",
+              "group_by y summarize",
+              "Unir tablas con joins"
+            ],
+            "contentFile": "content/lenguajes/r/r-manipulacion-de-datos.html"
+          },
+          {
+            "id": "r-visualizacion-con-ggplot2",
+            "title": "4. Visualización con ggplot2",
+            "content": "La gramática de gráficos: puntos, líneas, barras, facetas y temas.",
+            "sections": [
+              "La gramática de gráficos",
+              "Gráficos de puntos y líneas",
+              "Barras e histogramas",
+              "Facetas y temas",
+              "Guardar y exportar gráficos"
+            ],
+            "contentFile": "content/lenguajes/r/r-visualizacion-con-ggplot2.html"
+          },
+          {
+            "id": "r-estadistica-y-modelos",
+            "title": "5. Estadística y Modelos",
+            "content": "Estadística descriptiva, regresión con lm(), pruebas de hipótesis y resumen de modelos.",
+            "sections": [
+              "Estadística descriptiva",
+              "Correlación y regresión lineal",
+              "Modelos lineales con lm()",
+              "Pruebas de hipótesis",
+              "Interpretar el resumen de un modelo"
+            ],
+            "contentFile": "content/lenguajes/r/r-estadistica-y-modelos.html"
+          },
+          {
+            "id": "r-rmarkdown-y-buenas-practicas",
+            "title": "6. RMarkdown y Buenas Prácticas",
+            "content": "Informes reproducibles, chunks de código, proyectos RStudio y crear funciones propias.",
+            "sections": [
+              "Informes reproducibles con RMarkdown",
+              "Chunks de código y texto inline",
+              "Proyectos RStudio y rutas relativas",
+              "Estilo y buenas prácticas",
+              "Crear y usar funciones propias"
+            ],
+            "contentFile": "content/lenguajes/r/r-rmarkdown-y-buenas-practicas.html"
+          }
+        ]
+      },
+      {
+        "id": "ruby",
+        "title": "Ruby",
+        "icon": "fa-brands fa-ruby",
+        "lessons": [
+          {
+            "id": "ruby-introduccion-a-ruby",
+            "title": "1. Introducción a Ruby",
+            "content": "Qué es Ruby, instalación con rbenv/RVM, el REPL irb y tu primer programa.",
+            "sections": [
+              "¿Qué es Ruby?",
+              "Instalación y gestión de versiones (rbenv/RVM)",
+              "El REPL: irb y pry",
+              "Tu primer programa",
+              "puts, p y print"
+            ],
+            "contentFile": "content/lenguajes/ruby/ruby-introduccion-a-ruby.html"
+          },
+          {
+            "id": "ruby-sintaxis-y-tipos",
+            "title": "2. Sintaxis y Tipos de Datos",
+            "content": "Variables, números, strings con interpolación, símbolos, booleanos y nil.",
+            "sections": [
+              "Variables y constantes",
+              "Números y operadores",
+              "Strings e interpolación",
+              "Símbolos y booleanos",
+              "nil y todo es un objeto"
+            ],
+            "contentFile": "content/lenguajes/ruby/ruby-sintaxis-y-tipos.html"
+          },
+          {
+            "id": "ruby-control-de-flujo",
+            "title": "3. Control de Flujo",
+            "content": "if/elsif/unless, case/when, bucles, iteradores y métodos con argumentos.",
+            "sections": [
+              "if, elsif, unless y ternario",
+              "case/when",
+              "Bucles: times, each, while",
+              "Iteradores y rangos",
+              "Métodos y argumentos"
+            ],
+            "contentFile": "content/lenguajes/ruby/ruby-control-de-flujo.html"
+          },
+          {
+            "id": "ruby-objetos-y-clases",
+            "title": "4. Objetos y Clases",
+            "content": "Definir clases, accessors, métodos de clase, herencia y mixins.",
+            "sections": [
+              "Definir clases e instanciarlas",
+              "attr_accessor, attr_reader y attr_writer",
+              "Métodos de instancia y de clase",
+              "Herencia",
+              "Módulos y mixins (include, extend)"
+            ],
+            "contentFile": "content/lenguajes/ruby/ruby-objetos-y-clases.html"
+          },
+          {
+            "id": "ruby-colecciones-y-bloques",
+            "title": "5. Colecciones y Bloques",
+            "content": "Arreglos, hashes, bloques y Procs, Enumerable (map/select/reduce) y métodos bang.",
+            "sections": [
+              "Arreglos y operaciones",
+              "Hashes y símbolos",
+              "Bloques, Proc y lambdas",
+              "Enumerable: map, select, reduce",
+              "Métodos con y sin bang (!)"
+            ],
+            "contentFile": "content/lenguajes/ruby/ruby-colecciones-y-bloques.html"
+          },
+          {
+            "id": "ruby-gems-y-ecosistema",
+            "title": "6. Gems y Ecosistema",
+            "content": "Qué es una gem, Bundler y Gemfile, scripts con File y Regex, testing y Rails.",
+            "sections": [
+              "¿Qué es una gem?",
+              "Bundler y el Gemfile",
+              "Scripts útiles con File y Regex",
+              "Testing con Minitest",
+              "Una mirada a Ruby on Rails"
+            ],
+            "contentFile": "content/lenguajes/ruby/ruby-gems-y-ecosistema.html"
+          }
+        ]
+      },
+      {
+        "id": "dart",
+        "title": "Dart",
+        "icon": "fa-solid fa-bullseye",
+        "lessons": [
+          {
+            "id": "dart-introduccion-a-dart",
+            "title": "1. Introducción a Dart",
+            "content": "Qué es Dart, instalación del SDK, main/print, DartPad y sintaxis general.",
+            "sections": [
+              "¿Qué es Dart y dónde se usa?",
+              "Instalación del SDK",
+              "Tu primer programa: main y print",
+              "DartPad y herramientas",
+              "Sintaxis general"
+            ],
+            "contentFile": "content/lenguajes/dart/dart-introduccion-a-dart.html"
+          },
+          {
+            "id": "dart-variables-y-tipos",
+            "title": "2. Variables y Tipos de Datos",
+            "content": "var/final/const, null safety y los tipos int, double, bool y String.",
+            "sections": [
+              "Variables: var, final y const",
+              "Null safety",
+              "Tipos: int, double, bool y String",
+              "Conversión entre tipos",
+              "Interpolación de strings"
+            ],
+            "contentFile": "content/lenguajes/dart/dart-variables-y-tipos.html"
+          },
+          {
+            "id": "dart-control-de-flujo",
+            "title": "3. Control de Flujo",
+            "content": "if/else, switch y pattern matching, bucles y colecciones básicas.",
+            "sections": [
+              "if/else y operadores",
+              "switch y pattern matching",
+              "Bucles: for, while y do-while",
+              "List y Map: lo básico"
+            ],
+            "contentFile": "content/lenguajes/dart/dart-control-de-flujo.html"
+          },
+          {
+            "id": "dart-funciones-y-clases",
+            "title": "4. Funciones y Clases",
+            "content": "Funciones y parámetros, clases y constructores, getters/setters, herencia y mixins.",
+            "sections": [
+              "Funciones y parámetros",
+              "Clases y constructores",
+              "Getters, setters y campos privados",
+              "Herencia e interfaces",
+              "Mixins"
+            ],
+            "contentFile": "content/lenguajes/dart/dart-funciones-y-clases.html"
+          },
+          {
+            "id": "dart-colecciones-y-null-safety",
+            "title": "5. Colecciones y Null Safety avanzado",
+            "content": "Listas, mapas y sets, genéricos, tipos nullable y late, y funciones sobre colecciones.",
+            "sections": [
+              "Listas: operaciones útiles",
+              "Mapas y Sets",
+              "Genéricos",
+              "Tipos nullable y late",
+              "Funciones sobre colecciones"
+            ],
+            "contentFile": "content/lenguajes/dart/dart-colecciones-y-null-safety.html"
+          },
+          {
+            "id": "dart-async-y-ecosistema",
+            "title": "6. Async y Ecosistema",
+            "content": "async/await y Futures, Streams, apps de consola, pub y Flutter.",
+            "sections": [
+              "async/await y Futures",
+              "Streams",
+              "Apps de consola con argumentos",
+              "pub: paquetes y dependencias",
+              "Una mirada a Flutter"
+            ],
+            "contentFile": "content/lenguajes/dart/dart-async-y-ecosistema.html"
+          }
+        ]
+      },
+      {
+        "id": "scala",
+        "title": "Scala",
+        "icon": "fa-solid fa-infinity",
+        "lessons": [
+          {
+            "id": "scala-introduccion-a-scala",
+            "title": "1. Introducción a Scala",
+            "content": "Funcional + OOP en la JVM: instalación con sbt, el REPL y tu primer programa.",
+            "sections": [
+              "¿Qué es Scala? Funcional + OOP en la JVM",
+              "Instalación: JDK y sbt",
+              "El REPL de Scala",
+              "Tu primer programa: hola.scala",
+              "object y el punto de entrada"
+            ],
+            "contentFile": "content/lenguajes/scala/scala-introduccion-a-scala.html"
+          },
+          {
+            "id": "scala-valores-y-funciones",
+            "title": "2. Valores y Funciones",
+            "content": "val vs var, funciones, expresiones, operadores en prefijo y strings interpolados.",
+            "sections": [
+              "val vs var y los tipos",
+              "Funciones y azúcar sintáctico",
+              "Expresiones y sentencias",
+              "Operadores y notación de prefijo",
+              "Strings e interpolación"
+            ],
+            "contentFile": "content/lenguajes/scala/scala-valores-y-funciones.html"
+          },
+          {
+            "id": "scala-control-de-flujo",
+            "title": "3. Control de Flujo",
+            "content": "if como expresión, pattern matching con match y for-comprehensions.",
+            "sections": [
+              "if como expresión",
+              "Pattern matching con match",
+              "Bucles y for-comprehensions",
+              "while y control de flujo"
+            ],
+            "contentFile": "content/lenguajes/scala/scala-control-de-flujo.html"
+          },
+          {
+            "id": "scala-clases-y-case-classes",
+            "title": "4. Clases y Case Classes",
+            "content": "Clases, métodos y sobrecarga, case classes, object companion y traits.",
+            "sections": [
+              "Clases y constructores",
+              "Métodos y sobrecarga",
+              "Case classes",
+              "object y companion objects",
+              "Traits"
+            ],
+            "contentFile": "content/lenguajes/scala/scala-clases-y-case-classes.html"
+          },
+          {
+            "id": "scala-colecciones-inmutables",
+            "title": "5. Colecciones y Datos Funcionales",
+            "content": "List, Vector/Map/Set, Option, higher-order functions y fold/reduce.",
+            "sections": [
+              "List y ListBuffer",
+              "Vector, Map y Set inmutables",
+              "Option: Some y None",
+              "Higher-order functions",
+              "foldLeft, reduceLeft y agregación"
+            ],
+            "contentFile": "content/lenguajes/scala/scala-colecciones-inmutables.html"
+          },
+          {
+            "id": "scala-fp-y-ecosistema",
+            "title": "6. Programación Funcional y Ecosistema",
+            "content": "Inmutabilidad, pattern matching avanzado, Akka para concurrencia y Apache Spark.",
+            "sections": [
+              "Inmutabilidad y efectos",
+              "Pattern matching avanzado",
+              "for-comprehensions",
+              "Concurrencia con Akka",
+              "Big data con Apache Spark"
+            ],
+            "contentFile": "content/lenguajes/scala/scala-fp-y-ecosistema.html"
+          }
+        ]
+      },
+      {
+        "id": "perl",
+        "title": "Perl",
+        "icon": "fa-solid fa-code",
+        "lessons": [
+          {
+            "id": "perl-introduccion-a-perl",
+            "title": "1. Introducción a Perl",
+            "content": "Qué es Perl, instalación con perlbrew, tu primer script y los one-liners.",
+            "sections": [
+              "¿Qué es Perl?",
+              "Instalación y versiones (perlbrew)",
+              "Tu primer script",
+              "One-liners con perl -e",
+              "Documentación con perldoc"
+            ],
+            "contentFile": "content/lenguajes/perl/perl-introduccion-a-perl.html"
+          },
+          {
+            "id": "perl-variables-y-tipos",
+            "title": "2. Variables y Tipos de Datos",
+            "content": "Escalares, arreglos, hashes y el concepto de contexto de Perl.",
+            "sections": [
+              "Escalares: $var",
+              "Arreglos: @arr",
+              "Hashes: %hash",
+              "Contexto: el concepto clave",
+              "Operadores"
+            ],
+            "contentFile": "content/lenguajes/perl/perl-variables-y-tipos.html"
+          },
+          {
+            "id": "perl-control-de-flujo",
+            "title": "3. Control de Flujo",
+            "content": "if/unless, bucles, last/next/redo y recorrer hashes y listas.",
+            "sections": [
+              "if, unless y ternario",
+              "Bucles: for, foreach, while, until",
+              "last, next y redo",
+              "Recorrer hashes y listas"
+            ],
+            "contentFile": "content/lenguajes/perl/perl-control-de-flujo.html"
+          },
+          {
+            "id": "perl-expresiones-regulares",
+            "title": "4. Expresiones Regulares",
+            "content": "Regex con =~, m// y s///, clases de caracteres, capturas, flags y aplicaciones.",
+            "sections": [
+              "Sintaxis: =~, m// y s///",
+              "Clases de caracteres y cuantificadores",
+              "Capturas y retroreferencias",
+              "Flags y agrupación",
+              "Regex en el mundo real"
+            ],
+            "contentFile": "content/lenguajes/perl/perl-expresiones-regulares.html"
+          },
+          {
+            "id": "perl-subrutinas-y-modulos",
+            "title": "5. Subrutinas y Módulos (CPAN)",
+            "content": "Subrutinas con @_, retorno y contexto, referencias y CPAN.",
+            "sections": [
+              "Subrutinas y @_",
+              "Retorno y contexto",
+              "Referencias",
+              "CPAN y cpanminus",
+              "Módulos útiles"
+            ],
+            "contentFile": "content/lenguajes/perl/perl-subrutinas-y-modulos.html"
+          },
+          {
+            "id": "perl-archivos-y-automatizacion",
+            "title": "6. Archivos y Automatización",
+            "content": "Leer y escribir archivos, el operador diamante, tareas de sysadmin y Perl moderno.",
+            "sections": [
+              "Leer y escribir archivos",
+              "El operador diamante <>",
+              "Tareas de administración de sistemas",
+              "Procesamiento de texto",
+              "Perl moderno y buenas prácticas"
+            ],
+            "contentFile": "content/lenguajes/perl/perl-archivos-y-automatizacion.html"
+          }
+        ]
+      },
+      {
+        "id": "lua",
+        "title": "Lua",
+        "icon": "fa-solid fa-gamepad",
+        "lessons": [
+          {
+            "id": "lua-introduccion-a-lua",
+            "title": "1. Introducción a Lua",
+            "content": "Qué es Lua, instalación y entorno, tu primer script y su diseño minimalista.",
+            "sections": [
+              "¿Qué es Lua y dónde se usa?",
+              "Instalación y entorno",
+              "Tu primer script",
+              "La consola interactiva",
+              "Un diseño minimalista"
+            ],
+            "contentFile": "content/lenguajes/lua/lua-introduccion-a-lua.html"
+          },
+          {
+            "id": "lua-variables-y-tipos",
+            "title": "2. Variables y Tipos",
+            "content": "Variables y ámbito, tipos de datos, nil, números, strings y operadores.",
+            "sections": [
+              "Variables y ámbito",
+              "Tipos de datos",
+              "nil y booleanos",
+              "Números y strings",
+              "Operadores"
+            ],
+            "contentFile": "content/lenguajes/lua/lua-variables-y-tipos.html"
+          },
+          {
+            "id": "lua-tablas",
+            "title": "3. Tablas: el corazón de Lua",
+            "content": "La única estructura de datos: arreglos, diccionarios, operaciones y recorridos.",
+            "sections": [
+              "¿Qué es una tabla?",
+              "Tablas como arreglos",
+              "Tablas como diccionarios",
+              "Operaciones sobre tablas",
+              "Recorrer tablas con pairs e ipairs"
+            ],
+            "contentFile": "content/lenguajes/lua/lua-tablas.html"
+          },
+          {
+            "id": "lua-control-de-flujo-y-funciones",
+            "title": "4. Control de Flujo y Funciones",
+            "content": "if/elseif/else, bucles, funciones con múltiples retornos y closures.",
+            "sections": [
+              "if, elseif y else",
+              "Bucles: for, while y repeat",
+              "Funciones y múltiples retornos",
+              "Closures y funciones de orden superior",
+              "Manejo de errores con pcall"
+            ],
+            "contentFile": "content/lenguajes/lua/lua-control-de-flujo-y-funciones.html"
+          },
+          {
+            "id": "lua-metatablas-y-oop",
+            "title": "5. Metatablas y POO",
+            "content": "Metatablas y metamétodos, sobrecarga de operadores y objetos con tablas.",
+            "sections": [
+              "Metatablas y metamétodos",
+              "Sobrecarga de operadores",
+              "Sistemas de objetos con tablas",
+              "Herencia con metatablas"
+            ],
+            "contentFile": "content/lenguajes/lua/lua-metatablas-y-oop.html"
+          },
+          {
+            "id": "lua-modulos-y-aplicaciones",
+            "title": "6. Módulos y Aplicaciones",
+            "content": "require, librería estándar, corrutinas, Lua en juegos y en Redis.",
+            "sections": [
+              "Módulos con require",
+              "Librería estándar útil",
+              "Corrutinas",
+              "Lua en juegos: LÖVE y más",
+              "Lua en Redis y sistemas embebidos"
+            ],
+            "contentFile": "content/lenguajes/lua/lua-modulos-y-aplicaciones.html"
+          }
+        ]
+      },
+      {
+        "id": "julia",
+        "title": "Julia",
+        "icon": "fa-solid fa-flask",
+        "lessons": [
+          {
+            "id": "julia-introduccion-a-julia",
+            "title": "1. Introducción a Julia",
+            "content": "Qué es Julia, instalación con juliaup, el REPL y su ecosistema científico.",
+            "sections": [
+              "¿Qué es Julia? Ciencia + velocidad",
+              "Instalación y gestión de versiones (juliaup)",
+              "El REPL de Julia",
+              "Tu primer programa",
+              "Julia y su ecosistema científico"
+            ],
+            "contentFile": "content/lenguajes/julia/julia-introduccion-a-julia.html"
+          },
+          {
+            "id": "julia-sintaxis-y-tipos",
+            "title": "2. Sintaxis y Tipos",
+            "content": "Variables, tipos numéricos, strings, operadores y composición con pipes.",
+            "sections": [
+              "Variables y convenciones",
+              "Tipos numéricos",
+              "Strings y caracteres",
+              "Operadores y funciones matemáticas",
+              "Composición con pipes"
+            ],
+            "contentFile": "content/lenguajes/julia/julia-sintaxis-y-tipos.html"
+          },
+          {
+            "id": "julia-control-de-flujo-y-funciones",
+            "title": "3. Control de Flujo y Funciones",
+            "content": "if/elseif/else, bucles, funciones, comprensiones y try/catch.",
+            "sections": [
+              "if, elseif, else y ternario",
+              "Bucles for y while",
+              "Funciones y argumentos",
+              "Comprensiones y generadores",
+              "Excepciones y try/catch"
+            ],
+            "contentFile": "content/lenguajes/julia/julia-control-de-flujo-y-funciones.html"
+          },
+          {
+            "id": "julia-arrays-y-matrices",
+            "title": "4. Arrays y Matrices",
+            "content": "Arrays, matrices y álgebra lineal, broadcasting con el punto y tipado.",
+            "sections": [
+              "Arrays unidimensionales",
+              "Matrices y álgebra lineal",
+              "Funciones sobre arrays",
+              "Broadcasting: el punto .",
+              "Rendimiento y tipado"
+            ],
+            "contentFile": "content/lenguajes/julia/julia-arrays-y-matrices.html"
+          },
+          {
+            "id": "julia-ciencia-de-datos",
+            "title": "5. Ciencia de Datos",
+            "content": "DataFrames.jl, manipulación de datos, Plots.jl y estadística.",
+            "sections": [
+              "DataFrames.jl y estructuras",
+              "Manipulación de datos",
+              "Gráficos con Plots.jl",
+              "Estadística",
+              "Jupyter y Pluto.jl"
+            ],
+            "contentFile": "content/lenguajes/julia/julia-ciencia-de-datos.html"
+          },
+          {
+            "id": "julia-performance-y-ecosistema",
+            "title": "6. Rendimiento y Ecosistema",
+            "content": "JIT y múltiple dispatch, paquetes con Pkg, paralelismo y entornos.",
+            "sections": [
+              "Compilación JIT y múltiple dispatch",
+              "Múltiple dispatch en profundidad",
+              "El registro de paquetes y Pkg",
+              "Paralelismo y computación en clúster",
+              "Proyectos y entornos"
+            ],
+            "contentFile": "content/lenguajes/julia/julia-performance-y-ecosistema.html"
+          }
+        ]
+      },
+      {
+        "id": "fsharp",
+        "title": "F#",
+        "icon": "fa-solid fa-cubes",
+        "lessons": [
+          {
+            "id": "fsharp-introduccion-a-fsharp",
+            "title": "1. Introducción a F#",
+            "content": "Qué es F#, instalación, tu primer programa y F# Interactive.",
+            "sections": [
+              "¿Qué es F#?",
+              "Instalación",
+              "Tu primer programa",
+              "F# Interactive (FSI)",
+              "Inmutabilidad y valores"
+            ],
+            "contentFile": "content/lenguajes/fsharp/fsharp-introduccion-a-fsharp.html"
+          },
+          {
+            "id": "fsharp-sintaxis-y-funciones",
+            "title": "2. Sintaxis y Funciones",
+            "content": "let y la vinculación, funciones, el pipe |> e interpolación de cadenas.",
+            "sections": [
+              "let y la vinculación",
+              "Funciones",
+              "El operador pipe |>",
+              "Cadenas e interpolación",
+              "Tuplas y destructuring"
+            ],
+            "contentFile": "content/lenguajes/fsharp/fsharp-sintaxis-y-funciones.html"
+          },
+          {
+            "id": "fsharp-control-de-flujo",
+            "title": "3. Control de Flujo",
+            "content": "if/then/else, pattern matching con match, bucles y comprensiones.",
+            "sections": [
+              "if / then / else",
+              "Pattern matching: match",
+              "Bucles: for y while",
+              "List / Seq comprehension"
+            ],
+            "contentFile": "content/lenguajes/fsharp/fsharp-control-de-flujo.html"
+          },
+          {
+            "id": "fsharp-tipos-y-uniones",
+            "title": "4. Tipos y Uniones Discriminadas",
+            "content": "Records, uniones discriminadas, Option, Result y parsing.",
+            "sections": [
+              "Records",
+              "Uniones Discriminadas",
+              "Option: ausencia segura",
+              "Result: errores como datos",
+              "Parsing y la regla parse, don't validate"
+            ],
+            "contentFile": "content/lenguajes/fsharp/fsharp-tipos-y-uniones.html"
+          },
+          {
+            "id": "fsharp-colecciones",
+            "title": "5. Colecciones y Secuencias",
+            "content": "Listas, secuencias, funciones de orden superior y pipelines.",
+            "sections": [
+              "Listas",
+              "Secuencias y colecciones",
+              "Funciones de orden superior",
+              "Pipeline real de datos",
+              "Aplicación práctica y rendimiento"
+            ],
+            "contentFile": "content/lenguajes/fsharp/fsharp-colecciones.html"
+          },
+          {
+            "id": "fsharp-ecosistema-y-net",
+            "title": "6. Ecosistema y .NET",
+            "content": "Interoperabilidad con .NET, async, testing, web y buenas prácticas.",
+            "sections": [
+              "Interoperabilidad con .NET",
+              "Async y computación",
+              "Testing con Expecto / xUnit",
+              "Aplicaciones web",
+              "Buenas prácticas en proyectos F#"
+            ],
+            "contentFile": "content/lenguajes/fsharp/fsharp-ecosistema-y-net.html"
+          }
+        ]
+      },
+      {
+        "id": "elixir",
+        "title": "Elixir",
+        "icon": "fa-solid fa-vial",
+        "lessons": [
+          {
+            "id": "elixir-introduccion-a-elixir",
+            "title": "1. Introducción a Elixir",
+            "content": "Qué es Elixir, instalación, IEx, tu primer programa y Mix.",
+            "sections": [
+              "¿Qué es Elixir?",
+              "Instalación",
+              "IEx: el REPL interactivo",
+              "Tu primer programa",
+              "Mix: el gestor de proyectos"
+            ],
+            "contentFile": "content/lenguajes/elixir/elixir-introduccion-a-elixir.html"
+          },
+          {
+            "id": "elixir-sintaxis-y-tipos",
+            "title": "2. Sintaxis y Tipos",
+            "content": "Tipos básicos, pattern matching con =, inmutabilidad, átomos, maps y strings.",
+            "sections": [
+              "Tipos básicos",
+              "Pattern Matching: el operador =",
+              "Inmutabilidad",
+              "Átomos y maps",
+              "Strings e interpolación"
+            ],
+            "contentFile": "content/lenguajes/elixir/elixir-sintaxis-y-tipos.html"
+          },
+          {
+            "id": "elixir-control-de-flujo",
+            "title": "3. Control de Flujo",
+            "content": "case, if/cond, funciones con múltiples cláusulas, guards y recursión.",
+            "sections": [
+              "case: pattern matching como flujo",
+              "if, unless y cond",
+              "Funciones con múltiples cláusulas",
+              "Guards: when",
+              "Recurrencia (recursión) en práctica"
+            ],
+            "contentFile": "content/lenguajes/elixir/elixir-control-de-flujo.html"
+          },
+          {
+            "id": "elixir-modulos-y-pipes",
+            "title": "4. Módulos y Pipelines",
+            "content": "Módulos, el operador pipe, aridad y documentación.",
+            "sections": [
+              "Módulos y funciones con nombre",
+              "El operador pipe",
+              "Aridad y referencias a funciones",
+              "Funciones con nombre, defaults y capturas",
+              "Docs y metaprogramación"
+            ],
+            "contentFile": "content/lenguajes/elixir/elixir-modulos-y-pipes.html"
+          },
+          {
+            "id": "elixir-colecciones-y-enum",
+            "title": "5. Colecciones y Enum",
+            "content": "Listas, maps, el módulo Enum, comprehensions y structs.",
+            "sections": [
+              "Listas",
+              "Maps, keywords y conjuntos",
+              "El módulo Enum",
+              "Comprehensions: for",
+              "Structs y su integración con Enum"
+            ],
+            "contentFile": "content/lenguajes/elixir/elixir-colecciones-y-enum.html"
+          },
+          {
+            "id": "elixir-otp-y-phoenix",
+            "title": "6. OTP y Phoenix",
+            "content": "Procesos ligeros, mensajes, GenServer, supervisión y Phoenix.",
+            "sections": [
+              "Procesos ligeros",
+              "Mensajes y receive",
+              "GenServer: estado encapsulado",
+              "Supervisión y tolerancia a fallos",
+              "Phoenix: el framework web"
+            ],
+            "contentFile": "content/lenguajes/elixir/elixir-otp-y-phoenix.html"
+          }
+        ]
+      },
+      {
+        "id": "haskell",
+        "title": "Haskell",
+        "icon": "fa-solid fa-square-root-variable",
+        "lessons": [
+          {
+            "id": "haskell-introduccion-a-haskell",
+            "title": "1. Introducción a Haskell",
+            "content": "Qué es Haskell, instalación con GHC, GHCi y evaluación perezosa.",
+            "sections": [
+              "¿Qué es Haskell?",
+              "Instalación (GHC + cabal/stack)",
+              "GHCi: el intérprete",
+              "Tu primer programa",
+              "Evaluación perezosa y funciones puras"
+            ],
+            "contentFile": "content/lenguajes/haskell/haskell-introduccion-a-haskell.html"
+          },
+          {
+            "id": "haskell-funciones-puras",
+            "title": "2. Funciones Puras",
+            "content": "Funciones puras, firmas de tipo, guardas, secciones y composición.",
+            "sections": [
+              "Funciones puras",
+              "Firmas de tipo",
+              "Guardas (guards) y casos",
+              "Operator sections",
+              "Composición de funciones"
+            ],
+            "contentFile": "content/lenguajes/haskell/haskell-funciones-puras.html"
+          },
+          {
+            "id": "haskell-tipos-y-typeclasses",
+            "title": "3. Tipos y Typeclasses",
+            "content": "Sistema de tipos, typeclasses, Maybe, polimorfismo y newtype.",
+            "sections": [
+              "Sistema de tipos",
+              "Typeclasses (sobrecarga segura)",
+              "Maybe: no más null",
+              "Tipos polimórficos y parámetros",
+              "newtype, deriving y seguridad"
+            ],
+            "contentFile": "content/lenguajes/haskell/haskell-tipos-y-typeclasses.html"
+          },
+          {
+            "id": "haskell-listas-y-recursion",
+            "title": "4. Listas y Recursión",
+            "content": "Listas, recursión, pattern matching, funciones clásicas y listas infinitas.",
+            "sections": [
+              "Listas",
+              "Recursión básica",
+              "Pattern matching profundo",
+              "Funciones clásicas de listas",
+              "Listas infinitas"
+            ],
+            "contentFile": "content/lenguajes/haskell/haskell-listas-y-recursion.html"
+          },
+          {
+            "id": "haskell-map-filter-fold",
+            "title": "5. map, filter y fold",
+            "content": "map/filter, lambdas, fold, zip y aplicativos en listas.",
+            "sections": [
+              "map y filter",
+              "Funciones anónimas (lambda)",
+              "fold: términos de reducción",
+              "zip y combinaciones",
+              "Aplicativos en listas"
+            ],
+            "contentFile": "content/lenguajes/haskell/haskell-map-filter-fold.html"
+          },
+          {
+            "id": "haskell-io-y-proyectos",
+            "title": "6. IO y Proyectos",
+            "content": "IO con acciones puras, notación do, cabal, QuickCheck y mini-proyectos.",
+            "sections": [
+              "IO: acciones puras para efectos",
+              "Notación do",
+              "cabal: paquetes y proyectos",
+              "Pruebas con QuickCheck y HUnit",
+              "Mini-proyecto práctico"
+            ],
+            "contentFile": "content/lenguajes/haskell/haskell-io-y-proyectos.html"
+          }
+        ]
+      },
+      {
+        "id": "groovy",
+        "title": "Groovy",
+        "icon": "fa-solid fa-record-vinyl",
+        "lessons": [
+          {
+            "id": "groovy-introduccion-a-groovy",
+            "title": "1. Introducción a Groovy",
+            "content": "Qué es Groovy, instalación, tu primer script y compatibilidad con Java.",
+            "sections": [
+              "¿Qué es Groovy?",
+              "Instalación",
+              "Tu primer script",
+              "Dinamismo y tipado",
+              "Compatibilidad con Java"
+            ],
+            "contentFile": "content/lenguajes/groovy/groovy-introduccion-a-groovy.html"
+          },
+          {
+            "id": "groovy-sintaxis-y-tipos",
+            "title": "2. Sintaxis y Tipos",
+            "content": "Variables, GStrings, números, booleanos, operadores y navegación segura.",
+            "sections": [
+              "Variables y ámbito",
+              "Strings y GStrings",
+              "Números, booleanos y conversiones",
+              "Operadores",
+              "Navegación segura y operadores avanzados"
+            ],
+            "contentFile": "content/lenguajes/groovy/groovy-sintaxis-y-tipos.html"
+          },
+          {
+            "id": "groovy-colecciones",
+            "title": "3. Colecciones",
+            "content": "Listas, mapas, rangos, el GDK y cadenas con templating.",
+            "sections": [
+              "Listas",
+              "Mapas",
+              "Rangos",
+              "El GDK",
+              "Cadenas avanzadas y templating"
+            ],
+            "contentFile": "content/lenguajes/groovy/groovy-colecciones.html"
+          },
+          {
+            "id": "groovy-closures",
+            "title": "4. Closures",
+            "content": "Closures, delegación, currying, métodos GDK y builders.",
+            "sections": [
+              "Closures básicas",
+              "Delegación y configuración",
+              "Currying y memoria",
+              "Closures con métodos GDK",
+              "Builders"
+            ],
+            "contentFile": "content/lenguajes/groovy/groovy-closures.html"
+          },
+          {
+            "id": "groovy-oop-y-metaprogramacion",
+            "title": "5. OOP y Metaprogramación",
+            "content": "Clases y propiedades, traits, metaprogramación y scripts.",
+            "sections": [
+              "Clases y propiedades",
+              "Traits e interfaces",
+              "Metaprogramación",
+              "Categorías y categorías de clases",
+              "Scripts y estructura de proyecto"
+            ],
+            "contentFile": "content/lenguajes/groovy/groovy-oop-y-metaprogramacion.html"
+          },
+          {
+            "id": "groovy-gradle-y-ecosistema",
+            "title": "6. Gradle y Ecosistema",
+            "content": "Gradle, testing con Spock, Jenkins, REST y buenas prácticas.",
+            "sections": [
+              "Gradle: scripts de build con Groovy",
+              "Testing con Spock",
+              "Jenkins: pipelines con Groovy",
+              "Servicios REST y consola",
+              "Buenas prácticas"
+            ],
+            "contentFile": "content/lenguajes/groovy/groovy-gradle-y-ecosistema.html"
+          }
+        ]
+      },
+      {
+        "id": "powershell",
+        "title": "PowerShell",
+        "icon": "fa-solid fa-wand-magic-sparkles",
+        "lessons": [
+          {
+            "id": "powershell-introduccion-a-powershell",
+            "title": "1. Introducción a PowerShell",
+            "content": "Qué es PowerShell, instalación, la consola, los cmdlets y el perfil.",
+            "sections": [
+              "¿Qué es PowerShell?",
+              "Instalación",
+              "La consola interactiva",
+              "Cmdlets: los comandos",
+              "Versiones y perfil"
+            ],
+            "contentFile": "content/lenguajes/powershell/powershell-introduccion-a-powershell.html"
+          },
+          {
+            "id": "powershell-sintaxis-y-variables",
+            "title": "2. Sintaxis y Variables",
+            "content": "Variables, tipos .NET, arrays y hashtables, operadores y formato de salida.",
+            "sections": [
+              "Variables",
+              "Tipos .NET y conversiones",
+              "Arrays y hashtables",
+              "Operadores",
+              "Formato y salida"
+            ],
+            "contentFile": "content/lenguajes/powershell/powershell-sintaxis-y-variables.html"
+          },
+          {
+            "id": "powershell-pipeline-y-objetos",
+            "title": "3. Pipeline y Objetos",
+            "content": "El pipeline de objetos, filtrar, crear objetos, formatear y comparar.",
+            "sections": [
+              "El pipeline",
+              "Filtrar resultados",
+              "Trabajar con objetos",
+              "Formatear y mostrar",
+              "Comparar y medir"
+            ],
+            "contentFile": "content/lenguajes/powershell/powershell-pipeline-y-objetos.html"
+          },
+          {
+            "id": "powershell-control-de-flujo-y-funciones",
+            "title": "4. Control de Flujo y Funciones",
+            "content": "Condicionales, bucles, funciones con parámetros, scopes y errores.",
+            "sections": [
+              "Condicionales",
+              "Bucles",
+              "Funciones",
+              "Ámbitos (scopes)",
+              "Manejo de errores"
+            ],
+            "contentFile": "content/lenguajes/powershell/powershell-control-de-flujo-y-funciones.html"
+          },
+          {
+            "id": "powershell-administracion-de-sistema",
+            "title": "5. Administración de Sistema",
+            "content": "Archivos, procesos, registro de Windows, red y remoting.",
+            "sections": [
+              "Trabajar con archivos",
+              "Gestionar procesos",
+              "Trabajar con el registro",
+              "Red y conectividad",
+              "Remoting y Automatización"
+            ],
+            "contentFile": "content/lenguajes/powershell/powershell-administracion-de-sistema.html"
+          },
+          {
+            "id": "powershell-scripts-y-automatizacion",
+            "title": "6. Scripts y Automatización",
+            "content": "Estructura de scripts, parámetros avanzados, módulos, tareas y buenas prácticas.",
+            "sections": [
+              "Estructura de un script",
+              "Parámetros avanzados",
+              "Módulos",
+              "Programar tareas",
+              "Mejores prácticas"
+            ],
+            "contentFile": "content/lenguajes/powershell/powershell-scripts-y-automatizacion.html"
+          }
+        ]
       }
     ]
   },
@@ -5962,6 +7062,1161 @@ const DOCS_DATA = {
               "Mejores Prácticas Recomendado"
             ],
             "contentFile": "content/utilities/librerias/lib-tailwindcss-animations-plugin.html"
+          },
+          {
+            "id": "lib-lodash",
+            "title": "lodash",
+            "content": "Utilidades JS: colecciones, objetos, strings, debounce y throttle",
+            "sections": [
+              "Instalación Paso 1",
+              "Operaciones con Arrays Paso 2",
+              "Colecciones y Objetos Paso 3",
+              "Strings y Utilidades Paso 4",
+              "Optimización para Producción Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-lodash.html"
+          },
+          {
+            "id": "lib-axios",
+            "title": "axios",
+            "content": "Cliente HTTP con promesas: peticiones, interceptors y cancelación",
+            "sections": [
+              "Instalación Paso 1",
+              "Peticiones Básicas Paso 2",
+              "Instancia y Configuración Global Paso 3",
+              "Interceptors y Manejo de Errores Paso 4",
+              "Cancelación y Concurrencia Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-axios.html"
+          },
+          {
+            "id": "lib-chartjs",
+            "title": "chart.js",
+            "content": "Gráficos en canvas: barras, líneas, doughnut, scatter y tiempo real",
+            "sections": [
+              "Instalación Paso 1",
+              "Primer Gráfico Paso 2",
+              "Tipos de Gráficos Comunes Paso 3",
+              "Datos Dinámicos y Actualización Paso 4",
+              "Plugins, RWD y Producción Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-chartjs.html"
+          },
+          {
+            "id": "lib-jquery",
+            "title": "jquery",
+            "content": "Manipulación DOM, eventos, animaciones y AJAX con sintaxis concisa",
+            "sections": [
+              "Instalación Paso 1",
+              "Selectores y Manipulación DOM Paso 2",
+              "Eventos Paso 3",
+              "Efectos y Animaciones Paso 4",
+              "AJAX con jQuery Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-jquery.html"
+          },
+          {
+            "id": "lib-animejs",
+            "title": "anime.js",
+            "content": "Motor de animaciones webs: CSS, SVG, timelines y micro-interacciones",
+            "sections": [
+              "Instalación Paso 1",
+              "Animaciones Básicas Paso 2",
+              "Timelines (secuencias) Paso 3",
+              "SVG y Control Fino Paso 4",
+              "Buenas Prácticas y Rendimiento Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-animejs.html"
+          },
+          {
+            "id": "lib-aos",
+            "title": "aos",
+            "content": "Animate On Scroll: animaciones al hacer scroll en landing pages",
+            "sections": [
+              "Instalación Paso 1",
+              "Activación y Atributos Básicos Paso 2",
+              "Animaciones Disponibles Paso 3",
+              "Control y Personalización Paso 4",
+              "Rendimiento y Producción Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-aos.html"
+          },
+          {
+            "id": "lib-highlightjs",
+            "title": "highlight.js",
+            "content": "Resaltado de sintaxis en el cliente con 190+ lenguajes y temas",
+            "sections": [
+              "Instalación Paso 1",
+              "Uso Básico Paso 2",
+              "Lenguajes Parciales y Alias Paso 3",
+              "Temas y Personalización Paso 4",
+              "Integración con Marcos y SEO Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-highlightjs.html"
+          }
+        ]
+      },
+      {
+        "id": "bibliotecas",
+        "title": "Bibliotecas por Lenguaje",
+        "icon": "fa-solid fa-boxes-stacked",
+        "lessons": [
+          {
+            "id": "bash-ecosistema",
+            "title": "2. Ecosistema de Bash y Herramientas CLI",
+            "content": "Guía completa: 2. Ecosistema de Bash y Herramientas CLI",
+            "sections": [
+              "Herramientas modernas en línea de comandos",
+              "Frameworks de CLI: shellcheck y bashly",
+              "Ejecución en paralelo y control",
+              "Bash dentro del DevOps: contenedores y CI"
+            ],
+            "contentFile": "content/utilities/bibliotecas/bash-ecosistema.html"
+          },
+          {
+            "id": "bash-esenciales",
+            "title": "1. Librerías y Herramientas Esenciales de Bash",
+            "content": "Guía completa: 1. Librerías y Herramientas Esenciales de Bash",
+            "sections": [
+              "El \"shell\" como librería de utilidades",
+              "Funciones y utilidades propias",
+              "Procesado de texto: awk, sed, grep",
+              "Gestores de paquetes del sistema",
+              "Seguridad y secretos en scripts"
+            ],
+            "contentFile": "content/utilities/bibliotecas/bash-esenciales.html"
+          },
+          {
+            "id": "bash-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Bash",
+            "content": "Guía completa: 3. IDEs y Herramientas para Bash",
+            "sections": [
+              "Editores de scripts Bash",
+              "Depuración y trazas",
+              "Git y el entorno del desarrollador",
+              "Bash en Windows y CI multiplataforma",
+              "Productividad en terminal"
+            ],
+            "contentFile": "content/utilities/bibliotecas/bash-ides-herramientas.html"
+          },
+          {
+            "id": "c-ecosistema",
+            "title": "2. Frameworks y Librerías Populares de C",
+            "content": "Guía completa: 2. Frameworks y Librerías Populares de C",
+            "sections": [
+              "GLib: utilidades y estructuras",
+              "ncurses: interfaces de texto",
+              "libcurl, OpenSSL y zlib",
+              "SQLite: base de datos embebida",
+              "¿Cómo elegir?"
+            ],
+            "contentFile": "content/utilities/bibliotecas/c-ecosistema.html"
+          },
+          {
+            "id": "c-ides-herramientas",
+            "title": "3. IDEs y Herramientas para C",
+            "content": "Guía completa: 3. IDEs y Herramientas para C",
+            "sections": [
+              "Compiladores: GCC, Clang y MSVC",
+              "Sistemas de build: Make y CMake",
+              "Depuradores: gdb y LLDB",
+              "Editores y IDEs recomendados",
+              "Herramientas de análisis y testing"
+            ],
+            "contentFile": "content/utilities/bibliotecas/c-ides-herramientas.html"
+          },
+          {
+            "id": "c-librerias-estandar",
+            "title": "1. Librerías Estándar de C",
+            "content": "Guía completa: 1. Librerías Estándar de C",
+            "sections": [
+              "¿Qué es la librería estándar?",
+              "&lt;stdio.h&gt; y &lt;stdlib.h&gt;: las imprescindibles",
+              "string, math y time",
+              "ctype, assert y errno",
+              "Descargar e instalar"
+            ],
+            "contentFile": "content/utilities/bibliotecas/c-librerias-estandar.html"
+          },
+          {
+            "id": "cpp-ecosistema",
+            "title": "2. Frameworks y Librerías Populares de C++",
+            "content": "Guía completa: 2. Frameworks y Librerías Populares de C++",
+            "sections": [
+              "Frameworks de GUI: Qt y GTK",
+              "Gráficos y juegos: SDL2, Raylib y Vulkan",
+              "Multithreading: OpenMP, TBB y std::async",
+              "Frameworks de testing y profiling",
+              "Red y networking: HPPE y C++ REST SDK"
+            ],
+            "contentFile": "content/utilities/bibliotecas/cpp-ecosistema.html"
+          },
+          {
+            "id": "cpp-esenciales",
+            "title": "1. Librerías Esenciales de C++",
+            "content": "Guía completa: 1. Librerías Esenciales de C++",
+            "sections": [
+              "La librería estándar de C++ (STL)",
+              "C++ moderno: smart pointers y utilidades",
+              "fmt y spdlog: formato y logs",
+              "nldohmann/json: JSON fácil",
+              "Boost: las utilidades de oro"
+            ],
+            "contentFile": "content/utilities/bibliotecas/cpp-esenciales.html"
+          },
+          {
+            "id": "cpp-ides-herramientas",
+            "title": "3. IDEs y Herramientas para C++",
+            "content": "Guía completa: 3. IDEs y Herramientas para C++",
+            "sections": [
+              "Compiladores y sistemas de build",
+              "IDEs y editores C++",
+              "Depuración y perfilado",
+              "Análisis estático y formato"
+            ],
+            "contentFile": "content/utilities/bibliotecas/cpp-ides-herramientas.html"
+          },
+          {
+            "id": "csharp-esenciales",
+            "title": "1. Librerías Esenciales de C#",
+            "content": "Guía completa: 1. Librerías Esenciales de C#",
+            "sections": [
+              "BCL y .NET: la librería base",
+              "Configuración y logging con Microsoft.Extensions",
+              "NuGet: el gestor de paquetes",
+              "FluentValidation y AutoMapper",
+              "Instalación del SDK de .NET"
+            ],
+            "contentFile": "content/utilities/bibliotecas/csharp-esenciales.html"
+          },
+          {
+            "id": "csharp-frameworks",
+            "title": "2. Frameworks .NET: ASP.NET Core, EF Core",
+            "content": "Guía completa: 2. Frameworks .NET: ASP.NET Core, EF Core",
+            "sections": [
+              "ASP.NET Core: web y APIs",
+              "EF Core: ORM principal",
+              "Blazor: UI interactiva en C#",
+              "xUnit y Testing en .NET",
+              "Más allá: mensajería, gRPC y nube"
+            ],
+            "contentFile": "content/utilities/bibliotecas/csharp-frameworks.html"
+          },
+          {
+            "id": "csharp-ides-herramientas",
+            "title": "3. IDEs y Herramientas para C# / .NET",
+            "content": "Guía completa: 3. IDEs y Herramientas para C# / .NET",
+            "sections": [
+              "IDEs y editores .NET",
+              "La CLI: dotnet",
+              "Diagnóstico y perfilado",
+              "Contenedores y despliegue",
+              "Calidad de código: analyzers y formato"
+            ],
+            "contentFile": "content/utilities/bibliotecas/csharp-ides-herramientas.html"
+          },
+          {
+            "id": "css-esenciales",
+            "title": "1. Librerías Esenciales de CSS",
+            "content": "Guía completa: 1. Librerías Esenciales de CSS",
+            "sections": [
+              "CSS moderno: Grid, Flexbox, custom properties",
+              "Selectores, unidades y capas",
+              "Pseudo-clases, transiciones y responsive",
+              "Empezar y verificar CSS"
+            ],
+            "contentFile": "content/utilities/bibliotecas/css-esenciales.html"
+          },
+          {
+            "id": "css-frameworks",
+            "title": "2. Frameworks CSS: Bootstrap, Tailwind, Sass",
+            "content": "Guía completa: 2. Frameworks CSS: Bootstrap, Tailwind, Sass",
+            "sections": [
+              "Frameworks CSS: Bootstrap y Tailwind",
+              "Sass/SCSS: variables, mixins y anidación",
+              "PostCSS y herramientas de build CSS",
+              "Otras opciones: Bulma, Pico, Open Props"
+            ],
+            "contentFile": "content/utilities/bibliotecas/css-frameworks.html"
+          },
+          {
+            "id": "css-ides-herramientas",
+            "title": "3. IDEs y Herramientas para CSS",
+            "content": "Guía completa: 3. IDEs y Herramientas para CSS",
+            "sections": [
+              "stylelint: lint y reglas de calidad",
+              "Prettier y formato CSS",
+              "DevTools y autoprefixer: depurar y desplegar",
+              "Pipeline CSS: CI, cobertura y presupuestos"
+            ],
+            "contentFile": "content/utilities/bibliotecas/css-ides-herramientas.html"
+          },
+          {
+            "id": "dart-esenciales",
+            "title": "1. Librerías Esenciales de Dart",
+            "content": "Guía completa: 1. Librerías Esenciales de Dart",
+            "sections": [
+              "Paquetes core y dart:core",
+              "pub: gestor de paquetes",
+              "http, json y utilidades frecuentes",
+              "Instalación del SDK de Dart y Flutter"
+            ],
+            "contentFile": "content/utilities/bibliotecas/dart-esenciales.html"
+          },
+          {
+            "id": "dart-frameworks",
+            "title": "2. Frameworks y Ecosistema Dart (Flutter)",
+            "content": "Guía completa: 2. Frameworks y Ecosistema Dart (Flutter)",
+            "sections": [
+              "Flutter: UI multiplataforma",
+              "Gestión de estado: Riverpod y Bloc",
+              "Dart fuera de Flutter: backend con Shelf/Lighthouse",
+              "Testing: flutter_test y golden",
+              "Paquetes y decisiones del ecosistema Flutter"
+            ],
+            "contentFile": "content/utilities/bibliotecas/dart-frameworks.html"
+          },
+          {
+            "id": "dart-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Dart",
+            "content": "Guía completa: 3. IDEs y Herramientas para Dart",
+            "sections": [
+              "IDEs de Dart y Flutter",
+              "CLI: dart format, analyze, doc",
+              "Diagnóstico: DevTools y profile",
+              "Build y despliegue multilenguaje"
+            ],
+            "contentFile": "content/utilities/bibliotecas/dart-ides-herramientas.html"
+          },
+          {
+            "id": "elixir-esenciales",
+            "title": "1. Librerías Esenciales de Elixir",
+            "content": "Guía completa: 1. Librerías Esenciales de Elixir",
+            "sections": [
+              "Elixir stdlib: Enum, String, Map",
+              "Hex y Mix: gestión de paquetes",
+              "Librerías esenciales: jason, req, timex",
+              "Instalación de Elixir"
+            ],
+            "contentFile": "content/utilities/bibliotecas/elixir-esenciales.html"
+          },
+          {
+            "id": "elixir-frameworks",
+            "title": "2. Frameworks Elixir: Phoenix, Plug, Ecto",
+            "content": "Guía completa: 2. Frameworks Elixir: Phoenix, Plug, Ecto",
+            "sections": [
+              "El stack de Elixir",
+              "Phoenix: web completo y LiveView",
+              "Ecto: esquemas y queries",
+              "OTP: GenServer y supervisores",
+              "Testing: ExUnit y doctest"
+            ],
+            "contentFile": "content/utilities/bibliotecas/elixir-frameworks.html"
+          },
+          {
+            "id": "elixir-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Elixir",
+            "content": "Guía completa: 3. IDEs y Herramientas para Elixir",
+            "sections": [
+              "IDEs y ElixirLS",
+              "mix format, Credo y CLI",
+              "Depuración: IEx, observer y LSP debug",
+              "Releases: mix release y contenedores"
+            ],
+            "contentFile": "content/utilities/bibliotecas/elixir-ides-herramientas.html"
+          },
+          {
+            "id": "fsharp-esenciales",
+            "title": "1. Librerías Esenciales de F#",
+            "content": "Guía completa: 1. Librerías Esenciales de F#",
+            "sections": [
+              "FSharp.Core: la base de F#",
+              "Gestión de deps: Paket y NuGet",
+              "FSharp.Data: Type Providers",
+              "Instalación de F#"
+            ],
+            "contentFile": "content/utilities/bibliotecas/fsharp-esenciales.html"
+          },
+          {
+            "id": "fsharp-frameworks",
+            "title": "2. Frameworks F#: Giraffe, Saturn, Fable",
+            "content": "Guía completa: 2. Frameworks F#: Giraffe, Saturn, Fable",
+            "sections": [
+              "Frameworks web F#",
+              "Giraffe: HTTP funcional",
+              "Saturn y SAFE Stack",
+              "Datos .NET: EF Core y Mio",
+              "Testing: xUnit + FsUnit"
+            ],
+            "contentFile": "content/utilities/bibliotecas/fsharp-frameworks.html"
+          },
+          {
+            "id": "fsharp-ides-herramientas",
+            "title": "3. IDEs y Herramientas para F#",
+            "content": "Guía completa: 3. IDEs y Herramientas para F#",
+            "sections": [
+              "Editores y F# IDE",
+              "Fantomas, dotnet tools y calidad",
+              "Depuración y FSI",
+              "Publicar y desplegar"
+            ],
+            "contentFile": "content/utilities/bibliotecas/fsharp-ides-herramientas.html"
+          },
+          {
+            "id": "go-esenciales",
+            "title": "1. Librerías Esenciales de Go",
+            "content": "Guía completa: 1. Librerías Esenciales de Go",
+            "sections": [
+              "La librería estándar de Go",
+              "go mod, go get y dependencias",
+              "librerías populares: chi, cobra, viper",
+              "Instalación de Go"
+            ],
+            "contentFile": "content/utilities/bibliotecas/go-esenciales.html"
+          },
+          {
+            "id": "go-frameworks",
+            "title": "2. Frameworks Go: Gin, Echo, Fiber",
+            "content": "Guía completa: 2. Frameworks Go: Gin, Echo, Fiber",
+            "sections": [
+              "Elegir framework web para Go",
+              "Gin: validación, JSON y middleware",
+              "Fiber y Echo",
+              "Datos: GORM, sqlx y migraciones",
+              "Testing: testing estándar y testify"
+            ],
+            "contentFile": "content/utilities/bibliotecas/go-frameworks.html"
+          },
+          {
+            "id": "go-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Go",
+            "content": "Guía completa: 3. IDEs y Herramientas para Go",
+            "sections": [
+              "IDEs y editores Go",
+              "Herramientas CLI: fmt, vet y más",
+              "Depuración y perfilado: dlv y pprof",
+              "Compilar estáticamente y desplegar"
+            ],
+            "contentFile": "content/utilities/bibliotecas/go-ides-herramientas.html"
+          },
+          {
+            "id": "groovy-esenciales",
+            "title": "1. Librerías Esenciales de Groovy",
+            "content": "Guía completa: 1. Librerías Esenciales de Groovy",
+            "sections": [
+              "La sintaxis y la GDK",
+              "Grapes y @Grab: dependencias en el código",
+              "Utilidades: XML, JSON, Mock",
+              "Instalación de Groovy"
+            ],
+            "contentFile": "content/utilities/bibliotecas/groovy-esenciales.html"
+          },
+          {
+            "id": "groovy-frameworks",
+            "title": "2. Frameworks Groovy: Grails, Ratpack, Micronaut",
+            "content": "Guía completa: 2. Frameworks Groovy: Grails, Ratpack, Micronaut",
+            "sections": [
+              "Frameworks Groovy/Grails",
+              "Grails: MVC completo",
+              "Ratpack y Micronaut",
+              "GORM y persistencia",
+              "Spock: testing especificación"
+            ],
+            "contentFile": "content/utilities/bibliotecas/groovy-frameworks.html"
+          },
+          {
+            "id": "groovy-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Groovy",
+            "content": "Guía completa: 3. IDEs y Herramientas para Groovy",
+            "sections": [
+              "IDEs para Groovy",
+              "Gradle, groovylint y CLI",
+              "Depurar Groovy",
+              "Empaquetar y desplegar"
+            ],
+            "contentFile": "content/utilities/bibliotecas/groovy-ides-herramientas.html"
+          },
+          {
+            "id": "haskell-esenciales",
+            "title": "1. Librerías Esenciales de Haskell",
+            "content": "Guía completa: 1. Librerías Esenciales de Haskell",
+            "sections": [
+              "Cabal y Hackage",
+              "base, containers, text, bytestring",
+              "mtl, transformers y efectos",
+              "Instalación de Haskell"
+            ],
+            "contentFile": "content/utilities/bibliotecas/haskell-esenciales.html"
+          },
+          {
+            "id": "haskell-frameworks",
+            "title": "2. Frameworks Haskell: Yesod, Scotty, Servant",
+            "content": "Guía completa: 2. Frameworks Haskell: Yesod, Scotty, Servant",
+            "sections": [
+              "Frameworks web Haskell",
+              "Servant: APIs tipo-verificadas",
+              "Scotty y Yesod",
+              "Persistencia: Persistent y esqueleto",
+              "Testing: Tasty/Hspec/HUnit"
+            ],
+            "contentFile": "content/utilities/bibliotecas/haskell-frameworks.html"
+          },
+          {
+            "id": "haskell-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Haskell",
+            "content": "Guía completa: 3. IDEs y Herramientas para Haskell",
+            "sections": [
+              "IDEs y GHCi",
+              "ormolu, fourmolu y herramientas CLI",
+              "Depurar y perfilar Haskell",
+              "Compilar y desplegar"
+            ],
+            "contentFile": "content/utilities/bibliotecas/haskell-ides-herramientas.html"
+          },
+          {
+            "id": "html-esenciales",
+            "title": "1. Librerías Esenciales de HTML",
+            "content": "Guía completa: 1. Librerías Esenciales de HTML",
+            "sections": [
+              "HTML semántico: la base de todo",
+              "Formularios y multimedia",
+              "Accesibilidad: WAI-ARIA y buenas prácticas",
+              "Empezar y verificar HTML"
+            ],
+            "contentFile": "content/utilities/bibliotecas/html-esenciales.html"
+          },
+          {
+            "id": "html-frameworks",
+            "title": "2. Ecosistema HTML: HTMX, Alpine, Web Components",
+            "content": "Guía completa: 2. Ecosistema HTML: HTMX, Alpine, Web Components",
+            "sections": [
+              "El ecosistema HTML en 2025",
+              "HTMX: interactividad en el HTML",
+              "Alpine.js y Web Components",
+              "Templating: server-side vs client-side"
+            ],
+            "contentFile": "content/utilities/bibliotecas/html-frameworks.html"
+          },
+          {
+            "id": "html-ides-herramientas",
+            "title": "3. Herramientas HTML: validadores, templating y build",
+            "content": "Guía completa: 3. Herramientas HTML: validadores, templating y build",
+            "sections": [
+              "Validadores y lint de HTML",
+              "Emmet, Snippets y documentación",
+              "Build y automatización HTML",
+              "Desplegar sitios HTML"
+            ],
+            "contentFile": "content/utilities/bibliotecas/html-ides-herramientas.html"
+          },
+          {
+            "id": "java-esenciales",
+            "title": "1. Librerías Esenciales de Java",
+            "content": "Guía completa: 1. Librerías Esenciales de Java",
+            "sections": [
+              "JDK y las librerías principales",
+              "Gestión de dependencias: Maven y Gradle",
+              "Guava y Apache Commons",
+              "Logging (SLF4J + Log4j2) y JSON (Jackson)",
+              "Instalación del JDK"
+            ],
+            "contentFile": "content/utilities/bibliotecas/java-esenciales.html"
+          },
+          {
+            "id": "java-frameworks",
+            "title": "2. Frameworks Java: Spring, Quarkus, etc",
+            "content": "Guía completa: 2. Frameworks Java: Spring, Quarkus, etc",
+            "sections": [
+              "Spring Boot: el estándar empresarial",
+              "Alternativas nativas: Quarkus y Micronaut",
+              "Persistencia: Hibernate, JPA y MyBatis",
+              "Testing: JUnit 5 y Mockito",
+              "Otros del ecosistema prioritario"
+            ],
+            "contentFile": "content/utilities/bibliotecas/java-frameworks.html"
+          },
+          {
+            "id": "java-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Java",
+            "content": "Guía completa: 3. IDEs y Herramientas para Java",
+            "sections": [
+              "IDEs recomendados para Java",
+              "Build tools: Maven y Gradle",
+              "Herramientas de JVM: jcmd, jmap, javap",
+              "Contenedores y CI con Java",
+              "Lombok y las mejoras modernas"
+            ],
+            "contentFile": "content/utilities/bibliotecas/java-ides-herramientas.html"
+          },
+          {
+            "id": "javascript-esenciales",
+            "title": "1. Librerías Esenciales de JavaScript",
+            "content": "Guía completa: 1. Librerías Esenciales de JavaScript",
+            "sections": [
+              "ECMAScript moderno: utilidades nativas",
+              "npm y el arte de gestionar dependencias",
+              "HTTP: fetch estándar y axios",
+              "Fechas, números y formato con Intl",
+              "Validación y utilidades extra"
+            ],
+            "contentFile": "content/utilities/bibliotecas/javascript-esenciales.html"
+          },
+          {
+            "id": "javascript-frameworks",
+            "title": "2. Frameworks JavaScript: React, Vue, Express",
+            "content": "Guía completa: 2. Frameworks JavaScript: React, Vue, Express",
+            "sections": [
+              "Elegir framework de UI",
+              "React + hooks y estado",
+              "Backend: Express y Fastify",
+              "Persistence: Sequelize y Mongoose",
+              "Testing: Jest y Vitest"
+            ],
+            "contentFile": "content/utilities/bibliotecas/javascript-frameworks.html"
+          },
+          {
+            "id": "javascript-ides-herramientas",
+            "title": "3. IDEs y Herramientas para JavaScript",
+            "content": "Guía completa: 3. IDEs y Herramientas para JavaScript",
+            "sections": [
+              "Editores y herramientas",
+              "ESLint + Prettier bien configurados",
+              "Debug y rendimiento",
+              "Bundlers: Vite, esbuild, Webpack",
+              "Guardas de despliegue JS"
+            ],
+            "contentFile": "content/utilities/bibliotecas/javascript-ides-herramientas.html"
+          },
+          {
+            "id": "julia-esenciales",
+            "title": "1. Librerías Esenciales de Julia",
+            "content": "Guía completa: 1. Librerías Esenciales de Julia",
+            "sections": [
+              "Base y estándar: arrays y múltiple dispatch",
+              "Pkg: el gestor de paquetes de Julia",
+              "Librerías populares: DataFrames, JSON, HTTP",
+              "Instalación de Julia"
+            ],
+            "contentFile": "content/utilities/bibliotecas/julia-esenciales.html"
+          },
+          {
+            "id": "julia-frameworks",
+            "title": "2. Frameworks Julia: Genie, ecosistema ML",
+            "content": "Guía completa: 2. Frameworks Julia: Genie, ecosistema ML",
+            "sections": [
+              "Web y ciencia en Julia",
+              "Genie: web full-stack en Julia",
+              "Oxygen y HTTP.jl",
+              "Ciencia de datos: DataFrames, Plots, GLM",
+              "Testing: Test.jl"
+            ],
+            "contentFile": "content/utilities/bibliotecas/julia-frameworks.html"
+          },
+          {
+            "id": "julia-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Julia",
+            "content": "Guía completa: 3. IDEs y Herramientas para Julia",
+            "sections": [
+              "Editores Julia: VS Code + Julia extension",
+              "Juno? mejor: JuliaFormatter y tooling CLI",
+              "Depuración y perfilado",
+              "Compilar y desplegar Julia"
+            ],
+            "contentFile": "content/utilities/bibliotecas/julia-ides-herramientas.html"
+          },
+          {
+            "id": "kotlin-esenciales",
+            "title": "1. Librerías Esenciales de Kotlin",
+            "content": "Guía completa: 1. Librerías Esenciales de Kotlin",
+            "sections": [
+              "Kotlin stdlib: lo que trae de serie",
+              "Corutinas: asincronía sencilla",
+              "ktor-client y kotlinx-serialization",
+              "Instalación de Kotlin"
+            ],
+            "contentFile": "content/utilities/bibliotecas/kotlin-esenciales.html"
+          },
+          {
+            "id": "kotlin-frameworks",
+            "title": "2. Frameworks Kotlin: Ktor, Spring Boot Kotlin",
+            "content": "Guía completa: 2. Frameworks Kotlin: Ktor, Spring Boot Kotlin",
+            "sections": [
+              "Elegir backend Kotlin",
+              "Ktor: servidor Kotlin-first",
+              "Spring Boot con Kotlin",
+              "Exposed y persistencia",
+              "Testing: kotest y JUnit"
+            ],
+            "contentFile": "content/utilities/bibliotecas/kotlin-frameworks.html"
+          },
+          {
+            "id": "kotlin-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Kotlin",
+            "content": "Guía completa: 3. IDEs y Herramientas para Kotlin",
+            "sections": [
+              "IDEs Kotlin: IntelliJ y Android Studio",
+              "kotlinc, Gradle y herramientas CLI",
+              "Herramientas Android específicas",
+              "Kotlin Multiplatform y despliegue"
+            ],
+            "contentFile": "content/utilities/bibliotecas/kotlin-ides-herramientas.html"
+          },
+          {
+            "id": "lua-esenciales",
+            "title": "1. Librerías Esenciales de Lua",
+            "content": "Guía completa: 1. Librerías Esenciales de Lua",
+            "sections": [
+              "Biblioteca estándar de Lua",
+              "LuaRocks: paquetes de Lua",
+              "penlight y librerías útiles",
+              "Instalación de Lua"
+            ],
+            "contentFile": "content/utilities/bibliotecas/lua-esenciales.html"
+          },
+          {
+            "id": "lua-frameworks",
+            "title": "2. Frameworks Lua: LÖVE, OpenResty, Lapis",
+            "content": "Guía completa: 2. Frameworks Lua: LÖVE, OpenResty, Lapis",
+            "sections": [
+              "Usos de Lua: juegos, web, scripting",
+              "LÖVE: juegos 2D en Lua",
+              "OpenResty y Lapis: web con Nginx",
+              "Datos: SQLite + LuaSQL",
+              "Testing: busted y luaunit"
+            ],
+            "contentFile": "content/utilities/bibliotecas/lua-frameworks.html"
+          },
+          {
+            "id": "lua-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Lua",
+            "content": "Guía completa: 3. IDEs y Herramientas para Lua",
+            "sections": [
+              "Editores y LSP Lua",
+              "selene, stylua y tooling",
+              "Depurar Lua",
+              "Empaquetar y desplegar Lua"
+            ],
+            "contentFile": "content/utilities/bibliotecas/lua-ides-herramientas.html"
+          },
+          {
+            "id": "perl-esenciales",
+            "title": "1. Librerías Esenciales de Perl",
+            "content": "Guía completa: 1. Librerías Esenciales de Perl",
+            "sections": [
+              "Módulos core de Perl",
+              "CPAN: el gigante de módulos",
+              "Librerías populares: JSON, DBI, MIME",
+              "Instalación de Perl"
+            ],
+            "contentFile": "content/utilities/bibliotecas/perl-esenciales.html"
+          },
+          {
+            "id": "perl-frameworks",
+            "title": "2. Frameworks y Web en Perl",
+            "content": "Guía completa: 2. Frameworks y Web en Perl",
+            "sections": [
+              "Opciones web en Perl",
+              "Mojolicious: web moderno",
+              "Dancer2 y Catalyst",
+              "Persistencia: DBI, DBIx::Class",
+              "Testing Perl: prove y Test::More"
+            ],
+            "contentFile": "content/utilities/bibliotecas/perl-frameworks.html"
+          },
+          {
+            "id": "perl-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Perl",
+            "content": "Guía completa: 3. IDEs y Herramientas para Perl",
+            "sections": [
+              "Editores y LSP Perl",
+              "perlcritic, Perl::Tidy y buenas prácticas",
+              "Depuración: settrace, Devel::NYTProf",
+              "Despliegue y empaquetado"
+            ],
+            "contentFile": "content/utilities/bibliotecas/perl-ides-herramientas.html"
+          },
+          {
+            "id": "php-esenciales",
+            "title": "1. Librerías Esenciales de PHP",
+            "content": "Guía completa: 1. Librerías Esenciales de PHP",
+            "sections": [
+              "Librería estándar y funciones modernas",
+              "Composer: el gestor de dependencias",
+              "Librerías de utilidad populares",
+              "Instalación de PHP"
+            ],
+            "contentFile": "content/utilities/bibliotecas/php-esenciales.html"
+          },
+          {
+            "id": "php-frameworks",
+            "title": "2. Frameworks PHP: Laravel, Symfony, Slim",
+            "content": "Guía completa: 2. Frameworks PHP: Laravel, Symfony, Slim",
+            "sections": [
+              "Elegir framework PHP",
+              "Laravel: rutas, Eloquent y Blade",
+              "Symfony: estructura estándar de la industria",
+              "Slim: micro APIs",
+              "PHPUnit y Pest"
+            ],
+            "contentFile": "content/utilities/bibliotecas/php-frameworks.html"
+          },
+          {
+            "id": "php-ides-herramientas",
+            "title": "3. IDEs y Herramientas para PHP",
+            "content": "Guía completa: 3. IDEs y Herramientas para PHP",
+            "sections": [
+              "IDEs y editores PHP",
+              "Análisis estático: PHPStan y Psalm",
+              "Xdebug y herramientas de debug",
+              "Entornos de desarrollo con Docker"
+            ],
+            "contentFile": "content/utilities/bibliotecas/php-ides-herramientas.html"
+          },
+          {
+            "id": "powershell-esenciales",
+            "title": "1. Librerías Esenciales de PowerShell",
+            "content": "Guía completa: 1. Librerías Esenciales de PowerShell",
+            "sections": [
+              "Módulos core: Microsoft.PowerShell.*",
+              "PowerShellGet y PSGallery",
+              "I/O, JSON y objetos",
+              "Instalación de PowerShell 7"
+            ],
+            "contentFile": "content/utilities/bibliotecas/powershell-esenciales.html"
+          },
+          {
+            "id": "powershell-frameworks",
+            "title": "2. Frameworks e infraestructura con PowerShell",
+            "content": "Guía completa: 2. Frameworks e infraestructura con PowerShell",
+            "sections": [
+              "PowerShell en DevOps",
+              "Pode y Invoke-RestMethod: web con PS",
+              "Az PowerShell y AWS.Tools",
+              "DSC y automatización de config",
+              "Pester: testing de scripts"
+            ],
+            "contentFile": "content/utilities/bibliotecas/powershell-frameworks.html"
+          },
+          {
+            "id": "powershell-ides-herramientas",
+            "title": "3. IDEs y Herramientas para PowerShell",
+            "content": "Guía completa: 3. IDEs y Herramientas para PowerShell",
+            "sections": [
+              "VS Code + extensión PowerShell",
+              "PSScriptAnalyzer: lint oficial",
+              "Depuración PowerShell",
+              "Empaquetar y CI/CD"
+            ],
+            "contentFile": "content/utilities/bibliotecas/powershell-ides-herramientas.html"
+          },
+          {
+            "id": "python-esenciales",
+            "title": "1. Librerías Esenciales de Python",
+            "content": "Guía completa: 1. Librerías Esenciales de Python",
+            "sections": [
+              "Librería estándar: baterías incluidas",
+              "pip, venv y entorno de desarrollo",
+              "requests: HTTP humano",
+              "Pydantic y validación moderna",
+              "Logging y configuración"
+            ],
+            "contentFile": "content/utilities/bibliotecas/python-esenciales.html"
+          },
+          {
+            "id": "python-frameworks",
+            "title": "2. Frameworks Python: Django, FastAPI, Flask",
+            "content": "Guía completa: 2. Frameworks Python: Django, FastAPI, Flask",
+            "sections": [
+              "Django: web completa y batteries included",
+              "FastAPI: APIs modernas y asíncronas",
+              "Flask y alternativas ligeras",
+              "SQLAlchemy y SQLModel",
+              "Testing: pytest"
+            ],
+            "contentFile": "content/utilities/bibliotecas/python-frameworks.html"
+          },
+          {
+            "id": "python-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Python",
+            "content": "Guía completa: 3. IDEs y Herramientas para Python",
+            "sections": [
+              "IDEs y editores Python",
+              "Gestores de paquetes modernos: uv, poetry, conda",
+              "Tipos, linting y formato",
+              "Debug y perfilado",
+              "Producción: contenedores y CI"
+            ],
+            "contentFile": "content/utilities/bibliotecas/python-ides-herramientas.html"
+          },
+          {
+            "id": "r-ecosistema",
+            "title": "2. Frameworks y Ecosistema de R",
+            "content": "Guía completa: 2. Frameworks y Ecosistema de R",
+            "sections": [
+              "Shiny: aplicaciones web en R",
+              "R Markdown y Quarto: reportes",
+              "tidymodels: machine learning",
+              "Datos grandes y puente Python",
+              "testing (testthat) y empaquetado"
+            ],
+            "contentFile": "content/utilities/bibliotecas/r-ecosistema.html"
+          },
+          {
+            "id": "r-esenciales",
+            "title": "1. Librerías Esenciales de R",
+            "content": "Guía completa: 1. Librerías Esenciales de R",
+            "sections": [
+              "La base de R y tidyverse",
+              "ggplot2: visualización",
+              "Instalar R y gestionar paquetes",
+              "data.table y bases de datos",
+              "purrr y stringr: funciones y texto"
+            ],
+            "contentFile": "content/utilities/bibliotecas/r-esenciales.html"
+          },
+          {
+            "id": "r-ides-herramientas",
+            "title": "3. IDEs y Herramientas para R",
+            "content": "Guía completa: 3. IDEs y Herramientas para R",
+            "sections": [
+              "RStudio / Posit: el IDE principal",
+              "renv, pak y radian",
+              "Depuración y perfilado en R",
+              "Estilo y linting: styler y lintr",
+              "Despliegue de aplicaciones R"
+            ],
+            "contentFile": "content/utilities/bibliotecas/r-ides-herramientas.html"
+          },
+          {
+            "id": "ruby-esenciales",
+            "title": "1. Librerías Esenciales de Ruby",
+            "content": "Guía completa: 1. Librerías Esenciales de Ruby",
+            "sections": [
+              "Librería estándar (stdlib) y core",
+              "RubyGems y Bundler",
+              "Gemas de utilidad más usadas",
+              "Instalación de Ruby"
+            ],
+            "contentFile": "content/utilities/bibliotecas/ruby-esenciales.html"
+          },
+          {
+            "id": "ruby-frameworks",
+            "title": "2. Frameworks Ruby: Rails, Sinatra, Roda",
+            "content": "Guía completa: 2. Frameworks Ruby: Rails, Sinatra, Roda",
+            "sections": [
+              "Elegir framework Ruby",
+              "Rails: rutas, Active Record y vistas",
+              "Sinatra: micro-API en 10 líneas",
+              "RSpec: testing en Ruby",
+              "Extras del ecosistema: jobs y websockets"
+            ],
+            "contentFile": "content/utilities/bibliotecas/ruby-frameworks.html"
+          },
+          {
+            "id": "ruby-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Ruby",
+            "content": "Guía completa: 3. IDEs y Herramientas para Ruby",
+            "sections": [
+              "IDEs y editores Ruby",
+              "RuboCop, Bundler Audit y brakeman",
+              "Depuración: byebug y debug",
+              "Producción y despliegue Ruby"
+            ],
+            "contentFile": "content/utilities/bibliotecas/ruby-ides-herramientas.html"
+          },
+          {
+            "id": "rust-esenciales",
+            "title": "1. Librerías Esenciales de Rust",
+            "content": "Guía completa: 1. Librerías Esenciales de Rust",
+            "sections": [
+              "std y core: las librerías base",
+              "Cargo: el gestor de paquetes",
+              "serde, anyhow, thiserror",
+              "Instalación de Rust"
+            ],
+            "contentFile": "content/utilities/bibliotecas/rust-esenciales.html"
+          },
+          {
+            "id": "rust-frameworks",
+            "title": "2. Frameworks Rust: Axum, Actix, Rocket",
+            "content": "Guía completa: 2. Frameworks Rust: Axum, Actix, Rocket",
+            "sections": [
+              "Elegir framework web en Rust",
+              "Axum: servidor con tokio",
+              "Actix Web y Rocket",
+              "Datos: diesel, sqlx y sea-orm",
+              "Testing en Rust"
+            ],
+            "contentFile": "content/utilities/bibliotecas/rust-frameworks.html"
+          },
+          {
+            "id": "rust-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Rust",
+            "content": "Guía completa: 3. IDEs y Herramientas para Rust",
+            "sections": [
+              "IDEs y editores Rust",
+              "rustfmt, clippy y análisis",
+              "Depuración y perfilado Rust",
+              "Compilación y despliegue"
+            ],
+            "contentFile": "content/utilities/bibliotecas/rust-ides-herramientas.html"
+          },
+          {
+            "id": "scala-esenciales",
+            "title": "1. Librerías Esenciales de Scala",
+            "content": "Guía completa: 1. Librerías Esenciales de Scala",
+            "sections": [
+              "Scala stdlib y collections",
+              "Librerías funcionales: cats y zio",
+              "sbt: el build de Scala",
+              "Instalación de Scala"
+            ],
+            "contentFile": "content/utilities/bibliotecas/scala-esenciales.html"
+          },
+          {
+            "id": "scala-frameworks",
+            "title": "2. Frameworks Scala: Play, Akka, ZIO HTTP",
+            "content": "Guía completa: 2. Frameworks Scala: Play, Akka, ZIO HTTP",
+            "sections": [
+              "Elegir backend en Scala",
+              "Play Framework: servidor MVC",
+              "Akka HTTP y ZIO HTTP",
+              "Slick, Doobie y datos",
+              "Testing munit y płytest"
+            ],
+            "contentFile": "content/utilities/bibliotecas/scala-frameworks.html"
+          },
+          {
+            "id": "scala-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Scala",
+            "content": "Guía completa: 3. IDEs y Herramientas para Scala",
+            "sections": [
+              "IDEs y Metals",
+              "scalafmt, scalafix y CLI",
+              "Depuración y perfilado",
+              "Compilación y despliegue"
+            ],
+            "contentFile": "content/utilities/bibliotecas/scala-ides-herramientas.html"
+          },
+          {
+            "id": "sql-esenciales",
+            "title": "1. Librerías y Herramientas Básicas de SQL",
+            "content": "Guía completa: 1. Librerías y Herramientas Básicas de SQL",
+            "sections": [
+              "SQL: el lenguaje de datos",
+              "Elegir motor de base de datos",
+              "Joins, agregaciones y funciones ventana",
+              "Índices y optimización",
+              "Migraciones (Flyway/Liquibase) y seguridad"
+            ],
+            "contentFile": "content/utilities/bibliotecas/sql-esenciales.html"
+          },
+          {
+            "id": "sql-ides-herramientas",
+            "title": "3. IDEs y Herramientas para SQL",
+            "content": "Guía completa: 3. IDEs y Herramientas para SQL",
+            "sections": [
+              "Clientes y editores SQL",
+              "EXPLAIN y herramientas de tuning",
+              "BD local de desarrollo vía Docker",
+              "Backups, observabilidad y seguridad"
+            ],
+            "contentFile": "content/utilities/bibliotecas/sql-ides-herramientas.html"
+          },
+          {
+            "id": "sql-orms",
+            "title": "2. ORMs y Librerías SQL por Ecosistema",
+            "content": "Guía completa: 2. ORMs y Librerías SQL por Ecosistema",
+            "sections": [
+              "Elegir el ORM correcto",
+              "Ejemplo: las mismas tablas en tres ORMs",
+              "Query builders para control fino",
+              "Más allá del SQL puro: hibridos y NoSQL"
+            ],
+            "contentFile": "content/utilities/bibliotecas/sql-orms.html"
+          },
+          {
+            "id": "swift-esenciales",
+            "title": "1. Librerías Esenciales de Swift",
+            "content": "Guía completa: 1. Librerías Esenciales de Swift",
+            "sections": [
+              "Módulos core: Foundation y Swift estándar",
+              "Swift Package Manager (SPM)",
+              "async/await y Combine",
+              "Instalación de Swift"
+            ],
+            "contentFile": "content/utilities/bibliotecas/swift-esenciales.html"
+          },
+          {
+            "id": "swift-frameworks",
+            "title": "2. Frameworks Swift: Vapor, SwiftUI/Combine",
+            "content": "Guía completa: 2. Frameworks Swift: Vapor, SwiftUI/Combine",
+            "sections": [
+              "Elegir stack Swift",
+              "SwiftUI y Combine",
+              "Vapor: servidor Swift",
+              "Fluent y persistencia",
+              "Testing con XCTest"
+            ],
+            "contentFile": "content/utilities/bibliotecas/swift-frameworks.html"
+          },
+          {
+            "id": "swift-ides-herramientas",
+            "title": "3. IDEs y Herramientas para Swift",
+            "content": "Guía completa: 3. IDEs y Herramientas para Swift",
+            "sections": [
+              "Xcode: el IDE de Apple",
+              "Herramientas CLI: swift build, test y format",
+              "Depuración: LLDB y puntos de ruptura",
+              "Despliegue y CI Swift"
+            ],
+            "contentFile": "content/utilities/bibliotecas/swift-ides-herramientas.html"
+          },
+          {
+            "id": "typescript-esenciales",
+            "title": "1. Librerías Esenciales de TypeScript",
+            "content": "Guía completa: 1. Librerías Esenciales de TypeScript",
+            "sections": [
+              "TypeScript y su ecosistema de tipos",
+              "Zod: validación en runtime",
+              "lodash-es y fp-ts",
+              "Fechas y números: date-fns e innecesarios",
+              "tsconfig, ESM y eslint-typescript"
+            ],
+            "contentFile": "content/utilities/bibliotecas/typescript-esenciales.html"
+          },
+          {
+            "id": "typescript-frameworks",
+            "title": "2. Frameworks TypeScript: tRPC, NestJS, Next.js",
+            "content": "Guía completa: 2. Frameworks TypeScript: tRPC, NestJS, Next.js",
+            "sections": [
+              "Elegir pila full-Stack con TypeScript",
+              "tRPC: APIs tipadas de extremo a extremo",
+              "NestJS: arquitectura empresarial",
+              "Prisma + tRPC: datos con tipos",
+              "Testing: Vitest y React Testing Library"
+            ],
+            "contentFile": "content/utilities/bibliotecas/typescript-frameworks.html"
+          },
+          {
+            "id": "typescript-ides-herramientas",
+            "title": "3. IDEs y Herramientas para TypeScript",
+            "content": "Guía completa: 3. IDEs y Herramientas para TypeScript",
+            "sections": [
+              "Editores y herramientas de CI",
+              "El LSP (tsserver/typescript-language-server)",
+              "Monorepos y empaquetado",
+              "Debugging y rendimiento",
+              "Despliegue: contenedores y edge"
+            ],
+            "contentFile": "content/utilities/bibliotecas/typescript-ides-herramientas.html"
           }
         ]
       },
@@ -7319,8 +9574,8 @@ const DOCS_DATA = {
 };
 
 const STATS = {
-  "lessons": "497",
-  "languages": "15",
+  "lessons": "666",
+  "languages": "28",
   "frameworks": "9",
   "diagrams": "49"
 };

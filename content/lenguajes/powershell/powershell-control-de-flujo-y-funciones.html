@@ -1,0 +1,251 @@
+<!-- 4. Control de Flujo y Funciones - PowerShell (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="condicionales">
+    <h2>Condicionales</h2>
+    <div class="doc-content">
+<p>El <code>if</code>/<code>elseif</code>/<code>else</code> de PowerShell usa operadores de comparación con guion (<code>-eq</code>, <code>-ne</code>, <code>-gt</code>...) en lugar de los símbolos de otros lenguajes.</p>
+<pre><code class="language-powershell">$edad = 18
+
+if ($edad -ge 18) {
+    'Mayor de edad'
+} elseif ($edad -ge 13) {
+    'Adolescente'
+} else {
+    'Menor'
+}
+
+# Operadores de comparación
+# -eq -ne -gt -ge -lt -le : numéricos y de texto
+# -like / -notlike        : comodines con *
+# -match / -notmatch      : regex
+# -contains / -in         : pertenencia a colección
+# -and / -or / -not       : lógicos
+# -is / -isnot            : tipo de objeto
+
+if ('andrés' -like 'a*') { 'Empieza con a' }
+if (5 -in 1..10) { 'Está en el rango' }
+if ($archivo -is [System.IO.FileInfo]) { 'Es un FileInfo' }
+
+# switch (varias comparaciones)
+$dia = 'lunes'
+switch ($dia) {
+    'sábado' { 'Fin de semana' }
+    'domingo' { 'Fin de semana' }
+    default { 'Entre semana' }
+}
+
+# switch con expresiones como valores
+$nota = 85
+switch ($true) {
+    ($nota -ge 90) { 'Sobresaliente' }
+    ($nota -ge 70) { 'Notable' }
+    default { 'A mejorar' }
+}</code></pre>
+<blockquote class="aside aside-tip"><p>El <code>switch</code> evalúa cada cláusula en orden y no requiere <code>break</code> explícito, aunque <code>break</code> corta la evaluación. La forma de "expresiones" permite encadenar condiciones complejas de forma legible.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="bucles">
+    <h2>Bucles</h2>
+    <div class="doc-content">
+<p>PowerShell ofrece <code>for</code>, <code>foreach</code>, <code>while</code> y <code>do while</code>/<code>do until</code>. El más cómodo para colecciones es el <code>foreach</code> de pipeline o el <code>foreach</code> de instrucción.</p>
+<pre><code class="language-powershell"># for clásico (contador)
+for ($i = 1; $i -le 5; $i++) {
+    "Vuelta $i"
+}
+
+# foreach de instrucción (colección)
+$nombres = 'Ana', 'Bruno', 'Carla'
+foreach ($n in $nombres) {
+    "Hola, $n"
+}
+
+# foreach de pipeline (objetos)
+Get-Service | ForEach-Object {
+    "$($_.Name): $($_.Status)"
+}
+
+# while (condición al inicio)
+$i = 0
+while ($i -lt 3) {
+    $i++
+    "i = $i"
+}
+
+# do while (ejecuta al menos una vez)
+$password = ''
+do {
+    $password = Read-Host 'Contraseña'
+} while ($password -ne 'secreto')
+
+# do until (invierte la condición)
+do { $tecla = Read-Host '¿continúas? (s/n)' } until ($tecla -eq 'n')
+
+# control: break y continue
+foreach ($n in 1..10) {
+    if ($n -eq 3) { continue }   # se salta el 3
+    if ($n -eq 7) { break }      # termina en 7
+    "n = $n"
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Prefiere <code>foreach</code> de instrucción para recorrer colecciones pequeñas y el <code>foreach</code> de pipeline para trabajar con salida de cmdlets. <code>break</code> sale del bucle y <code>continue</code> salta a la siguiente iteración.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="funciones">
+    <h2>Funciones</h2>
+    <div class="doc-content">
+<p>Las funciones se declaran con <code>function</code>; sus parámetros se declaran con bloques <code>param()</code> y atributos como <code>[Parameter(Mandatory)]</code>.</p>
+<pre><code class="language-powershell"># Función básica
+function Saludar {
+    param($nombre)
+    "Hola, $nombre"
+}
+Saludar 'Mundo'
+
+# Parámetros tipados y con valor por defecto
+function Sumar {
+    param(
+        [int]$a,
+        [int]$b = 10
+    )
+    return $a + $b
+}
+Sumar 5 3          # 8
+Sumar 5            # 15 (usa el default)
+
+# Parámetros obligatorios
+function Renombrar {
+    param(
+        [Parameter(Mandatory)]
+        [string]$ruta
+    )
+    $nuevo = "$ruta.bak"
+    Copy-Item $ruta $nuevo -ErrorAction SilentlyContinue
+}
+
+# Parámetros con nombres y switch
+function Configurar {
+    param(
+        [string]$hostname,
+        [switch]$Force
+    )
+    if ($Force) { 'Forzado' } else { 'Normal' }
+}
+Configurar -hostname 'web01' -Force
+
+# Retornar valores: todo lo que se escribe al pipeline se devuelve
+function Factorial {
+    param([int]$n)
+    if ($n -le 1) { return 1 }
+    return $n * (Factorial ($n - 1))
+}
+Factorial 5</code></pre>
+<blockquote class="aside aside-caution"><p><code>return</code> sale de la función, pero todo valor "suelto" que imprimas también sale como salida. Usa <code>[void]</code>, <code>Out-Null</code> o <code>$null = ...</code> si no quieres que un comando intermedio contamine el resultado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="scopes">
+    <h2>Ámbitos (scopes)</h2>
+    <div class="doc-content">
+<p>Cada función o bloque tiene su propio <strong>alcance</strong> (<code>scope</code>). Las variables viven en: <code>Global</code>, <code>Script</code>, <code>Local</code> o el de un bloque. Puedes leer las de fuera, pero no modificarlas, salvo con el prefijo del alcance.</p>
+<pre><code class="language-powershell"># Variable global vs local
+$Global:contador = 0
+$local = 'solo aquí'
+
+function Incrementar {
+    # lee la global (sin prefijo también la ve)
+    $Global:contador++
+    # una asignación sin prefijo crea una local
+    $otro = 'local a la función'
+}
+Incrementar
+$contador   # ahora es 1
+# $otro ya no existe fuera de la función
+
+# Ámbitos relativos
+$variable = 'raíz'
+& {
+    $variable = 'modificada?'
+    "dentro: $variable"
+}
+"fuera: $variable"   # sigue siendo 'raíz'
+
+# Acceso explícito al ámbito
+$script:valor = 'tope'
+& {
+    $script:valor = 'actualizado'
+}
+$valor   # 'actualizado'
+
+# Get-Variable para inspeccionar ámbitos
+Get-Variable -Scope Global | Select-Object -First 3</code></pre>
+<blockquote class="aside aside-note"><p><code>$script:</code> se usa dentro de funciones para modificar variables de nivel script; <code>$Global:</code> para tocar variables globales. Usarlos con moderación mantienen los scripts predecibles.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores">
+    <h2>Manejo de errores</h2>
+    <div class="doc-content">
+<p>PowerShell distingue <strong>errores de terminación</strong> (rompen el flujo) y <strong>errores no terminación</strong> (continúan). El control se hace con <code>try</code>/<code>catch</code>/<code>finally</code> y <code>ErrorAction</code>.</p>
+<pre><code class="language-powershell"># try / catch / finally
+try {
+    $resultado = 10 / 0           # error de terminación
+    'No deberías verme'
+} catch {
+    "Error: $($_.Exception.Message)"
+} finally {
+    'Esto siempre se ejecuta'
+}
+
+# Forzar terminación con -ErrorAction Stop
+try {
+    Get-Content 'no-existe.txt' -ErrorAction Stop
+} catch {
+    'El archivo no existe'
+}
+
+# Lanzar errores propios
+function Validar {
+    param($valor)
+    if ($null -eq $valor) {
+        throw 'El valor no puede ser nulo'
+    }
+    return $valor
+}
+
+# Capturar el tipo específico
+try {
+    [int]'abc'
+} catch [System.FormatException] {
+    'Conversión fallida'
+} catch {
+    "Otro error: $($_.Exception.GetType().Name)"
+}
+
+# Errores no terminación: consultar $Error
+Get-Item 'x.txt' -ErrorAction SilentlyContinue   # ignora y sigue
+$Error | Select-Object -First 1                  # historial de errores</code></pre>
+<blockquote class="aside aside-success"><p>Regla práctica: usa <code>-ErrorAction Stop</code> en operaciones críticas que quieras envolver en <code>try/catch</code>, y <code>SilentlyContinue</code> solo cuando el fallo sea esperado y no necesite tratamiento.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Condicional</strong>: escribe una función que clasifique una nota (0-100) en Suspenso, Aprobado, Notable o Sobresaliente usando <code>switch</code>.</li>
+<li><strong>Bucle</strong>: imprime los números del 1 al 20, saltando los múltiplos de 3 con <code>continue</code> y parando en el 17 con <code>break</code>.</li>
+<li><strong>Función</strong>: crea <code>SumaLista</code> que recibe un arreglo de números y devuelve su suma con un bucle <code>foreach</code>.</li>
+<li><strong>Scopes</strong>: demuestra con un ejemplo que una variable local no puede modificarse desde una función sin el prefijo de ámbito.</li>
+<li><strong>Errores</strong>: lee un archivo inexistente dentro de <code>try/catch</code>, muestra el mensaje del error y un mensaje final en <code>finally</code>.</li>
+</ol>
+<p>En la próxima lección automatizaremos administración de sistema: archivos, procesos, registro, red y remoting.</p>
+    </div>
+  </section>

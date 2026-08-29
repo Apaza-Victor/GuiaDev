@@ -1,0 +1,126 @@
+<!-- 1. Introducción a Scala - Scala (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="que-es-scala">
+    <h2>¿Qué es Scala? Funcional + OOP en la JVM</h2>
+    <div class="doc-content">
+<p>Scala (del inglés <strong>scalable language</strong>) es un lenguaje que combina <strong>programación orientada a objetos</strong> con <strong>programación funcional</strong> y corre sobre la máquina virtual de Java. Nació en 2003 en la EPFL de Lausana, bajo la dirección de Martin Odersky, el mismo autor del compilador <code class="inline-code">javac</code>. Esto significa que puedes usar bibliotecas de Java directamente desde Scala, y compilar a los mismos <code class="inline-code">.class</code> que la JVM ejecuta.</p>
+<p>Su nombre viene de su objetivo inicial: crecer (<em>scalar</em>) con la complejidad del problema. Un script de una línea y un clúster de miles de nodos se escriben con la misma expresividad. Por eso es el lenguaje de referencia de Apache Spark, Akka y gran parte de la infraestructura de empresas como Twitter, LinkedIn y Netflix.</p>
+<blockquote class="aside aside-note"><p>Al correr sobre la JVM, Scala hereda una ventaja única: cualquier biblioteca de Java (JDBC, Log4j, Spring, etc.) se importa y utiliza sin adaptadores.</p></blockquote>
+<table><thead><tr><th>Característica</th><th>Scala</th><th>Java</th></tr></thead><tbody><tr><td>Paradigma</td><td>Funcional y OOP</td><td>Orientado a objetos</td></tr><tr><td>Inferencia de tipos</td><td>Sí (los tipos se deducen)</td><td>Limitada</td></tr><tr><td>Inmutabilidad</td><td>Predeterminada</td><td>Opcional</td></tr><tr><td>Concisión</td><td>Expresiva y compacta</td><td>Verbosa</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-y-sbt">
+    <h2>Instalación: JDK y sbt</h2>
+    <div class="doc-content">
+<p>Para ejecutar Scala necesitas un <strong>JDK</strong> (Java Development Kit) y el compilador Scala. La vía más rápida es instalar <code class="inline-code">sbt</code>, la herramienta de construcción estándar del ecosistema: descarga automáticamente el compilador y las dependencias del proyecto. En este curso asumimos Scala 3, la versión actual del lenguaje.</p>
+<pre><code class="language-bash"># Verifica tu máquina virtual de Java (requiere JDK 8 o superior)
+java -version
+
+# macOS / Linux con Homebrew
+brew install sbt
+
+# Debian / Ubuntu (agregando el repositorio oficial)
+sudo apt install default-jdk scala sbt
+
+# Windows con scoop
+scoop bucket add typesafe
+scoop install sbt
+
+# Verificar la instalación y lanzar una sesión interactiva
+sbt --version
+sbt console</code></pre>
+<blockquote class="aside aside-tip"><p>sbt es lento la primera vez porque descarga las dependencias. Corre sí, es normal; una vez listo, las compilaciones posteriores son casi instantáneas.</p></blockquote>
+<p>Si prefieres empezar sin instalar nada, visita la web oficial <strong>scastie.scala-lang.org</strong>: un playground online con compilador embebido, ideal para las primeras pruebas del curso.</p>
+<table><thead><tr><th>Herramienta</th><th>Rol en el ecosistema</th></tr></thead><tbody><tr><td>JDK</td><td>Máquina virtual que ejecuta el bytecode</td></tr><tr><td>compilador scala</td><td>Traduce el código fuente a <code class="inline-code">.class</code></td></tr><tr><td>sbt</td><td>Gestiona dependencias, builds y ejecución</td></tr><tr><td>scala-cli</td><td>Herramienta ligera moderna para scripts</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="el-repl">
+    <h2>El REPL de Scala</h2>
+    <div class="doc-content">
+<p>Antes de escribir archivos, conviene conocer el <strong>REPL</strong> (Read-Eval-Print Loop). Es una consola interactiva que evalúa cada línea al momento y muestra el tipo inferido de cada resultado. Es la forma más rápida de aprender Scala sin crear proyectos.</p>
+<pre><code class="language-bash"># Abre la consola interactiva (Puede tardar en la primera carga)
+sbt console
+
+# O con scala-cli, una alternativa más ligera:
+scala-cli repl</code></pre>
+<pre><code class="language-scala">// Dentro del REPL, cada expresión se evalúa de inmediato
+val nombre = "Scala"                    // val nombre: String = Scala
+val edad = 2026 - 2003                  // val edad: Int = 23
+val lista = List(1, 2, 3, 4)            // val lista: List[Int] = List(1, 2, 3, 4)
+lista.map(_ * 2)                        // res0: List[Int] = List(2, 4, 6, 8)
+
+// :quit sale del REPL
+// :help muestra todos los comandos disponibles</code></pre>
+<blockquote class="aside aside-note"><p>El REPL antepone <code class="inline-code">resN</code> (resultado N) a cada resultado sin nombre, y siempre te muestra el tipo inferido entre dos puntos.</p></blockquote>
+<p>Esta retroalimentación instantánea es tu mejor maestra: escribe una expresión, observa qué tipo te devuelve y vas formando tu intuición sobre Scala.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primer-programa">
+    <h2>Tu primer programa: hola.scala</h2>
+    <div class="doc-content">
+<p>Todo programa Scala que quieras ejecutar de forma independiente necesita un <strong>object</strong> con un método <strong>main</strong>. La declaración <code class="inline-code">@main def</code> (Scala 3) es moderna y limpia; la forma clásica Scala 2 también funciona. Crea el archivo <code class="inline-code">hola.scala</code> con el siguiente contenido.</p>
+<pre><code class="language-scala">// hola.scala
+// Punto de entrada moderno (Scala 3): se ejecuta de forma automática
+@main def hola(): Unit =
+  val mensaje = "Hola, Scala desde la JVM!"
+  println(mensaje)
+
+  // Scala 3 también permite la entrada clásica, para quien usa Scala 2:
+  // object Hola { def main(args: Array[String]): Unit = println("Hola") }</code></pre>
+<pre><code class="language-bash"># Ejecutar como script suelto con scala-cli
+scala-cli run hola.scala
+
+# O dentro de un proyecto sbt: crea src/main/scala/hola.scala y ejecuta
+sbt run
+
+# Salida esperada:
+# Hola, Scala desde la JVM!</code></pre>
+<blockquote class="aside aside-tip"><p>Con scala-cli puedes ejecutar un archivo suelto sin crear un proyecto completo: ideal para entrenar las lecciones de este curso.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="object-y-main">
+    <h2>object y el punto de entrada</h2>
+    <div class="doc-content">
+<p>Java exige que el código viva en clases; Scala ofrece además <strong>objects</strong>: singletons con la misma sintaxis que una clase pero instanciados una sola vez. Al ejecutar un programa, la JVM busca un <code class="inline-code">main</code> executable y sbt solo se encarga de encontrarlo.</p>
+<pre><code class="language-scala">// object: es un singleton. No necesita "new" para usarse
+object Calculadora:
+
+  // Método estático equivalente a static en Java
+  def suma(a: Int, b: Int): Int = a + b
+
+  // Punto de entrada clásico compatible con Scala 2 y 3
+  def main(args: Array[String]): Unit =
+    println(suma(3, 4))       // 7
+    println(Calculadora.suma(10, 20)) // 30
+
+// @main en Scala 3: genera automáticamente el punto de entrada
+@main def entrada(): Unit =
+  println("Hola desde @main")</code></pre>
+<blockquote class="aside aside-caution"><p>Un <code class="inline-code">object</code> no es una clase instanciable: no puedes usar <code class="inline-code">new Calculadora</code>. En su lugar, siempre existe una única instancia disponible en todo el programa.</p></blockquote>
+<table><thead><tr><th>Declaración</th><th>Qué es</th></tr></thead><tbody><tr><td>object Nombre</td><td>Singleton global con miembros estáticos</td></tr><tr><td>def main(args)</td><td>Entrada clásica, compatible Scala 2 y 3</td></tr><tr><td>@main def</td><td>Entrada moderna de Scala 3, más limpia</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<ol>
+<li>Verifica que tu JDK funciona con <code class="inline-code">java -version</code> y que tienes instalado <code class="inline-code">sbt</code> o <code class="inline-code">scala-cli</code>.</li>
+<li>Abre el REPL y resuelve en él las operaciones <code class="inline-code">5 + 8</code>, <code class="inline-code">10 * 3 - 2</code> y <code class="inline-code">"Hola" + " Scala"</code>. Observa los tipos que infiere el REPL.</li>
+<li>Crea <code class="inline-code">hola.scala</code> con tu nombre y tu edad, y ejecútalo con <code class="inline-code">scala-cli run hola.scala</code>.</li>
+<li>Define un <code class="inline-code">object Mensajero</code> con un método <code class="inline-code">saludar()</code> que imprima un mensaje y llámalo desde un <code class="inline-code">@main</code>.</li>
+<li>En el REPL, escribe <code class="inline-code">:quit</code> y vuelve a abrirlo: confirma que tus definiciones anteriores ya no existen, porque cada sesión es independiente.</li>
+</ol>
+<p>En la próxima lección aprenderás los valores inmutables, las funciones de primera clase y la interpolación de strings, el corazón del estilo Scala.</p>
+    </div>
+  </section>

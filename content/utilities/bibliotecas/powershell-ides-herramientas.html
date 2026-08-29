@@ -1,0 +1,95 @@
+<!-- 3. IDEs y Herramientas para PowerShell - Bibliotecas (Utilidades) -->
+  <section id="ide-vscode-powershell">
+    <h2>VS Code + extensión PowerShell <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># VS Code con la extensión PowerShell (Microsoft)
+code --install-extension ms-vscode.PowerShell
+#   - LSP (PowerShell Editor Services): lint, autocompletado
+#   - ISE (Integrated Scripting Environment) es legacy:
+#       VS Code la reemplaza; el ISE no acepta PS 7
+# Windows Terminal se recomienda como terminal base (mejor que consola)
+
+# En otros editores: Neovim con lspconfig + PowerShell Editor Services
+# JetBrains IDE: plugin PowerShell
+</code></pre>
+<blockquote class="aside aside-tip"><p>VS Code + extensión PowerShell (basada en PowerShell Editor Services/LSP) es el estándar moderno; el ISE quedó para PowerShell 5.1 en Windows.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="psscriptanalyzer">
+    <h2>PSScriptAnalyzer: lint oficial <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-powershell"># PSScriptAnalyzer: el analizador estático oficial
+Install-Module -Name PSScriptAnalyzer
+Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning, Error
+
+# Reglas de estilo/seguridad: PSUseShouldProcessForStateChangingFunctions,
+#   PSUseSingularNouns, AvoidUsingPlainTextForPassword, etc.
+# Supresiones por línea con [Diagnostics.CodeAnalysis.SuppressMessage]
+# Formato integrado en VS Code con la extensión PowerShell Preview
+# Integración en CI: Invoke-ScriptAnalyzer en steps de Actions
+</code></pre>
+<blockquote class="aside aside-note"><p>PSScriptAnalyzer detecta errores y malas prácticas; se integra en IDE y CI. Junto con Pester forman el piso de calidad para scripts de producción.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depurar-powershell">
+    <h2>Depuración PowerShell <span class="gd-badge gd-badge-note">Debug</span></h2>
+    <div class="doc-content">
+<pre><code class="language-powershell"># En VS Code: breakpoints, watch, step (DAP con PowerShell)
+# Desde terminal también: Set-PSBreakpoint -Script x.ps1 -Line 14
+Set-PSBreakpoint -Script .\script.ps1 -Line 14
+Get-PSCallStack                # pila actual de ejecución
+
+# Mensajes de log clasificados (streams)
+Write-Verbose "detalle" -Verbose
+Write-Debug "x" -Debug
+Write-Information "INFO" -InformationAction Continue
+
+# Errores: $Error[0], try/catch/finally, -ErrorAction
+try {
+    Get-Item inexistente.txt -ErrorAction Stop
+} catch {
+    Write-Error "falló: $($_.Exception.Message)"
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>VS Code (DAP) es el debugger visual; desde terminal con `Set-PSBreakpoint` + `Get-PSCallStack`. Los streams (Verbose/Debug/Information) organizan el logging.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="despliegue-powershell">
+    <h2>Empaquetar y CI/CD <span class="gd-badge gd-badge-note">Ops</span></h2>
+    <div class="doc-content">
+<pre><code class="language-powershell"># Nada especial: scripts .ps1 + módulos (.psm1) son "el paquete"
+# Opciones:
+#   - Publicar módulo en PSGallery (NuGet): Publish-Module
+#   - nuspec vía NuGet cli para distribución privada
+#   - Convertir a exe con PS2EXE (opcional, no recomendado)
+
+# CI/CD en GitHub Actions: runner de Windows vienen con pwsh
+#   steps:
+#     - run: |
+#         Install-Module Pester -Force
+#         Invoke-Pester -CI
+#   En Azure DevOps: task PowerShell@2
+</code></pre>
+<blockquote class="aside aside-success"><p>El "deployable" es el módulo/script + tests. Corre en cualquier runner (Windows/Linux/MAC) con pwsh. La gestión de identidades va por secretos (GH) o service connections.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Instala la extensión PowerShell de VS Code y ejecuta un script con F5.</li>
+<li>Corre Invoke-ScriptAnalyzer sobre tu módulo y corrige 5 avisos.</li>
+<li>Usa Write-Verbose/Write-Error con -ErrorAction Stop.</li>
+<li>Escribe un run de GitHub Actions que corra Pester + Analyzer.</li>
+<li>Publica un módulo en tu feed local (NuGet) y consumelo.</li>
+</ol>
+    </div>
+  </section>

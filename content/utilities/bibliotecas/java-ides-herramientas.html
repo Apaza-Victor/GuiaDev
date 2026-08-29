@@ -1,0 +1,125 @@
+<!-- 3. IDEs y Herramientas para Java - Bibliotecas (Utilidades) -->
+  <section id="ide-java">
+    <h2>IDEs recomendados para Java <span class="gd-badge gd-badge-note">IDE</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># IntelliJ IDEA Community/Ultimate: el estándar (#1 en encuestas)
+#   - Refactorización automática, inspecciones, debug visual
+#   - Soporte de Spring, Maven, Gradle, Test, Docker, Flyway
+
+# Eclipse / Eclipse STS: libre y muy usado en empresas (Spring Tool Suite)
+# NetBeans (Apache): ligero, buen javax, multicentrico JDK
+# VS Code + Extension Pack for Java (gratuito y lean)
+
+# Alternativas copilot-IDE: herramientas nativas como:
+#   IDEA incluye gratuita en otros JetBrains (2024)
+</code></pre>
+<blockquote class="aside aside-note"><p>Elige: IntelliJ para productividad máxima, Eclipse STS si heredas proyectos Spring, VS Code si buscas liviano/multilenguaje, NetBeans para aprendizaje no-interactivo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="build-tool">
+    <h2>Build tools: Maven y Gradle <span class="gd-badge gd-badge-note">Build</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Maven: convención sobre configuración (más popular)
+mvn archetype:generate -DgroupId=com.demo -DartifactId=app -Dversion=1.0
+cd app &amp;&amp; mvn clean package &amp;&amp; java -jar target/app.jar
+mvn dependency:tree      # ver árbol de dependencias
+mvn test                 # correr tests JUnit
+
+# Gradle: flexible y rápido (wrapper para versionar)
+./gradlew clean build
+./gradlew test --tests "*CalculadoraTest*"
+# Kotlin DSL (build.gradle.kts) es la variante moderna
+</code></pre>
+<blockquote class="aside aside-caution"><p>Con Java puedes necesitar `--add-opens` / `--enable-preview` para módulos; Maven/Gradle los manejan via `<compilerArgs>`/`jvmArgs`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="jvm-tools">
+    <h2>Herramientas de JVM: jcmd, jmap, javap <span class="gd-badge gd-badge-note">Diagnóstico</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># JVM aún corriendo: jps lista procesos Java
+jps -l
+# jcmd: inspeccionar "live" un proceso
+jcmd 12345 Thread.print          # stack traces de todos los hilos
+jcmd 12345 GC.heap_info          # estado del heap
+# jmap: dump de heap para análisis Offline (MAT)
+jmap -dump:format=b,file=heap.bin 12345
+# javap: desensamblar la clase (ver bytecode)
+javap -c MiClase
+# jhat / Eclipse MAT / VisualVM para lectura de dumps
+# JFR (Flight Recorder) ahora openjdk: jcmd 12345 JFR.start
+</code></pre>
+<blockquote class="aside aside-tip"><p>`jcmd Thread.print` ante un "hang" muestra dónde se quedó cada hilo. Un heap dump + Eclipse MAT resuelve fugas de memoria. Todo esto es gratis dentro del JDK.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="container-powered">
+    <h2>Contenedores y CI con Java <span class="gd-badge gd-badge-note">Cloud</span></h2>
+    <div class="doc-content">
+<pre><code class="language-docker"># Multi-stage: construir en uno, ejecutar en imagen ligera
+FROM maven:3.9 AS build
+WORKDIR /app
+COPY pom.xml . && RUN mvn -B dependency:go-offline
+COPY src src
+RUN mvn -B package -DskipTests
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/target/app.jar app.jar
+EXPOSE 8080
+CMD ["java", "-XX:+UseZGC", "-jar", "app.jar"]
+</code></pre>
+<pre><code class="language-yaml"># CI (GitHub Actions): test + build + coordinador imagen
+- uses: actions/checkout@v4
+- uses: actions/setup-java@v4
+  with: { distribution: temurin, java-version: '21' }
+- run: mvn -B verify
+</code></pre>
+<blockquote class="aside aside-note"><p>Imágenes JRE (sin JDK) hacen el despliegue más pequeño. Docker multistage + un pipeline que corre `mvn verify` es la ruta a producción segura en Java.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="lombok-y-records">
+    <h2>Lombok y las mejoras modernas <span class="gd-badge gd-badge-note">Moderno</span></h2>
+    <div class="doc-content">
+<pre><code class="language-java">// Lombok: reducir boilerplate
+package com.demo;
+import lombok.*;
+
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+public class UsuarioDTO {
+  private Long id;
+  private String nombre;
+  private int edad;
+}
+
+// Con records de Java 16+ (ya sin Lombok para data classes)
+public record Usuario(Long id, String nombre, int edad) {
+  // auto: constructor, equals, hashCode, toString, accessores
+}
+
+// Otras mejoras: var (Java 10+), switch-expression (14), text blocks (15+),
+// pattern matching (21), virtual threads/Project Loom (21)
+</code></pre>
+<blockquote class="aside aside-success"><p>Prefer records para DTO/data classes; Lombok útil para clases que no pueden ser records. Virtual Threads (Java 21) simplifican la concurrencia con alto rendimiento.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un proyecto Maven desde cero con un `record` y un test JUnit 5.</li>
+<li>Usa `jcmd Thread.print` contra una app que simule un hang y localiza el hilo.</li>
+<li>Genera un heap dump con jmap y ábrelo en Eclipse MAT identificando el mayor objeto.</li>
+<li>Escribe un Dockerfile multi-stage y contruye/ejecuta tu app dentro.</li>
+<li>Implementa el mismo DTO con Lombok y con un record; compara el bytecode.</li>
+</ol>
+    </div>
+  </section>

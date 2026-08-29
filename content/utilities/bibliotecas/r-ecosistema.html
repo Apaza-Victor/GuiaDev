@@ -1,0 +1,158 @@
+<!-- 2. Frameworks y Ecosistema de R - Bibliotecas (Utilidades) -->
+  <section id="shiny">
+    <h2>Shiny: aplicaciones web en R <span class="gd-badge gd-badge-note">Web</span></h2>
+    <div class="doc-content">
+<pre><code class="language-r">library(shiny)
+
+# app.R: UI + server + runApp()
+ui &lt;- fluidPage(
+  titlePanel("Dashboard simple"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("var", "Variable", choices = names(mtcars)),
+      sliderInput("bins", "Bins", min = 1, max = 30, value = 10)
+    ),
+    mainPanel(plotOutput("grafico"))
+  )
+)
+
+server &lt;- function(input, output, session) {
+  output$grafico &lt;- renderPlot({
+    hist(mtcars[[input$var]], breaks = input$bins,
+         main = paste("Histograma de", input$var))
+  })
+}
+
+shinyApp(ui, server)
+# Local: runApp(); Publicar: shinyapps.io o Shiny Server / Posit Connect
+</code></pre>
+<blockquote class="aside aside-tip"><p>Shiny convierte análisis R en dashboards reactivos sin HTML/JS. `reactive()` y `observeEvent()` gestionan recalculo; combinar con `reactable` para tablas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="rmarkdown-quarto">
+    <h2>R Markdown y Quarto: reportes <span class="gd-badge gd-badge-note">Docs</span></h2>
+    <div class="doc-content">
+<pre><code class="language-r-markdown"># reporte.qmd (Quarto) o .Rmd — YAML + Markdown + R
+---
+title: "Análisis de ventas"
+author: "GuiaDev"
+format: html
+---
+</code></pre>
+<pre><code class="language-r">
+```{r}
+library(dplyr)
+ventas &lt;- data.frame(region = c("A","B"), total = c(120, 90))
+```
+
+## Resumen
+```{r}
+ventas |&gt; knitr::kable()
+```
+</code></pre>
+<pre><code class="language-bash">quarto render reporte.qmd    # HTML/PDF/Docx/PPTX
+# o: rmarkdown::render("reporte.Rmd")
+</code></pre>
+<blockquote class="aside aside-note"><p>Quarto (sucesor moderno de R Markdown) genera reportes reproducible, presentaciones y sitios con código R/Python/Julia. `knitr` ejecuta los bloques.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tidymodels-ml">
+    <h2>tidymodels: machine learning <span class="gd-badge gd-badge-note">ML</span></h2>
+    <div class="doc-content">
+<pre><code class="language-r">library(tidymodels)
+
+# Dividir datos y preprocesar (recipe)
+set.seed(123)
+datos &lt;- mtcars
+div  &lt;- initial_split(datos, prop = 0.8)
+train &lt;- training(div)
+test  &lt;- testing(div)
+
+receta &lt;- recipe(mpg ~ ., data = train) |&gt;
+  step_normalize(all_numeric_predictors())
+
+# Modelo + workflow
+modelo &lt;- linear_reg(engine = "lm")
+flujo  &lt;- workflow() |&gt;
+  add_recipe(receta) |&gt;
+  add_model(modelo)
+
+ajustado &lt;- fit(flujo, train)
+# Evaluar: metrics(ajustado, test) con yardstick
+# tune() + vfold_cv() para buscar hiperparámetros
+</code></pre>
+<blockquote class="aside aside-tip"><p>tidymodels estandariza preprocesado (recipes), modelado (parsnip) y evaluación (yardstick). Para deep learning: `keras` (TensorFlow) o `torch`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="spark-python-interop">
+    <h2>Datos grandes y puente Python <span class="gd-badge gd-badge-note">Escala</span></h2>
+    <div class="doc-content">
+<pre><code class="language-r"># Arrow: compartir datos entre R/Python sin copias
+library(arrow)
+df_arrow &lt;- read_parquet("datos.parquet")
+
+# sparklyr / SparkR: análisis distribuidos
+library(sparklyr)
+sc &lt;- spark_connect(master = "local")
+df &lt;- copy_to(sc, mtcars, "mtcars_spark")
+
+# reticulate: llamar Python desde R
+library(reticulate)
+pd &lt;- import("pandas")
+df_py &lt;- pd$read_csv("datos.csv")
+
+# duckdb: SQL embebido sobre data frames
+library(duckdb)
+con &lt;- dbConnect(duckdb())
+dbGetQuery(con, "SELECT count(*) FROM mtcars")
+</code></pre>
+<blockquote class="aside aside-note"><p>`arrow`/`parquet` para intercambio eficiente, `sparklyr` para escala real, `reticulate` para combinar Python y R en el mismo flujo. `quarto` los une en reportes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="testthat-pak">
+    <h2>testing (testthat) y empaquetado <span class="gd-badge gd-badge-note">Calidad</span></h2>
+    <div class="doc-content">
+<pre><code class="language-r">library(testthat)
+
+# test-calculadora.R
+test_that("suma funciona", {
+  expect_equal(suma(2, 3), 5)
+  expect_type(suma(-1, 1), "double")
+})
+
+test_that("valida errores", {
+  expect_error(suma("a", 1))
+})
+
+# Empaquetar un paquete R
+usethis::create_package("mipaquete")
+usethis::use_testthat()
+devtools::test()            # correr tests
+devtools::check()           # verificación completa
+# Publicar: usethis::use_github_action() + CRAN (futuro)
+</code></pre>
+<blockquote class="aside aside-note"><p>testthat + devtools + usethis es el flujo para validar código y crear paquetes compartibles. Cobertura con covr::report().</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una app Shiny con un histograma que cambie con un slider/selectInput.</li>
+<li>Genera un reporte Quarto HTML que muestre una tabla de `diamonds` con knitr::kable.</li>
+<li>Entrena una regresión lineal con tidymodels sobre `mtcars` y evalúa en test.</li>
+<li>Lee un parquet con arrow y une algo de Python vía reticulate.</li>
+<li>Escribe 4 tests testthat sobre una función y correlos con devtools::test().</li>
+</ol>
+    </div>
+  </section>

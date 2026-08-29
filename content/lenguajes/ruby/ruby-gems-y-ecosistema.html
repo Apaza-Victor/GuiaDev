@@ -1,0 +1,165 @@
+<!-- 6. Gems y Ecosistema - Ruby (Lenguajes de Programación) -->
+  <section id="que-es-una-gem">
+    <h2>¿Qué es una gem?</h2>
+    <div class="doc-content">
+<p>Una <strong>gem</strong> es un paquete de código Ruby listo para instalar y reutilizar, similar a una librería o módulo. Contiene código, metadatos (versión, autor, licencia) y dependencias. Se distribuyen a través de <strong>RubyGems</strong>, el gestor de paquetes oficial.</p>
+<p>El comando <code class="inline-code">gem install &lt;nombre&gt;</code> instala una gem, y el código de Ruby la carga con <code class="inline-code">require</code>. Algunas gems vienen incluidas en la biblioteca estándar.</p>
+<pre><code class="language-bash"># Ver la versión de RubyGems
+gem --version
+
+# Instalar una gem
+gem install colorize
+
+# Listar gems instaladas
+gem list
+</code></pre>
+<pre><code class="language-ruby">require "colorize"
+
+puts "¡Mensaje en verde!".colorize(:green)
+puts "¡Mensaje en rojo!".colorize(:red)
+puts "Esto es Ruby colorido".colorize(:blue).bold
+</code></pre>
+<table>
+<thead><tr><th>Comando</th><th>Descripción</th></tr></thead>
+<tbody><tr><td>gem install x</td><td>Instala la gem x</td></tr><tr><td>gem uninstall x</td><td>Desinstala la gem x</td></tr><tr><td>gem list</td><td>Lista gems instaladas</td></tr><tr><td>gem info x</td><td>Muestra información de la gem x</td></tr></tbody>
+</table>
+<blockquote class="aside aside-tip"><p>Explorá el <strong>RubyGems</strong> (rubygems.org) para descubrir miles de gems listas para usar: desde manejo de JSON y HTTP hasta análisis de datos y frameworks web.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="bundler-y-gemfile">
+    <h2>Bundler y el Gemfile</h2>
+    <div class="doc-content">
+<p><strong>Bundler</strong> gestiona las <strong>dependencias</strong> de un proyecto Ruby. En lugar de instalar gems manualmente, declarás las que necesitás en un archivo <strong>Gemfile</strong> y Bundler las instala y mantiene versiones consistentes.</p>
+<p>El <strong>Gemfile</strong> es el corazón de un proyecto Ruby: allí se listan las gems y sus versiones. Luego <code class="inline-code">bundle install</code> instala todas las dependencias con sus <strong>versiones exactas</strong>.</p>
+<pre><code class="language-ruby"># Gemfile
+source "https://rubygems.org"
+
+gem "sinatra"
+gem "json", "~&gt; 2.6"
+gem "rake", group: :development
+</code></pre>
+<pre><code class="language-bash"># Instalar dependencias declaradas en el Gemfile
+bundle install
+
+# Ejecutar un archivo con el entorno de Bundler cargado
+bundle exec ruby app.rb
+
+# Añadir una gem nueva con Bundler
+bundle add httparty
+</code></pre>
+<blockquote class="aside aside-note"><p>El operador <code class="inline-code">~&gt;</code> en una versión (como <code class="inline-code">~&gt; 2.6</code>) permite actualizaciones menores pero bloquea cambios mayores. El archivo <strong>Gemfile.lock</strong> congela las versiones exactas para que el proyecto sea reproducible.</p></blockquote>
+<blockquote class="aside aside-caution"><p>Siempre ejecutá tu aplicación con <code class="inline-code">bundle exec ruby archivo.rb</code> para garantizar que use las versiones del <code class="inline-code">Gemfile.lock</code> y no las instaladas globalmente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="scripts-y-archivos">
+    <h2>Scripts útiles con File y Regex</h2>
+    <div class="doc-content">
+<p>Ruby es excelente para <strong>scripting</strong>: leer archivos, procesar texto y generar reportes. La clase <code class="inline-code">File</code> permite leer y escribir archivos, y las <strong>expresiones regulares</strong> (Regex) permiten buscar y extraer patrones de texto.</p>
+<p>Con estas herramientas puedes automatizar tareas como validar formatos, contar ocurrencias o transformar archivos de configuración.</p>
+<pre><code class="language-ruby"># Leer un archivo línea por línea
+File.foreach("datos.txt") do |linea|
+  puts linea.strip
+end
+
+# Escribir en un archivo
+File.write("salida.txt", "Contenido generado por Ruby\n")
+puts File.exist?("salida.txt")   # =&gt; true
+</code></pre>
+<pre><code class="language-ruby"># Expresiones regulares para validar y extraer
+email = "contacto@guia.dev"
+puts email =~ /\A[\w\.]+@[\w\.]+\.\w+\z/   # =&gt; 0 (posición del match)
+
+texto = "Llama al 351-123-4567 o escribe a soporte@guia.dev"
+puts texto.scan(/\d{3}-\d{3}-\d{4}/).inspect   # =&gt; ["351-123-4567"]
+puts texto.scan(/[\w\.]+@[\w\.]+/).inspect      # =&gt; ["soporte@guia.dev"]
+</code></pre>
+<table>
+<thead><tr><th>Clase/Patrón</th><th>Uso</th></tr></thead>
+<tbody><tr><td>File.read</td><td>Leer todo el contenido</td></tr><tr><td>File.foreach</td><td>Leer línea por línea</td></tr><tr><td>File.write</td><td>Escribir contenido</td></tr><tr><td>=~ o match</td><td>Buscar un patrón regex</td></tr></tbody>
+</table>
+<blockquote class="aside aside-tip"><p>Usá <code class="inline-code">File.foreach</code> en lugar de <code class="inline-code">File.read</code> para archivos grandes: lee de a una línea por vez y no carga todo el archivo en memoria.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="testing">
+    <h2>Testing con Minitest</h2>
+    <div class="doc-content">
+<p>El <strong>testing</strong> es fundamental en la cultura Ruby. <strong>Minitest</strong> es el framework de pruebas que viene incluido con Ruby, ideal para escribir y ejecutar tests de forma simple y rápida.</p>
+<p>Un test verifica que una porción de código se comporta como se espera. Los tests se agrupan en <strong>clases</strong> que heredan de <code class="inline-code">Minitest::Test</code>, con métodos que empiezan en <code class="inline-code">test_</code>.</p>
+<pre><code class="language-ruby"># calculadora.rb
+def sumar(a, b)
+  a + b
+end
+</code></pre>
+<pre><code class="language-ruby"># test_calculadora.rb
+require "minitest/autorun"
+require_relative "calculadora"
+
+class TestCalculadora &lt; Minitest::Test
+  def test_suma_de_dos_numeros
+    assert_equal 5, sumar(2, 3)
+  end
+
+  def test_suma_con_negativos
+    assert_equal 0, sumar(-2, 2)
+  end
+end
+</code></pre>
+<pre><code class="language-bash">$ ruby test_calculadora.rb
+Run options: --seed 62137
+2 runs, 2 assertions, 0 failures, 0 errors, 0 skips
+</code></pre>
+<blockquote class="aside aside-success"><p>Convención: escribís la lógica en un archivo y los tests en <code class="inline-code">test_nombre.rb</code>, usando <code class="inline-code">assert_equal esperado, actual</code>. Una suite de tests que pasa te da confianza para refactorizar sin romper nada.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="ruby-on-rails">
+    <h2>Una mirada a Ruby on Rails</h2>
+    <div class="doc-content">
+<p><strong>Ruby on Rails</strong> (simplemente "Rails") es el framework web más famoso escrito en Ruby. Sigue el patrón <strong>MVC</strong> (Modelo-Vista-Controlador) y su filosofía de <strong>convención sobre configuración</strong> permite crear aplicaciones web completas con muy poco código.</p>
+<p>Con Rails se construyen sitios, APIs y aplicaciones de todo tipo. Al crear un proyecto, Rails genera una estructura de carpetas organizada con modelos, controladores, vistas, rutas y tests.</p>
+<pre><code class="language-bash"># Crear una nueva aplicación Rails
+rails new blog
+
+# Levantar el servidor de desarrollo
+cd blog
+rails server
+</code></pre>
+<pre><code class="language-ruby"># app/controllers/posts_controller.rb
+class PostsController &lt; ApplicationController
+  def index
+    @posts = Post.all
+  end
+
+  def show
+    @post = Post.find(params[:id])
+  end
+end
+</code></pre>
+<pre><code class="language-ruby"># app/models/post.rb
+class Post &lt; ApplicationRecord
+  validates :titulo, presence: true, length: { minimum: 5 }
+  validates :cuerpo, presence: true
+end
+</code></pre>
+<blockquote class="aside aside-note"><p>Rails incluye <strong>ActiveRecord</strong> (ORM para bases de datos), <strong>ActionController</strong> (lógica HTTP) y <strong>ActionView</strong> (plantillas), además de migraciones, generadores y el sistema de assets. Es un ecosistema completo.</p></blockquote>
+<blockquote class="aside aside-tip"><p>Si te interesa el desarrollo web con Ruby, Rails es el siguiente paso natural tras dominar el lenguaje base. Empezá con <code class="inline-code">rails new blog</code> y seguí la guía oficial.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Integrá todos los conocimientos de Ruby resolviendo estos ejercicios con el ecosistema de gems.</p>
+<ol>
+<li>Instalá la gem <code class="inline-code">colorize</code> y creá un script que imprima mensajes con distintos colores según el nivel de severidad.</li>
+<li>Creá un Gemfile con las gems <code class="inline-code">json</code> y <code class="inline-code">httparty</code>, ejecutá <code class="inline-code">bundle install</code> y luego <code class="inline-code">bundle exec ruby app.rb</code>.</li>
+<li>Escribí un script que lea un archivo de texto y cuente cuántas palabras contiene usando <code class="inline-code">File.foreach</code> y <code class="inline-code">split</code>.</li>
+<li>Usá una expresión regular para extraer todos los números de teléfono de un texto y mostrarlos formateados.</li>
+<li>Escribí y ejecutá tests con Minitest para una función <code class="inline-code">es_palindromo?</code> que verifiques con al menos tres casos.</li>
+</ol>
+<p>¡Felicitaciones por completar el curso de Ruby! Ya conoces la sintaxis, los tipos, el control de flujo, la programación orientada a objetos, las colecciones y el ecosistema de gems. El siguiente paso es construir tu primer proyecto completo con Rails.</p>
+    </div>
+  </section>

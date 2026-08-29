@@ -1,0 +1,132 @@
+<!-- 1. Librerías y Herramientas Básicas de SQL - Bibliotecas (Utilidades) -->
+  <section id="que-es-sql">
+    <h2>SQL: el lenguaje de datos <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- SQL standard: consultas, DDL, DML y DCL
+-- DDL: estructuras
+CREATE TABLE usuarios (
+  id        INT PRIMARY KEY AUTO_INCREMENT,
+  nombre    VARCHAR(100) NOT NULL,
+  email     VARCHAR(255) UNIQUE,
+  creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- DML: datos
+INSERT INTO usuarios (nombre, email) VALUES ('Ana', 'ana@example.com');
+SELECT nombre, email FROM usuarios WHERE email LIKE '%example.com' ORDER BY nombre;
+UPDATE usuarios SET nombre = 'Ana M.' WHERE id = 1;
+DELETE FROM usuarios WHERE id = 2;
+
+-- DCL: permisos
+GRANT SELECT ON app.* TO 'lector'@'localhost';
+</code></pre>
+<blockquote class="aside aside-tip"><p>El SQL estándar es compartido por PostgreSQL, MySQL, SQL Server, Oracle y SQLite; cada motor añade dialéctos: funciones (`NOW()`, `getdate()`) y tipos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="motores-bd">
+    <h2>Elegir motor de base de datos <span class="gd-badge gd-badge-note">Inicio</span></h2>
+    <div class="doc-content">
+<pre><code class="language-bash"># Contexto habitual
+#   PostgreSQL: recomendado de facto (open source, robusto, JSONB, GIS)
+sudo apt install postgresql postgresql-contrib
+#   MySQL / MariaDB: alternativa muy extendida en web legacy
+sudo apt install mysql-server
+#   SQLite: embebido sin servidor (apps de escritorio/movil/SPAs)
+winget install SQLite.SQLite
+#   SQL Server: ecosistema Windows/.NET; Oracle: corporativo/legacy
+
+# Conectarse vía CLI
+psql -U ana -d miapp          # PostgreSQL
+mysql -u ana -p miapp         # MySQL
+sqlite3 mi.db                 # SQLite
+</code></pre>
+<blockquote class="aside aside-note"><p>Para proyectos nuevos elige PostgreSQL; usa SQLite para algo local sin servidor; heredas MySQL/SQL Server/Oracle cuando ya existen en tu entorno.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="joins-agregados">
+    <h2>Joins, agregaciones y funciones ventana <span class="gd-badge gd-badge-note">Consulta</span></h2>
+    <div class="doc-content">
+<pre><code class="language-sql">SELECT c.nombre, o.total
+FROM clientes c
+LEFT JOIN ordenes o ON o.cliente_id = c.id
+ORDER BY o.total DESC;
+
+-- Agregaciones y filtro de grupos
+SELECT estado, COUNT(*) AS total, AVG(total) AS promedio
+FROM ordenes
+GROUP BY estado
+HAVING COUNT(*) &gt; 10;
+
+-- Funciones de ventana: filas sin agrupar
+SELECT 	n,
+        n - LAG(n) OVER (ORDER BY n) AS diff_anterior,
+        SUM(n) OVER (ORDER BY n ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS media_movil
+FROM numeros;
+</code></pre>
+<blockquote class="aside aside-tip"><p>Domina `JOIN` (INNER/LEFT/RIGHT/FULL), `GROUP BY` + `HAVING`, y las ventanas (`RANK`, `LAG`, `SUM(...) OVER`) que resuelven rankings y comparaciones sin subconsultas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="indices-optimizacion">
+    <h2>Índices y optimización <span class="gd-badge gd-badge-note">Rendimiento</span></h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- Índices: aceleran búsquedas y joins
+CREATE INDEX idx_usuarios_email ON usuarios(email);
+CREATE INDEX idx_ordenes_cliente ON ordenes(cliente_id, estado);
+
+-- Plan de ejecución (PostgreSQL)
+EXPLAIN ANALYZE
+SELECT * FROM ordenes o JOIN clientes c ON c.id = o.cliente_id
+WHERE c.ciudad = 'Madrid';
+
+-- buenas prácticas de consulta
+--   1. Evitar SELECT * salvo prototipos
+--   2. Filtrar en WHERE, no en HAVING cuando se pueda
+--   3. Preferir EXISTS sobre IN (...) en subconsultas grandes
+--   4. Evitar funciones sobre columnas en el WHERE (WHERE year(f) = 2024)
+</code></pre>
+<blockquote class="aside aside-caution"><p>Unificar una columna en el WHERE con función rompe índices: usa rangos (`WHERE f &gt;= '2024-01-01' AND f &lt; '2025-01-01'`) y `EXPLAIN ANALYZE` para confirmar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="migraciones-seguridad">
+    <h2>Migraciones (Flyway/Liquibase) y seguridad <span class="gd-badge gd-badge-note">Datos</span></h2>
+    <div class="doc-content">
+<pre><code class="language-sql">-- Flyway: migraciones versionadas en archivos .sql
+-- V001__crear_usuarios.sql
+CREATE TABLE usuarios (id INT PRIMARY KEY, nombre VARCHAR(100) NOT NULL);
+-- V002__agrega_email.sql
+ALTER TABLE usuarios ADD COLUMN email VARCHAR(255) UNIQUE;
+-- Ejecutar: flyway migrate
+
+-- Seguridad básica: parámetros, nunca concatenación (SQL injection)
+SELECT * FROM usuarios WHERE email = '?email?' -- prepared statement
+
+-- Backups
+pg_dump miapp &gt; backup.sql        -- PostgreSQL
+mysqldump miapp &gt; backup.sql      -- MySQL
+.sqlite3 mi.db ".backup backup.db"
+</code></pre>
+<blockquote class="aside aside-note"><p>Versiona el esquema con migraciones (Flyway/Liquibase) en lugar de editar la BD a mano, usa parámetros en consultas dinámicas y programa backups regulares.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea tablas `clientes`-`ordenes` con FK y has varias consultas JOIN.</li>
+<li>Haz un ranking de clientes por total gastado con `RANK() OVER (ORDER BY ...)`.</li>
+<li>Añade un índice compuesto y compara un `EXPLAIN ANALYZE` antes/después.</li>
+<li>Escribe dos migraciones Flyway que creen y alteren una tabla.</li>
+<li>Reporte con `GROUP BY` y `HAVING` que muestre ciudades con más de 3 clientes.</li>
+</ol>
+    </div>
+  </section>

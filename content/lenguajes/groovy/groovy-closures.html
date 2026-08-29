@@ -1,0 +1,195 @@
+<!-- 4. Closures - Groovy (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="closures">
+    <h2>Closures básicas</h2>
+    <div class="doc-content">
+<p>Una <strong>closure</strong> es un bloque de código que se asigna a una variable, se pasa como argumento y se ejecuta. Capturan el ámbito donde se crean. Es la pieza que da vida a <code>collect</code>, <code>findAll</code>, builders y Spock.</p>
+<pre><code class="language-groovy">// Definición
+def saluda = { println 'Hola' }
+saluda()                       // Hola
+
+// Con parámetros
+def suma = { a, b -> a + b }
+println suma(2, 3)             // 5
+
+// Parámetro implícito it
+def doble = { it * 2 }
+println doble(21)              // 42
+
+// Closure en una variable (primer ciudadano)
+def aplicar = { fn, valor -> fn(valor) }
+def resultado = aplicar({ it * 10 }, 5)
+println resultado              // 50
+
+// Captura de ámbito (values del exterior)
+def factor = 3
+def mult = { n -> n * factor }
+println mult(4)                // 12
+
+// Con defaults y varargs
+def saluda2 = { nombre = 'Invitado' -> "Hola $nombre" }
+println saluda2()              // Hola Invitado
+def rest = { head, ...rest -> [head, rest] }
+println rest(1, 2, 3)          // [1, [2, 3]]</code></pre>
+<blockquote class="aside aside-tip"><p>Una closure es <strong>Closure</strong> con métodos <code>call()</code>, <code>curry()</code>, <code>delegate</code>... El parámetro implícito <code>it</code> habilita la sintaxis ultracompacta: <code>[1,2,3].collect { it * 2 }</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="delegacion">
+    <h2>Delegación y configuración</h2>
+    <div class="doc-content">
+<p>El poder oculto de las closures es el <strong>delegado</strong> (<code>delegate</code>): dentro de una closure, <code>this</code> resuelve contra el método que la creó, y puedes cambiarlo para ejecutar la closure "como si fuera" otro objeto. Es la base del DSL de Gradle.</p>
+<pre><code class="language-groovy">class Configuracion {
+    String host = 'localhost'
+    int puerto = 80
+
+    void aplicar(Closure cl) {
+        cl.delegate = this     // la closure configurará "this"
+        cl.resolveStrategy = Closure.DELEGATE_FIRST
+        cl()
+    }
+}
+
+def config = new Configuracion()
+config.aplicar {
+    host = 'guia.dev'         // setter del delegado (this.host)
+    puerto = 443
+}
+println config.host     // guia.dev
+println config.puerto   // 443
+
+// Este patrón (builders + delegate) es el DSL:
+// project { name = 'x'; dependencies { ... } } en Gradle</code></pre>
+<blockquote class="aside aside-success"><p>Esto es lo que permite escribir alcanza,<br/>en Gradle o Jenkins: <code>plugins { id '...' }</code>. La closure ejecuta sobre el delegado (Gradle project), no sobre el script. Memorízalo: <code>resolveStrategy = DELEGATE_FIRST</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="curry">
+    <h2>Currying y memoria</h2>
+    <div class="doc-content">
+<p>Con <code>curry()</code>, <code>curry()</code> fijas parámetros parcialmente, creando una closure derivada: patrones de programación funcional sin importar nada.</p>
+<pre><code class="language-groovy">def multiplica = { a, b -> a * b }
+
+// Fijar primer parámetro
+def por2 = multiplica.curry(2)
+def por10 = multiplica.curry(10)
+println por2(5)        // 10
+println por10(5)       // 50
+
+// curry con rcurry (fija al final)
+def divide = { num, den -> num / den }
+def medio = divide.rcurry(2)
+println medio(10)      // 5 (10/2)
+
+// ncurry: fija por índice
+def concat = { a, sep, b -> "$a$sep$b" }
+def conGuion = concat.ncurry(1, '-')
+println conGuion('a', 'b')   // a-b
+
+// Cachear con memoize (para funciones de coste alto)
+def lenta = { n -> println 'calculando'; n * n }.memoize()
+println lenta(4)      // calculando\n16
+println lenta(4)      // 16  (sin "calculando")</code></pre>
+<blockquote class="aside aside-tip"><p><code>curry</code> está en todas las closures: esencial para construir pipelines y reutilizar configuraciones. <code>memoize()</code> te da caché gratis de un argumento — útil en parseo pesado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="metodos">
+    <h2>Closures con métodos GDK</h2>
+    <div class="doc-content">
+<p>El 90% del uso de closures ocurre como argumento de métodos de colecciones: <code>collect</code>, <code>findAll</code>, <code>each</code>, <code>find</code>, <code>every</code>, <code>groupBy</code>, <code>inject</code>.</p>
+<pre><code class="language-groovy">def numeros = [1, 2, 3, 4, 5, 6]
+
+// collect / findAll / find
+def dobles = numeros.collect { it * 2 }
+def pares = numeros.findAll { it % 2 == 0 }
+def primerImpar = numeros.find { it % 2 == 1 }
+println dobles          // [2,4,6,8,10,12]
+println pares           // [2,4,6]
+println primerImpar     // 1
+
+// each (effetto lateral)
+numeros.each { print "$it " }
+println()
+
+// every / any
+println numeros.every { it > 0 }     // true
+println numeros.any { it > 5 }       // true
+
+// groupBy
+def agrupados = numeros.groupBy { it % 2 == 0 ? 'par' : 'impar' }
+println agrupados                    // [par:[2,4,6], impar:[1,3,5]]
+
+// inject (reduce)
+def suma = numeros.inject(0) { acc, n -> acc + n }
+println suma                         // 21
+
+// Con maps
+def datos = [a: 1, b: 2, c: 3]
+datos.each { k, v -> println "$k: $v" }</code></pre>
+<blockquote class="aside aside-tip"><p>Esta familia (map/filter/reduce en Ruby-lengua) es tu "mochila" de análisis en Groovy. Cuando trabajes en Gradle scripts, verás <code>each</code>/<code>collect</code>/<code>findAll</code> por todas partes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="builders">
+    <h2>Builders</h2>
+    <div class="doc-content">
+<p>Los <strong>builders</strong> son la cima del DSL con closures: construyen objetos anidados (XML, JSON, HTML, Swing, tree) con sintaxis declarativa.</p>
+<pre><code class="language-groovy">import groovy.xml.MarkupBuilder
+
+// MarkupBuilder: generar XML/HTML
+def xml = new StringWriter()
+def mb = new MarkupBuilder(xml)
+mb.persona(id: 1) {
+    nombre 'Ana'
+    edad 30
+    direccion(ciudad: 'Lima') {
+        calle 'Av. Principal'
+    }
+}
+println xml.toString()
+// &lt;persona id='1'&gt;
+//   &lt;nombre&gt;Ana&lt;/nombre&gt;
+//   &lt;edad&gt;30&lt;/edad&gt;
+//   &lt;direccion ciudad='Lima'&gt;
+//     &lt;calle&gt;Av. Principal&lt;/calle&gt;
+//   &lt;/direccion&gt;
+// &lt;/persona&gt;
+
+// JsonBuilder
+import groovy.json.JsonBuilder
+def jb = new JsonBuilder()
+jb.user {
+    nombre 'Ana'
+    etiquetas ['dev', 'data']
+}
+println jb.toString()
+// {"user":{"nombre":"Ana","etiquetas":["dev","data"]}}
+
+// BuilderSoporte: tu propio DSL
+import groovy.util.BuilderSupport
+// usualmente no necesario: el patrón delegate lo cubre</code></pre>
+<blockquote class="aside aside-caution"><p>En creadores anidados, la closure "hijita" se evalúa sobre el builder (delegación). Es muy cómodo, pero ojo: nombres de método (como `class`) pueden chocar; usa cadenas cuando sea necesario.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Practica en orden: cada ejercicio asume lo aprendido en el anterior.</p>
+<ol>
+<li><strong>Básicas</strong>: define <code>cuadrado = { it * it }</code> y pásalo a `[1,3,5].collect(cuadrado)`.</li>
+<li><strong>Delegación</strong>: define una clase rica con <code>aplicar(Closure)</code> y configúrala asignando propiedades desde dentro.</li>
+<li><strong>Curry</strong>: crea <code>construirUrl = { base, path -> "$base/$path" }.curry('https://api.x.com')</code> y genera varias URLs.</li>
+<li><strong>GDK + closures</strong>: de una lista de palabras, agrupa por longitud inicial y cuenta cuántas hay con cada inicial.</li>
+<li><strong>Builders</strong>: genera un JSON de un catálogo con <code>JsonBuilder</code> y un XML con <code>MarkupBuilder</code>.</li>
+</ol>
+<p>En la próxima lección veremos OOP y metaprogramación: clases, traits, categorías y scripts.</p>
+    </div>
+  </section>
