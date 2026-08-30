@@ -7142,6 +7142,38 @@ const DOCS_DATA = {
             "contentFile": "content/uml/herramientas/uml-herr-comparativa.html"
           }
         ]
+      },
+      {
+        "id": "como-hacer-diagramas",
+        "title": "Cómo Hacer Diagramas y Significado de los Símbolos",
+        "icon": "fa-solid fa-shapes",
+        "lessons": [
+          {
+            "id": "uml-como-hacer-paso-a-paso",
+            "title": "01. Cómo Hacer un Diagrama Paso a Paso",
+            "content": "El proceso completo para construir diagramas UML desde cero: definir el objetivo, identificar los elementos, dibujar la estructura y validar el resultado. Incluye guiones para reuniones y errores comunes.",
+            "sections": [
+              "Antes de dibujar: define el objetivo",
+              "Secuencia de creación de un diagrama",
+              "Reglas de estilo y limpieza",
+              "Errores comunes al hacer diagramas",
+              "Elección del diagrama correcto"
+            ],
+            "contentFile": "content/uml/como-hacer-diagramas/uml-como-hacer-paso-a-paso.html"
+          },
+          {
+            "id": "uml-simbolos-formas",
+            "title": "02. Símbolos y Formas: Rectángulo, Rombo, Óvalo y más",
+            "content": "Cada forma o símbolo UML explicado con su concepto, para qué sirve y en qué diagramas se usa: rectángulo, rombo, óvalo, cuadrado/rectángulo redondeado, círculo, flechas y líneas. Con ejemplos visuales.",
+            "sections": [
+              "Formas básicas y su significado",
+              "Líneas y flechas de relación",
+              "Formas por tipo de diagrama",
+              "Ejemplos visuales combinados"
+            ],
+            "contentFile": "content/uml/como-hacer-diagramas/uml-simbolos-formas.html"
+          }
+        ]
       }
     ]
   },
