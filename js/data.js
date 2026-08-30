@@ -10520,6 +10520,35 @@ const DOCS_DATA = {
             "contentFile": "content/ingles/precision/ing-pre-phrasal-devs.html"
           }
         ]
+      },
+      {
+        "id": "palabras-programacion",
+        "title": "Palabras de Programación y Términos Técnicos",
+        "icon": "fa-solid fa-terminal",
+        "lessons": [
+          {
+            "id": "ing-keywords-programacion",
+            "title": "01. Keywords de Programación",
+            "content": "Las palabras reservadas del código (if, else, return, for, while, function...) explicadas en español con su concepto corto: qué hacen y cuándo se usan.",
+            "sections": [
+              "Keywords de Control de Flujo",
+              "Keywords de Datos y Variables",
+              "Keywords de Funciones y Módulos"
+            ],
+            "contentFile": "content/ingles/palabras-programacion/ing-keywords-programacion.html"
+          },
+          {
+            "id": "ing-terminos-tecnicos",
+            "title": "02. Términos Técnicos de Dev",
+            "content": "El vocabulario técnico que usan los desarrolladores (bug, deploy, merge, sprint, refactor...) con su significado en español y concepto corto.",
+            "sections": [
+              "Términos de Desarrollo y Código",
+              "Términos de Git y Colaboración",
+              "Términos de Proceso y Metodología"
+            ],
+            "contentFile": "content/ingles/palabras-programacion/ing-terminos-tecnicos.html"
+          }
+        ]
       }
     ]
   },
