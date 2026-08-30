@@ -7172,6 +7172,43 @@ const DOCS_DATA = {
               "Ejemplos visuales combinados"
             ],
             "contentFile": "content/uml/como-hacer-diagramas/uml-simbolos-formas.html"
+          },
+          {
+            "id": "uml-catalogo-figuras",
+            "title": "03. Catálogo Completo de Figuras y Formas",
+            "content": "Todas las figuras geométricas de UML con su significado, variantes y ejemplos: rectángulo con compartimentos, rombo, óvalo, actor, elipse, paquete, componente, nodo, nota, cilindro de base de datos y línea de vida.",
+            "sections": [
+              "Figuras de estructura y comportamiento",
+              "Figuras de agrupación y anotación",
+              "Figuras de datos e infraestructura",
+              "Catálogo visual con PlantUML"
+            ],
+            "contentFile": "content/uml/como-hacer-diagramas/uml-catalogo-figuras.html"
+          },
+          {
+            "id": "uml-relaciones-avanzadas",
+            "title": "04. Símbolos de Relación Avanzados",
+            "content": "Las líneas y flechas que conectan los elementos: herencia, composición, agregación, dependencia, realización e interfaces, con su notación exacta, multiplicidad y ejemplos visuales.",
+            "sections": [
+              "Relaciones estructurales",
+              "Relaciones de dependencia e implementación",
+              "Multiplicidad y cardinalidad",
+              "Ejemplo visual de todas las relaciones"
+            ],
+            "contentFile": "content/uml/como-hacer-diagramas/uml-relaciones-avanzadas.html"
+          },
+          {
+            "id": "uml-ejemplos-por-diagrama",
+            "title": "05. Ejemplos Visuales por Tipo de Diagrama",
+            "content": "Un diagrama completo y comentado de cada tipo: clases, casos de uso, secuencia, actividades, componentes, despliegue, estados y entidad-relación, para ver todas las figuras en contexto real.",
+            "sections": [
+              "Diagrama de Secuencia",
+              "Diagrama de Componentes",
+              "Diagrama de Despliegue",
+              "Diagrama de Estados",
+              "Diagrama Entidad-Relación"
+            ],
+            "contentFile": "content/uml/como-hacer-diagramas/uml-ejemplos-por-diagrama.html"
           }
         ]
       }
