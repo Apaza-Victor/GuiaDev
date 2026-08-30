@@ -10356,6 +10356,170 @@ const DOCS_DATA = {
             "contentFile": "content/ingles/devs/ing-dev-cv.html"
           }
         ]
+      },
+      {
+        "id": "workflow",
+        "title": "Workflow y Herramientas",
+        "icon": "fa-solid fa-diagram-project",
+        "lessons": [
+          {
+            "id": "ing-wfl-git",
+            "title": "01. Git y Control de Versiones en Inglés",
+            "content": "Vocabulario real de git, conventional commits y el ida y vuelta de un PR en inglés, nivel intermedio.",
+            "sections": [
+              "Vocabulario de Git",
+              "Commits y Mensajes",
+              "Colaboración y Revisión"
+            ],
+            "contentFile": "content/ingles/workflow/ing-wfl-git.html"
+          },
+          {
+            "id": "ing-wfl-tickets",
+            "title": "02. Tickets, Historias y Jira en Inglés",
+            "content": "Estados, tipos, campos, prioridad y la fórmula de user stories con acceptance criteria en Jira/Trello.",
+            "sections": [
+              "Estados y Tipos de Ticket",
+              "Campos y Prioridad",
+              "User Stories y Acceptance Criteria"
+            ],
+            "contentFile": "content/ingles/workflow/ing-wfl-tickets.html"
+          },
+          {
+            "id": "ing-wfl-bugs",
+            "title": "03. Reportar Bugs y Manejar Incidencias",
+            "content": "Estructura de un bug report completo, vocabulario de bugs e incidentes y lenguaje del triage y severidad.",
+            "sections": [
+              "Estructura de un Bug Report",
+              "Vocabulario de Bugs",
+              "Triage y Severidad"
+            ],
+            "contentFile": "content/ingles/workflow/ing-wfl-bugs.html"
+          },
+          {
+            "id": "ing-wfl-testing",
+            "title": "04. Inglés de Testing y QA",
+            "content": "Tipos de test, frases de suite verde/roja, TDD/BDD y el vocabulario de QA y releases.",
+            "sections": [
+              "Tipos de Test",
+              "Hablar de la Suite",
+              "QA y Releases"
+            ],
+            "contentFile": "content/ingles/workflow/ing-wfl-testing.html"
+          },
+          {
+            "id": "ing-wfl-errores",
+            "title": "05. Errores, Terminal y Logs en Inglés",
+            "content": "Mensajes de error frecuentes, niveles de log y la fórmula para describir un error a un colega.",
+            "sections": [
+              "Mensajes de Error Frecuentes",
+              "Niveles de Log",
+              "Describir un Error a un Colega"
+            ],
+            "contentFile": "content/ingles/workflow/ing-wfl-errores.html"
+          }
+        ]
+      },
+      {
+        "id": "oral",
+        "title": "Comunicación Técnica Oral",
+        "icon": "fa-solid fa-comments",
+        "lessons": [
+          {
+            "id": "ing-oral-reuniones",
+            "title": "01. Reuniones Técnicas: Demos, Pairing y Grooming",
+            "content": "Reuniones técnicas en inglés: demos con walk through y screen sharing, grooming con criterios de aceptación y spikes, y reuniones 1:1 con tu manager.",
+            "sections": [
+              "Demos y Pairing",
+              "Grooming y Refinamiento",
+              "Reuniones 1:1"
+            ],
+            "contentFile": "content/ingles/oral/ing-oral-reuniones.html"
+          },
+          {
+            "id": "ing-oral-clarificar",
+            "title": "02. Expresar Dudas y Confirmar Entendimiento",
+            "content": "Pedir aclaraciones con naturalidad, parafrasear para confirmar entendimiento y manejar el momento en que no escuchaste o no captas algo.",
+            "sections": [
+              "Pedir Clarificación",
+              "Confirmar que Entiendes",
+              "Cuando No Escuchaste"
+            ],
+            "contentFile": "content/ingles/oral/ing-oral-clarificar.html"
+          },
+          {
+            "id": "ing-oral-idioms-devs",
+            "title": "03. Idioms y Expresiones de Equipos de Software",
+            "content": "Idioms de trabajo, expresiones de proceso (bikeshedding, timebox, ship it) y frases para impulsar el avance de las tareas y el equipo.",
+            "sections": [
+              "Idioms de Trabajo",
+              "Expresiones de Proceso",
+              "Frases de Avance"
+            ],
+            "contentFile": "content/ingles/oral/ing-oral-idioms-devs.html"
+          },
+          {
+            "id": "ing-oral-async",
+            "title": "04. Comunicación Asíncrona: Slack y Mensajes",
+            "content": "Lenguaje de Slack (pings, hilos, FYI), etiqueta escrita profesional y plantilla de status updates por escrito.",
+            "sections": [
+              "Lenguaje de Slack",
+              "Etiqueta Escrita",
+              "Actualizaciones por Escrito"
+            ],
+            "contentFile": "content/ingles/oral/ing-oral-async.html"
+          }
+        ]
+      },
+      {
+        "id": "precision",
+        "title": "Precisión del Vocabulario Técnico",
+        "icon": "fa-solid fa-code-compare",
+        "lessons": [
+          {
+            "id": "ing-pre-terminos",
+            "title": "01. Términos Técnicos que se Confunden",
+            "content": "Diferencia las parejas de términos técnicos que más se confunden (argument/parameter, method/function, run/execute/invoke, library/framework, endpoint/route/API, compile/build/transpile) con ejemplos de código.",
+            "sections": [
+              "Argument vs Parameter",
+              "Library vs Framework",
+              "Otras Parejas Clave"
+            ],
+            "contentFile": "content/ingles/precision/ing-pre-terminos.html"
+          },
+          {
+            "id": "ing-pre-falsos-cognados",
+            "title": "02. Falsos Cognados Técnicos",
+            "content": "Falsos amigos que cambian el mensaje en reuniones y código: assist, discuss, actually/currently, eventually, support, deliver, issue, assume, apply, deprecate y los plurales latinos.",
+            "sections": [
+              "Falsos Amigos del Día a Día",
+              "Falsos Amigos Técnicos",
+              "El Spanglish Técnico a Evitar"
+            ],
+            "contentFile": "content/ingles/precision/ing-pre-falsos-cognados.html"
+          },
+          {
+            "id": "ing-pre-preposiciones",
+            "title": "03. Preposiciones Técnicas y Colocaciones",
+            "content": "Las preposiciones que no se traducen 1:1 del español: depend on, consist of, based on, connect to, integrated with, y las de despliegue y docs (deploy to, run on, built with, sort/filter by, search for, responsible for, attached to).",
+            "sections": [
+              "Preposiciones de Dependencia",
+              "Preposiciones de Despliegue y Código",
+              "Colocaciones Comunes en Docs"
+            ],
+            "contentFile": "content/ingles/precision/ing-pre-preposiciones.html"
+          },
+          {
+            "id": "ing-pre-phrasal-devs",
+            "title": "04. Phrasal Verbs de Programación",
+            "content": "Los phrasal verbs que usan los devs a diario agrupados por escenario: infraestructura (set up, spin up, tear down, roll out/back), colaboración (check out, hook up, loop in, reach out) y resolución (figure out, work around, fall back on).",
+            "sections": [
+              "Verbos de Infraestructura",
+              "Verbos de Colaboración",
+              "Verbos de Resolución"
+            ],
+            "contentFile": "content/ingles/precision/ing-pre-phrasal-devs.html"
+          }
+        ]
       }
     ]
   },
@@ -10671,7 +10835,7 @@ const DOCS_DATA = {
 };
 
 const STATS = {
-  "lessons": "737",
+  "lessons": "750",
   "languages": "28",
   "frameworks": "9",
   "diagrams": "49"

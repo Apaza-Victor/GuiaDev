@@ -6,7 +6,7 @@ Plataforma web de documentación técnica para aprender y consultar conceptos de
 
 ## Características
 
-- **737 lecciones** organizadas en **11 categorías** temáticas
+- **750 lecciones** organizadas en **11 categorías** temáticas
 - Navegación SPA basada en hash con scroll-spy y tabla de contenidos automática
 - **Hub de acceso rápido en Recursos**: todo el directorio de enlaces en una sola vista con filtro instantáneo, sin navegar lección por lección
 - **Glosario de programación**: 234 términos con buscador en vivo y filtros por letra y por tema
@@ -95,11 +95,11 @@ Luego abre `http://localhost:8080`.
 | Entrevistas Laborales | JavaScript, React, Java, Spring, TypeScript | 15 |
 | Ingeniería de Software | Fundamentos (6), Requerimientos (5), Ciclo de Vida (5), Diseño de Software (5), Pruebas (4), Gestión de Proyectos (4), Calidad (4) | 33 |
 | Utilidades | Librerías (27), Bibliotecas (84), Python (12), Ziggy (6), NPM (1), PNPM (1) | 131 |
-| Inglés | Básico A1-A2 (12), Intermedio B1-B2 (10), Avanzado C1-C2 (5), Habilidades Clave (6), Para Devs (6) | 39 |
+| Inglés | Básico A1-A2 (12), Intermedio B1-B2 (10), Avanzado C1-C2 (5), Habilidades Clave (6), Para Devs (6), Workflow y Herramientas (5), Comunicación Técnica Oral (4), Precisión del Vocabulario Técnico (4) | 52 |
 | Control de Versiones | GitHub (7), GitLab (4), Bitbucket (3), Azure DevOps (4), Gitea (3), Clientes Gráficos (5), GitHub CLI (3), Git LFS (2), Calidad de Commits (3), CI/CD (4) | 38 |
 | Recursos | Docs oficiales (2), Herramientas (2), Práctica (2), Comunidades (3), Aprendizaje (1), Software Gratuito (1), Multimedia (1), Hosting y Despliegue (1), APIs y Datos (1), Inteligencia Artificial (1), Referencia Rápida (2), Fundamentos (1), VS Code (1) | 19 |
 | Glosario | Términos por tema: Fundamentos (36), POO (26), Web (21), Algoritmos (18), Paradigmas (18), Estructuras de Datos (17), Bases de Datos (15), Concurrencia (15), Arquitectura y Diseño (15), DevOps (14), Testing (11), Redes (12) | 234 términos* |
-| **Total** | | **737** |
+| **Total** | | **750** |
 
 ## Fondos animados por sección
 
