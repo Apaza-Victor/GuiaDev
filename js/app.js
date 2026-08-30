@@ -398,9 +398,29 @@ class GuiaDevApp {
       'utilities': 'pages/utilidades.html',
       'entrevistas': 'pages/entrevistas.html',
       'ingles': 'pages/ingles.html',
-      'recursos': 'pages/recursos.html'
+      'recursos': 'pages/recursos.html',
+      'glosario': 'pages/glosario.html'
     };
     const pageUrl = pageMap[category.id] || '#';
+
+    if (category.id === 'glosario') {
+      const count = typeof GLOSSARY_DATA !== 'undefined' ? GLOSSARY_DATA.length : 0;
+      return `
+      <a class="category-card" href="${pageUrl}" style="--card-accent: ${category.color}">
+        <div class="category-card-header">
+          <span class="category-card-icon"><i class="${category.icon}"></i></span>
+          <span class="category-card-count">${count} términos</span>
+        </div>
+        <h3 class="category-card-title">${category.title}</h3>
+        <div class="category-card-subcategories">
+          <span class="category-chip"><i class="fa-solid fa-magnifying-glass"></i> Busca y filtra</span>
+        </div>
+        <div class="category-card-arrow">
+          <i class="fa-solid fa-arrow-right"></i>
+        </div>
+      </a>
+    `;
+    }
 
     return `
       <a class="category-card" href="${pageUrl}" style="--card-accent: ${category.color}">
@@ -556,6 +576,7 @@ class GuiaDevApp {
   }
 
   bindEvents() {
+    GuiaDev.createBackToTop();
     const content = document.getElementById("main-content");
     if (content) {
       let ticking = false;
@@ -565,6 +586,7 @@ class GuiaDevApp {
         requestAnimationFrame(() => {
           ticking = false;
           this.highlightToc();
+          GuiaDev.syncBackToTop();
         });
       }, { passive: true });
     }

@@ -1,0 +1,213 @@
+<!-- 5. PWM y salidas analógicas - Arduino (Lenguajes de Programación) -->
+
+  <section id="que-es-pwm">
+    <h2><i class="fa-solid fa-wave-square"></i> ¿Qué es PWM?</h2>
+    <div class="doc-content">
+<p><strong>PWM</strong> son las siglas de <em>Pulse Width Modulation</em> (modulación por ancho de pulso): una técnica para simular una salida de voltaje variable sin generar realmente un voltaje analógico. En lugar de poner un valor intermedio continuo en el pin, el microcontrolador <strong>conmuta entre 0 V y 5 V extremadamente rápido</strong> y varía el tiempo que permanece en cada estado.</p>
+<p>El parámetro que define el resultado es el <strong>ciclo de trabajo</strong> (<em>duty cycle</em>): el porcentaje del tiempo que la señal permanece en ALTO dentro de cada periodo. A mayor duty cycle, más tiempo recibe energía la carga y mayor es el valor percibido.</p>
+<pre><code class="language-text">Cada bloque '█' = tiempo en ALTO; '▁' = tiempo en BAJO.
+
+Duty 25 %   █▁▁▁   █▁▁▁   █▁▁▁   █▁▁▁   → el LED brilla poco
+Duty 50 %   ██▁▁   ██▁▁   ██▁▁   ██▁▁   → brillo medio
+Duty 75 %   ███▁   ███▁   ███▁   ███▁   → casi al máximo
+
+Un periodo completo dura T = 1 / frecuencia.
+En el Uno (AVR) T ≈ 2,04 ms a 490 Hz y T ≈ 1,02 ms a 980 Hz.</code></pre>
+<p>El ojo humano no sigue conmutaciones de ~500 Hz: percibe el <strong>brillo medio</strong> integrado en el tiempo. Si el LED está el 50 % del tiempo encendido, parecerá que brilla a la mitad. Con motores ocurre algo parecido entre el par medio y la corriente media. La tabla traduce el duty cycle al valor que acepta <code>analogWrite()</code>:</p>
+<table><thead><tr><th>Ciclo de trabajo</th><th>Valor de analogWrite()</th><th>Efecto en un LED</th></tr></thead><tbody><tr><td>0 %</td><td>0</td><td>apagado</td></tr><tr><td>25 %</td><td>64</td><td>brillo bajo</td></tr><tr><td>50 %</td><td>128</td><td>brillo medio</td></tr><tr><td>75 %</td><td>192</td><td>brillo alto</td></tr><tr><td>100 %</td><td>255</td><td>encendido total</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>El PWM no es un voltaje analógico real. Con un multímetro verás un valor promedio, pero en un osciloscopio la señal es una onda cuadrada. Esa conmutación importa en circuitos de audio o aplicaciones de precisión.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="los-pines-con-tilde">
+    <h2><i class="fa-solid fa-bolt"></i> Los pines con ~</h2>
+    <div class="doc-content">
+<p>En la placa Uno los pines digitales <strong>3, 5, 6, 9, 10 y 11</strong> llevan un símbolo <code>~</code> (tilde) junto al número. Esa tilde indica que el pin está conectado a un temporizador del ATmega328P capaz de generar PWM por hardware. Solo en esos seis pines funciona <code>analogWrite()</code>.</p>
+<table><thead><tr><th>Pin PWM</th><th>Frecuencia aprox. (AVR a 16 MHz)</th></tr></thead><tbody><tr><td>5, 6</td><td>~980 Hz (Timer 0)</td></tr><tr><td>3, 9, 10, 11</td><td>~490 Hz (Timers 1 y 2)</td></tr></tbody></table>
+<p>Conviene aclarar un malentendido muy común: en Arduino <strong>no existen "salidas analógicas"</strong>. Los pines <code>A0</code> a <code>A5</code> son únicamente <strong>entradas</strong> del conversor ADC; si intentas escribir en ellos con <code>analogWrite()</code>, la función no hará nada (o actuará como un <code>digitalWrite()</code> con poca corriente), porque no llevan módulo PWM.</p>
+<p>El ADC y el PWM son <strong>circuitos independientes</strong> dentro del chip: uno mide voltajes (entrada analógica) y el otro genera ondas cuadradas (salida "analógica simulada"). Que un pin lleve una A en su nombre no lo convierte en una salida.</p>
+<blockquote class="aside aside-caution"><p>En Arduino 1.x y 2.x, <code>analogWrite()</code> solo ofrece salida real en los pines con tilde. En otras placas (Mega, Nano, Due) la lista de pines PWM cambia: consulta siempre la documentación de tu modelo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="analogwrite-brillo-de-un-led">
+    <h2><i class="fa-solid fa-lightbulb"></i> analogWrite: brillo de un LED</h2>
+    <div class="doc-content">
+<p>La función <code>analogWrite(pin, valor)</code> recibe un valor entre <code>0</code> y <code>255</code> y ajusta el ciclo de trabajo de forma proporcional. Internamente llama al temporizador correspondiente y configura la salida; no hace falta una resistencia distinta a la de un LED digital: la misma resistencia limitadora de 220 Ω sigue valiendo, porque la corriente de pico es la misma.</p>
+<pre><code class="language-cpp">// Sube y baja el brillo de un LED conectado al pin 9
+const int LED = 9;
+
+void setup() {
+  pinMode(LED, OUTPUT);
+}
+
+void loop() {
+  // Fade-in: de apagado a máximo
+  for (int brillo = 0; brillo &lt;= 255; brillo++) {
+    analogWrite(LED, brillo);
+    delay(10);
+  }
+  // Fade-out: de máximo a apagado
+  for (int brillo = 255; brillo &gt;= 0; brillo--) {
+    analogWrite(LED, brillo);
+    delay(10);
+  }
+}</code></pre>
+<p>Este patrón es la base de muchos proyectos con luz: atenuadores, luces de ambiente y un clásico localizado: los <strong>LED RGB</strong>, donde cada canal (rojo, verde, azul) lleva su propio pin PWM y el brillo relativo de cada color mezcla miles de colores percibidos.</p>
+<blockquote class="aside aside-tip"><p>El valor 255 de <code>analogWrite()</code> no "genera más voltaje": mantiene la señal el 100 % del tiempo. Para un desvanecimiento más natural a ojos humanos, aplica una curva de gamma: <code>valor = (brillo * brillo) / 255</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fade-luz-que-respira">
+    <h2><i class="fa-solid fa-wind"></i> Fade: luz que respira</h2>
+    <div class="doc-content">
+<p>Una de las demostraciones favoritas del PWM es la <strong>luz que respira</strong>: un LED que sube lentamente de brillo y luego baja, imitando la intensidad de una inspiración y una espiración. Se consigue recorriendo los 256 valores posibles con dos bucles <code>for</code>: uno ascendente (fade-in) y otro descendente (fade-out).</p>
+<pre><code class="language-cpp">// "Breathing": el LED respira. LED en el pin 9 con resistencia de 220 Ω.
+const int LED = 9;
+
+void setup() {
+  pinMode(LED, OUTPUT);
+}
+
+void loop() {
+  // Inspiración: sube de 0 a 255 con pasos de 15 ms (~3,8 segundos)
+  for (int i = 0; i &lt;= 255; i++) {
+    analogWrite(LED, i);
+    delay(15);
+  }
+  // Espiración: baja de 255 a 0
+  for (int i = 255; i &gt;= 0; i--) {
+    analogWrite(LED, i);
+    delay(15);
+  }
+}</code></pre>
+<p>El ciclo completo tarda aproximadamente <strong>7,7 segundos</strong>, la suma de las dos pasadas. Basta con tocar el argumento de <code>delay()</code> para hacer la respiración más lenta o más rápida.</p>
+<p><code>delay()</code> es la forma más directa para un único efecto, pero <strong>bloquea</strong> todo el programa: mientras el LED respira, la placa no puede leer botones ni sensores. Para varios efectos simultáneos se usa la técnica <em>non-blocking</em> con <code>millis()</code>, que verás en las próximas lecciones: cada 20 ms se actualiza el valor de PWM sin detener el resto del sketch.</p>
+<blockquote class="aside aside-success"><p>Prueba a combinar este sketch con un potenciómetro en A0: un <code>map()</code> convierte su lectura en la velocidad de la respiración. Unir entrada analógica y salida PWM es el primer gran hito electrónico.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="velocidad-de-un-motor">
+    <h2><i class="fa-solid fa-fan"></i> Velocidad de un motor</h2>
+    <div class="doc-content">
+<p>Un pin de Arduino no puede alimentar un motor directamente: el GPIO entrega como máximo ~40 mA recomendados (según fabricante, ~200 mA de pico absoluto), y un motor pequeño consume decenas o centenas de mA incluso en vacío. Conectarlo al pin fundiría el microcontrolador. La solución clásica es un <strong>transistor conmutador</strong>: el PWM gobierna una señal pequeña y el transistor permite que una <strong>fuente externa</strong> alimente el motor.</p>
+<pre><code class="language-text">Fuente externa (6-9 V):  (+) ──► terminal (+) del motor
+                         (−) ──► GND común
+Motor:                   terminal (•) ──► Drenor del MOSFET
+                         (diodo 1N4007 en paralelo: cátodo → (+),
+                          ánodo → terminal (•) del motor)
+MOSFET (IRF520N):        Gate  ──► 220 Ω ──► pin 9 (PWM)
+                         Drain ──► terminal (•) del motor
+                         Source ──► GND común
+BJT 2N2222 (motor pequeño): Base ──► 220 Ω ──► pin 9 · Colector ──► motor · Emisor ──► GND</code></pre>
+<p>Los tres componentes clave: el <strong>MOSFET de lógica</strong> (p. ej. IRF520N, o el BJT 2N2222 para motores muy pequeños) conmuta el motor a la fuente según el PWM del pin; el <strong>diodo <em>flyback</em></strong> (1N4007) absorbe el pico de tensión inversa que se genera al cortar la corriente y protege al transistor; y el <strong>GND común</strong> hace que placa y fuente compartan la misma referencia.</p>
+<pre><code class="language-cpp">// Acelera y decelera un pequeño motor controlado desde el pin 9
+const int PIN_MOTOR = 9;
+const int VELOCIDAD_MAX = 255;
+
+void setup() {
+  pinMode(PIN_MOTOR, OUTPUT);
+}
+
+void loop() {
+  // Arranque progresivo hasta la velocidad de crucero
+  for (int v = 0; v &lt;= VELOCIDAD_MAX; v++) {
+    analogWrite(PIN_MOTOR, v);
+    delay(6);
+  }
+  analogWrite(PIN_MOTOR, 180);
+
+  // Ciclo de aceleración y frenado suave
+  for (int v = 0; v &lt;= VELOCIDAD_MAX; v++) {
+    analogWrite(PIN_MOTOR, v);
+    delay(4);
+  }
+  for (int v = VELOCIDAD_MAX; v &gt;= 0; v--) {
+    analogWrite(PIN_MOTOR, v);
+    delay(4);
+  }
+}</code></pre>
+<blockquote class="aside aside-danger"><p>No alimentes motores desde el pin de 5 V ni desde el regulador de la placa: el regulador de la Uno entrega ~500 mA limitados por la USB, y un motor en arranque pide picos mucho mayores que pueden reiniciar o quemar la placa. Usa siempre una fuente externa separada con GND común.</p></blockquote>
+<blockquote class="aside aside-note"><p>El mismo principio se usa para regular <strong>tiras de LED de 12 V</strong>: el MOSFET conmuta la carga contra una fuente externa. Solo debes elegir un transistor adecuado a la corriente total del proyecto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tono-y-sonido">
+    <h2><i class="fa-solid fa-music"></i> Tono y sonido</h2>
+    <div class="doc-content">
+<p>La función <code>tone(pin, frecuencia)</code> genera una <strong>onda cuadrada a la frecuencia indicada</strong> usando un temporizador por hardware, ideal para un <strong>zumbador pasivo</strong> (buzzer sin oscilador interno). Se detiene con <code>noTone(pin)</code>.</p>
+<p>Un detalle importante: <code>tone()</code> reutiliza el <strong>mismo temporizador que los pines PWM 3 y 11</strong>. Mientras suena un tono, no uses <code>analogWrite()</code> en esos dos pines, o el tono se distorsionará y el PWM dejará de ser estable.</p>
+<table><thead><tr><th>Nota</th><th>Frecuencia</th></tr></thead><tbody><tr><td>DO (C4)</td><td>262 Hz</td></tr><tr><td>RE (D4)</td><td>294 Hz</td></tr><tr><td>MI (E4)</td><td>330 Hz</td></tr><tr><td>FA (F4)</td><td>349 Hz</td></tr><tr><td>SOL (G4)</td><td>392 Hz</td></tr><tr><td>LA (A4)</td><td>440 Hz</td></tr><tr><td>SI (B4)</td><td>494 Hz</td></tr><tr><td>DO5 (C5)</td><td>523 Hz</td></tr></tbody></table>
+<pre><code class="language-cpp">// Melodía de la escala mayor: DO RE MI FA SOL FA MI RE DO
+const int BUZZER = 8;
+
+const int DO = 262, RE = 294, MI = 330, FA = 349;
+const int SOL = 392, LA = 440, SI = 494, DO5 = 523;
+
+const int MELODIA[] = {DO, RE, MI, FA, SOL, FA, MI, RE, DO};
+const int DURACION[] = {300, 300, 300, 300, 600, 300, 300, 300, 600};
+
+void setup() {
+  pinMode(BUZZER, OUTPUT);
+}
+
+void loop() {
+  for (int i = 0; i &lt; 9; i++) {
+    tone(BUZZER, MELODIA[i]);
+    delay(DURACION[i]);
+  }
+  noTone(BUZZER);
+  delay(1000);   // pausa antes de repetir la melodía
+}</code></pre>
+<p>Con el temporizador del AVR solo puede sonar <strong>un tono a la vez</strong>; para notas simultáneas hace falta la librería extra <em>Tone</em> o hardware con más temporizadores. En el montaje usa un <strong>buzzer pasivo</strong> (no uno activo auto-oscilante) con una pequeña resistencia en serie.</p>
+<blockquote class="aside aside-tip"><p>Puedes crear una sirena modulando la frecuencia con un bucle: <code>for (int f = 200; f &lt;= 1500; f++) { tone(BUZZER, f); delay(2); }</code> y después bajándola con otro <code>for</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. Usar A0-A5 con analogWrite()</h3>
+<pre><code class="language-cpp">// ❌ A0 no tiene módulo PWM: no sale nada por ahí
+analogWrite(A0, 128);
+
+// ✅ Usa un pin con tilde (3, 5, 6, 9, 10 u 11)
+analogWrite(9, 128);</code></pre>
+<h3>2. Esperar un voltaje analógico "de verdad"</h3>
+<p>Medir el pin con un multímetro da un promedio, no un valor continuo. El PWM es <strong>conmutación</strong>: si la carga la aprovecha directamente (LED, motor) va perfecto; si necesitas una señal analógica limpia tendrás que filtrarla con un condensador RC.</p>
+<h3>3. tone() y analogWrite() a la vez en los pines 3 y 11</h3>
+<p>Comparten temporizador. Mientras suena <code>tone()</code>, el PWM de los pines 3 y 11 queda desactivado. Usa los pines 5, 6, 9 o 10 para el PWM mientras el zumbador toca.</p>
+<h3>4. Motores conectados al pin sin transistor</h3>
+<p>El GPIO no entrega corriente suficiente y se funde. Siempre transistor + diodo flyback + fuente externa.</p>
+<h3>5. Calcular mal el duty</h3>
+<pre><code class="language-cpp">// ❌ "50 %" mal traducido: esto es ~79 % de ciclo de trabajo
+analogWrite(9, 200);
+
+// ✅ 50 % de 255 ≈ 128
+analogWrite(9, 128);   // 255 × 0,50 = 127,5</code></pre>
+<h3>6. Delays largos que rompen la fluidez del fade</h3>
+<p>Con <code>delay(200)</code> dentro del bucle, el LED avanza a saltos bruscos. Para un fundido suave usa retardos de pocos milisegundos (o <code>millis()</code>, como adelantamos en la lección).</p>
+<blockquote class="aside aside-danger"><p>El fallo más caro de todos: conectar un motor o un relay de más de ~250 mA directamente al pin. El pin se funde y, en el peor de los casos, el microcontrolador entero queda inservible.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Para afianzar el PWM, monta y resuelve estos cinco ejercicios en orden de dificultad.</p>
+<ol>
+<li><strong>Escala de brillo en 5 pasos:</strong> con un LED en el pin 9, sube el brillo en 5 pasos (0 → 64 → 128 → 192 → 255), deja cada uno 500 ms y vuelve a bajar. Guarda los valores en un array y recórrelo con un bucle.</li>
+<li><strong>Respiración lenta:</strong> modifica el sketch de "luz que respira" para que el ciclo completo dure unos 10 segundos. Calcula el <code>delay()</code> que necesitas en cada paso y verifícalo con un cronómetro.</li>
+<li><strong>LED RGB:</strong> con un LED RGB de cátodo común en los pines 9, 10 y 11 (resistencia en cada canal), muestra en bucle 5 segundos cada uno: rojo (255,0,0), verde, azul, amarillo (255,255,0), magenta (255,0,255) y blanco (255,255,255).</li>
+<li><strong>Velocidad de motor:</strong> monta el circuito MOSFET descrito y haz que el motor siga este perfil en bucle: parado 2 s, acelera, velocidad alta durante 3 s, frena suavemente y repite. Mide la corriente consumida con un multímetro en serie.</li>
+<li><strong>SOS con zumbador:</strong> emite el código Morse internacional SOS con <code>tone()</code> y <code>noTone()</code>: 3 pitidos cortos (200 ms), 3 largos (600 ms) y 3 cortos, separando cada letra con 200 ms de silencio y 800 ms entre rondas.</li>
+</ol>
+    </div>
+  </section>

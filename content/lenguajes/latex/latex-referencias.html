@@ -1,0 +1,163 @@
+<!-- 6. Referencias y Bibliografía - LaTeX (Lenguajes de Programación) -->
+
+  <section id="referencias-cruzadas">
+    <h2><i class="fa-solid fa-link"></i> Referencias cruzadas</h2>
+    <div class="doc-content">
+<p>En un documento largo es molestísimo tener que reescribir «véase la sección 3.2» o «en la figura 5» cada vez que cambia la numeración. LaTeX resuelve esto con <strong>referencias cruzadas</strong>: marcas un punto con <code>\label{Nombre}</code> y después lo citas con <code>\ref{Nombre}</code>. LaTeX se encarga de insertar el número correcto en cada compilación.</p>
+<pre><code class="language-latex">\section{Introducción}
+\label{sec:intro}
+
+Como vimos en la sección \ref{sec:intro}, la introducción es breve.
+
+\section{Metodología}
+\label{sec:metodo}
+
+La sección \ref{sec:metodo} detalla el método y en \ref{sec:intro} el contexto.</code></pre>
+<p>El mecanismo funciona para <strong>secciones, subsecciones, figuras, tablas y ecuaciones</strong>. Cualquier elemento que genere un número puede llevar una etiqueta. Como el número se calcula durante la compilación, aparece por primera vez como <code>??</code> hasta que vuelves a compilar. Por eso la regla de oro: <strong>compila dos veces</strong> (o incluso tres) para que las referencias queden resueltas.</p>
+<pre><code class="language-latex">\begin{figure}
+  \includegraphics{grafico.png}
+  \caption{Crecimiento anual}
+  \label{fig:crecimiento}
+\end{figure}
+
+La \ref{fig:crecimiento} ilustra la tendencia.</code></pre>
+<blockquote class="aside aside-caution"><p>Las etiquetas deben ser descriptivas (<code>eq:cuadratica</code>, <code>tab:datos</code>, <code>fig:mapa</code>). Pero ojo: la numeración automática se basa en el orden, así que una <strong>sección sin numerar</strong> (creada con <code>\section*{...}</code>) no puede referenciarse por número, porque no tiene uno.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tabla-de-contenidos">
+    <h2><i class="fa-solid fa-list"></i> Tabla de contenidos</h2>
+    <div class="doc-content">
+<p>Generar el índice de un documento largo en Word es una odisea; en LaTeX es una sola línea. El comando <code>\tableofcontents</code> construye <strong>automáticamente</strong> el índice a partir de tus <code>\section</code>, <code>\subsection</code>, etc., con sus números y páginas:</p>
+<pre><code class="language-latex">\documentclass{article}
+\usepackage{amsmath}
+\begin{document}
+
+\tableofcontents
+
+\section{Introducción}
+...
+\section{Resultados}
+...
+\section{Conclusiones}
+
+\end{document}</code></pre>
+<p>Igual que con las referencias, el índice necesita <strong>más de una pasada</strong>: la primera compila las secciones, la segunda las recoge en el índice. Es habitual compilar dos veces seguidas (o tres si también hay referencias bibliográficas).</p>
+<p>También existen listas complementarias: <code>\listoffigures</code> genera el índice de figuras y <code>\listoftables</code> el de tablas, a partir de las líneas <code>\caption</code> dentro de cada entorno. Son opcionales y pueden colocarse junto al índice de contenidos.</p>
+<blockquote class="aside aside-tip"><p>Para títulos de índice largos, usa la forma con argumento opcional: <code>\section[Índice corto]{Este es el título completo y pormenorizado}</code>, y el índice usará la versión breve mientras el cuerpo muestra la completa.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="introduccion-a-la-bibliografia">
+    <h2><i class="fa-solid fa-book-atlas"></i> Introducción a la bibliografía</h2>
+    <div class="doc-content">
+<p>La <strong>bibliografía</strong> es la lista de fuentes citadas en el documento. La forma más sencilla es el entorno <code>thebibliography</code>, donde cada entrada se declara con <code>\bibitem</code> y se le asigna una <em>clave</em> para citarla. Vamos a verla porque es simple y casi todo lo demás es una mejora de esta idea.</p>
+<pre><code class="language-latex">\begin{thebibliography}{9}
+
+\bibitem{knuth} Donald E. Knuth.
+\textit{The TeXbook}. Addison-Wesley, 1984.
+
+\bibitem{lamport} Leslie Lamport.
+\textit{LaTeX: A Document Preparation System}.
+Addison-Wesley, 1994.
+
+\end{thebibliography}</code></pre>
+<p>Dentro del texto citas cada entrada con <code>\cite{clave}</code> y LaTeX la sustituye por su número entre corchetes ([1], [2]…), además de marcarla en la lista como citada:</p>
+<pre><code class="language-latex">El sistema original se describe en \cite{knuth}.
+La versión práctica se explica en \cite{lamport}.</code></pre>
+<blockquote class="aside aside-note"><p>En una entrada <code>\bibitem{clave} texto</code> la <em>clave</em> es el identificador interno con el que citas (cualquier nombre sin espacios). El <code>{9}</code> al inicio solo indica la anchura máxima del rótulo y es irrelevante en la práctica.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="bibtex-y-biblatex">
+    <h2><i class="fa-solid fa-folder-tree"></i> BibTeX y biblatex</h2>
+    <div class="doc-content">
+<p>Para documentos grandes no se escriben las referencias a mano: se guardan en un <strong>archivo de base de datos</strong> con extensión <code>.bib</code> y LaTeX las formatea automáticamente. Un archivo <code>.bib</code> agrupa entradas en campos con una sintaxis clara. Un artículo típico:</p>
+<pre><code class="language-latex">@article{einstein1905,
+  author  = {Einstein, Albert},
+  title   = {On the Electrodynamics of Moving Bodies},
+  journal = {Annalen der Physik},
+  year    = {1905},
+  volume  = {17},
+  pages   = {891--921}
+}</code></pre>
+<p>Cada entrada empieza por el <strong>tipo</strong> (<code>@article</code>, <code>@book</code>, <code>@inproceedings</code>…), una <em>clave</em> y una serie de campos <code>clave = {valor}</code> separados por comas. Los tipos más comunes:</p>
+<table><thead><tr><th>Tipo</th><th>Para qué sirve</th><th>Campos clave</th></tr></thead><tbody><tr><td><code>@article</code></td><td>Artículo de revista</td><td>author, title, journal, year, volume, pages</td></tr><tr><td><code>@book</code></td><td>Libro completo</td><td>author, title, publisher, year, edition</td></tr><tr><td><code>@inproceedings</code></td><td>Ponencia en congreso</td><td>author, title, booktitle, year, pages</td></tr><tr><td><code>@online</code></td><td>Recurso web</td><td>author, title, url, urldate</td></tr></tbody></table>
+<h3>Conectar la base de datos: BibTeX</h3>
+<p>Con el clásico <strong>BibTeX</strong>, en el preámbulo indicas el estilo y, en el cuerpo, el archivo <code>.bib</code> y el lugar donde imprimir la bibliografía:</p>
+<pre><code class="language-latex">\bibliographystyle{plain}        % en el preámbulo
+...
+\cite{einstein1905}              % en el texto
+...
+\bibliography{miarchivo}         % donde va la lista (sin .bib)</code></pre>
+<p>La alternativa moderna, <strong>biblatex</strong>, es más flexible: cargas el paquete con el estilo elegido, conectas el recurso y al final imprimes la lista. Además, requiere compilar con <code>biber</code> (ver lección de compilación):</p>
+<pre><code class="language-latex">\usepackage[style=numeric]{biblatex}
+\addbibresource{miarchivo.bib}
+...
+\printbibliography</code></pre>
+<blockquote class="aside aside-success"><p>La gran ventaja de separar la base de datos (<code>.bib</code>) del documento es la <strong>reutilización</strong>: el mismo archivo sirve para varios documentos, tesis, artículos o informes sin volver a teclear las referencias.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="citar-en-el-texto">
+    <h2><i class="fa-solid fa-quote-right"></i> Citar en el texto</h2>
+    <div class="doc-content">
+<p>Una vez conectada la bibliografía, citas con <code>\cite{clave}</code> y LaTeX coloca la referencia numérica donde toque (p. ej. <code>[1]</code>). Puedes afinar mucho la cita. Para añadir una página o capítulo concreto se usa el argumento opcional entre corchetes:</p>
+<pre><code class="language-latex">\cite{knuth}
+\cite[cap.~3]{lamport}          % → [2, cap. 3]
+\cite[ver p.~4]{einstein1905}   % → [1, ver p. 4]</code></pre>
+<p>Múltiples obras se citan a la vez separando las claves con comas: <code>\cite{knuth,lamport}</code> produce <code>[1, 2]</code>. Y en estilos autor-año (ver más abajo) conviene usar la variante textual de biblatex:</p>
+<pre><code class="language-latex">Según \textcite{lamport}, LaTeX facilita la escritura.
+% con estilo autor-año produce "Según Lamport (1994), ..."</code></pre>
+<h3>El estilo de la cita</h3>
+<p>El cómo se formatean las citas depende del <strong>estilo</strong>. Con BibTeX controlas solo los números (<code>plain</code>, <code>unsrt</code>, <code>alpha</code>…). Con biblatex tienes estilos mucho más ricos y configurables:</p>
+<table><thead><tr><th>Estilo</th><th>Apariencia</th><th>De dónde</th></tr></thead><tbody><tr><td>numeric</td><td>[1], [2]…</td><td>biblatex (por defecto)</td></tr><tr><td>alphabetic</td><td>[Knu84], [Lam94]…</td><td>biblatex / BibTeX alpha</td></tr><tr><td>author-year</td><td>(Knuth, 1984)</td><td>biblatex (carga estilo <code>authoryear</code>)</td></tr></tbody></table>
+<pre><code class="language-latex">\usepackage[style=authoryear]{biblatex}
+...
+Según \cite{knuth} y \textcite{lamport}, ambos son fundamentales.</code></pre>
+<blockquote class="aside aside-tip"><p>Un buen hábito: decide el estilo <em>antes</em> de escribir las citas, para usar el comando correcto (<code>\cite</code> para numérico, <code>\textcite</code> u otros para autor-año) desde el principio y no tener que reescribir el documento después.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. Olvidar compilar con biber/bibtex</h3>
+<pre><code class="language-text">Se ve "[?]" o "??" en la salida.
+→ Compila con biber (o bibtex) y vuelve a compilar.</code></pre>
+<h3>2. Citar una clave que no existe</h3>
+<pre><code class="language-latex">\cite{knuth}    % ✅ existe en el .bib
+\cite{kunth}    % ❌ error de ortografía en la clave → Warning: Citation undefined</code></pre>
+<h3>3. No incluir la bibliografía al final</h3>
+<pre><code class="language-latex">% Faltan una de estas dos líneas:
+\bibliography{miarchivo}       % BibTeX
+\printbibliography             % biblatex</code></pre>
+<h3>4. Repetir la misma obra varias veces en la lista</h3>
+<pre><code class="language-latex">% ❌ dos entradas para "el mismo" libro (LaTeX no las fusiona)
+\bibitem{mc1} Knuth. The TeXbook.
+\bibitem{mc2} D. E. Knuth. The TeXbook.</code></pre>
+<h3>5. No compilar las veces necesarias</h3>
+<p>Para que salgan las referencias, el índice y la bibliografía, la secuencia usual es: <code>pdflatex</code>, luego <code>biber/bibtex</code>, y de nuevo <code>pdflatex</code> dos veces. Compilar una sola vez casi seguro dejará <code>[?]</code>.</p>
+<blockquote class="aside aside-danger"><p>Si las citas salen como <code>[?]</code> o el documento no se actualiza, revisa primero la consola de compilación: avisos como <code>Citation 'x' undefined</code> o <code>There were undefined references</code> apuntan directamente a la causa, casi siempre un paso de compilación olvidado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Resuelve estos ejercicios para dominar referencias y bibliografía. Están ordenados de menor a mayor complejidad:</p>
+<ol>
+<li><strong>Referencia de sección:</strong> crea un documento con dos secciones, pon <code>\label{sec:uno}</code> y <code>\label{sec:dos}</code> y en la segunda escribe «véase la sección \ref{sec:uno}». Compila dos veces y comprueba que sale el número correcto, no <code>??</code>.</li>
+<li><strong>Tabla de contenidos:</strong> escribe un documento con tres secciones (Introducción, Método, Resultados), añade <code>\tableofcontents</code> al inicio en su propia página y comprueba que el índice aparece tras dos compilaciones.</li>
+<li><strong>Base de datos .bib:</strong> crea <code>miref.bib</code> con dos libros (usa <code>@book</code> con autor, título, editorial y año) y un artículo (<code>@article</code>).</li>
+<li><strong>Cita con página:</strong> en el texto cita una de las entradas con <code>\cite[ver p.~3]{clave}</code> y comprueba que el número y la página aparecen entre corchetes.</li>
+<li><strong>Cambiar a estilo autor-año:</strong> con biblatex carga <code>\usepackage[style=authoryear]{biblatex}</code>, añade <code>\addbibresource</code> y <code>\printbibliography</code>, y compila con <code>biber</code> en vez de bibtex. Observa cómo cambian las citas y la lista.</li>
+</ol>
+    </div>
+  </section>

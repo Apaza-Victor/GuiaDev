@@ -1,0 +1,143 @@
+<!-- 3 Desarrollo Guiado por Pruebas (TDD) - Pruebas (Ingeniería de Software) -->
+  <section id="que-es-tdd">
+    <h2><i class="fa-solid fa-circle-half-stroke"></i> ¿Qué es TDD?</h2>
+    <div class="doc-content">
+<p>El <strong>Desarrollo Guiado por Pruebas</strong> (TDD, <em>Test-Driven Development</em>) es una práctica de ingeniería en la que las pruebas se escriben <strong>antes</strong> del código de producción. El desarrollo avanza en ciclos cortos: se escribe una prueba que falla, se escribe el código mínimo para que pase y luego se refactoriza para mejorar la calidad.
+</p>
+<div class="plantuml-figure">
+          <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d206261636b67726f756e64436f6c6f722062656967650a736b696e706172616d2064656661756c74466f6e7453697a652031310a0a72656374616e676c6520224349434c4f2054444422206173207464642023453846354539207b0a202072656374616e676c65202252454422206173207265642023464638413635207b0a2020202063617264202245736372696265206c6120707275656261207175652066616c6c61220a20207d0a202072656374616e676c652022475245454e2220617320677265656e2023383143373834207b0a202020206361726420224573637269626520656c206dc3ad6e696d6f2063c3b36469676f2070617261207061736172220a20207d0a202072656374616e676c6520225245464143544f5222206173207265662023383144344641207b0a202020206361726420224d656a6f72612073696e2063616d6269617220636f6d706f7274616d69656e746f220a20207d0a7d0a726564202d646f776e2d3e20677265656e203a206dc3ad6e696d6f0a677265656e202d646f776e2d3e20726566203a206c696d7069610a726566202d72696768742d3e20726564203a207265706974650a0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam backgroundColor beige
+skinparam defaultFontSize 11
+
+rectangle &quot;CICLO TDD&quot; as tdd #E8F5E9 {
+  rectangle &quot;RED&quot; as red #FF8A65 {
+    card &quot;Escribe la prueba que falla&quot;
+  }
+  rectangle &quot;GREEN&quot; as green #81C784 {
+    card &quot;Escribe el mínimo código para pasar&quot;
+  }
+  rectangle &quot;REFACTOR&quot; as ref #81D4FA {
+    card &quot;Mejora sin cambiar comportamiento&quot;
+  }
+}
+red -down-&gt; green : mínimo
+green -down-&gt; ref : limpia
+ref -right-&gt; red : repite
+
+@enduml</code></pre>
+  </details>
+</div>
+<p>TDD popularizado por Kent Beck en los años 90 (dentro de la programación extrema) se resume en su lema: <em>"Red, Green, Refactor"</em>. No es una estrategia de pruebas tradicional, sino una <strong>práctica de diseño</strong>: las pruebas actúan como especificación ejecutable que guía la estructura del código.</p>
+<blockquote class="aside aside-note">
+La diferencia esencial con el testing clásico: en la metodología tradicional primero se escribe la implementación y luego las pruebas para validarla. En TDD, la prueba se escribe primero y define el comportamiento esperado, forzando a pensar en el <strong>qué debería hacer</strong> antes del <strong>cómo hacerlo</strong>.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ciclo-red-green-refactor">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> Ciclo: Red, Green, Refactor</h2>
+    <div class="doc-content">
+<p>El flujo de TDD es un ciclo corto y repetitivo que se ejecuta decenas de veces al día. Los guiones indican el estado de la prueba en cada fase.</p>
+<table><thead><tr><th>Fase</th><th>Estado de la prueba</th><th>Acciones</th></tr></thead><tbody><tr><td><strong>Red</strong></td><td>Falla (rojo)</td><td>Escribir una prueba que falle para la nueva funcionalidad. No se escribe código de producción todavía.</td></tr><tr><td><strong>Green</strong></td><td>Pasa (verde)</td><td>Escribir el código mínimo necesario para que la prueba pase. La meta es pasar la prueba, sin sofisticar.</td></tr><tr><td><strong>Refactor</strong></td><td>Sigue en verde</td><td>Mejorar el código (simplificar, eliminar duplicidad) manteniendo las pruebas pasando. El comportamiento no cambia.</td></tr></tbody></table>
+<pre><code class="language-text">Ciclo TDD (pseudocódigo):
+1. (RED)     Escribir una prueba para un comportamiento nuevo -> test falla
+2. (GREEN)   Implementar el código mínimo para que pase      -> test pasa
+3. (REFACTOR) Limpiar código manteniendo los tests en verde  -> test sigue pasando
+4. Repetir hasta completar la funcionalidad</code></pre>
+<blockquote class="aside aside-caution">
+La disciplina de "escribir solo el código mínimo" es la más difícil de respetar: la tentación de añadir funcionalidad extra en la fase Green rompe el ciclo. El código extra no está cubierto por la prueba y se convierte en <strong>deuda no verificada</strong>. Si se necesita más funcionalidad, se inicia un nuevo ciclo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="beneficios">
+    <h2><i class="fa-solid fa-shield-halved"></i> Beneficios de TDD</h2>
+    <div class="doc-content">
+<p>Adoptar TDD con disciplina trae beneficios que se acumulan con el tiempo:</p>
+<ul>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Menos defectos:</strong> cada comportamiento está cubierto por una prueba desde el primer día.</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Diseño más limpio:</strong> el código escrito para ser probable tiende a ser modular, desacoplado y con responsabilidades claras.</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Refactorización segura:</strong> la red de pruebas permite cambiar el código interno con confianza.</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Documentación viva:</strong> las pruebas describen cómo debe comportarse el sistema y cuándo se rompe algo lo comunican de inmediato.</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Feedback rápido:</strong> al trabajar en ciclos cortos, el error se detecta minutos después de introducirlo.</li>
+<li><i class="fa-solid fa-circle-check"></i> <strong>Menor efecto miedo:</strong> facilita modificar y ampliar código ajeno porque las pruebas vigilan los comportamientos.</li>
+</ul>
+<blockquote class="aside aside-tip">
+Los beneficios se ven sobre todo en el <strong>mediano y largo plazo</strong>: el proyecto que se mantiene, se refactoriza y evoluciona sin que cada cambio "rompa algo". El tiempo que se invierte escribiendo pruebas se gana con creces en depuración evitada.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="desafios">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Desafíos y críticas</h2>
+    <div class="doc-content">
+<p>TDD también tiene costo y dificultades, y no es una bala de plata:</p>
+<ul>
+<li><i class="fa-solid fa-xmark"></i> <strong>Curva de aprendizaje:</strong> pensar primero en pruebas exige práctica; al principio el ritmo de desarrollo parece más lento.</li>
+<li><i class="fa-solid fa-xmark"></i> <strong>Cobertura que da falsa seguridad:</strong> las pruebas pueden pasar sin probar bien los requisitos reales o los casos límite.</li>
+<li><i class="fa-solid fa-xmark"></i> <strong>Pruebas mal diseñadas:</strong> pruebas acopladas a la implementación, frágiles o redundantes agregan mantenimiento sin valor.</li>
+<li><i class="fa-solid fa-xmark"></i> <strong>No aplica a todo:</strong> en UI compleja, interfaces visuales o prototipos exploratorios el ciclo puede entorpecer en lugar de ayudar.</li>
+<li><i class="fa-solid fa-xmark"></i> <strong>Doble esfuerzo</strong> si la funcionalidad es efímera o descartable: se escriben pruebas para código que después se desecha.</li>
+</ul>
+<blockquote class="aside aside-caution">
+Crítica central: TDD <strong>no garantiza cobertura de todos los requisitos</strong>. Los equipos pueden caer en escribir "pruebas fáciles" que validan la implementación en lugar de probar el comportamiento del negocio. La práctica debe combinarse con pruebas de sistemas, revisión de requisitos y análisis de calidad.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejemplo-practico">
+    <h2><i class="fa-solid fa-code"></i> Ejemplo práctico</h2>
+    <div class="doc-content">
+<p>Supongamos que necesitamos una función que devuelve el número de vocales de una cadena. Veamos el ciclo TDD completo con su verificación en un lenguaje sencillo.</p>
+<h3><i class="fa-solid fa-circle"></i> Fase RED: la prueba falla porque la función no existe</h3>
+<pre><code class="language-python"># test_vocales.py
+from vocales import contar_vocales
+
+def test_contar_vocales_hola():
+    assert contar_vocales("hola") == 2</code></pre>
+<p>Se ejecuta y falla (rojo) porque <code>vocales</code> aún no existe. El fallo confirma que la prueba está bien formada y que la funcionalidad falta realmente.</p>
+<h3><i class="fa-solid fa-circle-check"></i> Fase GREEN: el código mínimo para pasar la prueba</h3>
+<pre><code class="language-python"># vocales.py
+def contar_vocales(texto):
+    return len([c for c in texto if c in "aeiou"])</code></pre>
+<p>La prueba pasa (verde). El código es mínimo: solo cubre el caso probado con minúsculas.</p>
+<h3><i class="fa-solid fa-wrench"></i> Nueva RED: ampliar a mayúsculas y tildes</h3>
+<pre><code class="language-python"># test_vocales.py - nuevos casos
+def test_contar_vocales_mayusculas():
+    assert contar_vocales("Hola") == 2
+
+def test_contar_vocales_tildadas():
+    assert contar_vocales("café") == 2</code></pre>
+<p>La primera prueba nueva falla: con "Hola" aún no se cuenta la "H" como no vocal de más... en realidad devuelve 1 por la 'a'. El ciclo se repite actualizando la implementación (por ejemplo, normalizando el texto a minúsculas y ampliando el conjunto de vocales) hasta que todo quede en verde.</p>
+<h3><i class="fa-solid fa-arrows-rotate"></i> Fase REFACTOR: mantener verde y mejorar</h3>
+<pre><code class="language-python"># vocales.py - refactor con normalización y vacíos
+def contar_vocales(texto):
+    if not texto:
+        return 0
+    vocales = set("aeiouáéíóú")
+    return sum(1 for c in texto.lower() if c in vocales)</code></pre>
+<blockquote class="aside aside-tip">
+Observa el patrón: <strong>cada vez que se descubre un nuevo caso no cubierto, se escribe primero la prueba (red), luego se implementa (green) y finalmente se limpia (refactor)</strong>. El conjunto de pruebas crece junto al código y siempre queda verificado.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-graduation-cap"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+- <i class="fa-solid fa-circle-half-stroke"></i> **Definición:** TDD es escribir las pruebas antes que el código de producción; es una práctica de diseño, no solo de testing.
+- <i class="fa-solid fa-arrows-rotate"></i> **Ciclo:** Red (prueba falla) → Green (código mínimo pasa) → Refactor (limpiar sin romper nada).
+- <i class="fa-solid fa-shield-halved"></i> **Beneficios:** Menos defectos, diseño limpio, refactor seguro y documentación viva del sistema.
+- <i class="fa-solid fa-triangle-exclamation"></i> **Desafíos:** Curva de aprendizaje, pruebas mal diseñadas y contextos (UI, prototipos) donde no siempre aplica.
+- <i class="fa-solid fa-code"></i> **Práctica:** El ciclo se repite en pasos pequeños que mantienen el software siempre verificado y evolutivo.
+</blockquote>
+    </div>
+  </section>

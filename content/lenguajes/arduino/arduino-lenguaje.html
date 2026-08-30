@@ -1,0 +1,319 @@
+<!-- 2. El lenguaje de Arduino (Wiring) - Arduino (Lenguajes de Programación) -->
+
+  <section id="wiring-cpp-para-maker">
+    <h2><i class="fa-solid fa-code"></i> Wiring: C++ para maker</h2>
+    <div class="doc-content">
+<p>Cuando escribes un sketch en el IDE de Arduino, en realidad estás escribiendo <strong>C++</strong> compilado con <code>avr-gcc</code>. La plataforma añade una capa de librerías llamada <strong>Wiring</strong> (creada por Hernando Barragán) que simplifica enormemente la programación: esconde la configuración de registros del micro y ofrece funciones expresivas como <code>digitalWrite()</code>, <code>analogRead()</code> o <code>delay()</code>.</p>
+<h3>¿Qué hace el preprocesador de Arduino?</h3>
+<p>Tu archivo <code>.ino</code> no es C++ válido tal cual. Antes de compilar, el IDE ejecuta un <strong>preprocesador</strong> que transforma el sketch en un <code>.cpp</code> real:</p>
+<ol>
+<li>Une todos los <code>.ino</code> de la carpeta en un solo archivo.</li>
+<li>Añade automáticamente los <code>#include</code> de las librerías de Arduino (como <code>Arduino.h</code>).</li>
+<li>Genera <strong>prototipos</strong> (declaraciones) de tus funciones para que puedas invocarlas antes de definirlas.</li>
+</ol>
+<p>Por eso puedes llamar a una función <code>parpadear()</code> al principio de tu sketch aunque la definas más abajo, algo que no funcionaría en un <code>.cpp</code> puro sin declararla antes.</p>
+<h3>Flujo de ejecución</h3>
+<pre><code>Arranca la placa
+      |
+      v
+┌─────────────┐   una sola vez
+│  setup()    │───────────────────┐
+└─────────────┘                   │
+      |                           │
+      v                           v
+┌─────────────┐   ←───────────┘
+│   loop()    │   se repite siempre
+└─────────────┘</code></pre>
+<p>Esto es un diagrama de flujo simplificado en texto: <code>setup()</code> prepara el terreno y <code>loop()</code> ejecuta tu lógica principal sin fin.</p>
+<h3>¿Por qué es un buen lenguaje para empezar?</h3>
+<ul>
+<li>Tipado estático que atrapa errores en compilación.</li>
+<li>Sintaxis familiar (llaves, puntos y coma) que sirve para muchos otros lenguajes.</li>
+<li>Control total de bajo nivel cuando lo necesitas, sin imponerlo al principio.</li>
+<li>Al estar sobre C++, el conocimiento se transfiere a sistemas embebidos profesionales.</li>
+</ul>
+<blockquote class="aside aside-note"><p>La diferencia clave entre un <code>.ino</code> y un <code>.cpp</code> puro es esa capa de magia: en el <code>.cpp</code> deberías tú escribir los includes, los prototipos y la función <code>main()</code> que llama a setup/loop. Arduino lo hace por ti.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipos-de-datos">
+    <h2><i class="fa-solid fa-cubes"></i> Tipos de datos</h2>
+    <div class="doc-content">
+<p>Cada dato en C++ tiene un tipo, que define su tamaño en memoria y cómo se interpreta. En un microcontrolador de 8 bits como el ATmega328P, <code>int</code> ocupa <strong>2 bytes</strong> (no 4 como en un PC), algo fundamental para no desbordar variables.</p>
+<h3>Tabla de tipos en el Uno (AVR 8-bit)</h3>
+<table><thead><tr><th>Tipo</th><th>Bytes</th><th>Rango aproximado</th></tr></thead><tbody><tr><td><code>boolean</code></td><td>1</td><td>true / false</td></tr><tr><td><code>char</code></td><td>1</td><td>-128 a 127</td></tr><tr><td><code>byte</code></td><td>1</td><td>0 a 255</td></tr><tr><td><code>int</code></td><td>2</td><td>-32 768 a 32 767</td></tr><tr><td><code>unsigned int</code></td><td>2</td><td>0 a 65 535</td></tr><tr><td><code>long</code></td><td>4</td><td>-2 147 483 648 a 2 147 483 647</td></tr><tr><td><code>unsigned long</code></td><td>4</td><td>0 a 4 294 967 295</td></tr><tr><td><code>float</code></td><td>4</td><td>aprox. ±3.4e38 (precisión ~7 dígitos)</td></tr><tr><td><code>double</code></td><td>4</td><td><strong>en AVR es igual a float</strong></td></tr></tbody></table>
+<h3>El peligro del desbordamiento (<em>overflow</em>)</h3>
+<p>Si una variable <code>int</code> acumula más de <code>32767</code>, se desborda y "da la vuelta" a valores negativos. Lo mismo ocurre con <code>unsigned long</code>: la función <code>millis()</code>, que cuenta milisegundos, se desborda tras unos <strong>49 días</strong> de funcionamiento continuo:</p>
+<pre><code class="language-cpp">unsigned long t = millis();
+// t se desborda a 0 después de 4 294 967 295 ms
+// = 49,7 días aproximadamente</code></pre>
+<p>Esto explica bugs sutiles en proyectos que llevan encendidos mucho tiempo. La solución es comparar restas (<code>millis() - inicio &lt; intervalo</code>) en vez de sumar.</p>
+<h3><code>String</code> frente a <code>char[]</code></h3>
+<p>Arduino ofrece la clase <code>String</code>, cómoda pero con costo: usa memoria dinámica (heap) que puede fragmentarse. Las cadenas en C puro, <code>char[]</code>, son fijas y predecibles. Decidiremos cuándo usar cada una más adelante.</p>
+<h3>Consultar tamaños con <code>sizeof</code></h3>
+<pre><code class="language-cpp">void setup() {
+  Serial.begin(9600);
+  Serial.println(sizeof(int));        // 2 en el Uno
+  Serial.println(sizeof(long));       // 4
+}
+
+void loop() {}</code></pre>
+<blockquote class="aside aside-caution"><p>En un PC <code>int</code> ocupa 4 bytes; en un Arduino Uno solo 2. Si haces cuentas que dependen del tamaño, usa <code>long</code> o tipos explícitos como <code>uint32_t</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="variables-y-constantes">
+    <h2><i class="fa-solid fa-memory"></i> Variables y constantes</h2>
+    <div class="doc-content">
+<p>Una <strong>variable</strong> es un espacio de memoria con nombre y tipo que puede cambiar. Las <strong>constantes</strong> son valores que no cambian. Elegirlas bien marca la diferencia entre un sketch claro y uno caótico.</p>
+<h3>Ámbitos de las variables</h3>
+<ul>
+<li><strong>Globales:</strong> declaradas fuera de cualquier función; visibles en todo el sketch. Útiles para configuración de pines y estado compartido.</li>
+<li><strong>Locales:</strong> declaradas dentro de una función; solo existen mientras esta se ejecuta.</li>
+<li><strong><code>static</code>:</strong> locales que <em>conservan</em> su valor entre llamadas, sin ser globales.</li>
+</ul>
+<h3>Nombres en camelCase</h3>
+<p>La convención de Arduino es usar <strong>camelCase</strong> para variables y funciones (<code>tiempoEspera</code>, <code>leerSensor()</code>) y <strong>MAYÚSCULAS_SNAKE</strong> para constantes clásicas (<code>TIEMPO_ESPERA</code>). Nombres descriptivos que documenten el código:</p>
+<pre><code class="language-cpp">const int PIN_LED = 13;          // favorito del principiante
+const int RETARDO = 250;         // milisegundos
+const float PI = 3.14159;</code></pre>
+<h3><code>const</code> frente a <code>#define</code></h3>
+<table><thead><tr><th>Aspecto</th><th><code>const</code></th><th><code>#define</code></th></tr></thead><tbody><tr><td><strong>Qué es</strong></td><td>Variable de solo lectura con tipo</td><td>Macro de sustitución de texto</td></tr><tr><td><strong>Tipado</strong></td><td>Sí, respeta el tipo</td><td>No, reemplaza el texto literal</td></tr><tr><td><strong>Consume RAM</strong></td><td>A veces</td><td>No (solo flash del programa)</td></tr><tr><td><strong>Recomendada para</strong></td><td>La mayoría de casos</td><td>Valores que dependen de otros macros</td></tr></tbody></table>
+<p>En general prefiere <code>const</code>: el compilador conoce el tipo y puede detectar errores. No uses <code>constexpr</code> pensando que ganas optimización en AVR: este microcontrolador estándar no tiene soporte completo para C++ moderno.</p>
+<h3>Ejemplo de configuración de pines con constantes</h3>
+<pre><code class="language-cpp">const int PIN_SENSOR = A0;
+const int PIN_LED_ROJO = 9;
+const int PIN_BOTON = 2;
+
+void setup() {
+  pinMode(PIN_LED_ROJO, OUTPUT);
+  pinMode(PIN_BOTON, INPUT_PULLUP);
+}
+
+void loop() {
+  digitalWrite(PIN_LED_ROJO, digitalRead(PIN_BOTON));
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="operadores">
+    <h2><i class="fa-solid fa-plus-minus"></i> Operadores</h2>
+    <div class="doc-content">
+<p>Los operadores permiten combinar y transformar valores. Arduino usa los de C++, por lo que dominarlos te servirá en cualquier lenguaje próximo.</p>
+<h3>Aritméticos</h3>
+<pre><code class="language-cpp">int a = 10, b = 3;
+int s = a + b;   // 13   suma
+int r = a - b;   // 7    resta
+int m = a * b;   // 30   multiplicación
+int d = a / b;   // 3    división entera (¡trunca!)
+int mo = a % b;  // 1    módulo (resto)</code></pre>
+<h3>Incremento, compuestos y comparación</h3>
+<pre><code class="language-cpp">int n = 5;
+n++;             // 6   (también existe --n, n-- …)
+n += 3;          // 9   (equivale a n = n + 3)
+n *= 2;          // 18
+
+bool igual = (n == 18);    // true
+bool distinto = (n != 18); // false
+bool menor = (n < 20);     // true</code></pre>
+<h3>Lógicos y bit a bit</h3>
+<pre><code class="language-cpp">bool cond = (a &gt; 5) &amp;&amp; (b &lt; 5);   // Y lógico
+bool cond2 = (a &gt; 5) || (b &gt; 5);  // O lógico
+bool neg = !cond;                  // negación
+
+// Bit a bit (trabajan bit a bit del número)
+int x = 6;                 // 0110 en binario
+int y = 3;                 // 0011
+int andB = x &amp; y;          // 0010 = 2
+int orB = x | y;           // 0111 = 7
+int xorB = x ^ y;          // 0101 = 5
+int shiftB = x &lt;&lt; 1;       // 1100 = 12 (desplaza a la izquierda)
+int comp = ~x;             // complemento a uno</code></pre>
+<h3>Máscaras con operadores bit a bit</h3>
+<p>En sistemas embebidos es normal empaquetar varios flags en un solo byte y manipularlos con máscaras:</p>
+<pre><code class="language-cpp">byte estado = 0;
+// Activar el bit 3 (valor 8 = 0b1000)
+estado |= (1 &lt;&lt; 3);
+// Preguntar si el bit 5 está activo
+if (estado &amp; (1 &lt;&lt; 5)) { /* ... */ }
+// Apagar el bit 2
+estado &amp;= ~(1 &lt;&lt; 2);</code></pre>
+<blockquote class="aside aside-note"><p>Usa <code>&amp;&amp;</code>, <code>||</code>, <code>!</code> para lógica booleana y <code>&amp;</code>, <code>|</code>, <code>^</code> para números bit a bit. Confundirlos es un clásico que produce resultados extraños.</p></blockquote>
+<p>La <strong>precedencia</strong> sigue a C: multiplicación/división antes que suma/resta, comparación antes que lógicos. Cuando dudes, usa paréntesis: son gratis y aclaran la intención.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="estructuras-de-control">
+    <h2><i class="fa-solid fa-diagram-project"></i> Estructuras de control</h2>
+    <div class="doc-content">
+<p>Las estructuras de control dirigen el flujo del programa: decisiones y repeticiones. Son las mismas que en C/C++.</p>
+<h3>Tabla resumen de cuándo usar cada una</h3>
+<table><thead><tr><th>Estructura</th><th>Úsala cuando…</th></tr></thead><tbody><tr><td><code>if / else if / else</code></td><td>Tienes condiciones sencillas o intervalos</td></tr><tr><td><code>switch / case</code></td><td>Comparas una variable con varios valores fijos</td></tr><tr><td><code>for</code></td><td>Conoces de antemano las iteraciones</td></tr><tr><td><code>while</code></td><td>Repites mientras se cumpla una condición</td></tr><tr><td><code>do...while</code></td><td>Debes ejecutar al menos una vez</td></tr></tbody></table>
+<h3>if / else y switch de ejemplo</h3>
+<pre><code class="language-cpp">int nivel = leerSensor();
+
+if (nivel &gt; 900) {
+  Serial.println("Crítico");
+} else if (nivel &gt; 500) {
+  Serial.println("Alto");
+} else {
+  Serial.println("Normal");
+}</code></pre>
+<pre><code class="language-cpp">// Menú con switch
+char opcion = 'b';
+switch (opcion) {
+  case 'a':
+    Serial.println("Opcion A");
+    break;
+  case 'b':
+    Serial.println("Opcion B");
+    break;
+  default:
+    Serial.println("Desconocida");
+}</code></pre>
+<h3>Bucles for, while y do...while</h3>
+<pre><code class="language-cpp">// Encender 5 LEDs en secuencia con for
+for (int i = 0; i &lt; 5; i++) {
+  digitalWrite(pinBase + i, HIGH);
+  delay(200);
+}
+
+// Esperar mientras pulsemos el boton
+while (digitalRead(PIN_BOTON) == HIGH) {
+  delay(10);
+}
+
+// Ejecutar al menos una vez
+do {
+  Serial.println("leyendo sensor...");
+  delay(1000);
+} while (digitalRead(PIN_BOTON) == LOW);</code></pre>
+<h3><code>break</code>, <code>continue</code> y el ternario</h3>
+<pre><code class="language-cpp">for (int i = 0; i &lt; 10; i++) {
+  if (i == 3) continue;      // salta la iteración 3
+  if (i == 7) break;         // sale del bucle en 7
+}
+
+// Operador ternario: ? :
+int velocidad = (botonPulsado) ? 255 : 0;</code></pre>
+<blockquote class="aside aside-tip"><p>El ternario <code>(condición) ? valorSiSi : valorSiNo</code> es azúcar sintáctico para un if/else de una sola asignación. Úsalo solo cuando sea legible.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="funciones-propias">
+    <h2><i class="fa-solid fa-cube"></i> Funciones propias</h2>
+    <div class="doc-content">
+<p>Las funciones organizan el código en bloques reutilizables. En Arduino, gracias al preprocesador, no necesitas declarar sus <strong>prototipos</strong> manualmente: el IDE los genera por ti.</p>
+<h3>Sintaxis básica</h3>
+<pre><code class="language-cpp">tipoDeRetorno nombreFuncion(tipoParametro parametro) {
+  // cuerpo
+  return valor;
+}</code></pre>
+<h3>Parámetros por valor y por referencia</h3>
+<p>Por defecto los parámetros se pasan <strong>por valor</strong> (una copia), así que modificarlos dentro no afecta al exterior. Para modificar el original se pasa <strong>por referencia</strong> con <code>&amp;</code>, útil también para no duplicar arrays grandes:</p>
+<pre><code class="language-cpp">void subeUnidad(int &amp;valor) {
+  valor++;              // modifica la variable original
+}
+
+void setup() {
+  int contador = 5;
+  subeUnidad(contador);
+  Serial.println(contador);   // 6
+}</code></pre>
+<h3>Función que parpadea un LED n veces</h3>
+<pre><code class="language-cpp">void parpadear(int pin, int veces, int tiempo) {
+  for (int i = 0; i &lt; veces; i++) {
+    digitalWrite(pin, HIGH);
+    delay(tiempo);
+    digitalWrite(pin, LOW);
+    delay(tiempo);
+  }
+}
+
+void setup() {
+  pinMode(13, OUTPUT);
+  parpadear(13, 3, 500);   // 3 parpadeos de 500 ms
+}
+
+void loop() {}</code></pre>
+<h3>Con valores de retorno</h3>
+<pre><code class="language-cpp">int sumaDos(int a, int b) {
+  return a + b;
+}
+
+int dobleDe(int x) {
+  return 2 * x;
+}
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println(sumaDos(3, 4));   // 7
+  Serial.println(dobleDe(7));       // 14
+}
+
+void loop() {}</code></pre>
+<h3>Buenas prácticas</h3>
+<ul>
+<li><strong>Una función, una tarea:</strong> si una función hace varias cosas, divídela.</li>
+<li><strong>Nombres descriptivos:</strong> verbos que reflejen la acción (<code>encenderLED</code>, <code>leerTemperatura</code>).</li>
+<li><strong>Limitar parámetros:</strong> si hay demasiados, quizá conviene agruparlos.</li>
+<li><strong>Funciones <code>void</code></strong> cuando no devuelven nada.</li>
+</ul>
+<blockquote class="aside aside-success"><p>Escribir funciones propias es lo que convierte un sketch en un programa profesional: legible, testable y reutilizable entre proyectos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<p>Estos son los fallos típicos al programar en Wiring/C++ para Arduino y cómo evitarlos:</p>
+<h3>1. Tipos demasiado pequeños</h3>
+<pre><code class="language-cpp">byte contador = 0;            // max 255
+// contador++ se desborda en 255
+unsigned long contadorLargo = 0;   // solución para contadores grandes</code></pre>
+<h3>2. Acumular en <code>int</code> y desbordar</h3>
+<p>Si sumas lecturas de sensores en un <code>int</code>, pronto superarás <code>32767</code> y el valor "dará la vuelta". Usa <code>long</code> para acumuladores que puedan crecer.</p>
+<h3>3. Usar <code>=</code> en vez de <code>==</code></h3>
+<pre><code class="language-cpp">if (estado = HIGH) { }   // ❌ asigna (¡siempre true!)
+if (estado == HIGH) { }  // ✅ compara</code></pre>
+<h3>4. Puntos y coma o llaves desequilibrados</h3>
+<p>Un <code>;</code> o una llave <code>{</code> de más o de menos produce errores en cadena. Revisa siempre el mensaje del compilador que indica la primera línea del problema y usa indentación consistente.</p>
+<h3>5. Redeclarar variables dentro de bloques</h3>
+<pre><code class="language-cpp">int x = 10;
+for (int i = 0; i &lt; 3; i++) {
+  int y = x * i;      // y solo existe aquí
+}
+// aqu� y ya NO existe; intentar usarla es error</code></pre>
+<h3>6. Pensar que <code>double</code> da más precisión</h3>
+<p>En el AVR de 8 bits, <code>double</code> <strong>es exactamente igual a <code>float</code></strong> (4 bytes). Si necesitas más precisión decimal, tendrías que cambiar de plataforma o usar librerías de coma fija.</p>
+<h3>7. Abusar de <code>String</code> en bucles</h3>
+<pre><code class="language-cpp">// ❌ multiplica corazones de memoria en el heap
+for (int i = 0; i &lt; 100; i++) {
+  String s = "valor " + String(i);
+}
+// ✅ usa char[] de tamaño fijo cuando sea posible</code></pre>
+<blockquote class="aside aside-danger"><p>El heap de un Uno es diminuto (2 KB de SRAM en total). Concatener <code>String</code> en bucles o en <code>loop()</code> fragmenta la memoria y termina por colgar la placa o reiniciarla aleatoriamente. Prefiere buffers <code>char[]</code> fijos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Pon en práctica el lenguaje de Arduino con estos ejercicios, ordenados por dificultad creciente:</p>
+<ol>
+<li><strong>Calcula el overflow de millis:</strong> sabiendo que <code>unsigned long</code> llega hasta 4 294 967 295, calcula cuántos días transcurren hasta que <code>millis()</code> se desborde a cero (divide entre 1000 ms/s, luego entre 3600 s/h y luego entre 24 h/día). ¿Qué precaución tomarías en un proyecto que dura semanas?</li>
+<li><strong>Switch para día de la semana:</strong> escribe un programa que, dado un <code>int dia</code> (1 a 7), imprima por el puerto serie el nombre del día en español usando <code>switch/case</code> (1=Lunes … 7=Domingo) y un <code>default</code> que diga "Día inválido".</li>
+<li><strong>Función máximo:</strong> escribe una función <code>int maximo(int a, int b)</code> que devuelva el mayor de dos enteros. Pruébala desde <code>setup()</code> imprimiendo <code>maximo(5, 9)</code> y <code>maximo(10, 3)</code>. Compárala con la función <code>max()</code> incluida en Arduino.</li>
+<li><strong>Una función con referencia:</strong> modifica el ejemplo <code>subeUnidad</code> para escribir tu propia función <code>void incrementar(int &amp;n)</code> que sume 1 al valor original, e imprime el resultado por <code>Serial</code> para comprobar que la variable exterior cambió.</li>
+<li><strong>Mide tamaños con sizeof:</strong> escribe un sketch que imprima <code>sizeof(byte)</code>, <code>sizeof(int)</code>, <code>sizeof(long)</code>, <code>sizeof(float)</code> y <code>sizeof(double)</code>. Anota los valores que obtienes en tu placa y explica la diferencia entre ellos.</li>
+<li><strong>Detector de desbordamiento de int:</strong> crea un <code>int</code>, súmale repetidamente 10000 en un bucle e imprime el valor en cada paso. Observa cuándo se vuelve negativo y explica por qué ocurre y cómo lo evitarías.</li>
+</ol>
+    </div>
+  </section>

@@ -1,0 +1,337 @@
+<!-- 7. Comunicación Serial - Arduino (Lenguajes de Programación) -->
+
+  <section id="que-es-la-comunicacion-serial">
+    <h2><i class="fa-solid fa-cable-car"></i> ¿Qué es la comunicación serial?</h2>
+    <div class="doc-content">
+<p>La <strong>comunicación serial</strong> (o serie) es la forma más básica y universal de que tu placa Arduino intercambie datos con el mundo exterior, sobre todo con tu computadora. Antes de ver el código, conviene entender qué ocurre a nivel físico, porque muchos comportamientos "raros" del Monitor Serie se explican por ahí.</p>
+<p>En la comunicación serial los datos viajan <strong>bit a bit, uno detrás de otro</strong>, por un único hilo conductor. Es el protocolo <strong>UART</strong> (Universal Asynchronous Receiver-Transmitter). Si necesitas enviar y recibir a la vez tendrás dos hilos: <strong>TX</strong> (transmisión) y <strong>RX</strong> (recepción). Es "asíncrono" porque no hay un cable de reloj que sincronice los dos extremos: ambos acuerdan por adelantado una velocidad.</p>
+<h3>Velocidad de transmisión: los baudios</h3>
+<p>La velocidad se mide en <strong>baudios</strong> (baudios/s), que a efectos prácticos podemos leer como <strong>bits por segundo</strong>. Ambos extremos deben pactar exactamente la misma velocidad: si el emisor envía a 9600 y el receptor espera a 9600, todo coincidirá; si no, recibirás caracteres basura. Es la causa más típica de que "no se vea nada" o de ver símbolos extraños.</p>
+<h3>El USB del Arduino esconde un convertidor</h3>
+<p>El ordenador no entiende de TX/RX a nivel de pines; el Arduino Uno no tiene un puerto serie nativo en el USB. Lo que ocurre es que un pequeño chip (en el Uno clásico es el <strong>ATmega16U2</strong>, y en muchas placas clon un <strong>CH340</strong>) actúa como <strong>convertidor USB-serial</strong>: traduce los bytes del UART a señales USB y viceversa. Por eso tu placa aparece en el sistema como un <strong>puerto COM virtual</strong> (en Windows) o <strong>/dev/ttyUSB0</strong> (en Linux/macOS).</p>
+<blockquote class="aside aside-tip"><p>Puedes verlo como una "ventana" entre el microcontrolador y la computadora: el Micro escribe texto por el serial, el convertidor lo convierte a USB, y tu PC lo muestra en una ventana (el Monitor Serie). Y a la inversa: lo que escribas en el Monitor viaja por USB hasta el pin RX.</p></blockquote>
+<h3>Full duplex y qué es el Monitor Serie</h3>
+<p>La UART es <strong>full-duplex</strong> en la práctica: puede enviar (TX) y recibir (RX) al mismo tiempo, lo que hace posible mandar comandos y leer respuestas en la misma sesión. El <strong>Monitor Serie</strong> es la herramienta integrada del IDE que usa esta vía para <strong>depurar</strong> tus programas: imprimir el valor de un sensor, el estado de una variable o mensajes de diagnóstico es la forma más rápida y barata de saber qué está haciendo tu placa en cada momento.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="serial-begin-y-el-monitor-serie">
+    <h2><i class="fa-solid fa-satellite"></i> Serial.begin y el Monitor Serie</h2>
+    <div class="doc-content">
+<p>Antes de poder enviar o recibir nada debes <strong>abrir</strong> el puerto serie con <code>Serial.begin(velocidad)</code>. Lo habitual es llamarlo en <code>setup()</code>, porque solo hay que configurarlo una vez. El argumento es la velocidad en baudios:</p>
+<pre><code class="language-cpp">void setup() {
+  // Abre el puerto serie a 9600 baudios
+  Serial.begin(9600);
+}
+
+void loop() {
+  // El puerto ya está abierto; podemos usarlo aquí
+}</code></pre>
+<h3>Velocidades habituales</h3>
+<table><thead><tr><th>Baudios</th><th>Uso típico</th></tr></thead><tbody><tr><td><strong>300 / 600 / 1200</strong></td><td>Dispositivos slow, GPS antiguos</td></tr><tr><td><strong>9600</strong></td><td>El clásico por defecto; funciona casi siempre</td></tr><tr><td><strong>57600 / 115200</strong></td><td>Datos más fluidos, Ideal para el Serial Plotter</td></tr><tr><td><strong>250000 / 1000000</strong></td><td>Comunicar con otros micros a alta velocidad</td></tr></tbody></table>
+<p>No hay una velocidad "correcta" universal: la única regla es que <strong>ambos extremos coincidan</strong>. 9600 es segura y legible para el ser humano; 115200 es mucho mejor para series de datos largas (como gráficas) porque transmite más de 10 veces más rápido.</p>
+<h3>Cómo abrir el Monitor Serie</h3>
+<p>En el Arduino IDE 2.x: menú <em>Herramientas → Monitor Serie</em> o el atajo <strong>Ctrl+Shift+M</strong>. En la ventana que se abre verás un selector de <strong>baudios</strong> en la esquina (asegúrate de que coincida con el de <code>Serial.begin</code>) y una lista desplegable del <strong>puerto serie</strong> si tienes varias placas conectadas.</p>
+<h3>No ver nada: casi siempre la velocidad</h3>
+<p>Si el Monitor no muestra nada o muestra símbolos raros (<code>?Ã</code>, <code>çá</code>…), la causa probada es que la velocidad del Monitor no coincide con la del <code>begin()</code>. Antes de tocar el código, verifica ambos números.</p>
+<h3>Primera prueba: "Hola, mundo"</h3>
+<pre><code class="language-cpp">void setup() {
+  Serial.begin(9600);
+  // Se imprime una sola vez, porque setup() corre una vez al inicio
+  Serial.println("Hola, GuiaDev!");
+}
+
+void loop() {
+  // Mientras tanto, el programa no hace nada especial
+}</code></pre>
+<blockquote class="aside aside-note"><p>El Monitor Serie puede <strong>reiniciar la placa</strong> al abrirse (la Uno reinicia al abrir el monitor o pulsar reset). A veces verás el mensaje dos veces: es el puerto abriéndose, la placa reiniciándose y volviendo a imprimir. Es normal.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="enviar-datos-print-y-println">
+    <h2><i class="fa-solid fa-paper-plane"></i> Enviar datos: print y println</h2>
+    <div class="doc-content">
+<p>Para enviar datos al computador usas dos funciones casi idénticas: <code>Serial.print(valor)</code> imprime el valor sin salto de línea, y <code>Serial.println(valor)</code> hace lo mismo pero añade un <strong>salto de línea</strong> al final (el <code>ln</code> viene de "line"). Eso hace que cada mensaje ocupe una fila propia, mucho más legible.</p>
+<pre><code class="language-cpp">void setup() {
+  Serial.begin(9600);
+  Serial.print("Hola");        // Hola
+  Serial.print(" mundo");      // Hola mundo (sin salto)
+  Serial.println();            // ahora sí, nueva línea
+  Serial.println("Fin");       // Fin + salto de línea
+}</code></pre>
+<h3>Imprimir números, variables y texto</h3>
+<p>Puedes imprimir texto literal, el valor de variables de cualquier tipo, y combinarlos en un mismo mensaje "concatenado":</p>
+<pre><code class="language-cpp">int temperatura = 27;
+
+void setup() {
+  Serial.begin(9600);
+  Serial.print("Mensaje: ");
+  Serial.println(57);
+  Serial.println(temperatura);
+  Serial.println("Temperatura: " + String(temperatura) + " C");
+}</code></pre>
+<h3>Formateo de números</h3>
+<p>El segundo argumento opcional de <code>print()</code> controla cómo se muestra un número:</p>
+<pre><code class="language-cpp">int n = 42;
+float pi = 3.14159;
+
+void setup() {
+  Serial.begin(9600);
+  Serial.print(n, DEC);      // 42  (decimal)
+  Serial.print(F(", "));
+  Serial.print(n, HEX);      // 2A  (hexadecimal)
+  Serial.print(F(", "));
+  Serial.print(n, BIN);      // 101010 (binario)
+  Serial.println();
+  Serial.print(pi, 2);       // 3.14 (2 decimales)
+  Serial.println();
+}</code></pre>
+<blockquote class="aside aside-tip"><p>El formateo con <code>, 2</code> limita los decimales de un <code>float</code>: ideal para lecturas de sensores como el LM35, que entrega 10 mV por grado y produce un número con muchos decimales ilegibles.</p></blockquote>
+<h3>Ejemplo: leer un sensor y enviarlo por serial</h3>
+<pre><code class="language-cpp">int pinSensor = A0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(pinSensor, INPUT);
+}
+
+void loop() {
+  int valor = analogRead(pinSensor);
+  Serial.print("Lectura: ");
+  Serial.println(valor);
+  delay(500);
+}</code></pre>
+<p>Este patrón —leer, imprimir, esperar— es la base de cualquier instrumento de medición por serial. El <code>delay(500)</code> evita saturar el puerto con miles de líneas por segundo.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="recibir-datos-available-y-read">
+    <h2><i class="fa-solid fa-inbox"></i> Recibir datos: available y read</h2>
+    <div class="doc-content">
+<p>Recibir datos es tan importante como enviarlos. El flujo es siempre el mismo: primero compruebas <strong>cuántos bytes han llegado</strong> con <code>Serial.available()</code> y después los lees con <code>Serial.read()</code>.</p>
+<ul>
+<li><code>Serial.available()</code> devuelve el <strong>número de bytes</strong> esperando en el búfer de recepción.</li>
+<li><code>Serial.read()</code> devuelve el <strong>primer byte</strong> de la cola y lo consume; si no hay nada, devuelve <code>-1</code>.</li>
+</ul>
+<p>Un patrón típico usa un <code>while</code> para no dejar pasar bytes sin leer:</p>
+<pre><code class="language-cpp">void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Mientras haya datos esperando, los lee y los reenvía (eco)
+  while (Serial.available() &gt; 0) {
+    char c = Serial.read();       // un byte de la cola
+    Serial.print(c);              // lo devuelve
+  }
+}</code></pre>
+<h3>Byte vs char: son lo mismo internamente</h3>
+<p><code>Serial.read()</code> devuelve un <code>int</code> que representa un byte (0–255) o <code>-1</code>. Puedes tratarlo como <code>char</code> para mostrarlo como letra, o como número para manipularlo. Imprimir un byte con <code>println</code> muestra su valor numérico; imprimirlo como <code>char</code> muestra su carácter:</p>
+<pre><code class="language-cpp">while (Serial.available() &gt; 0) {
+  int b = Serial.read();
+  Serial.print(b);         // muestra el número (p. ej. 65)
+  Serial.print(" = ");
+  Serial.println((char)b); // muestra la letra (p. ej. A)
+}</code></pre>
+<h3>Leer hasta nueva línea</h3>
+<p>Si envías textos terminados en salto de línea, puedes ir acumulando caracteres hasta encontrarlo:</p>
+<pre><code class="language-cpp">String mensaje = "";
+
+void loop() {
+  while (Serial.available() &gt; 0) {
+    char c = Serial.read();
+    if (c == '\n') {
+      Serial.print("Recibido: ");
+      Serial.println(mensaje);
+      mensaje = "";
+    } else if (c != '\r') {
+      mensaje += c;         // acumula el carácter
+    }
+  }
+}</code></pre>
+<blockquote class="aside aside-note"><p>El <code>\r</code> (retorno de carro) lo añade la opción "Nueva línea" del Monitor Serie según su configuración. Filtrarlo evita que se cuele un carácter extra de salto al final del mensaje.</p></blockquote>
+<h3>Leer números con parseInt y flush</h3>
+<p>Para recibir números enteros existe <code>Serial.parseInt()</code>, que lee dígitos del búfer y los convierte en un <code>int</code>, saltando espacios y saltos de línea:</p>
+<pre><code class="language-cpp">void setup() {
+  Serial.begin(9600);
+  Serial.println("Envíame un número:");
+}
+
+void loop() {
+  if (Serial.available() &gt; 0) {
+    int numero = Serial.parseInt();
+    Serial.print("Recibido: ");
+    Serial.println(numero);
+  }
+}</code></pre>
+<blockquote class="aside aside-caution"><p><code>Serial.parseInt()</code> puede quedarse <strong>esperando</strong> si no llega el número completo (o bloquea hasta un timeout interno). No lo uses para comandos de texto cortos; reserva <code>parseInt()</code> para cuando realmente esperes un número y usa <code>flush()</code> con cuidado, porque descarta todo lo que queda en el búfer.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="protocolos-sencillos-de-texto">
+    <h2><i class="fa-solid fa-route"></i> Protocolos sencillos de texto</h2>
+    <div class="doc-content">
+<p>La forma más robusta y legible de controlar tu placa desde un computador es definir un <strong>protocolo de texto</strong>: comandos simples que tu programa interpreta. Por ejemplo, un carácter: <code>'A'</code> enciende, <code>'B'</code> apaga; o una palabra terminada en salto de línea: <code>ON</code>, <code>OFF</code>, <code>SET 50</code>.</p>
+<h3>Parse simple con switch</h3>
+<pre><code class="language-cpp">int led = 13;
+
+void setup() {
+  pinMode(led, OUTPUT);
+  Serial.begin(9600);
+  Serial.println("Comandos: A=on, B=off");
+}
+
+void loop() {
+  if (Serial.available() &gt; 0) {
+    char cmd = Serial.read();
+    switch (cmd) {
+      case 'A':
+        digitalWrite(led, HIGH);
+        Serial.println("LED encendido");
+        break;
+      case 'B':
+        digitalWrite(led, LOW);
+        Serial.println("LED apagado");
+        break;
+      default:
+        Serial.println("Comando desconocido");
+    }
+  }
+}</code></pre>
+<h3>Comandos de texto completo con acumulador</h3>
+<p>Para palabras como <code>ON</code> / <code>OFF</code> acumulamos caracteres y comparamos al llegar el salto de línea:</p>
+<pre><code class="language-cpp">String buffer = "";
+int led = 13;
+
+void setup() {
+  pinMode(led, OUTPUT);
+  Serial.begin(9600);
+  Serial.println("ON / OFF para controlar el LED");
+}
+
+void loop() {
+  while (Serial.available() &gt; 0) {
+    char c = Serial.read();
+    if (c == '\n') {
+      buffer.trim();                  // quita espacios/retornos
+      if (buffer == "ON") {
+        digitalWrite(led, HIGH);
+        Serial.println("LED encendido (comando ON)");
+      } else if (buffer == "OFF") {
+        digitalWrite(led, LOW);
+        Serial.println("LED apagado (comando OFF)");
+      } else {
+        Serial.println("Comando desconocido: " + buffer);
+      }
+      buffer = "";                    // limpia para el siguiente
+    } else if (c != '\r') {
+      buffer += c;
+    }
+  }
+}</code></pre>
+<h3>Protocolo con parámetro numérico</h3>
+<p>Puedes mezclar texto y números: un comando como <code>SET 128</code> para fijar el brillo PWM:</p>
+<pre><code class="language-cpp">String buffer = "";
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("'SET n' fija el brillo PWM (0-255)");
+}
+
+void loop() {
+  while (Serial.available() &gt; 0) {
+    char c = Serial.read();
+    if (c == '\n') {
+      buffer.trim();
+      if (buffer.startsWith("SET ")) {
+        int brillo = buffer.substring(4).toInt();
+        analogWrite(9, constrain(brillo, 0, 255));
+        Serial.print("Brillo = ");
+        Serial.println(brillo);
+      }
+      buffer = "";
+    } else if (c != '\r') {
+      buffer += c;
+    }
+  }
+}</code></pre>
+<blockquote class="aside aside-note"><p>Los mensajes de confirmación ("LED encendido…", "Brillo = 128") son buena práctica: cierran el bucle de comunicación y te dicen si la placa interpretó bien el comando, algo vital para depurar protocolos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="serial-plotter">
+    <h2><i class="fa-solid fa-chart-line"></i> Serial Plotter</h2>
+    <div class="doc-content">
+<p>El <strong>Serial Plotter</strong> convierte las líneas de datos del puerto serie en una <strong>gráfica en tiempo real</strong>. Está en <em>Herramientas → Serial Plotter</em> o con el atajo <strong>Ctrl+Shift+L</strong>. Es perfecto para visualizar lecturas de sensores sin escribir una sola línea de código de visualización.</p>
+<h3>Cómo formatear los datos</h3>
+<p>El Plotter interpreta cada línea enviada con <code>println</code> como un nuevo punto de la gráfica. Si quieres dibujar <strong>varias curvas a la vez</strong>, separa los valores con <strong>tabulador</strong> (<code>\t</code>) en la misma línea, y etiqueta cada serie al principio con el mismo formato.</p>
+<pre><code class="language-cpp">void setup() {
+  Serial.begin(115200);   // más fluido para gráficas
+  Serial.println("Sensor\tUmbral");  // etiquetas de las series
+}
+
+void loop() {
+  int valor = analogRead(A0);
+  int umbral = 512;
+  Serial.print(valor);
+  Serial.print('\t');
+  Serial.println(umbral);
+  delay(50);
+}</code></pre>
+<p>Con esto verás dos curvas en la misma ventana: la lectura del sensor y una línea constante en el valor umbral, útil para comparar y detectar cuándo se cruzan.</p>
+<h3>Dos valores: la clave del tabulador</h3>
+<p>El <code>\t</code> entre valores es lo que le dice al Plotter "nueva serie" en la misma fila. Un <code>println</code> al final cierra la fila. Si solo envías un valor por fila, dibujarás una única curva.</p>
+<blockquote class="aside aside-caution"><p>Con 9600 baudios el Plotter se ve entrecortado y lento. Para gráficas fluidas usa <strong>115200</strong> (o más) y un <code>delay()</code> corto. El formato de los datos debe ser homogéneo: números (o valores con decimales), nunca texto mezclado en la fila de datos.</p></blockquote>
+<blockquote class="aside aside-tip"><p>Ideal para detectar ruido o picos: prueba a mover un potenciómetro lentamente y observa si la curva es suave o "peluda". Ese pelusa delata interferencias que en el Monitor Serie pasarían desapercibidas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes-serial">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<p>La comunicación serial tiene una lista corta pero muy repetida de errores. Conocerlos te ahorrará horas:</p>
+<h3>1. Velocidad del Monitor distinta a la de begin()</h3>
+<p>El clásico absoluto. Abres el serial, se "abre" pero no sale nada o salen caracteres raros. Solución: iguala la velocidad del Monitor a la de <code>Serial.begin()</code>.</p>
+<h3>2. Esperar datos sin abrir el Monitor</h3>
+<p>Si la placa solo espera a recibir comandos (esperando <code>Serial.available()</code>) y nunca abres el Monitor, parece que el programa está "congelado". Además, al abrir el Monitor la placa <strong>se reinicia</strong>: el USB resetea el micro al establecer la conexión. No es un bug, es el comportamiento esperado.</p>
+<h3>3. Usar read() sin comprobar available()</h3>
+<p><code>Serial.read()</code> devuelve <code>-1</code> cuando no hay datos. Leer sin comprobar <code>available()</code> puede producir bucles que se comen la CPU o procesar valores basura:</p>
+<pre><code class="language-cpp">// ❌ Inseguro: si no hay datos, c devuelve -1 y aun así se procesa
+// int c = Serial.read();
+// Procesar(c);
+
+// ✅ Seguro: solo lee si hay algo
+if (Serial.available() &gt; 0) {
+  int c = Serial.read();
+  Procesar(c);
+}</code></pre>
+<h3>4. Imprimir sin descanso y ralentizar el bucle</h3>
+<p>Enviar miles de líneas por segundo a 9600 baudios estrangula el <code>loop()</code>, porque la placa espera a que el búfer de salida se vacíe. Imprime solo lo necesario y usa <code>delay()</code> o un temporizador.</p>
+<h3>5. while(!Serial) en placas con USB nativo</h3>
+<p>En placas como <strong>Leonardo, Micro o Zero</strong> el USB es nativo y la línea <code>while (!Serial) { }</code> se usa para esperar a que el Monitor abra la conexión. En el <strong>Uno</strong> da igual (el 16U2 conecta sin esperar), pero copiar ese <code>while</code> en un Uno puede hacer que el programa se quede esperando un Monitor que nunca se abre si lo usas fuera de contexto.</p>
+<h3>6. Confundir print y println, y 9600 en gráficas densas</h3>
+<p>Usar solo <code>print</code> junta todo en una línea ilegible; elegir 9600 baudios para el Plotter lo deja lento y entrecortado. Prueba <code>println</code> para mensajes y 115200 para gráficas.</p>
+<blockquote class="aside aside-danger"><p>Cuando depures serial, cambia una sola cosa a la vez: primero la velocidad, luego el puerto, luego el formato de los datos. Cambiarlo todo de golpe oculta cuál de los factores era el culpable.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios-serial">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Para dominar la comunicación serial, resuelve estos ejercicios con tu placa conectada. Están ordenados por dificultad:</p>
+<ol>
+<li><strong>Hola, mundo serial:</strong> escribe un sketch que imprima tu nombre una sola vez en <code>setup()</code> y, en <code>loop()</code>, imprima la palabra "tick" cada segundo. Abre el Monitor a 9600 y comprueba el resultado.</li>
+<li><strong>Eco de caracteres:</strong> crea un programa que lea lo que escribas en el Monitor y lo devuelva en mayúsculas (pista: <code>toupper()</code>). Lee un byte cada vez con <code>Serial.read()</code>.</li>
+<li><strong>Termómetro LM35 por serial:</strong> conecta un LM35 a A0 y envía la temperatura en grados Celsius con un decimal (<code>, 1</code>) cada medio segundo. Compruébala en el Monitor y luego en el Plotter.</li>
+<li><strong>Comandos ON/OFF:</strong> usa el sketch de comandos de texto que controla el LED con <code>ON</code>/<code>OFF</code>, añádele el comando <code>BLINK</code> que haga parpadear el LED mientras esté activo, y verifica los mensajes de confirmación.</li>
+<li><strong>Dos variables para el Plotter:</strong> envía en una misma línea, separados por un tabulador, el valor de <code>analogRead(A0)</code> y un umbral fijo (por ejemplo 512). Abre el Serial Plotter y observa las dos curvas. Prueba a cambiar el umbral a 700 y vuelve a mirar.</li>
+</ol>
+    </div>
+  </section>

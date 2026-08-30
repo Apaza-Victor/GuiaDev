@@ -1,0 +1,160 @@
+<!-- 4. Entrada y Salida de Datos - Fundamentos de Programación (Lenguajes de Programación) -->
+
+  <section id="por-que-comunicarse-con-el-usuario">
+    <h2><i class="fa-solid fa-keyboard"></i> ¿Por qué comunicarse con el usuario?</h2>
+    <div class="doc-content">
+<p>Hasta ahora los algoritmos funcionaban con datos fijos. Pero un programa real es útil porque es <strong>interactivo</strong>: recibe datos del usuario (<strong>entrada</strong>), los procesa y devuelve resultados (<strong>salida</strong>). Esa conversación constantemente entre programa y persona es lo que hace útil una calculadora, un formulario o una caja registradora.</p>
+<table><thead><tr><th>Dirección</th><th>Nombre</th><th>Ejemplo</th></tr></thead><tbody><tr><td>Usuario → Programa</td><td><strong>Entrada</strong> (input)</td><td>Teclear la edad, elegir una opción, escribir el radio</td></tr><tr><td>Programa → Usuario</td><td><strong>Salida</strong> (output)</td><td>Mostrar el resultado, avisar de un error, imprimir la factura</td></tr></tbody></table>
+<p>¿Por qué leemos datos en lugar de <em>hardcodearlos</em> (escribirlos fijos en el programa)? Porque un programa que solo sabe restar 10 menos 3 no sirve para nada; uno que pregunta "¿qué números quieres restar?" sirve para siempre. Los datos variables se deciden en tiempo de ejecución, no al escribir el código.</p>
+<p>El ciclo completo de un programa interactivo se puede representar así:</p>
+<pre><code class="language-text">    ENTRADA            PROCESO              SALIDA
++--------------+    +-----------+    +-----------------+
+| Leer nombre  | →  | saludo <- | →  | Escribir "Hola, |
+| Leer edad    |    | nombre    |    | [nombre]"       |
++--------------+    +-----------+    +-----------------+</code></pre>
+<blockquote class="aside aside-note"><p>La entrada y la salida son el "rostro" del programa. Un programa puede tener una lógica impecable y aun así ser inútil si el usuario no entiende qué se le pide o qué se le muestra.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="leer-datos-de-entrada">
+    <h2><i class="fa-solid fa-reply"></i> Leer datos de entrada</h2>
+    <div class="doc-content">
+<p>En PSeInt la entrada se hace con la instrucción <code>Leer</code>. Cuando el programa llega a un <code>Leer</code>, se <strong>pausa y espera</strong> a que el usuario teclee un valor y pulse Enter; ese valor se guarda en la variable indicada.</p>
+<pre><code class="language-pseudocode">Leer edad          // guarda lo tecleado en la variable edad
+Leer a, b, c       // lee tres valores seguidos, separados por comas o espacios</code></pre>
+<p>Visualmente, la ejecución se detiene justo en la instrucción <code>Leer</code> y no continúa hasta que el usuario responde:</p>
+<pre><code class="language-text">+----------------------------+
+|  Escribir "¿Qué edad tienes?"  |
++----------------------------+
+              |
+              v
++----------------------------+
+|  Leer edad                |   <-- aquí se pausa el programa
++----------------------------+
+              |
+              v
++----------------------------+
+|  Escribir "Edad: ", edad  |
++----------------------------+</code></pre>
+<p>Regla de oro: <strong>antes de cada <code>Leer</code> debe ir un <code>Escribir</code></strong> que diga qué hay que introducir. Si no, el programa se queda esperando y el usuario no sabe qué tiene que escribir.</p>
+<pre><code class="language-pseudocode">Algoritmo saludoPersonalizado
+    Definir nombre Como Caracter
+    Definir edad Como Entero
+
+    Escribir "¿Cómo te llamas?"
+    Leer nombre
+    Escribir "¿Qué edad tienes?"
+    Leer edad
+
+    Escribir "Hola, ", nombre, ". El año que viene tendrás ", edad + 1
+FinAlgoritmo</code></pre>
+<blockquote class="aside aside-tip"><p>Mensaje claro como "Ingrese su edad:" vale mucho más que un "Dato:" seco. El usuario debe saber <em>qué</em> escribir, <em>en qué formato</em> (¿entero?, ¿real?) y, si aplica, el rango permitido.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="mostrar-resultados">
+    <h2><i class="fa-solid fa-print"></i> Mostrar resultados</h2>
+    <div class="doc-content">
+<p>La salida en PSeInt se hace con <code>Escribir</code>. Puedes imprimir texto, variables o la combinación de ambos separándolos con comas. El programa junta todo en una misma línea de salida:</p>
+<pre><code class="language-pseudocode">Escribir "La edad es ", edad          // texto + variable
+Escribir "Suma: ", a + b               // texto + expresión calculada en el momento
+Escribir "Hola, ", nombre, "!"         // varios trozos pegados en una línea</code></pre>
+<table><thead><tr><th>Tipo de salida</th><th>Vista al ejecutar</th></tr></thead><tbody><tr><td>Bien formada</td><td><code>El promedio de las notas es: 7.5</code></td></tr><tr><td>Mal formada (cruda)</td><td><code>7.5</code></td></tr></tbody></table>
+<p>Compara ambas: la primera responde a la pregunta "¿qué me estás mostrando?"; la segunda obliga al usuario a adivinar. <strong>Formatea siempre la salida</strong> con una frase que le dé contexto al número.</p>
+<h3>Salida en varias líneas</h3>
+<p>Cada instrucción <code>Escribir</code> produce una línea de salida independiente. Si quieres dos líneas consecutivas, escribes dos instrucciones:</p>
+<pre><code class="language-pseudocode">Escribir "--- Factura ---"
+Escribir "Subtotal: ", subtotal
+Escribir "Total con IVA: ", total</code></pre>
+<p>La salida se muestra siempre con un salto de línea implícito al final. Si las líneas aparecen pegadas o sin orden, revisa que no estés "horneando" varios datos en un único <code>Escribir</code> sin comas ni texto que los separe.</p>
+<p>Una calculadora sencilla que lee dos números y muestras sus operaciones básicas:</p>
+<pre><code class="language-pseudocode">Algoritmo miniCalculadora
+    Definir n1, n2 Como Real
+
+    Escribir "Ingrese el primer número:"
+    Leer n1
+    Escribir "Ingrese el segundo número:"
+    Leer n2
+
+    Escribir n1, " + ", n2, " = ", n1 + n2
+    Escribir n1, " - ", n2, " = ", n1 - n2
+    Escribir n1, " * ", n2, " = ", n1 * n2
+    Escribir n1, " / ", n2, " = ", n1 / n2
+FinAlgoritmo</code></pre>
+<blockquote class="aside aside-success"><p>Fíjate en el formato <code>Escribir n1, " + ", n2, " = ", n1 + n2</code>: cada coma añade un trozo a la línea. El texto entre comillas aporta los símbolos y espacios; las expresiones numéricas aportan los valores.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="conversion-de-tipos">
+    <h2><i class="fa-solid fa-arrows-turn-to-dots"></i> Conversión de tipos</h2>
+    <div class="doc-content">
+<p>Los datos entran y salen del programa como <strong>texto</strong>: el teclado siempre envía caracteres. El programa debe decidir con qué tipo los interpreta: <code>Leer edad</code> espera un entero, <code>Leer sueldo</code> espera un real. Si el usuario teclea algo incompatible, el programa falla.</p>
+<p>En PSeInt el tipo de la variable guía la interpretación del <code>Leer</code>. En muchos lenguajes hay conversiones explícitas (<code>parseInt()</code>, <code>str()</code>, <code>Float()</code>…) que transforman un tipo en otro:</p>
+<table><thead><tr><th>Conversión</th><th>Ejemplo</th><th>Resultado</th><th>Riesgo</th></tr></thead><tbody><tr><td>Real → Entero (truncar)</td><td><code>Entero(3.9)</code></td><td>3</td><td>Pierde el decimal (no redondea)</td></tr><tr><td>Real → Entero (redondear)</td><td><code>Redondear(3.6)</code></td><td>4</td><td>Comportamiento según la función usada</td></tr><tr><td>Entero → Real</td><td><code>3</code> como <code>3.0</code></td><td>3.0</td><td>Sin pérdida de precisión</td></tr><tr><td>Número → Texto</td><td><code>"La nota es 7.5"</code></td><td>Cadena</td><td>Ya no se puede operar con él</td></tr><tr><td>Texto → Número</td><td><code>"10"</code> como entero</td><td>10</td><td>Falla si el texto no es numérico</td></tr></tbody></table>
+<h3>¿Por qué importa?</h3>
+<p>Porque en algunos lenguajes <code>"10" + "5"</code> no es <code>15</code>, sino <code>"105"</code>: al ser dos textos, el operador <code>+</code> los <strong>concatena</strong> en vez de sumarlos. La confusión entre "número que se suma" y "texto que se pega" es fuente infinita de errores.</p>
+<p>Veamos cómo se comporta la conversión de un real a entero en PSeInt, con sus dos variantes (truncar vs. redondear):</p>
+<pre><code class="language-pseudocode">Algoritmo conversionTipos
+    Definir precio Como Real
+    Definir truncado, redondeado Como Entero
+
+    precio <- 39.75
+    truncado <- Truncar(precio)       // 39: elimina los decimales
+    redondeado <- Redondear(precio)   // 40: redondea al entero más cercano
+
+    Escribir "Truncado: ", truncado
+    Escribir "Redondeado: ", redondeado
+FinAlgoritmo</code></pre>
+<blockquote class="aside aside-caution"><p><code>Truncar(2.99)</code> da <code>2</code> y <code>Redondear(2.5)</code> da <code>3</code>: elige la función según la intención real del problema. Truncar pierde información; redondear puede sumar o restar medio punto.</p></blockquote>
+<blockquote class="aside aside-caution"><p>Antes de operar, pregúntate: ¿qué tengo aquí, un número o una cadena que parece número? Convertir primero y operar después evita sorpresas como "105" o divisiones imposibles.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. Leer sobre una variable no definida</h3>
+<pre><code class="language-pseudocode">// ❌ Falta Definir antes del Leer
+Leer precio
+
+// ✅ Declarar primero
+Definir precio Como Real
+Leer precio</code></pre>
+<h3>2. Escribir sin mensaje previo</h3>
+<p>Un <code>Leer</code> sin su <code>Escribir</code> deja al programa parado en pantalla con el cursor parpadeando: el usuario no sabe qué se espera. Todo <code>Leer</code> merece su pregunta.</p>
+<h3>3. No convertir entre tipos</h3>
+<p>Mezclar un número con una cadena que "parece número" (<code>"10" + 5</code>) produce comportamientos según el lenguaje: concatenación, error o suma inesperada. Convierte de forma explícita y consciente.</p>
+<h3>4. Asumir que el usuario siempre teclea bien</h3>
+<p>Un real donde se pedía un entero, una letra donde se pedía un número, un Enter que falta… El usuario comete errores; un programa robusto los anticipa y muestra mensajes de aviso (lo veremos con las estructuras de repetición y de validación).</p>
+<h3>5. Olvidar el salto de línea en la salida</h3>
+<p>Salidas que se encadenan sin orden ("Hola.Ana.3" todo pegado) son ilegibles. Organiza los <code>Escribir</code> y los formatos para que cada dato viva en su lugar y haya separación visual entre mensajes.</p>
+<h3>6. Leer varios datos sin avisar del orden</h3>
+<pre><code class="language-pseudocode">// ❌ El usuario no sabe cuántos ni en qué orden teclear
+Leer a, b, c
+
+// ✅ Se indica qué se espera
+Escribir "Ingrese base, altura y número de lados:"
+Leer base, altura, lados</code></pre>
+<p>Cuando leas varios valores a la vez, el mensaje previo debe describir <em>todos</em>, en el mismo orden en que serán leídos.</p>
+<blockquote class="aside aside-danger"><p>Prueba siempre tu programa con una entrada anómala además de la correcta: tecleará letras, un número negativo o un espacio de más. Ahí es donde se descubre si tu entrada/salida es robusta o frágil.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Resuelve estos ejercicios en PSeInt. Cuida siempre la forma de los mensajes de entrada y salida:</p>
+<ol>
+<li><strong>Saludo con nombre:</strong> lee el nombre del usuario y muestra <code>Hola, [nombre], bienvenido a GuiaDev</code>.</li>
+<li><strong>Suma por teclado:</strong> lee dos números, los suma y muestra el resultado con el formato <code>[a] + [b] = [suma]</code>.</li>
+<li><strong>Área de un rectángulo:</strong> lee base y altura (Reales), calcula el área y muéstrala con un mensaje claro: <code>El área del rectángulo es 24 unidades cuadradas</code>.</li>
+<li><strong>Convertidor Celsius → Fahrenheit:</strong> lee una temperatura en grados Celsius y muestra su equivalente en Fahrenheit usando la fórmula <code>F = C * 9 / 5 + 32</code>.</li>
+<li><strong>Formato de mensajes:</strong> escribe un pseudocódigo que pregunte "Ingrese su edad:" y luego muestre exactamente dos líneas: <code>Tu edad es [edad] años</code> y <code>Dentro de 10 años tendrás [edad+10]</code>. Comprueba el salto de línea entre ambas salidas.</li>
+</ol>
+    </div>
+  </section>

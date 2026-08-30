@@ -19,7 +19,8 @@
     'utilidades': 'rings',
     'entrevistas': 'birds',
     'ingles': 'letters',
-    'recursos': 'firefly'
+    'recursos': 'firefly',
+    'glosario': 'glosario'
   };
 
   var P5_EFFECTS = ['trunk', 'topology'];
@@ -31,7 +32,7 @@
       loader: 'loadFireflyPreset'
     }
   };
-  var CUSTOM_2D = ['letters'];
+  var CUSTOM_2D = ['letters', 'glosario'];
   var gen = 0;
   var VALID = Object.keys(SECTION_EFFECTS).map(function (k) { return SECTION_EFFECTS[k]; });
 

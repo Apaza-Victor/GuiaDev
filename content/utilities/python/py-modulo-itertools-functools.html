@@ -1,0 +1,166 @@
+<!-- itertools y functools - Python (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>`itertools` aporta constructores de iteradores eficientes y perezosos (combinaciones, ciclos, productos) y `functools` añade herramientas funcionales como `reduce`, `partial` o caché de resultados. Juntos evitan bucles manuales y repeticiones de cálculo.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Combinar, permutar o emparejar elementos con `combinations`, `permutations` y `product`.</li>
+<li>Iterar sin fin con `cycle`, `repeat` o `count` sin cargar listas en memoria.</li>
+<li>Memoizar funciones puras con `lru_cache` o `cache` para no recalcular lo mismo.</li>
+<li>Fijar argumentos de una función con `partial` o reducir secuencias con `reduce`.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Recorrer bucles sobre millones de elementos con consumo de memoria constante.</li>
+<li>Generar combinaciones para pruebas o datos de train y test.</li>
+<li>Acelerar una función costosa que se llama repetidas veces con la misma entrada.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Cuidado con `list(...)` sobre iteradores de `itertools`: destruyen el ahorro de memoria y pueden explotar en datasets inmensos. Y `lru_cache` solo sirve para funciones puras, no con efectos laterales o valores mutables.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="iteracion-infinita-base">
+    <h2>Iteración Infinita <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-python">from itertools import cycle, repeat, count
+</code></pre>
+<blockquote class="aside aside-tip"><p>`itertools` ofrece iteradores perezosos: no construyen listas enteras, van generando elementos sobre la marcha. Perfectos para bucles enormes que no caben en memoria.</p></blockquote>
+<pre><code class="language-python">from itertools import cycle, count, repeat
+
+# cycle: repite la secuencia sin fin
+turnos = cycle(["rojo", "amarillo", "verde"])
+for _ in range(6):
+    print(next(turnos))     # rojo, amarillo, verde, rojo...
+
+# count: contador infinito con paso
+for n in count(0, 5):       # 0, 5, 10, 15...
+    if n &gt; 20:
+        break
+
+# repeat: el mismo valor N veces
+for x in repeat("ok", 3):   # ok, ok, ok
+    print(x)
+</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="combinatoria-paso-1">
+    <h2>Combinatoria <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from itertools import product, permutations, combinations
+
+cartas = ["A", "B", "C"]
+
+# product: todas las combinaciones plaza (con reposición)
+list(product([0, 1], repeat=2))    # [(0,0),(0,1),(1,0),(1,1)]
+
+# permutations: ordenaciones sin repetir
+list(permutations(cartas, 2))      # (A,B),(A,C),(B,A),(B,C),(C,A),(C,B)
+
+# combinations: grupos SIN importar el orden
+list(combinations(cartas, 2))      # (A,B),(A,C),(B,C)
+
+# Uso real: agenda de parejas para un torneo
+jugadores = ["Ana", "Bruno", "Carla"]
+for pareja in combinations(jugadores, 2):
+    print(pareja)
+</code></pre>
+<blockquote class="aside aside-note"><p>`product`, `permutations` y `combinations` generan todas las variantes sin anidar bucles a mano. El número explota rápido: úsalos con cuidado y convierte a list solo en datos pequeños.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="agrupar-seleccionar-paso-2">
+    <h2>Agrupar y Seleccionar <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from itertools import groupby, chain, islice
+
+# groupby: agrupa elementos CONSECUTIVOS iguales (requiere ordenar antes)
+datos = ["apple", "apple", "banana", "apple"]
+datos_ordenados = sorted(datos)
+for clave, grupo in groupby(datos_ordenados):
+    print(clave, list(grupo))
+# apple ['apple', 'apple'] ; banana ['banana'] ; apple ['apple']
+
+# chain: encadena varios iterables como si fueran uno
+list(chain([1, 2], [3, 4], (5, 6)))          # [1, 2, 3, 4, 5, 6]
+
+# islice: porción sin crear la lista (mejora rendimiento)
+primeros = list(islice(range(1_000_000), 0, 5))   # [0..4]
+</code></pre>
+<blockquote class="aside aside-caution"><p>`groupby` agrupa solo corridas consecutivas: si no ordenas antes, "apple" aparecerá en dos grupos. Úsalo para comprimir datos ordenados (p. ej. logs por nivel consecutivo).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="functools-cache-paso-3">
+    <h2>functools: cache y lru_cache <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from functools import lru_cache
+
+# Memoización: guarda resultados para no recalcular
+@lru_cache(maxsize=128)
+def fib(n):
+    if n &lt; 2:
+        return n
+    return fib(n - 1) + fib(n - 2)
+
+fib(30)     # rapidísimo tras el primer cálculo
+fib.cache_info()   # CacheInfo(hits=..., misses=..., maxsize=128)
+
+# Sin lru_cache, fib(30) haría millones de llamadas.
+
+# cache (sin límite) es un alias moderno sin maxsize
+from functools import cache
+@cache
+def factorial(n):
+    return n * factorial(n - 1) if n else 1
+
+factorial(5)     # 120
+</code></pre>
+<blockquote class="aside aside-success"><p>`lru_cache` transforma funciones recursivas exponenciales en O(n). Útil también para llamadas a bases de datos o APIs costosas dentro del mismo proceso. Recuerda que los argumentos deben ser hashables.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="reduce-partial-paso-4">
+    <h2>reduce y partial <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from functools import reduce, partial
+
+# reduce: combina los elementos en un solo valor
+total = reduce(lambda acc, x: acc + x, [1, 2, 3, 4])   # 10
+fact = reduce(lambda a, b: a * b, range(1, 6))          # 120
+
+# partial: fija argumentos de una función (reuso de config)
+def conectar(host, puerto, ssl):
+    print(f"{host}:{puerto} ssl={ssl}")
+
+produccion = partial(conectar, host="db-prod", ssl=True)
+produccion(5432)     # db-prod:5432 ssl=True
+</code></pre>
+<pre><code class="language-python"># Ejemplo práctico: rebajas con porcentaje fijo
+descuento_50 = partial(round, ndigits=2)
+print(descuento_50(3.14159))   # 3.14
+</code></pre>
+<blockquote class="aside aside-tip"><p>`partial` "congela" argumentos y devuelve otra función: ideal para reutilizar configuraciones (hosts, flags, timeouts). `reduce` resume listas en un valor; aunque Python tenga `sum`, para lógica compleja (máximo, mínimo con lógica propia) es expresivo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Genera todos los pares (equipo A - equipo B) de 4 equipos con `combinations`.</li>
+<li>Intercala dos listas de colores usando `cycle` en un bucle de 10 vueltas.</li>
+<li>Agrupa una lista de ventas por mes (ordena antes) con `groupby`.</li>
+<li>Calcula el producto de 1..10 con `reduce` (sin `math.prod`).</li>
+<li>Memoiza la función de Fibonacci con `lru_cache` y mide las llamadas con `cache_info`.</li>
+</ol>
+    </div>
+  </section>

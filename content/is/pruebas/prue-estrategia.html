@@ -1,0 +1,151 @@
+<!-- 4 Estrategia y Plan de Pruebas - Pruebas (Ingeniería de Software) -->
+  <section id="que-es-una-estrategia">
+    <h2><i class="fa-solid fa-compass"></i> ¿Qué es una estrategia de pruebas?</h2>
+    <div class="doc-content">
+<p>La <strong>estrategia de pruebas</strong> es el marco de alto nivel que define cómo se abordará la verificación del software: qué se va a probar, con qué niveles, tipos y técnicas, a qué profundidad y con qué recursos. Es la respuesta organizada a la pregunta <em>"¿cómo garantizamos, de forma eficiente, que este software es lo bastante bueno?"</em>.
+</p>
+<div class="plantuml-figure">
+          <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d206261636b67726f756e64436f6c6f722062656967650a736b696e706172616d2064656661756c74466f6e7453697a652031310a0a72656374616e676c652022455354524154454749412044452050525545424153222061732073747261742023453846354539207b0a202072656374616e676c652022506c616e2220617320706c616e2023383144344641207b0a20202020636172642022416c63616e6365220a202020206361726420225265637572736f73220a20207d0a202072656374616e676c652022456a6563756369c3b36e2220617320657865632023383143373834207b0a202020206361726420224361736f7320646520707275656261220a202020206361726420224175746f6d6174697a616369c3b36e220a20207d0a202072656374616e676c6520224765737469c3b36e206465206465666563746f7322206173206465662023464638413635207b0a202020206361726420225265676973747261722079207072696f72697a6172220a20207d0a202072656374616e676c6520224dc3a974726963617322206173206d65742023464642373444207b0a20202020636172642022436f62657274757261220a20207d0a7d0a706c616e202d646f776e2d3e20657865630a65786563202d646f776e2d3e206465660a646566202d72696768742d3e206d6574203a20726574726f616c696d656e74610a6d6574202d75702d3e20706c616e203a206d656a6f72610a0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam backgroundColor beige
+skinparam defaultFontSize 11
+
+rectangle &quot;ESTRATEGIA DE PRUEBAS&quot; as strat #E8F5E9 {
+  rectangle &quot;Plan&quot; as plan #81D4FA {
+    card &quot;Alcance&quot;
+    card &quot;Recursos&quot;
+  }
+  rectangle &quot;Ejecución&quot; as exec #81C784 {
+    card &quot;Casos de prueba&quot;
+    card &quot;Automatización&quot;
+  }
+  rectangle &quot;Gestión de defectos&quot; as def #FF8A65 {
+    card &quot;Registrar y priorizar&quot;
+  }
+  rectangle &quot;Métricas&quot; as met #FFB74D {
+    card &quot;Cobertura&quot;
+  }
+}
+plan -down-&gt; exec
+exec -down-&gt; def
+def -right-&gt; met : retroalimenta
+met -up-&gt; plan : mejora
+
+@enduml</code></pre>
+  </details>
+</div>
+<p>A diferencia de los casos de prueba puntuales, la estrategia es una <strong>decisión de gestión</strong>: parte del análisis de riesgos para priorizar dónde poner el esfuerzo, define las herramientas, asigna responsabilidades y establece los puntos de control para decidir si un producto está listo para liberarse.</p>
+<blockquote class="aside aside-note">
+La estrategia se documenta en el <strong>plan de pruebas</strong>, que es el documento operativo que materializa esas decisiones. Según el estándar ISO/IEC/IEEE 29119, el plan define el alcance, los recursos, el cronograma y los criterios de entrada y salida de cada nivel de pruebas.
+</blockquote>
+<p>Una buena estrategia evita los dos extremos: <strong>probar de más</strong> (desperdiciar recursos en zonas de bajo riesgo) y <strong>probar de menos</strong> (liberar con defectos graves sin detectar). Se construye siempre sobre la base de los riesgos y el presupuesto disponible.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="elementos-del-plan">
+    <h2><i class="fa-solid fa-sheet-plastic"></i> Elementos del plan de pruebas</h2>
+    <div class="doc-content">
+<p>El plan de pruebas es el documento que convierte la estrategia en acciones concretas y verificables. Sus elementos principales:</p>
+<table><thead><tr><th>Elemento</th><th>Descripción</th><th>Ejemplo concreto</th></tr></thead><tbody><tr><td><strong>Alcance</strong></td><td>Qué funcionalidades y sistemas se prueban (y qué se excluye explícitamente)</td><td>Se prueban los módulos de login, pago y catálogo; se excluye el módulo de reportes</td></tr><tr><td><strong>Criterios de entrada</strong></td><td>Condiciones que deben cumplirse antes de comenzar un nivel de pruebas</td><td>El código compila sin errores y los casos críticos están automatizados</td></tr><tr><td><strong>Criterios de salida</strong></td><td>Condiciones que deben cumplirse para dar por terminadas las pruebas</td><td>Cobertura ≥ 80% y cero defectos de severidad crítica abiertos</td></tr><tr><td><strong>Recursos</strong></td><td>Personas, entornos, datos y herramientas necesarios</td><td>3 analistas QA, entorno de staging clonado de producción, Selenium + JUnit</td></tr><tr><td><strong>Cronograma</strong></td><td>Tiempos, hitos y entregables por fase</td><td>Pruebas de integración del 10 al 20 de agosto; informe final el 25</td></tr><tr><td><strong>Riesgos</strong></td><td>Identificación de amenazas al plan y sus planes de contingencia</td><td>Riesgo alto: retraso en datos reales; mitigación: generar datasets sintéticos</td></tr><tr><td><strong>Herramientas</strong></td><td>Suite de herramientas para gestión, automatización y reporte</td><td>Jira (gestión), Playwright (E2E), Jenkins (CI)</td></tr></tbody></table>
+<pre><code class="language-text">Ejemplo de criterios de entrada/salida (checklist):
+ENTRADA:
+[ ] Los criterios de la historia de usuario están definidos y validados
+[ ] El build compila y los smoke tests pasan
+[ ] El entorno de pruebas está disponible y con datos de prueba
+
+SALIDA:
+[ ] 100% de los casos planificados ejecutados
+[ ] 0 defectos críticos y 0 altos sin resolver
+[ ] Informe de pruebas aprobado por el dueño del producto</code></pre>
+<blockquote class="aside aside-tip">
+Los criterios de salida son el <strong>contrato de calidad</strong> con el negocio: si no se cumplen, el lanzamiento se retrasa o se re-negocia el alcance. Definirlos con números medibles evita discusiones subjetivas ("parece que ya está").
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="gestion-de-defectos">
+    <h2><i class="fa-solid fa-bug"></i> Gestión de defectos</h2>
+    <div class="doc-content">
+<p>Un <strong>defecto</strong> es cualquier comportamiento del software que no coincide con lo especificado. La gestión de defectos es el proceso de registrar, clasificar, asignar, resolver y verificar cada uno de ellos desde que se descubre hasta que se cierra.</p>
+<h3><i class="fa-solid fa-diagram-project"></i> Ciclo de vida del defecto</h3>
+<pre><code class="language-text">Nuevo -> Asignado -> En desarrollo -> Resuelto -> Verificado (Requiere re-testing)
+                                    |               \-> Reabierto (si la corrección falla)
+                                    \-> Diferido (postergado para otra release)
+                                    \-> Duplicado / No es defecto (descartado)</code></pre>
+<ul>
+<li><strong>Nuevo:</strong> el tester reporta el defecto con pasos de reproducción, entorno y evidencia.</li>
+<li><strong>Asignado:</strong> el líder de pruebas o desarrollo confirma y asigna al responsable.</li>
+<li><strong>En desarrollo:</strong> el desarrollador corrige el código.</li>
+<li><strong>Resuelto / Verificado:</strong> el tester re-ejecuta la prueba para confirmar la corrección y cierra.</li>
+<li><strong>Reabierto:</strong> la corrección no resolvió el problema o introdujo uno nuevo.</li>
+<li><strong>Diferido:</strong> se decide posponer, registrado con su justificación y riesgos.</li>
+</ul>
+<h3><i class="fa-solid fa-scale-balanced"></i> Severidad vs. Prioridad</h3>
+<p>La <strong>severidad</strong> indica el impacto técnico del defecto; la <strong>prioridad</strong> indica la urgencia de corregirlo. No siempre coinciden: un defecto grave pero en una opción poco usada puede tener prioridad baja.</p>
+<table><thead><tr><th>Nivel</th><th>Severidad (impacto)</th><th>Prioridad (urgencia)</th></tr></thead><tbody><tr><td><strong>Crítico / Alta</strong></td><td>Sistema inoperable, pérdida de datos, seguridad comprometida</td><td>Bloquea el lanzamiento; corrige de inmediato</td></tr><tr><td><strong>Mayor / Media</strong></td><td>Función principal no funciona como se espera, sin llevar a pérdida de datos</td><td>Se corrige antes de la siguiente release</td></tr><tr><td><strong>Menor / Baja</strong></td><td>Fallo en funciones secundarias; cosmético o con workaround fácil</td><td>Se agenda cuando haya disponibilidad</td></tr><tr><td><strong>Trivial</strong></td><td>Error de texto, detalle visual; no afecta el uso</td><td>Se corrige cuando se pueda</td></tr></tbody></table>
+<blockquote class="aside aside-caution">
+Un error común es tratar todos los defectos por igual. La matriz severidad × prioridad ayuda a <strong>decidir qué se corrige ya y qué se difiere</strong>. Confundir ambas es la causa típica de "release que se atrasa por un error cosmético mientras un defecto de datos espera en la cola".
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="automatizacion">
+    <h2><i class="fa-solid fa-robot"></i> Automatización de pruebas</h2>
+    <div class="doc-content">
+<p>La <strong>automatización</strong> usa herramientas para ejecutar pruebas y verificar resultados sin intervención manual. Su gran valor es la <strong>repetición barata y consistente</strong> en cada build, lo que la hace ideal para pruebas de regresión.</p>
+<h3><i class="fa-solid fa-check-double"></i> Cuándo automatizar</h3>
+<ul>
+<li><i class="fa-solid fa-circle-check"></i> Pruebas que se repiten frecuentemente (regresión, humo).</li>
+<li><i class="fa-solid fa-circle-check"></i> Pruebas con criterios objetivos y verificables de forma determinista.</li>
+<li><i class="fa-solid fa-circle-check"></i> Sistemas estables cuyo código no cambia de forma radical en cada iteración.</li>
+<li><i class="fa-solid fa-circle-check"></i> Potencial de tiempo guardado alto: ejecuciones largas que hoy se hacen a mano.</li>
+</ul>
+<h3><i class="fa-solid fa-ban"></i> Qué NO automatizar</h3>
+<ul>
+<li><i class="fa-solid fa-xmark"></i> Pruebas de usabilidad que requieren criterio humano y observación.</li>
+<li><i class="fa-solid fa-xmark"></i> Exploración libre o pruebas "creativas" que buscan lo inesperado.</li>
+<li><i class="fa-solid fa-xmark"></i> Funcionalidades nuevas e inestables cuyo diseño sigue cambiando.</li>
+<li><i class="fa-solid fa-xmark"></i> Casos que cuestan más automatizar que el tiempo que se ahorra.</li>
+</ul>
+<table><thead><tr><th>Herramienta</th><th>Enfoque</th><th>Uso típico</th></tr></thead><tbody><tr><td><strong>Selenium</strong></td><td>Automatización de navegador web (multi-lenguaje)</td><td>Pruebas E2E de interfaces web</td></tr><tr><td><strong>JUnit</strong></td><td>Framework de unit tests en Java</td><td>Pruebas unitarias y de integración en Java</td></tr><tr><td><strong>Jest</strong></td><td>Framework de tests en JavaScript</td><td>Unit y snapshot tests para proyectos JS/TS (React, Node)</td></tr><tr><td><strong>Cypress</strong></td><td>E2E moderno con ejecución en el navegador</td><td>Pruebas de interfaz con retroalimentación visual en tiempo real</td></tr><tr><td><strong>Playwright</strong></td><td>E2E multi-navegador con API potente</td><td>E2E web robusta y paralela (Chromium, Firefox, WebKit)</td></tr></tbody></table>
+<blockquote class="aside aside-caution">
+La automatización <strong>no elimina las pruebas manuales</strong>: las complementa. Automatizar demasiado pronto (UI que cambia cada semana) produce suites frágiles que dan falsas alarmas y consumen más tiempo del que ahorran. La regla práctica: automatiza lo estable y repetible; deja lo exploratorio y subjetivo en manos humanas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="metricas">
+    <h2><i class="fa-solid fa-chart-simple"></i> Métricas de pruebas</h2>
+    <div class="doc-content">
+<p>Las <strong>métricas</strong> convierten la actividad de pruebas en datos objetivos para tomar decisiones y comunicar el estado de calidad a los interesados. Las principales:</p>
+<table><thead><tr><th>Métrica</th><th>Fórmula / cálculo</th><th>Qué indica</th></tr></thead><tbody><tr><td><strong>Cobertura de pruebas</strong></td><td>(% líneas / ramas / requisitos cubiertos)</td><td>Qué parte del código se ejecutó durante las pruebas; sirve para encontrar zonas sin probar</td></tr><tr><td><strong>Densidad de defectos</strong></td><td>Defectos encontrados ÷ tamaño (Líneas, puntos de función, módulos)</td><td>Qué tan defectuoso es cada módulo; ayuda a focalizar el esfuerzo</td></tr><tr><td><strong>Defectos resueltos</strong></td><td>% de defectos cerrados ÷ defectos totales reportados</td><td>Velocidad de la corrección y madurez del proceso de gestión</td></tr><tr><td><strong>Defectos abiertos por severidad</strong></td><td>Conteo de defectos críticos / altos / medios pendientes</td><td>Riesgo residual de la release y decisión de salida</td></tr><tr><td><strong>Ratio de pruebas pasadas</strong></td><td>Pruebas que pasan ÷ pruebas totales ejecutadas</td><td>Estabilidad general del build y avance del ciclo</td></tr></tbody></table>
+<pre><code class="language-text">Ejemplo de panel de métricas de una release:
+Cobertura de líneas: 82 %
+Densidad de defectos: 1.4 defectos / KLOC
+Defectos resueltos: 76 %
+Defectos críticos abiertos: 0  (criterio de salida: OK)
+Ratio de pruebas superadas: 98 %</code></pre>
+<blockquote class="aside aside-warning">
+Las métricas son útiles solo si se interpretan con contexto: una cobertura del 90% no garantiza que se probaron los requisitos críticos, y una densidad baja puede reflejar pocas pruebas, no buen código. La meta no es "inflar números", sino <strong>tomar mejores decisiones sobre riesgos, capacidad de prueba y disposición a liberar</strong>.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-graduation-cap"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+- <i class="fa-solid fa-compass"></i> **Estrategia:** Marco de alto nivel que define qué, cómo, hasta dónde y con qué recursos se prueba, guiado por el análisis de riesgo.
+- <i class="fa-solid fa-sheet-plastic"></i> **Plan:** Alcance, criterios de entrada/salida, recursos, cronograma, riesgos y herramientas son sus pilares.
+- <i class="fa-solid fa-bug"></i> **Defectos:** Tienen un ciclo de vida (nuevo → verificado → cerrado) y se clasifican por severidad e impacto vs. prioridad de corrección.
+- <i class="fa-solid fa-robot"></i> **Automatización:** Ideal para lo repetible y estable; lo exploratorio y subjetivo queda para el humano. Herramientas clave: Selenium, JUnit, Jest, Cypress, Playwright.
+- <i class="fa-solid fa-chart-simple"></i> **Métricas:** Cobertura, densidad de defectos y defectos resueltos convierten las pruebas en decisiones basadas en datos.
+</blockquote>
+    </div>
+  </section>

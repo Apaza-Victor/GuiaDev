@@ -1,0 +1,249 @@
+<!-- 4 Principios SOLID - Diseño (Ingeniería de Software) -->
+  <section id="que-es-solid">
+    <h2><i class="fa-solid fa-cubes-stacked"></i> ¿Qué es SOLID?</h2>
+    <div class="doc-content">
+<p><strong>SOLID</strong> es un acrónimo que agrupa cinco principios de diseño orientado a objetos que buscan crear software más <strong>comprensible, flexible y mantenible</strong>. Fueron formulados y popularizados por <strong>Robert C. Martin (Uncle Bob)</strong> a inicios de la década de 2000.
+</p>
+<div class="plantuml-figure">
+          <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d206261636b67726f756e64436f6c6f722062656967650a736b696e706172616d2064656661756c74466f6e7453697a652031310a0a72656374616e676c6520225052494e434950494f5320534f4c49442220617320736f6c69642023453846354539207b0a202072656374616e676c652022532220617320732023464642373444207b0a20202020636172642022526573706f6e736162696c6964616420c39a6e696361220a20207d0a202072656374616e676c6520224f22206173206f2023383144344641207b0a202020206361726420224162696572746f2f4365727261646f220a20207d0a202072656374616e676c6520224c22206173206c2023434539334438207b0a20202020636172642022537573746974756369c3b36e206465204c69736b6f76220a20207d0a202072656374616e676c652022492220617320692023383143373834207b0a20202020636172642022536567726567616369c3b36e20646520496e7465726661636573220a20207d0a202072656374616e676c652022442220617320642023464641373236207b0a20202020636172642022496e7665727369c3b36e20646520446570656e64656e63696173220a20207d0a7d0a73202d72696768742d3e206f203a20636c617365732073696d706c6573207920636c617261730a6f202d646f776e2d3e206c203a20657874656e7369626c652073696e206d6f646966696361720a6c202d646f776e2d3e2069203a20686572656e63696120636f686572656e74650a69202d72696768742d3e2064203a20696e7465726661636573207065717565c3b161730a64202d75702d3e2073203a206162737472616363696f6e65730a0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam backgroundColor beige
+skinparam defaultFontSize 11
+
+rectangle &quot;PRINCIPIOS SOLID&quot; as solid #E8F5E9 {
+  rectangle &quot;S&quot; as s #FFB74D {
+    card &quot;Responsabilidad Única&quot;
+  }
+  rectangle &quot;O&quot; as o #81D4FA {
+    card &quot;Abierto/Cerrado&quot;
+  }
+  rectangle &quot;L&quot; as l #CE93D8 {
+    card &quot;Sustitución de Liskov&quot;
+  }
+  rectangle &quot;I&quot; as i #81C784 {
+    card &quot;Segregación de Interfaces&quot;
+  }
+  rectangle &quot;D&quot; as d #FFA726 {
+    card &quot;Inversión de Dependencias&quot;
+  }
+}
+s -right-&gt; o : clases simples y claras
+o -down-&gt; l : extensible sin modificar
+l -down-&gt; i : herencia coherente
+i -right-&gt; d : interfaces pequeñas
+d -up-&gt; s : abstracciones
+
+@enduml</code></pre>
+  </details>
+</div>
+<table><thead><tr><th>Letra</th><th>Principio</th><th>Idea central</th></tr></thead><tbody><tr><td><strong>S</strong></td><td>Responsabilidad Única (SRP)</td><td>Cada clase tiene un único motivo para cambiar.</td></tr><tr><td><strong>O</strong></td><td>Abierto/Cerrado (OCP)</td><td>Abierto a extensión, cerrado a modificación.</td></tr><tr><td><strong>L</strong></td><td>Sustitución de Liskov (LSP)</td><td>Las subclases deben poder sustituir a su clase base.</td></tr><tr><td><strong>I</strong></td><td>Segregación de Interfaces (ISP)</td><td>Preferir interfaces pequeñas y específicas.</td></tr><tr><td><strong>D</strong></td><td>Inversión de Dependencias (DIP)</td><td>Depender de abstracciones, no de concreciones.</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+El propósito de SOLID no es la perfección estética, sino <strong>reducir el coste del cambio</strong>: un sistema que respete estos principios es más fácil de extender y de mantener a lo largo del tiempo.
+</blockquote>
+<blockquote class="aside aside-tip">
+SOLID se aplica mejor de forma <strong>incremental</strong>: no intentes cumplir los cinco en cada clase desde el primer día. Refactoriza hacia ellos cuando el código empiece a doler, guiándote por los síntomas reales.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="s-responsabilidad-unica">
+    <h2><i class="fa-solid fa-s"></i> S: Responsabilidad Única (SRP)</h2>
+    <div class="doc-content">
+<p>El principio de <strong>responsabilidad única</strong> (Single Responsibility Principle) establece que una clase debe tener <strong>un solo motivo para cambiar</strong>: debe encapsular una única responsabilidad del sistema.</p>
+<blockquote class="aside aside-note">
+SRP no significa "la clase hace una sola cosa", sino que "la clase tiene una sola razón para ser modificada". Si dos actores o áreas de negocio dependen de ella, cualquier cambio solicitado por uno puede romper al otro.
+</blockquote>
+<h3><i class="fa-solid fa-circle-xmark"></i> Ejemplo que VIOLA el SRP</h3>
+<pre><code class="language-java">class Pedido {
+  +calcularTotal()
+  +aplicarDescuento()
+  +enviarCorreoConfirmacion()
+  +generarFacturaPDF()
+}</code></pre>
+<p>Aquí la clase concentra <strong>persistencia, validación de negocio, notificación y exportación</strong>. Cualquier cambio en el correo, en el PDF o en las reglas de descuento la altera: hay demasiados motivos para modificar la misma clase.</p>
+<h3><i class="fa-solid fa-circle-check"></i> Cómo corregirlo</h3>
+<pre><code class="language-java">class Pedido {
+  +calcularTotal()
+  +aplicarDescuento()
+}
+
+class Notificador {
+  +enviarCorreoConfirmacion(correo)
+}
+
+class GeneradorPDF {
+  +generarFacturaPDF(pedido)
+}</code></pre>
+<p>Cada responsabilidad (validar pagos, notificar, generar PDF) pasa a su propia clase con un motivo único de cambio.</p>
+<blockquote class="aside aside-caution">
+No confundas SRP con "una clase debe tener un solo método". Se trata de <strong>coherencia de responsabilidad</strong>, no de contar líneas o métodos. Una clase de validación con varios métodos sigue cumpliendo un solo propósito.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="o-abierto-cerrado">
+    <h2><i class="fa-solid fa-o"></i> O: Abierto/Cerrado (OCP)</h2>
+    <div class="doc-content">
+<p>El principio <strong>abierto/cerrado</strong> (Open/Closed Principle) afirma que una clase debe estar <strong>abierta a la extensión</strong> pero <strong>cerrada a la modificación</strong>: se puede añadir comportamiento nuevo sin tocar el código ya escrito y probado.</p>
+<blockquote class="aside aside-note">
+La clave del OCP es definir una <strong>abstracción estable</strong> (interfaz o clase base) y que el código dependa de esa abstracción. Las nuevas funcionalidades llegan como <strong>nuevas implementaciones</strong>, no como complicados <code>if/else</code> que modifican código existente.
+</blockquote>
+<h3><i class="fa-solid fa-circle-xmark"></i> Ejemplo que VIOLA el OCP</h3>
+<pre><code class="language-java">// Sin OCP: cada nuevo tipo obliga a modificar el switch
+double calcular (Pedido p) {
+  if (p.tipo == "local") return p.total * 1.0;
+  if (p.tipo == "internacional") return p.total * 1.15;
+  if (p.tipo == "urgente") return p.total * 1.05;
+  return p.total;
+}</code></pre>
+<p>Cada nuevo tipo de envío obliga a <strong>editar esta función</strong>, arriesgando romper los casos existentes.</p>
+<h3><i class="fa-solid fa-circle-check"></i> Cómo corregirlo</h3>
+<pre><code class="language-java">interface CalculadoraEnvio {
+  double calcular(Pedido p);
+}
+class EnvioLocal implements CalculadoraEnvio {
+  double calcular(Pedido p) { return p.total; }
+}
+class EnvioInternacional implements CalculadoraEnvio {
+  double calcular(Pedido p) { return p.total * 1.15; }
+}</code></pre>
+<p>Ahora añadir un tipo de envío es <strong>crear una clase nueva</strong> que implementa la interfaz: el código existente no se toca, solo se extiende.</p>
+<blockquote class="aside aside-tip">
+Para aplicar OCP bien, primero identifica el <strong>punto de variación</strong>: lo que cambia se aísla tras una interfaz, y lo que permanece estable queda abierto a nuevas implementaciones.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="l-sustitucion-liskov">
+    <h2><i class="fa-solid fa-l"></i> L: Sustitución de Liskov (LSP)</h2>
+    <div class="doc-content">
+<p>El principio de <strong>sustitución de Liskov</strong> (Liskov Substitution Principle), definido por Barbara Liskov, establece que <strong>si una clase S es subtipo de T, entonces los objetos de T pueden sustituirse por objetos de S sin alterar la correctitud del programa</strong>.</p>
+<blockquote class="aside aside-note">
+En la práctica: las subclases deben <strong>respetar el contrato</strong> de la clase base. Si una subclase rompe las precondiciones, las postcondiciones o los invariantes de la base, el código que depende de la base fallará silenciosamente.
+</blockquote>
+<h3><i class="fa-solid fa-circle-xmark"></i> Ejemplo que VIOLA el LSP</h3>
+<pre><code class="language-java">class Rectangulo {
+  int alto, ancho;
+  void setAlto(int a) { alto = a; }
+  void setAncho(int a) { ancho = a; }
+  int area() { return alto * ancho; }
+}
+class Cuadrado extends Rectangulo {
+  void setAlto(int a) { alto = a; ancho = a; }  // viola el contrato
+  void setAncho(int a) { ancho = a; alto = a; } // viola el contrato
+}</code></pre>
+<p>Un <code>Cuadrado</code> que fuerza <code>ancho == alto</code> rompe la invariante del <code>Rectangulo</code>. Si el código cliente establece el ancho y luego lee el alto esperando que no cambie, se comportará mal con un cuadrado.</p>
+<h3><i class="fa-solid fa-circle-check"></i> Solución</h3>
+<p>Rediseñar la jerarquía: <code>Rectangulo</code> y <code>Cuadrado</code> como <strong>objetos inmutables</strong> o como clases sin herencia entre sí (ambos implementan una interfaz <code>Forma</code> con <code>area()</code>).</p>
+<blockquote class="aside aside-warning">
+Detectar una violación de LSP suele ser <strong>subjetiva y tardía</strong>. Un síntoma típico: tener que comprobar el <code>instanceof</code> para tratar distinto a las subclases. Si te encuentras haciendo eso, revisa la jerarquía de herencia.
+</blockquote>
+<blockquote class="aside aside-tip">
+Preferir <strong>composición sobre herencia</strong> reduce las violaciones de LSP: en lugar de forzar una relación "es-un" artificial, se compone un objeto con el comportamiento que necesita.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="i-segregacion-interfaces">
+    <h2><i class="fa-solid fa-i"></i> I: Segregación de Interfaces (ISP)</h2>
+    <div class="doc-content">
+<p>El principio de <strong>segregación de interfaces</strong> (Interface Segregation Principle) sostiene que es mejor tener <strong>muchas interfaces pequeñas y específicas</strong> que una interfaz grande y generalista que obligue a los clientes a implementar métodos que no usan.</p>
+<blockquote class="aside aside-note">
+Ningún cliente debe ser forzado a depender de métodos que no utiliza. Una interfaz "gorda" obliga a implementaciones vacías o que lanzan excepciones, propagando acoplamiento innecesario.
+</blockquote>
+<h3><i class="fa-solid fa-circle-xmark"></i> Ejemplo que VIOLA el ISP</h3>
+<pre><code class="language-java">interface Empleado {
+  void trabajar();
+  void gestionarEquipo();
+  void firmarNominas();
+}</code></pre>
+<p>Un simple <code>Desarrollador</code> que solo trabaja se ve <strong>obligado</strong> a implementar <code>gestionarEquipo()</code> y <code>firmarNominas()</code> aunque no le correspondan.</p>
+<h3><i class="fa-solid fa-circle-check"></i> Cómo corregirlo</h3>
+<pre><code class="language-java">interface Trabajador { void trabajar(); }
+interface Jefe extends Trabajador { void gestionarEquipo(); }
+interface Gerente extends Jefe { void firmarNominas(); }
+
+class Desarrollador implements Trabajador { void trabajar() {...} }
+class GerenteRRHH implements Gerente { ... }</code></pre>
+<p>Cada cliente usa <strong>solo la interfaz que necesita</strong>. Añadir una nueva responsabilidad no obliga a implementarla a todos.</p>
+<blockquote class="aside aside-tip">
+El ISP guarda relación con el SRP: si una interfaz crece con responsabilidades distintas, es señal de que debería dividirse. Una interfaz enfocada es más fácil de implementar, probar y reutilizar.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="d-inversion-dependencias">
+    <h2><i class="fa-solid fa-d"></i> D: Inversión de Dependencias (DIP)</h2>
+    <div class="doc-content">
+<p>El principio de <strong>inversión de dependencias</strong> (Dependency Inversion Principle) establece dos reglas:</p>
+<ul>
+<li><strong>Los módulos de alto nivel no deben depender de módulos de bajo nivel</strong>; ambos deben depender de abstracciones.</li>
+<li><strong>Las abstracciones no deben depender de los detalles</strong>; los detalles deben depender de las abstracciones.</li>
+</ul>
+<blockquote class="aside aside-note">
+DIP invierte la "flecha de dependencia": en lugar de que el negocio dependa de la base de datos o del proveedor de correo (detalles), <strong>todo depende de interfaces</strong> definidas por el propio negocio. Los detalles se vuelven intercambiables.
+</blockquote>
+<h3><i class="fa-solid fa-circle-xmark"></i> Ejemplo que VIOLA el DIP</h3>
+<pre><code class="language-java">class Facturador {
+  BaseDeDatosMySQL db;              // depende de un detalle concreto
+  Facturador(BaseDeDatosMySQL db) { this.db = db; }
+  void guardar(Factura f) { db.insertar(f); }
+}</code></pre>
+<p>Si mañana se cambia a PostgreSQL, hay que <strong>modificar el Facturador</strong> y recompilar todo lo que depende de él.</p>
+<h3><i class="fa-solid fa-circle-check"></i> Cómo corregirlo</h3>
+<pre><code class="language-java">interface RepositorioFacturas {
+  void guardar(Factura f);
+}
+class Facturador {
+  RepositorioFacturas repo;         // depende de la abstracción
+  Facturador(RepositorioFacturas repo) { this.repo = repo; }
+  void guardar(Factura f) { repo.guardar(f); }
+}</code></pre>
+<p>El <code>Facturador</code> depende de la interfaz <code>RepositorioFacturas</code>. La implementación concreta se inyecta desde fuera (<strong>inyección de dependencias</strong>), sin tocar el código de negocio.</p>
+<blockquote class="aside aside-tip">
+DIP se complementa con la <strong>inyección de dependencias (DI)</strong>: no es la clase quien crea sus dependencias con <code>new</code>, sino que se le pasan desde fuera. Esto también facilita el <strong>testing</strong> con mocks.
+</blockquote>
+<blockquote class="aside aside-warning">
+DIP no es lo mismo que "inyección de dependencias": DI es la <em>técnica</em>, DIP es el <em>principio orientado a invertir la dirección de las dependencias</em>. Aplicar uno sin el otro no logra el desacoplamiento deseado.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="impacto-practico">
+    <h2><i class="fa-solid fa-rocket"></i> Impacto práctico</h2>
+    <div class="doc-content">
+<p>SOLID no se aplica por dogmatismo: cada principio ataca un síntoma concreto de la mala calidad del código.</p>
+<table><thead><tr><th>Principio</th><th>Problemática que resuelve</th><th>Beneficio observable</th></tr></thead><tbody><tr><td><strong>SRP</strong></td><td>Clases con muchas responsabilidades</td><td>Clases enfocadas, fáciles de entender y testear.</td></tr><tr><td><strong>OCP</strong></td><td>Modificación continua del código</td><td>Extensión con menos riesgo de romper lo ya probado.</td></tr><tr><td><strong>LSP</strong></td><td>Jerarquías de herencia frágiles</td><td>Composición y abstracciones que se pueden sustituir con seguridad.</td></tr><tr><td><strong>ISP</strong></td><td>Interfaces "gordas" que obligan implementaciones vacías</td><td>Clientes que solo dependen de lo que usan.</td></tr><tr><td><strong>DIP</strong></td><td>Dependencias de detalles concretos</td><td>Sistema desacoplado, intercambiable y testeable con mocks.</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+En conjunto, SOLID conduce a un código con <strong>menor acoplamiento y mayor cohesión</strong>, lo que se traduce en volver a conectar con los principios del diseño modular: cada pieza hace una cosa, se comunica por interfaces y cambia con independencia del resto.
+</blockquote>
+<blockquote class="aside aside-tip">
+Úsalo como <strong>guía de refactoring</strong>: cuando te cueste explicar qué hace una clase (SRP), tengas que tocar muchas clases para un cambio (OCP), o dependas de detalles de terceros (DIP), es momento de aplicar el principio correspondiente.
+</blockquote>
+<blockquote class="aside aside-caution">
+SOLID no garantiza por sí solo una buena arquitectura; es un cimiento. Debe combinarse con patrones de diseño, estilos arquitectónicos y buenas prácticas de testing para lograr sistemas robustos y evolutivos.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-graduation-cap"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+- <i class="fa-solid fa-cubes-stacked"></i> **SOLID:** cinco principios de diseño OO de R. C. Martin para lograr código comprensible, flexible y mantenible.
+- <i class="fa-solid fa-s"></i> **SRP:** una clase con un único motivo para cambiar.
+- <i class="fa-solid fa-o"></i> **OCP:** abierto a extensión, cerrado a modificación (depender de abstracciones estables).
+- <i class="fa-solid fa-l"></i> **LSP:** las subclases deben poder sustituir a su clase base respetando su contrato.
+- <i class="fa-solid fa-i"></i> **ISP:** preferir muchas interfaces pequeñas y específicas.
+- <i class="fa-solid fa-d"></i> **DIP:** los módulos deben depender de abstracciones, no de concreciones (uso de inyección de dependencias).
+- <i class="fa-solid fa-rocket"></i> **Impacto:** menor acoplamiento, mayor cohesión y coste de cambio reducido, aplicados de forma incremental como guía de refactoring.
+</blockquote>
+    </div>
+  </section>

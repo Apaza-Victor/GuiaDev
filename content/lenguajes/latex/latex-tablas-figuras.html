@@ -1,0 +1,206 @@
+<!-- 4. Tablas y Figuras - LaTeX (Lenguajes de Programación) -->
+
+  <section id="el-entorno-tabular">
+    <h2><i class="fa-solid fa-table"></i> El entorno tabular</h2>
+    <div class="doc-content">
+<p>El entorno <strong><code>tabular</code></strong> es el corazón de las tablas en LaTeX. Se define indicando entre llaves el número y la <strong>alineación de las columnas</strong>: <code>l</code> (izquierda), <code>c</code> (centro), <code>r</code> (derecha). Dentro, los símbolos <code>&amp;</code> separan celdas, <code>\\</code> termina cada fila y <code>\hline</code> dibuja una línea horizontal.</p>
+<pre><code class="language-latex">\begin{tabular}{l c r}
+  Nombre &amp; Edad &amp; Ciudad \\
+  \hline
+  Ana    &amp; 25  &amp; Madrid \\
+  Luis   &amp; 30  &amp; Sevilla \\
+\end{tabular}</code></pre>
+<p>El resultado es una tabla de tres columnas (izquierda, centro y derecha) con una línea horizontal en la parte superior. Observa cómo <code>&amp;</code> separa cada celda y <code>\\</code> cierra la fila.</p>
+<h3>Líneas verticales y combinadas</h3>
+<pre><code class="language-latex">\begin{tabular}{|l|c|r|}
+  \hline
+  Nombre &amp; Edad &amp; Ciudad \\
+  \hline
+  Ana    &amp; 25  &amp; Madrid \\
+  Luis   &amp; 30  &amp; Sevilla \\
+  \hline
+\end{tabular}</code></pre>
+<p>Añadiendo <code>|</code> entre las letras de las columnas (y a los lados) dibujas líneas verticales; <code>\hline</code> al inicio y al final cierra el cuadro completo.</p>
+<blockquote class="aside aside-caution"><p>Importante: <code>tabular</code> <strong>no flota</strong>. Ocupa el sitio exacto donde lo escribes, en mitad del texto, tal cual. Para que una tabla «flote» a una posición óptima (con subtítulo y referencia) usarás más adelante el entorno <code>table</code>.</p></blockquote>
+<blockquote class="aside aside-tip"><p>El número de columnas en la cabecera debe coincidir siempre con el número de <code>&amp;</code> + 1 de cada fila. Si pones 3 columnas y una fila tiene 2 celdas, LaTeX dará error de «extra alignment tab».</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tablas-con-booktabs">
+    <h2><i class="fa-solid fa-grid-horizontal"></i> Tablas con booktabs</h2>
+    <div class="doc-content">
+<p>El paquete <strong><code>booktabs</code></strong> produce tablas «publicación» de aspecto profesional: líneas horizontales finas y cuidadas (top, mid y bottom rule), sin la cacofonía de las líneas verticales. Es la opción recomendada para cualquier documento académico o científico.</p>
+<pre><code class="language-latex">\usepackage{booktabs}   % en el preámbulo
+
+\begin{tabular}{lcc}
+  \toprule
+  Producto  &amp; Precio &amp; Unidades \\
+  \midrule
+  Teclado   &amp; 25     &amp; 3 \\
+  Ratón     &amp; 15     &amp; 5 \\
+  \addlinespace
+  Auriculares &amp; 40    &amp; 2 \\
+  \bottomrule
+\end{tabular}</code></pre>
+<p>Los comandos clave son <code>\toprule</code> (línea superior), <code>\midrule</code> (línea media) y <code>\bottomrule</code> (línea inferior). <code>\addlinespace</code> añade un pequeño espacio vertical entre filas para airear la tabla.</p>
+<table><thead><tr><th>Característica</th><th>tabular básico</th><th>tabular + booktabs</th></tr></thead><tbody><tr><td><strong>Líneas verticales</strong></td><td>Suele incluirlas</td><td>No (se evitan)</td></tr><tr><td><strong>Líneas horizontales</strong></td><td><code>\hline</code> iguales</td><td>Top / mid / bottom diferenciadas</td></tr><tr><td><strong>Espaciado</strong></td><td>Secreto y tosco</td><td><code>\addlinespace</code> controlado</td></tr><tr><td><strong>Aspecto</strong></td><td>Cuadriculado</td><td>Limpio y profesional</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>La regla de oro del diseño de tablas: <strong>más líneas no es más claro</strong>. Booktabs lo demuestra: tres reglas horizontales y cero verticales dan la tabla más legible. Úsalo por defecto.</p></blockquote>
+<blockquote class="aside aside-note"><p>Booktabs no está pensado para rejillas densas tipo hoja de cálculo ni para tablas con muchos datos y muchas líneas. Para cuadrículas muy marcadas, el <code>tabular</code> clásico sigue siendo válido.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="columnas-y-alineacion">
+    <h2><i class="fa-solid fa-arrows-to"></i> Columnas y alineación</h2>
+    <div class="doc-content">
+<p>Además de <code>l</code>, <code>c</code> y <code>r</code>, LaTeX permite definir columnas con <strong>ancho fijo</strong> usando <code>p{ancho}</code>, <code>m{ancho}</code> (centrado vertical) y <code>b{ancho}</code> (base). Son imprescindibles cuando una celda ha de contener un párrafo largo que se parte solo en varias líneas.</p>
+<h3>Columnas con ancho fijo p{}</h3>
+<pre><code class="language-latex">\begin{tabular}{|p{4cm}|c|}
+  \hline
+  Este texto es largo y se parte solo
+  en varias líneas gracias al ancho p{4cm}.
+  &amp; 10 \\
+  \hline
+\end{tabular}</code></pre>
+<p>Con <code>p{4cm}</code> la primera columna mide 4 cm y el texto fluye dentro de ella automáticamente, sin tener que insertar saltos a mano.</p>
+<h3>Combinar celdas: \multicolumn</h3>
+<pre><code class="language-latex">\begin{tabular}{|l|l|l|}
+  \hline
+  \multicolumn{2}{|c|}{Producto} &amp; Precio \\
+  \hline
+  Nombre &amp; Marca &amp; 25 \\
+  \hline
+\end{tabular}</code></pre>
+<p><code>\multicolumn{2}{|c|}{Producto}</code> hace que una celda <strong>ocupe 2 columnas</strong>, centrada, con alineación <code>c</code> y línea vertical a los lados. Es la herramienta para crear cabeceras que abarcan varias columnas.</p>
+<pre><code class="language-latex">\begin{tabular}{|l|l|}
+  \hline
+  Nombre &amp; \multicolumn{1}{r|}{Nota} \\
+  \hline
+  Ana &amp; 9.5 \\
+  \hline
+\end{tabular}</code></pre>
+<blockquote class="aside aside-tip"><p>Combina <code>&amp;</code>, <code>\\</code>, <code>|</code>, <code>\hline</code>, <code>p{}</code> y <code>\multicolumn</code> para construir cualquier tabla, por compleja que sea. La lógica es siempre la misma: definir columnas y rellenar filas.</p></blockquote>
+<blockquote class="aside aside-caution"><p>En <code>\multicolumn</code>, el segundo argumento indica la <strong>alineación y líneas</strong> de la celda nueva (<code>{|c|}</code>), y debe declararse como si fuera una columna completa. Un error típico es omitir esa especificación y romper la tabla.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="insertar-figuras">
+    <h2><i class="fa-solid fa-image"></i> Insertar figuras</h2>
+    <div class="doc-content">
+<p>Para insertar imágenes necesitas el paquete <strong><code>graphicx</code></strong> en el preámbulo y el comando <code>\includegraphics</code>. El entorno <code>figure</code> es un <strong>flotante</strong>: LaTeX lo coloca en el mejor lugar disponible (no necesariamente donde lo escribiste) y le añade subtítulo.</p>
+<pre><code class="language-latex">\usepackage{graphicx}   % en el preámbulo
+
+\begin{figure}[ht]
+  \includegraphics[width=0.8\textwidth]{foto.png}
+  \caption{Una fotografía de ejemplo.}
+  \label{fig:foto}
+\end{figure}</code></pre>
+<h3>Opciones de tamaño y orientación</h3>
+<pre><code class="language-latex">\includegraphics[width=5cm]{imagen.png}      % ancho fijo
+\includegraphics[height=4cm]{imagen.png}     % alto fijo
+\includegraphics[scale=0.5]{imagen.png}      % escala (mitad)
+\includegraphics[width=0.8\textwidth]{foto}  % 80% del ancho de texto
+\includegraphics[angle=90]{imagen.png}       % girada 90 grados</code></pre>
+<p>Puedes usar <code>width</code>, <code>height</code>, <code>scale</code> u <code>angle</code>. La ruta se escribe como nombre de archivo; en la mayoría de distribuciones la extensión (<code>.png</code>, <code>.jpg</code>, <code>.pdf</code>) es opcional porque el motor la deduce.</p>
+<h3>Las opciones de colocación [htbp]</h3>
+<pre><code class="language-latex">\begin{figure}[htbp]   % here, top, bottom, page
+  \includegraphics[width=0.6\textwidth]{grafica.png}
+  \caption{Resultados gráficos.}
+\end{figure}</code></pre>
+<p><code>[htbp]</code> son sugerencias de colocación, en orden: aquí (<code>h</code>), arriba (<code>t</code>), abajo (<code>b</code>), página aparte (<code>p</code>). LaTeX elige la mejor según el espacio disponible.</p>
+<blockquote class="aside aside-tip"><p>¿Por qué «flotan» las figuras? Porque LaTeX quiere colocarlas donde quepan sin dejar huecos antiestéticos. Si la imagen no aparece donde la escribiste, no es un error: está flotando a una posición mejor. Compila dos veces para que se asiente.</p></blockquote>
+<blockquote class="aside aside-caution"><p>Asegúrate de declarar <code>\usepackage{graphicx}</code> y de que la imagen existe en la carpeta del proyecto. Con rutas que contienen espacios o nombres raros, mejor renombra el archivo o escríbelo entre comillas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="subtitulos-referencias">
+    <h2><i class="fa-solid fa-link"></i> Subtítulos y referencias cruzadas</h2>
+    <div class="doc-content">
+<p><code>\caption{...}</code> genera el <strong>subtítulo</strong> de la figura («Figura 1: ...») y, junto con <code>\label</code> y <code>\ref</code>, permite <strong>referenciar</strong> la figura en cualquier parte del texto sin escribir el número a mano.</p>
+<h3>Un mini documento enlazado</h3>
+<pre><code class="language-latex">\documentclass{article}
+\usepackage{graphicx}
+\begin{document}
+
+Como se puede observar en la Figura~\ref{fig:grafica},
+los resultados son positivos.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.7\textwidth]{grafica.png}
+  \caption{Resultados del experimento.}
+  \label{fig:grafica}
+\end{figure}
+
+\end{document}</code></pre>
+<p>La clave está en el orden y la pareja:</p>
+<ul>
+<li><code>\caption{...}</code> crea el subtítulo (Figura N).</li>
+<li><code>\label{fig:grafica}</code> <strong>después</strong> del caption, asocia la etiqueta al número.</li>
+<li><code>\ref{fig:grafica}</code> en el texto imprime el número de la figura automáticamente.</li>
+</ul>
+<h3>El listado de figuras</h3>
+<p>Como con <code>\tableofcontents</code>, puedes generar un índice de todas tus figuras con <code>\listoffigures</code>:</p>
+<pre><code class="language-latex">\documentclass{article}
+\usepackage{graphicx}
+\begin{document}
+
+\listoffigures
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.5\textwidth]{grafica.png}
+  \caption{Resultados del experimento.}
+  \label{fig:grafica}
+\end{figure}
+
+\end{document}</code></pre>
+<blockquote class="aside aside-note"><p>El <code>~</code> en <code>Figura~\ref{...}</code> es un espacio no separable: evita que «Figura» y el número queden en líneas distintas. Es la forma profesional y correcta de citar figuras.</p></blockquote>
+<blockquote class="aside aside-caution"><p>Para que la referencia tenga el número correcto, <strong>compila dos (o tres) veces</strong>: la primera registra las etiquetas y la segunda las resuelve. Si ves «??» en lugar del número, es que falta esa compilación extra.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. Olvidar \usepackage{graphicx}</h3>
+<p>Sin el paquete, <code>\includegraphics</code> no existe y LaTeX no sabe qué hacer con la imagen. Es el primer error con figuras. Agrégale siempre <code>graphicx</code> al preámbulo.</p>
+<h3>2. Ruta de imagen con espacios</h3>
+<p>Un archivo llamado <code>mi grafica.png</code> rompe la ruta. Renombra el archivo a algo sin espacios (p. ej. <code>mi_grafica.png</code>) o escríbelo entre comillas.</p>
+<h3>3. \label mal colocado</h3>
+<p>El <code>\label</code> debe ir <strong>después</strong> del <code>\caption</code> dentro del entorno <code>figure</code>; si va antes, referencia al número anterior (a veces el de otra figura).</p>
+<h3>4. Referencia con número no actualizado</h3>
+<pre><code class="language-latex">% Si ves "Figura ??" o un número viejo,
+% vuelve a COMPILAR DOS VECES.
+[...\ref{fig:grafica}...]</code></pre>
+<h3>5. Figura que no aparece</h3>
+<p>Un placement demasiado restrictivo (<code>[h]</code> solo, con poco espacio) hace que la figura no quepa y se retrase a una página posterior, o no aparezca. Usa <code>[htbp]</code> para dar libertad a LaTeX.</p>
+<h3>6. Tabla enorme sin longtable</h3>
+<p>Para tablas que ocupan varias páginas, <code>tabular</code> no sirve: se sale de la página. Usa el paquete <code>longtable</code> (que sí admiten la ruptura entre páginas).</p>
+<h3>7. Filas sin el número correcto de &amp;</h3>
+<pre><code class="language-latex">% ❌ 3 columnas declaradas pero fila con 2 celdas
+\begin{tabular}{ccc}
+  a &amp; b \\   % error: extra alignment tab
+\end{tabular}</code></pre>
+<blockquote class="aside aside-caution"><p>Cuando una tabla o figura falla, lee el número de línea del error en el log. El mensaje casi siempre te señala exactamente dónde falta un <code>&amp;</code>, un <code>\\</code> o un paquete. Compilar más veces cuando dudes de las referencias.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios prácticos</h2>
+    <div class="doc-content">
+<p>Resuelve estos ejercicios para dominar tablas y figuras en LaTeX. Están ordenados de menor a mayor dificultad:</p>
+<ol>
+<li><strong>Tabla 3x3 con booktabs:</strong> crea una tabla de 3 columnas y 3 filas de datos con <code>\usepackage{booktabs}</code>, usando <code>\toprule</code>, <code>\midrule</code>, <code>\bottomrule</code> y <code>\addlinespace</code>.</li>
+<li><strong>Columna con p{} que salta línea:</strong> haz una tabla donde una celda de <code>p{4cm}</code> contenga un texto largo que se parte solo en varias líneas.</li>
+<li><strong>Imagen propia centrada:</strong> inserta una imagen que tengas (puedes crear un PDF o usar una foto) centrada con <code>\centering</code> y un ancho de <code>0.5\textwidth</code>.</li>
+<li><strong>Figura con caption, label y referencia:</strong> inserta una figura con <code>\caption</code> y <code>\label{fig:mi}</code>, y en el texto escribe <code>Como se ve en la Figura~\ref{fig:mi}</code>, compilando dos veces.</li>
+<li><strong>Lista de figuras:</strong> añade <code>\listoffigures</code> a un documento con al menos dos figuras y compila dos veces para ver el índice generado.</li>
+</ol>
+    </div>
+  </section>

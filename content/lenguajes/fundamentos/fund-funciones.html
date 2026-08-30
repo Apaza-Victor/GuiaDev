@@ -1,0 +1,205 @@
+<!-- 7. Funciones y Modularidad - Fundamentos de Programación (Lenguajes de Programación) -->
+
+  <section id="por-que-dividir-el-problema">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> ¿Por qué dividir el problema?</h2>
+    <div class="doc-content">
+<p>Un programa complejo, escrito todo seguido como un único bloque enorme, es difícil de leer, de probar y de corregir. Cuando el código crece, cualquier cambio puede romper algo en un lugar imprevisible. La solución que usan los programadores profesionales es <strong>dividir el problema</strong>: partir una tarea grande en tareas pequeñas, resolver cada una por separado y luego combinarlas.</p>
+<p>Este enfoque tiene varios nombres —<em>descomposición</em>, <em>divide y vencerás</em>— y es una de las ideas más importantes de la programación. Cada pieza pequeña se convierte en una <strong>función</strong> con una responsabilidad concreta.</p>
+<h3>Beneficios de dividir</h3>
+<ul>
+<li><strong>Código reutilizable:</strong> escribimos una vez y llamamos muchas veces, sin copiar y pegar.</li>
+<li><strong>Legibilidad:</strong> el programa principal se lee como un guion de pasos claros, cada uno delegado en una función.</li>
+<li><strong>Facilidad de prueba:</strong> una función pequeña se verifica de forma aislada; un bloque gigante es casi imposible de probar pieza a pieza.</li>
+<li><strong>Mantenimiento:</strong> corregir un fallo suele significar tocar un solo lugar.</li>
+</ul>
+<h3>Analogía del mundo real</h3>
+<p>Piensa en una <strong>receta de cocina</strong>: no hay una sola instrucción gigante, sino pasos organizados (mezclar, hornear, decorar), cada uno con sus subpasos. O en una <strong>empresa</strong>, dividida en departamentos (ventas, contabilidad, soporte), cada uno con su función. Un programa modular funciona igual: módulos que colaboran.</p>
+<blockquote class="aside aside-note"><p>La alternativa —un único <em>bloque gigante</em>— a veces parece más rápido al empezar, pero se convierte en una "bola de barro" a medida que crece. Dividir desde el principio es una inversión que se paga en mantenimiento.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="definicion-de-una-funcion">
+    <h2><i class="fa-solid fa-cube"></i> Definición de una función</h2>
+    <div class="doc-content">
+<p>Una <strong>función</strong> es un bloque de código con nombre que realiza una tarea concreta y que podemos invocar (llamar) cuando la necesitemos. En PSeInt se define con <code>Funcion</code> (o <code>SubProceso</code>) y se cierra con <code>FinFuncion</code>.</p>
+<h3>Sintaxis básica en PSeInt</h3>
+<pre><code class="language-pseudocode">Funcion &lt;nombre&gt; ( &lt;parámetros&gt; )
+    // cuerpo de la función
+FinFuncion</code></pre>
+<p>Cuando la función no devuelve ningún valor se le llama <strong>Procedimiento</strong> o <strong>SubProceso</strong> en PSeInt (en otros lenguajes, funciones <code>void</code>). Su propósito es ejecutar acciones (mostrar algo, leer datos, modificar el estado), pero no producir un resultado nuevo.</p>
+<h3>Función que calcula el cuadrado de un número</h3>
+<pre><code class="language-pseudocode">Funcion cuadrado( num )
+    Definir resultado Como Entero
+    resultado &lt;- num * num
+    Retornar resultado
+FinFuncion
+
+Algoritmo principal
+    Definir x, y Como Entero
+    Escribir "Ingrese un número:"
+    Leer x
+    y &lt;- cuadrado(x)
+    Escribir "El cuadrado es: ", y
+FinAlgoritmo</code></pre>
+<h3>Partes de una función</h3>
+<table><thead><tr><th>Parte</th><th>Qué es</th><th>Ejemplo</th></tr></thead><tbody><tr><td>Nombre</td><td>Identificador único y descriptivo</td><td><code>cuadrado</code></td></tr><tr><td>Parámetros</td><td>Entradas que recibe</td><td><code>num</code></td></tr><tr><td>Retorno</td><td>Valor que entrega (<code>Retornar</code>)</td><td><code>num * num</code></td></tr><tr><td>Cuerpo</td><td>Instrucciones internas</td><td>cálculo del cuadrado</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Distingue <em>definir</em> (escribir la función una vez) de <em>llamar</em> (usarla). Definir <code>cuadrado</code> no la ejecuta; solo al escribir <code>y &lt;- cuadrado(x)</code> dentro del algoritmo principal se ejecuta.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="parametros-y-retorno">
+    <h2><i class="fa-solid fa-arrow-right-arrow-left"></i> Parámetros y retorno</h2>
+    <div class="doc-content">
+<p>Los <strong>parámetros</strong> son las entradas de una función: los valores que le pasamos para que trabaje con ellos. El <strong>retorno</strong> es el resultado que devuelve. Dominar esta comunicación entre la función y su llamador es clave para diseñar funciones bien hechas.</p>
+<h3>Parámetros como entradas</h3>
+<p>Cuando llamas <code>maximoDos(3, 8)</code>, los valores <code>3</code> y <code>8</code> son los <strong>argumentos</strong>; dentro de la función se reciben en los parámetros. El <strong>orden y el tipo</strong> deben coincidir con la definición: pasar el nombre donde se espera un número es un error clásico.</p>
+<h3>Función que devuelve el mayor de dos</h3>
+<pre><code class="language-pseudocode">Funcion mayor &lt;- maximoDos( a, b )
+    Si a &gt; b Entonces
+        mayor &lt;- a
+    SiNo
+        mayor &lt;- b
+    FinSi
+FinFuncion
+
+Algoritmo principal
+    Definir x, y, m Como Entero
+    Escribir "Ingrese dos números:"
+    Leer x
+    Leer y
+    m &lt;- maximoDos( x, y )
+    Escribir "El mayor es: ", m
+FinAlgoritmo</code></pre>
+<h3>Pasar por valor vs por referencia</h3>
+<p><strong>Por valor:</strong> la función recibe una copia; modificarla dentro no afecta a la variable original. <strong>Por referencia:</strong> la función recibe la variable original, de modo que puede modificarla. Por defecto, en la mayoría de los lenguajes los datos simples se pasan por valor. Es un concepto que verás con más detalle al trabajar con arreglos.</p>
+<h3>Llamar a una función desde otra</h3>
+<p>No hay límite: una función puede llamar a otra. Podemos reutilizar <code>maximoDos</code> para hallar el máximo de tres:</p>
+<pre><code class="language-pseudocode">Funcion m &lt;- maximoTres( a, b, c )
+    m &lt;- maximoDos( maximoDos( a, b ), c )
+FinFuncion</code></pre>
+<table><thead><tr><th>Concepto</th><th>Significado</th><th>Uso</th></tr></thead><tbody><tr><td>Parámetro</td><td>Entrada que recibe la función</td><td>Pasa datos del llamador a la función</td></tr><tr><td>Retorno</td><td>Resultado que entrega</td><td>Aporta un dato de vuelta al llamador</td></tr><tr><td>Llamada</td><td>Ejecución de la función</td><td>Invoca con argumentos reales</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>Una función bien diseñada hace "una sola cosa" y se comunica solo por parámetros y retorno. Evita que lea o escriba variables globales para hacer su trabajo: eso acopla y complica.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ambito-de-las-variables">
+    <h2><i class="fa-solid fa-border-all"></i> Ámbito de las variables</h2>
+    <div class="doc-content">
+<p>El <strong>ámbito</strong> (alcance) de una variable define <em>dónde</em> es visible y se puede usar. En PSeInt, las variables definidas dentro de un <code>Algoritmo</code> general o de los subprocesos tienen reglas claras: las variables creadas dentro de una función son <strong>locales</strong> y solo existen mientras la función se ejecuta.</p>
+<h3>Variables locales vs globales</h3>
+<ul>
+<li><strong>Locales:</strong> se declaran dentro de la función; solo se usan ahí, y su valor no "se filtra" al exterior.</li>
+<li><strong>Globales:</strong> se declaran al nivel del programa principal y son visibles desde todas las funciones. PSeInt, como verás, favorece el paso de parámetros antes que las globales.</li>
+</ul>
+<h3>Variable local duplicada en dos funciones</h3>
+<pre><code class="language-pseudocode">Funcion primero( )
+    Definir valor Como Entero   // local de primero
+    valor &lt;- 10
+    Escribir "En primero: ", valor
+FinFuncion
+
+Funcion segundo( )
+    Definir valor Como Entero   // local de segundo, independiente
+    valor &lt;- 99
+    Escribir "En segundo: ", valor
+FinFuncion
+
+Algoritmo main
+    primero()   // muestra 10
+    segundo()   // muestra 99 (no comparte la variable)
+FinAlgoritmo</code></pre>
+<p>Aunque las dos funciones usan la misma variable <code>valor</code>, son variables <strong>distintas</strong>: cada una tiene su propia copia local. Modificar una no afecta a la otra.</p>
+<h3>¿Por qué evitar las globales?</h3>
+<p>Las variables globales crean dependencias ocultas: cualquiera puede modificarlas y los errores se vuelven difíciles de localizar. Imagina que una función cambia una global y otra función esperaba su valor anterior. La recomendación es usar el <strong>menor alcance posible</strong>: declara la variable lo más cerca de donde se usa y comunícate con funciones mediante parámetros y retorno.</p>
+<blockquote class="aside aside-caution"><p>Las globales funcionan en programas pequeños, pero conforme crece el proyecto se convierten en una fuente de bugs difíciles de rastrear. Preferir parámetros y retorno es la práctica profesional.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="modularidad">
+    <h2><i class="fa-solid fa-network-wired"></i> Modularidad</h2>
+    <div class="doc-content">
+<p>La <strong>modularidad</strong> es la práctica de construir un programa a partir de muchas funciones pequeñas, cada una con una única responsabilidad clara. El programa principal se convierte en una sucesión de llamadas de alto nivel: <em>leer datos, calcular, mostrar resultado</em>.</p>
+<h3>Ejemplo completo: calculadora modular</h3>
+<p>Dividimos el problema en funciones de entrada, operación y salida:</p>
+<pre><code class="language-pseudocode">Funcion a &lt;- leerNumero( mensaje )
+    Escribir mensaje
+    Leer a
+FinFuncion
+
+Funcion op &lt;- leerOpcion( )
+    Escribir "1. Sumar"
+    Escribir "2. Restar"
+    Escribir "3. Multiplicar"
+    Escribir "Elija:"
+    Leer op
+FinFuncion
+
+Funcion r &lt;- calcular( a, b, op )
+    Segun op Hacer
+        1: r &lt;- a + b
+        2: r &lt;- a - b
+        3: r &lt;- a * b
+    FinSegun
+FinFuncion
+
+Funcion mostrarResultado( r )
+    Escribir "El resultado es: ", r
+FinFuncion
+
+Algoritmo principal
+    Definir n1, n2, opcion, res Como Entero
+    n1 &lt;- leerNumero( "Ingrese el primer número:" )
+    n2 &lt;- leerNumero( "Ingrese el segundo número:" )
+    opcion &lt;- leerOpcion( )
+    res &lt;- calcular( n1, n2, opcion )
+    mostrarResultado( res )
+FinAlgoritmo</code></pre>
+<p>El algoritmo principal es ahora casi declarativo: solo llama funciones con nombres que explican qué hace cada paso. Cada función es corta, hace <strong>una</strong> cosa y puede probarse de forma aislada.</p>
+<h3>Ventaja de probar cada función</h3>
+<p>Si el programa falla, sabemos que el problema está en una de las funciones. Podemos probar <code>calcular(2,3,1)</code> y verificar que da 5, sin ejecutar todo. Eso es impensable en un bloque único gigante.</p>
+<blockquote class="aside aside-success"><p>Regla de oro: si una función hace más de una cosa, divídela. Si un algoritmo principal supera unas pocas llamadas, mejor extrae una función. Un buen programa se lee como un índice de funciones bien nombradas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. Olvidar el <code>FinFuncion</code></h3>
+<p>Cada función debe cerrarse con su <code>FinFuncion</code>. Si falta, el intérprete "absorbe" el código siguiente dentro de la función y provoca errores confusos.</p>
+<h3>2. Llamar a una función antes de definirla</h3>
+<p>En PSeInt las funciones deben estar definidas <em>antes</em> de poder llamarse desde el algoritmo principal (o al menos antes del punto de uso). Asegúrate de colocar las definiciones primero y el <code>Algoritmo</code> principal después.</p>
+<h3>3. No usar <code>Retornar</code></h3>
+<h3>4. Sobrecargar la función con demasiadas tareas</h3>
+<p>Si una función "hace de todo" (lee, calcula, muestra, valida), cuesta leerla y reutilizarla. Divídela en funciones de una sola responsabilidad.</p>
+<h3>5. Variables globales duplicadas</h3>
+<p>Depender de globales que varias funciones cambian produce valores inesperados. Prefiere parámetros y retorno.</p>
+<h3>6. Parámetros en orden equivocado</h3>
+<pre><code class="language-pseudocode">Funcion m &lt;- areaRectangulo( base, altura )
+    m &lt;- base * altura
+FinFuncion
+
+// ❌ m &lt;- areaRectangulo( altura, base )  → si los tipos son iguales, error silencioso
+// ✅ m &lt;- areaRectangulo( base, altura )</code></pre>
+<blockquote class="aside aside-danger"><p>El error nº 1 en funciones es olvidar el <code>Retornar</code>: sin él, la función no entrega un resultado, y la variable que espera el resultado puede quedar sin inicializar (valor basura). Verifica siempre que toda ruta del código devuelva algo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Resuelve estos ejercicios en PSeInt o en tu lenguaje favorito. De menor a mayor dificultad:</p>
+<ol>
+<li><strong>Máximo de dos:</strong> escribe una función que reciba dos números y devuelva el mayor; pruébala desde el algoritmo principal.</li>
+<li><strong>Es par:</strong> escribe una función que reciba un número y devuelva <code>V/F</code> (lógico) según sea par o impar; úsala para clasificar varios valores.</li>
+<li><strong>Factorial:</strong> escribe una función que calcule el factorial de un número. Hazlo con un bucle y comenta qué ocurriría si usaras recursión.</li>
+<li><strong>Promedio modular:</strong> divide el cálculo del promedio de N notas en funciones: una para leer las notas, otra para sumarlas y otra para mostrar el promedio.</li>
+<li><strong>Detectar el error:</strong> revisa el siguiente pseudocódigo e indica qué falla y cómo corregirlo: una función <code>Funcion saludar()</code> que no devuelve valor pero se llama como <code>s &lt;- saludar()</code>.</li>
+</ol>
+    </div>
+  </section>

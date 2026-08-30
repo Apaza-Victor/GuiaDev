@@ -1,0 +1,206 @@
+<!-- 10. Librerías y ampliación - Arduino (Lenguajes de Programación) -->
+
+  <section id="que-es-una-libreria">
+    <h2><i class="fa-solid fa-folder-open"></i> ¿Qué es una librería?</h2>
+    <div class="doc-content">
+<p>Una <strong>librería</strong> es una colección de código reutilizable (funciones y clases ya escritas y probadas) que evita que reinventes la rueda en cada proyecto. En lugar de programar tú la comunicación con <em>ese</em> sensor o <em>esa</em> pantalla, alguien ya la escribió, la corrigió y la documentó: tú solo la instalas y la llamas.</p>
+<p>En Arduino existen tres niveles de código reutilizable:</p>
+<ul>
+<li><strong>Núcleo (core):</strong> el propio lenguaje: <code>pinMode()</code>, <code>digitalWrite()</code>, <code>Serial</code>… forman parte del núcleo que ya trae el IDE.</li>
+<li><strong>Oficiales:</strong> librerías que Arduino mantiene para sus placas, como <code>Servo</code>, <code>LiquidCrystal</code>, <code>SD</code> o <code>EEPROM</code>.</li>
+<li><strong>De terceros:</strong> escritas por la comunidad o por los propios fabricantes de sensores, pantallas y módulos.</li>
+</ul>
+<p>Una librería suele constar de uno o varios archivos de cabecera <code>.h</code> (con las declaraciones) y archivos <code>.cpp</code> (con la implementación). Al compilar tu sketch, el IDE <strong>compila también los archivos de las librerías</strong> que hayas incluido y los enlaza en el binario final que se sube a la placa.</p>
+<h3>¿Por qué explotar la comunidad?</h3>
+<ul>
+<li>Sensores, pantallas, motores y módulos de comunicación ya tienen su librería publicada.</li>
+<li>Velocidad: conectas el módulo, cargas un ejemplo y funciona ese mismo día.</li>
+<li>Mantenimiento: la comunidad corrige errores y amplía funcionalidades con cada versión.</li>
+</ul>
+<p>La mayoría de librerías se distribuyen con licencias abiertas (<strong>MIT</strong> o <strong>BSD</strong> son las típicas; algunas usan <strong>GPL</strong>). Antes de integrarlas en un producto comercial, revisa la licencia indicada en el repositorio.</p>
+<blockquote class="aside aside-tip"><p>Regla de oro: si tu sensor tiene librería oficial del fabricante, úsala. Normalmente incluye ejemplos, corrección de bugs y compatibilidad con las placas modernas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalar-librerias">
+    <h2><i class="fa-solid fa-download"></i> Instalar librerías</h2>
+    <div class="doc-content">
+<p>Hay dos vías principales para instalar una librería: el <strong>Gestor de Librerías</strong> (recomendada) o añadir un archivo <strong>.ZIP</strong> descargado a mano.</p>
+<h3>Vía 1: Gestor de Librerías del IDE</h3>
+<ol>
+<li>En el IDE: <em>Sketch → Incluir librería → Gestionar librerías…</em> (o el icono del libro en la barra izquierda).</li>
+<li>Busca por nombre, por ejemplo <code>DHT sensor library</code>.</li>
+<li>Selecciona la librería, elige la versión más reciente y pulsa <em>Instalar</em>.</li>
+<li>Espera a que termine la barra de progreso; no hace falta reiniciar el IDE.</li>
+</ol>
+<h3>Vía 2: Añadir un .ZIP manual</h3>
+<ol>
+<li>Descarga el archivo <code>.zip</code> desde GitHub o la web del fabricante.</li>
+<li>En el IDE: <em>Sketch → Incluir librería → Añadir librería .ZIP…</em> y selecciona el archivo.</li>
+<li>El IDE lo descomprime y copia automáticamente en tu carpeta de librerías.</li>
+</ol>
+<h3>¿Dónde vive cada cosa?</h3>
+<table><thead><tr><th>Recurso</th><th>Ubicación</th></tr></thead><tbody><tr><td><strong>Librerías de usuario</strong></td><td><code>Documents\Arduino\libraries</code> (Windows) o <code>~/Arduino/libraries</code> (macOS/Linux)</td></tr><tr><td><strong>Librerías del núcleo</strong></td><td>Dentro de la instalación del IDE (no conviene tocarlas)</td></tr><tr><td><strong>Ejemplos de cada librería</strong></td><td><em>Archivo → Ejemplos</em>, agrupados por nombre y autor</td></tr></tbody></table>
+<h3>Verificar que todo fue bien</h3>
+<p>Abre <em>Archivo → Ejemplos</em>: si ves la carpeta de la librería recién instalada, está correctamente colocada. Como prueba, compila y sube uno de sus ejemplos con tu placa conectada.</p>
+<blockquote class="aside aside-caution"><p>Un mismo Skectch no debería ver dos versiones de la misma librería: si tras actualizar algo se rompe, abre tu carpeta de librerías y borra la copia antigua (o el <code>.zip</code> bloqueado) antes de reinstalar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="incluir-y-usar-una-libreria">
+    <h2><i class="fa-solid fa-code"></i> Incluir y usar una librería</h2>
+    <div class="doc-content">
+<p>Para usar una librería hay que declararla en la parte <strong>superior del sketch</strong> con <code>#include</code>. Los ángulos <code>&lt;Biblioteca.h&gt;</code> indican que es una librería del sistema; las comillas <code>"mi_archivo.h"</code> se reservan para archivos de tu propio proyecto.</p>
+<h3>Declarar objeto, inicializar, usar</h3>
+<p>La mayoría de librerías exponen clases, y el flujo típico es siempre el mismo:</p>
+<pre><code class="language-cpp">#include <DHT.h>
+
+DHT dht(2, DHT11);          // 1. construir el objeto (a nivel global)
+
+void setup() {
+  dht.begin();              // 2. inicializarlo en setup()
+}
+
+void loop() {
+  float t = dht.readTemperature();   // 3. usar sus métodos en loop()
+  if (!isnan(t)) {
+    Serial.println(t);
+  }
+}</code></pre>
+<p>Observa los tres momentos: declarar el objeto <strong>a nivel global</strong> (fuera de cualquier función), inicializarlo en <code>setup()</code> (<code>begin</code>, <code>init</code> o <code>attach</code>, según la librería) y llamar a sus métodos en <code>loop()</code>. El patrón se repite en casi todas.</p>
+<h3>Ejemplo completo: LCD I2C</h3>
+<pre><code class="language-cpp">#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);   // dirección I2C 0x27, pantalla 16x2
+
+void setup() {
+  lcd.init();               // iniciar el LCD
+  lcd.backlight();          // encender la retroiluminación
+  lcd.setCursor(0, 0);
+  lcd.print("Hola, GuiaDev!");
+}
+
+void loop() {
+  lcd.setCursor(0, 1);      // segunda fila
+  lcd.print(millis() / 1000);  // mostrar los segundos transcurridos
+  delay(250);
+}</code></pre>
+<p>Si la librería ya está incluida, <strong>no copies su código dentro de tu sketch</strong>: duplicar la implementación provoca conflictos de nombres y te impide actualizarla desde el gestor.</p>
+<blockquote class="aside aside-note"><p>Al compilar verás en la consola mensajes sobre archivos <code>.cpp</code> de la librería: es normal. El IDE está compilando la librería junto con tu sketch, no mostrando errores.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="librerias-esenciales">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> Librerías esenciales</h2>
+    <div class="doc-content">
+<p>Estas son las librerías que más se repiten en los proyectos de Arduino, con una llamada típica como referencia:</p>
+<table><thead><tr><th>Librería</th><th>Para qué sirve</th><th>Llamada típica</th></tr></thead><tbody><tr><td><strong>Servo</strong></td><td>Motores servo de precisión</td><td><code>miServo.write(90)</code></td></tr><tr><td><strong>LiquidCrystal / LiquidCrystal_I2C</strong></td><td>Pantallas LCD 16x2 (paralelo / I2C)</td><td><code>lcd.print("Hola")</code></td></tr><tr><td><strong>DHT sensor library</strong></td><td>Temperatura y humedad (DHT11/DHT22)</td><td><code>dht.readTemperature()</code></td></tr><tr><td><strong>Adafruit Unified Sensor</strong></td><td>Interfaz común para sensores Adafruit</td><td><code>sensors.getEvent(&evento)</code></td></tr><tr><td><strong>SD</strong></td><td>Lectura/escritura en tarjetas microSD</td><td><code>archivo.println(dato)</code></td></tr><tr><td><strong>Wire / SPI</strong></td><td>Protocolos I2C y SPI de bajo nivel</td><td><code>Wire.write(dato)</code> / <code>SPI.transfer(dato)</code></td></tr><tr><td><strong>FastLED</strong></td><td>LEDs direccionables WS2812</td><td><code>leds[i] = CRGB::Red</code></td></tr><tr><td><strong>AccelStepper</strong></td><td>Motores paso a paso con aceleración</td><td><code>stepper.runSpeed()</code></td></tr><tr><td><strong>EEPROM</strong></td><td>Datos persistentes entre reinicios</td><td><code>EEPROM.write(dir, valor)</code></td></tr><tr><td><strong>Keypad</strong></td><td>Matrices de teclado (4x4, etc.)</td><td><code>keypad.getKey()</code></td></tr><tr><td><strong>SoftwareSerial</strong></td><td>Puertos serie extra por software</td><td><code>puerto.print("OK")</code></td></tr><tr><td><strong>NewPing (HCSR04)</strong></td><td>Sensor de distancia por ultrasonidos</td><td><code>sonar.ping_cm()</code></td></tr></tbody></table>
+<h3>Un servo bajo control</h3>
+<pre><code class="language-cpp">#include <Servo.h>
+
+Servo miServo;
+
+void setup() {
+  miServo.attach(9);        // servo conectado al pin 9
+  miServo.write(0);         // posición inicial 0°
+}
+
+void loop() {
+  for (int a = 0; a <= 180; a += 10) {
+    miServo.write(a);       // barrido suave
+    delay(100);
+  }
+}</code></pre>
+<h3>Leer temperatura y humedad</h3>
+<pre><code class="language-cpp">#include <DHT.h>
+#define PIN_DHT 2
+#define TIPO_DHT DHT11
+
+DHT dht(PIN_DHT, TIPO_DHT);
+
+void setup() {
+  Serial.begin(9600);
+  dht.begin();
+}
+
+void loop() {
+  float t = dht.readTemperature();
+  float h = dht.readHumidity();
+  if (!isnan(t) && !isnan(h)) {       // proteger frente a lecturas vacías
+    Serial.print("Temp: ");
+    Serial.print(t);
+    Serial.print(" C | Hum: ");
+    Serial.println(h);
+  }
+  delay(2000);
+}</code></pre>
+<blockquote class="aside aside-success"><p>La mejor manera de descubrir librerías es buscar por el componente que tienes en la mano. Si hay sensor, hay librería: usa siempre la del fabricante o la más valorada por la comunidad.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="manejo-de-errores-y-documentacion">
+    <h2><i class="fa-solid fa-book-open"></i> Manejo de errores y documentación</h2>
+    <div class="doc-content">
+<p>Cuando instales una librería, dedica unos minutos a su documentación. La mayoría trae <strong>ejemplos</strong> listos para ejecutar: son el mejor manual de usuario que existe.</p>
+<h3>Validar la instalación con un ejemplo</h3>
+<ol>
+<li>Abre <em>Archivo → Ejemplos</em> y busca el nombre de la librería.</li>
+<li>Selecciona y compila el ejemplo más parecido a tu objetivo.</li>
+<li>Sube el sketch a la placa: si funciona, la instalación y el cableado son correctos.</li>
+</ol>
+<h3>Mensajes de error típicos</h3>
+<table><thead><tr><th>Mensaje</th><th>Qué significa</th><th>Solución</th></tr></thead><tbody><tr><td><code>DHT.h: No such file or directory</code></td><td>La librería no está instalada o el include está mal escrito</td><td>Instala la librería o corrige el nombre</td></tr><tr><td><code>multiple libraries found for…</code></td><td>Dos versiones de la misma librería</td><td>Elimina la copia antigua de <code>Documents\Arduino\libraries</code></td></tr><tr><td><code>class has no member named…</code></td><td>Método o atributo mal escrito o inexistente</td><td>Revisa el ejemplo de la librería</td></tr><tr><td><code>conflicting declaration</code></td><td>Nombre de clase duplicado</td><td>Revísate que no pegaste código de la librería en el sketch</td></tr></tbody></table>
+<h3>Documentación y datasheet</h3>
+<p>Busca la página del fabricante o el <strong>datasheet</strong> del componente: el <strong>pinout</strong> (qué pin se conecta a qué pin de la placa) y el <strong>protocolo</strong> (I2C, SPI o serie) te indican qué librería usar y cómo inicializarla. Si encuentras un bug, no lo parchees en tu sketch: <strong>repórtalo en el repositorio</strong> de la librería (pestaña <em>Issues</em> de GitHub) con una copia mínima del código y la placa usada.</p>
+<h3>Versiones y compatibilidad</h3>
+<p>Anota la versión de librería que usa tu proyecto: algunas exigen núcleos recientes y fallan con IDEs antiguos o con placas de 8 bits frente a las de 32. Desconfía de copias "reempaquetadas" o con nombres raros: prefiere siempre el repositorio oficial del autor.</p>
+<blockquote class="aside aside-tip"><p>Antes de "arreglar" una librería a mano, pregunta a la comunidad. Si el problema es de cableado, lo arreglarás antes por ahí que peleándote con la librería.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. Olvidar el #include</h3>
+<pre><code class="language-cpp">// ❌ sin el include, "Servo" no existe para el compilador
+Servo miServo;
+// ✅ al principio del sketch:
+// #include &lt;Servo.h&gt;</code></pre>
+<h3>2. Incluir pero no declarar el objeto</h3>
+<p>Instalar la librería no basta: hay que <strong>crear el objeto</strong>. Sin esa línea, al usar métodos aparece el espantoso <code>class has no default member</code> o <code>no matching function for call</code>. La declaración (<code>Servo miServo;</code>, <code>DHT dht(2, DHT11);</code>…) va siempre a nivel global.</p>
+<h3>3. Instalar sin desinstalar la versión anterior</h3>
+<p>Dos versiones de la misma librería provocan <code>multiple libraries found</code> y un bucle de "arreglos" que no funcionan. Borra la copia antigua de <code>Documents\Arduino\libraries</code>.</p>
+<h3>4. Añadir el .ZIP sin extraer (o añadir el zip equivocado)</h3>
+<p>El IDE espera un <code>.zip</code> que contenga la carpeta de la librería. Si intentas añadir el archivo ya extraído o un zip que no es, no aparecerá en <em>Ejemplos</em>.</p>
+<h3>5. Llamar a métodos antes de begin()</h3>
+<pre><code class="language-cpp">dht.readTemperature();   // ❌ antes de dht.begin()
+dht.begin();             // ✅ primero se inicializa</code></pre>
+<h3>6. Esperar Serial sin iniciarlo</h3>
+<p>Si una librería usa <code>Serial</code> y no llamas a <code>Serial.begin(9600)</code>, el Monitor Serie no mostrará nada. Mira siempre el <code>setup()</code> de los ejemplos de la librería.</p>
+<h3>7. Ignorar la incompatibilidad con la placa</h3>
+<p>Algunas librerías usan APIs que cambian entre Arduino 1.x y 2.x, o requieren placas de 32 bits. Si compilas y ves un mensaje de argumentos o registros (<code>argument mismatch</code>, <code>undefined reference</code>), mira la versión de la librería y la placa que exige.</p>
+<blockquote class="aside aside-danger"><p>El error número uno con librerías no es técnico, es de procedimiento: no leer el ejemplo de la librería. Antes de modificar nada, copia un ejemplo tal cual, súbelo y compruébalo: si funciona, tu cableado es el problema, no la librería.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Cinco ejercicios que te llevarán de instalar a construir proyectos reales con librerías. Recuerda guardar cada sketch en su propia carpeta.</p>
+<ol>
+<li><strong>Instalar y validar:</strong> instala una librería desde el Gestor de Librerías (elige una con muchas estrellas, por ejemplo <em>DHT sensor library</em>). Abre uno de sus ejemplos, compílalo y súbelo a tu placa. Anota dónde se guardó en disco la librería.</li>
+<li><strong>Servo con potenciómetro:</strong> con <code>Servo.h</code>, mueve un servo (pin 9) según la lectura de un potenciómetro en A0 usando <code>analogRead()</code> + <code>map()</code> para convertir 0–1023 a 0–180 grados.</li>
+<li><strong>Termómetro:</strong> con la librería DHT (o NTC, si no tienes el sensor, simula con <code>analogRead</code> de un potenciómetro), imprime por el Monitor Serie "Temp: X C | Hum: Y %" cada 2 segundos.</li>
+<li><strong>Memoria EEPROM:</strong> escribe un valor en la dirección 0 con <code>EEPROM.write(0, valor)</code>, apaga y enciende la placa y verifica con <code>EEPROM.read(0)</code> que el dato sigue ahí. Documenta qué pasa si escribes valores superiores a 255.</li>
+<li><strong>LCD I2C "Hola, GuiaDev!":</strong> con <code>LiquidCrystal_I2C</code>, muestra tu nombre en la primera fila y, en la segunda, los segundos transcurridos desde el arranque con <code>millis() / 1000</code>. Si no tienes LCD, simúllalo imprimiendo por Serial.</li>
+</ol>
+<p>---</p>
+    </div>
+  </section>

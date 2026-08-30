@@ -1,0 +1,225 @@
+<!-- 4. Entradas y salidas digitales - Arduino (Lenguajes de Programación) -->
+
+  <section id="senales-digitales">
+    <h2><i class="fa-solid fa-wave-square"></i> Señales digitales</h2>
+    <div class="doc-content">
+<p>En electrónica digital solo existen <strong>dos estados</strong>: encendido o apagado, <code>1</code> o <code>0</code>, presente o ausente. Arduino los representa como <code>HIGH</code> (tensión de alimentación lógica, <strong>Vcc</strong>) y <code>LOW</code> (masa, <strong>GND</strong>, 0 V). Es el mismo principio del sistema binario: con muchos unos y ceros se construye todo.</p>
+<p>En un <strong>Arduino Uno</strong> (que trabaja a 5 V) un pin digital en <code>HIGH</code> entrega o recibe aproximadamente <strong>5 voltios</strong>; en placas de 3,3 V como la <strong>Arduino MKR o la ESP32</strong>, el <code>HIGH</code> son 3,3 V. Nunca alimentes un pin de una placa de 3,3 V con 5 V: se daña.</p>
+<h3>¿Entrada o salida?</h3>
+<p>Un pin digital no es entrada ni salida por naturaleza: es lo que <strong>tú decides</strong>. Con <code>pinMode()</code> lo configuras para que <em>lea</em> una señal (entrada: mirar un botón o un sensor) o para que <em>entregue</em> una señal (salida: encender un LED o un relé). Es la misma pata física cumpliendo dos papeles distintos.</p>
+<table><thead><tr><th>Nivel lógico</th><th>Uno (5 V)</th><th>MKR / ESP32 (3,3 V)</th><th>Significado</th></tr></thead><tbody><tr><td><strong>HIGH</strong></td><td>≈ 5 V</td><td>≈ 3,3 V</td><td>Encendido / 1 / Vcc</td></tr><tr><td><strong>LOW</strong></td><td>≈ 0 V</td><td>≈ 0 V</td><td>Apagado / 0 / GND</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>Esos "≈" importan: el microcontrolador no mide el voltaje con precisión de laboratorio. Un pin entrega muy cerca de 5 V sin carga, pero la cifra exacta depende de la corriente que se le demande.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="pinmode-high-y-low">
+    <h2><i class="fa-solid fa-toggle-on"></i> pinMode, HIGH y LOW</h2>
+    <div class="doc-content">
+<p>Estas tres instrucciones son el corazón de todo trabajo con pines digitales. Domínalas y podrás leer casi cualquier componente sencillo.</p>
+<pre><code class="language-cpp">pinMode(pin, mode);          // declara un pin como INPUT, OUTPUT o INPUT_PULLUP
+digitalWrite(pin, value);    // pone HIGH o LOW un pin configurado como salida
+digitalRead(pin);            // lee si un pin recibe HIGH o LOW (1 o 0)</code></pre>
+<h3>Sintaxis y modos</h3>
+<table><thead><tr><th>Función</th><th>Parámetros</th><th>Ejemplo</th><th>Para qué</th></tr></thead><tbody><tr><td><code>pinMode()</code></td><td><code>pin</code>, <code>mode</code></td><td><code>pinMode(9, OUTPUT)</code></td><td>Configurar el rol del pin</td></tr><tr><td><code>digitalWrite()</code></td><td><code>pin</code>, <code>value</code></td><td><code>digitalWrite(9, HIGH)</code></td><td>Encender/apagar una salida</td></tr><tr><td><code>digitalRead()</code></td><td><code>pin</code></td><td><code>digitalRead(2)</code></td><td>Leer un botón o señal externa</td></tr></tbody></table>
+<p>El modo <code>mode</code> admite tres constantes: <code>INPUT</code> (entrada en alta impedancia), <code>OUTPUT</code> (salida que entrega tensión) y <code>INPUT_PULLUP</code> (entrada con resistencia interna de pull-up activada, que veremos en la sección 5).</p>
+<h3>Frontera eléctrica: qué cuenta como HIGH</h3>
+<p>El pin lee un voltaje y decide si es <code>0</code> o <code>1</code> comparándolo con umbrales. En la familia AVR de 5 V, un valor inferior a ~1,5 V se lee como <code>LOW</code> y uno superior a ~3 V se lee como <code>HIGH</code> (niveles compatibles con TTL/CMOS). La zona entre ambos es gris y poco fiable: por eso un pin <strong>flotante</strong> (sin conexión firme a GND o Vcc) da lecturas impredecibles.</p>
+<pre><code class="language-cpp">void setup() {
+  Serial.begin(9600);
+  pinMode(2, INPUT);        // pin 2 como entrada
+}
+
+int estado = digitalRead(2);   // fuera del setup sería inválido aquí:
+                               // en este ejemplo se usa dentro de loop()</code></pre>
+<blockquote class="aside aside-caution"><p>Todo pin leído con <code>digitalRead()</code> debe estar conectado de forma el <em>decidida</em>: a una señal clara o, en su defecto, a un pull-up o pull-down. Un pin literalmente "en el aire" devuelve valores que cambian solos, dando lugar a bugs endiabladamente difíciles de reproducir.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="salidas-digitales-led">
+    <h2><i class="fa-solid fa-lightbulb"></i> Salidas digitales: encender un LED</h2>
+    <div class="doc-content">
+<p>El uso más típico de una salida digital es encender un <strong>LED</strong>. El circuito mínimo es: LED en serie con una resistencia limitadora entre el pin y GND. Sin esa resistencia, la corriente que pide el LED (prácticamente ilimitada) destruye el LED y puede dañar el pin.</p>
+<pre><code class="language-text">         Arduino Uno              Protoboard
+        ┌────────────┐
+        │  GND  13  │              ┌───┤   R = 220 Ω  ├───┐
+        │       12  │              │                     │
+        │       11  │              ▼                     ▼
+        │       10  │         ┌────────┐      ┌──────────────────┐
+        │        9  │         │  á .................  c  │  LED
+        │        8  │         └────────┘      └──────────────────┘
+</code></pre>
+<p>El ánodo largo del LED va hacia la resistencia (y esta hacia el pin); el cátodo corto, a GND. La resistencia de 220 a 330 Ω es la clásica para prototipos; incluso 1 kΩ funciona y alarga la vida del LED, solo brillará menos. ¿Por qué esos valores? <strong>Ley de Ohm</strong>: el pin entrega ~5 V y el LED consume su tensión de paso (<em>forward voltage</em>, Vf, entre 1,8 y 3,3 V según color). La caída en la resistencia es <code>Vcc - Vf</code>, y quieres una corriente moderada:</p>
+<pre><code class="language-text">R = (Vcc - Vf) / I = (5 V - 2 V) / 0,015 A ≈ 200 Ω   → usamos 220 Ω</code></pre>
+<p>El LED integrado de la placa es exactamente el pin <strong>13</strong> (<code>LED_BUILTIN</code>), con su resistencia ya montada en la placa. Con un LED externo al pin 9:</p>
+<pre><code class="language-cpp">const int PIN_LED = 9;
+
+void setup() {
+  pinMode(PIN_LED, OUTPUT);      // pin 9 ahora ES una salida
+}
+
+void loop() {
+  digitalWrite(PIN_LED, HIGH);   // enciende el LED
+  delay(200);                    // medio segundo encendido
+  digitalWrite(PIN_LED, LOW);    // apaga el LED
+  delay(200);                    // medio segundo apagado
+}</code></pre>
+<blockquote class="aside aside-danger"><p>Un pin de salida en <code>HIGH</code> solo puede entregar unos <strong>20-40 mA</strong> (máximo absoluto en torno a 40 mA, y unos ~200 mA en total para todo el microcontrolador). Conectarlo directamente a GND (cortocircuito) puede freír el pin o el chip entero.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="entradas-digitales-boton">
+    <h2><i class="fa-solid fa-hand-pointer"></i> Entradas digitales: leer un botón</h2>
+    <div class="doc-content">
+<p>Un botón (pulsador) tiene <strong>4 patas</strong>, pero internamente solo hay dos contactos por par: las dos patas de un mismo lado están conectadas entre sí. Cerrar el botón une ambos pares y deja pasar la corriente; soltarlo la corta.</p>
+<pre><code class="language-text">       vista superior (pulsador de 4 patas)
+        ┌─────────────┐
+   A1 ──┤  ●     ●   ├── B1        A1 conectado con A2 (mismo lado)
+   A2 ──┤  ●     ●   ├── B2        B1 conectado con B2 (mismo lado)
+        └─────────────┘
+   Al pulsar: A1-A2 <-> B1-B2 (cierra el circuito)</code></pre>
+<h3>El problema del pin flotante</h3>
+<p>Si conectas un botón solo entre el pin y GND, cuando no está pulsado el pin <strong>no está conectado a nada</strong>: queda <em>flotante</em> y lee valores al azar. La solución es garantizar que el pin nunca quede sin definición eléctrica, con una resistencia que lo lleve a un nivel conocido cuando el botón está abierto:</p>
+<pre><code class="language-text">        Vcc (+5 V)                 GND
+          │                         │
+          R = 10 kΩ pull-up         R = 10 kΩ pull-down
+          │                         │
+   pin ●──┤                     pin ●──┤
+        botón │                     botón │
+        a GND ▼                     a Vcc ▼
+   Sin pulsar: HIGH            Sin pulsar: LOW
+   Pulsado:   LOW              Pulsado:   HIGH</code></pre>
+<p>El circuito de la izquierda (botón a GND + pull-up a Vcc) es el más habitual. Con él, el sketch lee:</p>
+<pre><code class="language-cpp">const int PIN_BOTON = 2;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(PIN_BOTON, INPUT_PULLUP);   // resistencia pull-up INTERNA
+}
+
+void loop() {
+  if (digitalRead(PIN_BOTON) == LOW) {
+    Serial.println("Boton pulsado");  // con pull-up, pulsado = LOW
+  } else {
+    Serial.println("Boton libre");
+  }
+  delay(50);
+}</code></pre>
+<p>Obsérvalo en el <strong>Monitor Serie</strong> (ajusta la velocidad a 9600 baudios). Nota extra: notarás que el relé de mensajes "tiembla" al pulsar: es el <strong>rebote</strong> del botón (micro-contactos que abren y cierran en milisegundos). En proyectos críticos se filtra con <em>debounce</em>; lo veremos con <code>millis()</code> en una lección próxima.</p>
+<blockquote class="aside aside-note"><p>Regla mnemotécnica: en los circuitos con botón casi nunca se conecta el pin a masa directamente. Se conecta a un nivel de reposo firme (Vcc con pull-up o GND con pull-down) y el botón, al cerrarse, <strong>arrastra el pin al estado opuesto</strong>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resistencias-pull-up">
+    <h2><i class="fa-solid fa-plug-circle-check"></i> Resistencias pull-up y INPUT_PULLUP</h2>
+    <div class="doc-content">
+<p>Ya has visto el concepto: una <strong>pull-up</strong> es una resistencia que lleva el pin a <code>HIGH</code> cuando el botón está abierto; una <strong>pull-down</strong> lo lleva a <code>LOW</code>. Ambas eliminan el estado flotante fijando el nivel de reposo.</p>
+<p>Externas, los valores típicos son <strong>10 kΩ</strong> (a Vcc para pull-up, a GND para pull-down). Pero el microcontrolador AVR ya trae resistencias internas de pull-up (entre ~20 y 50 kΩ) que se activan con el modo <code>INPUT_PULLUP</code>:</p>
+<pre><code class="language-cpp">pinMode(2, INPUT_PULLUP);   // resistencia interna pull-up ACTIVADA</code></pre>
+<h3>La lógica se invierte</h3>
+<p>Con <code>INPUT_PULLUP</code> tienes beneficios (una resistencia menos, circuito más simple) a cambio de lógica invertida: en reposo el pin lee <code>HIGH</code> y al pulsar lee <code>LOW</code>. Es fácil de manejar comparando con <code>LOW</code> en vez de con <code>HIGH</code>, pero hay que tenerlo siempre presente:</p>
+<table><thead><tr><th>Configuración</th><th>Resistencia</th><th>En reposo (sin pulsar)</th><th>Al pulsar</th></tr></thead><tbody><tr><td><strong>Pull-up externa</strong></td><td>10 kΩ a Vcc</td><td>HIGH</td><td>LOW</td></tr><tr><td><strong>INPUT_PULLUP</strong></td><td>Interna ~20-50 kΩ</td><td>HIGH</td><td>LOW</td></tr><tr><td><strong>Pull-down externa</strong></td><td>10 kΩ a GND</td><td>LOW</td><td>HIGH</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Regla práctica del 90 % de los proyectos: botón a GND + <code>pinMode(pin, INPUT_PULLUP)</code>. Un solo cable menos, misma fiabilidad, y el botón sigue "bajando" el pin al pulsarlo.</p></blockquote>
+<blockquote class="aside aside-caution"><p>El orden de las operaciones importa: si primero haces <code>pinMode(pin, INPUT)</code> y luego quieres activar la pull-up, el modo correcto es <code>pinMode(pin, INPUT_PULLUP)</code> desde el principio. Declarar <code>OUTPUT</code> y luego pretender leerlo es otro clásico: un pin declarado salida no se lee como entrada.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="proyecto-led-boton">
+    <h2><i class="fa-solid fa-hammer"></i> Proyecto: LED controlado por botón</h2>
+    <div class="doc-content">
+<p>Junta lo aprendido: un botón con <code>INPUT_PULLUP</code> en el pin 2 y un LED externo (o el integrado) en el pin 13. Sin resistencias externas para el botón, solo la del LED.</p>
+<pre><code class="language-text">        Arduino Uno
+        ┌────────────┐
+        │  13   LED_BUILTIN ──> LED integrado (ya lleva su resistencia)
+        │   2   ●────botón────→ GND      (con INPUT_PULLUP interno)
+        └────────────┘
+   Reposo:   pin 2 = HIGH (botón libre)
+   Pulsado:  pin 2 = LOW  (arrastra el pin a GND)</code></pre>
+<h3>Versión 1: el LED brilla solo mientras mantienes el botón</h3>
+<pre><code class="language-cpp">const int PIN_BOTON = 2;
+const int PIN_LED   = LED_BUILTIN;
+
+void setup() {
+  pinMode(PIN_BOTON, INPUT_PULLUP);  // entrada con resist. interna
+  pinMode(PIN_LED, OUTPUT);          // salida al LED
+}
+
+void loop() {
+  if (digitalRead(PIN_BOTON) == LOW) {
+    digitalWrite(PIN_LED, HIGH);     // botón apretado → LED encendido
+  } else {
+    digitalWrite(PIN_LED, LOW);      // botón libre  → LED apagado
+  }
+}</code></pre>
+<p>Esta versión es un <em>seguidor</em>: la salida copia la entrada en vivo. Para hacer un interruptor que <strong>alterna</strong> (pulsas una vez = enciende, otra = apaga) necesitas recordar el estado anterior con una variable global, sin bibliotecas:</p>
+<h3>Versión 2: toggle con estado previo</h3>
+<pre><code class="language-cpp">const int PIN_BOTON = 2;
+const int PIN_LED   = LED_BUILTIN;
+
+bool ledEncendido = false;   // estado actual del LED
+bool botonAntes   = HIGH;    // lectura anterior del botón
+                             // (HIGH = no pulsado por el pull-up)
+
+void setup() {
+  pinMode(PIN_BOTON, INPUT_PULLUP);
+  pinMode(PIN_LED, OUTPUT);
+}
+
+void loop() {
+  bool botonAhora = (digitalRead(PIN_BOTON) == LOW); // LOW = pulsado → true
+
+  if (botonAhora && !botonAntes) {       // flanco: pulsas AHORA pero
+    ledEncendido = !ledEncendido;        // la vez pasada NO → alterna
+    digitalWrite(PIN_LED, ledEncendido ? HIGH : LOW);
+  }
+  delay(20);         // pequeña pausa para filtrar el rebote básico
+
+  botonAntes = botonAhora;               // guardamos el estado para el ciclo
+}</code></pre>
+<blockquote class="aside aside-success"><p>La <strong>detección de flanco</strong> (<code>botonAhora && !botonAntes</code>) es una técnica universal: actúa solo en el instante en que el botón pasa de no pulsado a pulsado, no mientras se mantiene. Con ella el LED alterna exactamente una vez por pulsación, aunque mantengas el dedo.</p></blockquote>
+<blockquote class="aside aside-note"><p>Ese <code>delay(20)</code> es un apaño sencillo de rebote. En la lección de <code>millis()</code> implementarás un debounce propio sin bloquear el programa; la estructura (comparar con el estado anterior) ya la has visto aquí.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. Olvidar el pinMode</h3>
+<p>Leer un botón o encender un LED sin <code>pinMode</code> previo deja el pin en alta impedancia. Para el LED el fallo es sutil (no enciende), para el botón es caótico (lecturas flotantes).</p>
+<h3>2. Conectar el LED sin resistencia limitadora</h3>
+<p>El LED absorberá toda la corriente que el pin pueda dar: sobrecorriente, LED quemado y riesgo para el pin. Resistencia de 220-330 Ω en serie, siempre.</p>
+<h3>3. Invertir las patas del botón</h3>
+<p>Colocar el botón con sus dos pares en paralelo en el circuito (por ejemplo, pin y GND en el mismo lado) significa que pulsar "no cierra nada". Usa los dos lados opuestos: una pata a cada esquina común.</p>
+<h3>4. No entender la lógica invertida de INPUT_PULLUP</h3>
+<pre><code class="language-cpp">if (digitalRead(2) == HIGH) {   // ❌ se enciende cuando NO pulsas
+if (digitalRead(2) == LOW)  {   // ✅ correcto con INPUT_PULLUP</code></pre>
+<h3>5. Esperar más corriente de un pin de salida</h3>
+<p>Un pin OUTPUT entrega ~20-40 mA, no amperios. Alimentar motores, relés o tiras LED directamente desde el pin es pedir el cortocircuito; esos componentes necesitan un transistor o un módulo con su propia alimentación.</p>
+<h3>6. Ocupar el pin 13 en proyectos que "necesitan" el LED integrado</h3>
+<p>En el Uno el <code>LED_BUILTIN</code> comparte el pin 13. Si usas el pin 13 para otra señal externa, el LED integrado parpadeará a la vez y puede confundirte al depurar. Revisa qué carga tienes en ese pin.</p>
+<h3>7. Leer el botón sin pull-up ni pull-down</h3>
+<p>Pin flotante === lecturas al azar. Si el comportamiento "funciona a veces" con el dedo encima del cable, es esto. Añade el <code>INPUT_PULLUP</code>.</p>
+<blockquote class="aside aside-danger"><p>El error más caro de este tema es conectar una tensión mayor de 5 V (o GND invertido) a un pin. El microcontrolador no perdona: un pin se puede quemar a partir de un simple cortocircuito. Revisa el cableado dos veces antes de conectar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Cinco prácticas con botón y LED para asentar las entradas y salidas digitales. Ordenadas de menor a mayor dificultad:</p>
+<ol>
+<li><strong>Parpadeo por pulsación:</strong> dos LED conectados a los pines 9 y 10. Mantiene pulsado el botón (pin 2 con <code>INPUT_PULLUP</code>): el LED del pin 9 parpadea a 1 Hz; al soltar, se apaga. Sin usar nada más que <code>digitalRead</code>, <code>digitalWrite</code> y <code>delay</code>.</li>
+<li><strong>Dúo de LED alternos:</strong> botón en el pin 2 y dos LED en los pines 9 y 10. Con cada pulsación (flanco) alterna cuál de los dos LED está encendido: nunca los dos a la vez.</li>
+<li><strong>Botón con pull-down externa:</strong> monta el botón con una resistencia de 10 kΩ a GND y el pin como <code>INPUT</code> (sin <code>INPUT_PULLUP</code>). Ahora la lógica es normal: pulsado = <code>HIGH</code>. Adapta el sketch de la versión 1 del proyecto a esta configuración.</li>
+<li><strong>Semáforo de tres LED:</strong> LED rojo (9), ámbar (10) y verde (11). Secuencia española: verde 4 s, ámbar 1 s, rojo 4 s en bucle, usando <code>delay()</code> (aquí es aceptable). Cuando pulses el botón, congela las luces intermitentes: hazlas parpadear todas a la vez mientras se mantiene pulsado.</li>
+<li><strong>Contador de pulsaciones:</strong> con el toggle de la versión 2, incrementa un contador global cada vez que detectes el flanco y envíalo por el <strong>Monitor Serie</strong> (<code>Serial.println</code>) con un mensaje claro. Verifica con <code>Verificar</code> y <code>Subir</code> que el número no salta de más de una pulsación por vez.</li>
+</ol>
+<p>---</p>
+    </div>
+  </section>

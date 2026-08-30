@@ -1,0 +1,134 @@
+<!-- random - Python (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>`random` genera números pseudoaleatorios con distribución uniforme o controlada: sirve para elegir elementos al azar, mezclar listas, simular dados o crear datos de prueba. Los valores se basan en el Mersenne Twister, así que el resultado depende de la semilla inicial.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Generar números en un rango con `random()`, `randint` y `uniform`.</li>
+<li>Elegir al azar con `choice`, `choices` (con pesos) y `sample` sin repetición.</li>
+<li>Revolver una lista en el sitio con `shuffle`.</li>
+<li>Reproducir resultados fijando la semilla con `seed`, útil en demos y tests.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Juegos, sorteos y decisiones aleatorias simples dentro de un script.</li>
+<li>Generar datasets sintéticos o mutar inputs en pruebas.</li>
+<li>Simulaciones de Monte Carlo mientras el volumen y la precisión lo permitan.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Nunca uses `random` para contraseñas, tokens o cualquier cosa relacionada con seguridad: no es criptográficamente seguro. Para eso existe el módulo `secrets`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="importar-random-base">
+    <h2>Importar random <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-python">import random
+
+# O funciones concretas
+from random import randint, choice, shuffle
+</code></pre>
+<blockquote class="aside aside-tip"><p>`random` forma parte de la biblioteca estándar de Python: genera números pseudoaleatorios, elige elementos de secuencias y baraja colecciones. Es la base para juegos, sorteos y simulaciones.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="numeros-aleatorios-paso-1">
+    <h2>Números Aleatorios <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import random
+
+random.random()                 # flotante en [0.0, 1.0)
+random.uniform(10, 20)          # flotante en [10, 20]
+random.randint(1, 6)            # entero entre 1 y 6 (LANZAR DADO)
+random.randrange(0, 100, 5)     # entero: 0, 5, 10, ... 95 (paso 5)
+
+# Precisión decimal para dinero o notas
+random.uniform(8, 20)           # nota de una evaluación
+round(random.uniform(0, 10), 2) # nota con 2 decimales
+</code></pre>
+<blockquote class="aside aside-note"><p>`random()` nunca alcanza 1.0, `randint` incluye ambos extremos y `randrange` respeta el paso (como `range`). Para números "nada de juego" usa `secrets` (criptográfico).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="eleccion-muestreo-paso-2">
+    <h2>Elección y Muestreo <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import random
+
+alumnos = ["Ana", "Bruno", "Carla", "Diego", "Elena"]
+
+random.choice(alumnos)                  # un elemento al azar
+random.choices(alumnos, k=2)            # con reposición (puede repetir)
+random.sample(alumnos, 3)               # sin reposición (únicos)
+
+# Con pesos: gana "panqueque" el 90% de las veces
+amenaza = random.choices(
+    ["panqueque", "bomba"],
+    weights=[90, 10],
+    k=1
+)[0]
+</code></pre>
+<blockquote class="aside aside-tip"><p>`choice` elige uno, `sample` da un subconjunto único y `choices` permite repeticiones con `weights` (control de probabilidad). Ideal para sorteos justos o misiones aleatorias en juegos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="barajar-distribuciones-paso-3">
+    <h2>Barajar y Distribuciones <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import random
+
+cartas = [f"{n} de {pal}" for pal in ("corazones", "diamantes", "tréboles", "picas")
+                             for n in range(1, 14)]
+random.shuffle(cartas)          # mezcla IN-PLACE (modifica la lista)
+mano = cartas[:2]
+
+# Distribuciones (crear datos "realistas")
+random.gauss(mu=175, sigma=8)   # estaturas (campana)
+random.expovariate(1.0 / 60)    # tiempos de espera
+random.paretovariate(alpha=2)   # ingresos (cola larga)
+</code></pre>
+<blockquote class="aside aside-caution"><p>`shuffle` modifica la lista original y no devuelve nada (ojo al mezclar la lista "maestra"). Para datos con forma de curva normal, `gauss`/`normalvariate` reproducen poblaciones reales mejor que `uniform`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="simular-semilla-paso-4">
+    <h2>Simular con Semilla <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import random
+
+random.seed(42)                 # fija la secuencia
+print(random.randint(1, 100))   # SIEMPRE el mismo número
+print(random.choice(["a", "b", "c"]))
+
+# Volver a empezar: misma semilla = misma secuencia
+random.seed(42)
+print(random.randint(1, 100))   # idéntico al primero
+
+# Simulación: lotería sin repetidos
+random.seed(20260501)
+numeros = random.sample(range(1, 46), 6)
+print(sorted(numeros))
+</code></pre>
+<blockquote class="aside aside-success"><p>La semilla hace reproducible la "aleatoriedad": tests, demos y análisis que dependen del azar devuelven siempre lo mismo. Sin `seed()`, Python usa la hora del sistema. Usa `SystemRandom` / `secrets` si necesitas verdadera imprevisibilidad.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Escribe un "dado virtual": lanza un `randint(1, 6)` y di si es mayor que 3.</li>
+<li>Sorteo: de una lista de 10 nombres elige 3 ganadores únicos con `sample`.</li>
+<li>Crea una contraseña de 8 caracteres mezclando mayúsculas, minúsculas y dígitos.</li>
+<li>Baraja un mazo de 52 cartas y reparte dos manos de 5.</li>
+<li>Fija `seed(7)` y verifica que la secuencia de 5 `randint` se repite sin cambiarla.</li>
+</ol>
+    </div>
+  </section>

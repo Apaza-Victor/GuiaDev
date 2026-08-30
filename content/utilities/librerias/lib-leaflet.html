@@ -1,0 +1,159 @@
+<!-- leaflet - Librerías (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>Leaflet es la librería de mapas interactivos más ligera y extendida (unos 42 kB). Carga teselas (tiles) de OpenStreetMap u otros proveedores, añade marcadores, polylines, popups y controla zoom y panorámica con una API minimalista.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Mostrar mapas interactivos con capas de tiles de OSM u otros proveedores.</li>
+<li>Añadir marcadores, popups y rutas dibujadas con polyline o polygon.</li>
+<li>Manejar eventos de mapa (click, zoom) y la geolocalización del usuario.</li>
+<li>Construir mapas con clusters o controles personalizados mediante plugins.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Sitios de contacto con mapas de ubicaciones y marcadores.</li>
+<li>Dashboards con visualización de puntos de interés geográficos.</li>
+<li>Apps de delivery o rutas donde la ligereza del mapa importa.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Para SIG avanzado, raster analysis o mallas muy pesadas, MapLibre o Mapbox ofrecen más (vector tiles y 3D). Leaflet es ideal cuando quieres mapas simples y rápidos sin plataforma de pago.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"&gt;
+&lt;script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install leaflet
+</code></pre>
+<h4 class="tab-label">Contenedor</h4>
+<pre><code class="language-html">&lt;div id="mapa" style="height: 480px; width: 100%"&gt;&lt;/div&gt;
+</code></pre>
+<blockquote class="aside aside-tip"><p>Leaflet es el mapa interactivo más ligero y usado (unos 42 kB). Funciona con tiles de OpenStreetMap u otros proveedores y se integra en 10 minutos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="mapa-basico">
+    <h2>Mapa Básico <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Coordenadas: latitud, longitud (Lima)
+const mapa = L.map('mapa').setView([-12.0464, -77.0428], 12);
+
+// Capa de teselas (tiles) de OpenStreetMap
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&amp;copy; OpenStreetMap'
+}).addTo(mapa);
+</code></pre>
+<pre><code class="language-js">// Destruir y recrear para "refrescar"
+mapa.remove();
+const mapa2 = L.map('mapa').setView([...], 12);
+</code></pre>
+<blockquote class="aside aside-note"><p>El mapa en sí es solo un "visually" sobre una capa de mosaicos. La capa define el proveedor gráfico; el mapa maneja zoom y panorámica. Recuerda dar altura al contenedor o no verás nada.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="marcadores-popups">
+    <h2>Marcadores y Popups <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">const marker = L.marker([-12.0464, -77.0428])
+  .addTo(mapa)
+  .bindPopup('&lt;b&gt;Plaza de Armas&lt;/b&gt;&lt;br&gt;Lima, Perú')
+  .openPopup();
+
+// Icono personalizado
+const icono = L.icon({
+  iconUrl: '/img/pin.png',
+  iconSize: [32, 42],
+  iconAnchor: [16, 42],     // punta del pin
+  popupAnchor: [0, -42]
+});
+L.marker([-12.0551, -77.0462], { icon: icono })
+  .addTo(mapa)
+  .bindPopup('Palacio de Gobierno');
+
+// Círculo de área
+L.circle([-12.0464, -77.0428], {
+  radius: 1200,
+  color: '#f59e0b',
+  fillOpacity: 0.15
+}).addTo(mapa);
+</code></pre>
+<blockquote class="aside aside-tip"><p>`bindPopup` asocia un globo al marcador y `openPopup()` lo abre al cargar. Alinear bien `iconAnchor`/`popupAnchor` es clave para que el pin "apunte" al lugar exacto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="capas-geojson">
+    <h2>Capas y GeoJSON <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Cargar un GeoJSON (provincias, rutas, POIs) y pintarlo
+fetch('/data/distritos.json')
+  .then((r) =&gt; r.json())
+  .then((geo) =&gt; {
+    L.geoJSON(geo, {
+      style: () =&gt; ({ color: '#3b82f6', weight: 1, fillOpacity: 0.1 }),
+      onEachFeature: (feature, layer) =&gt; {
+        layer.bindPopup(`&lt;b&gt;${feature.properties.name}&lt;/b&gt;`);
+      }
+    }).addTo(mapa);
+  });
+
+// Varias capas con control para encender/apagar
+const capaCafes = L.layerGroup([...]).addTo(mapa);
+const capaParques = L.layerGroup([...]);
+
+L.control.layers({
+  'Cafés': capaCafes,
+  'Parques': capaParques
+}).addTo(mapa);
+</code></pre>
+<blockquote class="aside aside-success"><p>Leaflet consume GeoJSON directamente con `L.geoJSON`, incluyendo estilos y popups por feature. Los `layerGroup` + `L.control.layers` dan un panel de capas sin escribir UI.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="interaccion-eventos">
+    <h2>Interacción y Eventos <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Eventos de mapa
+mapa.on('click', (e) =&gt; {
+  console.log('Coordenadas:', e.latlng.lat, e.latlng.lng);
+  L.marker(e.latlng).addTo(mapa);   // colocar marcador donde clicaste
+});
+
+mapa.on('zoomend', () =&gt; {
+  console.log('Zoom actual:', mapa.getZoom());
+});
+
+// Fit al contenido
+const bounds = L.latLngBounds([[ -12.08, -77.09 ], [ -12.01, -77.01 ]]);
+mapa.fitBounds(bounds);   // encuadra el rectángulo completo
+
+// Actualizar centro/zoom
+mapa.setView([-13.5250, -71.9722], 13);   // Cusco
+</code></pre>
+<blockquote class="aside aside-caution"><p>`fitBounds` es la forma robusta de encuadrar puntos: en vez de calcular el centro a mano, deja que Leaflet resuelva el zoom. Para "mi ubicación", usa la Geolocation API del navegador y `mapa.locate()`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un mapa centrado en tu ciudad con tiles de OpenStreetMap.</li>
+<li>Añade 5 marcadores con popups que describan cada lugar.</li>
+<li>Coloca marcadores con un clic en cualquier punto del mapa.</li>
+<li>Pinta un polígono GeoJSON y dale estilo personalizado.</li>
+<li>Usa `fitBounds` para encuadrar todos los marcadores automáticamente.</li>
+</ol>
+    </div>
+  </section>

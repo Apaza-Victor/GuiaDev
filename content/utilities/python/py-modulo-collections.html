@@ -1,0 +1,163 @@
+<!-- collections - Python (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>`collections` amplía los tipos integrados de Python (dict, list, tuple) con estructuras especializadas para casos de uso frecuentes: contar elementos, agrupar valores por clave, colas de doble extremo o tuplas con nombre.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Contar frecuencias de elementos con `Counter`, como en análisis de texto o logs.</li>
+<li>Agrupar listas por clave sin escribir la comprobación manual con `defaultdict`.</li>
+<li>Montar colas y pilas eficientes con `deque` y rotaciones con `rotate`.</li>
+<li>Crear registros inmutables legibles con `namedtuple` o combinados con `ChainMap`.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Cuando un dict normal te obliga a repetir el patrón "si no existe, inicialízalo".</li>
+<li>Cuando necesitas el elemento más común o acumular histogramas en una línea.</li>
+<li>Cuando encolas operaciones en un buffer y el rendimiento de `list.pop(0)` no sirve.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Para datasets enormes, `Counter` y `defaultdict` siguen viviendo en memoria: si no caben, pasa a procesar por lotes con `itertools` o a `pandas`/bases de datos. Y `deque(maxlen=n)` evita que una cola crezca sin control.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="introduccion-base">
+    <h2>Introducción <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-python">from collections import Counter, defaultdict, deque, namedtuple, ChainMap
+</code></pre>
+<p>Cuando un dict, list o tuple no te basta, `collections` trae estructuras especializadas y eficientes:</p>
+<table><thead><tr><th>Estructura</th><th>Para qué</th></tr></thead><tbody><tr><td><code>Counter</code></td><td>contar apariciones</td></tr><tr><td><code>defaultdict</code></td><td>dict con valor por defecto</td></tr><tr><td><code>deque</code></td><td>colas rápidas por ambos extremos</td></tr><tr><td><code>namedtuple</code></td><td>tuplas con campos con nombre</td></tr><tr><td><code>OrderedDict</code></td><td>orden de inserción (gerencias ya no lo necesitan)</td></tr><tr><td><code>ChainMap</code></td><td>varios dict vistos como uno solo</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="counter-conteos-paso-1">
+    <h2>Counter: conteos <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from collections import Counter
+
+vocales = Counter("abracadabra")
+print(vocales["a"])        # 5
+
+palabras = Counter("hola mundo hola código hola".split())
+palabras.most_common(2)    # [('hola', 3), ('mundo', 1)]
+palabras["hola"]           # 3
+
+# Sumar contadores y operar
+c1 = Counter(a=3, b=1)
+c2 = Counter(a=2, b=5)
+c1 + c2                    # Counter({'a': 5, 'b': 6})
+c1 - c2                    # Counter() (no baja de 0)
+
+# Ideal para análisis de logs o palabras en textos
+from collections import Counter
+with open("log.txt", encoding="utf-8") as f:
+    nivel = Counter(line.split(" ")[0] for line in f)
+print(nivel)               # Counter({'ERROR': 8, 'OK': 12, ...})
+</code></pre>
+<blockquote class="aside aside-tip"><p>`Counter` es un dict que cuenta y da `most_common(n)` y sumas/restas. Sustituye decenas de líneas de "if in dict" y es más rápido.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="defaultdict-paso-2">
+    <h2>defaultdict: valores por defecto <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from collections import defaultdict
+
+# Sin comprobar: indexar una clave nueva NO da KeyError
+por_seccion = defaultdict(list)
+
+estudiantes = [("A", "Lina"), ("B", "Sami"), ("A", "Nico")]
+for seccion, nombre in estudiantes:
+    por_seccion[seccion].append(nombre)
+
+por_seccion["A"]     # ['Lina', 'Nico']
+por_seccion["C"]     # []  (crea la lista vacía sola)
+
+# Con int: contadores sin inicializar
+contador = defaultdict(int)
+for c in "banana":
+    contador[c] += 1
+contador["b"]        # 1
+
+# Con set: agrupar sin repetidos
+grupos = defaultdict(set)
+</code></pre>
+<blockquote class="aside aside-note"><p>`defaultdict(factory)` devuelve un valor nuevo cada vez que accedes a una clave inexistente. Acaba con el patrón `d.setdefault(k, []).append(...)`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="deque-colas-paso-3">
+    <h2>deque: colas rápidas <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from collections import deque
+
+# Cola FIFO: lo primero que entra es lo primero que sale
+tareas = deque(["a", "b", "c"])
+tareas.popleft()          # 'a'  (sale por la izquierda en O(1))
+tareas.append("d")        # entra por la derecha
+
+# Pila LIFO: lo último entra, lo primero sale
+historial = deque()
+historial.append("página1")
+historial.append("página2")
+historial.pop()           # 'página2' (undo/back se hace así)
+
+# Ventana con límite: se descartan los más antiguos
+recientes = deque(maxlen=3)
+for i in range(5):
+    recientes.append(i)   # deque([2, 3, 4], maxlen=3)
+
+# Girar / rotar útiles para ruedas y carruseles
+rot = deque([1, 2, 3, 4])
+rot.rotate(-1)            # deque([2, 3, 4, 1])
+</code></pre>
+<blockquote class="aside aside-caution"><p>Insertar/borrar en los extremos de una lista normal es O(n); con `deque` es O(1). El `maxlen` es perfecto para el historial "última N vistas".</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="namedtuple-chainmap-paso-4">
+    <h2>namedtuple y ChainMap <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from collections import namedtuple, ChainMap
+
+# namedtuple: tupla con nombres (ligera e inmutable)
+Punto = namedtuple("Punto", "x y")
+p = Punto(10, 20)
+p.x      # 10
+p.y      # 20
+p[0]     # 10 (sigue siendo tupla)
+x, y = p # desempaquetado normal
+
+# _replace crea una copia modificada (inmutabilidad real)
+q = p._replace(x=99)      # Punto(x=99, y=20)
+
+# ChainMap: busca en varios dict en orden
+defaults = {"tema": "claro", "vol": 0.7}
+usuario = {"tema": "oscuro"}
+cfg = ChainMap(usuario, defaults)
+cfg["tema"]    # 'oscuro'  (del más prioritario)
+cfg["vol"]     # 0.7  (del default)
+</code></pre>
+<blockquote class="aside aside-success"><p>`namedtuple` cuesta menos memoria que un dict y auto-documenta el código. `ChainMap` modela configuraciones "usuario gana sobre defaults" sin fundir ambos dict.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Cuenta cuántas veces aparece cada letra en "programación" con `Counter`.</li>
+<li>Añade a una lista de espera con un `defaultdict` de alumnos por sección.</li>
+<li>Implementa el botón "atrás" de un navegador con una `deque` de páginas.</li>
+<li>Crea un `namedtuple` `Producto` con nombre y precio, y calcula un total.</li>
+<li>Combina defaults y preferencias del usuario con `ChainMap`.</li>
+</ol>
+    </div>
+  </section>

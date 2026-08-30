@@ -134,6 +134,28 @@ const GuiaDev = {
     return '<i class="fa-solid fa-sun"></i>';
   },
 
+  createBackToTop() {
+    if (document.getElementById("back-to-top")) return;
+    const btn = document.createElement("button");
+    btn.id = "back-to-top";
+    btn.className = "back-to-top";
+    btn.title = "Volver al inicio";
+    btn.setAttribute("aria-label", "Volver al inicio");
+    btn.innerHTML = '<i class="fa-solid fa-arrow-up"></i>';
+    btn.addEventListener("click", () => {
+      const content = document.getElementById("main-content");
+      if (content) content.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    document.body.appendChild(btn);
+  },
+
+  syncBackToTop() {
+    const btn = document.getElementById("back-to-top");
+    const content = document.getElementById("main-content");
+    if (!btn || !content) return;
+    btn.classList.toggle("visible", content.scrollTop > 300);
+  },
+
   renderTableOfContents(lesson) {
     if (!lesson || !lesson.sections) return '';
 
@@ -192,7 +214,8 @@ const GuiaDev = {
     utilities: 'pages/utilidades.html',
     entrevistas: 'pages/entrevistas.html',
     ingles: 'pages/ingles.html',
-    recursos: 'pages/recursos.html'
+    recursos: 'pages/recursos.html',
+    glosario: 'pages/glosario.html'
   },
 
   getPageUrl(categoryId) {
@@ -209,7 +232,8 @@ const GuiaDev = {
     'utilities',
     'entrevistas',
     'ingles',
-    'recursos'
+    'recursos',
+    'glosario'
   ],
 
   orderedCategories() {
@@ -229,7 +253,8 @@ const GuiaDev = {
     utilities: 'Utilidades',
     entrevistas: 'Entrevistas',
     ingles: 'Inglés',
-    recursos: 'Recursos'
+    recursos: 'Recursos',
+    glosario: 'Glosario'
   },
 
   renderHeaderNav(currentCategoryId, prefix = '') {

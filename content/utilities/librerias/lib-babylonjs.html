@@ -1,0 +1,173 @@
+<!-- babylon.js - Librerías (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>Babylon.js es un motor 3D para el navegador orientado al desarrollo de juegos y experiencias inmersivas. Ofrece engine y scene al estilo de los motores profesionales, con física integrada, GUI, sprites, partículas y un editor visual para armar escenas.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Construir escenas 3D interactivas con cámara, luces y mallas.</li>
+<li>Desarrollar juegos web con física, colisiones y control de input.</li>
+<li>Renderizar modelos importados (glTF, OBJ) y entornos de realidad virtual y aumentada.</li>
+<li>Montar interfaces dentro de la escena con la capa GUI de Babylon.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Juegos y demos 3D que exigen física y animación de personajes.</li>
+<li>Visualización de productos o configuradores 3D complejos.</li>
+<li>Proyectos AR/VR con WebXR donde Babylon aporta soporte directo.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Para mostrar modelos 3D simples o panoramas ligeros, Three.js es más sencillo y ligero. Babylon brilla en proyectos tipo motor de juego que justifican su tamaño y su API corporativa.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install @babylonjs/core @babylonjs/gui
+</code></pre>
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;script src="https://cdn.babylonjs.com/babylon.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-js">import { Engine, Scene, FreeCamera, Vector3, HemisphericLight } from '@babylonjs/core';
+</code></pre>
+<blockquote class="aside aside-tip"><p>Babylon.js es otro gran motor 3D web, con fuerte énfasis en juegos: física integrada, GUI, sprites y shaders. Su API por engine+scene recuerda a otros motores de juegos profesionales.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primera-escena">
+    <h2>Primera Escena <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">import { Engine, Scene, FreeCamera, Vector3, } from '@babylonjs/core';
+import { HemisphericLight, MeshBuilder, StandardMaterial, Color3 } from '@babylonjs/core';
+
+// 1. Engine sobre el canvas
+const canvas = document.getElementById('escena');
+const engine = new Engine(canvas, true);
+
+// 2. Escena
+const scene = new Scene(engine);
+
+// 3. Cámara libre con controles WASD/flechas
+const camera = new FreeCamera('cam', new Vector3(0, 2, -8), scene);
+camera.setTarget(Vector3.Zero());
+camera.attachControl(canvas, true);
+
+// 4. Luz hemisférica + direccional para un sol creíble
+const light = new HemisphericLight('luz', new Vector3(0, 1, 0), scene);
+light.intensity = 0.8;
+
+// 5. Un cubo
+const cubo = MeshBuilder.CreateBox('cubo', { size: 2 }, scene);
+const material = new StandardMaterial('mat', scene);
+material.diffuseColor = new Color3(0.96, 0.62, 0.04);
+cubo.material = material;
+
+// 6. Bucle de render
+engine.runRenderLoop(() =&gt; scene.render());
+addEventListener('resize', () =&gt; engine.resize());
+</code></pre>
+<blockquote class="aside aside-note"><p>Babylon usa un sistema de "engine + scene": el engine gestiona el canvas y el render loop, la escena guarda los objetos. `attachControl` conecta la cámara con los controles del usuario.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="camara-controles">
+    <h2>Cámara y Controles <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">import { ArcRotateCamera } from '@babylonjs/core';
+
+// Cámara orbital (como OrbitControls): gira con el ratón
+const cam = new ArcRotateCamera('cam', -Math.PI / 2, Math.PI / 3, 10,
+                                new Vector3(0, 1, 0), scene);
+cam.attachControl(canvas, true);
+cam.lowerRadiusLimit = 3;   // zoom mínimo
+cam.upperRadiusLimit = 25;  // zoom máximo
+cam.wheelPrecision = 20;
+
+// Movimiento táctil (escritorio y móvil)
+cam.panningSensibility = 100;
+</code></pre>
+<pre><code class="language-js">// Física básica: escenas de juego
+import { PhysicsAggregate, PhysicsShapeType } from '@babylonjs/core';
+import '@babylonjs/core/Physics/v1/physicsEngineComponent.js';
+
+const pelota = MeshBuilder.CreateSphere('p', { diameter: 1 }, scene);
+pelota.position.y = 5;
+new PhysicsAggregate(pelota, PhysicsShapeType.SPHERE, { mass: 1 }, scene);
+</code></pre>
+<blockquote class="aside aside-tip"><p>Babylon trae física con un clic: `PhysicsAggregate` + `PhysicsShapeType` añade gravedad y colisiones sin instalar nada. Es ideal para prototipos de juegos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="materiales-texturas">
+    <h2>Materiales y Texturas <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">import { StandardMaterial, Color3, Texture } from '@babylonjs/core';
+
+// Textura entrelazada (mipmap) y escala
+const textura = new Texture('/texturas/ladrillo.jpg', scene);
+textura.uScale = 2;   // repetir 2 veces en U
+textura.vScale = 2;
+
+const material = new StandardMaterial('mat', scene);
+material.diffuseTexture = textura;
+material.specularColor = new Color3(0.1, 0.1, 0.1);
+material.ambientColor = new Color3(0.2, 0.2, 0.2);
+
+// Emisión (objetos que brillan)
+const brillo = new StandardMaterial('brillo', scene);
+brillo.emissiveColor = new Color3(0, 1, 0.5);
+
+// Transparencia
+const vidrio = new StandardMaterial('vidrio', scene);
+vidrio.alpha = 0.4;
+</code></pre>
+<blockquote class="aside aside-caution"><p>Las texturas deben estar bajo el mismo dominio (GitHub Pages la sirve desde `/repo/...`) o usar rutas relativas al proyecto. Carga texturas grandes con `loading="async"` y opciones de compresión para no penalizar el arranque.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="animacion-events">
+    <h2>Animación y Scene events <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Animación declarativa por keyframes
+import { Animation } from '@babylonjs/core';
+
+const anim = new Animation('girar', 'rotation.y', 60,
+                           Animation.ANIMATIONTYPE_FLOAT,
+                           Animation.ANIMATIONLOOPMODE_CYCLE);
+anim.setKeys([
+  { frame: 0,   value: 0 },
+  { frame: 60,  value: Math.PI * 2 },
+]);
+cubo.animations.push(anim);
+scene.beginAnimation(cubo, 0, 60, true);
+
+// Movimiento manual en cada frame
+scene.onBeforeRenderObservable.add(() =&gt; {
+  cubo.position.y = 1 + Math.sin(scene.getTime() / 500) * 0.5;
+});
+</code></pre>
+<blockquote class="aside aside-success"><p>Usa `Animation` con keyframes para animaciones reutilizables y programadas, y `onBeforeRenderObservable` para lógica por frame (IA, físicas, partículas). Ambos coexisten sin conflictos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una escena con un suelo con rejilla (`MeshBuilder.CreateGround`) y un cono encima.</li>
+<li>Usa `ArcRotateCamera` y limita el zoom y el ángulo vertical.</li>
+<li>Añade una esfera con física que caiga sobre el suelo y rebote.</li>
+<li>Anima un cubo girando en bucle infinito con `Animation` y keyframes.</li>
+<li>Pon dos puntos de luz (punto y spot) y observa las sombras con `light.generateShadowMap = true`.</li>
+</ol>
+    </div>
+  </section>

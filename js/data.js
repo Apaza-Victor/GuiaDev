@@ -4087,6 +4087,407 @@ const DOCS_DATA = {
             "contentFile": "content/lenguajes/powershell/powershell-scripts-y-automatizacion.html"
           }
         ]
+      },
+      {
+        "id": "arduino",
+        "title": "Arduino",
+        "icon": "fa-solid fa-microchip",
+        "lessons": [
+          {
+            "id": "arduino-introduccion",
+            "title": "1. Introducción a Arduino",
+            "content": "Qué es Arduino, el hardware y el ecosistema: de dónde viene, qué placas existen y cómo empezar.",
+            "sections": [
+              "¿Qué es Arduino?",
+              "El microcontrolador",
+              "Placas y cuándo usar cada una",
+              "El ecosistema y el IDE",
+              "Primeros pasos",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/arduino/arduino-introduccion.html"
+          },
+          {
+            "id": "arduino-lenguaje",
+            "title": "2. El lenguaje de Arduino (Wiring)",
+            "content": "La variante de C++ que usa Arduino: tipos de datos, variables, operadores y funciones propias.",
+            "sections": [
+              "Wiring: C++ para maker",
+              "Tipos de datos",
+              "Variables y constantes",
+              "Operadores",
+              "Estructuras de control",
+              "Funciones propias",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/arduino/arduino-lenguaje.html"
+          },
+          {
+            "id": "arduino-sketches",
+            "title": "3. Estructura de un sketch",
+            "content": "setup() y loop(): el esqueleto de todo programa de Arduino, la compilación y el primer Blink.",
+            "sections": [
+              "¿Qué es un sketch?",
+              "setup() y loop()",
+              "Compilar y subir el código",
+              "El primer programa: Blink",
+              "Organización y comentarios",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/arduino/arduino-sketches.html"
+          },
+          {
+            "id": "arduino-digital",
+            "title": "4. Entradas y salidas digitales",
+            "content": "Leer botones y encender LEDs: pinMode, digitalWrite, digitalRead y resistencias pull-up/pull-down.",
+            "sections": [
+              "Señales digitales",
+              "pinMode, HIGH y LOW",
+              "Salidas digitales: encender un LED",
+              "Entradas digitales: leer un botón",
+              "Resistencias pull-up y INPUT_PULLUP",
+              "Proyecto: LED controlado por botón",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/arduino/arduino-digital.html"
+          },
+          {
+            "id": "arduino-pwm",
+            "title": "5. PWM y salidas analógicas",
+            "content": "Brillo, velocidad y sonido suaves: analogWrite, los pines ~, el teorema y aplicaciones del PWM.",
+            "sections": [
+              "¿Qué es PWM?",
+              "Los pines con ~",
+              "analogWrite: brillo de un LED",
+              "Fade: luz que respira",
+              "Velocidad de un motor",
+              "Tono y sonido",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/arduino/arduino-pwm.html"
+          },
+          {
+            "id": "arduino-analogico",
+            "title": "6. Entradas analógicas y sensores",
+            "content": "Leer potenciómetros y sensores: analogRead, escalado con map(), y conexión de sensores reales.",
+            "sections": [
+              "Del mundo analógico al digital",
+              "analogRead y el ADC de 10 bits",
+              "Potenciómetro: medir posiciones",
+              "Sensor de luz (LDR)",
+              "Sensor de temperatura",
+              "Escalar valores con map() y constrain()",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/arduino/arduino-analogico.html"
+          },
+          {
+            "id": "arduino-serial",
+            "title": "7. Comunicación Serial",
+            "content": "Habla con tu PC: Serial.begin, print, println y lectura de datos con el Monitor Serie.",
+            "sections": [
+              "¿Qué es la comunicación serial?",
+              "Serial.begin y el Monitor Serie",
+              "Enviar datos: print y println",
+              "Recibir datos: available y read",
+              "Protocolos sencillos de texto",
+              "Serial Plotter",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/arduino/arduino-serial.html"
+          },
+          {
+            "id": "arduino-tiempo",
+            "title": "8. Tiempo y multitarea: millis()",
+            "content": "Deja de bloquear a delay(): usa millis() y micros() para temporizar varias tareas a la vez.",
+            "sections": [
+              "El problema de delay()",
+              "millis() y micros()",
+              "Temporizador con millis()",
+              "Multitarea sin bloqueos",
+              "Otras funciones de tiempo",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/arduino/arduino-tiempo.html"
+          },
+          {
+            "id": "arduino-interrupciones",
+            "title": "9. Interrupciones y debounce",
+            "content": "Reacciona al instante: attachInterrupt, ISR y el antirrebote de botones con millis().",
+            "sections": [
+              "¿Qué es una interrupción?",
+              "attachInterrupt y pines compatibles",
+              "Las reglas de la ISR",
+              "Flags y volatile",
+              "Debounce de botones",
+              "Interrupción vs. polling",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/arduino/arduino-interrupciones.html"
+          },
+          {
+            "id": "arduino-librerias",
+            "title": "10. Librerías y ampliación",
+            "content": "La superpoderosa biblioteca de Arduino: instalar, incluir y usar librerías para sensores y pantallas.",
+            "sections": [
+              "¿Qué es una librería?",
+              "Instalar librerías",
+              "Incluir y usar una librería",
+              "Librerías esenciales",
+              "Manejo de errores y documentación",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/arduino/arduino-librerias.html"
+          }
+        ]
+      },
+      {
+        "id": "fundamentos",
+        "title": "Fundamentos de Programación",
+        "icon": "fa-solid fa-graduation-cap",
+        "lessons": [
+          {
+            "id": "fund-introduccion",
+            "title": "1. ¿Qué es un Algoritmo?",
+            "content": "La base de todo: qué es un algoritmo, sus propiedades y cómo representarlo con pseudocódigo y diagramas de flujo",
+            "sections": [
+              "¿Qué es un algoritmo?",
+              "Propiedades de un algoritmo",
+              "Representaciones: pseudocódigo y diagrama de flujo",
+              "Ejemplo guiado paso a paso",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/fundamentos/fund-introduccion.html"
+          },
+          {
+            "id": "fund-variables",
+            "title": "2. Variables y Tipos de Datos",
+            "content": "Cómo la computadora guarda información: variables, tipos de datos, constantes y buenas prácticas de nombrado",
+            "sections": [
+              "¿Qué son las variables?",
+              "Tipos de datos básicos",
+              "Declaración y asignación",
+              "Constantes",
+              "Buenas prácticas de nombrado",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/fundamentos/fund-variables.html"
+          },
+          {
+            "id": "fund-operadores",
+            "title": "3. Operadores y Expresiones",
+            "content": "Aritméticos, de comparación y lógicos: cómo se construyen y evalúan las expresiones en todo lenguaje",
+            "sections": [
+              "¿Qué es una expresión?",
+              "Operadores aritméticos",
+              "Operadores de comparación",
+              "Operadores lógicos",
+              "Precedencia de operadores",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/fundamentos/fund-operadores.html"
+          },
+          {
+            "id": "fund-entrada-salida",
+            "title": "4. Entrada y Salida de Datos",
+            "content": "Cómo un programa recibe datos del usuario y muestra resultados: lectura, impresión y conversiones de tipo",
+            "sections": [
+              "¿Por qué comunicarse con el usuario?",
+              "Leer datos de entrada",
+              "Mostrar resultados",
+              "Conversión de tipos",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/fundamentos/fund-entrada-salida.html"
+          },
+          {
+            "id": "fund-condicionales",
+            "title": "5. Estructuras de Control: Condicionales",
+            "content": "Tomar decisiones en código: if, else if, switch y condiciones compuestas en pseudocódigo y diagramas",
+            "sections": [
+              "La toma de decisiones",
+              "if / else",
+              "if / else if / else",
+              "switch",
+              "Condiciones compuestas",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/fundamentos/fund-condicionales.html"
+          },
+          {
+            "id": "fund-bucles",
+            "title": "6. Estructuras de Control: Bucles",
+            "content": "Repetir sin copiar código: for, while, do-while, bucles anidados y cómo evitar los bucles infinitos",
+            "sections": [
+              "Repetir sin copiar código",
+              "El bucle for",
+              "El bucle while",
+              "El bucle do-while",
+              "break y continue",
+              "Bucles anidados",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/fundamentos/fund-bucles.html"
+          },
+          {
+            "id": "fund-funciones",
+            "title": "7. Funciones y Modularidad",
+            "content": "Dividir el problema en partes más pequeñas: parámetros, valores de retorno y ámbito de las variables",
+            "sections": [
+              "¿Por qué dividir el problema?",
+              "Definición de una función",
+              "Parámetros y retorno",
+              "Ámbito de las variables",
+              "Modularidad",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/fundamentos/fund-funciones.html"
+          },
+          {
+            "id": "fund-arreglos",
+            "title": "8. Arreglos y Cadenas",
+            "content": "Agrupar muchos datos en una sola estructura: arreglos, recorridos, matrices y cadenas de texto",
+            "sections": [
+              "¿Qué es un arreglo?",
+              "Declaración y acceso",
+              "Recorrer un arreglo",
+              "Matrices",
+              "Cadenas de texto",
+              "Buenas prácticas",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/fundamentos/fund-arreglos.html"
+          }
+        ]
+      },
+      {
+        "id": "latex",
+        "title": "LaTeX",
+        "icon": "fa-solid fa-file-lines",
+        "lessons": [
+          {
+            "id": "latex-introduccion",
+            "title": "1. Introducción a LaTeX",
+            "content": "Qué es LaTeX, por qué se usa en ciencia y academia, y cómo instalar tu primera distribución",
+            "sections": [
+              "¿Qué es LaTeX?",
+              "LaTeX vs. procesadores de texto",
+              "Instalar LaTeX",
+              "Tu primer documento",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/latex/latex-introduccion.html"
+          },
+          {
+            "id": "latex-estructura",
+            "title": "2. Estructura de un Documento",
+            "content": "Preámbulo, clases de documento, el cuerpo y los paquetes esenciales que todo documento usa",
+            "sections": [
+              "El preámbulo",
+              "Clases de documento",
+              "El cuerpo del documento",
+              "Secciones y estructura",
+              "Paquetes esenciales",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/latex/latex-estructura.html"
+          },
+          {
+            "id": "latex-texto",
+            "title": "3. Texto y Formato",
+            "content": "Espaciado, énfasis, tamaños de letra, caracteres especiales y los trucos para escribir bien en LaTeX",
+            "sections": [
+              "Escritura de texto",
+              "Negrita, cursiva y subrayado",
+              "Tamaños y estilos",
+              "Saltos y espaciado",
+              "Caracteres especiales y acentos",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/latex/latex-texto.html"
+          },
+          {
+            "id": "latex-tablas-figuras",
+            "title": "4. Tablas y Figuras",
+            "content": "El entorno tabular, tablas profesionales con el paquete booktabs y cómo insertar y referenciar figuras",
+            "sections": [
+              "El entorno tabular",
+              "Tablas con booktabs",
+              "Columnas y alineación",
+              "Insertar figuras",
+              "Subtítulos y referencias cruzadas",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/latex/latex-tablas-figuras.html"
+          },
+          {
+            "id": "latex-matematicas",
+            "title": "5. Escritura Matemática",
+            "content": "El modo matemático: símbolos, fracciones, raíces, ecuaciones numeradas y alineación con amsmath",
+            "sections": [
+              "El modo matemático",
+              "Símbolos y letras griegas",
+              "Fracciones y raíces",
+              "Subíndices, superíndices y funciones",
+              "Ecuaciones numeradas y alineadas",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/latex/latex-matematicas.html"
+          },
+          {
+            "id": "latex-referencias",
+            "title": "6. Referencias y Bibliografía",
+            "content": "Tabla de contenidos, referencias cruzadas y bibliografía con BibTeX y biblatex para un documento académico",
+            "sections": [
+              "Referencias cruzadas",
+              "Tabla de contenidos",
+              "Introducción a la bibliografía",
+              "BibTeX y biblatex",
+              "Citar en el texto",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/latex/latex-referencias.html"
+          },
+          {
+            "id": "latex-compilacion",
+            "title": "7. Compilación y Buenas Prácticas",
+            "content": "El flujo de compilación, editores y herramientas (Overleaf, TeXstudio), depuración de errores y organización",
+            "sections": [
+              "El flujo de compilación",
+              "Editores y herramientas",
+              "Depurar errores",
+              "Organización de proyectos",
+              "Buenas prácticas",
+              "Errores comunes",
+              "Ejercicios"
+            ],
+            "contentFile": "content/lenguajes/latex/latex-compilacion.html"
+          }
+        ]
       }
     ]
   },
@@ -6804,6 +7205,32 @@ const DOCS_DATA = {
               "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
             ],
             "contentFile": "content/is/fundamentos/is-desafios-desarrollo.html"
+          },
+          {
+            "id": "is-etica-profesionalismo",
+            "title": "5 Ética y Profesionalismo",
+            "content": "Responsabilidad social, código de ética ACM/IEEE, profesionalismo y dilemas éticos en el desarrollo de software",
+            "sections": [
+              "<i class=\"fa-solid fa-scale-balanced\"></i> ¿Por qué importa la ética en el software?",
+              "<i class=\"fa-solid fa-book-open\"></i> Códigos de ética: ACM e IEEE",
+              "<i class=\"fa-solid fa-user-tie\"></i> Profesionalismo y competencias",
+              "<i class=\"fa-solid fa-diagram-project\"></i> Dilemas y casos prácticos",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/fundamentos/is-etica-profesionalismo.html"
+          },
+          {
+            "id": "is-principios-pilares",
+            "title": "6 Principios y Pilares de la Ingeniería de Software",
+            "content": "Pilares (fiabilidad, eficiencia, mantenibilidad, usabilidad), principios KISS/DRY/YAGNI y el enfoque sistemático",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> Los pilares de la ingeniería de software",
+              "<i class=\"fa-solid fa-dice-d6\"></i> Principios clave del desarrollo profesional",
+              "<i class=\"fa-solid fa-flask\"></i> El enfoque sistemático y científico",
+              "<i class=\"fa-solid fa-scale-balanced\"></i> El equilibrio entre principios",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/fundamentos/is-principios-pilares.html"
           }
         ]
       },
@@ -6924,6 +7351,301 @@ const DOCS_DATA = {
               "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
             ],
             "contentFile": "content/is/ciclo-vida/ciclo-modelos-desarrollo.html"
+          },
+          {
+            "id": "ciclo-modelos-agiles-xp-kanban",
+            "title": "4 Modelos Ágiles: XP y Kanban",
+            "content": "Programación Extrema (XP), Kanban con flujo continuo, y cuándo elegir cada método ágil",
+            "sections": [
+              "<i class=\"fa-solid fa-bolt\"></i> Programación Extrema (XP)",
+              "<i class=\"fa-solid fa-kaaba\"></i> Kanban",
+              "<i class=\"fa-solid fa-shuffle\"></i> Scrumban y elección de método",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/ciclo-vida/ciclo-modelos-agiles-xp-kanban.html"
+          },
+          {
+            "id": "ciclo-modelos-incremental-espiral",
+            "title": "5 Modelos Incremental y Espiral",
+            "content": "Modelo incremental por módulos y modelo en espiral orientado al riesgo de Boehm",
+            "sections": [
+              "<i class=\"fa-solid fa-layer-group\"></i> Modelo Incremental",
+              "<i class=\"fa-solid fa-circle-notch\"></i> Modelo en Espiral",
+              "<i class=\"fa-solid fa-scale-balanced\"></i> Incremental vs. Espiral vs. Cascada",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/ciclo-vida/ciclo-modelos-incremental-espiral.html"
+          }
+        ]
+      },
+      {
+        "id": "diseno",
+        "title": "Diseño de Software",
+        "icon": "fa-solid fa-drafting-compass",
+        "lessons": [
+          {
+            "id": "dis-arquitectura",
+            "title": "1 Arquitectura de Software",
+            "content": "Estructura del sistema, requisitos arquitectónicos, atributos de calidad y rol del arquitecto",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué es la Arquitectura de Software?",
+              "<i class=\"fa-solid fa-trophy\"></i> ¿Por qué importa?",
+              "<i class=\"fa-solid fa-clipboard-list\"></i> Requisitos que condicionan la arquitectura",
+              "<i class=\"fa-solid fa-diagram-project\"></i> Diagrama de Arquitectura",
+              "<i class=\"fa-solid fa-user-tie\"></i> Rol del Arquitecto de Software",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/diseno/dis-arquitectura.html"
+          },
+          {
+            "id": "dis-diseno-modular",
+            "title": "2 Diseño Modular, Cohesión y Acoplamiento",
+            "content": "Partición en módulos, tipos de cohesión y acoplamiento, y buenas prácticas de diseño",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué es el diseño modular?",
+              "<i class=\"fa-solid fa-fill-drip\"></i> Cohesión: qué tan enfocado es un módulo",
+              "<i class=\"fa-solid fa-link\"></i> Acoplamiento: qué tan conectados están los módulos",
+              "<i class=\"fa-solid fa-chart-column\"></i> Tabla comparativa",
+              "<i class=\"fa-solid fa-circle-check\"></i> Buenas prácticas",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/diseno/dis-diseno-modular.html"
+          },
+          {
+            "id": "dis-patroones-diseno",
+            "title": "3 Patrones de Diseño (GoF)",
+            "content": "Patrones creacionales, estructurales y de comportamiento, y cuándo aplicarlos",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué son los patrones de diseño?",
+              "<i class=\"fa-solid fa-layer-group\"></i> Clasificación: creacionales, estructurales y de comportamiento",
+              "<i class=\"fa-solid fa-boxes-stacked\"></i> Patrones creacionales",
+              "<i class=\"fa-solid fa-cubes\"></i> Patrones estructurales",
+              "<i class=\"fa-solid fa-person-running\"></i> Patrones de comportamiento",
+              "<i class=\"fa-solid fa-scale-balanced\"></i> Cuándo usar y cuándo evitar patrones",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/diseno/dis-patroones-diseno.html"
+          },
+          {
+            "id": "dis-principios-solid",
+            "title": "4 Principios SOLID",
+            "content": "Los cinco principios SOLID de Robert C. Martin y su impacto en el diseño de clases",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué es SOLID?",
+              "<i class=\"fa-solid fa-1\"></i> S: Responsabilidad Única (SRP)",
+              "<i class=\"fa-solid fa-2\"></i> O: Abierto/Cerrado (OCP)",
+              "<i class=\"fa-solid fa-3\"></i> L: Sustitución de Liskov (LSP)",
+              "<i class=\"fa-solid fa-4\"></i> I: Segregación de Interfaces (ISP)",
+              "<i class=\"fa-solid fa-5\"></i> D: Inversión de Dependencias (DIP)",
+              "<i class=\"fa-solid fa-arrow-trend-up\"></i> Impacto práctico",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/diseno/dis-principios-solid.html"
+          },
+          {
+            "id": "dis-estilos-arquitectonicos",
+            "title": "5 Estilos Arquitectónicos",
+            "content": "Capas, monolítico, cliente-servidor, microservicios, eventos y cómo seleccionar el adecuado",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué es un estilo arquitectónico?",
+              "<i class=\"fa-solid fa-layer-group\"></i> Arquitectura por capas (layered)",
+              "<i class=\"fa-solid fa-cube\"></i> Arquitectura monolítica",
+              "<i class=\"fa-solid fa-server\"></i> Cliente-Servidor",
+              "<i class=\"fa-solid fa-cubes\"></i> Microservicios",
+              "<i class=\"fa-solid fa-bell\"></i> Arquitectura orientada a eventos (EDA)",
+              "<i class=\"fa-solid fa-list-check\"></i> Cómo elegir el estilo adecuado",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/diseno/dis-estilos-arquitectonicos.html"
+          }
+        ]
+      },
+      {
+        "id": "pruebas",
+        "title": "Pruebas de Software",
+        "icon": "fa-solid fa-vial-circle-check",
+        "lessons": [
+          {
+            "id": "prue-fundamentos",
+            "title": "1 Fundamentos de Pruebas de Software",
+            "content": "Definición, principios ISTQB, objetivos y relación entre calidad y pruebas",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué son las pruebas de software?",
+              "<i class=\"fa-solid fa-list-check\"></i> Principios fundamentales",
+              "<i class=\"fa-solid fa-trophy\"></i> Objetivos y beneficios",
+              "<i class=\"fa-solid fa-scale-balanced\"></i> Calidad vs. Pruebas",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/pruebas/prue-fundamentos.html"
+          },
+          {
+            "id": "prue-niveles-tipos",
+            "title": "2 Niveles y Tipos de Pruebas",
+            "content": "Unitarias, integración, sistema y aceptación; pruebas funcionales y no funcionales",
+            "sections": [
+              "<i class=\"fa-solid fa-list-ol\"></i> Niveles de pruebas",
+              "<i class=\"fa-solid fa-shapes\"></i> Tipos de pruebas por propósito",
+              "<i class=\"fa-solid fa-gear\"></i> Pruebas funcionales",
+              "<i class=\"fa-solid fa-gauge-high\"></i> Pruebas no funcionales",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> Pirámide de pruebas",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/pruebas/prue-niveles-tipos.html"
+          },
+          {
+            "id": "prue-tdd",
+            "title": "3 Desarrollo Guiado por Pruebas (TDD)",
+            "content": "Ciclo red-green-refactor, beneficios, desafíos y ejemplo práctico",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué es TDD?",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> Ciclo: Red, Green, Refactor",
+              "<i class=\"fa-solid fa-trophy\"></i> Beneficios de TDD",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> Desafíos y críticas",
+              "<i class=\"fa-solid fa-flask\"></i> Ejemplo práctico",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/pruebas/prue-tdd.html"
+          },
+          {
+            "id": "prue-estrategia",
+            "title": "4 Estrategia y Plan de Pruebas",
+            "content": "Plan de pruebas, gestión de defectos, automatización y métricas",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué es una estrategia de pruebas?",
+              "<i class=\"fa-solid fa-clipboard-list\"></i> Elementos del plan de pruebas",
+              "<i class=\"fa-solid fa-bug\"></i> Gestión de defectos",
+              "<i class=\"fa-solid fa-robot\"></i> Automatización de pruebas",
+              "<i class=\"fa-solid fa-chart-column\"></i> Métricas de pruebas",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/pruebas/prue-estrategia.html"
+          }
+        ]
+      },
+      {
+        "id": "proyectos",
+        "title": "Gestión de Proyectos",
+        "icon": "fa-solid fa-diagram-project",
+        "lessons": [
+          {
+            "id": "proy-estimacion",
+            "title": "1 Estimación de Software",
+            "content": "Técnicas de estimación, unidades, errores comunes y buenas prácticas",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué es estimar?",
+              "<i class=\"fa-solid fa-list-check\"></i> Técnicas de estimación",
+              "<i class=\"fa-solid fa-ruler\"></i> Unidades: horas, story points, LOC",
+              "<i class=\"fa-solid fa-circle-exclamation\"></i> Errores comunes",
+              "<i class=\"fa-solid fa-lightbulb\"></i> Consejos para estimar mejor",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/proyectos/proy-estimacion.html"
+          },
+          {
+            "id": "proy-planificacion",
+            "title": "2 Planificación de Proyectos",
+            "content": "Diagrama de Gantt, ruta crítica, herramientas y planificación ágil",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué es la planificación?",
+              "<i class=\"fa-solid fa-chart-gantt\"></i> Diagrama de Gantt",
+              "<i class=\"fa-solid fa-route\"></i> Ruta crítica (Critical Path)",
+              "<i class=\"fa-solid fa-toolbox\"></i> Herramientas comunes",
+              "<i class=\"fa-solid fa-bolt\"></i> Planificación en metodologías ágiles",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/proyectos/proy-planificacion.html"
+          },
+          {
+            "id": "proy-riesgos",
+            "title": "3 Gestión de Riesgos",
+            "content": "Proceso de gestión, tipos de riesgo, matriz de probabilidad e impacto y estrategias de respuesta",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué es un riesgo en software?",
+              "<i class=\"fa-solid fa-list-check\"></i> Proceso de gestión de riesgos",
+              "<i class=\"fa-solid fa-shapes\"></i> Tipos de riesgos",
+              "<i class=\"fa-solid fa-table-cells\"></i> Matriz de probabilidad e impacto",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> Estrategias de respuesta",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/proyectos/proy-riesgos.html"
+          },
+          {
+            "id": "proy-seguimiento",
+            "title": "4 Seguimiento y Control del Proyecto",
+            "content": "Métricas clave, reuniones de seguimiento, gestión del cambio y señales de alerta",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Por qué es importante el seguimiento?",
+              "<i class=\"fa-solid fa-chart-column\"></i> Métricas clave",
+              "<i class=\"fa-solid fa-people-group\"></i> Reuniones de seguimiento",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> Gestión del cambio de alcance",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> Señales de alerta",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/proyectos/proy-seguimiento.html"
+          }
+        ]
+      },
+      {
+        "id": "calidad",
+        "title": "Calidad y Mantenimiento",
+        "icon": "fa-solid fa-clipboard-check",
+        "lessons": [
+          {
+            "id": "calidad-normas",
+            "title": "1 Calidad del Software y Normas",
+            "content": "Modelo ISO/IEC 25010, QA vs QC, procesos de mejora y cultura de calidad",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué es la calidad del software?",
+              "<i class=\"fa-solid fa-book-open\"></i> Normas y estándares",
+              "<i class=\"fa-solid fa-scale-balanced\"></i> Garantía de calidad vs. Control de calidad",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> Procesos y mejora continua",
+              "<i class=\"fa-solid fa-people-group\"></i> Cultura de calidad en el equipo",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/calidad/calidad-normas.html"
+          },
+          {
+            "id": "calidad-metricas",
+            "title": "2 Métricas e Indicadores de Calidad",
+            "content": "Métricas de producto, proceso y proyecto, KPIs recomendados y cuidados",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué son las métricas?",
+              "<i class=\"fa-solid fa-cube\"></i> Métricas de producto",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> Métricas de proceso",
+              "<i class=\"fa-solid fa-diagram-project\"></i> Métricas de proyecto",
+              "<i class=\"fa-solid fa-gauge-high\"></i> KPI recomendados",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> Cuidado con las métricas",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/calidad/calidad-metricas.html"
+          },
+          {
+            "id": "calidad-refactorizacion",
+            "title": "3 Refactorización y Código Limpio",
+            "content": "Refactorización, code smells, técnicas comunes y principios de código limpio",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> ¿Qué es la refactorización?",
+              "<i class=\"fa-solid fa-clock\"></i> ¿Cuándo y por qué refactorizar?",
+              "<i class=\"fa-solid fa-biohazard\"></i> Code smells (malos olores)",
+              "<i class=\"fa-solid fa-screwdriver-wrench\"></i> Técnicas comunes",
+              "<i class=\"fa-solid fa-sparkles\"></i> Código limpio y nomenclatura",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/calidad/calidad-refactorizacion.html"
+          },
+          {
+            "id": "calidad-mantenimiento",
+            "title": "4 Mantenimiento y Deuda Técnica",
+            "content": "Tipos de mantenimiento, deuda técnica, cómo medirla y estrategias para reducirla",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> Tipos de mantenimiento",
+              "<i class=\"fa-solid fa-money-bill-trend-up\"></i> ¿Qué es la deuda técnica?",
+              "<i class=\"fa-solid fa-chart-column\"></i> Cómo medir y gestionar la deuda técnica",
+              "<i class=\"fa-solid fa-arrow-trend-down\"></i> Cómo reducir la deuda",
+              "<i class=\"fa-solid fa-list-check\"></i> Estrategia de mantenimiento efectiva",
+              "<i class=\"fa-solid fa-graduation-cap\"></i> Resumen"
+            ],
+            "contentFile": "content/is/calidad/calidad-mantenimiento.html"
           }
         ]
       }
@@ -7160,6 +7882,160 @@ const DOCS_DATA = {
               "Ejercicios prácticos Reto"
             ],
             "contentFile": "content/utilities/librerias/lib-highlightjs.html"
+          },
+          {
+            "id": "lib-threejs",
+            "title": "three.js",
+            "content": "Motor 3D en el navegador: escenas, cámaras, mallas, luces y animaciones WebGL",
+            "sections": [
+              "Instalación Paso 1",
+              "Primera Escena Paso 2",
+              "Geometrías y Materiales Paso 3",
+              "Luces y Cámara Paso 4",
+              "Animación y Render Loop Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-threejs.html"
+          },
+          {
+            "id": "lib-babylonjs",
+            "title": "babylon.js",
+            "content": "Motor 3D y juegos en el navegador: escena, cámara, luces, materiales y físicas",
+            "sections": [
+              "Instalación Paso 1",
+              "Primera Escena Paso 2",
+              "Cámara y Controles Paso 3",
+              "Materiales y Texturas Paso 4",
+              "Animación y Scene events Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-babylonjs.html"
+          },
+          {
+            "id": "lib-gsap",
+            "title": "gsap",
+            "content": "Animación profesional de alto rendimiento: tweens, timelines, easing y ScrollTrigger",
+            "sections": [
+              "Instalación Paso 1",
+              "Tweens Básicos Paso 2",
+              "Timelines Paso 3",
+              "Easing y Control Paso 4",
+              "ScrollTrigger Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-gsap.html"
+          },
+          {
+            "id": "lib-framer-motion",
+            "title": "framer motion",
+            "content": "Animaciones y gestos declarativos para React: motion, variants y AnimatePresence",
+            "sections": [
+              "Instalación Paso 1",
+              "Componentes motion Paso 2",
+              "Variants Paso 3",
+              "Gestos y Drag Paso 4",
+              "AnimatePresence y Transiciones Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-framer-motion.html"
+          },
+          {
+            "id": "lib-d3",
+            "title": "d3.js",
+            "content": "Visualización de datos con SVG: selecciones, escalas, ejes y data joins",
+            "sections": [
+              "Instalación Paso 1",
+              "Selecciones y DOM Paso 2",
+              "Escalas y Ejes Paso 3",
+              "Data Join Paso 4",
+              "Gráficos con Datos Dinámicos Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-d3.html"
+          },
+          {
+            "id": "lib-p5",
+            "title": "p5.js",
+            "content": "Creative coding y arte generativo: canvas, formas, color, interacción y ruido",
+            "sections": [
+              "Instalación Paso 1",
+              "setup y draw Paso 2",
+              "Formas y Color Paso 3",
+              "Interacción con el Mouse Paso 4",
+              "Aleatoriedad y Ruido Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-p5.html"
+          },
+          {
+            "id": "lib-dayjs",
+            "title": "day.js",
+            "content": "Manejo de fechas ultraligero con API similar a Moment.js y plugins opcionales",
+            "sections": [
+              "Instalación Paso 1",
+              "Parseo y Formato Paso 2",
+              "Operaciones Paso 3",
+              "Comparaciones Paso 4",
+              "Plugins Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-dayjs.html"
+          },
+          {
+            "id": "lib-leaflet",
+            "title": "leaflet",
+            "content": "Mapas interactivos livianos: tiles, marcadores, popups, capas y GeoJSON",
+            "sections": [
+              "Instalación Paso 1",
+              "Mapa Básico Paso 2",
+              "Marcadores y Popups Paso 3",
+              "Capas y GeoJSON Paso 4",
+              "Interacción y Eventos Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-leaflet.html"
+          },
+          {
+            "id": "lib-swiper",
+            "title": "swiper",
+            "content": "Slider y carrusel moderno con gestos táctiles, autoplay y módulos opcionales",
+            "sections": [
+              "Instalación Paso 1",
+              "Slider Básico Paso 2",
+              "Navegación y Paginación Paso 3",
+              "Módulos y Opciones Paso 4",
+              "Autoplay y Breakpoints Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-swiper.html"
+          },
+          {
+            "id": "lib-tsparticles",
+            "title": "tsParticles",
+            "content": "Partículas animadas configurables: fondos, formas, enlaces, repulsión y efectos",
+            "sections": [
+              "Instalación Paso 1",
+              "Configuración Básica Paso 2",
+              "Formas y Colores Paso 3",
+              "Interacción con el Mouse Paso 4",
+              "Rendimiento y Múltiples Instancias Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-tsparticles.html"
+          },
+          {
+            "id": "lib-revealjs",
+            "title": "reveal.js",
+            "content": "Presentaciones en HTML: diapositivas, temas, fragmentos, transiciones y speaker notes",
+            "sections": [
+              "Instalación Paso 1",
+              "Estructura de Diapositivas Paso 2",
+              "Temas y Diseño Paso 3",
+              "Fragmentos y Transiciones Paso 4",
+              "Panel del Presentador Paso 5",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/librerias/lib-revealjs.html"
           }
         ]
       },
@@ -8217,6 +9093,181 @@ const DOCS_DATA = {
               "Despliegue: contenedores y edge"
             ],
             "contentFile": "content/utilities/bibliotecas/typescript-ides-herramientas.html"
+          }
+        ]
+      },
+      {
+        "id": "python",
+        "title": "Python: Módulos y Librerías",
+        "icon": "fa-brands fa-python",
+        "lessons": [
+          {
+            "id": "py-modulo-random",
+            "title": "random: números y selección aleatoria",
+            "content": "Genera números aleatorios, elige elementos y baraja colecciones con el módulo random",
+            "sections": [
+              "Importar random Base",
+              "Números Aleatorios Paso 1",
+              "Elección y Muestreo Paso 2",
+              "Barajar y Distribuciones Paso 3",
+              "Simular con Semilla Paso 4",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/python/py-modulo-random.html"
+          },
+          {
+            "id": "py-modulo-math",
+            "title": "math: funciones matemáticas",
+            "content": "Constantes, redondeo, potencias, raíces, trigonometría y combinatoria con math",
+            "sections": [
+              "Importar math Base",
+              "Constantes y Redondeo Paso 1",
+              "Potencias y Raíces Paso 2",
+              "Trigonometría Paso 3",
+              "Logaritmos y Combinatoria Paso 4",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/python/py-modulo-math.html"
+          },
+          {
+            "id": "py-modulo-os-sys",
+            "title": "os y sys: sistema y consola",
+            "content": "Accede al sistema operativo, variables de entorno, rutas y argumentos con os y sys",
+            "sections": [
+              "Explorar el sistema Base",
+              "Rutas y Archivos Paso 1",
+              "Variables de Entorno Paso 2",
+              "sys: argumentos y salida Paso 3",
+              "Plataforma y Procesos Paso 4",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/python/py-modulo-os-sys.html"
+          },
+          {
+            "id": "py-modulo-datetime",
+            "title": "datetime: fechas y horas",
+            "content": "Fechas, horas, duraciones, formato y zonas horarias con el módulo datetime",
+            "sections": [
+              "Fechas y Horas Base",
+              "Crear y Operar Paso 1",
+              "Formato y Parseo Paso 2",
+              "timedelta: duraciones Paso 3",
+              "Aplicaciones Prácticas Paso 4",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/python/py-modulo-datetime.html"
+          },
+          {
+            "id": "py-modulo-json",
+            "title": "json: datos serializados",
+            "content": "Lee y escribe JSON para APIs, configuraciones y persistencia con el módulo json",
+            "sections": [
+              "Los conceptos Base",
+              "Serializar con dumps Paso 1",
+              "Deserializar con loads Paso 2",
+              "Archivos con load y dump Paso 3",
+              "Errores y Opciones Paso 4",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/python/py-modulo-json.html"
+          },
+          {
+            "id": "py-modulo-re",
+            "title": "re: expresiones regulares",
+            "content": "Busca, valida y reemplaza texto con patrones usando el módulo re",
+            "sections": [
+              "Patrones Base",
+              "Buscar con search y match Paso 1",
+              "Encontrar Todas las Coincidencias Paso 2",
+              "Reemplazar y Dividir Paso 3",
+              "Grupos y Flags Paso 4",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/python/py-modulo-re.html"
+          },
+          {
+            "id": "py-modulo-collections",
+            "title": "collections: estructuras de datos",
+            "content": "Counter, defaultdict, deque, namedtuple y ChainMap para datos eficientes",
+            "sections": [
+              "Introducción Base",
+              "Counter: conteos Paso 1",
+              "defaultdict: valores por defecto Paso 2",
+              "deque: colas rápidas Paso 3",
+              "namedtuple y ChainMap Paso 4",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/python/py-modulo-collections.html"
+          },
+          {
+            "id": "py-modulo-itertools-functools",
+            "title": "itertools y functools",
+            "content": "Iteradores infinitos, combinatoria, cache, reduce y partial para código idiomático",
+            "sections": [
+              "Iteración Infinita Base",
+              "Combinatoria Paso 1",
+              "Agrupar y Seleccionar Paso 2",
+              "functools: cache y lru_cache Paso 3",
+              "reduce y partial Paso 4",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/python/py-modulo-itertools-functools.html"
+          },
+          {
+            "id": "py-modulo-pathlib",
+            "title": "pathlib: archivos y rutas",
+            "content": "Rutas modernas, leer y escribir archivos, y recorrer directorios con pathlib",
+            "sections": [
+              "Rutas modernas Base",
+              "Paths y Operaciones Paso 1",
+              "Leer y Escribir Paso 2",
+              "Recorrer Directorios Paso 3",
+              "Crear, Mover y Eliminar Paso 4",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/python/py-modulo-pathlib.html"
+          },
+          {
+            "id": "py-modulo-subprocess-shutil",
+            "title": "subprocess y shutil",
+            "content": "Ejecuta comandos, captura salidas y automatiza copias, borrados y compresión",
+            "sections": [
+              "Ejecutar Comandos Base",
+              "Capturar Salida Paso 1",
+              "Shell e Interacción Paso 2",
+              "shutil: copias y backups Paso 3",
+              "Compresión y Movimientos Paso 4",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/python/py-modulo-subprocess-shutil.html"
+          },
+          {
+            "id": "py-modulo-argparse",
+            "title": "argparse: línea de comandos",
+            "content": "Crea CLIs profesionales: argumentos, flags, valores por defecto y ayuda automática",
+            "sections": [
+              "Argumentos Base",
+              "Primer parser Paso 1",
+              "Tipos y Valores por Defecto Paso 2",
+              "Flags Booleanos Paso 3",
+              "Mejora la Experiencia Paso 4",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/python/py-modulo-argparse.html"
+          },
+          {
+            "id": "py-modulo-turtle",
+            "title": "turtle: gráficos y dibujo",
+            "content": "Dibuja figuras, crea programas visuales y juegos con la tortuga de Python",
+            "sections": [
+              "La tortuga Base",
+              "Muévela Paso 1",
+              "Figuras y Colores Paso 2",
+              "Bucles y Fractales Paso 3",
+              "Eventos con el Teclado Paso 4",
+              "Ejercicios prácticos Reto"
+            ],
+            "contentFile": "content/utilities/python/py-modulo-turtle.html"
           }
         ]
       },
@@ -9567,14 +10618,60 @@ const DOCS_DATA = {
             "contentFile": "content/recursos/referencia/rec-ref-online-tools.html"
           }
         ]
+      },
+      {
+        "id": "fundamentos",
+        "title": "Fundamentos en la Práctica",
+        "icon": "fa-solid fa-bullseye",
+        "lessons": [
+          {
+            "id": "rec-fund-principiantes",
+            "title": "Programas y Webs para Practicar Fundamentos",
+            "content": "Programas de escritorio y sitios web para aprender y practicar los fundamentos de la programación: PSeInt, Scratch, Flowgorithm y más.",
+            "sections": [
+              "Programas para practicar pseudocódigo y algoritmos",
+              "Sitios web interactivos de fundamentos",
+              "Juegos y retos de lógica",
+              "Plataformas de práctica en línea"
+            ],
+            "contentFile": "content/recursos/fundamentos/rec-fund-principiantes.html"
+          }
+        ]
+      },
+      {
+        "id": "vscode",
+        "title": "VS Code: Extiende y Acelera",
+        "icon": "fa-solid fa-bolt",
+        "lessons": [
+          {
+            "id": "rec-vscode-extensiones",
+            "title": "Qué instalar en VS Code para programar más rápido",
+            "content": "Las mejores extensiones (IA, Git, formateo y productividad) para escribir código más rápido desde el primer día.",
+            "sections": [
+              "Extensiones esenciales para escribir más rápido",
+              "IA y autocompletado: menos teclear",
+              "Git sin salir del editor",
+              "Formato, snippets y productividad extra"
+            ],
+            "contentFile": "content/recursos/vscode/rec-vscode-extensiones.html"
+          }
+        ]
       }
     ]
+  },
+  {
+    "id": "glosario",
+    "title": "Glosario",
+    "icon": "fa-solid fa-book",
+    "color": "#8b5cf6",
+    "order": 1,
+    "subcategories": []
   }
-]
+  ]
 };
 
 const STATS = {
-  "lessons": "666",
+  "lessons": "737",
   "languages": "28",
   "frameworks": "9",
   "diagrams": "49"

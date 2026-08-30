@@ -1,0 +1,178 @@
+<!-- d3.js - Librerías (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>D3.js (Data-Driven Documents) es la librería de referencia para visualización de datos: une los datos con el DOM y SVG mediante selecciones, data joins, escalas, ejes y transiciones. No ofrece gráficos predefinidos; te da las piezas para construir los tuyos.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Crear visualizaciones a medida: scatter, sankey, mapas, chord, etc.</li>
+<li>Escalar datos a coordenadas visuales con `d3.scaleLinear` y `d3.scaleBand`.</li>
+<li>Enlazar datos con el DOM usando enter/update/exit (`data` + `join`).</li>
+<li>Añadir ejes, grids y transiciones animadas a los SVG generados.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Informes de datos a medida donde Chart.js no da el control necesario.</li>
+<li>Mapas interactivos y visualizaciones científicas con grandes datasets.</li>
+<li>Dashboards con gráficos custom que cambian dinámicamente con los datos.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Su curva de aprendizaje es pronunciada y el código se vuelve verboso. Si tu necesidad son gráficos estándar (barra, línea, doughnut), Chart.js o ECharts son opciones mucho más rápidas de implementar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install d3
+</code></pre>
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-js">import * as d3 from 'd3';
+</code></pre>
+<blockquote class="aside aside-tip"><p>D3.js es la librería de referencia para visualización de datos: une datos con el DOM y SVG. No trae gráficos predefinidos; te da los bloques (escalas, ejes, joins) para construir los tuyos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="selecciones-dom">
+    <h2>Selecciones y DOM <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Seleccionar y crear SVG
+const svg = d3.select('#grafico')
+  .append('svg')
+  .attr('width', 600)
+  .attr('height', 400);
+
+// Añadir círculos y ligarlos a datos (data join)
+svg.selectAll('circle')
+  .data([10, 25, 40, 60])
+  .join('circle')
+    .attr('cx', (d, i) =&gt; 50 + i * 80)
+    .attr('cy', 200)
+    .attr('r', (d) =&gt; d)
+    .attr('fill', '#f59e0b');
+
+// Actualizar atributos con estilo y texto
+svg.selectAll('text')
+  .data([10, 25, 40, 60])
+  .join('text')
+    .attr('x', (d, i) =&gt; 50 + i * 80)
+    .attr('y', 220)
+    .style('text-anchor', 'middle')
+    .text((d) =&gt; d);
+</code></pre>
+<blockquote class="aside aside-note"><p>La selección por datos (`join`) es el corazón de D3: crea, actualiza y elimina elementos según los datos que cambian. Es una declaración "sincroniza el DOM con esta serie de datos".</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="escalas-ejes">
+    <h2>Escalas y Ejes <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Escala lineal para el eje X (dominio de datos -&gt; rango de píxeles)
+const x = d3.scaleLinear()
+  .domain([0, 100])
+  .range([0, 500]);
+
+// Escala de banda para barras (categorías)
+const y = d3.scaleBand()
+  .domain(['Lun', 'Mar', 'Mié', 'Jue'])
+  .range([0, 300])
+  .padding(0.2);
+
+// Crear el eje
+svg.append('g')
+  .attr('transform', 'translate(50, 360)')
+  .call(d3.axisBottom(x));
+
+svg.append('g')
+  .attr('transform', 'translate(50, 0)')
+  .call(d3.axisLeft(y));
+
+// Escala de color
+const color = d3.scaleOrdinal(d3.schemeTableau10);
+console.log(color('A'));   // '#4e79a7'
+</code></pre>
+<blockquote class="aside aside-tip"><p>Las escalas traducen datos a píxeles (o colores). `scaleOrdinal` + `schemeTableau10` da paletas listas para categorías sin diseñar nada.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="data-join">
+    <h2>Data Join <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Modelo de tres fases: enter / update / exit
+function dibujaBarras(datos) {
+  const barras = svg.selectAll('rect')
+    .data(datos, (d) =&gt; d.nombre);   // key de identidad
+
+  // ENTER: barras nuevas
+  barras.enter()
+    .append('rect')
+    .attr('width', x.bandwidth())
+    .attr('height', 0)
+    .attr('y', (d) =&gt; valorY(d.valor))
+    .merge(barras)                    // combina enter + update
+    .transition()
+    .duration(400)
+    .attr('height', (d) =&gt; alto(d.valor));
+
+  // UPDATE: re-used via merge
+  //
+  // EXIT: barras que ya no existen
+  barras.exit()
+    .transition()
+    .duration(300)
+    .attr('height', 0)
+    .remove();
+}
+</code></pre>
+<blockquote class="aside aside-caution"><p>Usa una **key** (`.data(datos, d => d.nombre)`) para que D3 sepa qué elementos actualizar cuando el array cambia de orden o contenido; sin key, D3 casa por posición y las transiciones se ven erróneas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="datos-dinamicos">
+    <h2>Gráficos con Datos Dinámicos <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Cargar datos externos (CSV/JSON)
+d3.json('/api/ventas.json').then((datos) =&gt; dibujaBarras(datos));
+
+// Transición con easing
+function actualiza(datos) {
+  svg.selectAll('rect')
+    .data(datos, (d) =&gt; d.nombre)
+    .join(
+      enter =&gt; enter.append('rect')
+        .attr('y', 300)
+        .attr('height', 0)
+        .call((sel) =&gt; sel.transition().duration(500).attr('height', (d) =&gt; alto(d.valor))),
+      update =&gt; update
+        .call((sel) =&gt; sel.transition().duration(500)
+          .attr('y', (d) =&gt; valorY(d.valor))
+          .attr('height', (d) =&gt; alto(d.valor))),
+      exit =&gt; exit.transition().duration(300).attr('height', 0).remove()
+    );
+}
+</code></pre>
+<blockquote class="aside aside-success"><p>Con `join(enter, update, exit)` declaras qué hace cada fase. Las transiciones animan entre valores y D3 escala los ticks y los ejes automáticamente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Dibuja un scatter plot con 10 puntos usando `scaleLinear` para ambos ejes.</li>
+<li>Construye un gráfico de barras vertical con `scaleBand` y `d3.axisBottom`.</li>
+<li>Añade una transición que anime las barras desde altura 0 al cargar.</li>
+<li>Haz que las barras respondan a un botón "ordenar": mueve los datos con `datum.sort` y re-anima.</li>
+<li>Colorea cada barra de la paleta `schemeTableau10` según su índice.</li>
+</ol>
+    </div>
+  </section>

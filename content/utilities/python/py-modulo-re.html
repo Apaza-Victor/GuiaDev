@@ -1,0 +1,150 @@
+<!-- re - Python (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>`re` implementa las expresiones regulares (regex) en Python: patrones de texto que sirven para buscar, validar, extraer o reemplazar cadenas según reglas flexibles, desde validar un email hasta limpiar miles de líneas de un log.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Buscar coincidencias con `search` y `match`, o todas ellas con `findall` y `finditer`.</li>
+<li>Extraer partes concretas del texto con grupos `(...)` y `group()`.</li>
+<li>Reemplazar patrones con `sub` y dividir cadenas con `split`.</li>
+<li>Escapar texto literal con `re.escape` y compilar patrones reutilizables con `compile`.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Validar formatos de entrada: emails, teléfonos, códigos postales o fechas.</li>
+<li>Buscar y extraer datos de logs, CSVs o configuraciones de texto plano.</li>
+<li>Normalizar textos o migrar formatos con reemplazos masivos.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Para HTML y XML no uses regex: un parser como `BeautifulSoup` o `html.parser` entiende la jerarquía real. Y cuidado con patrones anidados que causan "catastrophic backtracking"; simplifica la expresión.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="patrones-base">
+    <h2>Patrones <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-python">import re
+</code></pre>
+<blockquote class="aside aside-tip"><p>Las expresiones regulares (`regex`) describen patrones de texto: validar emails, buscar palabras, extraer partes de un log o reemplazar formatos. El módulo `re` es la implementación de Python.</p></blockquote>
+<table><thead><tr><th>Patrón</th><th>Significado</th></tr></thead><tbody><tr><td><code>.</code></td><td>cualquier carácter</td></tr><tr><td><code>\d</code></td><td>dígito (0-9)</td></tr><tr><td><code>\w</code></td><td>letra, dígito o _</td></tr><tr><td><code>\s</code></td><td>espacio o tab</td></tr><tr><td><code>+</code></td><td>1 o más del anterior</td></tr><tr><td><code>[]</code></td><td>conjunto (p. ej. [a-z0-9])</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buscar-search-match-paso-1">
+    <h2>Buscar con search y match <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import re
+
+texto = "El pedido #1234 fue enviado ayer."
+
+# search: encuentra en CUALQUIER parte del texto
+m = re.search(r"\d+", texto)
+m.group()            # '1234'
+m.span()             # (12, 16) posición inicial-final
+
+# match: exige que coincida DESDE el principio
+re.match(r"El", texto)      # match (&lt;objeto match&gt;)
+re.match(r"pedido", texto)  # None
+
+# ¿contiene un email? (patrón simple)
+correo = "contacto@guia.dev"
+if re.search(r"[\w.]+@[\w]+\.[a-z]{2,}", correo):
+    print("Email válido")
+</code></pre>
+<blockquote class="aside aside-note"><p>`match` solo mira al inicio del string; `search` barre todo el texto. Usa patrones crudos (`r"..."`) para que la barra invertida `\d` no se interprete como escape del string.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="todas-coincidencias-paso-2">
+    <h2>Encontrar Todas las Coincidencias <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import re
+
+log = "ERROR login; OK request /api/v1; ERROR timeout; OK 200"
+
+# findall: devuelve lista de coincidencias
+re.findall(r"ERROR", log)          # ['ERROR', 'ERROR']
+re.findall(r"\d{3}", log)          # ['200']
+
+# finditer: devuelve objetos match (con posiciones)
+for m in re.finditer(r"[A-Z]{2,}", log):
+    print(m.group(), m.span())
+
+# Con grupos, findall devuelve tuplas
+fechas = "12/08/2026 y 01/01/2027"
+re.findall(r"(\d{2})/(\d{2})/(\d{4})", fechas)
+# [('12', '08', '2026'), ('01', '01', '2027')]
+</code></pre>
+<blockquote class="aside aside-tip"><p>`findall` es ideal para "saca todos los emails/ids/IPs". Si tu patrón tiene paréntesis, cada coincidencia devuelve una tupla con los grupos capturados.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="reemplazar-dividir-paso-3">
+    <h2>Reemplazar y Dividir <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import re
+
+# sub: reemplaza las coincidencias
+texto = "Celular: +51 999-888-777"
+limpio = re.sub(r"[^\d+]", "", texto)    # '+51999888777' (quita no-dígitos)
+re.sub(r"-", "", "2026-08-29")           # '20260829'
+
+# sub con función de reemplazo: transforma cada match
+def mayus(m):
+    return m.group(0).upper()
+re.sub(r"\bpython\b", mayus, "amo python en python")   # 'amo PYTHON en PYTHON'
+
+# split: divide usando el patrón
+re.split(r"[\s,;]+", "hola, mundo; hoy")   # ['hola', 'mundo', 'hoy']
+</code></pre>
+<blockquote class="aside aside-caution"><p>`re.sub` es muy potente: quita caracteres, normalize espacios múltiples o anonimiza datos (por eso va bien con funciones de callback). Ojo con `\b` (límite de palabra) para no reemplazar "pythonista" al buscar "python".</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="grupos-flags-paso-4">
+    <h2>Grupos y Flags <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import re
+
+# Grupos con nombre
+m = re.search(r"(?P&lt;dia&gt;\d{2})/(?P&lt;mes&gt;\d{2})/(?P&lt;anio&gt;\d{4})", "29/08/2026")
+m.group("dia")     # '29'
+m.group("mes")     # '08'
+m.group("anio")    # '2026'
+m.group(0, 1, 2, 3)
+
+# Flags que cambian el comportamiento
+re.findall(r"hola", "Hola HOLa", re.IGNORECASE)      # ['Hola', 'HOLa']
+re.findall(r".+", "una\nlínea\nmás", re.DOTALL)      # multilinea completa
+
+# Alternancia y opcionalidad
+re.search(r"(madrid|lima|tokyo)", "vivo en Lima, Perú")  # lima
+re.search(r"colou?r", "color")      # 'color' (?) hace opcional la u
+
+# Compilar para reusar patrón
+patron = re.compile(r"\d{4}-\d{2}-\d{2}")
+patron.fullmatch("2026-08-29")      # asegura que TODO el texto coincide
+</code></pre>
+<blockquote class="aside aside-success"><p>Los grupos nombrados hacen el código legible (en vez de `match.group(1)` sabes qué es cada captura). `fullmatch` valida que el texto completo encaja: la forma correcta de validar formatos estrictos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Busca el primer número telefónico `+51 999-999-999` en una frase con `search`.</li>
+<li>Extrae todos los emails de un texto con `findall`.</li>
+<li>Quita los espacios duplicados a un párrafo con `re.sub`. </li>
+<li>Divide una cadena por comas, puntos y espacios con `re.split`.</li>
+<li>Valida un formato `AAAA-MM-DD` usando `fullmatch` con grupos nombrados.</li>
+</ol>
+    </div>
+  </section>

@@ -1,0 +1,157 @@
+<!-- pathlib - Python (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>`pathlib` moderniza el manejo de rutas: en vez de cadenas que concatenas con cuidado, usa objetos `Path` con métodos y operadores (`/`, `.exists()`, `.glob()`) que funcionan igual en Windows y Unix y se leen de forma natural.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Construir rutas componiéndolas con el operador `/` sin preocuparte por el separador.</li>
+<li>Leer y escribir ficheros directo con `read_text` y `write_text`.</li>
+<li>Buscar archivos con patrones glob (`*.csv`) y recorrer directorios con `glob` e `iterdir`.</li>
+<li>Renombrar, mover, comprobar existencia o crear carpetas con `mkdir`.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Procesar lotes de archivos donde detectas y agrupas por extensión o patrón.</li>
+<li>Escribir código multiplataforma sin encadenar `os.path.join` y `os.sep`.</li>
+<li>Guardar logs o adjuntos en carpetas que deben crearse automáticamente.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Si necesitas abrir un archivo binario pesado o un flujo complejo usa `open`, no `Path.read_bytes` para grandes volúmenes. Y para compatibilidad con código antiguo sigue existiendo `os.path`, pero en código nuevo conviene `pathlib`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="rutas-modernas-base">
+    <h2>Rutas modernas <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-python">from pathlib import Path
+</code></pre>
+<blockquote class="aside aside-tip"><p>`pathlib` trata las rutas como **objetos** (`Path`): en vez de cadenas con `os.path.join`, escribes `Path("datos") / "notas.csv"` y funciona en Windows y Unix por igual.</p></blockquote>
+<pre><code class="language-python">from pathlib import Path
+
+ruta = Path("informes") / "2026" / "enero.csv"
+print(ruta)                    # informes\2026\enero.csv (en Windows)
+
+actual = Path.cwd()            # directorio actual
+home = Path.home()             # directorio del usuario
+</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="paths-operaciones-paso-1">
+    <h2>Paths y Operaciones <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from pathlib import Path
+
+p = Path("/home/ana/proyecto/main.py")
+
+p.name          # 'main.py'
+p.stem          # 'main'
+p.suffix        # '.py'
+p.parent        # /home/ana/proyecto
+p.parents[0]    # idem, parents[n] sube n niveles
+p.parts         # ('\\', 'home', 'ana', 'proyecto', 'main.py')
+
+# Saber qué es
+p.is_file()     # True
+p.is_dir()      # False
+p.exists()      # True / False
+
+# Comparar y resolver
+abs_path = Path("pruebas/../main.py").resolve()   # ruta absoluta limpia
+</code></pre>
+<blockquote class="aside aside-note"><p>Todo lo que antes hacías con `os.path.*` (name, basename, split ext, exists...) ahora son propiedades/métodos del objeto `Path`. Es la API recomendada desde Python 3.6+.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="leer-escribir-paso-2">
+    <h2>Leer y Escribir <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from pathlib import Path
+
+archivo = Path("notas.txt")
+
+# Una línea, legible y limpia (con encoding seguro)
+texto = archivo.read_text(encoding="utf-8")
+archivo.write_text("nueva nota\n", encoding="utf-8")   # sobreescribe
+
+# Leer líneas o binario
+archivo.read_lines()          # lista de líneas
+datos = Path("logo.png").read_bytes()
+
+# Escribir una vez si no existe (evita reemplazos) y comprobar
+if not archivo.exists():
+    archivo.write_text("creado", encoding="utf-8")
+</code></pre>
+<blockquote class="aside aside-tip"><p>`read_text`/`write_text` cierran el archivo automáticamente (contexto implícito). Es la alternativa más cómoda a `open(...).read()` para scripts simples.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="recorrer-directorios-paso-3">
+    <h2>Recorrer Directorios <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from pathlib import Path
+
+directorio = Path("proyecto")
+
+# Contenido directo
+for item in directorio.iterdir():
+    print(item.name, "ES DIR" if item.is_dir() else "es archivo")
+
+# Con patrón (glob)
+list(directorio.glob("*.py"))      # todos los .py de un nivel
+list(directorio.rglob("*.html"))   # recursivo en subcarpetas
+list(directorio.glob("**/*.css"))  # equivalente a rglob("*.css")
+
+# Filtrar
+carpetas = [d for d in directorio.iterdir() if d.is_dir()]
+tam_total = sum(f.stat().st_size for f in directorio.glob("*.mp4"))
+</code></pre>
+<blockquote class="aside aside-success"><p>`glob` y `rglob` aceptan comodines (`*.py`, `**/*.md`) y devuelven objetos `Path`. Para listar con filtros es más limpio que `os.walk` en scripts pequeños.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="crear-mover-eliminar-paso-4">
+    <h2>Crear, Mover y Eliminar <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from pathlib import Path
+
+# Crear directorios
+Path("copia_seguridad").mkdir(exist_ok=True)
+Path("a/b/c").mkdir(parents=True, exist_ok=True)
+
+# Renombrar / mover
+Path("v1.txt").rename("v2.txt")
+Path("v2.txt").replace("backup/v2.txt")    # move con reemplazo robusto
+
+# Eliminar
+Path("temporal.txt").unlink(missing_ok=True)          # borra archivo
+Path("carpeta_vacia").rmdir()                          # solo si vacía
+
+# Crear un nuevo archivo y escribir
+nuevo = Path("data/secreto.txt")
+nuevo.parent.mkdir(parents=True, exist_ok=True)
+nuevo.write_text("contenido", encoding="utf-8")
+</code></pre>
+<blockquote class="aside aside-caution"><p>Con `parents=True` `mkdir` crea la jerarquía completa y `exist_ok=True` evita errores al repetir. `unlink(missing_ok=True)` no falla si el archivo no existe (Python 3.8+). Para borrar carpetas con contenido usa `shutil.rmtree`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea la estructura de carpetas `proyecto/src`, `proyecto/tests` con una línea.</li>
+<li>Enumera todos los `.py` dentro de tu carpeta del proyecto con `rglob`.</li>
+<li>Escribe un archivo `hola.txt`, léelo de vuelta e imprime su contenido.</li>
+<li>Mueve `hola.txt` a una subcarpeta usando `replace`.</li>
+<li>Borra un archivo por si acaso ya existía (sin romper con `missing_ok`).</li>
+</ol>
+    </div>
+  </section>

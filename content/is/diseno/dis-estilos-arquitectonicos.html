@@ -1,0 +1,183 @@
+<!-- 5 Estilos Arquitectónicos - Diseño (Ingeniería de Software) -->
+  <section id="que-es-un-estilo">
+    <h2><i class="fa-solid fa-compass-drafting"></i> ¿Qué es un estilo arquitectónico?</h2>
+    <div class="doc-content">
+<p>Un <strong>estilo arquitectónico</strong> es una <strong>familia de arquitecturas</strong> que comparte una misma forma de organizar los componentes del sistema y su comunicación. Describe el "esqueleto" general: qué tipos de componentes existen y cómo se relacionan entre sí.
+</p>
+<div class="plantuml-figure">
+          <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d206261636b67726f756e64436f6c6f722062656967650a736b696e706172616d2064656661756c74466f6e7453697a652031310a0a72656374616e676c652022455354494c4f5320415251554954454354c3934e49434f5322206173207374796c65732023453846354539207b0a202072656374616e676c652022506f7220636170617322206173206361702023383144344641207b0a2020202063617264202250726573656e74616369c3b36e220a202020206361726420224e65676f63696f220a202020206361726420224461746f73220a20207d0a202072656374616e676c6520224d6963726f736572766963696f7322206173206d6963726f20233831433738340a202072656374616e676c6520224f7269656e7461646f2061206576656e746f73222061732065646120234646423734440a202072656374616e676c6520224d6f6e6f6cc3ad7469636f22206173206d6f6e6f20234345393344380a7d0a6d6f6e6f202d646f776e2d3e20636170203a2063726563650a636170202d72696768742d3e20656461203a207365706172610a656461202d72696768742d3e206d6963726f203a20657363616c610a0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam backgroundColor beige
+skinparam defaultFontSize 11
+
+rectangle &quot;ESTILOS ARQUITECTÓNICOS&quot; as styles #E8F5E9 {
+  rectangle &quot;Por capas&quot; as cap #81D4FA {
+    card &quot;Presentación&quot;
+    card &quot;Negocio&quot;
+    card &quot;Datos&quot;
+  }
+  rectangle &quot;Microservicios&quot; as micro #81C784
+  rectangle &quot;Orientado a eventos&quot; as eda #FFB74D
+  rectangle &quot;Monolítico&quot; as mono #CE93D8
+}
+mono -down-&gt; cap : crece
+cap -right-&gt; eda : separa
+eda -right-&gt; micro : escala
+
+@enduml</code></pre>
+  </details>
+</div>
+<blockquote class="aside aside-note">
+Un estilo arquitectónico responde a preguntas como: ¿el sistema es una sola pieza o varias? ¿Cómo se comunican las partes (llamadas directas, eventos, mensajes)? ¿Dónde se despliega y cómo escala?
+</blockquote>
+<h3><i class="fa-solid fa-code-compare"></i> Estilo arquitectónico vs. patrón de diseño</h3>
+<table><thead><tr><th>Criterio</th><th>Estilo arquitectónico</th><th>Patrón de diseño (GoF)</th></tr></thead><tbody><tr><td><strong>Alcance</strong></td><td>Todo el sistema / subsistemas</td><td>Clases y objetos dentro de un módulo</td></tr><tr><td><strong>Granularidad</strong></td><td>Alta (componentes, servicios, capas)</td><td>Baja (clases individuales)</td></tr><tr><td><strong>Decide</strong></td><td>Cómo se estructura y despliega el sistema</td><td>Cómo se resuelve un problema local de diseño</td></tr><tr><td><strong>Nivel de abstracción</strong></td><td>Más abstracto y global</td><td>Más concreto y reutilizable</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Piénsalo así: el <strong>estilo arquitectónico</strong> es el "plano de la ciudad"; los <strong>patrones de diseño</strong> son la distribución interna de cada edificio. Ambos se complementan: un sistema puede usar estilo por capas y, a la vez, patrones como Factory u Observer internamente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="capas">
+    <h2><i class="fa-solid fa-layer-group"></i> Arquitectura por capas (layered)</h2>
+    <div class="doc-content">
+<p>La <strong>arquitectura por capas</strong> organiza el sistema en niveles horizontales, donde cada capa ofrece servicios a la capa superior y consume servicios de la inferior. La más común es la de <strong>tres capas</strong>.</p>
+<h3><i class="fa-solid fa-table-columns"></i> Capas típicas</h3>
+<ul>
+<li><strong>Presentación:</strong> interfaz de usuario, controladores y API. Se encarga de mostrar datos y capturar acciones.</li>
+<li><strong>Negocio (lógica):</strong> reglas de negocio, validaciones y procesos centrales de la aplicación.</li>
+<li><strong>Datos (acceso a datos / infraestructura):</strong> persistencia, conexiones a bases de datos y servicios externos.</li>
+</ul>
+<blockquote class="aside aside-note">
+La regla de oro: <strong>las dependencias van de arriba hacia abajo</strong>. La presentación conoce al negocio, el negocio conoce a los datos; nunca al revés, y preferiblemente cada capa accede solo a la inmediatamente inferior.
+</blockquote>
+<h3><i class="fa-solid fa-scale-balanced"></i> Ventajas y desventajas</h3>
+<table><thead><tr><th>Ventajas</th><th>Desventajas</th></tr></thead><tbody><tr><td><strong>Separación de responsabilidades</strong> clara</td><td><strong>Latencia</strong> añadida si las capas son procesos/redes</td></tr><tr><td>Fácil de <strong>mantener y reemplazar</strong> una capa</td><td>El <strong>paso de datos</strong> vertical puede resultar verboso</td></tr><tr><td>Equipos pueden <strong>especializarse</strong> por capa</td><td>Riesgo de <strong>dependencia "sándwich"</strong> rígida</td></tr><tr><td>Bien conocida y <strong>documentada</strong></td><td>Puede crear capas "anémicas" que solo transportan datos</td></tr></tbody></table>
+<blockquote class="aside aside-caution">
+Un error común es que las entidades/objetos de la base de datos "floten" hacia la presentación. Define <strong>DTOs (objetos de transferencia)</strong> para desacoplar las capas y no propagar el modelo de datos por todo el sistema.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="monolitico">
+    <h2><i class="fa-solid fa-cube"></i> Arquitectura monolítica</h2>
+    <div class="doc-content">
+<p>La <strong>arquitectura monolítica</strong> despliega toda la aplicación como <strong>un único artefacto o proceso</strong>. Todos los módulos (presentación, negocio, datos) compilan y se ejecutan juntos, en un mismo despliegue.</p>
+<blockquote class="aside aside-note">
+Un monolito no significa necesariamente "código espagueti": puede estar <strong>bien modularizado internamente</strong> (por capas o módulos) y aun así desplegarse como una única unidad. La modularidad interna y el despliegue único son cosas distintas.
+</blockquote>
+<h3><i class="fa-solid fa-scale-balanced"></i> Ventajas y desventajas</h3>
+<table><thead><tr><th>Ventajas</th><th>Desventajas</th></tr></thead><tbody><tr><td><strong>Simplicidad</strong> de desarrollo y despliegue</td><td><strong>Escalado grueso</strong>: se escala toda la app, no una parte</td></tr><tr><td>Menos <strong>complejidad operativa</strong> (un solo proceso)</td><td><strong>Acoplamiento</strong> creciente: un cambio afecta a todo</td></tr><tr><td>Rendimiento por <strong>llamadas en memoria</strong> (sin red)</td><td>Gran <strong>superficie de cambio</strong> y pruebas costosas</td></tr><tr><td>Fácil de <strong>testear de extremo a extremo</strong></td><td>Un fallo puede <strong>tumbar todo</strong> el sistema</td></tr><tr><td>Ideal para <strong>empezar</strong> o dominios pequeños</td><td>Dificulta <strong>trabajo en paralelo</strong> de muchos equipos</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+El monolito es el punto de partida <strong>recomendado</strong> para la mayoría de los proyectos: entrega valor rápido y simplifica la operación. La fragmentación en microservicios debe responder a necesidades reales de escala o de organización de equipos, no a la moda.
+</blockquote>
+<blockquote class="aside aside-warning">
+Evita el "monolito de cristal": al crecer sin modularidad interna, un monolito se vuelve frágil y difícil de evolucionar. La solución no siempre es pasar a microservicios; a menudo basta con <strong>modularizar y acotar responsabilidades</strong> dentro del propio monolito.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cliente-servidor">
+    <h2><i class="fa-solid fa-network-wired"></i> Cliente-Servidor</h2>
+    <div class="doc-content">
+<p>La arquitectura <strong>cliente-servidor</strong> divide el sistema en dos tipos de participantes: el <strong>cliente</strong>, que solicita servicios o recursos, y el <strong>servidor</strong>, que los ofrece. La comunicación suele ser mediante <strong>peticiones y respuestas</strong> sobre una red (HTTP, sockets, RPC).</p>
+<h3><i class="fa-solid fa-server"></i> Características</h3>
+<ul>
+<li><strong>Cliente:</strong> inicia la comunicación, presenta la interfaz y consume servicios; normalmente no comparte sus recursos.</li>
+<li><strong>Servidor:</strong> escucha, procesa las peticiones y responde; puede atender a muchos clientes simultáneamente.</li>
+<li><strong>Modelo petición-respuesta:</strong> síncrono en su forma básica (el cliente espera la respuesta).</li>
+<li><strong>Centralización:</strong> la lógica y los datos suelen residir en el servidor.</li>
+</ul>
+<blockquote class="aside aside-note">
+Es la base de la <strong>web actual</strong>: un navegador (cliente) realiza peticiones HTTP a un servidor web que procesa y devuelve HTML, JSON o API. También aplica a clientes de correo, bases de datos centralizadas y aplicaciones móviles que consultan APIs.
+</blockquote>
+<h3><i class="fa-solid fa-scale-balanced"></i> Ventajas y desventajas</h3>
+<table><thead><tr><th>Ventajas</th><th>Desventajas</th></tr></thead><tbody><tr><td><strong>Centralización</strong> de datos y lógica: consistencia y control</td><td><strong>Punto único de fallo</strong> en el servidor</td></tr><tr><td>Clientes <strong>ligeros</strong> y de bajo coste</td><td><strong>Cuello de botella</strong> en el servidor ante mucha carga</td></tr><tr><td>Fácil de <strong>asegurar y respaldar</strong></td><td>Dependencia de la <strong>red</strong> y de su latencia</td></tr><tr><td><strong>Escalado vertical</strong> simple</td><td>Escalado horizontal requiere más diseño</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="microservicios">
+    <h2><i class="fa-solid fa-shield-halved"></i> Microservicios</h2>
+    <div class="doc-content">
+<p>La arquitectura de <strong>microservicios</strong> estructura la aplicación como un conjunto de <strong>servicios pequeños, independientes y desplegables por separado</strong>, cada uno con su propia base de datos o lógica, que se comunican entre sí mediante protocolos ligeros (HTTP/REST, mensajería).</p>
+<blockquote class="aside aside-note">
+Cada microservicio se centra en una <strong>capacidad de negocio concreta</strong>, tiene su propio ciclo de vida, se despliega de forma autónoma y puede ser desarrollado por equipos distintos. Esto exige una fuerte <strong>disciplina de contratos</strong> y de observabilidad.
+</blockquote>
+<h3><i class="fa-solid fa-scale-balanced"></i> Ventajas y desventajas</h3>
+<table><thead><tr><th>Ventajas</th><th>Desventajas</th></tr></thead><tbody><tr><td><strong>Escalado independiente</strong> por servicio</td><td><strong>Complejidad operativa</strong> alta (red, despliegue, monitoreo)</td></tr><tr><td><strong>Despliegue y desarrollo independiente</strong></td><td><strong>Latencia de red</strong> y fallos distribuidos</td></tr><tr><td>Equipos <strong>autónomos y paralelos</strong></td><td>Consistencia de datos <strong>eventualmente</strong> (transacciones difíciles)</td></tr><tr><td><strong>Aislamiento de fallos</strong> (un servicio cae, no todo)</td><td>Difícil de <strong>probar de extremo a extremo</strong></td></tr><tr><td>Política de <strong>deuda tecnológica</strong> por servicio</td><td>Sobrecoste de <strong>infraestructura y contratos</strong></td></tr></tbody></table>
+<blockquote class="aside aside-warning">
+Los microservicios <strong>no son gratis</strong>: distribuyen el problema pero introducen los "dolores" de la computación distribuida (red, fallos parciales, consistencia). Elegirlos sin necesidad transforma un monolito sencillo en un sistema distribuido complejo.
+</blockquote>
+<h3><i class="fa-solid fa-list-check"></i> Cuándo elegirlos</h3>
+<ul>
+<li>Equipos grandes que necesitan <strong>autonomía e independencia</strong> de despliegue.</li>
+<li><strong>Escala desigual</strong>: componentes con requisitos de carga muy distintos.</li>
+<li>Tecnologías diversas o <strong>evolución aislada</strong> de módulos.</li>
+<li>Capacidad operativa madura (CI/CD, monitoreo, contenedores).</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="eventos-y-colas">
+    <h2><i class="fa-solid fa-envelope-open-text"></i> Arquitectura orientada a eventos (EDA)</h2>
+    <div class="doc-content">
+<p>La <strong>arquitectura orientada a eventos</strong> (Event-Driven Architecture, EDA) organiza el sistema alrededor de la <strong>producción, detección y consumo de eventos</strong>. Los componentes se desacoplan: el productor <strong>publica</strong> un evento sin saber quién lo consumirá, y los consumidores <strong>reaccionan</strong> a su llegada.</p>
+<h3><i class="fa-solid fa-tower-broadcast"></i> Mecanismos típicos</h3>
+<ul>
+<li><strong>Colas (queues):</strong> entregan cada mensaje a <strong>un solo consumidor</strong> (distribución de trabajo).</li>
+<li><strong>Temas/Topics (pub/sub):</strong> publican un evento a <strong>varios suscriptores</strong> interesados.</li>
+<li><strong>Broker de mensajería:</strong> middleware que gestiona el enrutamiento (Kafka, RabbitMQ, SQS).</li>
+</ul>
+<blockquote class="aside aside-tip">
+Diferencia clave: en una <strong>cola</strong> compiten consumidores por cada mensaje (work queue); en <strong>pub/sub</strong> todos los suscriptores reciben una copia del evento. Comprender esta diferencia evita errores de diseño graves.
+</blockquote>
+<h3><i class="fa-solid fa-scale-balanced"></i> Ventajas y desventajas</h3>
+<table><thead><tr><th>Ventajas</th><th>Desventajas</th></tr></thead><tbody><tr><td><strong>Desacoplamiento</strong> fuerte entre productor y consumidor</td><td>Flujo <strong>más difícil de seguir y depurar</strong></td></tr><tr><td><strong>Escalabilidad</strong> y procesamiento asíncrono</td><td>Complejidad de <strong>consistencia y de duplicados</strong></td></tr><tr><td>Alta <strong>flexibilidad</strong> para añadir consumidores</td><td>Riesgo de <strong>pérdida de eventos</strong> sin configurar bien</td></tr><tr><td>Buen <strong>rendimiento</strong> bajo picos de carga</td><td>Necesita <strong>tolerancia a fallos parciales</strong></td></tr></tbody></table>
+<blockquote class="aside aside-caution">
+En EDA hay que diseñar para el <strong>fallo del broker y la entrega no garantizada</strong>: define políticas de retry, dead-letter queues y orden de eventos cuando importe, o el sistema perderá datos o procesará en orden incorrecto.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="seleccion">
+    <h2><i class="fa-solid fa-sliders"></i> Cómo elegir el estilo adecuado</h2>
+    <div class="doc-content">
+<p>No existe un "mejor" estilo en abstracto: la decisión depende de <strong>requisitos, contexto y restricciones</strong>. La siguiente tabla condensa cuándo conviene cada uno.</p>
+<table><thead><tr><th>Criterio</th><th>Monolito / Capas</th><th>Cliente-Servidor</th><th>Microservicios</th><th>EDA</th></tr></thead><tbody><tr><td><strong>Tamaño del equipo</strong></td><td>Pequeño / uno</td><td>Mediano</td><td>Grande, autónomo</td><td>Cualquiera</td></tr><tr><td><strong>Escala esperada</strong></td><td>Baja / media</td><td>Media</td><td>Alta y desigual</td><td>Alta, picos</td></tr><tr><td><strong>Velocidad de entrega</strong></td><td>Alta al inicio</td><td>Media</td><td>Alta a largo plazo</td><td>Media</td></tr><tr><td><strong>Complejidad operativa</strong></td><td>Baja</td><td>Media</td><td>Alta</td><td>Alta</td></tr><tr><td><strong>Desacoplamiento</strong></td><td>Bajo</td><td>Medio</td><td>Alto</td><td>Muy alto</td></tr><tr><td><strong>Tolerancia a fallos</strong></td><td>Baja</td><td>Media</td><td>Alta (aislada)</td><td>Alta (asíncrono)</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+**Checklist para elegir estilo:**
+- <i class="fa-solid fa-circle-check"></i> ¿El tamaño del equipo y del sistema justifica la complejidad?
+- <i class="fa-solid fa-circle-check"></i> ¿Qué <strong>requisitos no funcionales</strong> pesan (escala, disponibilidad, latencia)?
+- <i class="fa-solid fa-circle-check"></i> ¿La operación (CI/CD, monitoreo) puede sostener la complejidad elegida?
+- <i class="fa-solid fa-circle-check"></i> ¿Puedo empezar simple (monolito) y evolucionar, o el dominio necesita algo distribuido desde el inicio?
+</blockquote>
+<blockquote class="aside aside-warning">
+Los estilos <strong>no son excluyentes</strong>: se combinan con frecuencia (un sistema por capas que sirve a clientes web con eventos para tareas asíncronas). La madurez está en combinar estilos según la necesidad de cada parte del sistema.
+</blockquote>
+<blockquote class="aside aside-caution">
+Evita decidir el estilo "de entrada" sin datos. Empieza por el <strong>monolito modular</strong> y extrae servicios o eventos cuando aparezcan necesidades reales de escala, autonomía o asincronía.
+</blockquote>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-graduation-cap"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+- <i class="fa-solid fa-compass-drafting"></i> **Estilo arquitectónico:** organiza los componentes del sistema completo y su comunicación; es más global que un patrón de diseño (que es local).
+- <i class="fa-solid fa-layer-group"></i> **Por capas:** divide en presentación, negocio y datos; simple y mantenible, con las dependencias hacia abajo.
+- <i class="fa-solid fa-cube"></i> **Monolítico:** un solo despliegue; simple de empezar pero con escalado grueso y mayor acoplamiento.
+- <i class="fa-solid fa-network-wired"></i> **Cliente-Servidor:** cliente solicita y servidor responde; base de la web, con punto único de fallo en el servidor.
+- <i class="fa-solid fa-shield-halved"></i> **Microservicios:** servicios independientes y desplegables por separado; escala y autonomía, a coste de gran complejidad operativa.
+- <i class="fa-solid fa-envelope-open-text"></i> **EDA:** componentes desacoplados vía colas y publicar/suscribir; gran flexibilidad y asincronía, con retos de consistencia.
+- <i class="fa-solid fa-sliders"></i> **Selección:** no hay estilo único; evalúa requisitos, escala, equipo y operación, combinando estilos y empezando simple (monolito modular).
+</blockquote>
+    </div>
+  </section>

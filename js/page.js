@@ -578,6 +578,7 @@ class CategoryPage {
   }
 
   bindScrollEvents() {
+    GuiaDev.createBackToTop();
     const content = document.getElementById("main-content");
     if (content) {
       let ticking = false;
@@ -587,6 +588,7 @@ class CategoryPage {
         requestAnimationFrame(() => {
           ticking = false;
           this.highlightToc();
+          GuiaDev.syncBackToTop();
         });
       }, { passive: true });
     }

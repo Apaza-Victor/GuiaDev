@@ -1,0 +1,168 @@
+<!-- day.js - Librerías (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>Day.js es una librería de fechas de unos 2 kB con una API casi idéntica a Moment.js pero inmutable. Con plugins opcionales cubre formatos custom, timezone, tiempo relativo y duraciones sin inflar el bundle.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Parsear y formatear fechas con `dayjs('2025-01-01').format('DD/MM/YYYY')`.</li>
+<li>Realizar operaciones inmutables: suma, resta e inicio o fin de unidad (.add, .startOf).</li>
+<li>Mostrar tiempos relativos como "hace 3 días" con el plugin relativeTime.</li>
+<li>Trabajar con timezones y formatos personalizados mediante plugins opcionales.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Apps donde necesitas formatear fechas sin el peso de Moment.js.</li>
+<li>Calendarios, agendas y reportes que calculan rangos de fechas.</li>
+<li>Proyectos que migran desde Moment.js y buscan una API muy parecida.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>El manejo nativo con `Date` e `Intl.DateTimeFormat` cubre bastante en navegadores modernos. Recurre a Day.js cuando necesites operaciones de calendario (sumas, inicios de mes, relativeTime) o timezones.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install dayjs
+</code></pre>
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-js">import dayjs from 'dayjs';
+</code></pre>
+<blockquote class="aside aside-tip"><p>Day.js pesa ~2 kB y ofrece la API familiar de Moment.js pero inmutable y con plugins opcionales. Es ideal para apps donde no quieres inflar el bundle solo por fechas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="parseo-formato">
+    <h2>Parseo y Formato <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Crear fechas
+dayjs();                        // ahora
+dayjs('2025-03-01');            // string ISO
+dayjs('01/03/2025', 'DD/MM/YYYY');  // con formato (necesita el plugin customParseFormat)
+dayjs(new Date());              // desde Date nativo
+dayjs(1735728000000);           // desde timestamp
+
+// Formatear
+dayjs().format();               // 2025-01-01T00:00:00+00:00
+dayjs().format('DD/MM/YYYY');   // 01/01/2025
+dayjs().format('dddd D [de] MMMM YYYY');  // miércoles 1 de enero 2025
+
+// Accesores
+const d = dayjs('2025-03-01');
+d.year();      // 2025
+d.month();     // 2   (¡0-indexado!)
+d.date();      // 1
+d.day();       // 6   (sábado)
+d.hour();      // 0
+</code></pre>
+<blockquote class="aside aside-note"><p>Day.js es **inmutable**: cada operación devuelve una instancia nueva, nunca modifica la original. Recuerda que `month()` (y `day()`) van en base 0.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="operaciones">
+    <h2>Operaciones <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">const hoy = dayjs();
+
+// Sumar / restar unidades
+hoy.add(1, 'day');
+hoy.add(2, 'month');
+hoy.subtract(7, 'week');
+hoy.add(90, 'minute');
+
+// Inicios y fines de periodo
+hoy.startOf('month');       // 1 del mes a las 00:00
+hoy.endOf('month');         // último día a las 23:59:59.999
+hoy.startOf('week');        // lunes (configurable)
+hoy.endOf('day');
+
+// Set (no muta el original)
+hoy.set('year', 2030).set('month', 11);
+
+// Diferencia relativa
+const entrega = dayjs('2025-12-24');
+entrega.diff(hoy, 'day');     // días
+entrega.diff(hoy, 'hour');    // horas
+entrega.diff(hoy);            // milisegundos
+</code></pre>
+<blockquote class="aside aside-tip"><p>`startOf`/`endOf` son la forma más limpia de "quedarme con el mes de esta fecha" o agrupar eventos por día para las vistas de calendario.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="comparaciones">
+    <h2>Comparaciones <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">const a = dayjs('2025-03-01');
+const b = dayjs('2025-03-15');
+
+a.isBefore(b);      // true
+a.isAfter(b);       // false
+a.isSame(b);        // false
+a.isSame(dayjs('2025-03-01'));  // true
+
+// Comparar solo un lapso
+a.isSame(b, 'month');            // true (mismo mes)
+a.isSame(b, 'year');             // true
+
+// Precisión de minuto
+dayjs('2025-01-01 10:20').isBefore(dayjs('2025-01-01 10:30'), 'minute');
+
+// Rangos
+a.isBetween(dayjs('2025-02-01'), dayjs('2025-04-01'));  // requiere plugin isBetween
+</code></pre>
+<blockquote class="aside aside-caution"><p>Al comparar pasa el segundo argumento con la unidad (`'day'`, `'month'`...) cuando solo te interesa ese lapso; si no, compara a nivel de milisegundo y fallará con fechas "iguales" en papel.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="plugins">
+    <h2>Plugins <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">import dayjs from 'dayjs';
+
+// Registro de plugins
+import relativeTime from 'dayjs/plugin/relativeTime';
+import isBetween from 'dayjs/plugin/isBetween';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(relativeTime);
+dayjs.extend(isBetween);
+dayjs.extend(customParseFormat);
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+// Tiempo relativo
+dayjs('2025-01-01').fromNow();        // 'hace 2 meses'
+dayjs('2025-01-01').from(dayjs('2025-02-01'));  // '1 mes'; prefija con .to()
+
+// Zonas horarias
+dayjs.tz('2025-03-01 09:00', 'America/Lima');
+dayjs().tz('Europe/Madrid').format();
+</code></pre>
+<blockquote class="aside aside-success"><p>Los plugins se importan y extienden individualmente, así el bundle solo incluye lo que usas. `relativeTime` + `timezone` cubren los casos más comunes del día a día (chats, agendas, dashboards).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Muestra la fecha de hoy en formato `miércoles, 01 de enero de 2025`.</li>
+<li>Calcula cuántos días faltan para tu cumpleaños con `diff`.</li>
+<li>Obtén el inicio y el fin de la semana actual con `startOf/endOf('week')`.</li>
+<li>Comprueba si una fecha está dentro del trimestre actual usando `isBetween`.</li>
+<li>Muestra la fecha de creación de un post como "hace 3 horas" con `relativeTime`.</li>
+</ol>
+    </div>
+  </section>

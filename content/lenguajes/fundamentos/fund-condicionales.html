@@ -1,0 +1,243 @@
+<!-- 5. Estructuras de Control: Condicionales - Fundamentos de Programación (Lenguajes de Programación) -->
+
+  <section id="la-toma-de-decisiones">
+    <h2><i class="fa-solid fa-sitemap"></i> La toma de decisiones</h2>
+    <div class="doc-content">
+<p>Hasta ahora los programas que hemos visto ejecutan sus instrucciones <strong>una tras otra, en orden</strong>. A eso se le llama ejecución <em>secuencial</em>. Pero un programa útil rara vez es solo una lista plana de pasos: necesita <strong>decidir</strong>. ¿Qué hago si el usuario es menor de edad? ¿Y si la nota no llega al mínimo? Esas preguntas solo se pueden responder si el programa es capaz de tomar decisiones en mitad de su ejecución.</p>
+<p>La buena noticia es que la toma de decisión, por sofisticada que parezca, se reduce siempre a una única elección <strong>binaria</strong>: evaluar una condición que es <strong>verdadera (V)</strong> o <strong>falsa (F)</strong>. No existe "más o menos": o la condición se cumple, o no se cumple. Sobre esa base de V/F construimos toda la lógica de decisión de un programa.</p>
+<h3>La decisión como un cruce de caminos</h3>
+<p>Visualmente, una decisión se dibuja en los diagramas de flujo como un <strong>rombo</strong>: dentro va la condición, y de él salen dos caminos (Sí/No) que se vuelven a reunir cuando termina. Así se dibujan los condicionales. Las computadoras eligen de esta forma <em>binaria</em>:</p>
+<pre><code class="language-text">   ┌───────────┐
+   │  inicio   │
+   └─────┬─────┘
+         │
+         v
+   ┌─────┴──────┐
+   │ ¿nota >= 60?│  &lt;&lt; decisión (V/F)
+   └──┬──────┬──┘
+     Sí│      │No
+      v       v
+  ┌───────┐ ┌──────────┐
+  │ Aprobó │ │ Reprobó  │
+  └───┬───┘ └────┬─────┘
+      │          │
+      └────┬─────┘
+         │
+         v
+   ┌─────────────┐
+   │   final     │
+   └─────────────┘</code></pre>
+<h3>El programa como combinación de piezas</h3>
+<p>Todo programa se construye combinando tres tipos de elementos básicos: <strong>secuencias</strong> (pasos en orden), <strong>decisiones</strong> (condicionales) y <strong>repeticiones</strong> (bucles, que veremos en la próxima lección). Si un programador no domina las decisiones, no puede escribir prácticamente ninguna lógica real. Sin condiciones no hay "lógica": no puedes reaccionar a datos de entrada, validar errores ni adaptar el comportamiento del programa a lo que ocurre en tiempo de ejecución.</p>
+<blockquote class="aside aside-note"><p>Las computadoras no "piensan" ni "deciden" con intuición: solo comparan valores y comprueban si una condición da V o F. Toda la inteligencia que percibes en un programa es, al final, una gran cantidad de estas elecciones binarias bien combinadas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="if-else">
+    <h2><i class="fa-solid fa-arrow-right-to-bracket"></i> if / else</h2>
+    <div class="doc-content">
+<p>El condicional más básico recibe el nombre de <code>if</code> (palabra que en muchos lenguajes significa "si"). En español, dentro de PSeInt, se escribe con <code>Si</code>. Su estructura permite ejecutar un bloque de instrucciones <strong>solo si</strong> se cumple una condición, y opcionalmente otro bloque cuando no se cumple.</p>
+<h3>Sintaxis en PSeInt</h3>
+<p>La forma más simple ejecuta algo solo cuando la condición es verdadera:</p>
+<pre><code class="language-pseudocode">Algoritmo if_simple
+    Definir nota Como Entero
+    Escribir "Ingrese la nota:"
+    Leer nota
+
+    Si nota >= 60 Entonces
+        Escribir "Aprobaste"
+    FinSi
+
+FinAlgoritmo</code></pre>
+<p>Cuando además queremos qué hacer si la condición es falsa, usamos la rama <code>SiNo</code> (que en otros lenguajes es <code>else</code>):</p>
+<pre><code class="language-pseudocode">Algoritmo if_else
+    Definir nota Como Entero
+    Escribir "Ingrese la nota:"
+    Leer nota
+
+    Si nota >= 60 Entonces
+        Escribir "Aprobaste"
+    SiNo
+        Escribir "Reprobaste"
+    FinSi
+
+FinAlgoritmo</code></pre>
+<h3>Tabla de verdad mental</h3>
+<table><thead><tr><th>Condición (nota &gt;= 60)</th><th>Rama que se ejecuta</th><th>Resultado</th></tr></thead><tbody><tr><td>Verdadera</td><td><code>Si ... Entonces</code></td><td>"Aprobaste"</td></tr><tr><td>Falsa</td><td><code>SiNo</code> (else)</td><td>"Reprobaste"</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Siempre <strong>indenta</strong> (sangra) el interior del condicional con espacios: aunque PSeInt no lo exija estrictamente, ayuda a leer qué instrucciones pertenecen a cada rama. La buena indentación evita errores de comprensión.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="if-else-if-else">
+    <h2><i class="fa-solid fa-code-fork"></i> if / else if / else</h2>
+    <div class="doc-content">
+<p>No siempre hay solo dos caminos. Muchas veces necesitamos evaluar <strong>varias condiciones alternativas</strong> y ejecutar una sola de ellas. Para eso encadenamos ramas con <code>SiNo Si</code> (que en otros lenguajes es <code>else if</code>), y cerramos con un <code>SiNo</code> final que actúa como caso por defecto.</p>
+<h3>Clasificación de edades con varias ramas</h3>
+<pre><code class="language-pseudocode">Algoritmo clasificar_edad
+    Definir edad Como Entero
+    Escribir "Ingrese su edad:"
+    Leer edad
+
+    Si edad &lt; 18 Entonces
+        Escribir "Eres menor de edad"
+    SiNo Si edad &lt; 65 Entonces
+        Escribir "Eres adulto"
+    SiNo
+        Escribir "Eres un adulto mayor"
+    FinSi
+
+FinAlgoritmo</code></pre>
+<p>Fíjate en el orden: si la edad es 10, la primera condición (<code>edad &lt; 18</code>) es verdadera y no evaluamos las demás. Si la edad es 30, la primera es falsa, la segunda (<code>edad &lt; 65</code>) es verdadera, y el <code>SiNo</code> final no se toca.</p>
+<h3>El orden importa</h3>
+<p>La primera rama que resulte verdadera se ejecuta y las restantes se ignoran. Por eso conviene colocar <strong>primero los casos más específicos o más comunes</strong>. Si intercambias el orden, una rama puede "tragarse" las demás. Por ejemplo, si pusieras <code>Si edad &lt; 65</code> primero, nunca llegarías a distinguir al menor de edad.</p>
+<h3>Diagrama de ramas múltiples</h3>
+<pre><code class="language-text">   ┌──────────────┐
+   │  leer edad   │
+   └──────┬───────┘
+          v
+   ┌───────────────┐   Sí ┌──────────────┐
+   │ ¿edad < 18?   │────▶│ menor de edad │
+   └──────┬────────┘     └──────────────┘
+         No│
+          v
+   ┌───────────────┐   Sí ┌──────────────┐
+   │ ¿edad < 65?   │────▶│   adulto     │
+   └──────┬────────┘     └──────────────┘
+         No│
+          v
+   ┌───────────────┐
+   │ adulto mayor  │
+   └───────────────┘</code></pre>
+<blockquote class="aside aside-caution"><p>Cada rama recibe exactamente <strong>una</strong> condición, y la secuencia de <code>SiNo Si</code> se evalúa en orden. Si ninguna condición coincide, se ejecuta el <code>SiNo</code> final; si no lo hay, no se ejecuta ninguna rama.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="switch">
+    <h2><i class="fa-solid fa-table-list"></i> switch</h2>
+    <div class="doc-content">
+<p>Cuando una decisión depende exclusivamente de que una variable sea <strong>igual a uno de varios valores exactos</strong>, encadenar muchos <code>SiNo Si</code> resulta verboso y difícil de leer. Para esos casos existe la estructura <code>switch</code>, que en PSeInt se llama <code>Segun</code>.</p>
+<h3>Sintaxis en PSeInt</h3>
+<pre><code class="language-pseudocode">Segun variable Hacer
+    caso1:
+        // acciones si variable = caso1
+    caso2:
+        // acciones si variable = caso2
+    De Otro Modo:
+        // acciones si variable no coincide con ningún caso
+FinSegun</code></pre>
+<h3>Ejemplo: un menú de opciones</h3>
+<pre><code class="language-pseudocode">Algoritmo menu
+    Definir opcion Como Entero
+    Escribir "1. Sumar"
+    Escribir "2. Restar"
+    Escribir "3. Multiplicar"
+    Escribir "4. Salir"
+    Escribir "Elija una opción:"
+    Leer opcion
+
+    Segun opcion Hacer
+        1:
+            Escribir "Elegiste sumar"
+        2:
+            Escribir "Elegiste restar"
+        3:
+            Escribir "Elegiste multiplicar"
+        4:
+            Escribir "Saliste del programa"
+        De Otro Modo:
+            Escribir "Opción no válida"
+    FinSegun
+
+FinAlgoritmo</code></pre>
+<h3>¿Cuándo conviene y cuándo no?</h3>
+<p>El <code>Segun</code> brilla cuando comparamos por <strong>valor exacto</strong> (opciones de un menú, códigos, estados). No sirve para comparaciones de <strong>rango</strong>: "si la edad está entre 18 y 65" no se puede expresar con un solo caso; para eso usamos <code>if / else if</code> con las condiciones que ya conoces.</p>
+<table><thead><tr><th>Criterio</th><th>if / else if</th><th>Segun (switch)</th></tr></thead><tbody><tr><td>Igualdad con varios valores exactos</td><td>Funciona, pero verboso</td><td>Ideal y legible</td></tr><tr><td>Comparaciones de rango (&lt;, &gt;, entre)</td><td>Ideal</td><td>No apto</td></tr><tr><td>Condiciones compuestas (Y / O)</td><td>Ideal</td><td>No apto</td></tr><tr><td>Menús con opciones numeradas</td><td>Funciona</td><td>Recomendado</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Regla rápida: si te encuentras escribiendo <code>Si var = 1, Si var = 2, Si var = 3...</code>, es señal de que deberías usar <code>Segun</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="condiciones-compuestas">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> Condiciones compuestas</h2>
+    <div class="doc-content">
+<p>Una sola condición a veces no basta. Queremos preguntar "¿es adulto en edad laboral?" que junta dos condiciones: <code>edad &gt;= 18</code> Y <code>edad &lt;= 65</code>. Para combinar condiciones usamos los <strong>operadores lógicos</strong>: <code>Y</code> (AND), <code>O</code> (OR) y <code>NO</code> (NOT).</p>
+<h3>Operadores lógicos</h3>
+<table><thead><tr><th>Operador</th><th>Resultado verdadero cuando…</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>Y</code></td><td>Todas las condiciones son verdaderas</td><td><code>A Y B</code></td></tr><tr><td><code>O</code></td><td>Al menos una condición es verdadera</td><td><code>A O B</code></td></tr><tr><td><code>NO</code></td><td>La condición es falsa (invierte)</td><td><code>NO A</code></td></tr></tbody></table>
+<h3>Ejemplo correcto e incorrecto</h3>
+<pre><code class="language-pseudocode">Algoritmo condiciones_compuestas
+    Definir edad, credito Como Entero
+
+    // ✅ Correcto: ambas deben cumplirse
+    Si edad &gt;= 18 Y edad &lt;= 65 Entonces
+        Escribir "Edad laboral"
+    FinSi
+
+    // ✅ Correcto: basta cumplir una
+    Si edad &lt; 18 O edad &gt; 65 Entonces
+        Escribir "Fuera del rango laboral"
+    FinSi
+
+    // ❌ Incorrecto: no se puede expresar un rango con O
+    Si edad &gt;= 18 O edad &lt;= 65 Entonces
+        Escribir "Esto se cumple SIEMPRE (error de lógica)"
+    FinSi
+
+FinAlgoritmo</code></pre>
+<p>El ejemplo incorrecto es un clásico: <code>edad &gt;= 18 O edad &lt;= 65</code> es verdadero para cualquier edad (todo número es mayor o igual a 18, o menor o igual a 65). Para definir un rango hay que usar <code>Y</code>, no <code>O</code>.</p>
+<h3>Agrupación con paréntesis</h3>
+<p>Puedes combinar ambas con paréntesis para clarificar el orden, igual que en matemáticas. La expresión <code>(A O B) Y C</code> significa "A o B, pero además C".</p>
+<pre><code class="language-pseudocode">// Tarjeta válida solo si (es estudiante O es empleado) Y además es mayor de 16
+Si (estudiante O empleado) Y edad &gt; 16 Entonces
+    Escribir "Tarjeta habilitada"
+FinSi</code></pre>
+<blockquote class="aside aside-caution"><p>Algunos lenguajes aplican la <strong>evaluación en cortocircuito</strong>: si la primera parte de un <code>Y</code> es falsa, no evalúan la segunda (y viceversa con <code>O</code>). Depende del lenguaje, pero como buena práctica ordena las condiciones de forma que evites errores y costes innecesarios.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. Olvidar el <code>FinSi</code></h3>
+<p>Cada <code>Si</code> debe cerrarse con su <code>FinSi</code>. Si falta, PSeInt mostrará un error y el resto del algoritmo quedará mal interpretado.</p>
+<h3>2. Usar <code>=</code> en lugar de comparación</h3>
+<pre><code class="language-pseudocode">// ❌ En muchos lenguajes = asigna, no compara
+// Si x = 5 Entonces  →  podría asignar, no comparar
+
+// ✅ Comparar usa operadores como == o la sintaxis de PSeInt
+Si x = 5 Entonces
+    Escribir "x es 5"
+FinSi</code></pre>
+<blockquote class="aside aside-note"><p>En PSeInt el signo <code>=</code> ya se interpreta como igualdad dentro de una condición, pero en lenguajes como C, Java o JavaScript el operador de comparación es <code>==</code> y usar <code>=</code> es uno de los errores más típicos.</p></blockquote>
+<h3>3. Ramas vacías que caen en orden en <code>Segun</code></h3>
+<p>En algunos lenguajes, si olvidas el <code>break</code> de un <code>switch</code>, la ejecución "cae" al siguiente caso. Asegúrate de cerrar bien cada caso según la sintaxis que uses.</p>
+<h3>4. Usar <code>Segun</code> para rangos</h3>
+<p>Intentar expresar <code>edad entre 18 y 65</code> con <code>Segun</code> no funciona: para rangos usa <code>Si ... SiNo ...</code>.</p>
+<h3>5. Comparar reales con igualdad exacta</h3>
+<pre><code class="language-pseudocode">Definir a, b Como Real
+a &lt;- 0.1
+b &lt;- 0.3
+// ❌ a + a = b podría ser FALSO por errores de precisión
+// ✅ comparar reales alejando: abs(a - b) &lt; 0.0001</code></pre>
+<h3>6. Condición con fluctuaciones</h3>
+<p>Una condición que cambia de valor entre evaluaciones (por ejemplo, depende de algo aleatorio o de otra línea que la modifica) produce comportamientos impredecibles. Evalúa una vez y guarda el resultado si lo necesitas estable.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Resuelve estos ejercicios en PSeInt o en tu lenguaje favorito. Están ordenados de menor a mayor dificultad:</p>
+<ol>
+<li><strong>Mayor de tres números:</strong> lee tres números y con varios <code>if / else if</code> determina cuál es el mayor (o si hay empate).</li>
+<li><strong>Par o impar:</strong> lee un número y con la operación módulo (<code>%</code>) y un condicional imprime si es par o impar.</li>
+<li><strong>Menú con Segun:</strong> muestra un menú de 4 opciones, lee la opción elegida y con <code>Segun</code> reacciona a cada una; usa <code>De Otro Modo</code> para entradas no válidas.</li>
+<li><strong>Clasificar por edad:</strong> lee una edad y con ramas múltiples clasifícala en niño, adolescente, adulto o adulto mayor (define tú los rangos y cuida el orden).</li>
+<li><strong>Validar rango compuesto:</strong> lee un número y con una condición compuesta (<code>Y</code>) valida que esté dentro de un rango, p. ej. entre 1 y 100 incluidos.</li>
+</ol>
+    </div>
+  </section>

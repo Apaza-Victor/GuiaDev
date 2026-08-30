@@ -1,0 +1,201 @@
+<!-- 3. Estructura de un sketch - Arduino (Lenguajes de Programación) -->
+
+  <section id="que-es-un-sketch">
+    <h2><i class="fa-solid fa-file-code"></i> ¿Qué es un sketch?</h2>
+    <div class="doc-content">
+<p>En el mundo de Arduino un programa se llama <strong>sketch</strong> ("boceto" en inglés), un término que refuerza la idea de experimentación rápida: escribes, subes y pruebas en segundos. Un sketch se guarda en un fichero con extensión <code>.ino</code> dentro de una carpeta que lleva el mismo nombre que el archivo (por ejemplo <code>Blink/Blink.ino</code>).</p>
+<p>Puede parecer que escribes en un lenguaje nuevo llamado "Arduino", pero en realidad escribes <strong>C++ real</strong>. Lo que ocurre es que el entorno añade una capa: el <strong>preprocesador</strong> del IDE se encarga automáticamente de generar los <code>#include</code> necesarios (el de <code>Arduino.h</code> entre ellos), de insertar las declaraciones de tus funciones y de construir un programa C++ completo antes de pasárselo al compilador <code>avr-g++</code>. Por eso puedes usar un <code>pinMode()</code> en <code>setup()</code> sin haberlo declarado nunca antes.</p>
+<blockquote class="aside aside-note"><p>El sketch tiene prioridad sobre el fichero C++ completo que el IDE genera al vuelo: tu código es el cuerpo y el compilador lo rodea de toda la infraestructura (el <code>main</code>, el <code>init()</code>, las cabeceras) que la placa necesita para arrancar.</p></blockquote>
+<h3>Anatomía básica de un sketch</h3>
+<p>Todo sketch, del más simple al más complejo, sigue esta estructura lógica de arriba a abajo:</p>
+<pre><code class="language-text">1. #include ...            //  librerías (opcional)
+2. #define o const ...     //  constantes con nombre
+3. variables globales      //  el estado compartido del programa
+4. void setup()            //  configuración: se ejecuta 1 vez
+5. void loop()             //  bucle principal: se repite sin fin
+</code></pre>
+<p>Las <strong>constantes de pin</strong> son el primer contacto con esta estructura en casi todos los proyectos:</p>
+<pre><code class="language-cpp">#define PIN_LED 13          // constante del preprocesador
+
+const int PIN_BOTON = 2;    // constante en tiempo de compilación
+
+int contadorPulsaciones = 0;   // variable global: su valor perdura</code></pre>
+<blockquote class="aside aside-tip"><p>Usa <code>const int</code> en lugar de <code>#define</code> siempre que puedas: es más seguro, respeta los tipos y el compilador lo optimiza igual de bien. El resultado en el microcontrolador es idéntico.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="setup-y-loop">
+    <h2><i class="fa-solid fa-power-off"></i> setup() y loop()</h2>
+    <div class="doc-content">
+<p>Todo sketch define obligatoriamente dos funciones: <code>setup()</code> y <code>loop()</code>. Ninguna de las dos recibe parámetros ni devuelve nada (su tipo de retorno es <code>void</code>). Sus nombres describen exactamente qué hacen:</p>
+<ul>
+<li><code>setup()</code> se ejecuta <strong>una sola vez</strong> al encender la placa. Aquí configuras los pines (<code>pinMode</code>), inicias la comunicación serie (<code>Serial.begin</code>) y dejas todo listo.</li>
+<li><code>loop()</code> se ejecuta <strong>en bucle infinito</strong>, una y otra vez, durante toda la vida del programa. Aquí vive la lógica diaria: leer sensores, decidir, escribir salidas.</li>
+</ul>
+<p>El flujo de ejecución real es este:</p>
+<pre><code class="language-text">encender placa
+    │
+    ▼
+setup()          ← se ejecuta UNA vez
+    │
+    ▼
+loop() ─────► loop() ─────► loop() ─────► loop() ...
+    ▲                               
+    └── se repite para siempre ──────┘
+</code></pre>
+<p>Puedes verificarlo tú mismo con el Monitor Serie:</p>
+<pre><code class="language-cpp">void setup() {
+  Serial.begin(9600);                    // inicia la comunicación serie
+  Serial.println("setup(): una sola vez");
+}
+
+void loop() {
+  Serial.println("loop(): otra pasada mas");
+  delay(500);                            // espera 500 ms antes de repetir
+}</code></pre>
+<pre><code class="language-text">setup(): una sola vez
+loop(): otra pasada mas
+loop(): otra pasada mas
+loop(): otra pasada mas
+...</code></pre>
+<h3>¿Quién llama a estas funciones?</h3>
+<p>En un programa "normal" de C++ la ejecución empieza en <code>main()</code>. En Arduino el <code>main()</code> existe, pero está escondido en el fichero pregenerado que el IDE crea por ti. Su forma simplificada es esta:</p>
+<pre><code class="language-cpp">int main(void) {
+  init();            // configura temporizadores y hardware base
+  setup();           // tu código de configuración, una vez
+  while (1) {        // bucle infinito
+    loop();          // tu código principal, una y otra vez
+  }
+}</code></pre>
+<blockquote class="aside aside-caution"><p>Como <code>loop()</code> corre sin parar, nada de lo que escribas fuera de él (instrucciones sueltas al final del archivo) llegará nunca a ejecutarse. Si quieres que algo pase una vez, va en <code>setup()</code>; si quieres que se repita, va en <code>loop()</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="compilar-y-subir">
+    <h2><i class="fa-solid fa-arrow-up-from-bracket"></i> Compilar y subir el código</h2>
+    <div class="doc-content">
+<p>El IDE ofrece dos botones que conviene no confundir, aunque viven juntos en la barra superior:</p>
+<table><thead><tr><th>Botón</th><th>Qué hace</th><th>Combinación de teclas</th></tr></thead><tbody><tr><td><strong>Verificar</strong></td><td>Comprueba el código sin compilar nada que se quede en la placa: no se sube</td><td>Ctrl + R / ⌘ + R</td></tr><tr><td><strong>Subir</strong></td><td>Verifica y, si todo es correcto, compila y graba el firmware en el microcontrolador por USB</td><td>Ctrl + U / ⌘ + U</td></tr></tbody></table>
+<p>Subir implica primero verificar, así que "subir sin verificar" no existe: el botón Subir siempre compila antes de grabar. Lo que sí conviene es practicar el hábito de pulsar <strong>Verificar</strong> mientras estás escribiendo, para detectar errores antes de molestar a la placa.</p>
+<h3>El proceso completo</h3>
+<p>Cuando pulsas <strong>Subir</strong> ocurren estas fases en cadena:</p>
+<ol>
+<li><strong>Validación:</strong> el preprocesador prepara tu <code>.ino</code> y lo convierte en C++ completo.</li>
+<li><strong>Compilación:</strong> <code>avr-g++</code> traduce el código a lenguaje máquina del microcontrolador (un fichero <code>.hex</code>).</li>
+<li><strong>Grabación vía USB:</strong> el IDE resetea la placa y el <strong>bootloader</strong> (un pequeño programa de fábrica que reside en el microcontrolador) recibe los datos y escribe el firmware en la memoria flash.</li>
+</ol>
+<p>En la <strong>terminal de mensajes</strong> de la parte inferior verás todo lo que pasa. Frases útiles a reconocer: <code>Sketch uses 924 bytes</code> (memoria flash: el programa), <code>Global variables use 9 bytes of dynamic memory</code> (SRAM: las variables) y, al final, <code>Done uploading</code>.</p>
+<blockquote class="aside aside-caution"><p>El aviso <strong>"low memory available, stability problems may occur"</strong> es serio. El ATmega328P (Arduino Uno) solo tiene 2 KB de SRAM y 32 KB de flash. Si te quedas sin SRAM el programa puede comportarse de forma errática sin explicación lógica.</p></blockquote>
+<blockquote class="aside aside-tip"><p>Si la subida falla con errores de <code>port</code> o <code>avrdude</code>, revisa la placa y el puerto seleccionados en <em>Herramientas</em>: son la causa más frecuente de un <code>Failed uploading</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="el-primer-programa-blink">
+    <h2><i class="fa-solid fa-lightbulb"></i> El primer programa: Blink</h2>
+    <div class="doc-content">
+<p>El <em>"hola mundo"</em> de Arduino consiste en hacer parpadear el <strong>LED integrado</strong> de la placa. En el Uno y la mayoría de placas ese LED está conectado al pin 13, y el lenguaje lo llama <code>LED_BUILTIN</code>. No necesitas ningún componente externo. Este es el sketch completo:</p>
+<pre><code class="language-cpp">void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);   // el pin 13 configurado como salida
+}
+
+void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);   // 5 V en el pin: el LED se ENCIENDE
+  delay(1000);                        // espera 1000 ms (1 segundo)
+  digitalWrite(LED_BUILTIN, LOW);     // 0 V en el pin: el LED se APAGA
+  delay(1000);                        // espera otro segundo
+}</code></pre>
+<p>Línea a línea:</p>
+<ol>
+<li><code>pinMode(LED_BUILTIN, OUTPUT)</code>: declara el pin 13 como <strong>salida</strong>, es decir, capaz de entregar tensión.</li>
+<li><code>digitalWrite(pin, HIGH)</code>: pone <strong>5 voltios</strong> en el pin. La corriente circula por el LED interno y brilla.</li>
+<li><code>delay(1000)</code>: detiene el programa <strong>1000 milisegundos</strong> con el LED encendido.</li>
+<li><code>digitalWrite(pin, LOW)</code>: pone <strong>0 voltios</strong>, la corriente deja de circular y el LED se apaga.</li>
+<li>El segundo <code>delay(1000)</code> mantiene el LED apagado otro segundo, y <code>loop()</code> vuelve a empezar: un parpadeo de 1 Hz.</li>
+</ol>
+<blockquote class="aside aside-danger"><p><code>delay()</code> <strong>bloquea</strong> el microcontrolador por completo: durante esos milisegundos el chip no puede leer botones ni sensores. Para parpadear está bien, pero en proyectos con varias tareas reales aprenderás a sustituirlo por <code>millis()</code> (lo veremos en una lección posterior).</p></blockquote>
+<blockquote class="aside aside-tip"><p>Prueba a cambiar <code>delay(1000)</code> por <code>delay(100)</code> y verás un parpadeo rapidísimo; con <code>delay(2000)</code> obtendrás pausas largas. Definir el retardo como <code>const int TIEMPO = 1000;</code> al inicio del sketch hace el ajuste todavía más cómodo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="organizacion-y-comentarios">
+    <h2><i class="fa-solid fa-comments"></i> Organización y comentarios</h2>
+    <div class="doc-content">
+<p>Un sketch vive semanas, a veces meses, y siempre acaba en manos de otra persona (o de tu yo del futuro). Organizarlo bien es tan importante como saber escribir C++. El primer hábito es una <strong>cabecera de fichero</strong> que documente el proyecto:</p>
+<pre><code class="language-cpp">/*
+ * Autor:       Ana García
+ * Fecha:       29 de agosto de 2026
+ * Descripción: Hace parpadear el LED integrado (pin 13).
+ * Hardware:    Arduino Uno + LED_BUILTIN.
+ */
+ 
+void setup() {
+  // ...</code></pre>
+<p>Arduino soporta dos estilos de comentario, ambos ignorados por el compilador:</p>
+<ul>
+<li><code>//</code> comentario de una línea: explica una instrucción o un bloque corto.</li>
+<li><code>/* ... */</code> comentario de varias líneas: ideal para cabeceras y explicaciones largas.</li>
+</ul>
+<h3>Convenciones que mantienen el orden</h3>
+<ul>
+<li><strong>Orden lógico:</strong> includes → constantes → variables globales → <code>setup()</code> → <code>loop()</code> → funciones auxiliares.</li>
+<li><strong>Nombres descriptivos:</strong> <code>pinLed</code> o <code>PIN_LED</code> antes que <code>x</code>; <code>leerBoton()</code> antes que <code>f()</code>.</li>
+<li><strong>Documenta el cableado:</strong> un comentario que diga qué va en cada pin ahorra volver a mirar los esquemas.</li>
+<li><strong>Separa secciones:</strong> usa cabeceras de comentario para agrupar fases (lectura, lógica, salida).</li>
+</ul>
+<pre><code class="language-cpp">// ---------- CONFIGURACIÓN ----------
+const int PIN_LED = 9;
+
+// ---------- Variables de estado ----------
+int brillo = 0;
+
+void setup() {
+  // Cableado: LED + resistencia 220 ohm -> pin 9, cátodo a GND
+  pinMode(PIN_LED, OUTPUT);
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Es preferible que el código se lea solo y que los comentarios cuenten <strong>el porqué</strong>, no el qué: <code>// anima con retardo corto para evitar parpadeo visible</code> aporta más que <code>// le doy un valor a brillo</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. No seleccionar la placa ni el puerto correctos</h3>
+<p>Subir un sketch para un Uno estando seleccionado un Nano o un puerto equivocado termina siempre en <code>Failed uploading</code>. Revisa <em>Herramientas → Placa</em> y <em>Herramientas → Puerto</em> antes de pulsar Subir.</p>
+<h3>2. Olvidar el punto y coma</h3>
+<pre><code class="language-cpp">pinMode(LED_BUILTIN, OUTPUT)   // ❌ falta el ';' → error de compilación
+pinMode(LED_BUILTIN, OUTPUT);  // ✅</code></pre>
+<h3>3. Usar delay() para todo</h3>
+<p>Encadenar <code>delay()</code> para simular tiempos hace que la placa quede "ciega" a botones y sensores mientras espera. El síntoma clásico: un LED que responde siempre tarde. La solución a futuro es <code>millis()</code>.</p>
+<h3>4. Usar un cable USB sin datos</h3>
+<p>Muchos cables USB solo alimentan (cargan) y no llevan pistas de datos: la placa se enciende pero el IDE no la ve. Prueba con otro cable o comprueba en <em>Herramientas → Puerto</em> si aparece el dispositivo.</p>
+<h3>5. Conectar un LED directamente sin resistencia</h3>
+<p>Un LED externo a 5 V sin limitador se estropea (y puede dañar el pin). Siempre en serie una resistencia de 220 o 330 Ω para prototipos.</p>
+<h3>6. Escribir el pin equivocado con LED_BUILTIN</h3>
+<p><code>LED_BUILTIN</code> se refiere al LED integrado en la placa, no a un LED que hayas conectado al pin 13 de manera externa en otra placa. Si usas otra placa, mira su documentación.</p>
+<pre><code class="language-cpp">digitalWrite(LED_BUILTIN, HIGH);   // ✅ Si quieres el LED interno
+digitalWrite(13, HIGH);            // ✅ equivalente en el Uno
+digitalWrite(10, HIGH);            // ❌ no es el LED integrado</code></pre>
+<blockquote class="aside aside-danger"><p>El error nº 1 de quien empieza es no subir el sketch y asumir que el programa "cambió". Si el LED no parpadea, pregunta primero: ¿se subió de verdad? ¿está la placa conectada al puerto correcto?</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Resuélvelos en orden creciente de dificultad. Todos se hacen solo con el LED integrado, sin componentes externos, ni siquiera el cable: el LED_BUILTIN ya está conectado.</p>
+<ol>
+<li><strong>Blink a 3 segundos:</strong> modifica Blink para que el LED esté encendido 2 segundos y apagado 1 segundo. Observa la diferencia de ritmo.</li>
+<li><strong>SOS en código Morse:</strong> tres parpadeos cortos (200 ms), tres largos (600 ms) y tres cortos de nuevo, con pausas de 200 ms entre destellos y 1 s entre letras. Define los tiempos como constantes al inicio del sketch.</li>
+<li><strong>Cambia el pin del LED:</strong> conecta un LED externo con su resistencia 220 Ω al pin 9 y modifica Blink para usarlo. Reemplaza <code>LED_BUILTIN</code> por una constante <code>PIN_LED</code> definida al inicio.</li>
+<li><strong>Comenta cada línea:</strong> abre Blink y escribe un comentario <code>//</code> que explique lo que hace cada línea, y una cabecera <code>/* */</code> con autor, fecha y descripción. Después verifica que sigue compilando.</li>
+<li><strong>Reporte de compilación:</strong> sube Blink y anota en la terminal: bytes de flash usados, bytes de SRAM usados y el porcentaje de cada memoria. ¿Cuánto espacio libre le queda al microcontrolador para crecer?</li>
+</ol>
+<p>---</p>
+    </div>
+  </section>

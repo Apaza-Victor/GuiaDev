@@ -1,0 +1,252 @@
+<!-- 8. Tiempo y multitarea: millis() - Arduino (Lenguajes de Programación) -->
+
+  <section id="el-problema-de-delay">
+    <h2><i class="fa-solid fa-timer"></i> El problema de delay()</h2>
+    <div class="doc-content">
+<p>La función <code>delay(ms)</code> es la primera que casi todo el mundo aprende para "esperar": congela la ejecución el número de milisegundos indicado. En un ejemplo sencillo como Blink funciona perfecto, pero tiene una limitación importante: <strong>mientras el micro espera, no hace absolutamente nada más</strong>. No lee botones, no muestra datos, no atiende sensores.</p>
+<p>Imagina este sketch: un LED integrado parpadea cada segundo… y quieres que un botón lo apague. Con <code>delay(1000)</code> la placa pasará medio «atontada»: cuando pulsas el botón justo en medio del parpadeo, no responde hasta que acaba la espera. El tiempo real que el programa "vive" se pierde en esperas ciegas.</p>
+<pre><code class="language-cpp">int led = 13;
+int boton = 2;
+int activo = true;
+
+void setup() {
+  pinMode(led, OUTPUT);
+  pinMode(boton, INPUT_PULLUP);
+}
+
+void loop() {
+  // Si pulsas el botón aquí, no se verá hasta que terminen los delays
+  if (digitalRead(boton) == LOW) {
+    activo = !activo;   // alterna el estado
+  }
+
+  if (activo) {
+    digitalWrite(led, HIGH);
+    delay(1000);        // ❌ bloquea TODO durante 1 s
+    digitalWrite(led, LOW);
+    delay(1000);        // ❌ el botón queda ignorado casi todo el tiempo
+  }
+}</code></pre>
+<h3>Ideas erróneas comunes</h3>
+<ul>
+<li><strong>"Un retardo no es mucho."</strong> Los delays se acumulan; tres retardos de 1 s hacen que tu programa deje de responder 3 s.</li>
+<li><strong>"Solo usaré delay en este sitio."</strong> Cada delay que añades es un punto donde el micro queda ciego.</li>
+<li><strong>"El micro procesa delay en segundo plano."</strong> No: <code>delay()</code> bloquea la CPU por completo (salvo interrupciones).</li>
+</ul>
+<h3>¿Entonces delay() está mal?</h3>
+<p>No, solo está <strong>mal usado</strong>. Es perfectamente aceptable en <code>setup()</code>, para esperas puntuales en el arranque (por ejemplo, dar tiempo a un sensor o a un módulo), para demos y prototipos simples. El problema aparece cuando necesitas un programa <strong>reactivo</strong>, que atienda varias cosas a la vez. Para eso existe <code>millis()</code>.</p>
+<blockquote class="aside aside-note"><p>Decimos que <code>delay()</code> "no es robusto" porque hace el tiempo <em>ciego</em>: pierdes la noción de cuánto tiempo real lleva esperando y de si ocurrieron eventos durante la pausa. Es ideal para aprender, pero hay que superarlo pronto.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="millis-y-micros">
+    <h2><i class="fa-solid fa-clock"></i> millis() y micros()</h2>
+    <div class="doc-content">
+<p>La alternativa a <code>delay()</code> es medir el tiempo con un <strong>contador interno de la placa</strong> y comparar: en vez de "parar", le preguntamos al hardware cuánto tiempo ha pasado desde que arrancó. La función clave es <code>millis()</code>, que devuelve el número de <strong>milisegundos</strong> transcurridos desde que comenzó el programa, como un <code>unsigned long</code> (32 bits). Su versión más precisa es <code>micros()</code>, que devuelve <strong>microsegundos</strong>.</p>
+<table><thead><tr><th>Función</th><th>Devuelve</th><th>Tipo</th><th>Desborda a los…</th></tr></thead><tbody><tr><td><strong>millis()</strong></td><td>Milisegundos desde el arranque</td><td>unsigned long</td><td>~49,7 días</td></tr><tr><td><strong>micros()</strong></td><td>Microsegundos desde el arranque</td><td>unsigned long</td><td>~71,6 minutos</td></tr></tbody></table>
+<h3>La cuenta y su límite: el desbordamiento</h3>
+<p>Un <code>unsigned long</code> puede contar hasta 4.294.967.295. En milisegundos eso son unos <strong>49,7 días</strong>; en microsegundos, apenas <strong>71,6 minutos</strong>. Cuando se alcanza el máximo, el contador <strong>vuelve a cero</strong> (overflow). No pasa nada de malo —como verás, la técnica correcta de comparación con resta funciona igual tras el desbordamiento—, pero hay que evitar comparaciones que fallen en ese instante.</p>
+<blockquote class="aside aside-caution"><p>Precisión: <code>micros()</code> no mide a nivel de instrucción. Con un reloj de 16 MHz, <code>micros()</code> tiene una resolución real de unos 4 microsegundos y no es fiable para medir tiempos inferiores a varios microsegundos.</p></blockquote>
+<h3>Las funciones no bloquean</h3>
+<p>La gran ventaja: <code>millis()</code> y <code>micros()</code> <strong>no detienen la ejecución</strong>. Solo contestan una pregunta ("¿cuánto ha pasado?") y el programa sigue su curso. Eso permite construir temporizadores sin bloquear.</p>
+<p>Las funciones funcionan solo midiendo tiempo transcurrido (<em>elapsed time</em>): no existe una "hora del día" interna. Para fecha/hora real se necesita un módulo <strong>RTC</strong> (como DS1307 o DS3231) o sincronismo por red (NTP) con WiFi.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="temporizador-con-millis">
+    <h2><i class="fa-solid fa-stopwatch"></i> Temporizador con millis()</h2>
+    <div class="doc-content">
+<p>El patrón clásico para hacer algo cada cierto intervalo, sin bloquear, es este:</p>
+<pre><code class="language-cpp">unsigned long anterior = 0;   // marca del último disparo
+const unsigned long intervalo = 1000;  // cada 1000 ms
+
+void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+}
+
+void loop() {
+  // Si ya ha pasado el intervalo desde la última vez…
+  if (millis() - anterior >= intervalo) {
+    anterior = millis();          // actualiza la marca
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // parpadea
+  }
+  // Aquí el programa sigue disponible: nada bloqueado
+}</code></pre>
+<p>Este sketch hace lo mismo que Blink (parpadeo de 1 s) pero sin llamar a <code>delay()</code>: mientras no toca el parpadeo, el <code>loop()</code> sigue girando y puede atender botones, sensors o serial. El LED integrado alterna su estado cada segundo.</p>
+<h3>¿Por qué millis() - anterior es correcto incluso tras overflow?</h3>
+<p>Gracias a la <strong>aritmética modular</strong> de los <code>unsigned long</code>. Imagina que <code>anterior</code> vale 4.294.967.200 y <code>millis()</code> ya desbordó y vale 100. La resta se hace en aritmética sin signo de 32 bits y <em>da el valor correcto</em> (~196 ms), exactamente como si el contador nunca hubiera dado la vuelta:</p>
+<pre><code class="language-cpp">// 100 - 4294967200 da el tiempo correcto incluso tras el overflow,
+// porque todas las operaciones se hacen con unsigned long (módulo 2^32).
+if (millis() - anterior >= intervalo) {
+  anterior = millis();
+  // ...
+}</code></pre>
+<blockquote class="aside aside-tip"><p>La clave es <strong>restar</strong> (<code>millis() - anterior</code>) y comparar con <code>&gt;=</code> en lugar de comparar <code>millis()</code> directo con un objetivo fijo. Así el intervalo se comporta bien ocurra o no el desbordamiento.</p></blockquote>
+<h3>Sketch completo y comentado</h3>
+<pre><code class="language-cpp">// Parpadeo sin delay: un LED blink mejor
+const int led = 9;
+unsigned long ultimaVez = 0;      // cuándo cambiamos por última vez
+const unsigned long periodo = 500; // cada 500 ms
+
+void setup() {
+  pinMode(led, OUTPUT);
+}
+
+void loop() {
+  if (millis() - ultimaVez >= periodo) {
+    ultimaVez = millis();          // reinicia la cuenta
+    digitalWrite(led, !digitalRead(led));  // alterna el LED
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="multitarea-sin-bloqueos">
+    <h2><i class="fa-solid fa-layers"></i> Multitarea sin bloqueos</h2>
+    <div class="doc-content">
+<p>El superpoder de <code>millis()</code> es poder hacer <strong>varias tareas "a la vez"</strong> en un único <code>loop()</code>: basta con varios temporizadores independientes, cada uno con su propia variable de marca. El micro no hace nada en paralelo de verdad, pero reacciona tan rápido que el resultado parece simultáneo.</p>
+<p>En este ejemplo un LED parpadea cada 500 ms, otro cada 1200 ms y el puerto serie refresca un valor dos veces por segundo, todo en el mismo bucle:</p>
+<pre><code class="language-cpp">unsigned long tLed1 = 0, tLed2 = 0, tSerial = 0;
+
+const unsigned long pLed1 = 500;   // cada 0,5 s
+const unsigned long pLed2 = 1200;  // cada 1,2 s
+const unsigned long pSerial = 500; // dos veces por segundo
+
+void setup() {
+  pinMode(9, OUTPUT);
+  pinMode(10, OUTPUT);
+  Serial.begin(115200);
+}
+
+void loop() {
+  // Temporizador 1: LED del pin 9
+  if (millis() - tLed1 >= pLed1) {
+    tLed1 = millis();
+    digitalWrite(9, !digitalRead(9));
+  }
+  // Temporizador 2: LED del pin 10 (otro ritmo)
+  if (millis() - tLed2 >= pLed2) {
+    tLed2 = millis();
+    digitalWrite(10, !digitalRead(10));
+  }
+  // Temporizador 3: refresco del serial
+  if (millis() - tSerial >= pSerial) {
+    tSerial = millis();
+    Serial.println(analogRead(A0));
+  }
+}</code></pre>
+<h3>Máquina de estados: un semáforo</h3>
+<p>Cuando una tarea pasa por distintas <strong>fases</strong>, almacenas el estado actual en una variable y cambias de fase según el tiempo:</p>
+<pre><code class="language-cpp">int estado = 0;                 // 0:rojo, 1:verde, ...
+unsigned long tEstado = 0;
+
+const int rojo = 11, amarillo = 12, verde = 13;
+const unsigned long tRojo = 4000;
+const unsigned long tVerde = 3000;
+const unsigned long tAmarillo = 1000;
+
+void setup() {
+  pinMode(rojo, OUTPUT);
+  pinMode(amarillo, OUTPUT);
+  pinMode(verde, OUTPUT);
+}
+
+void loop() {
+  switch (estado) {
+    case 0:
+      digitalWrite(rojo, HIGH);
+      digitalWrite(verde, LOW);
+      if (millis() - tEstado >= tRojo) { estado = 2; tEstado = millis(); }
+      break;
+    case 2:
+      digitalWrite(verde, HIGH);
+      digitalWrite(rojo, LOW);
+      if (millis() - tEstado >= tVerde) { estado = 1; tEstado = millis(); }
+      break;
+    case 1:
+      digitalWrite(verde, LOW);
+      digitalWrite(amarillo, HIGH);
+      if (millis() - tEstado >= tAmarillo) { estado = 0; tEstado = millis(); }
+      break;
+  }
+}</code></pre>
+<blockquote class="aside aside-note"><p>No es magia: el `<code>loop()</code>` sigue siendo secuencial y ejecuta una instrucción tras otra. La diferencia es que cada pasada es tan corta y frecuente que ninguna tarea "roba" el tiempo de las demás. Mientras una espera su intervalo, las otras se ejecutan.</p></blockquote>
+<h3>Patrones avanzados</h3>
+<p>Si necesitas muchas tareas, el patrón se puede generalizar (varias marcas en un array o estructuras), y para proyectos grandes existen librerías de <strong>scheduler</strong> o RTOS ligeros (por ejemplo <code>TaskScheduler</code> o enfoques con <code>Scheduler</code> en placas con soporte). Son herramientas avanzadas; el patrón con <code>millis()</code> cubre la gran mayoría de necesidades.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="otras-funciones-de-tiempo">
+    <h2><i class="fa-solid fa-hourglass-half"></i> Otras funciones de tiempo</h2>
+    <div class="doc-content">
+<p>Además de <code>millis()</code> y <code>micros()</code>, existen otras utilidades de tiempo en Arduino:</p>
+<table><thead><tr><th>Función</th><th>Qué hace</th><th>Bloquea</th></tr></thead><tbody><tr><td><code>delay(ms)</code></td><td>Espera ms milisegundos</td><td>Sí</td></tr><tr><td><code>delayMicroseconds(us)</code></td><td>Espera us microsegundos (muy preciso para pulsos)</td><td>Sí</td></tr><tr><td><code>millis()</code></td><td>Devuelve ms desde el arranque</td><td>No</td></tr><tr><td><code>micros()</code></td><td>Devuelve microsegundos desde el arranque</td><td>No</td></tr></tbody></table>
+<ul>
+<li><code>delayMicroseconds()</code> es útil para generar trenes de pulsos precisos (servos, protocolos de un solo hilo); no uses <code>delay()</code> para eso, su resolución no da.</li>
+<li><code>micros()</code> es más preciso que <code>millis()</code> pero se desborda a los ~71,6 minutos y no sirve para marcar intervalos largos.</li>
+</ul>
+<h3>Guardar la marca entre llamadas</h3>
+<p>Para medir intervalos hay que <strong>recordar</strong> el momento anterior entre una vuelta del <code>loop()</code> y la siguiente, por eso se usa una variable global <code>unsigned long</code>:</p>
+<pre><code class="language-cpp">unsigned long ultimaMarca = 0;   // recuerda la última vez
+
+void loop() {
+  if (millis() - ultimaMarca >= 1000) {
+    ultimaMarca = millis();      // guarda el nuevo momento
+    Serial.println("Ha pasado 1 segundo");
+  }
+}</code></pre>
+<h3>Secciones críticas e interrupciones</h3>
+<p>En situaciones de máxima criticidad (por ejemplo, midiendo un pulso exacto) puedes desactivar temporalmente las interrupciones con <code>noInterrupts()</code> y volver a activarlas con <code>interrupts()</code>. Es una técnica avanzada a usar con pinzas, porque mientras dura el bloque la CPU no atiende eventos externos.</p>
+<blockquote class="aside aside-danger"><p>Ninguna de estas funciones da una fecha ni una hora del calendario. <code>millis()</code> solo cuenta desde que se encendió la placa. Si tu proyecto necesita hora real (reloj en pantalla, registro con marca de tiempo), necesitas un módulo RTC (DS1307/DS3231) o sincronización NTP vía WiFi.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes-millis">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<p>Trabajar con tiempo en Arduino tiene trampas típicas. Estas son las más importantes:</p>
+<h3>1. Declarar <code>anterior</code> como <code>int</code></h3>
+<p>El mayor error de todos: usar <code>int</code> en vez de <code>unsigned long</code> para las marcas. Un <code>int</code> de 16 bits se desborda a los <strong>~32,7 segundos</strong> (32167 ms), rompiendo el temporizador en menos de un minuto. Siempre: <code>unsigned long anterior = 0;</code></p>
+<pre><code class="language-cpp">// ❌ int se desborda a los ~32 segundos
+// int anterior = 0;
+
+// ✅ unsigned long dura 49,7 días
+unsigned long anterior = 0;</code></pre>
+<h3>2. Olvidar actualizar <code>anterior = millis()</code></h3>
+<p>Si condicionas con <code>millis() - anterior &gt;= intervalo</code> pero nunca actualizas <code>anterior</code>, entrarás en el bloque <strong>cada vuelta del loop</strong> sin parar (o, si la comparación se desincroniza, el arranque se bloquea). La línea <code>anterior = millis();</code> dentro del <code>if</code> es imprescindible.</p>
+<h3>3. Comparar <code>millis() &gt; objetivo</code> directamente</h3>
+<p>Comparar contra un objetivo fijo en vez de restar falla cuando el contador se desborda o cuando la marca es casi el máximo:</p>
+<pre><code class="language-cpp">// ❌ Falla en el desbordamiento
+// if (millis() &gt; objetivo) { ... }
+
+// ✅ Correcto: la resta es robusta al overflow
+if (millis() - anterior >= intervalo) { ... }</code></pre>
+<h3>4. Usar delay() dentro de bloques que deben ser reactivos</h3>
+<p>Mezclar <code>delay()</code> con temporizadores de <code>millis()</code> reintegra el bloqueo que intentabas evitar. Un <code>delay(2000)</code> en medio del <code>loop()</code> congela también a tus temporizadores de <code>millis()</code>.</p>
+<h3>5. Suponer que micros() es preciso a nivel de instrucción</h3>
+<p><code>micros()</code> tiene una resolución real de unos 4 microsegundos con el reloj de 16 MHz y no es fiable para tiempos inferiores. Para pulsos muy cortos usa <code>delayMicroseconds()</code> u otras técnicas.</p>
+<h3>6. Bloquear el loop con lectura serial larga</h3>
+<p>Un <code>while (Serial.available()) { … }</code> muy largo (o un <code>parseInt()</code> esperando datos que no llegan) detiene todos los temporizadores. Si necesitas leer y temporizar a la vez, procesa pocos bytes por vuelta del <code>loop()</code> en lugar de vaciar todo el búfer de golpe.</p>
+<blockquote class="aside aside-success"><p>Regla de oro: <strong>usa siempre <code>unsigned long</code>, actualiza la marca dentro del <code>if</code>, y compara con resta</strong>. Con esos tres hábitos el desbordamiento de <code>millis()</code> deja de ser un problema y tus temporizadores serán a prueba de bombas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios-millis">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Afianza el tiempo sin bloqueos con estos ejercicios, de menor a mayor dificultad:</p>
+<ol>
+<li><strong>LED 1 s con millis (sin delay):</strong> reescribe el sketch Blink para que el LED integrado parpadee cada segundo usando <code>millis()</code> y <em>sin</em> llamar a <code>delay()</code> en el <code>loop()</code>. Comprueba que un botón conectado a otra tarea responde mientras el LED parpadea.</li>
+<li><strong>Dos LEDs a ritmos distintos:</strong> conecta dos LEDs a los pines 9 y 10 y haz que parpadeen a 500 ms y 1200 ms respectivamente, con dos temporizadores independientes de <code>millis()</code>.</li>
+<li><strong>Semáforo con estados:</strong> construye el semáforo de la lección (rojo 4 s, verde 3 s, amarillo 1 s) y adapta los tiempos para que el ciclo completo dure 10 s exactos.</li>
+<li><strong>Botón N veces + parpadeo simultáneo:</strong> un botón cuenta cuántas veces se pulsa (y lo muestra por serial) mientras un LED parpadea cada segundo con <code>millis()</code>; después de cada pulso, apaga el LED brevemente como confirmación, sin bloquear el parpadeo.</li>
+<li><strong>Cronómetro por serial con dos botones:</strong> un botón inicia/pausa un cronómetro que muestra los segundos transcurridos por serial, y otro botón lo reinicia a cero. Utiliza <code>millis()</code> para medir el tiempo y comprueba que el serial no se bloquea.</li>
+</ol>
+    </div>
+  </section>

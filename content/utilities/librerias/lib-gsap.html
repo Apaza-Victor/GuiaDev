@@ -1,0 +1,173 @@
+<!-- gsap - Librerías (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>GSAP (GreenSock Animation Platform) es el estándar profesional de animación web: anima cualquier propiedad de cualquier objeto (CSS, SVG, canvas) con rendimiento optimizado y control total del timeline. Plugins como ScrollTrigger añaden animaciones basadas en scroll.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Animar DOM, SVG y canvas con tweens sobre cualquier propiedad.</li>
+<li>Orquestar secuencias complejas con timelines (`gsap.timeline`).</li>
+<li>Vincular animaciones al scroll con ScrollTrigger: pin, scrub y parallax.</li>
+<li>Aplicar easing y stagger avanzados incluso con cientos de elementos.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Landing pages con efectos de scroll robustos: reveals, pins y parallax.</li>
+<li>Prototipos de producto o presentaciones animadas con control fino.</li>
+<li>Animaciones de logo y SVG con plugins avanzados (MorphSVG, DrawSVG).</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Algunos plugins avanzados requieren licencia comercial en empresas grandes. Para animaciones simples de entrada, CSS puro o Anime.js bastan; GSAP brilla cuando necesitas timeline y scroll complejos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install gsap
+</code></pre>
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-js">import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+gsap.registerPlugin(ScrollTrigger);
+</code></pre>
+<blockquote class="aside aside-tip"><p>GSAP (GreenSock) es el estándar de animación profesional: rendimiento incluso con cientos de nodos animados, timeline granular y plugins (ScrollTrigger, MorphSVG, DrawSVG...).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tweens-basicos">
+    <h2>Tweens Básicos <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Animación de un solo elemento
+gsap.to('.caja', { x: 300, duration: 1, ease: 'power2.out' });
+
+// Desde un estado inicial
+gsap.from('#titulo', { y: 40, opacity: 0, duration: 0.8, delay: 0.2 });
+
+// Efecto alternando desde y hacia
+gsap.fromTo('.logo', { scale: 0.8, rotation: -8 },
+                    { scale: 1, rotation: 0, duration: 0.6, ease: 'elastic.out(1, 0.4)' });
+
+// Varias propiedades y stagger para listas
+gsap.to('.card', {
+  y: -10,
+  opacity: 1,
+  stagger: 0.08,      // escalonado
+  duration: 0.5
+});
+
+// Callbacks
+gsap.to('#btn', { x: 50, onComplete: () =&gt; console.log('listo') });
+</code></pre>
+<blockquote class="aside aside-tip"><p>`.to()` anima hacia el valor dado, `.from()` parte de ese valor y llega al actual, y `.fromTo()` fija ambos extremos explícitamente. `stagger` reparte el delay en colecciones de nodos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="timelines">
+    <h2>Timelines <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Secuencia de pasos con control global
+const tl = gsap.timeline({ defaults: { duration: 0.5, ease: 'power2.out' } });
+
+tl.from('#panel', { opacity: 0, scale: 0.9 })
+  .from('.fila h3', { x: -30, opacity: 0, stagger: 0.1 })
+  .to('#panel', { boxShadow: '0 20px 40px rgba(0,0,0,0.3)' })
+  .add(() =&gt; emitirEvento(), '-=0.2');   // callback con offset
+
+// Controles
+tl.pause();
+tl.play();
+tl.reverse();
+tl.timeScale(2);   // acelerar 2x
+tl.progress(0.3);  // saltar al 30%
+</code></pre>
+<blockquote class="aside aside-note"><p>Una timeline encadena animaciones en orden y permite offsets (p. ej. `'-=0.3'`) para solapar pasos. Es la forma más legible de coreografiar una experiencia completa.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="easing-control">
+    <h2>Easing y Control <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Easings comunes
+gsap.to('.a', { x: 200, ease: 'power1.inOut' });      // acelerar y frenar
+gsap.to('.b', { x: 200, ease: 'back.out(1.7)' });     // rebote antes de asentarse
+gsap.to('.c', { x: 200, ease: 'elastic.out(1, 0.4)' }); // elástico
+gsap.to('.d', { x: 200, ease: 'steps(6)' });           // cuadro a cuadro
+
+// Repetir y alternar
+gsap.to('#pelota', {
+  y: 200,
+  repeat: -1,       // infinito
+  yoyo: true,       // va y viene
+  duration: 0.6,
+  ease: 'sine.inOut'
+});
+
+// Pausar / hacer ping-pong desde cualquier estado
+const tween = gsap.to('.caja', { rotation: 90, duration: 1 });
+tween.pause();
+tween.tweenTo(tween.duration() / 2);
+</code></pre>
+<blockquote class="aside aside-success"><p>El easing define la "personalidad" del movimiento. `back` y `elastic` añaden vida; `power`/`expo` dan profesionalismo; `steps` es ideal para animación por frames.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="scrolltrigger">
+    <h2>ScrollTrigger <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">gsap.registerPlugin(ScrollTrigger);
+
+// Animar cuando la sección entra en el viewport
+gsap.from('.seccion .item', {
+  opacity: 0,
+  y: 60,
+  stagger: 0.1,
+  duration: 0.7,
+  scrollTrigger: {
+    trigger: '.seccion',
+    start: 'top 80%',       // top de la sección al 80% del viewport
+    toggleActions: 'play none none reverse'
+  }
+});
+
+// Pin: fijar un elemento mientras se hace scroll
+ScrollTrigger.create({
+  trigger: '.sticky',
+  start: 'top top',
+  end: '+=600',
+  pin: true
+});
+
+// Progress bar de scroll
+gsap.to('.barra-progreso', {
+  scaleX: 1,
+  ease: 'none',
+  scrollTrigger: { start: 0, end: 'max', scrub: 0.5 }
+});
+</code></pre>
+<blockquote class="aside aside-caution"><p>Con `scrub: true` el progreso va ligado al scroll (efectos parallax). Usa `toggleActions` y `pin` con moderación: varios `pin` simultáneos pueden penalizar el rendimiento en móviles.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea una entrada escalonada con `.from()` y `stagger` para 5 tarjetas de una sección.</li>
+<li>Encadena en una timeline: aparece logo, se deslizan los 3 menús y sube la sombra.</li>
+<li>Haz una pelota que rebote infinitamente con `yoyo` y `elastic.out`.</li>
+<li>Con ScrollTrigger, anima una galería "sticky" mientras el usuario sigue scrolleando.</li>
+<li>Una barra de progreso superior que avance con `scrub` sincronizada al scroll total.</li>
+</ol>
+    </div>
+  </section>

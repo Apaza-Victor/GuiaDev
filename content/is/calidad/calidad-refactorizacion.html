@@ -1,0 +1,197 @@
+<!-- 3 Refactorización y Código Limpio - Calidad y Mantenimiento (Ingeniería de Software) -->
+<section id="que-es-refactorizar">
+  <h2><i class="fa-solid fa-wrench"></i> ¿Qué es la refactorización?</h2>
+  <div class="doc-content">
+    <p>La refactorización, según la definición clásica de <strong>Martin Fowler</strong>, es el proceso de <strong>cambiar la estructura interna del software sin alterar su comportamiento externo observable</strong>. En otras palabras: se reorganiza el código para hacerlo más limpio, comprensible y mantenible, pero la funcionalidad que percibe el usuario permanece idéntica.
+</p>
+<div class="plantuml-figure">
+          <img src="https://www.plantuml.com/plantuml/svg/~h407374617274756d6c0a736b696e706172616d206261636b67726f756e64436f6c6f722062656967650a736b696e706172616d2064656661756c74466f6e7453697a652031310a0a72656374616e676c6520225245464143544f52495a414349c3934e22206173207265662023453846354539207b0a202072656374616e676c652022416e7465732220617320616e7465732023464638413635207b0a20202020636172642022436f646520736d656c6c73220a2020202063617264202243c3b36469676f206475706c696361646f220a20207d0a202072656374616e676c65202254c3a9636e6963617322206173207465632023383144344641207b0a2020202063617264202245787472616572206dc3a9746f646f220a2020202063617264202252656e6f6d62726172220a20207d0a202072656374616e676c6520224465737075c3a9732220617320646573702023383143373834207b0a2020202063617264202243c3b36469676f206c696d70696f220a202020206361726420224d69736d6f20636f6d706f7274616d69656e746f220a20207d0a7d0a616e746573202d646f776e2d3e207465630a746563202d646f776e2d3e2064657370203a2073696e2063616d6269617220636f6d706f7274616d69656e746f0a0a40656e64756d6c" alt="Diagrama UML" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-plantuml">@startuml
+skinparam backgroundColor beige
+skinparam defaultFontSize 11
+
+rectangle &quot;REFACTORIZACIÓN&quot; as ref #E8F5E9 {
+  rectangle &quot;Antes&quot; as antes #FF8A65 {
+    card &quot;Code smells&quot;
+    card &quot;Código duplicado&quot;
+  }
+  rectangle &quot;Técnicas&quot; as tec #81D4FA {
+    card &quot;Extraer método&quot;
+    card &quot;Renombrar&quot;
+  }
+  rectangle &quot;Después&quot; as desp #81C784 {
+    card &quot;Código limpio&quot;
+    card &quot;Mismo comportamiento&quot;
+  }
+}
+antes -down-&gt; tec
+tec -down-&gt; desp : sin cambiar comportamiento
+
+@enduml</code></pre>
+  </details>
+</div>
+
+    <p>La clave de la refactorización es que introduce <strong>mejoras estructurales</strong> (legibilidad, modularidad, eliminación de duplicación) mientras las pruebas existentes garantizan que no se ha roto nada. Por ello, refactorizar sin una buena batería de tests es especialmente arriesgado.</p>
+
+    <aside class="aside aside-note">
+      <strong>Diferencia clave:</strong> refactorizar <em>no</em> es añadir una funcionalidad nueva ni corregir un bug. Es una actividad de reestructuración interna cuyo resultado funcional es el mismo, pero con un código de mejor calidad.
+    </aside>
+  </div>
+</section>
+
+<section id="cuando-refactorizar">
+  <h2><i class="fa-solid fa-clock"></i> ¿Cuándo y por qué refactorizar?</h2>
+  <div class="doc-content">
+    <p>Refactorizar no es un capricho, sino una práctica que se aplica en momentos concretos del desarrollo. Una de las guías más conocidas es la <strong>"regla de las tres"</strong>: cuando vas a tocar un código por tercera vez porque suele presentar problemas, es momento de refactorizarlo.</p>
+
+    <p>Los momentos idóneos para refactorizar son:</p>
+
+    <ul>
+      <li><strong>Al agregar nueva funcionalidad:</strong> antes de introducir cambios, reestructura el código existente para que el nuevo comportamiento encaje de forma natural.</li>
+      <li><strong>Al corregir bugs:</strong> un defecto suele deberse a código complejo o confuso; limpiarlo ayuda a localizar la causa y evita que el problema reaparezca.</li>
+      <li><strong>Durante la revisión de código (code review):</strong> si un revisor detecta una confusión o duplicación, es el momento de corregirla, no de posponerla.</li>
+    </ul>
+
+    <aside class="aside aside-tip">
+      <strong>Consejo:</strong> refactoriza en pasos pequeños y seguros: aplica una técnica, ejecuta las pruebas, y continúa. Mantener cambios pequeños facilita localizar errores en caso de que algo falle.
+    </aside>
+  </div>
+  <p>---</p>
+</section>
+
+<section id="malos-olores">
+  <h2><i class="fa-solid fa-fish-fins"></i> Code smells (malos olores)</h2>
+  <div class="doc-content">
+    <p>Los "code smells" (malos olores del código) son indicios o síntomas en el código que sugieren la presencia de problemas más profundos. No son errores en sí, pero suelen desembocar en defectos o en dificultades de mantenimiento.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Code smell</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Código duplicado</td>
+          <td>El mismo bloque de lógica aparece en varios lugares; cualquier corrección debe repetirse en todas las copias.</td>
+        </tr>
+        <tr>
+          <td>Método largo (Long Method)</td>
+          <td>Una función con demasiadas responsabilidades es difícil de entender, probar y modificar.</td>
+        </tr>
+        <tr>
+          <td>Clase God Class</td>
+          <td>Una clase que concentra demasiadas responsabilidades y datos de todo el sistema.</td>
+        </tr>
+        <tr>
+          <td>Lista de parámetros excesiva (Long Parameter List)</td>
+          <td>Una función que recibe demasiados argumentos se vuelve confusa y difícil de invocar correctamente.</td>
+        </tr>
+        <tr>
+          <td>Feature Envy</td>
+          <td>Un método usa intensivamente datos o métodos de otra clase en lugar de sus propios datos.</td>
+        </tr>
+        <tr>
+          <td>Disparo de escopeta (Shotgun Surgery)</td>
+          <td>Un cambio trivial obliga a modificar muchas clases distintas, síntoma de una separación de responsabilidades deficiente.</td>
+        </tr>
+        <tr>
+          <td>Comentarios excesivos / código muerto</td>
+          <td>Comentarios que explican lo que hace un código confuso (en vez de arreglarlo) o fragmentos que ya no se ejecutan.</td>
+        </tr>
+        <tr>
+          <td>Cadenas de mensajes (Message Chains)</td>
+          <td>Encadenamientos del tipo a.getB().getC().getD() que acoplan fuertemente al resto del sistema.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <aside class="aside aside-warning">
+      <strong>Advertencia:</strong> reconocer un code smell es el primer paso, pero no todos merecen eliminarse de inmediato. Prioriza los que generan mayor riesgo o cuestan más de mantener, y arréglalos junto con las funcionalidades que los tocan.
+    </aside>
+  </div>
+  <p>---</p>
+</section>
+
+<section id="tecnicas-de-refactorizacion">
+  <h2><i class="fa-solid fa-scissors"></i> Técnicas comunes</h2>
+  <div class="doc-content">
+    <p>Existen catálogos amplios de técnicas de refactorización. Las más frecuentes y de mayor impacto son las siguientes.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Técnica</th>
+          <th>Qué hace</th>
+          <th>Ejemplo breve</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Extraer método</td>
+          <td>Tomar un bloque de código y convertirlo en un método con nombre propio.</td>
+          <td>Sacar el cálculo del IVA de un método grande a un método <code>calcularIva()</code>.</td>
+        </tr>
+        <tr>
+          <td>Renombrar</td>
+          <td>Cambiar el nombre de variables, funciones o clases a uno más expresivo.</td>
+          <td>Renombrar <code>x</code> a <code>precioSinImpuesto</code>.</td>
+        </tr>
+        <tr>
+          <td>Mover (método o campo)</td>
+          <td>Trasladar lógica a la clase donde tiene más sentido.</td>
+          <td>Mover <code>calcularSaldo()</code> a la clase <code>Cuenta</code>.</td>
+        </tr>
+        <tr>
+          <td>Dividir clase</td>
+          <td>Separar una clase con muchas responsabilidades en varias clases cohesivas.</td>
+          <td>Dividir una <code>Pedido</code> monstruo en <code>Pedido</code>, <code>LineaPedido</code> y <code>Facturacion</code>.</td>
+        </tr>
+        <tr>
+          <td>Reemplazar condicional por polimorfismo</td>
+          <td>Sustituir una cadena de <code>if/switch</code> por la elección de una subclase o implementación.</td>
+          <td>Pasar de <code>switch(tipo)</code> a invocar el método sobre objetos <code>Rectangulo</code>, <code>Circulo</code>, etc.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <aside class="aside aside-tip">
+      <strong>Consejo:</strong> cada técnica debe aplicarse junto con la ejecución de las pruebas para verificar que el comportamiento no cambió. Muchos IDEs automatizan estas transformaciones de forma segura con "refactorings" integrados.
+    </aside>
+  </div>
+  <p>---</p>
+</section>
+
+<section id="codigo-limpio">
+  <h2><i class="fa-solid fa-broom"></i> Código limpio y nomenclatura</h2>
+  <div class="doc-content">
+    <p>El <strong>código limpio</strong>, concepto popularizado por Robert C. Martin (Uncle Bob), es aquel que es fácil de leer, entender y modificar para otros desarrolladores, incluido su propio autor meses después. La base de un código limpio es una nomenclatura clara y honesta.</p>
+
+    <ul>
+      <li><strong>Nombres que revelan la intención:</strong> un nombre debe describir qué hace y por qué, evitando <code>d</code>, <code>tmp</code> o <code>data</code> ambiguos.</li>
+      <li><strong>Funciones pequeñas y de una sola responsabilidad:</strong> cada función debe hacer una única cosa y hacerla bien.</li>
+      <li><strong>Evitar la duplicación:</strong> el principio DRY (Don't Repeat Yourself) reduce errores y facilita el mantenimiento.</li>
+      <li><strong>Comentarios como último recurso:</strong> el código bien nombrado no necesita comentarios que expliquen "qué" hace, sino que expresa su intención por sí mismo.</li>
+      <li><strong>Consistencia:</strong> respetar las convenciones de nomenclatura y formato del proyecto (camelCase, PascalCase, etc.) de forma uniforme.</li>
+    </ul>
+
+    <aside class="aside aside-note">
+      <strong>Analogía útil:</strong> el código se escribe una vez, pero se lee muchas. Por tanto, escribir código limpio es optimizar para los futuros lectores (incluido el propio autor), no solo para la máquina que lo ejecuta.
+    </aside>
+  </div>
+</section>
+
+<section id="resumen">
+  <h2><i class="fa-solid fa-graduation-cap"></i> Resumen</h2>
+  <aside class="aside aside-note">
+    <ul>
+      <li>Refactorizar es cambiar la estructura interna del código sin alterar su comportamiento externo.</li>
+      <li>Se aplica al añadir funcionalidad, corregir bugs o durante las revisiones de código, idealmente en pasos pequeños.</li>
+      <li>Los code smells son señales de problemas profundos; el código duplicado y los métodos largos son los más comunes.</li>
+      <li>Existen técnicas concretas como extraer, renombrar, mover, dividir o reemplazar condicionales por polimorfismo.</li>
+      <li>El código limpio se fundamenta en nombres que revelan intención, funciones pequeñas y la ausencia de duplicación.</li>
+    </ul>
+  </aside>
+</section>

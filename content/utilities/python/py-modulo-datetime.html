@@ -1,0 +1,164 @@
+<!-- datetime - Python (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>`datetime` es la forma correcta de trabajar con fechas y horas en Python: crear fechas, calcular diferencias con `timedelta`, manejar zonas horarias y convertir entre objetos y texto para logs, APIs o bases de datos.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Obtener la fecha u hora actual y construir fechas a medida con `date` y `datetime`.</li>
+<li>Sumar y restar días, semanas o meses con `timedelta` sin errores de rango.</li>
+<li>Formatear a texto con `strftime` y analizar cadenas con `strptime`.</li>
+<li>Comparar fechas, calcular antigüedades o saber el día de la semana de una fecha.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Registrar timestamps en logs y filenames finalizados en fecha.</li>
+<li>Calcular vencimientos, plazos o antigüedad de registros en una app.</li>
+<li>Convertir fechas de un JSON o CSV hacia el tipo `date` para compararlas.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Para medir tiempos de ejecución usa `time.perf_counter`, no `datetime`: no está pensado para crono precisos. Y para zonas horarias complejas tira de `zoneinfo` con la base de datos IANA en vez de saltos manuales de horas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="fechas-horas-base">
+    <h2>Fechas y Horas <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-python">from datetime import date, datetime, timedelta, timezone
+
+hoy = date.today()                 # 2026-08-29
+ahora = datetime.now()             # 2026-08-29 14:30:00.123456
+utc = datetime.now(timezone.utc)   # con zona horaria
+</code></pre>
+<blockquote class="aside aside-tip"><p>`datetime` reúne `date` (año-mes-día), `time` (hora) y `datetime` (ambos), más `timedelta` para matemática de duraciones. Todo en la biblioteca estándar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="crear-operar-paso-1">
+    <h2>Crear y Operar <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from datetime import date, datetime, timedelta
+
+# Crear fechas y horas concretas
+fecha = date(2026, 8, 29)
+momento = datetime(2026, 8, 29, 14, 30, 0)
+
+# Leer componentes
+fecha.year      # 2026
+fecha.month     # 8
+fecha.day       # 29
+momento.hour    # 14
+momento.minute  # 30
+momento.second  # 0
+
+# Día de la semana: 0 = lunes ... 6 = domingo
+fecha.weekday()     # 5 (sábado)
+fecha.isoweekday()  # 6 (según ISO, lunes = 1)
+
+# Sumar y restar
+fecha + timedelta(days=7)               # una semana después
+momento - timedelta(hours=2)            # hace 2 horas
+</code></pre>
+<blockquote class="aside aside-note"><p>`timedelta` suma días/horas/minutos/segundos a fechas e instantes y es **inmutable** al igual que date/datetime: las operaciones devuelven objetos nuevos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="formato-parseo-paso-2">
+    <h2>Formato y Parseo <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from datetime import datetime
+
+ahora = datetime.now()
+
+# Dar formato a una fecha: strftime
+ahora.strftime("%Y-%m-%d")          # '2026-08-29'
+ahora.strftime("%d/%m/%Y")          # '29/08/2026'
+ahora.strftime("%H:%M:%S")          # '14:30:00'
+ahora.strftime("%A, %d de %B de %Y")  # 'sábado, 29 de agosto de 2026'
+
+# Leer una fecha desde texto: strptime
+fecha_texto = "2026-08-29"
+fecha = datetime.strptime(fecha_texto, "%Y-%m-%d")
+
+# ISO (muy usado en APIs)
+ahora.isoformat()                   # '2026-08-29T14:30:00.123456'
+datetime.fromisoformat("2026-08-29T14:30:00")
+</code></pre>
+<blockquote class="aside aside-caution"><p>`strftime` convierte fechas -&gt; texto y `strptime` texto -&gt; fecha. La directiva debe coincidir con el texto real: `%d` es día, `%m` mes en número, `%B` el nombre completo, `%A` el día de la semana.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="timedelta-duraciones-paso-3">
+    <h2>timedelta: duraciones <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from datetime import date, datetime, timedelta
+
+# Crear duraciones
+semana = timedelta(days=7)
+duracion = timedelta(hours=2, minutes=30)
+
+# Operar con fechas
+inicio = date(2026, 1, 1)
+fin = inicio + timedelta(days=100)
+
+# Diferencia entre fechas (da un timedelta)
+delta = fin - inicio
+delta.days                     # 100
+delta.total_seconds()          # 8640000.0
+
+# Ejemplo real: vencimiento de licencia
+hoy = date.today()
+licencia = date(2026, 9, 30)
+dias_restantes = (licencia - hoy).days
+print(f"Tu licencia vence en {dias_restantes} días")
+</code></pre>
+<blockquote class="aside aside-tip"><p>`timedelta` maneja días, horas, segundos y microsegundos. Si necesitas "hace 3 meses" o "el próximo lunes", `relativedelta` (del paquete `dateutil`) añade lo que falta: `pip install python-dateutil`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="aplicaciones-practicas-paso-4">
+    <h2>Aplicaciones Prácticas <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">from datetime import datetime, timedelta, timezone
+
+# Zonas horarias
+from zoneinfo import ZoneInfo
+lima = datetime.now(ZoneInfo("America/Lima"))
+tokyo = lima.astimezone(ZoneInfo("Asia/Tokyo"))
+
+# Calcular cuánto tardó una tarea
+t0 = datetime.now()
+# ... hacer algo ...
+t1 = datetime.now()
+print(f"Tomó {t1 - t0}")
+
+# Primer y último día del mes actual
+hoy = datetime.now().date()
+primero = hoy.replace(day=1)
+ultimo = (primero + timedelta(days=31)).replace(day=1) - timedelta(days=1)
+
+# Vencer cookies / tokens
+expira = datetime.now(timezone.utc) + timedelta(days=30)
+</code></pre>
+<blockquote class="aside aside-success"><p>Con `ZoneInfo` (py3.9+) manejas zonas horarias reales del IANA. Para medir tiempos usa `datetime` (o mejor `time.perf_counter` para micro-segundos) y registra fechas de expiración siempre en **UTC**.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Muestra la fecha y hora actuales en formato `DD/MM/YYYY HH:MM`.</li>
+<li>Suma 30 días a la fecha de hoy y muestra el día de la semana resultante.</li>
+<li>Convierte `"25/12/2026"` a un objeto `datetime`.</li>
+<li>Calcula cuántos días faltan para tu próximo cumpleaños.</li>
+<li>Convierte una `datetime` local a su equivalente en Tokio con `ZoneInfo`.</li>
+</ol>
+    </div>
+  </section>

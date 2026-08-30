@@ -1,0 +1,263 @@
+<!-- 6. Estructuras de Control: Bucles - Fundamentos de Programación (Lenguajes de Programación) -->
+
+  <section id="repetir-sin-copiar-codigo">
+    <h2><i class="fa-solid fa-rotate"></i> Repetir sin copiar código</h2>
+    <div class="doc-content">
+<p>Pronto te toparás con una necesidad inevitable: hacer lo mismo muchas veces. ¿Imprimir los números del 1 al 100? ¿Sumar las notas de toda una clase? ¿Mostrar un menú una y otra vez hasta que el usuario decida salir? La solución ingenua sería <strong>copiar y pegar</strong> el mismo bloque un centenar de veces… pero eso es un desastre: el código se hace gigante, es casi imposible de mantener y cualquier cambio obliga a editar cada copia.</p>
+<p>Para eso existen los <strong>bucles</strong> (también llamados <em>ciclos</em> o <em>repeticiones</em>): estructuras que permiten ejecutar un bloque de instrucciones varias veces, de forma controlada. Son uno de los tres pilares de la programación junto con la secuencia y las decisiones.</p>
+<h3>Repetición determinada e indeterminada</h3>
+<ul>
+<li><strong>Determinada:</strong> sabemos de antemano cuántas veces se repite (p. ej. 100 veces). La resuelve el bucle <code>Para</code>.</li>
+<li><strong>Indeterminada:</strong> no sabemos cuántas veces, depende de una condición. La resuelven <code>Mientras</code> y <code>Repetir</code>.</li>
+</ul>
+<h3>Diagrama de un bucle</h3>
+<pre><code class="language-text">        ┌───────────┐
+        │   inicio  │
+        └─────┬─────┘
+              v
+   ┌──────────┴──────────┐
+   │  ¿condición cierta? │──No──▶ salir del bucle
+   └──────────┬──────────┘
+             Sí│
+              v
+        ┌───────────┐
+        │  cuerpo   │  &lt;&lt; se repite
+        └─────┬─────┘
+              │
+              └──▶ vuelve a evaluar la condición</code></pre>
+<p>La clave es el <strong>cuerpo</strong> (lo que se repite) y la <strong>condición de salida</strong>. Cada vuelta debe acercar al programa a terminar el bucle; si no, caemos en un bucle infinito.</p>
+<blockquote class="aside aside-note"><p>Copiar/pegar suele funcionar… hasta que cambia un requisito. Con un bucle, ese cambio se hace en un solo lugar; con copias, en cien. Por eso la regla de oro es: <em>nunca copies código que puedas repetir</em>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="el-bucle-for">
+    <h2><i class="fa-solid fa-forward-fast"></i> El bucle for</h2>
+    <div class="doc-content">
+<p>El bucle <code>Para</code> (en otros lenguajes <code>for</code>) se usa cuando <strong>sabemos exactamente cuántas veces</strong> queremos repetir. Tiene un contador que recorre un rango. Su estructura consta de tres partes: <em>inicialización</em>, <em>condición</em> y <em>incremento</em>.</p>
+<h3>Sintaxis en PSeInt</h3>
+<pre><code class="language-pseudocode">Para i &lt;- 1 Hasta 10 Hacer
+    // cuerpo: se ejecuta con i = 1, 2, ..., 10
+FinPara
+
+// Con paso (incremento) de 2 en 2
+Para i &lt;- 1 Hasta 10 con paso 2 Hacer
+    // i = 1, 3, 5, 7, 9
+FinPara</code></pre>
+<h3>Las tres partes del bucle</h3>
+<table><thead><tr><th>Parte</th><th>En PSeInt</th><th>Qué hace</th></tr></thead><tbody><tr><td>Inicialización</td><td><code>i &lt;- 1</code></td><td>Define el valor inicial del contador</td></tr><tr><td>Condición</td><td><code>Hasta 10</code></td><td>Determina el valor límite</td></tr><tr><td>Incremento</td><td><code>con paso 2</code> (o <code>Decremento</code>)</td><td>Cuánto avanza el contador cada vuelta</td></tr></tbody></table>
+<h3>Ejemplo: sumar del 1 al 100 (acumulador)</h3>
+<pre><code class="language-pseudocode">Algoritmo sumar_1_100
+    Definir suma, i Como Entero
+    suma &lt;- 0
+
+    Para i &lt;- 1 Hasta 100 Hacer
+        suma &lt;- suma + i
+    FinPara
+
+    Escribir "La suma del 1 al 100 es: ", suma
+
+FinAlgoritmo</code></pre>
+<p>Fíjate en la variable <code>suma</code>: se llama <strong>acumulador</strong> y debe inicializarse a 0 <em>antes</em> del bucle. Dentro, en cada vuelta, le sumamos el valor actual de <code>i</code>. Al final tiene la suma total (5050).</p>
+<h3>Ejemplo: la tabla del 7</h3>
+<pre><code class="language-pseudocode">Algoritmo tabla_del_7
+    Definir i, resultado Como Entero
+
+    Para i &lt;- 1 Hasta 10 Hacer
+        resultado &lt;- 7 * i
+        Escribir "7 x ", i, " = ", resultado
+    FinPara
+
+FinAlgoritmo</code></pre>
+<blockquote class="aside aside-tip"><p>El nombre del contador (<code>i</code>) es convención para "índice", pero puedes usar cualquiera. Lo importante es que no lo modifiques dentro del cuerpo: el bucle ya avanza solo con su incremento.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="el-bucle-while">
+    <h2><i class="fa-solid fa-repeat"></i> El bucle while</h2>
+    <div class="doc-content">
+<p>Cuando <strong>no sabemos cuántas veces</strong> se repetirá el bloque, usamos el bucle <code>Mientras</code> (en otros lenguajes <code>while</code>). Repite <em>mientras</em> una condición sea verdadera, y deja de hacerlo cuando se vuelve falsa. Es un bucle de tipo <strong>pre-test</strong>: comprueba la condición <em>antes</em> de entrar, por lo que puede no ejecutarse nunca.</p>
+<h3>Sintaxis en PSeInt</h3>
+<pre><code class="language-pseudocode">Mientras condicion Hacer
+    // cuerpo: se repite mientras condicion sea verdadera
+FinMientras</code></pre>
+<h3>Ejemplo: leer notas hasta que el usuario meta 0</h3>
+<pre><code class="language-pseudocode">Algoritmo leer_notas
+    Definir nota, total, contador, promedio Como Real
+    total &lt;- 0
+    contador &lt;- 0
+
+    Escribir "Ingrese una nota (0 para terminar):"
+    Leer nota
+
+    Mientras nota &lt;&gt; 0 Hacer
+        total &lt;- total + nota
+        contador &lt;- contador + 1
+        Escribir "Ingrese otra nota (0 para terminar):"
+        Leer nota
+    FinMientras
+
+    Si contador &gt; 0 Entonces
+        promedio &lt;- total / contador
+        Escribir "El promedio es: ", promedio
+    FinSi
+
+FinAlgoritmo</code></pre>
+<p>No sabemos cuántas notas escribirá el usuario; solo termina cuando escriba 0. Por eso <code>Mientras</code> es la elección natural.</p>
+<h3>Pre-test vs post-test</h3>
+<table><thead><tr><th>Bucle</th><th>Tipo</th><th>¿Se ejecuta al menos una vez?</th></tr></thead><tbody><tr><td><code>Mientras</code></td><td>Pre-test</td><td>No: si la condición es falsa desde el inicio, no entra nunca</td></tr><tr><td><code>Repetir</code></td><td>Post-test</td><td>Sí: garantiza al menos una ejecución</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Dentro de un <code>Mientras</code> debe existir algo que <em>pueda</em> cambiar la condición (leer un dato, incrementar una variable). Si la condición nunca cambia, el bucle no termina jamás: es un bucle infinito.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="el-bucle-do-while">
+    <h2><i class="fa-solid fa-angles-right"></i> El bucle do-while</h2>
+    <div class="doc-content">
+<p>El bucle <code>Repetir</code> (en muchos lenguajes <code>do-while</code>) es un bucle de tipo <strong>post-test</strong>: se ejecuta el cuerpo <em>una vez</em> y luego comprueba la condición. Garantiza que el bloque se ejecute al menos una vez, lo cual es perfecto para menús que siempre se muestran al menos una vez.</p>
+<h3>Sintaxis en PSeInt</h3>
+<pre><code class="language-pseudocode">Repetir
+    // cuerpo: se ejecuta al menos una vez
+Hasta Que condicion</code></pre>
+<p>Importante: en PSeInt el bucle termina cuando la condición es <strong>verdadera</strong> (por eso se llama "Hasta Que"). Es lo contrario del <code>Mientras</code>, que repite mientras sea verdadera.</p>
+<h3>Ejemplo: menú repetido hasta elegir salir</h3>
+<pre><code class="language-pseudocode">Algoritmo menu_repetido
+    Definir opcion Como Entero
+
+    Repetir
+        Escribir "1. Ver saldo"
+        Escribir "2. Depositar"
+        Escribir "3. Retirar"
+        Escribir "4. Salir"
+        Escribir "Elija:"
+        Leer opcion
+
+        Segun opcion Hacer
+            1: Escribir "Tu saldo es 500"
+            2: Escribir "Depósito realizado"
+            3: Escribir "Retiro realizado"
+            4: Escribir "Adiós"
+            De Otro Modo: Escribir "Opción inválida"
+        FinSegun
+    Hasta Que opcion = 4
+
+FinAlgoritmo</code></pre>
+<p>El menú siempre se muestra al menos una vez (algo que el <code>Mientras</code> no garantizaría si la condición inicial fuera falsa). </p>
+<h3>¿Cuál usar?</h3>
+<table><thead><tr><th>Necesidad</th><th>Bucle recomendado</th></tr></thead><tbody><tr><td>Sé cuántas veces repetir</td><td>Para (for)</td></tr><tr><td>No sé cuántas veces y quizá no entrar</td><td>Mientras (while)</td></tr><tr><td>Debe ejecutarse al menos una vez</td><td>Repetir (do-while)</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p>La regla para elegir bucle es sencilla: cuenta lo que sabes. Sabes el número → <code>Para</code>. Sabes cuándo parar pero no cuántas veces → <code>Mientras</code> o <code>Repetir</code> según necesites garantizar (o no) la primera ejecución.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="break-y-continue">
+    <h2><i class="fa-solid fa-forward-step"></i> break y continue</h2>
+    <div class="doc-content">
+<p>A veces queremos salir de un bucle <em>antes</em> de que termine su recorrido natural, o saltar una vuelta en concreto. En muchos lenguajes existen las sentencias <code>break</code> (salir del bucle) y <code>continue</code> (saltar a la siguiente vuelta). PSeInt clásico no las tiene como tal, pero podemos conseguir el mismo efecto con <strong>condiciones de salida</strong>, a menudo con una variable <strong>bandera</strong> (flag) que controla el fin.</p>
+<h3>Salir temprano con una bandera</h3>
+<pre><code class="language-pseudocode">Algoritmo primer_multiplo
+    Definir encontrado Como Logico
+    Definir i Como Entero
+    encontrado &lt;- Falso
+
+    Para i &lt;- 1 Hasta 100 Y NO encontrado Hacer
+        Si i MOD 7 = 0 Entonces
+            Escribir "Primer múltiplo de 7: ", i
+            encontrado &lt;- Verdadero
+        FinSi
+    FinPara
+
+FinAlgoritmo</code></pre>
+<p>La bandera <code>encontrado</code> empieza en falso; en cuanto encontramos el valor buscado la ponemos a verdadero y el bucle (que exige <code>NO encontrado</code>) se detiene. Es el equivalente práctico de un <code>break</code>.</p>
+<h3>¿Qué hacen break y continue?</h3>
+<table><thead><tr><th>Concepto</th><th>Efecto</th><th>Equivalente en PSeInt</th></tr></thead><tbody><tr><td><code>break</code></td><td>Salir del bucle por completo</td><td>Bandera + condición de salida</td></tr><tr><td><code>continue</code></td><td>Saltar al inicio de la siguiente vuelta</td><td>Un <code>Si</code> que envuelve lo que queremos omitir</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>No abuses de <code>break</code> ni de banderas para salir: suelen indicar que la condición del bucle no está bien planteada. Lo legible es plantear una condición que termine de forma natural. Usa la salida temprana solo cuando simplifique mucho el código.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="bucles-anidados">
+    <h2><i class="fa-solid fa-layers"></i> Bucles anidados</h2>
+    <div class="doc-content">
+<p>Un bucle puede vivir <strong>dentro de otro bucle</strong>. Se llaman <em>bucles anidados</em> y resultan imprescindibles para trabajar con estructuras de dos dimensiones: tablas, matrices, figuras dibujadas con asteriscos. Por cada vuelta del bucle externo, el bucle interno recorre todas las suyas.</p>
+<h3>Ejemplo: tabla de multiplicar 10x10</h3>
+<pre><code class="language-pseudocode">Algoritmo tabla_10x10
+    Definir i, j Como Entero
+
+    Para i &lt;- 1 Hasta 10 Hacer
+        Para j &lt;- 1 Hasta 10 Hacer
+            Escribir i * j, " "
+        FinPara
+        Escribir ""   // salto de línea al terminar cada fila
+    FinPara
+
+FinAlgoritmo</code></pre>
+<p>El bucle interno (<code>j</code>) se ejecuta completo por cada valor del externo (<code>i</code>). En total son <code>10 × 10 = 100</code> ejecuciones del cuerpo más interno.</p>
+<h3>Imprimir una figura de asteriscos</h3>
+<pre><code class="language-pseudocode">Algoritmo triangulo_asteriscos
+    Definir i, j, n Como Entero
+    n &lt;- 5
+
+    Para i &lt;- 1 Hasta n Hacer
+        Para j &lt;- 1 Hasta i Hacer
+            Escribir Sin Saltar "*"
+        FinPara
+        Escribir ""   // salto de línea
+    FinPara
+
+FinAlgoritmo</code></pre>
+<p>El resultado es un triángulo: en la fila <code>i</code> se imprimen <code>i</code> asteriscos.</p>
+<h3>Cuidado con el tiempo</h3>
+<p>El número total de iteraciones es el <strong>producto</strong> de las de cada bucle. Un bucle de 1000 dentro de otro de 1000 ejecuta un millón de veces el cuerpo interno. Combínalo con un tercero y el tiempo puede dispararse. Antes de anidar demasiado, piensa si realmente es necesario.</p>
+<blockquote class="aside aside-note"><p>En bucles anidados es convención usar índices distintos (normalmente <code>i</code>, luego <code>j</code>, luego <code>k</code>). Usar el mismo índice en ambos niveles es una fuente clásica de errores difíciles de rastrear.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. Bucle infinito (olvidar el incremento)</h3>
+<pre><code class="language-pseudocode">// ❌ Contador que nunca cambia: nunca llegará a 5
+Mientras i &lt;&gt; 5 Hacer
+    Escribir i   // i nunca se modifica → bucle infinito
+FinMientras
+
+// ✅ Aumenta el contador dentro del cuerpo
+Mientras i &lt;&gt; 5 Hacer
+    Escribir i
+    i &lt;- i + 1
+FinMientras</code></pre>
+<h3>2. Bucle que no entra (condición falsa desde el inicio)</h3>
+<p>Si la condición de un <code>Mientras</code> es falsa antes de la primera vuelta, el cuerpo no se ejecuta jamás. Comprueba que inicializaste las variables que intervienen en la condición.</p>
+<h3>3. Usar el contador mal (i en lugar de i+1)</h3>
+<p>Confundir el valor actual de <code>i</code> con el siguiente produce resultados desfasados, sobre todo al acceder a posiciones de datos. Revisa si necesitas <code>i</code> o <code>i + 1</code>.</p>
+<h3>4. Índices intercambiados en bucles anidados</h3>
+<p>En un doble bucle, usar <code>j</code> donde toca <code>i</code> (por ejemplo al acceder a una matriz) genera errores lógicos difíciles de detectar. Nombra y respeta el rol de cada índice.</p>
+<h3>5. Acumulador no inicializado</h3>
+<pre><code class="language-pseudocode">// ❌ suma empieza con valor basura
+// suma &lt;- suma + i   → resultado incorrecto
+
+// ✅ inicializar a 0 antes del bucle
+suma &lt;- 0
+Para i &lt;- 1 Hasta 100 Hacer
+    suma &lt;- suma + i
+FinPara</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Resuelve estos ejercicios en PSeInt o en tu lenguaje de preferencia. De menor a mayor dificultad:</p>
+<ol>
+<li><strong>Sumar pares del 1 al 100:</strong> con un <code>Para</code>, recorre los números y suma solo los pares; muestra el total.</li>
+<li><strong>Tabla de un número leído:</strong> lee un número y muestra su tabla de multiplicar del 1 al 10 con un bucle.</li>
+<li><strong>Contar cifras de un número:</strong> con un <code>Repetir</code>, divide un número entre 10 hasta que sea 0 y cuenta cuántas cifras tiene.</li>
+<li><strong>Triángulo de asteriscos:</strong> con bucles anidados, imprime una figura: línea 1 con un asterisco, línea 2 con dos, y así hasta N.</li>
+<li><strong>Promedio de N notas:</strong> pide cuántas notas leer, luego usa un bucle para leerlas y calcula su promedio con un acumulador.</li>
+</ol>
+    </div>
+  </section>

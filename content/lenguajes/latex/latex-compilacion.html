@@ -1,0 +1,147 @@
+<!-- 7. Compilación y Buenas Prácticas - LaTeX (Lenguajes de Programación) -->
+
+  <section id="flujo-de-compilacion">
+    <h2><i class="fa-solid fa-play"></i> El flujo de compilación</h2>
+    <div class="doc-content">
+<p>A diferencia de un procesador de texto, LaTeX no muestra el documento mientras escribes: <strong>compilas</strong> tu archivo <code>.tex</code> y se genera un PDF. Comprender ese flujo te ahorrará muchísimos quebraderos de cabeza, porque casi todos los problemas con referencias e índice tienen su origen aquí.</p>
+<h3>De .tex a PDF, y los archivos auxiliares</h3>
+<p>Cada vez que compilas, el motor procesa tu archivo fuente y produce, además del PDF, una serie de <strong>archivos auxiliares</strong>. Son ficheros de texto intermedios que guardan información para las siguientes pasadas: <code>.aux</code> (referencias y números), <code>.log</code> (un diario detallado de la compilación), <code>.toc</code> (el índice de contenidos) y <code>.out</code> (etiquetas para el marcador del PDF).</p>
+<pre><code class="language-text">miDocumento.tex   →   miDocumento.aux
+                  →   miDocumento.log
+                  →   miDocumento.toc
+                  →   miDocumento.out
+                  →   miDocumento.pdf</code></pre>
+<h3>¿Por qué compilar varias veces?</h3>
+<p>Los números de las secciones, figuras, tablas y bibliografía se resuelven en <strong>pasadas sucesivas</strong>. La primera pasada calcula los números y los guarda en <code>.aux</code>; la segunda los lee y los inserta en las referencias. Por eso la regla habitual es compilar <strong>dos o tres veces</strong>, y más si hay índice o bibliografía.</p>
+<p>Este comportamiento puede sorprender a quien viene de un procesador de texto, pero es intencionado y eficiente: LaTeX no recompila todo en cada pasada, sino que reutiliza la información de los auxiliares. Verás un aviso clásico al final de la salida cuando algo quede pendiente:</p>
+<pre><code class="language-text">LaTeX Warning: Reference `sec:x' on page 1 undefined on input line 12.
+LaTeX Warning: There were undefined references.</code></pre>
+<p>Si ves este aviso, no es un error fatal: simplemente vuelve a compilar una o dos veces más hasta que desaparezca.</p>
+<h3>Los motores y el pipeline</h3>
+<p>Existen varios motores que compilan LaTeX. Los fundamentales son <code>pdflatex</code> (el estándar, genera PDF directamente), <code>xelatex</code> y <code>lualatex</code> (mejores con fuentes del sistema y Unicode). Además, si usas biblatex, la bibliografía se procesa con <code>biber</code> (o <code>bibtex</code> para la variante clásica). La secuencia completa típica es:</p>
+<table><thead><tr><th>Paso</th><th>Herramienta</th><th>Qué hace</th></tr></thead><tbody><tr><td>1&ordm;</td><td><code>pdflatex doc.tex</code></td><td>Genera PDF y archivos auxiliares con la información del documento</td></tr><tr><td>2&ordm;</td><td><code>biber doc</code> (o <code>bibtex</code>)</td><td>Resuelve las citas y crea la bibliografía ordenada</td></tr><tr><td>3&ordm;</td><td><code>pdflatex doc.tex</code></td><td>Incorpora las referencias y la bibliografía</td></tr><tr><td>4&ordm;</td><td><code>pdflatex doc.tex</code></td><td>Estabiliza números de páginas e índice</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Si aparecen errores raros o referencias que no se actualizan, <strong>limpia los auxiliares</strong> (borra los <code>.aux</code>, <code>.toc</code>, <code>.out</code>…) y vuelve a compilar de cero. No son necesarios para el documento: son solo caché, y a veces están desincronizados y causan problemas fantasma.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="editores-y-herramientas">
+    <h2><i class="fa-solid fa-laptop-code"></i> Editores y herramientas</h2>
+    <div class="doc-content">
+<p>Para escribir LaTeX necesitas un editor. Tienes desde soluciones en la nube hasta entornos instalables, cada uno con sus ventajas. La elección depende de tu comodidad y de si prefieres compilar en local o en la nube.</p>
+<table><thead><tr><th>Herramienta</th><th>Ventajas</th><th>Sistemas</th></tr></thead><tbody><tr><td><strong>Overleaf</strong></td><td>En línea, sin instalación, compila en la nube, colaboración en tiempo real</td><td>Navegador (cualquier SO)</td></tr><tr><td><strong>TeXstudio</strong></td><td>Autocompletado potente y visor PDF integrado</td><td>Windows, Linux, macOS</td></tr><tr><td><strong>TeXworks</strong></td><td>Mínimo y sencillo, viene con MiKTeX/TeX Live</td><td>Windows, Linux, macOS</td></tr><tr><td><strong>VS Code + LaTeX Workshop</strong></td><td>Editor ligero y extenso con vista previa al vuelo</td><td>Windows, Linux, macOS</td></tr><tr><td><strong>Papeeria</strong></td><td>Alternativa en la nube, editor simple</td><td>Navegador</td></tr></tbody></table>
+<h3>¿Cuál elegir para empezar?</h3>
+<p>Si nunca has tocado LaTeX, la recomendación clara es <strong>Overleaf</strong>: no instalas nada, los paquetes ya están disponibles, y un botón compila y muestra el PDF al lado. Es la forma más rápida de pasar de la teoría a la práctica sin pelearte con la instalación de un motor. Cuando quieras trabajar sin conexión o en proyectos propios, TeXstudio o VS Code son excelentes siguientes pasos.</p>
+<blockquote class="aside aside-tip"><p>Una instalación local (por ejemplo MiKTeX en Windows o TeX Live en Linux/macOS) te da total control y funciona sin conexión, pero requiere actualizar paquetes. Mucha gente combina ambas: Overleaf para colaborar y un editor local para trabajo individual.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="depurar-errores">
+    <h2><i class="fa-solid fa-wrench"></i> Depurar errores</h2>
+    <div class="doc-content">
+<p>Cuando una compilación falla, la información clave está en el <code>.log</code>. Leo ese diario es la habilidad que separa a quien resuelve de quien se bloquea. Los mensajes de error tienen la forma <code>! Mensaje de error</code> y suelen venir acompañados de la línea problemática.</p>
+<pre><code class="language-text">! Undefined control sequence.
+l.5 \foobar
+           LaTeX compila hasta el punto del error y muestra la línea.</code></pre>
+<p>Estos son los errores más habituales y qué significan:</p>
+<table><thead><tr><th>Error en el .log</th><th>Significado</th><th>Solución típica</th></tr></thead><tbody><tr><td><code>Undefined control sequence</code></td><td>Un comando <code>\algo</code> no existe</td><td>Revisa la ortografía o añade el paquete que lo define</td></tr><tr><td><code>Missing $ inserted</code></td><td>Estás usando matemáticas fuera del modo matemático</td><td>Cierra los <code>$</code> o usa <code>\(...\)</code></td></tr><tr><td><code>Runaway argument?</code></td><td>Falta una llave de cierre <code>}</code></td><td>Cuenta las llaves y ciérralas</td></tr><tr><td><code>Missing \begin{document}</code></td><td>Hay texto antes del comienzo del documento</td><td>Mueve el texto dentro de <code>\begin{document}...\end{document}</code></td></tr><tr><td><code>File 'x' not found</code></td><td>Un <code>\includegraphics</code> o <code>\input</code> apunta a un archivo inexistente</td><td>Comprueba la ruta y el nombre del archivo</td></tr></tbody></table>
+<h3>Estrategias de depuración eficaces</h3>
+<p>Dos consejos valiosos. El <strong>primer error</strong> suele ser la raíz de todos los siguientes: LaTeX se descoloca tras un fallo y dispara errores en cadena. Corrige siempre el primero y recompila antes de mirar el resto. Y una técnica muy práctica es resolver <strong>de atrás hacia adelante</strong>: cuando no sabes dónde está el fallo, comentar tramos grandes (pon <code>%</code> al principio de cada línea) te va acotando la zona problemática. Cuando el error está en una línea concreta, echa un vistazo a la línea siguiente: a menudo una llave o un <code>$</code> mal cerrado se detecta en la línea de después.</p>
+<blockquote class="aside aside-danger"><p>Cuando hay un error grave, LaTeX igualmente produce un <strong>PDF parcial</strong> hasta la línea donde falló. Ese PDF vale para comprobar rápido si el contenido anterior está bien, pero hazlo siempre con la idea de localizar y corregir el error, no de considerarlo terminado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="organizacion-de-proyectos">
+    <h2><i class="fa-solid fa-folder-tree"></i> Organización de proyectos</h2>
+    <div class="doc-content">
+<p>Un documento largo (tesis, libro, informe) no se mantiene como un único <code>.tex</code> gigante. La práctica profesional es <strong>dividir en varios archivos</strong> y ensamblarlos desde un archivo principal. Así cada capítulo vive en su propio fichero y el preámbulo se mantiene limpio.</p>
+<pre><code class="language-text">proyecto/
+├── main.tex            ← archivo principal, preámbulo y ensamblaje
+├── cap1.tex            ← primer capítulo
+├── cap2.tex            ← segundo capítulo
+├── imgs/               ← carpeta para las imágenes
+│   ├── diagrama.png
+│   └── grafico.pdf
+└── bib/
+    └── referencias.bib ← base de datos bibliográfica</code></pre>
+<h3>LaTeX, input y include</h3>
+<p>En <code>main.tex</code> insertas los capítulos con <code>\input{cap1}</code> o <code>\include{cap1}</code>. La diferencia fundamental es que <code>\include</code> fuerza un <strong>salto de página</strong> antes y después del archivo (pensado para capítulos), mientras que <code>\input</code> simplemente inserta el contenido donde esté. Como regla general, <code>\input</code> para fragmentos continuos y <code>\include</code> para capítulos que empiezan en página nueva.</p>
+<pre><code class="language-latex">\documentclass{book}
+\usepackage{amsmath}
+\graphicspath{{imgs/}}
+
+\begin{document}
+\tableofcontents
+
+\input{cap1}
+\input{cap2}
+
+\end{document}</code></pre>
+<blockquote class="aside aside-tip"><p>Evita espacios y caracteres raros en nombres de archivos (<code>cap 1.tex</code> da problemas); usa guiones o guiones bajos (<code>cap1.tex</code>, <code>grafico_final.png</code>). Y si el preámbulo se repite entre proyectos, muévelo a un archivo separado (por ejemplo <code>miestilo.tex</code>) que incluyes con <code>\input</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="buenas-practicas">
+    <h2><i class="fa-solid fa-clipboard-check"></i> Buenas prácticas</h2>
+    <div class="doc-content">
+<p>LaTeX premia un estilo de trabajo ordenado. Estas buenas prácticas te ahorrarán horas:</p>
+<ul>
+<li><strong>Un solo propósito por archivo.</strong> El preámbulo configura, cada capítulo desarrolla un tema, y los paquetes que repites en varios proyectos viven en su propio archivo reutilizable.</li>
+<li><strong>Elige bien <code>\input</code> vs <code>\include</code>.</strong> <code>\include</code> crea páginas nuevas (ideal para capítulos); <code>\input</code> no (ideal para fragmentos continuos dentro del mismo capítulo).</li>
+<li><strong>Define macros propias.</strong> Si repites una fórmula o etiqueta complicada, créala una vez con <code>\newcommand</code> y reutilízala:</li>
+</ul>
+<pre><code class="language-latex">\newcommand{\derivada}[2]{\frac{d#1}{d#2}}
+...
+\[ \derivada{y}{x} \]</code></pre>
+<ul>
+<li><strong>No uses <code>\\</code> para separar párrafos.</strong> Los saltos de línea <code>\\</code> pertenecen a matemáticas y tablas; para separar párrafos deja una línea en blanco o usa <code>\par</code>.</li>
+<li><strong>Usa un paquete si la función es estándar.</strong> Si existe un paquete consolidado para lo que necesitas (tablas, álgebra, código), úsalo en lugar de reinventarlo a mano.</li>
+<li><strong>Commits frecuentes con git</strong> si trabajas en un proyecto versionado, para poder volver atrás y entender cambios.</li>
+<li><strong>Compila y mira el PDF al final.</strong> La compilación sin errores no es garantía de buen resultado: revisa visualmente el PDF antes de dar por terminado.</li>
+</ul>
+<blockquote class="aside aside-success"><p>La filosofía «escribe una vez, reutiliza siempre» (el principio <em>DRY</em>: Don't Repeat Yourself) encaja a la perfección con LaTeX: macros, <code>.bib</code> compartido y preámbulos separados son LaTeX bueno y sostenible.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. Olvidar el preámbulo compartido</h3>
+<pre><code class="language-latex">% Cada capítulo con su propio preámbulo → formato distinto por capítulo
+% ✅ Mantén TODO el preámbulo solo en main.tex</code></pre>
+<h3>2. Rutas con espacios en imágenes</h3>
+<pre><code class="language-latex">\includegraphics{mi imagen.png}   % ❌ error: archivo no encontrado
+\graphicspath{{imgs/}}
+\includegraphics{mi_imagen.png}   % ✅ sin espacios en el nombre</code></pre>
+<h3>3. Imágenes gigantes</h3>
+<pre><code class="language-latex">% ❌ Cargar "Imagen.png" de más de 10 MB ralentiza todo y puede colapsar
+% ✅ Comprime o reduce la resolución antes de incluirla</code></pre>
+<h3>4. No cerrar un \input</h3>
+<p>Un <code>\input{cap1}</code> no necesita <code>\end</code> propio (el archivo incluido solo contiene contenido), pero olvidar un <code>%</code> o dejar una llave abierta dentro del archivo incluido produce errores que se notan misteriosamente en <code>main.tex</code>.</p>
+<h3>5. Compilar una sola vez</h3>
+<pre><code class="language-text">pdflatex doc.tex     # ❌ una sola pasada → índice y refs con ?? o [?]
+pdflatex doc.tex     # ✅ segunda pasada resuelve referencias</code></pre>
+<h3>6. Editar en Overleaf sin compilar ni revisar</h3>
+<p>Editar y subir sin <strong>compilar y mirar el PDF</strong> es la vía rápida a entregar un documento con errores invisibles. Compila siempre y revisa visualmente antes de considerar terminado el trabajo.</p>
+<blockquote class="aside aside-danger"><p>El error de organización más caro es el «preámbulo esparcido»: cada capítulo con su propio paquete y configuración produce formatos inconsistentes (títulos, fuentes, espaciados) imposibles de unificar después. Centraliza la configuración y tu documento será coherente por diseño.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Resuelve estos ejercicios para dominar la compilación y la organización. Están ordenados de menor a mayor complejidad:</p>
+<ol>
+<li><strong>Compilar dos veces:</strong> crea un documento mínimo con dos secciones y una referencia <code>\ref</code>. Compílalo una vez y observa el <code>??</code>; compila de nuevo y comprueba que el número se resuelve.</li>
+<li><strong>Proyecto multiparchivo:</strong> crea <code>main.tex</code> que use <code>\include{cap1}</code> y <code>\include{cap2}</code>, donde cada capítulo es un archivo separado con su título y un párrafo. Compila y confirma que cada capítulo empieza en página nueva.</li>
+<li><strong>Leer el .log:</strong> introduce a propósito un error conocido (por ejemplo un comando inexistente <code>\toalgo</code>), compila y abre el <code>.log</code> para localizar el <em>primer</em> <code>Undefined control sequence</code> real.</li>
+<li><strong>Carpeta de proyecto ordenada:</strong> monta la estructura con carpetas <code>imgs/</code>, <code>bib/</code> y tu <code>main.tex</code>, e incluye una imagen real con <code>\includegraphics</code> usando la ruta relativa.</li>
+<li><strong>Macro propia:</strong> define con <code>\newcommand</code> una macro, por ejemplo <code>\commR</code>, que escriba un símbolo repetido (como «\mathbb{R}» o tu propia marca) y úsala tres veces en distintas partes del documento.</li>
+</ol>
+    </div>
+  </section>

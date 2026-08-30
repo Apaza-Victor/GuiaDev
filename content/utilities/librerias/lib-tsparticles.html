@@ -1,0 +1,176 @@
+<!-- tsParticles - Librerías (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>tsParticles genera fondos de partículas configurables: confeti, lluvia, luciérnagas, conexiones de red o estrellas. Es el sucesor moderno de particles.js, con presets listos, soporte para frameworks y render en canvas o WebGL.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Crear fondos animados de partículas en segundos con una config JavaScript.</li>
+<li>Usar presets listos (firefly, confetti, links, snow) cargados por módulo.</li>
+<li>Configurar interacciones: velocidad, gravedad, colisiones y reacción al mouse.</li>
+<li>Integrar en React, Vue o Svelte con los paquetes oficiales.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Landing pages y hero sections con fondos vivos y branding propio.</li>
+<li>Celebraciones o estados de carga con confeti o lluvia animada.</li>
+<li>Webs de presentación que buscan un toque visual distintivo.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Un fondo de partículas permanente lastra el rendimiento y puede distraer al usuario. Úsalo como acento puntual. Para físicas muy específicas o controles a medida, valora una solución propia con canvas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;script src="https://cdn.jsdelivr.net/npm/@tsparticles/engine@3/tsparticles.bundle.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/npm/@tsparticles/slim@3/tsparticles.slim.bundle.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/npm/@tsparticles/preset-firefly@3/tsparticles.preset.firefly.bundle.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install @tsparticles/engine
+</code></pre>
+<blockquote class="aside aside-tip"><p>tsParticles genera fondos de partículas configurables: confeti, lluvia, conexiones de red, luciérnagas... Es el sucesor moderno de particles.js y el que usa GuiaDev para la sección de Recursos (preset Firefly).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="configuracion-basica">
+    <h2>Configuración Básica <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Instancia en modo bundle (window.tsParticles)
+tsParticles.load('fondo', {
+  particles: {
+    number: { value: 80 },
+    move: { enable: true, speed: 1.5 },
+    opacity: { value: 0.6 },
+    size: { value: { min: 1, max: 4 } }
+  }
+});
+</code></pre>
+<pre><code class="language-js">import { loadSlim } from '@tsparticles/slim';
+import { tsParticles } from '@tsparticles/engine';
+
+async function init() {
+  await loadSlim(tsParticles);
+  await tsParticles.load('fondo', {
+    particles: { number: { value: 80 }, move: { enable: true } }
+  });
+}
+</code></pre>
+<h4 class="tab-label">HTML</h4>
+<pre><code class="language-html">&lt;div id="fondo" style="position:absolute; inset:0; z-index:-1"&gt;&lt;/div&gt;
+</code></pre>
+<blockquote class="aside aside-note"><p>El contenedor recibe las partículas; `fullScreen.enable: true` los convierte en un canvas fijo de toda la pantalla. Recuerda subir el `z-index` del contenido para que el fondo quede detrás.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="formas-colores">
+    <h2>Formas y Colores <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">tsParticles.load('fondo', {
+  particles: {
+    color: { value: ['#f59e0b', '#fbbf24', '#fde68a'] },
+    shape: {
+      type: ['circle', 'square', 'star'],
+      options: { star: { sides: 5 } }
+    },
+    size: { value: { min: 2, max: 8 } },
+    number: { value: 110 },
+    opacity: {
+      value: { min: 0.2, max: 0.9 },
+      animation: { enable: true, speed: 1 }
+    },
+    move: {
+      enable: true,
+      speed: 2,
+      direction: 'top',       // suben como ceniza
+      outModes: 'out'
+    }
+  }
+});
+</code></pre>
+<blockquote class="aside aside-tip"><p>Puedes mezclar tipos de forma y paletas de color en arrays. `opacity.animation` pulsa el brillo de cada partícula, dando sensación de vida al fondo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="interaccion-mouse">
+    <h2>Interacción con el Mouse <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">tsParticles.load('fondo', {
+  fullScreen: { enable: true },
+  particles: {
+    number: { value: 90 },
+    color: { value: '#38bdf8' },
+    shape: { type: 'circle' },
+    size: { value: { min: 1, max: 4 } },
+    move: {
+      enable: true,
+      speed: 2,
+      links: { enable: true, distance: 140, color: '#3b82f6', opacity: 0.4 }
+    }
+  },
+  interactivity: {
+    events: {
+      onHover: { enable: true, mode: 'bubble' },
+      onClick: { enable: true, mode: 'repulse' }
+    },
+    modes: {
+      bubble: { distance: 160, size: 8, duration: 0.4 },
+      repulse: { distance: 180, duration: 0.4 }
+    }
+  },
+  background: { color: '#0f172a' }
+});
+</code></pre>
+<blockquote class="aside aside-note"><p>`links` une partículas cercanas (efecto "red de nodos"). Con `interactivity` el cursor agranda (`bubble`) o empuja (`repulse`) las partículas al pasar o hacer clic.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="rendimiento-instancia">
+    <h2>Rendimiento y Múltiples Instancias <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Reducir número de partículas en móviles
+const ligero = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+tsParticles.load('fondo', ligero
+  ? { particles: { number: { value: 20 }, move: { enable: false } } }
+  : { particles: { number: { value: 110 }, move: { enable: true } } });
+
+// Múltiples instancias separadas
+tsParticles.load('confeti-a', { ...confeti });
+tsParticles.load('confeti-b', { ...confeti });
+
+// Destruir y recrear cuando hace falta
+tsParticles.dom().forEach((p) =&gt; p.destroy());
+await tsParticles.load('fondo', nuevaConfig);
+
+// Preset aleatorio de partículas
+await loadRandom(tsParticles);
+await tsParticles.load('random', { preset: 'random' });
+</code></pre>
+<pre><code class="language-css">/* El canvas de partículas no debe bloquear la interacción */
+#fondo canvas { pointer-events: none; }
+</code></pre>
+<blockquote class="aside aside-success"><p>Para fondos decorativos, `prefers-reduced-motion` o bajar la densidad en móviles marca la diferencia de batería. `pointer-events: none` evita que el canvas robe clics y scroll al contenido de arriba.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Carga el preset `firefly` y haz un fondo de luciérnagas doradas para un hero.</li>
+<li>Configura partículas en forma de estrella que suban lentamente como ceniza.</li>
+<li>Añade el modo `bubble` al hover y `repulse` al clic.</li>
+<li>Crea dos instancias en distintas secciones de la misma página.</li>
+<li>Desactiva las partículas si el usuario prefiere `prefers-reduced-motion`.</li>
+</ol>
+    </div>
+  </section>

@@ -1,0 +1,184 @@
+<!-- three.js - Librerías (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>Three.js es el motor 3D más popular para la web: abstrae WebGL y deja construir escenas con objetos, luces, cámaras y materiales de forma declarativa. Es la opción por defecto para 3D interactivo en el navegador, publicable como sitio estático.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Renderizar escenas 3D: geometrías, mallas, luces y cámaras.</li>
+<li>Animar objetos en el bucle de render con materiales y texturas propias.</li>
+<li>Cargar modelos externos (glTF, OBJ, FBX) y entornos con iluminación realista.</li>
+<li>Integrar experiencia VR/AR y efectos de postprocesado avanzados.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Visualizadores de productos 3D en webs comerciales.</li>
+<li>Experiencias interactivas, configuradores y portafolios inmersivos.</li>
+<li>Prototipos y demos 3D publicados en GitHub Pages u hosting estático.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>WebGL puro o Babylon.js son alternativas según el control que necesites o si el proyecto está orientado a juegos. Three.js es enorme: importa módulos específicos desde `three/addons` para reducir el bundle.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install three
+</code></pre>
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;script type="importmap"&gt;
+  { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-js">import * as THREE from 'three';
+</code></pre>
+<blockquote class="aside aside-tip"><p>Three.js es el motor 3D web más popular: abstrae WebGL y te deja trabajar con escenas, objetos, luces y cámaras de forma declarativa. Corre perfecto en GitHub Pages porque se sirve como estático.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primera-escena">
+    <h2>Primera Escena <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">import * as THREE from 'three';
+
+// 1. Escena
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1e293b);
+
+// 2. Cámara (perspectiva: fov, aspect, near, far)
+const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 100);
+camera.position.z = 5;
+
+// 3. Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// 4. Un cubo
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshStandardMaterial({ color: 0xf59e0b });
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+
+// 5. Luz (MeshStandardMaterial la necesita)
+const light = new THREE.DirectionalLight(0xffffff, 2);
+light.position.set(2, 3, 4);
+scene.add(light);
+
+// 6. Dibujar un frame
+renderer.render(scene, camera);
+</code></pre>
+<blockquote class="aside aside-note"><p>La escena es un árbol de objetos, la cámara define el punto de vista y el renderer pinta el frame en un `<canvas>`. Sin luz, un material PBR se ve completamente negro.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="geometrias-materiales">
+    <h2>Geometrías y Materiales <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Geometrías
+const esfera = new THREE.Mesh(
+  new THREE.SphereGeometry(1, 32, 32),
+  new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.2 })
+);
+
+const toro = new THREE.Mesh(
+  new THREE.TorusGeometry(1, 0.35, 16, 64),
+  new THREE.MeshStandardMaterial({ color: 0x3b82f6, metalness: 0.7 })
+);
+
+// Textura desde una imagen
+const texture = new THREE.TextureLoader().load('/texturas/madera.jpg');
+const suelo = new THREE.Mesh(
+  new THREE.PlaneGeometry(10, 10),
+  new THREE.MeshStandardMaterial({ map: texture })
+);
+
+// Agrupar objetos
+const grupo = new THREE.Group();
+grupo.add(esfera, toro);
+scene.add(grupo);
+</code></pre>
+<blockquote class="aside aside-caution"><p>Cuanto más altos sean los segmentos (32, 64...), más suave es la geometría pero más costosa. Para escenas con muchos objetos prefiere `InstancedMesh` en lugar de usar miles de meshes sueltos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="luces-camara">
+    <h2>Luces y Cámara <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// Luces comunes
+const ambiente  = new THREE.AmbientLight(0xffffff, 0.4);          // ilumina todo
+const direccional = new THREE.DirectionalLight(0xffffff, 2);      // sol
+const punto     = new THREE.PointLight(0xf59e0b, 1, 20);          // bombilla
+punto.position.set(2, 3, 1);
+
+scene.add(ambiente, direccional, punto);
+
+// Cámara que sigue a un objetivo (para juegos / orbit)
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;   // inercia suave
+controls.target.set(0, 0, 0);
+</code></pre>
+<blockquote class="aside aside-tip"><p>Combina una luz ambiental suave con una direccional para dar volumen, y añade puntuales para acentos. `OrbitControls` te da navegación estilo "ver modelo 3D" con el ratón y zoom con el scroll.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="animacion-render-loop">
+    <h2>Animación y Render Loop <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const t = clock.getElapsedTime();   // segundos desde el inicio
+
+  // Rotar y flotar
+  cube.rotation.x = t * 0.5;
+  cube.rotation.y = t * 0.7;
+  cube.position.y = Math.sin(t) * 0.5;
+
+  // Escalamiento pulsante
+  const s = 1 + Math.sin(t * 3) * 0.1;
+  cube.scale.set(s, s, s);
+
+  // Cámara en órbita personalizada
+  camera.position.x = Math.sin(t * 0.5) * 5;
+  camera.position.z = Math.cos(t * 0.5) * 5;
+  camera.lookAt(0, 0, 0);
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// Redimensionar el canvas
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</code></pre>
+<blockquote class="aside aside-success"><p>El bucle de render (requestAnimationFrame) es obligatorio para animar: con `clock.getElapsedTime()` obtienes el tiempo transcurrido y evitas desincronías entre dispositivos con distinto refresh rate.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Renderiza una escena con tres esferas de colores distintos y una luz direccional.</li>
+<li>Anima un toro rotando alrededor del eje Y dentro de una escena con fondo oscuro.</li>
+<li>Añade `OrbitControls` y comprueba cómo la inercia (damping) mejora la navegación.</li>
+<li>Haz una estrella 8 puntas con `RingGeometry` o `ConeGeometry` rotando sobre un grupo.</li>
+<li>Redimensiona el canvas correctamente con el evento `resize` y prueba pestaña a pantalla completa.</li>
+</ol>
+    </div>
+  </section>

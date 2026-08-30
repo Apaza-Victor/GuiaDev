@@ -1,0 +1,163 @@
+<!-- os y sys - Python (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>`os` conecta tu script con el sistema operativo: rutas, directorios, procesos y variables de entorno. `sys` pone en tus manos la información del propio intérprete de Python, los argumentos que recibió el script y su salida y errores.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Crear, listar y recorrer directorios con `os.mkdir`, `os.listdir` y `os.walk`.</li>
+<li>Leer y escribir variables de entorno con `os.getenv` y `os.environ`.</li>
+<li>Leer argumentos y salir con código de error usando `sys.argv` y `sys.exit`.</li>
+<li>Inspeccionar versiones y plataforma con `sys.version` y `sys.platform`.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Scripts de automatización que preparan carpetas o borran temporales.</li>
+<li>Configuración en runtime mediante variables de entorno (claves, rutas, modos).</li>
+<li>CLIs que terminan con códigos distintos según si todo fue bien o falló.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Para manipular rutas de archivos prefiere `pathlib`, es más legible y multiplataforma. Y evita `os.system`: ejecuta comandos del shell de forma insegura; para lanzar programas usa `subprocess` con listas de argumentos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="explorar-sistema-base">
+    <h2>Explorar el sistema <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-python">import os
+import sys
+
+# Información del sistema
+os.getcwd()            # directorio de trabajo actual
+os.name                # 'nt' (Windows), 'posix' (Linux/Mac)
+sys.platform           # 'win32', 'linux', 'darwin'
+sys.version            # versión de Python en uso
+</code></pre>
+<blockquote class="aside aside-tip"><p>`os` habla con el sistema operativo (rutas, archivos, procesos, entorno) y `sys` con el intérprete de Python (argv, salida, plataforma). Juntos automatizan scripts de administración y despliegue.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="rutas-archivos-paso-1">
+    <h2>Rutas y Archivos <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import os
+
+# Unir rutas de forma portable (usa / o \ según el SO)
+ruta = os.path.join("carpeta", "datos", "config.ini")
+
+# Comprobar existencia
+os.path.exists(ruta)          # True/False
+os.path.isfile(ruta)
+os.path.isdir("carpeta")
+
+# Navegar
+os.mkdir("logs")              # crear directorio
+os.makedirs("a/b/c", exist_ok=True)   # crea la jerarquía completa
+os.listdir(".")               # contenido de un directorio
+os.listdir(".") != []         # ¿hay archivos?
+
+# Separar y ver partes
+base, ext = os.path.splitext("reporte.csv")   # ('reporte', '.csv')
+print(os.path.basename("/x/y/z.txt"))   # 'z.txt'
+print(os.path.dirname("/x/y/z.txt"))    # '/x/y'
+</code></pre>
+<blockquote class="aside aside-note"><p>`os.path.join` escribe el separador correcto según el sistema: nunca concatenes con "/" a mano o tu script romperá en Windows. `exist_ok=True` evita errores al repetir `makedirs`.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="variables-entorno-paso-2">
+    <h2>Variables de Entorno <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import os
+
+# Leer (con valor por defecto)
+clave = os.environ.get("API_KEY", "no-configurada")
+
+# Establecer y borrar
+os.environ["MODO"] = "produccion"    # solo en este proceso
+del os.environ["MODO"]               # o .pop("MODO", None)
+
+# Variables útiles del sistema
+print(os.environ.get("PATH"))        # binarios del sistema
+print(os.environ.get("HOME"))        # directorio del usuario
+
+# Patrón típico al arrancar una app
+DEBUG = os.environ.get("DEBUG", "0") == "1"
+</code></pre>
+<blockquote class="aside aside-caution"><p>Nunca guardes contraseñas ni claves de API directamente en el código fuente. Léelas de variables de entorno (`.env`) y así no se filtran al repositorio de Git.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="sys-argumentos-salida-paso-3">
+    <h2>sys: argumentos y salida <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import sys
+
+# Argumentos de la línea de comandos
+#   python script.py lima --verbose
+print(sys.argv)         # ['script.py', 'lima', '--verbose']
+
+nombre_ciudad = sys.argv[1] if len(sys.argv) &gt; 1 else "default"
+
+# Salida y errores
+sys.stdout.write("Mensaje normal\n")
+sys.stderr.write("Algo falló\n")      # va a consola de errores
+
+# Terminar con código de salida
+# sys.exit(0)   # OK
+# sys.exit(1)   # error para el que invocó
+
+# Limpieza al cerrar
+def al_salir():
+    print("Cerrando conexión...")
+sys.exitfunc = al_salir
+</code></pre>
+<blockquote class="aside aside-tip"><p>`sys.argv[0]` es el propio script, el resto son argumentos. `exit(n)` devuelve el código a la shell: 0 = éxito, distinto de 0 = error (útil en CI/CD).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="plataforma-procesos-paso-4">
+    <h2>Plataforma y Procesos <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import os
+import sys
+
+# Proceso actual
+os.getpid()                       # identificador del proceso
+os.getppid()                      # del proceso padre (la shell)
+
+# Endianness y tamaño de palabra
+sys.byteorder                     # 'little' en CPUs modernas
+sys.maxsize                       # mayor int representable (64 bits)
+
+# Comportamiento por plataforma
+def ruta_config():
+    if sys.platform == "win32":
+        return os.path.expandvars(r"%APPDATA%\miapp")
+    return os.path.expanduser("~/.config/miapp")
+
+# Arrancar procesos externos (ver subprocess para avanzado)
+# os.system("dir")   # compatibilidad simple (prefiere subprocess)
+</code></pre>
+<blockquote class="aside aside-success"><p>`getpid`/`getppid` permiten escribir logs de proceso y locks de un solo ejecutor. Detectar `sys.platform` te deja escribir scripts multiplataforma sin romper en la máquina del cliente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Muestra tu directorio de trabajo, plataforma y versión de Python.</li>
+<li>Crea la jerarquía `informes/2026/enero` sin dar error si ya existe.</li>
+<li>Lee la variable `API_KEY` con un valor por defecto amigable.</li>
+<li>Escribe un script que imprima sus argumentos y salga con código 1 si no recibe ninguno.</li>
+<li>Detecta si el script corre en Windows y ajusta la ruta del archivo de configuración.</li>
+</ol>
+    </div>
+  </section>

@@ -1,0 +1,154 @@
+<!-- json - Python (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>`json` es el puente entre los objetos de Python y el formato JSON, el estándar de intercambio de datos en APIs y configuraciones. Con `dumps` y `loads` serializas y deserializas datos en una sola llamada, sin librerías externas.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Convertir un dict o lista a texto JSON con `json.dumps` (con `indent` para leerlo).</li>
+<li>Analizar la respuesta de una API o un fichero JSON con `json.loads` y `json.load`.</li>
+<li>Guardar y recuperar configuración o estado de una app en un fichero legible.</li>
+<li>Controlar el formato con parámetros como `sort_keys`, `ensure_ascii` o claves propias.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Consumir o exponer APIs: la mayoría devuelven y aceptan JSON.</li>
+<li>Mantener configuraciones de proyecto que sean fáciles de revisar y versionar.</li>
+<li>Intercambiar datos entre servicios escritos en distintos lenguajes.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>No uses el módulo `pickle` para intercambiar datos: no es seguro y no es interoperable. Si el JSON es enorme o fluye de forma continua, valora `ijson` para streaming o `orjson` si necesitas máxima velocidad.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="conceptos-base">
+    <h2>Los conceptos <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-python">import json
+</code></pre>
+<blockquote class="aside aside-tip"><p>JSON es el formato de intercambio de datos más usado en APIs y configuraciones. El módulo `json` convierte objetos de Python &lt;-&gt; texto JSON con una sola llamada.</p></blockquote>
+<table><thead><tr><th>Python</th><th>JSON</th></tr></thead><tbody><tr><td>dict</td><td>objeto</td></tr><tr><td>list, tuple</td><td>array</td></tr><tr><td>str</td><td>string</td></tr><tr><td>int, float</td><td>number</td></tr><tr><td>True / False</td><td>true / false</td></tr><tr><td>None</td><td>null</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="serializar-dumps-paso-1">
+    <h2>Serializar con dumps <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import json
+
+usuario = {
+    "nombre": "Ana",
+    "edad": 30,
+    "activo": True,
+    "hobbies": ["leer", "correr"],
+    "nada": None
+}
+
+# Python -&gt; texto JSON
+texto = json.dumps(usuario)
+print(texto)
+# '{"nombre": "Ana", "edad": 30, "activo": true, "hobbies": ["leer", "correr"], "nada": null}'
+
+# Opciones útiles
+json.dumps(usuario, indent=2)         # formateado bonito
+json.dumps(usuario, ensure_ascii=False)   # "ñ" / "á" no escapadas
+json.dumps(usuario, sort_keys=True)   # claves ordenadas
+</code></pre>
+<blockquote class="aside aside-note"><p>`dumps` da una cadena; `dump` escribe a un archivo. `ensure_ascii=False` es imprescindible si tu JSON lleva tildes o ñ y quieres texto legible.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="deserializar-loads-paso-2">
+    <h2>Deserializar con loads <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import json
+
+texto = '{"nombre": "Ana", "edad": 30, "activo": true}'
+
+# JSON -&gt; Python
+datos = json.loads(texto)
+datos["nombre"]       # 'Ana'
+datos["activo"]       # True (bool de Python)
+
+# JSON contiene listas y arrays anidados
+respuesta = json.loads('{"resultado": [1, 2, 3], "ok": true}')
+respuesta["resultado"]   # [1, 2, 3]
+
+# Tupes y fechas NO vienen listos: hay que convertir
+json.loads('{"fecha": "2026-08-29"}')["fecha"]   # str, no date
+</code></pre>
+<blockquote class="aside aside-caution"><p>`loads` recibe una cadena; `load` lee desde un archivo. Los booleans llegan como `True/False` correctamente, pero fechas y `tuple` llegan como texto/listas: tendrás que convertirlos a mano.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="archivos-load-dump-paso-3">
+    <h2>Archivos con load y dump <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import json
+
+# Guardar un diccionario en un archivo
+config = {"tema": "dark", "volumen": 0.8, "guardado": True}
+with open("config.json", "w", encoding="utf-8") as f:
+    json.dump(config, f, indent=2, ensure_ascii=False)
+
+# Leer de vuelta
+with open("config.json", "r", encoding="utf-8") as f:
+    datos = json.load(f)
+
+print(datos["tema"])       # 'dark'
+
+# Guardar una lista de registros (típico de exportar)
+usuarios = [{"id": 1, "nombre": "Ana"}, {"id": 2, "nombre": "Bruno"}]
+with open("usuarios.json", "w", encoding="utf-8") as f:
+    json.dump(usuarios, f, indent=2, ensure_ascii=False)
+</code></pre>
+<blockquote class="aside aside-tip"><p>`dump`/`load` trabajan con archivos: abre siempre con `encoding="utf-8"` para que los acentos se lean bien. Son la base para persistir configuraciones o exportar datos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-opciones-paso-4">
+    <h2>Errores y Opciones <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import json
+
+# JSON mal formado lanza JSONDecodeError
+try:
+    json.loads('{"nombre": "Ana",}')
+except json.JSONDecodeError as e:
+    print(f"JSON inválido en línea {e.lineno}: {e.msg}")
+
+# Parsear de forma tolerante con default
+def fecha_a_str(obj):
+    if hasattr(obj, "isoformat"):
+        return obj.isoformat()
+    raise TypeError(f"Tipo {type(obj)} no serializable")
+
+from datetime import datetime
+payload = {"creado": datetime.now()}
+print(json.dumps(payload, default=fecha_a_str, indent=2))
+
+# ¿Papelera? skipkeys para claves no str
+json.dumps({("a", "b"): 1}, skipkeys=True)   # {} sin error
+</code></pre>
+<blockquote class="aside aside-success"><p>Para tipos como `datetime`, `Decimal` o clases propias, pasa una función `default` que los convierta. Atrapar `JSONDecodeError` es obligatorio al consumir datos que vienen de fuera (APIs).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Convierte un diccionario de perfil a JSON con `indent=2` y guárdalo en un archivo.</li>
+<li>Lee el archivo anterior y muestra el nombre del perfil.</li>
+<li>Convierte un JSON de una API (con anidados) a dict y accede a un valor anidado.</li>
+<li>Maneja una cadena JSON rota dentro de `try/except JSONDecodeError`.</li>
+<li>Serializa un objeto con `datetime.now()` usando una función `default`.</li>
+</ol>
+    </div>
+  </section>

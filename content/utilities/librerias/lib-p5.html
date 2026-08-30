@@ -1,0 +1,194 @@
+<!-- p5.js - Librerías (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>p5.js es la librería de creative coding que transforma el navegador en un boceto: dibujas formas, imágenes y texto en un canvas usando funciones globales (`ellipse`, `fill`, `mouseX`) y un bucle `draw()` que corre unas 60 veces por segundo.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Dibujar arte generativo y visuales interactivas en canvas.</li>
+<li>Crear sketches que responden al input del usuario: mouse, teclado o cámara.</li>
+<li>Animar elementos con el bucle `draw()` y pausarlo con `noLoop()`.</li>
+<li>Prototipar ideas visuales con una API muy accesible.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Landing pages y webs con fondos de arte generativo o partículas propias.</li>
+<li>Talleres y educación donde se enseña lógica visual a principiantes.</li>
+<li>Prototipos de visuales, juegos sencillos o experimentos interactivos.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Su rendimiento se degrada con demasiados objetos por frame. Para partículas masivas o efectos de producción, tsParticles o shaders con WebGL son mejores; y para juegos serios encaja mejor un motor como Phaser.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">CDN</h4>
+<pre><code class="language-html">&lt;script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install p5
+</code></pre>
+<h4 class="tab-label">Instancia</h4>
+<pre><code class="language-js">import p5 from 'p5';
+
+new p5((sk) =&gt; {
+  sk.setup = () =&gt; {};
+  sk.draw = () =&gt; {};
+});
+</code></pre>
+<blockquote class="aside aside-tip"><p>p5.js es la puerta de entrada al creative coding: dibujas en un canvas con funciones globales (`ellipse()`, `fill()`, `mouseX`...) y cada frame vuelve a ejecutar `draw()`. Perfecto para arte generativo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="setup-draw">
+    <h2>setup y draw <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">function setup() {
+  createCanvas(600, 400);
+  background(30, 30, 45);
+}
+
+function draw() {
+  // Se ejecuta ~60 veces por segundo
+  ellipse(mouseX, mouseY, 20, 20);
+}
+</code></pre>
+<pre><code class="language-js">function setup() {
+  createCanvas(400, 400);
+}
+
+function draw() {
+  background(0, 0, 0, 10);   // semitransparente: rastro difuso
+  noStroke();
+  fill(245, 158, 11);
+  circle(random(width), random(height), 12);
+}
+</code></pre>
+<blockquote class="aside aside-note"><p>`setup()` se ejecuta una vez y `draw()` en bucle. El truco del "rastro" usa un `background` con alfa bajo: cada frame deja una estela sin borrar del todo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="formas-color">
+    <h2>Formas y Color <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">function setup() {
+  createCanvas(600, 400);
+}
+
+function draw() {
+  background('#1e293b');
+
+  // Formas básicas
+  circle(80, 80, 60);                 // círculo (x, y, diámetro)
+  rect(160, 80, 90, 60, 8);           // rectángulo redondeado
+  line(280, 80, 340, 140);            // línea
+  triangle(370, 140, 400, 80, 430, 140);
+  arc(500, 110, 70, 70, 0, PI / 2);   // arco (en radianes)
+
+  // Color con alfa
+  noStroke();
+  fill(16, 185, 129, 120);            // RGB + transparencia
+  circle(120, 260, 90);
+  fill(59, 130, 246, 120);
+  circle(180, 260, 90);
+  fill(245, 158, 11, 120);
+  circle(150, 210, 90);
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>Los verbos son intuitivos: `fill()` rellena, `stroke()` el borde, `noStroke()`/`noFill()` los desactivan. Los ángulos van en radianes con `PI`. El alfa permite composiciones de patrones superpuestos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="interaccion-mouse">
+    <h2>Interacción con el Mouse <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">function setup() {
+  createCanvas(600, 400);
+}
+
+function draw() {
+  background(20);
+
+  // Paleta según posición del ratón
+  const r = map(mouseX, 0, width, 0, 255);
+  const g = map(mouseY, 0, height, 255, 0);
+  fill(r, g, 150);
+
+  noStroke();
+  push();
+  translate(width / 2, height / 2);
+  scale(map(mouseX, 0, width, 0.5, 2));
+  circle(0, 0, 120);
+  pop();
+}
+
+function mousePressed() {
+  console.log('clic en', mouseX, mouseY);
+}
+
+function mouseDragged() {
+  stroke(255);
+  strokeWeight(4);
+  point(mouseX, mouseY);   // dibuja mientras arrastras
+}
+</code></pre>
+<blockquote class="aside aside-success"><p>`map()` re-escala un valor de un rango a otro (aquí convierte la posición en color/escala). `push()`/`pop()` guardan y restauran el sistema de coordenadas para transformaciones locales.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="aleatoriedad-ruido">
+    <h2>Aleatoriedad y Ruido <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-js">// ruido: valores suaves y orgánicos (Perlin noise)
+let t = 0;
+
+function setup() {
+  createCanvas(600, 400);
+  background(10);
+}
+
+function draw() {
+  const x = noise(t * 0.01) * width;        // 0..1 suavizado
+  const y = noise(t * 0.01 + 5) * height;
+  fill(245, 158, 11, 40);
+  noStroke();
+  circle(x, y, 6);
+  t++;
+}
+
+// tirada aleatoria clásica
+function setup() {
+  createCanvas(300, 300);
+  background(0);
+}
+
+function draw() {
+  noStroke();
+  fill(random(60, 255), random(100), random(140, 255));
+  square(random(width), random(height), random(5, 30));
+  if (frameCount &gt; 300) noLoop();   // se detiene tras 300 frames
+}
+</code></pre>
+<blockquote class="aside aside-caution"><p>Evita `random()` puro para el movimiento de fondo: cada frame da saltos bruscos. Para desplazamientos "orgánicos", `noise()` produce cambios correlacionados; incrementa `t` poco a poco para transiciones suaves.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Dibuja un círculo que siga al ratón cambiando de color según su posición.</li>
+<li>Genera una lluvia de partículas que deje un rastro con `background` alfa bajo.</li>
+<li>Crea una roseta de 12 triángulos rotados alrededor del centro con `push/translate/rotate`.</li>
+<li>Usa `noise` para mover una "serpiente" de puntos orgánicamente por el canvas.</li>
+<li>Detén la animación con `noLoop()` y actívala de nuevo con el clic (`mousePressed`).</li>
+</ol>
+    </div>
+  </section>

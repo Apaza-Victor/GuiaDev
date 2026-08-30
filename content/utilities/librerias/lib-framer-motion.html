@@ -1,0 +1,204 @@
+<!-- framer motion - Librerías (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>Framer Motion es la librería de animación declarativa para React. Con componentes `motion.*` animas opacidad, posición, escala o rutas usando props como `initial` y `animate`, y controlas entradas y salidas con `AnimatePresence`.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Animar componentes React con props declarativas sin manipular el DOM.</li>
+<li>Crear transiciones de entrada y salida con `AnimatePresence`.</li>
+<li>Responder a hover, tap y foco con `whileHover`, `whileTap` y `whileFocus`.</li>
+<li>Animar según el scroll con `useScroll` y `useTransform` para parallax y reveals.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Apps React que necesitan micro-interacciones y transiciones de páginas.</li>
+<li>Componentes de UI que entran o salen de listas, modales y tabs.</li>
+<li>Landing pages y portfolios en React con reveals basados en scroll.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Funciona solo en el ecosistema React. Para proyectos vanilla o Vue con animaciones complejas, GSAP o Anime.js son alternativas más portables entre frameworks.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="instalacion-paso-1">
+    <h2>Instalación <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">npm</h4>
+<pre><code class="language-bash">npm install framer-motion
+</code></pre>
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-jsx">import { motion, AnimatePresence, useScroll } from 'framer-motion';
+</code></pre>
+<blockquote class="aside aside-tip"><p>Framer Motion es la librería de animación declarativa para React: animas con props (`initial`, `animate`, `whileHover`), sin tocar los ciclos de vida ni el DOM manualmente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="componentes-motion">
+    <h2>Componentes motion <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-jsx">import { motion } from 'framer-motion';
+
+function Tarjeta() {
+  return (
+    &lt;motion.div
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+    &gt;
+      Contenido de la tarjeta
+    &lt;/motion.div&gt;
+  );
+}
+
+// Cada elemento HTML tiene su versión motion: motion.h1, motion.button...
+function Boton() {
+  return (
+    &lt;motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      whileFocus={{ scale: 1.02 }}
+    &gt;
+      Hover me
+    &lt;/motion.button&gt;
+  );
+}
+</code></pre>
+<blockquote class="aside aside-note"><p>`initial` define el estado de partida, `animate` el estado final y `transition` la curva y duración. `whileHover`/`whileTap` reaccionan a la interacción sin JavaScript adicional.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="variants">
+    <h2>Variants <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-jsx">import { motion } from 'framer-motion';
+
+const lista = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12 }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+};
+
+function Galeria() {
+  return (
+    &lt;motion.ul variants={lista} initial="hidden" animate="show"&gt;
+      {items.map((it, i) =&gt; (
+        &lt;motion.li key={i} variants={item}&gt;{it.name}&lt;/motion.li&gt;
+      ))}
+    &lt;/motion.ul&gt;
+  );
+}
+</code></pre>
+<blockquote class="aside aside-tip"><p>Las variants se propagan de padre a hijos: el padre orquesta (`staggerChildren`) y cada hijo describe su propia animación. Reutilizables entre componentes con `variants` compartidas.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="gestos-drag">
+    <h2>Gestos y Drag <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-jsx">import { motion } from 'framer-motion';
+
+// Drag con retorno elástico
+function SwipeCard() {
+  return (
+    &lt;motion.div
+      drag="x"
+      dragConstraints={{ left: -160, right: 160 }}
+      dragElastic={0.6}
+      whileDrag={{ scale: 1.05, zIndex: 2 }}
+      onDragEnd={(e, info) =&gt; {
+        const swiped = info.offset.x;
+        if (Math.abs(swiped) &lt; 100) return;          // vuelve solo
+        console.log('Swipe hacia', swiped &gt; 0 ? 'derecha' : 'izquierda');
+      }}
+    &gt;
+      Desliza la tarjeta
+    &lt;/motion.div&gt;
+  );
+}
+</code></pre>
+<pre><code class="language-jsx">// Gestos más avanzados (hover/tap/border en un solo componente)
+function Perfil() {
+  return (
+    &lt;motion.img
+      whileHover={{ y: -6, scale: 1.05 }}
+      initial={{ rotate: -3 }}
+      whileInView={{ opacity: 1, rotate: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+    /&gt;
+  );
+}
+</code></pre>
+<blockquote class="aside aside-caution"><p>`whileInView` dispara la animación cuando el elemento entra al viewport (bien con `viewport={{ once: true }}`). Recuerda que `drag` sobre móvil compite con el scroll: limita a `drag="x"` o vertical según el caso.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="animatepresence">
+    <h2>AnimatePresence y Transiciones <span class="gd-badge gd-badge-note">Paso 5</span></h2>
+    <div class="doc-content">
+<pre><code class="language-jsx">import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+
+function Modal() {
+  const [open, setOpen] = useState(false);
+  return (
+    &lt;&gt;
+      &lt;button onClick={() =&gt; setOpen(o =&gt; !o)}&gt;Abrir&lt;/button&gt;
+      &lt;AnimatePresence&gt;
+        {open &amp;&amp; (
+          &lt;motion.div
+            key="modal"
+            className="modal"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.25 }}
+            onClick={() =&gt; setOpen(false)}
+          &gt;
+            Hola 👋
+          &lt;/motion.div&gt;
+        )}
+      &lt;/AnimatePresence&gt;
+    &lt;/&gt;
+  );
+}
+
+// Transiciones de ruta con React Router
+import { useLocation } from 'react-router-dom';
+function App() {
+  const location = useLocation();
+  return (
+    &lt;AnimatePresence mode="wait"&gt;
+      &lt;Routes location={location} key={location.pathname}&gt;...&lt;/Routes&gt;
+    &lt;/AnimatePresence&gt;
+  );
+}
+</code></pre>
+<blockquote class="aside aside-success"><p>`AnimatePresence` mantiene montados los hijos durante su `exit`, permitiendo animaciones de salida. Combinado con `mode="wait"` coreografías rutas, modales y toasts sin fugas de memoria.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Haz un botón que crezca un 5% al pasar el ratón y se encoja un 5% al pulsarlo.</li>
+<li>Crea una lista que aparezca en cascada usando `variants` y `staggerChildren`.</li>
+<li>Implementa tarjetas con `drag="x"`: al soltar sin llegar al límite, vuelven solas.</li>
+<li>Anima la aparición y desaparición de un modal con `AnimatePresence`.</li>
+<li>Añade una transición de ruta suave entre dos páginas con React Router.</li>
+</ol>
+    </div>
+  </section>

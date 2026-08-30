@@ -1,0 +1,151 @@
+<!-- argparse - Python (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>`argparse` convierte tus scripts en herramientas de línea de comandos reales: define argumentos posicionales, opciones con valor y flags booleanos, y genera automáticamente la ayuda con `--help` y los errores cuando falta algún dato.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Recibir argumentos desde la consola, como `python app.py datos.csv --limite 100`.</li>
+<li>Declarar opciones con tipo (`int`, `float`, `bool`) que Python valida antes de ejecutar.</li>
+<li>Mostrar ayuda y mensajes de error sin escribir ni una línea extra de texto.</li>
+<li>Construir CLIs con subcomandos (estilo git o pip) mediante subparsers.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Cuando un script necesita más de uno o dos parámetros y quieres nombrarlos con claridad.</li>
+<li>Cuando quieres que los fallos de uso se expliquen solos al usuario final.</li>
+<li>Cuando distribuyes una herramienta que otros ejecutarán desde su terminal.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Si solo lees un parámetro, `sys.argv` o una variable de entorno bastan. Y si la CLI crece demasiado, `click` o `typer` ofrecen una sintaxis más declarativa y ergonómica.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="argumentos-base">
+    <h2>Argumentos <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-python">import argparse
+</code></pre>
+<blockquote class="aside aside-tip"><p>Tus scripts de consola pueden recibir flags y opciones como cualquier herramienta real. `argparse` parsea argumentos, genera la ayuda (`--help`) y valida errores, todo de la biblioteca estándar.</p></blockquote>
+<table><thead><tr><th>Ejemplo</th><th>Qué es</th></tr></thead><tbody><tr><td><code>python app.py lima</code></td><td>argumento posicional</td></tr><tr><td><code>--verboso</code></td><td>flag (bool)</td></tr><tr><td><code>-n 10 / --nombre Ana</code></td><td>opción con valor</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="primer-parser-paso-1">
+    <h2>Primer parser <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import argparse
+
+parser = argparse.ArgumentParser(
+    description="Saluda a un usuario desde la consola"
+)
+parser.add_argument("nombre", help="nombre a saludar")
+
+args = parser.parse_args()
+print(f"Hola, {args.nombre}")
+</code></pre>
+<h4 class="tab-label">Uso</h4>
+<pre><code class="language-bash">python app.py Ana
+# Hola, Ana
+
+python app.py
+# error: the following arguments are required: nombre
+</code></pre>
+<blockquote class="aside aside-note"><p>Cada `add_argument` declara una pieza de la CLI. Al ejecutar `parse_args()` obtienes un objeto con los atributos (`.nombre` en este caso) y Python lanza ayuda y errores automáticamente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="tipos-valores-paso-2">
+    <h2>Tipos y Valores por Defecto <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--edad", type=int, default=18,
+                    help="edad del usuario")
+parser.add_argument("--precio", type=float, required=True)
+parser.add_argument("--tamaño", choices=["small", "medio", "grande"])
+
+args = parser.parse_args()
+
+print(args.edad)       # 18 si no se pasa
+print(args.precio)     # obligatorio: falla sin él
+print(args.tamaño)     # None si no se usa
+</code></pre>
+<pre><code class="language-bash">python app.py --edad 25 --precio 9.99 --tamaño medio
+python app.py --precio 9.99 --tamaño extra   # error: invalid choice
+</code></pre>
+<blockquote class="aside aside-tip"><p>Con `type=` argparse convierte el texto automáticamente (int, float, Path...), con `default=` define el valor si no se pasa y `required=True` obliga a pasarlo. `choices` valida la lista permitida.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="flags-booleanos-paso-3">
+    <h2>Flags Booleanos <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-v", "--verboso", action="store_true",
+                    help="muestra información extra")
+parser.add_argument("-q", "--quieto", action="store_true")
+args = parser.parse_args()
+
+if args.verboso:
+    print("Modo detallado activado")
+
+# Alternativa compacta para dos caminos
+parser = argparse.ArgumentParser()
+g = parser.add_mutually_exclusive_group()
+g.add_argument("-v", "--verbose", action="store_true")
+g.add_argument("-q", "--quiet", action="store_true")
+</code></pre>
+<blockquote class="aside aside-note"><p>`action="store_true"` crea un flag booleano: `-v`/`--verboso` pone `True`, ausente pone `False`. Un `add_mutually_exclusive_group` prohíbe pasar `-v` y `-q` juntos (arbitraje de conflictos gratis).</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="mejora-experiencia-paso-4">
+    <h2>Mejora la Experiencia <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import argparse
+
+parser = argparse.ArgumentParser(
+    prog="deploy",
+    description="Sube la app a un entorno",
+    epilog="Ejemplo: python deploy.py -e prod --no-deps"
+)
+parser.add_argument("entorno", choices=["dev", "staging", "prod"])
+parser.add_argument("--no-deps", action="store_true",
+                    help="no instalar dependencias")
+parser.add_argument("--timeout", type=int, default=60,
+                    help="tiempo límite en segundos (default: %(default)s)")
+
+args = parser.parse_args()
+print(f"Desplegando en {args.entorno}...")
+if args.no_deps:
+    print("Omitiendo dependencias")
+
+# El texto de ayuda ya incluye los defaults y ejemplos
+# python deploy.py -h
+</code></pre>
+<blockquote class="aside aside-success"><p>`%(default)s` interpola el valor por defecto dentro del texto de ayuda, `epilog` añade ejemplos al final y `prog` renombra el comando mostrado. La CLI queda profesional sin escribir nada más.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Crea un script que reciba tu nombre por línea de comandos y lo salude.</li>
+<li>Añade `--edad` con `type=int` y un valor por defecto de 18.</li>
+<li>Obliga a pasar una ruta con `required=True`.</li>
+<li>Implementa un flag `--verbose` con `action="store_true"`.</li>
+<li>Añade un grupo mutuamente exclusivo con `-v` y `-q` y prueba ambos.</li>
+</ol>
+    </div>
+  </section>

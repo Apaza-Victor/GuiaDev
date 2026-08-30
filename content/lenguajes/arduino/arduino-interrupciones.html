@@ -1,0 +1,220 @@
+<!-- 9. Interrupciones y debounce - Arduino (Lenguajes de Programación) -->
+
+  <section id="que-es-una-interrupcion">
+    <h2><i class="fa-solid fa-bell"></i> ¿Qué es una interrupción?</h2>
+    <div class="doc-content">
+<p>Una <strong>interrupción</strong> es un evento <strong>hardware</strong> que pausa el programa en curso, salta a una función especial llamada <strong>ISR</strong> (<em>Interrupt Service Routine</em>) y, al terminar, vuelve exactamente al punto donde estaba. Es como si estuvieras redactando un informe y te llamaran por teléfono: dejas lo que hacías, atiendes la llamada y, al colgar, continúas donde lo dejaste. ¿Por qué importa? Porque el programa no tiene que estar <em>mirando</em> continuamente para reaccionar: sin interrupciones, detectar un pulso breve exige que el <code>loop()</code> lea ese pin constantemente, y si en ese instante está ocupado (una espera con <code>delay()</code>, una operación larga…), el evento se pierde para siempre.</p>
+<h3>Interrupciones externas vs. temporizadores</h3>
+<p>En el microcontrolador conviven dos grandes familias: <strong>externas (por pin)</strong>, que saltan cuando un pin cambia de estado (flanco de subida o de bajada) y son las protagonistas de esta lección con <code>attachInterrupt()</code>; e <strong>internas (temporizadores)</strong>, que saltan cada cierto tiempo programado según el reloj del chip y se esconden detrás de <code>millis()</code>, de la señal PWM y de librerías como <code>Servo</code> o <code>Tone</code>.</p>
+<p>El ejemplo típico es contar los pulsos de un <strong>encoder</strong> o de un sensor de flujo: esos pulsos duran microsegundos y llegan en cualquier momento mientras el <code>loop()</code> hace algo lento. Un bucle que muestrea no puede garantizar no perderse ninguno; una interrupción los captura siempre.</p>
+<blockquote class="aside aside-note"><p>La interrupción no hace que el programa "vaya más rápido": lo que hace es <strong>garantizar que un evento no se pierda</strong>, pase lo que pase en el <code>loop()</code>. El coste es un pequeño retardo al saltar y volver de la ISR.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="attachinterrupt-y-pines-compatibles">
+    <h2><i class="fa-solid fa-bolt"></i> attachInterrupt y pines compatibles</h2>
+    <div class="doc-content">
+<p>La función que conecta una interrupción externa con tu código es <code>attachInterrupt()</code>, con esta firma:</p>
+<pre><code class="language-cpp">attachInterrupt(digitalPinToInterrupt(pin), nombreISR, modo);</code></pre>
+<p>El primer argumento es el <strong>pin</strong>, envuelto en <code>digitalPinToInterrupt(pin)</code>: así el mismo código funciona en distintas placas aunque la tabla de pines cambie. El segundo es el nombre de tu ISR (sin paréntesis) y el tercero, el <strong>modo</strong> que dispara la interrupción:</p>
+<table><thead><tr><th>Modo</th><th>Cuándo se dispara</th></tr></thead><tbody><tr><td><strong>RISING</strong></td><td>Cuando el pin pasa de LOW a HIGH (flanco de subida)</td></tr><tr><td><strong>FALLING</strong></td><td>Cuando el pin pasa de HIGH a LOW (flanco de bajada)</td></tr><tr><td><strong>CHANGE</strong></td><td>En cualquier cambio de estado (subida o bajada)</td></tr><tr><td><strong>LOW</strong></td><td>Mientras el pin esté a nivel bajo (¡se repite continuamente!)</td></tr></tbody></table>
+<h3>¿Qué pines soportan interrupciones externas?</h3>
+<p>No todos los pines valen: solo los que el microcontrolador conecta a sus entradas de interrupción (INT). En las placas clásicas la lista es corta:</p>
+<table><thead><tr><th>Placa</th><th>Pines con interrupción externa</th><th>Interrupciones</th></tr></thead><tbody><tr><td><strong>Uno / Nano</strong></td><td>2, 3</td><td>INT0, INT1</td></tr><tr><td><strong>Mega 2560</strong></td><td>2, 3, 18, 19, 20, 21</td><td>INT0 a INT5</td></tr><tr><td><strong>Leonardo / Micro</strong></td><td>0, 1, 2, 3, 7</td><td>INT0 a INT4</td></tr><tr><td><strong>ESP32 / ESP8266</strong></td><td>Casi cualquier GPIO</td><td>Muchas y flexibles</td></tr></tbody></table>
+<h3>Un contador mínimo</h3>
+<pre><code class="language-cpp">volatile unsigned int pulsos = 0;
+void contar() {
+  pulsos++;                      // la ISR: corta y simple
+}
+void setup() {
+  Serial.begin(9600);
+  attachInterrupt(digitalPinToInterrupt(2), contar, RISING);
+}
+void loop() {
+  Serial.println(pulsos);
+  delay(500);
+}</code></pre>
+<p>Para desactivar la interrupción de un pin se usa <code>detachInterrupt(digitalPinToInterrupt(pin))</code>, útil cuando el evento ya no te interesa (por ejemplo, al entrar en un modo de reposo por software).</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="las-reglas-de-la-isr">
+    <h2><i class="fa-solid fa-stopwatch"></i> Las reglas de la ISR</h2>
+    <div class="doc-content">
+<p>La ISR es un mundo aparte dentro de tu programa. Mientras se ejecuta, el flujo principal está <strong>congelado</strong> y, por defecto, las demás interrupciones están deshabilitadas. De ahí salen unas reglas de oro que hay que respetar siempre:</p>
+<ul>
+<li><strong>Debe ser corta y rápida:</strong> cuanto menos tiempo bloquee el programa principal, mejor. Piénsala como un "marcar y salir".</li>
+<li><strong>Nada de <code>delay()</code>:</strong> no aporta nada útil y congela todo el sistema, incluidos <code>millis()</code> y el propio <code>loop()</code>.</li>
+<li><strong>Poco o nada de <code>Serial</code>:</strong> imprimir dentro de la ISR desperdicia tiempo y puede corromper la comunicación si la llamada llega a mitad de un envío.</li>
+<li><strong>Nada de tareas pesadas:</strong> escribir en tarjetas SD, radios o pantallas queda prohibido: son operaciones lentas y no atómicas.</li>
+<li><strong>Sin bucles que esperen:</strong> un <code>while</code> que se queda esperando dentro de la ISR bloquea el microcontrolador indefinidamente.</li>
+</ul>
+<pre><code class="language-cpp">void miISR() {
+  contador++;                       // ✅ legal y rápido: solo suma
+  // delay(100);                    // ❌ prohibido: congela el sistema
+  // Serial.println(contador);      // ⚠️ evítalo dentro de la ISR
+}</code></pre>
+<h3>¿Qué pasa al terminar?</h3>
+<p>Cuando la ISR acaba, el hardware <strong>restaura el punto exacto</strong> donde se interrumpió el programa: la CPU guarda la dirección de retorno y los registros en la pila. Tu programa "no sabe" que ha sido pausado; simplemente continúa como si nada hubiera pasado.</p>
+<h3>El consejo clave: marcar o incrementar, trabajar en el loop</h3>
+<p>La técnica más saludable es que la ISR <strong>solo marque un flag o incremente un contador</strong>, y deje todo el trabajo de verdad (mostrar datos, cambiar salidas, tomar decisiones) para el <code>loop()</code>. Así la interrupción dura microsegundos y el sistema se mantiene estable: piensa en la ISR como un botón de pausa, porque mientras está activa el <code>loop()</code> no corre.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="flags-y-volatile">
+    <h2><i class="fa-solid fa-flag"></i> Flags y volatile</h2>
+    <div class="doc-content">
+<p>Todo lo que comparte la ISR con el <code>loop()</code> (contadores, flags, lecturas de sensores) es una <strong>variable compartida entre dos "hilos" de ejecución</strong>: el principal y el de interrupción. Para que el compilador no haga trampas, esas variables deben declararse con la palabra clave <code>volatile</code>.</p>
+<blockquote class="aside aside-caution"><p>Sin <code>volatile</code>, el compilador puede cachear el valor de la variable en un registro y leer un dato obsoleto: aunque la ISR la modifique, tu <code>loop()</code> seguirá viendo el valor antiguo. <code>volatile</code> le ordena al compilador leer siempre de la memoria real.</p></blockquote>
+<h3>Contador de pulsos con volatile</h3>
+<pre><code class="language-cpp">volatile unsigned long pulsos = 0;   // modificada en la ISR
+void contar() {
+  pulsos++;
+}
+void setup() {
+  Serial.begin(9600);
+  attachInterrupt(digitalPinToInterrupt(2), contar, RISING);
+}
+void loop() {
+  Serial.print("Pulsos: ");
+  Serial.println(pulsos);
+  delay(500);
+}</code></pre>
+<h3>El patrón flag</h3>
+<p>Cuando no quieres contar sino <em>avisar</em> de que ocurrió algo, se usa un <strong>flag</strong>: la ISR lo pone a <code>true</code> y el <code>loop()</code> lo consulta y lo limpia.</p>
+<pre><code class="language-cpp">volatile bool evento = false;         // aviso de la ISR
+void detectar() {
+  evento = true;                      // solo avisa; el trabajo va en loop()
+}
+void setup() {
+  Serial.begin(9600);
+  attachInterrupt(digitalPinToInterrupt(3), detectar, FALLING);
+}
+
+void loop() {
+  if (evento) {                       // ¿ha llegado un aviso?
+    evento = false;                   // consumir el aviso
+    Serial.println("Evento detectado");
+  }
+}</code></pre>
+<h3>El atasco de lectura: noInterrupts() e interrupts()</h3>
+<p>En un AVR, una <code>unsigned int</code> ocupa 2 bytes y se lee en dos pasos. Si una interrupción ocurre entre ambos, puedes leer una mezcla: un byte de una lectura y otro de la siguiente. Para leer un contador multi-byte de forma <strong>atómica</strong>, se bloquean las interrupciones durante la lectura.</p>
+<pre><code class="language-cpp">volatile unsigned int conteo = 0;     // 2 bytes: lectura no atómica
+unsigned int leerConteo() {
+  unsigned int copia;
+  noInterrupts();                     // congelar las interrupciones
+  copia = conteo;                     // lectura completa de los 2 bytes
+  interrupts();                       // reanudar
+  return copia;
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Regla mental: toda variable compartida con una ISR se declara <code>volatile</code>; y si ocupa más de un byte y la lees o modificas desde el <code>loop()</code>, protégela con <code>noInterrupts()</code>/<code>interrupts()</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="debounce-de-botones">
+    <h2><i class="fa-solid fa-filter"></i> Debounce de botones</h2>
+    <div class="doc-content">
+<p>Cuando pulsas un botón físico, los contactos metálicos <strong>rebotan</strong>: hacen y deshacen el contacto durante unos milisegundos antes de asentarse. El resultado es que el microcontrolador puede ver <strong>varios flancos</strong> en una sola pulsación, como un rápido parpadeo ruidoso. A ese fenómeno se le llama <em>rebote</em> (<em>bounce</em>) y hay que filtrarlo.</p>
+<h3>Soluciones hardware vs. software</h3>
+<table><thead><tr><th>Enfoque</th><th>Cómo se hace</th><th>Ventaja</th></tr></thead><tbody><tr><td><strong>Hardware</strong></td><td>Condensador en paralelo con el botón, disparador de Schmitt o chip dedicado</td><td>Se resuelve sin tocar el código</td></tr><tr><td><strong>Software</strong></td><td>Ignorar los cambios que llegan durante unos 50 ms tras el último válido</td><td>Barato, flexible y sin componentes extra</td></tr></tbody></table>
+<h3>Debounce con millis()</h3>
+<p>La versión estándar usa <code>millis()</code> para descartar los cambios demasiado cercanos al último válido. Este sketch alterna un LED con un botón sin que los rebotes lo confundan:</p>
+<pre><code class="language-cpp">const int BOTON = 2;
+const int LED = 13;
+int estadoBoton = HIGH;               // estado filtrado actual
+unsigned long ultimoCambio = 0;
+const unsigned long DEBOUNCE = 50;    // milisegundos de filtro
+
+void setup() {
+  pinMode(BOTON, INPUT_PULLUP);       // resistencia interna: LOW = pulsado
+  pinMode(LED, OUTPUT);
+}
+
+void loop() {
+  int lectura = digitalRead(BOTON);
+
+  if (lectura != estadoBoton && millis() - ultimoCambio > DEBOUNCE) {
+    ultimoCambio = millis();
+    estadoBoton = lectura;
+    if (estadoBoton == LOW) {                  // flanco válido
+      digitalWrite(LED, !digitalRead(LED));    // alternar el LED
+    }
+  }
+}</code></pre>
+<h3>Antirrebote dentro de la ISR</h3>
+<p>Si el botón está conectado a un pin de interrupción, puedes aplicar el mismo filtro temporal dentro de la propia ISR: los rebotes del mismo pulso llegan con menos de 50 ms de diferencia y se ignoran.</p>
+<pre><code class="language-cpp">volatile int pulsaciones = 0;
+volatile unsigned long ultimoPulso = 0;
+const unsigned long DEBOUNCE = 50;
+void pulso() {
+  unsigned long ahora = millis();
+  if (ahora - ultimoPulso > DEBOUNCE) {        // primer flanco válido
+    ultimoPulso = ahora;
+    pulsaciones++;                             // se cuenta una sola vez
+  }
+}</code></pre>
+<blockquote class="aside aside-success"><p>El filtro de 50 ms es un valor clásico: más largo que el rebote típico de un botón y más corto que una pulsación humana real (que dura cientos de ms). Si tu botón es ruidoso o viejo, sube la constante a 80–100 ms.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="interrupcion-vs-polling">
+    <h2><i class="fa-solid fa-scale-balanced"></i> Interrupción vs. polling</h2>
+    <div class="doc-content">
+<p><strong>Polling</strong> (muestreo) es el enfoque simple: el <code>loop()</code> pregunta continuamente con <code>digitalRead()</code> a sus entradas. <strong>Interrupción</strong> invierte el modelo: no preguntas tú, te avisan a ti. ¿Cuándo conviene cada uno?</p>
+<table><thead><tr><th>Criterio</th><th>Polling</th><th>Interrupción</th></tr></thead><tbody><tr><td><strong>Facilidad</strong></td><td>Muy simple y legible</td><td>Requiere dominio de ISR y volatile</td></tr><tr><td><strong>Latencia</strong></td><td>Depende de la velocidad del loop</td><td>Respuesta casi inmediata</td></tr><tr><td><strong>Eventos lentos (botones)</strong></td><td>Suficiente</td><td>Útil pero no imprescindible</td></tr><tr><td><strong>Pulsos cortos / frecuencia alta</strong></td><td>Fácil perder eventos</td><td>El estándar (encoders)</td></tr><tr><td><strong>Si el loop se atasca</strong></td><td>Todo se pierde</td><td>Las ISR siguen disparándose</td></tr><tr><td><strong>Coste</strong></td><td>Ninguno</td><td>Retardo, pila y complejidad</td></tr></tbody></table>
+<h3>¿Cuándo elegir qué?</h3>
+<p><strong>Polling:</strong> botones que pulsas con el dedo, interruptores de estado y sensores que cambian despacio, siempre que el <code>loop()</code> esté despejado. Simple y suficiente. <strong>Interrupción:</strong> encoders, contadores de pulsos (flujo, tacómetros, ruedas), pulsos muy cortos, o cuando el <code>loop()</code> hace tareas lentas y no puede vigilar entradas.</p>
+<h3>Consejo práctico</h3>
+<p>Si el evento <strong>puede ocurrir en cualquier instante</strong> y perderlo es inaceptable, usa interrupción. Si solo quieres <strong>conocer el estado</strong> de una entrada de vez en cuando y el loop está despejado, el polling es más simple y robusto. Muchos proyectos mezclan ambos: la lógica general con polling y uno o dos flancos críticos con interrupción.</p>
+<blockquote class="aside aside-tip"><p>Ante la duda, empieza con polling: añade una interrupción solo cuando compruebes que pierdes eventos. Una ISR mal diseñada produce bugs más difíciles de diagnosticar que un muestreo lento.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. Olvidar volatile</h3>
+<pre><code class="language-cpp">unsigned long pulsos = 0;   // ❌ sin volatile: el loop puede leer valores viejos
+void contar() { pulsos++; }
+// volatile unsigned long pulsos = 0;   // ✅ corrección</code></pre>
+<h3>2. Operaciones lentas dentro de la ISR</h3>
+<pre><code class="language-cpp">void isr() {
+  delay(200);               // ❌ congela TODO el sistema
+  // Marca un flag y deja lo lento para el loop(); nunca al revés.
+}</code></pre>
+<h3>3. Usar Serial dentro de la ISR</h3>
+<p>Imprimir durante la ISR desperdicia microsegundos preciosos y puede desordenar la comunicación si la llamada llega a mitad de un envío. Guarda el dato y publícalo desde el <code>loop()</code>.</p>
+<h3>4. Olvidar digitalPinToInterrupt</h3>
+<pre><code class="language-cpp">attachInterrupt(2, contar, RISING);                       // ❌ frágil
+attachInterrupt(digitalPinToInterrupt(2), contar, RISING); // ✅ portable</code></pre>
+<h3>5. Usar el modo LOW sin cuidado</h3>
+<p>Con <code>LOW</code> la interrupción se dispara <strong>mientras el pin esté bajo</strong>: si no lo subes pronto, volverá a saltar en cuanto la ISR termine y el programa nunca continuará. Prefiere <code>RISING</code>/<code>FALLING</code> para detectar flancos.</p>
+<h3>6. Leer o modificar contadores multi-byte sin protección</h3>
+<pre><code class="language-cpp">if (pulsos > 100) { }     // ⚠️ 2+ bytes: la ISR puede "atacar" a media lectura
+// Usa una copia con noInterrupts() / interrupts() alrededor.</code></pre>
+<p>Lo mismo aplica si el <code>loop()</code> escribe una variable que también escribe la ISR: una escritura a medias de 2 o 4 bytes deja un valor corrupto para la interrupción.</p>
+<blockquote class="aside aside-danger"><p>El fallo más caro de esta lección es creer que las interrupciones "aceleran" el código. No lo hacen: traen exactitud. Programarlas mal (variables no <code>volatile</code>, ISR largas, modo LOW) produce bugs intermitentes que son de los más difíciles de depurar que existen.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<p>Cinco retos ordenados de menor a mayor dificultad. Necesitarás una placa Uno (o compatible), un botón, resistencias, LEDs y cables.</p>
+<ol>
+<li><strong>Contador de pulsos:</strong> conecta un botón (o un sensor de flujo) al pin 2 y muestra por el Monitor Serie el total de pulsos acumulado con una ISR en modo RISING. Recuerda declarar el contador <code>volatile</code> y probar qué pasa si lo olvidas.</li>
+<li><strong>Botón con debounce:</strong> reproduce el sketch de debounce con <code>millis()</code> que alterna un LED. Cambia la constante <code>DEBOUNCE</code> a 5 ms y pulsa rápido: observa y explica por qué ahora parece que el LED "duda".</li>
+<li><strong>Detector de flanco:</strong> con el modo CHANGE y un <code>volatile bool</code>, imprime un mensaje cada vez que el botón cambie de estado y, en el <code>loop()</code>, cuenta cuántos cambios hubo en 10 segundos con <code>millis()</code>.</li>
+<li><strong>Mini encoder:</strong> usa los pines 2 y 3 en modo CHANGE con dos flags. Cuenta "adelante" cuando el pin A cambie antes que el B y "atrás" en el caso contrario. Es la semilla de un encoder rotatorio real.</li>
+<li><strong>Semáforo con alarma:</strong> monta un semáforo de 3 LEDs con su ciclo normal. Añade un botón en el pin 3 cuya ISR (con debounce temporal) ponga un flag de alarma; al leerlo, el <code>loop()</code> debe interrumpir el ciclo y parpadear el ámbar hasta que se pulse de nuevo.</li>
+</ol>
+<p>---</p>
+    </div>
+  </section>

@@ -1,0 +1,172 @@
+<!-- subprocess y shutil - Python (Utilidades) -->
+  <section id="para-que-sirve-y-cuando-usarla">
+    <h2>¿Para qué sirve y cuándo usarla? <span class="gd-badge gd-badge-tip">Concepto</span></h2>
+    <div class="doc-content">
+<p>`subprocess` lanza otros programas (git, pip, ffmpeg...) desde Python y captura su salida; `shutil` automatiza operaciones de archivos de alto nivel como copiar, mover o comprimir. Juntos resuelven scripts de mantenimiento y despliegue sin tocar el shell a mano.</p>
+<h4>¿Para qué se usa?</h4>
+<ul>
+<li>Ejecutar comandos y recoger su salida con `subprocess.run` y `capture_output`.</li>
+<li>Pasar datos a un proceso y leer lo que devuelve con `stdin`, `stdout` y `stderr`.</li>
+<li>Copiar y mover árboles de archivos con `shutil.copy`, `copy2` y `rmtree`.</li>
+<li>Empaquetar y extraer comprimidos con `make_archive` y `unpack_archive`.</li>
+</ul>
+<h4>¿En qué casos conviene usarla?</h4>
+<ul>
+<li>Automatizar git, zip, ffmpeg u otras herramientas de consola en un script.</li>
+<li>Hacer backups y migraciones copiando carpetas enteras con metadatos.</li>
+<li>Orquestar instalaciones o despliegues verificando códigos de retorno.</li>
+</ul>
+<blockquote class="aside aside-caution"><p>Evita `shell=True`: ejecutes la línea desde el shell y abres la puerta a inyección de comandos. Pasa siempre la lista de argumentos (`["git", "status"]`). Y `shutil.rmtree` borra sin piedad; úsalo tras comprobar la ruta.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejecutar-comandos-base">
+    <h2>Ejecutar Comandos <span class="gd-badge gd-badge-note">Base</span></h2>
+    <div class="doc-content">
+<h4 class="tab-label">Import</h4>
+<pre><code class="language-python">import subprocess, shutil
+</code></pre>
+<blockquote class="aside aside-tip"><p>`subprocess` lanza otros programas (git, pip, ffmpeg...) desde Python y `shutil` automatiza copias, movimientos y compresión de archivos. Juntos construyen scripts de mantenimiento y despliegue.</p></blockquote>
+<pre><code class="language-python">import subprocess
+
+# Ejecutar un comando simple esperando a que termine
+subprocess.run(["git", "status"])
+subprocess.run(["echo", "hola"])
+
+# Comprobar el código de salida
+resultado = subprocess.run(["false"])          # comando que falla
+print(resultado.returncode)                    # 1 (distinto de 0 = error)
+</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="capturar-salida-paso-1">
+    <h2>Capturar Salida <span class="gd-badge gd-badge-note">Paso 1</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import subprocess
+
+# Capturar stdout y stderr
+r = subprocess.run(["git", "log", "--oneline", "-3"],
+                   capture_output=True, text=True)
+print(r.stdout)        # los últimos 3 commits
+print(r.stderr)        # '' si fue limpio
+print(r.returncode)    # 0
+
+# check=True lanza CalledProcessError si falla (ideal en scripts CI)
+r = subprocess.run(["python", "-m", "pytest"],
+                   capture_output=True, text=True, check=True)
+
+# Análisis de la salida
+salidas = subprocess.run(["ls"], capture_output=True, text=True)
+nombres = salidas.stdout.splitlines()
+</code></pre>
+<blockquote class="aside aside-note"><p>Con `capture_output=True` la salida no se imprime sino que se guarda en `.stdout`/`.stderr`. `text=True` la devuelve como cadena; sin él obtienes bytes.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="shell-interaccion-paso-2">
+    <h2>Shell e Interacción <span class="gd-badge gd-badge-note">Paso 2</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import subprocess
+
+# Argumentos como lista: evita inyección de shell (¡clave!)
+subprocess.run(["git", "add", "."])
+# NUNCA hagas: subprocess.run(f"git add {argumento}", shell=True)
+
+# Si necesitas shell=True, hazlo consciente
+subprocess.run("echo $HOME", shell=True)   # expande variables
+
+# Tiempo de espera para no bloquearse
+try:
+    subprocess.run(["ping", "8.8.8.8"],
+                   capture_output=True, text=True, timeout=10)
+except subprocess.TimeoutExpired:
+    print("El proceso tardó demasiado")
+
+# Comunicar datos de entrada al proceso
+from subprocess import Popen, PIPE
+proc = Popen(["python", "-c", "import sys; print(sys.stdin.read())"],
+             stdin=PIPE, stdout=PIPE, text=True)
+salida, _ = proc.communicate(input="hola por stdin\n")
+print(salida)
+</code></pre>
+<blockquote class="aside aside-caution"><p>Prefiere siempre listas de argumentos (`["git", "commit", ...]`) a cadenas con `shell=True`: es la forma segura de no concatenar comandos del usuario en tu shell.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="shutil-copias-paso-3">
+    <h2>shutil: copias y backups <span class="gd-badge gd-badge-note">Paso 3</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import shutil
+from pathlib import Path
+
+# Copiar archivo
+shutil.copy("db.sqlite", "backup_db.sqlite")       # copia contenido
+shutil.copy2("db.sqlite", "backup/")               # preserva metadatos
+
+# Copiar árboles completos (recursivo)
+shutil.copytree("src", "copia_src", dirs_exist_ok=True)
+
+# Mover archivo o carpeta (renombrado incluido)
+shutil.move("copia_src", "archivos/copia_src")
+
+# Borrar árboles enteros (os.rmdir no puede)
+shutil.rmtree("carpeta_temporal", ignore_errors=True)
+
+# Solicitar espacio disponible
+total, usado, libre = shutil.disk_usage("/")
+print(f"Libres {libre // 2**30} GB")
+</code></pre>
+<blockquote class="aside aside-success"><p>`copy2` conserva la fecha de modificación (muy útil para backups). `copytree` con `dirs_exist_ok=True` (3.8+) evita que falle si el destino ya existe. `rmtree` es el borrado potente; úsalo con cuidado.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="compresion-movimientos-paso-4">
+    <h2>Compresión y Movimientos <span class="gd-badge gd-badge-note">Paso 4</span></h2>
+    <div class="doc-content">
+<pre><code class="language-python">import shutil
+
+# Crear ZIP (y otros formatos: zip, tar, bztar, gztar, xztar)
+shutil.make_archive("respaldo", "zip", root_dir="datos")
+
+# Extraer
+shutil.unpack_archive("respaldo.zip", extract_dir=".")
+
+# Copiar árbol como si fuera "cp -a"
+shutil.copyfile("origen.bin", "destino.bin")
+
+# which: localizar un ejecutable del PATH
+git_path = shutil.which("git")
+print(git_path or "Git no instalado")
+</code></pre>
+<pre><code class="language-python"># Ejemplo completo: backup diario
+import shutil
+from datetime import date
+
+nombre = f"backup_{date.today().isoformat()}.zip"
+shutil.make_archive(nombre.replace(".zip", ""), "zip",
+                    root_dir="src", base_dir=".")
+print(f"Backup creado: {nombre}")
+</code></pre>
+<blockquote class="aside aside-tip"><p>`make_archive` empaqueta sin instalar librerías y `unpack_archive` descomprime. `shutil.which` te evita "el comando no existe" solucionando el PATH de una vez.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios prácticos <span class="gd-badge gd-badge-note">Reto</span></h2>
+    <div class="doc-content">
+<ol>
+<li>Ejecuta `git status` desde Python y muestra su salida en consola.</li>
+<li>Captura la salida de `python --version` con `capture_output=True`.</li>
+<li>Haz un backup copiando una carpeta con `shutil.copytree`.</li>
+<li>Crea un ZIP de tu proyecto en una línea con `make_archive`.</li>
+<li>Comprueba que `git` está en el sistema con `shutil.which`.</li>
+</ol>
+    </div>
+  </section>

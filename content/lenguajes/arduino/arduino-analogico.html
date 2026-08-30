@@ -1,0 +1,217 @@
+<!-- 6. Entradas analógicas y sensores - Arduino (Lenguajes de Programación) -->
+
+  <section id="del-mundo-analogico-al-digital">
+    <h2><i class="fa-solid fa-gauge-high"></i> Del mundo analógico al digital</h2>
+    <div class="doc-content">
+<p>La naturaleza es <strong>analógica</strong>: la temperatura, la luz o la posición de una rueda varían de forma continua, y casi todos los sensores traducen esa magnitud en un <strong>voltaje proporcional</strong>. Sin embargo, un microcontrolador solo entiende <strong>unos y ceros</strong>; para leer un voltaje intermedio necesita un <strong>conversor analógico-digital (ADC)</strong>. En el Arduino Uno los pines <code>A0</code> a <code>A5</code> son las seis <strong>entradas analógicas</strong> del ADC: en ellos mides un voltaje entre 0 y 5 V y obtienes un número proporcional. Los pines digitales, en cambio, solo distinguen si hay más o menos de un umbral (~2,5 V): no te dicen <em>cuánto</em>, solo <em>si</em>.</p>
+<table><thead><tr><th>Pines digitales</th><th>Pines analógicos (A0-A5)</th></tr></thead><tbody><tr><td>Leen 0 ó 1 (con un umbral)</td><td>Leen un valor continuo de 0 a 1023</td></tr><tr><td>No miden la magnitud real</td><td>Miden el voltaje conectado</td></tr><tr><td>Botones, interruptores, detectores</td><td>Potenciómetros, sensores, joysticks</td></tr></tbody></table>
+<p>Los sensores que se leen por analógico son la puerta de entrada al mundo real del microcontrolador: <strong>potenciómetros</strong> (posición), <strong>LDR</strong> (luz), <strong>LM35/TMP36</strong> (temperatura), sensores de gas, joysticks o los ejes de una IMU. La regla práctica: si un sensor devuelve un voltaje que depende de algo externo, lo leerás por una entrada analógica.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="analogread-y-el-adc-de-10-bits">
+    <h2><i class="fa-solid fa-chart-line"></i> analogRead y el ADC de 10 bits</h2>
+    <div class="doc-content">
+<p>La función <code>analogRead(pin)</code> mide el voltaje en un pin analógico y devuelve un entero entre <code>0</code> y <code>1023</code>. El ADC del ATmega328P tiene una resolución de <strong>10 bits</strong> y por eso el máximo es <strong>2¹⁰ − 1 = 1023</strong>: los 10 bits representan 1024 niveles distintos entre 0 V y la tensión de referencia.</p>
+<table><thead><tr><th>Referencia</th><th>Resolución por paso</th></tr></thead><tbody><tr><td>5 V (por defecto)</td><td>5000 mV / 1024 ≈ 4,88 mV</td></tr><tr><td>3,3 V</td><td>3300 mV / 1024 ≈ 3,22 mV</td></tr><tr><td>1,1 V interna (INTERNAL1V1)</td><td>1100 mV / 1024 ≈ 1,07 mV</td></tr></tbody></table>
+<p>Esos ~4,88 mV por paso significan que <strong>no puedes distinguir diferencias menores de unos 5 mV</strong> con referencia de 5 V. Cada conversión tarda unas <strong>~100 µs</strong> (el ADC corre a ~125 kHz en la Uno), así que hay miles de lecturas por segundo; para señales ruidosas conviene promediar varias. La referencia por defecto es la tensión de alimentación (5 V); puedes cambiarla con <code>analogReference(tipo)</code> <em>antes</em> de llamar a <code>analogRead()</code> para medir rangos pequeños con más detalle, aceptando esa nueva escala en tus conversiones.</p>
+<pre><code class="language-cpp">// Lee A0 y muestra el valor crudo y el voltaje por el monitor serie
+const int PIN = A0;
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  int lectura = analogRead(PIN);             // 0..1023
+  float voltaje = lectura * (5.0 / 1023.0);  // → voltios
+  Serial.print("ADC = ");
+  Serial.print(lectura);
+  Serial.print("  |  ");
+  Serial.print(voltaje, 2);
+  Serial.println(" V");
+  delay(300);
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="potenciometro-medir-posiciones">
+    <h2><i class="fa-solid fa-dial"></i> Potenciómetro: medir posiciones</h2>
+    <div class="doc-content">
+<p>El <strong>potenciómetro</strong> es una resistencia variable con tres patas: dos extremos fijos y un <strong>cursor</strong> (<em>wiper</em>) central que divide la resistencia total en dos partes. Conectado entre <code>5 V</code> y <code>GND</code> forma un <em>divisor de tensión</em>: el voltaje del cursor varía de forma continua entre 0 y 5 V según la posición del eje. Al girarlo, <code>analogRead()</code> devuelve valores entre 0 y 1023.</p>
+<pre><code class="language-text">Las tres patas de un potenciómetro formando un divisor:
+
+   5 V ──── pata izquierda
+          │
+         ┌┴┐
+         │ │  ← pista resistiva
+         └┬┘
+          │
+   pata central (cursor) ──► A0
+          │
+         ┌┴┐
+         │ │
+         └┬┘
+   GND ──── pata derecha</code></pre>
+<pre><code class="language-cpp">// Potenciómetro en A0: giro convertido a porcentaje
+const int PIN_POT = A0;
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  int lectura = analogRead(PIN_POT);           // 0..1023
+  int porcentaje = map(lectura, 0, 1023, 0, 100);
+  Serial.print("ADC = ");
+  Serial.print(lectura);
+  Serial.print("  |  ");
+  Serial.print(porcentaje);
+  Serial.println(" %");
+  delay(50);
+}</code></pre>
+<p>El potenciómetro es el <strong>ejemplo didáctico por excelencia</strong> de entrada analógica: barato, lineal, fácil de conectar y sin electrónica adicional. Comprueba las patas antes de cablear: la central es el cursor (conectar las dos externas al revés no rompe nada, son simétricas, pero unir el cursor a GND y una externa a 5 V invierte la curva de lectura). También puede funcionar como <strong>resistencia variable</strong> (<em>reóstato</em>) usando solo la pata central y una externa, útil para ajustar la sensibilidad de otros divisores.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="sensor-de-luz-ldr">
+    <h2><i class="fa-solid fa-sun"></i> Sensor de luz (LDR)</h2>
+    <div class="doc-content">
+<p>Una <strong>fotoresistencia o LDR</strong> (<em>Light Dependent Resistor</em>) tiene una resistencia que <strong>disminuye al recibir luz</strong>: a pleno sol baja a unos cientos de ohmios y en la oscuridad puede superar el megaohmio. No devuelve un voltaje por sí sola: necesita una resistencia fija que forme con ella un <strong>divisor de tensión</strong>. La más habitual es una fija de <strong>10 kΩ</strong>.</p>
+<pre><code class="language-text">Opción A (más luz → más voltaje):    5 V ── LDR ── A0 ── 10 kΩ ── GND
+Opción B (más luz → menos voltaje):  5 V ── 10 kΩ ── A0 ── LDR ── GND</code></pre>
+<p>Eliges una posición u otra según el comportamiento deseado: con el LDR arriba, a más luz mayor lectura; con la fija arriba, a más oscuridad mayor lectura. En ambas, el reparto de caídas depende de la relación entre las dos resistencias.</p>
+<pre><code class="language-cpp">// Lámpara nocturna: enciende el LED cuando oscurece
+const int PIN_LDR = A0;
+const int PIN_LED = 9;
+const int UMBRAL = 500;   // se ajusta con el monitor serie
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(PIN_LED, OUTPUT);
+}
+
+void loop() {
+  int lectura = analogRead(PIN_LDR);
+  Serial.println(lectura);
+  if (lectura &lt; UMBRAL) {          // pocos lúmenes: de noche
+    analogWrite(PIN_LED, 255);
+  } else {
+    analogWrite(PIN_LED, 0);
+  }
+  delay(200);
+}</code></pre>
+<p>El valor <code>UMBRAL</code> se <strong>calibra empíricamente</strong>: abre el monitor serie, ilumina y tapa el sensor, anota los dos valores y fija un punto intermedio. Recuerda que la respuesta de un LDR <strong>no es lineal</strong>: no intentes convertir la lectura en "lux" sin una tabla de calibración previa.</p>
+<blockquote class="aside aside-caution"><p>Si conectas el LDR sin la resistencia fija, el pin A0 queda a alta impedancia y leerá valores flotantes. El divisor necesita siempre ambas resistencias: el LDR y su compañera fija.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="sensor-de-temperatura">
+    <h2><i class="fa-solid fa-temperature-half"></i> Sensor de temperatura</h2>
+    <div class="doc-content">
+<p>El <strong>LM35</strong> (y su primo el TMP36) es un sensor de temperatura con salida <strong>lineal</strong>: entrega 10 mV por cada grado Celsius. A 0 °C sale 0 V, a 25 °C salen 0,25 V, y solo tiene tres patas: <code>Vcc</code>, <code>Out</code> y <code>GND</code>. El TMP36, su gemelo de 3 pines, añade un desfase de 0,5 V a 0 °C y su fórmula cambia a <code>(lectura * 5.0 / 1023.0 − 0.5) / 0.01</code>; compruébalo siempre en su hoja de datos.</p>
+<pre><code class="language-text">LM35 (cara plana hacia ti):  Pata 1 → 5 V  ·  Pata 2 (Out) → A0  ·  Pata 3 → GND</code></pre>
+<p>La conversión se hace en dos pasos: primero pasas el valor del ADC a voltios y después divides entre <code>0,01</code> (10 mV por grado). La fórmula completa es <code>(lectura * 5.0) / 1023.0 / 0.01</code> grados Celsius.</p>
+<pre><code class="language-cpp">// Termómetro con LM35 en A0: imprime °C y un estado
+const int PIN_SENSOR = A0;
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  int lectura = analogRead(PIN_SENSOR);
+  float voltaje = lectura * (5.0 / 1023.0);
+  float temperatura = voltaje / 0.01;    // 10 mV por °C
+  Serial.print("Voltaje = ");
+  Serial.print(voltaje, 2);
+  Serial.print(" V  |  ");
+  Serial.print(temperatura, 1);
+  Serial.print(" °C  |  ");
+
+  if (temperatura &lt; 18) {                // zona fría
+    Serial.println("Frío");
+  } else if (temperatura &lt; 28) {         // zona confort
+    Serial.println("Cálido");
+  } else {
+    Serial.println("Caliente");
+  }
+  delay(500);
+}</code></pre>
+<p>El LM35 es lineal y barato en el rango de clima ambiente; medir temperaturas bajo cero en la Uno requiere un montaje de polarización extra. Alternativas habituales:</p>
+<ul>
+<li><strong>Termistor NTC:</strong> muy barato y sensible, pero con respuesta <strong>no lineal</strong>; exige la fórmula de Steinhart-Hart con las constantes B de su hoja de datos.</li>
+<li><strong>DHT11 / DHT22:</strong> temperatura y humedad en un módulo, pero con salida <strong>digital</strong> y protocolo propio: se lee mediante librería y lo veremos en el tema de librerías.</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="escalar-valores-con-map-y-constrain">
+    <h2><i class="fa-solid fa-ruler"></i> Escalar valores con map() y constrain()</h2>
+    <div class="doc-content">
+<p>El ADC devuelve 0-1023, pero casi nunca quieres mostrarlo tal cual: prefieres porcentajes (0-100), grados de servo (0-180) o valores de PWM (0-255). La función <code>map(valor, deMin, deMax, aMin, aMax)</code> reescala de un rango a otro de forma lineal, y <code>constrain(valor, min, max)</code> limita el resultado a un intervalo cerrado.</p>
+<pre><code class="language-cpp">int lectura = analogRead(A0);                    // 0..1023
+int porcentaje = map(lectura, 0, 1023, 0, 100);  // a 0-100 %
+int brillo     = map(lectura, 0, 1023, 0, 255);  // a PWM
+int angulo     = map(lectura, 0, 1023, 0, 180);  // a servo
+int seguro = constrain(porcentaje, 0, 100);      // recorta el rango</code></pre>
+<p>La diferencia clave: <code>map()</code> <strong>no recorta</strong>. Si la entrada supera el rango original, el resultado se sale del rango destino (por ejemplo, 150 %). <code>constrain()</code> sí acota. El patrón habitual es <strong>map() + constrain()</strong> para proteger la salida cuando el sensor puede sobrepasar los extremos (por contaminación del divisor o montajes imperfectos).</p>
+<pre><code class="language-cpp">const int PIN_POT = A0;
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  int lectura = analogRead(PIN_POT);               // 0..1023
+  int porcentaje = map(lectura, 0, 1023, 0, 100);  // puede salirse del rango
+  porcentaje = constrain(porcentaje, 0, 100);      // ahora está acotado
+  Serial.print("ADC = ");
+  Serial.print(lectura);
+  Serial.print("  |  ");
+  Serial.println(porcentaje);
+  delay(100);
+}</code></pre>
+<blockquote class="aside aside-danger"><p><code>map()</code> trabaja con <strong>enteros</strong>, truncando en cada paso; no lo uses para precisión decimal. Para floats escala con aritmética manual: <code>float normalizado = lectura / 1023.0; float salida = normalizado * 100.0;</code></p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="errores-comunes">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> Errores comunes</h2>
+    <div class="doc-content">
+<h3>1. Alimentar sensores a 5 V y leer con referencia de 3,3 V</h3>
+<p>Si el sensor entrega salidas de 0-5 V pero la placa (o la referencia ADC) trabaja a 3,3 V, la lectura satura en el extremo alto y es inexacta. Revisa la tensión de alimentación del sensor y decide una sola referencia para todos tus cálculos.</p>
+<h3>2. Leer sin la masa común</h3>
+<p>Sensor y placa deben compartir <code>GND</code>; sin él, la lectura "flota" y devuelve valores absurdos o erráticos. Es el fallo nº 1 en montajes analógicos.</p>
+<h3>3. Conectar la salida del sensor sin conocer su rango</h3>
+<pre><code class="language-cpp">// Se esperaba una escala de 0-5 V, pero el sensor entrega 0-1,8 V
+// → solo se aprovecha ~el 36 % del ADC (valores de 0 a 368)</code></pre>
+<p>Consulta la hoja de datos: si la salida máxima queda lejos de la referencia, adapta con un divisor, un op-amp o cambiando <code>analogReference()</code>.</p>
+<h3>4. Olvidar la referencia en los cálculos</h3>
+<pre><code class="language-cpp">// ❌ Supone 5 V aunque el ADC use la referencia interna de 1,1 V
+// float v = lectura * (5.0 / 1023.0);
+
+// ✅ Coherente con analogReference(INTERNAL1V1)
+// float v = lectura * (1.1 / 1023.0);</code></pre>
+<h3>5. Usar map() como si trabajara con float</h3>
+<p><code>map()</code> trunca a entero en cada operación y no sirve para precisión decimal. Escala a mano con <code>float</code>, como se explica en la sección anterior.</p>
+<h3>6. No proteger las entradas de picos superiores a 5 V</h3>
+<blockquote class="aside aside-danger"><p>Regla de oro del ADC: nunca conectes a un pin analógico un voltaje superior a <strong>Vcc + 0,5 V</strong> (5 V en la Uno); los pines del ATmega no lo toleran y el daño puede ser permanente. Un transitorio en A0-A5 también puede dañar el ADC: añade resistencias en serie y, en entornos ruidosos, diodos de sujeción o un zener de 5,1 V a tierra. El pin <code>Aref</code> debe mantenerse igualmente dentro de ese margen.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2><i class="fa-solid fa-dumbbell"></i> Ejercicios</h2>
+    <div class="doc-content">
+<ol>
+<li><strong>Barra de brillo con potenciómetro:</strong> con un potenciómetro en A0 y un LED en el pin 9, haz que el giro controle el brillo con <code>map()</code> y muestra en el monitor serie el valor crudo, el porcentaje y el valor PWM enviado.</li>
+<li><strong>Lámpara nocturna:</strong> con el LDR + 10 kΩ en A0 y un LED en el pin 9, enciende el LED cuando oscurezca usando un umbral calibrado con el monitor serie. Añade un segundo umbral intermedio que encienda el LED a media potencia.</li>
+<li><strong>Termómetro:</strong> con un LM35 en A0, imprime la temperatura en °C por el monitor serie y avisa con distintas frases si está por debajo de 15 °C, entre 15 y 30 °C, o por encima. Cambia el brillo de un LED en el pin 9 según la zona.</li>
+<li><strong>Control acotado:</strong> lee el potenciómetro, conviértelo a un valor 0-100 con <code>map()</code> y muestra en el monitor serie el resultado sin <code>constrain()</code> y después de aplicarlo, girando hasta los topes. Explica en qué momentos difieren.</li>
+<li><strong>Detector con histéresis:</strong> con el LDR, enciende el LED solo si la lectura supera 600 y no lo apagues hasta que baje de 400. Comprueba que el LED parpadea mucho menos que con un único umbral. ¿Por qué ocurre?</li>
+</ol>
+    </div>
+  </section>
