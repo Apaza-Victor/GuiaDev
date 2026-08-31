@@ -1,0 +1,198 @@
+<!-- 9. Algoritmos Clásicos: Búsqueda y Ordenación - PSeInt (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="busqueda-lineal">
+    <h2>Búsqueda lineal</h2>
+    <div class="doc-content">
+<p>La <strong>búsqueda lineal</strong> recorre un arreglo de principio a fin comparando cada elemento con el valor buscado. Es simple y funciona aunque el arreglo <strong>no esté ordenado</strong>.</p>
+<pre><code class="language-none">Algoritmo BusquedaLineal
+    Definir a Como Entero
+    Definir n, i, x, posicion Como Entero
+
+    Escribir "Número de elementos: "
+    Leer n
+    Dimension a[n]
+    Para i &lt;- 1 Hasta n Con Paso 1 Hacer
+        Leer a[i]
+    FinPara
+
+    Escribir "Valor a buscar: "
+    Leer x
+
+    posicion &lt;- 0   // 0 indica "no encontrado"
+    Para i &lt;- 1 Hasta n Con Paso 1 Hacer
+        Si a[i] = x Entonces
+            posicion &lt;- i
+            i &lt;- n   // termina el bucle
+        FinSi
+    FinPara
+
+    Si posicion = 0 Entonces
+        Escribir "No se encontró el valor"
+    SiNo
+        Escribir "Encontrado en la posición ", posicion
+    FinSi
+FinAlgoritmo</code></pre>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/LT11JiD030NGlK_nbLMYYaMt6IAwOGTSeEh2JHngQV1KdYdqNXoWKdinb025xYpRUj_oAXVsSdYBD1VKFeaus5rUOmAlRHD-UaVKxnoJWx4zv9wz2TJkKzPUaw73tJ9Gg-Ym3FInqoYe5VSTh85crEUJM9-iE0_feI50HzIyrWqw71kKdHW1m7zI0m5YWuu4pBPYCVbYmnn14t9pmrLgdrCkpexg9U4lkWeaCSlDmkDr2Z5ySvTFGuK5Vl4vKqVA9Urf9JPCB_i2" alt="Diagrama de flujo: búsqueda lineal en un arreglo" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-none">@startuml
+start
+:Leer arreglo a[n];
+:Leer x (valor a buscar);
+:posicion = -1;
+:i = 1;
+while (i &lt;= n) is (¿encontrado?)
+  if (a[i] = x) then
+    :posicion = i;
+  endif
+  :i = i + 1;
+endwhile
+if (posicion = -1) then
+  :Mostrar "No encontrado";
+else
+  :Mostrar "Encontrado en posición " + posicion;
+endif
+stop
+@enduml</code></pre>
+  </details>
+</div>
+<blockquote class="aside aside-note"><p>La búsqueda lineal se llama así porque avanza <strong>en línea recta</strong>, elemento por elemento. Su coste es proporcional a <code>n</code>: en el peor caso recorre todo el arreglo.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="busqueda-binaria">
+    <h2>Búsqueda binaria</h2>
+    <div class="doc-content">
+<p>La <strong>búsqueda binaria</strong> es mucho más rápida, pero exige que el arreglo esté <strong>ordenado</strong>. Divide el arreglo a la mitad y descarta la mitad que no puede contener al valor en cada paso.</p>
+<pre><code class="language-none">Algoritmo BusquedaBinaria
+    Definir a Como Entero
+    Definir n, izq, der, medio, x Como Entero
+    Definir encontrado Como Logico
+
+    Escribir "Valor a buscar: "
+    Leer x
+    izq &lt;- 1
+    der &lt;- n
+    encontrado &lt;- FALSO
+
+    Mientras izq &lt;= der Y NO encontrado Hacer
+        medio &lt;- trunc((izq + der) / 2)
+        Si a[medio] = x Entonces
+            encontrado &lt;- VERDADERO
+        SiNo
+            Si x &lt; a[medio] Entonces
+                der &lt;- medio - 1
+            SiNo
+                izq &lt;- medio + 1
+            FinSi
+        FinSi
+    FinMientras
+
+    Si encontrado Entonces
+        Escribir "Encontrado en la posición ", medio
+    SiNo
+        Escribir "No se encontró"
+    FinSi
+FinAlgoritmo</code></pre>
+<table><thead><tr><th>Paso</th><th>Montón a buscar (ordenado: 2 5 8 12 15 20)</th><th>izq</th><th>der</th><th>medio</th></tr></thead><tbody>
+<tr><td>1</td><td>Buscar 12</td><td>1</td><td>6</td><td>a[3]=8 (12&gt;8 → izq=4)</td></tr>
+<tr><td>2</td><td>Buscar 12</td><td>4</td><td>6</td><td>a[5]=15 (12&lt;15 → der=4)</td></tr>
+<tr><td>3</td><td>Buscar 12</td><td>4</td><td>4</td><td>a[4]=12 (¡encontrado!)</td></tr>
+</tbody></table>
+<blockquote class="aside aside-tip"><p>Con 6 elementos la búsqueda binaria hace como mucho <strong>3 comparaciones</strong>; con un millón, solo unas 20. Por eso es ideal para datos ordenados de gran tamaño.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ordenamiento-burbuja">
+    <h2>Ordenamiento de burbuja</h2>
+    <div class="doc-content">
+<p>El <strong>ordenamiento de burbuja</strong> (bubble sort) compara parejas de elementos adyacentes y los intercambia si están en el orden equivocado. Los valores grandes "suben" hacia el final como burbujas.</p>
+<pre><code class="language-none">Algoritmo Burbuja
+    Definir a Como Entero
+    Definir n, i, j, temp Como Entero
+
+    // Llenar y suponer a[] ya con datos, n = longitud
+    Para i &lt;- 1 Hasta n - 1 Con Paso 1 Hacer
+        Para j &lt;- 1 Hasta n - i Con Paso 1 Hacer
+            Si a[j] &gt; a[j + 1] Entonces
+                // Intercambiar
+                temp &lt;- a[j]
+                a[j] &lt;- a[j + 1]
+                a[j + 1] &lt;- temp
+            FinSi
+        FinPara
+    FinPara
+
+    Escribir "Arreglo ordenado:"
+    Para i &lt;- 1 Hasta n Con Paso 1 Hacer
+        Escribir Sin Saltar a[i], " "
+    FinPara
+FinAlgoritmo</code></pre>
+<blockquote class="aside aside-warning"><p>Para <strong>intercambiar</strong> dos variables siempre necesitas una variable auxiliar <code>temp</code>: guarda un valor, mueve el otro y coloca el primero. Sin la auxiliar perderías un dato.</p></blockquote>
+<blockquote class="aside aside-note"><p>El burbuja es fácil de entender pero <strong>lento</strong> con muchos datos (compara muchas veces). Es ideal para aprender; para arreglos grandes se usan ordenamientos más avanzados.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="numero-primo-y-factorial">
+    <h2>Número primo y factorial</h2>
+    <div class="doc-content">
+<p>Dos algoritmos clásicos de teoría de números muy usados en ejercicios.</p>
+<pre><code class="language-none">Algoritmo EsPrimo
+    Definir n, i Como Entero
+    Definir primo Como Logico
+
+    Escribir "Ingresa un número: "
+    Leer n
+
+    primo &lt;- VERDADERO
+    Si n &lt;= 1 Entonces
+        primo &lt;- FALSO
+    SiNo
+        Para i &lt;- 2 Hasta trunc(raiz(n)) Con Paso 1 Hacer
+            Si n mod i = 0 Entonces
+                primo &lt;- FALSO
+            FinSi
+        FinPara
+    FinSi
+
+    Si primo Entonces
+        Escribir n, " es primo"
+    SiNo
+        Escribir n, " no es primo"
+    FinSi
+FinAlgoritmo</code></pre>
+<pre><code class="language-none">Algoritmo Factorial
+    Definir n, i, resultado Como Entero
+
+    Escribir "Número: "
+    Leer n
+    resultado &lt;- 1
+    Para i &lt;- 1 Hasta n Con Paso 1 Hacer
+        resultado &lt;- resultado * i
+    FinPara
+    Escribir "El factorial de ", n, " es ", resultado
+FinAlgoritmo</code></pre>
+<blockquote class="aside aside-tip"><p>Para saber si <code>n</code> es primo basta comprobar divisores hasta <code>raiz(n)</code>: si hay algún divisor exacto, no es primo. Así el programa es mucho más rápido que probar todos los números.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios-clasicos">
+    <h2>Ejercicios de algoritmos clásicos</h2>
+    <div class="doc-content">
+<p>Refuerza con estos ejercicios:</p>
+<h3><i class="fa-solid fa-list-check"></i> Ejercicios</h3>
+<table><thead><tr><th>#</th><th>Problema</th><th>Pista</th></tr></thead><tbody>
+<tr><td>1</td><td>Ordenar un arreglo de mayor a menor (descendente).</td><td>Cambia <code>&gt;</code> por <code>&lt;</code> en el burbuja.</td></tr>
+<tr><td>2</td><td>Buscar un valor en un arreglo ordenado con búsqueda binaria.</td><td>Requiere arreglo ordenado previamente.</td></tr>
+<tr><td>3</td><td>Mostrar todos los números primos entre 1 y 100.</td><td>Bucle <code>Para</code> llamando a la lógica de primo.</td></tr>
+<tr><td>4</td><td>Calcular el factorial de un número con <code>Repetir</code>.</td><td>Acumula la multiplicación en un contador.</td></tr>
+<tr><td>5</td><td>Contar cuántas veces aparece un valor en un arreglo.</td><td>Recorre y suma cuando <code>a[i] = x</code>.</td></tr>
+</tbody></table>
+<p>---</p>
+    </div>
+  </section>

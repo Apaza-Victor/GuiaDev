@@ -4488,6 +4488,279 @@ const DOCS_DATA = {
             "contentFile": "content/lenguajes/latex/latex-compilacion.html"
           }
         ]
+      },
+      {
+        "id": "pseint",
+        "title": "PSeInt",
+        "icon": "fa-solid fa-diagram-project",
+        "lessons": [
+          {
+            "id": "ps-introduccion",
+            "title": "1. Introducción a PSeInt",
+            "content": "Qué es PSeInt, instalación, entorno de trabajo y tu primer algoritmo en pseudocódigo en español",
+            "sections": [
+              "¿Qué es PSeInt?",
+              "Instalación",
+              "El entorno de PSeInt",
+              "Tu primer algoritmo",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseint/ps-introduccion.html"
+          },
+          {
+            "id": "ps-sintaxis-y-variables",
+            "title": "2. Sintaxis Básica y Variables",
+            "content": "Estructura de un algoritmo, tipos de datos, operadores y entrada/salida de datos en PSeInt",
+            "sections": [
+              "Estructura básica de un algoritmo",
+              "Tipos de datos",
+              "Operadores",
+              "Entrada y salida de datos",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseint/ps-sintaxis-y-variables.html"
+          },
+          {
+            "id": "ps-condicionales",
+            "title": "3. Estructuras Condicionales",
+            "content": "Aprende a tomar decisiones con Si-Entonces, SiNo, condicionales anidados y la estructura Según en PSeInt",
+            "sections": [
+              "La estructura Si-Entonces",
+              "Si-Entonces-SiNo",
+              "Condicionales anidados",
+              "La estructura Según",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseint/ps-condicionales.html"
+          },
+          {
+            "id": "ps-bucles",
+            "title": "4. Estructuras Repetitivas (Bucles)",
+            "content": "Los bucles Mientras, Repetir-Hasta Que y Para, con bucles anidados para repetir tareas en PSeInt",
+            "sections": [
+              "El bucle Mientras",
+              "El bucle Repetir-Hasta Que",
+              "El bucle Para",
+              "Bucles anidados",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseint/ps-bucles.html"
+          },
+          {
+            "id": "ps-funciones-y-ejercicios",
+            "title": "5. Subprocesos y Ejercicios Integradores",
+            "content": "Crea subprocesos y funciones en PSeInt y resuelve ejercicios que combinan todo lo aprendido",
+            "sections": [
+              "¿Qué es un subproceso?",
+              "Funciones que devuelven valor",
+              "Proyecto integrador: calculadora",
+              "Análisis de un problema con PSeInt",
+              "Ejercicios finales"
+            ],
+            "contentFile": "content/lenguajes/pseint/ps-funciones-y-ejercicios.html"
+          },
+          {
+            "id": "ps-arreglos",
+            "title": "6. Arreglos (Arrays)",
+            "content": "Los arreglos en PSeInt: declararlos con Dimension, llenarlos, recorrerlos con bucles y recorrer arreglos bidimensionales (tablas)",
+            "sections": [
+              "¿Qué es un arreglo?",
+              "Declarar arreglos (Dimension)",
+              "Llenar y recorrer un arreglo",
+              "Arreglos bidimensionales",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseint/ps-arreglos.html"
+          },
+          {
+            "id": "ps-cadenas",
+            "title": "7. Cadenas de Caracteres",
+            "content": "Trabaja con textos en PSeInt: funciones de cadena como Longitud, Subcadena y Mayusculas, y su comparación y recorrido",
+            "sections": [
+              "¿Qué es una cadena?",
+              "Funciones básicas de cadena",
+              "Longitud y subcadenas",
+              "Recorrer y comparar cadenas",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseint/ps-cadenas.html"
+          },
+          {
+            "id": "ps-funciones-matematicas",
+            "title": "8. Funciones Matemáticas y Aleatoriedad",
+            "content": "Las funciones matemáticas de PSeInt (raiz, abs, trunc, redon, seno, coseno) y números aleatorios con azar y al azar",
+            "sections": [
+              "Funciones matemáticas",
+              "Redondeo y truncado",
+              "Funciones trigonométricas",
+              "Números aleatorios (azar)",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseint/ps-funciones-matematicas.html"
+          },
+          {
+            "id": "ps-algoritmos-clasicos",
+            "title": "9. Algoritmos Clásicos",
+            "content": "Problemas tipo: máximo y mínimo, búsqueda, ordenamiento de burbuja, factorial y suma de dígitos resueltos con PSeInt",
+            "sections": [
+              "Máximo y mínimo",
+              "Búsqueda en un arreglo",
+              "Ordenamiento de burbuja",
+              "Factorial y suma de dígitos",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseint/ps-algoritmos-clasicos.html"
+          },
+          {
+            "id": "ps-buenas-practicas",
+            "title": "10. Buenas Prácticas y Validación",
+            "content": "Escribe algoritmos limpios y robustos: nombres claros, modularidad, validación de entrada y depuración de errores en PSeInt",
+            "sections": [
+              "Nombres y estructura clara",
+              "Modularidad con subprocesos",
+              "Validación de entrada",
+              "Detectar y corregir errores",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseint/ps-buenas-practicas.html"
+          }
+        ]
+      },
+      {
+        "id": "pseudoflow",
+        "title": "PseudoFlow",
+        "icon": "fa-solid fa-sitemap",
+        "lessons": [
+          {
+            "id": "pf-introduccion",
+            "title": "1. Introducción a PseudoFlow",
+            "content": "Qué es PseudoFlow, instalación, entorno con diagramas en tiempo real y tu primer programa",
+            "sections": [
+              "¿Qué es PseudoFlow?",
+              "Instalación",
+              "El entorno de PseudoFlow",
+              "Tu primer programa",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseudoflow/pf-introduccion.html"
+          },
+          {
+            "id": "pf-variables-y-operadores",
+            "title": "2. Variables y Operadores",
+            "content": "Declaración de variables, tipos de datos, operadores y entrada/salida de datos en PseudoFlow",
+            "sections": [
+              "Variables y declaración",
+              "Tipos de datos",
+              "Operadores",
+              "Entrada y salida",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseudoflow/pf-variables-y-operadores.html"
+          },
+          {
+            "id": "pf-condicionales",
+            "title": "3. Estructuras Condicionales",
+            "content": "Toma decisiones con if, else, if anidados y la estructura switch en PseudoFlow",
+            "sections": [
+              "La estructura if",
+              "if y else",
+              "if anidados",
+              "La estructura switch",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseudoflow/pf-condicionales.html"
+          },
+          {
+            "id": "pf-bucles",
+            "title": "4. Estructuras Repetitivas (Bucles)",
+            "content": "Los bucles while y repeat (for) con pasos, bucles descendentes y anidados en PseudoFlow",
+            "sections": [
+              "El bucle while",
+              "El bucle repeat (for)",
+              "repeat con paso y descendente",
+              "Bucles anidados",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseudoflow/pf-bucles.html"
+          },
+          {
+            "id": "pf-arrays-y-proyecto",
+            "title": "5. Arreglos y Proyecto Integrador",
+            "content": "Trabaja con arreglos (arrays), recórrelos con bucles y resuelve proyectos que combinan todo lo aprendido",
+            "sections": [
+              "Arreglos (arrays)",
+              "Recorrer un arreglo",
+              "Ejercicio: máximo de N números",
+              "Proyecto integrador: verificador de número primo",
+              "Ejercicios finales"
+            ],
+            "contentFile": "content/lenguajes/pseudoflow/pf-arrays-y-proyecto.html"
+          },
+          {
+            "id": "pf-arreglos",
+            "title": "6. Arreglos: Recorrido y Operaciones",
+            "content": "Los arreglos unidimensionales en PseudoFlow: declarar e inicializar, recorrer con repeat for, recorrer el máximo, buscar e invertir",
+            "sections": [
+              "¿Qué es un arreglo?",
+              "Declarar e inicializar",
+              "Recorrer un arreglo",
+              "Máximo y búsqueda",
+              "Invertir un arreglo",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseudoflow/pf-arreglos.html"
+          },
+          {
+            "id": "pf-cadenas",
+            "title": "7. Cadenas de Caracteres",
+            "content": "Trabaja con textos en PseudoFlow: longitud con .length, acceso a caracteres, concatenación, comparación y conteo de caracteres",
+            "sections": [
+              "¿Qué es una cadena?",
+              "Longitud y acceso a caracteres",
+              "Recorrer una cadena y contar",
+              "Comparar cadenas",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseudoflow/pf-cadenas.html"
+          },
+          {
+            "id": "pf-dowhile",
+            "title": "8. Bucle dowhile y Validación",
+            "content": "El bucle dowhile de PseudoFlow, que se ejecuta al menos una vez, ideal para validar entrada de datos y construir menús",
+            "sections": [
+              "El bucle dowhile (do-while)",
+              "Validar la entrada de datos",
+              "Contar intentos",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseudoflow/pf-dowhile.html"
+          },
+          {
+            "id": "pf-algoritmos-clasicos",
+            "title": "9. Algoritmos Clásicos",
+            "content": "Problemas tipo en PseudoFlow: máximo y mínimo, ordenamiento de burbuja, búsqueda lineal, factorial y suma de dígitos",
+            "sections": [
+              "Máximo y mínimo de N números",
+              "Ordenamiento de burbuja",
+              "Búsqueda lineal en un arreglo",
+              "Factorial y suma de dígitos",
+              "Ejercicios prácticos"
+            ],
+            "contentFile": "content/lenguajes/pseudoflow/pf-algoritmos-clasicos.html"
+          },
+          {
+            "id": "pf-proyectos-integradores",
+            "title": "10. Proyectos Integradores",
+            "content": "Proyectos completos en PseudoFlow: menús con switch y dowhile, promedios con arreglos y validación combinada de datos",
+            "sections": [
+              "Proyecto: menú con switch",
+              "Proyecto: promedios con arreglos",
+              "Proyecto: validación combinada",
+              "Desafíos finales de PseudoFlow"
+            ],
+            "contentFile": "content/lenguajes/pseudoflow/pf-proyectos-integradores.html"
+          }
+        ]
       }
     ]
   },

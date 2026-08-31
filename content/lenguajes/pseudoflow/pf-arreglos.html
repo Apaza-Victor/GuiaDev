@@ -1,0 +1,174 @@
+<!-- 6. Arreglos - PseudoFlow (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="declarar-arreglos">
+    <h2>Declarar y usar arreglos</h2>
+    <div class="doc-content">
+<p>Un <strong>arreglo</strong> es una colección de valores del mismo tipo bajo un mismo nombre. En PseudoFlow se declaran con un valor inicial y se accede a cada elemento con su <strong>índice entre corchetes</strong> <code>arr[i]</code>. A diferencia de PSeInt, aquí los índices empiezan en <strong>0</strong>.</p>
+<pre><code class="language-none">// Arreglo con valores iniciales (índices 0, 1, 2, 3, 4)
+declare notas = [7, 9, 5, 8, 10]
+
+print "La nota del alumno 0 es: " + notas[0]
+print "La nota del alumno 4 es: " + notas[4]
+print "El arreglo tiene " + notas.length + " elementos"</code></pre>
+<pre><code class="language-none">// Declarar un arreglo vacío
+declare vacio = []
+vacio[0] = 100
+vacio[1] = 200
+print vacio[0] + vacio[1]</code></pre>
+<h3><i class="fa-solid fa-table"></i> Conceptos de arreglos en PseudoFlow</h3>
+<table><thead><tr><th>Concepto</th><th>Explicación</th><th>Ejemplo</th></tr></thead><tbody>
+<tr><td>Índice</td><td>Posición del elemento (empieza en 0).</td><td><code>notas[0]</code></td></tr>
+<tr><td>asignación</td><td>Cambiar o crear un elemento.</td><td><code>notas[2] = 6</code></td></tr>
+<tr><td>length</td><td>Número de elementos.</td><td><code>notas.length</code></td></tr>
+<tr><td>Arreglo vacío</td><td>Se puede declarar y llenar después.</td><td><code>declare a = []</code></td></tr>
+</tbody></table>
+<blockquote class="aside aside-danger"><p><strong>Importante:</strong> en PseudoFlow el primer elemento es <code>[0]</code>. Si vienes de PSeInt, recuerda que tu "posición 1" aquí es <code>pos[0]</code>. Acceder a un índice inexistente da error.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="recorrer-arreglos-pf">
+    <h2>Recorrer un arreglo</h2>
+    <div class="doc-content">
+<p>Para procesar todos los elementos usa un bucle <code>repeat</code> que recorra los índices desde 0 hasta <code>length - 1</code>.</p>
+<pre><code class="language-none">// Sumar todos los elementos
+declare notas = [7, 9, 5, 8, 10]
+declare suma = 0
+
+repeat (for i = 0 until (notas.length - 1) steps 1)
+    suma = suma + notas[i]
+endrepeat
+
+print "La suma es: " + suma
+print "El promedio es: " + (suma / notas.length)</code></pre>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/FOwz2iCm38HtFON6X0njXovs2tcFqa7K8XNOLl0FUVqI6tUwWxlxk3KNIgK63ys0SVpnb2WXfSIRLunQAEDqxsQsO78DX4-yMZ3IzVYAPvm47-WrRbAgcm5nD9ii7V2IjpsZSocuuCq2HzS0OFQaWPtes5p-E0icQ2xdiL6oa8lki79qDVWV" alt="Diagrama de flujo: calcular promedio de un arreglo en PseudoFlow" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-none">@startuml
+start
+:declarar arreglo notas (5 notas);
+:suma = 0;
+:i = 0;
+while (i &lt; longitud)
+  :suma = suma + notas[i];
+  :i = i + 1;
+endwhile
+:promedio = suma / longitud;
+:mostrar promedio;
+stop
+@enduml</code></pre>
+  </details>
+</div>
+<blockquote class="aside aside-tip"><p>El patrón general para recorrer es: <code>repeat (for i = 0 until length - 1 steps 1) ... endrepeat</code>. Así visitas <strong>todas</strong> las posiciones sin pasarte.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="maximo-minimo-pf">
+    <h2>Máximo, mínimo y búsqueda</h2>
+    <div class="doc-content">
+<p>Buscar el valor mayor, el menor o ver si existe un elemento son operaciones típicas. El truco es ir actualizando una variable de referencia al recorrer.</p>
+<pre><code class="language-none">// Encontrar el mayor de un arreglo
+declare nums = [3, 8, 1, 9, 4]
+declare mayor = nums[0]
+declare i = 1
+
+while (i < nums.length)
+    if (nums[i] > mayor) then
+        mayor = nums[i]
+    endif
+    i = i + 1
+endwhile
+
+print "El mayor es: " + mayor</code></pre>
+<pre><code class="language-none">// Buscar si existe un valor
+declare nums = [3, 8, 1, 9, 4]
+declare x = 9
+declare encontrado = false
+declare i = 0
+
+while (i < nums.length and encontrado == false)
+    if (nums[i] == x) then
+        encontrado = true
+    endif
+    i = i + 1
+endwhile
+
+if (encontrado) then
+    print "Encontrado en la posición " + (i - 1)
+else
+    print "No se encontró"
+endif</code></pre>
+<blockquote class="aside aside-warning"><p>Para recorrer mientras <strong>no</strong> se cumpla algo, compara el flag con <code>== false</code>: <code>while (...) and encontrado == false</code>. En PseudoFlow no existe un operador <code>not</code>; los booleanos son <code>true</code>/<code>false</code> y se comparan con <code>==</code>. Las palabras clave (<code>and</code>, <code>or</code>) van en minúsculas.</p></blockquote>
+<blockquote class="aside aside-danger"><p><strong>Ojo con la comparación:</strong> dentro de una condición (<code>if</code>, <code>while</code>) usa siempre <code>==</code> para comparar. Un solo <code>=</code> es solo para asignar valores y PseudoFlow lo rechaza en las condiciones.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="invertir-arreglo">
+    <h2>Invertir un arreglo</h2>
+    <div class="doc-content">
+<p>Invertir un arreglo coloca el último elemento primero y el primero al final. La técnica clave es el <strong>intercambio (swap)</strong> usando una variable temporal para no perder datos.</p>
+<pre><code class="language-none">// Invertir el arreglo usando una variable temporal
+declare arr = [1, 2, 3, 4, 5]
+declare temp
+
+// i avanza desde el inicio y j desde el final, hasta cruzarse
+declare i = 0
+declare j = arr.length - 1
+
+while (i < j)
+    temp = arr[i]
+    arr[i] = arr[j]
+    arr[j] = temp
+    i = i + 1
+    j = j - 1
+endwhile
+
+// Mostrar el arreglo invertido
+print "Arreglo invertido:"
+repeat (for k = 0 until arr.length - 1 steps 1)
+    print arr[k]
+endrepeat</code></pre>
+<div class="plantuml-figure">
+  <img src="https://www.plantuml.com/plantuml/svg/HSt12eCm40JG-tx572r5KEWfQI3_8Hu40zqbKKaY_dxPMEXjvh7C-bANNCyKgGKo38V1aX4ul2nT7uu17UCDUH1WQaW779QS9vwjoXr_9dyJDJrlehkC9yRMT5tGQmlRsfvGgVj1FcphcU8N" alt="Diagrama de flujo: invertir un arreglo en PseudoFlow" loading="lazy" />
+  <details class="plantuml-source"><summary>Ver código PlantUML</summary>
+<pre><code class="language-none">@startuml
+start
+:declare arr = [1,2,3,4,5];
+:i = 0;
+:j = 4;
+while (i &lt; j)
+  :temp = arr[i];
+  :arr[i] = arr[j];
+  :arr[j] = temp;
+  :i = i + 1;
+  :j = j - 1;
+endwhile
+:mostrar arreglo invertido;
+stop
+@enduml</code></pre>
+  </details>
+</div>
+<blockquote class="aside aside-note"><p>PseudoFlow trabaja con <strong>arreglos unidimensionales</strong>: solo puedes acceder a un índice a la vez (<code>arr[i]</code>). No hay matrices de dos dimensiones, así que para modelar una tabla se usan arreglos planos y se calcula la posición <code>fila * nColumnas + columna</code>.</p></blockquote>
+<blockquote class="aside aside-tip"><p>El <strong>intercambio con temporal</strong> es de los patrones más importantes: se usa en ordenamiento (burbuja, selección) y en invertir arreglos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="ejercicios-arreglos-pf">
+    <h2>Ejercicios de arreglos</h2>
+    <div class="doc-content">
+<p>Pon a prueba tu comprensión:</p>
+<h3><i class="fa-solid fa-list-check"></i> Ejercicios</h3>
+<table><thead><tr><th>#</th><th>Problema</th><th>Pista</th></tr></thead><tbody>
+<tr><td>1</td><td>Sumar todos los elementos de un arreglo.</td><td>Recorre con <code>repeat for</code> y acumula.</td></tr>
+<tr><td>2</td><td>Contar cuántos pares tiene un arreglo.</td><td><code>num[i] % 2 = 0</code>.</td></tr>
+<tr><td>3</td><td>Encontrar el menor elemento.</td><td>Empieza con <code>arr[0]</code> y compara.</td></tr>
+<tr><td>4</td><td>Invertir el arreglo (el último primero).</td><td>Usa una variable temporal para intercambiar.</td></tr>
+<tr><td>5</td><td>Calcular el promedio de un arreglo.</td><td>Suma y divide entre <code>length</code>.</td></tr>
+</tbody></table>
+<p>---</p>
+    </div>
+  </section>
