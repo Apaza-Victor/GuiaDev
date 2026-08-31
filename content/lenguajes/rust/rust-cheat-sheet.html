@@ -1,0 +1,373 @@
+<!-- Cheat Sheet de Rust - Rust (Lenguajes de Programación) -->
+<section id="cheat-que-es-rust">
+    <h2>¿Qué es Rust?</h2>
+    <div class="doc-content">
+        <p><strong>Rust</strong> es un lenguaje de sistemas creado por <strong>Mozilla</strong> (hoy mantenido por la <strong>Rust Foundation</strong>) que destaca por la <strong>seguridad de memoria en tiempo de compilación</strong> <em>sin</em> recolector de basura, y por un rendimiento comparable al de C/C++. Es la opción moderna para sistemas, embebidos, WASM y herramientas de línea de comandos.</p>
+        <pre><code class="language-rust">fn main() {
+    println!("Hola");
+}</code></pre>
+        <table>
+            <thead>
+                <tr><th>Ventaja</th><th>Qué aporta</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><strong>Seguridad de memoria</strong></td><td>Unión de reglas de ownership que el compilador verifica; los bugs de memoria no compilan.</td></tr>
+                <tr><td><strong>Sin recolector de basura</strong></td><td>Sin GC: la memoria se libera sola cuando el valor sale del ámbito, sin pausas de recolección.</td></tr>
+                <tr><td><strong>Velocidad</strong></td><td>Binario nativo tan rápido como C/C++: sin pausas ni máquina virtual.</td></tr>
+                <tr><td><strong>Concurrencia segura</strong></td><td>Las carreras de datos se detectan en compilación: "fearless concurrency".</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-note">
+            <p>Rust 1.0 se publicó en 2015. Su lema: rendimiento de bajo nivel sin las vulnerabilidades de memoria de C/C++.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="cheat-sintaxis-basica">
+    <h2>Sintaxis básica</h2>
+    <div class="doc-content">
+        <p>Las variables se declaran con <code>let</code> y son <strong>inmutables por defecto</strong>; para poder modificarlas se marca <code>mut</code>. La macro <code>println!</code> imprime con salto de línea y los comentarios usan <code>//</code> y <code>/* */</code>.</p>
+        <pre><code class="language-rust">fn main() {
+    let x = 5;              // inmutable: x solo se puede leer
+    let mut y = 10;         // mutable: se puede reasignar
+    y = 11;                 // ✅ permitido porque tiene mut
+
+    println!("x = {}, y = {}", x, y);   // macro de impresión
+
+    // Comentario de una sola línea
+    /* Comentario
+       de varias
+       líneas */
+}</code></pre>
+        <table>
+            <thead>
+                <tr><th>Acción</th><th>Sintaxis</th><th>Ejemplo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Declarar variable (inmutable)</td><td><code>let nombre = valor;</code></td><td><code>let x = 5;</code></td></tr>
+                <tr><td>Variable mutable</td><td><code>let mut nombre = valor;</code></td><td><code>let mut contador = 0;</code></td></tr>
+                <tr><td>Imprimir</td><td><code>println!("{}", valor)</code></td><td><code>println!("Hola {}", nombre);</code></td></tr>
+                <tr><td>Comentario</td><td><code>// texto</code> o <code>/* texto */</code></td><td><code>// nota rápida</code></td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p><code>println!</code> lleva <code>!</code> porque es una <strong>macro</strong>: se expande en tiempo de compilación y valida el formato de los marcadores <code>{}</code> antes de ejecutar.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="cheat-tipos-de-datos">
+    <h2>Tipos de datos</h2>
+    <div class="doc-content">
+        <p>Rust es <strong>estáticamente tipado</strong>: el tipo de cada variable se conoce en compilación. Los tipos escalares (enteros, flotantes, bool, char) vienen de fábrica; los compuestos (arrays, tuplas, <code>String</code>, <code>&amp;str</code>, <code>Option</code>) cubren la mayoría de casos reales.</p>
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>Qué guarda</th><th>Ejemplo</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>i32</code></td><td>Entero con signo de 32 bits</td><td><code>let n: i32 = -5;</code></td></tr>
+                <tr><td><code>u32</code></td><td>Entero sin signo de 32 bits (no negativos)</td><td><code>let edad: u32 = 25;</code></td></tr>
+                <tr><td><code>f64</code></td><td>Flotante de doble precisión</td><td><code>let pi: f64 = 3.14159;</code></td></tr>
+                <tr><td><code>bool</code></td><td>Verdadero o falso</td><td><code>let ok: bool = true;</code></td></tr>
+                <tr><td><code>char</code></td><td>Un carácter Unicode (4 bytes)</td><td><code>let c = 'A';</code></td></tr>
+                <tr><td><code>String</code></td><td>Cadena de texto propietaria y mutable en el heap</td><td><code>let s = String::from("hola");</code></td></tr>
+                <tr><td><code>&amp;str</code></td><td>Literal o "vista" de una cadena (referencia)</td><td><code>let s: &amp;str = "hola";</code></td></tr>
+                <tr><td><code>[T; N]</code></td><td>Arreglo de tipo T con tamaño fijo N</td><td><code>let a = [1, 2, 3];</code></td></tr>
+                <tr><td><code>(T1, T2)</code></td><td>Tupla: agrupa valores de tipos distintos</td><td><code>let t = ("Ana", 25);</code></td></tr>
+                <tr><td><code>Option&lt;T&gt;</code></td><td>Valor opcional: <code>Some(T)</code> o <code>None</code></td><td><code>let opt: Option&lt;i32&gt; = Some(7);</code></td></tr>
+            </tbody>
+        </table>
+        <pre><code class="language-rust">fn main() {
+    let entero: i32 = 42;
+    let decimal: f64 = 3.14;
+    let activo: bool = true;
+    let inicial: char = 'R';
+
+    let texto: String = String::from("hola");   // String: propietaria
+    let literal: &amp;str = "hola";                 // &str: literal inmutable
+
+    let numeros: [i32; 3] = [1, 2, 3];          // array fijo de 3
+    let punto: (f64, f64) = (0.0, 1.5);         // tupla con 2 campos
+
+    let posible: Option&lt;u32&gt; = Some(10);        // opcional: tiene valor
+}</code></pre>
+        <blockquote class="aside aside-caution">
+            <p><strong>String vs &amp;str</strong>: <code>String</code> es una cadena <strong>propietaria</strong> que puedes crecer o modificar; <code>&amp;str</code> es una <strong>referencia</strong> a un texto (literal fijo o una "ventana" de un String). Si necesitas mutar, usa <code>String</code>; para leer o pasar texto, basta <code>&amp;str</code>.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="cheat-propiedad-y-prestamos">
+    <h2>Propiedad, préstamos y referencias</h2>
+    <div class="doc-content">
+        <p>El concepto central de Rust es el de <strong>ownership</strong> (propiedad): cada valor tiene <em>un único dueño</em>, y cuando el dueño sale del ámbito, el valor se libera automáticamente. Para usar un valor sin transferir la propiedad se <strong>presta</strong> mediante referencias: <code>&amp;</code> presta inmutable y <code>&amp;mut</code> presta mutablemente. No puede haber <strong>dos préstamos mutables</strong> sobre el mismo valor a la vez.</p>
+        <pre><code class="language-rust">fn main() {
+    let mut s = String::from("hola");
+
+    let r1 = &amp;s;            // préstamo inmutable (&): solo lectura
+    println!("{}", r1);     // varios préstamos inmutables SÍ conviven
+
+    let r2 = &amp;mut s;        // préstamo mutable (&mut): puede modificarlo
+    r2.push_str(", mundo");
+
+    println!("{}", s);
+} // aquí s se libera sola: no hay free manual ni GC</code></pre>
+        <table>
+            <thead>
+                <tr><th>Concepto</th><th>Qué hace</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Ownership</td><td>Cada valor tiene un único dueño que lo libera al salir del ámbito.</td></tr>
+                <tr><td>Borrowing</td><td>Prestar temporalmente el valor con <code>&amp;</code> sin transferir la propiedad.</td></tr>
+                <tr><td>Referencia inmutable</td><td><code>&amp;&amp;T</code>: acceso de solo lectura; puede haber varias a la vez.</td></tr>
+                <tr><td>Referencia mutable</td><td><code>&amp;mut T</code>: acceso de escritura; solo una a la vez.</td></tr>
+                <tr><td>Mover (move)</td><td>Asignar un valor sin clonar transfiere la propiedad; el origen queda inválido.</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-caution">
+            <p>Reglas del ownership: (1) cada valor tiene un solo dueño; (2) solo puede existir un <code>&amp;mut</code> a la vez, o varios <code>&amp;</code>, pero no mezclar; (3) las referencias nunca viven más que el valor que apuntan. El compilador lo verifica sin penalizar el rendimiento.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="cheat-estructuras-de-control">
+    <h2>Estructuras de control</h2>
+    <div class="doc-content">
+        <h3>if / else</h3>
+        <pre><code class="language-rust">let n = 7;
+if n &gt; 0 {
+    println!("Positivo");
+} else if n &lt; 0 {
+    println!("Negativo");
+} else {
+    println!("Cero");
+}
+
+// if también es una EXPRESIÓN que devuelve valor
+let estado = if n % 2 == 0 { "par" } else { "impar" };</code></pre>
+
+        <h3>match (equivalente al switch, mucho más potente)</h3>
+        <pre><code class="language-rust">let numero = 2;
+let texto = match numero {
+    1 =&gt; "uno",
+    2 =&gt; "dos",
+    3..=9 =&gt; "tres a nueve",
+    _ =&gt; "otro",           // _ es el patrón comodín
+};
+println!("{}", texto);      // dos</code></pre>
+
+        <h3>loop (bucle infinito), while y for</h3>
+        <pre><code class="language-rust">let mut contador = 0;
+loop {
+    contador += 1;
+    if contador == 3 { break; }   // sale del bucle
+}
+
+let mut i = 0;
+while i &lt; 5 {
+    i += 1;
+}
+
+for j in 1..=5 {                  // rango inclusivo: 1,2,3,4,5
+    println!("{}", j);
+}
+
+for k in 0..3 {                   // rango exclusivo: 0,1,2
+    println!("{}", k);
+}</code></pre>
+        <table>
+            <thead>
+                <tr><th>Estructura</th><th>Sintaxis</th><th>Uso</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>if / else</td><td><code>if cond { } else { }</code></td><td>Condicional clásico; también devuelve valores.</td></tr>
+                <tr><td>match</td><td><code>match expr { pat =&gt; val, _ =&gt; val }</code></td><td>Selección múltiple por patrones (exhaustiva).</td></tr>
+                <tr><td>loop</td><td><code>loop { }</code></td><td>Bucle infinito; se sale con <code>break</code>.</td></tr>
+                <tr><td>while</td><td><code>while cond { }</code></td><td>Repite mientras la condición sea verdadera.</td></tr>
+                <tr><td>for...in</td><td><code>for x in 1..=5 { }</code></td><td>Itera sobre rangos (<code>..=</code> inclusivo, <code>..</code> exclusivo) y colecciones.</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-tip">
+            <p><code>match</code> es el patrón más potente de Rust: obliga a cubrir <em>todos</em> los casos (<code>_</code> como comodín) y permite extraer datos de <code>Option</code>, <code>Result</code> y enum sin riesgo.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="cheat-funciones-y-structs">
+    <h2>Funciones, structs y traits</h2>
+    <div class="doc-content">
+        <h3>Funciones</h3>
+        <pre><code class="language-rust">fn sumar(a: i32, b: i32) -&gt; i32 {
+    a + b                        // sin ";": es el valor de retorno
+}
+
+fn saludar(nombre: &amp;str) {
+    println!("Hola, {}", nombre);
+}
+
+fn main() {
+    let r = sumar(3, 4);         // r = 7
+    saludar("Ana");
+}</code></pre>
+
+        <h3>Struct: estructura de datos con campos</h3>
+        <pre><code class="language-rust">struct Persona {
+    nombre: String,
+    edad: u32,
+}
+
+let p = Persona {
+    nombre: String::from("Ana"),
+    edad: 25,
+};
+println!("{} tiene {}", p.nombre, p.edad);</code></pre>
+
+        <h3>Métodos con impl y self</h3>
+        <pre><code class="language-rust">impl Persona {
+    fn presentarse(&amp;self) {
+        println!("Soy {} y tengo {} años", self.nombre, self.edad);
+    }
+}
+
+p.presentarse();</code></pre>
+
+        <h3>Traits: comportamiento compartido</h3>
+        <pre><code class="language-rust">trait Sonido {
+    fn hacer_sonido(&amp;self) -&gt; String;
+}
+
+impl Sonido for Persona {
+    fn hacer_sonido(&amp;self) -&gt; String {
+        String::from("Hola!")    // "impl Trait for Tipo"
+    }
+}</code></pre>
+        <table>
+            <thead>
+                <tr><th>Elemento</th><th>Sintaxis</th><th>Qué es</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Función</td><td><code>fn nombre(param: Tipo) -&gt; Retorno { }</code></td><td>Bloque reutilizable; la última expresión sin <code>;</code> es el retorno.</td></tr>
+                <tr><td>struct</td><td><code>struct Nombre { campo: Tipo }</code></td><td>Define un tipo compuesto con campos con nombre.</td></tr>
+                <tr><td>impl</td><td><code>impl Tipo { fn metodo(&amp;self) { } }</code></td><td>Bloque de métodos asociados al tipo.</td></tr>
+                <tr><td>self</td><td><code>&amp;self</code></td><td>Referencia al objeto actual dentro de un método.</td></tr>
+                <tr><td>trait</td><td><code>trait Nombre { fn metodo(&amp;self); }</code></td><td>Interfaz que agrupa comportamiento compartido.</td></tr>
+                <tr><td>impl Trait for Tipo</td><td><code>impl Sonido for Persona { }</code></td><td>Implementa el trait sobre el tipo concreto.</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-success">
+            <p>Resumen: <code>struct</code> define <em>qué son los datos</em>, <code>impl</code> define <em>qué pueden hacer</em>, y <code>trait</code> define <em>qué interfaz comparten</em> distintos tipos.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="cheat-errores-y-cargo">
+    <h2>Manejo de errores y Cargo</h2>
+    <div class="doc-content">
+        <p>Rust no usa excepciones: los errores se representan como valores. <code>Result&lt;T, E&gt;</code> devuelve <code>Ok(T)</code> o <code>Err(E)</code>, y <code>Option&lt;T&gt;</code> da <code>Some(T)</code> o <code>None</code>. <code>unwrap()</code> y <code>expect()</code> extraen el valor o <em>paniquean</em>; el operador <code>?</code> propaga el error automáticamente hacia arriba.</p>
+        <pre><code class="language-rust">fn dividir(a: f64, b: f64) -&gt; Result&lt;f64, String&gt; {
+    if b == 0.0 {
+        Err(String::from("división por cero"))
+    } else {
+        Ok(a / b)
+    }
+}
+
+fn main() -&gt; Result&lt;(), String&gt; {
+    let r = dividir(10.0, 0.0)?;   // si es Err, sube el error
+    println!("{}", r);
+    Ok(())
+}
+
+let opcion: Option&lt;i32&gt; = Some(42);
+let v = opcion.unwrap();           // 42; con None, paniquea
+let v = opcion.expect("faltó el valor");  // con mensaje de pánico</code></pre>
+        <table>
+            <thead>
+                <tr><th>Herramienta</th><th>Qué hace</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>Result&lt;T, E&gt;</code></td><td>Resultado que puede ser <code>Ok(T)</code> (éxito) o <code>Err(E)</code> (fallo).</td></tr>
+                <tr><td><code>Option&lt;T&gt;</code></td><td>Valor opcional: <code>Some(T)</code> o <code>None</code>.</td></tr>
+                <tr><td><code>unwrap()</code></td><td>Extrae el valor interno o provoca un <code>panic</code> si falla.</td></tr>
+                <tr><td><code>expect(msg)</code></td><td>Igual que <code>unwrap</code> pero con mensaje personalizado de error.</td></tr>
+                <tr><td><code>?</code></td><td>Propaga el error: si hay <code>Err</code>/<code>None</code>, retorna de la función.</td></tr>
+                <tr><td><code>panic!</code></td><td>Aborta el programa con un mensaje cuando algo es irrecuperable.</td></tr>
+            </tbody>
+        </table>
+        <h3>Cargo, el gestor de proyectos</h3>
+        <p><strong>Cargo</strong> crea proyectos, compila, ejecuta y gestiona dependencias. El manifiesto <code>Cargo.toml</code> declara el paquete y sus dependencias, que se toman de <strong>crates.io</strong> (el registro oficial de crates).</p>
+        <pre><code class="language-bash">cargo new mi_proyecto     # crea un proyecto nuevo
+cargo build                # compila
+cargo run                  # compila y ejecuta
+cargo test                 # ejecuta los tests
+cargo build --release      # compila optimizado</code></pre>
+        <table>
+            <thead>
+                <tr><th>Comando Cargo</th><th>Qué hace</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>cargo new</code></td><td>Crea un proyecto con <code>Cargo.toml</code> y <code>src/main.rs</code>.</td></tr>
+                <tr><td><code>cargo build</code></td><td>Compila el proyecto a <code>target/debug/</code>.</td></tr>
+                <tr><td><code>cargo run</code></td><td>Compila (si hace falta) y ejecuta el binario.</td></tr>
+                <tr><td><code>cargo test</code></td><td>Compila y ejecuta las pruebas con <code>#[test]</code>.</td></tr>
+                <tr><td><code>cargo check</code></td><td>Valida tipos y ownership sin generar binario (más rápido).</td></tr>
+                <tr><td><code>cargo add</code></td><td>Añade una dependencia a <code>Cargo.toml</code> desde crates.io.</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-warning">
+            <p>Evita <code>unwrap()</code> en producción cuando el error es previsible: prefiere <code>?</code> para propagar y <code>match</code> para decidir qué hacer con cada caso.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>
+
+<section id="cheat-conceptos-importantes">
+    <h2>Conceptos importantes</h2>
+    <div class="doc-content">
+        <table>
+            <thead>
+                <tr><th>Concepto</th><th>Qué significa</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>crate</td><td>Unidad de compilación de Rust: una biblioteca o un binario.</td></tr>
+                <tr><td>module</td><td>Forma de organizar el código en <code>mod</code>; controla visibilidad.</td></tr>
+                <tr><td>package</td><td>Un crate junto a su <code>Cargo.toml</code> con metadatos y dependencias.</td></tr>
+                <tr><td>Cargo</td><td>Gestor de proyectos, builds, tests y dependencias.</td></tr>
+                <tr><td>Compilador</td><td><code>rustc</code>: convierte el código <code>.rs</code> en binario nativo.</td></tr>
+                <tr><td>Ownership</td><td>Cada valor tiene un único dueño que lo libera al salir del ámbito.</td></tr>
+                <tr><td>Borrowing</td><td>Prestar un valor temporalmente con una referencia, sin transferir propiedad.</td></tr>
+                <tr><td>Borrowing mutable</td><td>Préstamo de escritura (<code>&amp;mut</code>): solo uno a la vez.</td></tr>
+                <tr><td>Reference</td><td>Referencia: acceso a un valor sin ser dueño (<code>&amp;T</code> o <code>&amp;mut T</code>).</td></tr>
+                <tr><td>trait</td><td>Interfaz que define comportamiento compartido entre tipos.</td></tr>
+                <tr><td>impl</td><td>Bloque que implementa métodos o un trait sobre un tipo.</td></tr>
+                <tr><td>struct</td><td>Tipo compuesto de datos con campos con nombre.</td></tr>
+                <tr><td>enum</td><td>Tipo que puede ser una de varias variantes; base de los sum types.</td></tr>
+                <tr><td>match</td><td>Estructura que compara una expresión con patrones (exhaustivo).</td></tr>
+                <tr><td>pattern</td><td>Patrón que descompone y vincula valores en <code>match</code> o <code>let</code>.</td></tr>
+                <tr><td>Result</td><td><code>Result&lt;T, E&gt;</code>: <code>Ok</code> o <code>Err</code>, para operaciones que fallan.</td></tr>
+                <tr><td>Option</td><td><code>Option&lt;T&gt;</code>: <code>Some</code> o <code>None</code>, para valores opcionales.</td></tr>
+                <tr><td>unwrap</td><td>Extrae el valor de <code>Result</code>/<code>Option</code>; provoca <code>panic!</code> si falla.</td></tr>
+                <tr><td>macro</td><td>Código que se expande en compilación; su llamado usa <code>!</code>.</td></tr>
+                <tr><td><code>::</code></td><td>Operador de acceso a rutas o items asociados (ej. <code>String::from</code>).</td></tr>
+                <tr><td><code>-&gt;</code></td><td>Tipo de retorno de una función: <code>fn f() -&gt; i32</code>.</td></tr>
+                <tr><td><code>mut</code></td><td>Marca una variable o referencia como modificable.</td></tr>
+                <tr><td><code>let</code></td><td>Declara (vincula) una variable; inmutable salvo <code>mut</code>.</td></tr>
+                <tr><td><code>println!</code></td><td>Macro que imprime texto con salto de línea e interpolación <code>{}</code>.</td></tr>
+                <tr><td>String vs &amp;str</td><td><code>String</code> propietaria y mutable; <code>&amp;str</code> literal o vista de texto.</td></tr>
+                <tr><td>slice</td><td>"Ventana" sobre una colección sin copiarla (<code>&amp;[T]</code>, <code>&amp;str</code>).</td></tr>
+                <tr><td>lifetime</td><td>Anotación que garantiza cuánto viven las referencias (<code>'a</code>).</td></tr>
+                <tr><td>panic</td><td>Aborte el programa con un mensaje cuando algo es irrecuperable.</td></tr>
+            </tbody>
+        </table>
+        <blockquote class="aside aside-success">
+            <p>Con este vocabulario dominas las ideas clave de Rust: propiedad y préstamos, tipos y patrones, errores como valores y la gestión de proyectos con Cargo.</p>
+        </blockquote>
+        <p>---</p>
+    </div>
+</section>

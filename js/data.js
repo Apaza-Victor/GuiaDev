@@ -1196,6 +1196,23 @@ const DOCS_DATA = {
               "Mantenimiento y monitoreo"
             ],
             "contentFile": "content/lenguajes/sql/sql-optimizacion.html"
+          },
+          {
+            "id": "sql-cheat-sheet",
+            "title": "9. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de SQL: qué es, sublenguajes (DDL, DML, DCL, TCL), consultas SELECT, creación de tablas, inserciones, filtros, JOIN, subconsultas y funciones",
+            "sections": [
+              "¿Qué es SQL?",
+              "Sublenguajes de SQL (DDL, DML, DCL, TCL)",
+              "Consultas SELECT",
+              "DDL: crear y modificar tablas",
+              "DML: INSERT, UPDATE y DELETE",
+              "Filtros, orden y agrupación",
+              "JOIN y subconsultas",
+              "Funciones de agregado y funciones de texto/fecha",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/sql/sql-cheat-sheet.html"
           }
         ]
       },
@@ -1366,6 +1383,22 @@ const DOCS_DATA = {
               "Estructura y herramientas del proyecto"
             ],
             "contentFile": "content/lenguajes/php/php-buenas-practicas.html"
+          },
+          {
+            "id": "php-cheat-sheet",
+            "title": "14. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de PHP: palabras reservadas, sintaxis, tipos de datos, operadores, estructuras de control, funciones, arrays, POO y formularios web",
+            "sections": [
+              "Palabras reservadas",
+              "Sintaxis básica",
+              "Tipos de datos",
+              "Operadores",
+              "Estructuras de control",
+              "Funciones y arrays",
+              "POO y formularios web",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/php/php-cheat-sheet.html"
           }
         ]
       },
@@ -1510,6 +1543,22 @@ const DOCS_DATA = {
               "Gestión de dependencias"
             ],
             "contentFile": "content/lenguajes/java/java-best-practices.html"
+          },
+          {
+            "id": "java-cheat-sheet",
+            "title": "12. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de Java: palabras reservadas, sintaxis, tipos de datos, operadores, estructuras de control, clases, POO, colecciones y excepciones",
+            "sections": [
+              "Palabras reservadas",
+              "Sintaxis básica",
+              "Tipos de datos",
+              "Operadores",
+              "Estructuras de control",
+              "Clases, objetos y herencia",
+              "Colecciones y excepciones",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/java/java-cheat-sheet.html"
           }
         ]
       },
@@ -1673,6 +1722,22 @@ const DOCS_DATA = {
               "<i class=\"fa-solid fa-bullseye\"></i> Resumen de la lección"
             ],
             "contentFile": "content/lenguajes/python/py-oop.html"
+          },
+          {
+            "id": "py-cheat-sheet",
+            "title": "12. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de Python: palabras reservadas, sintaxis, tipos de datos, operadores, estructuras de control, funciones, clases y funciones integradas",
+            "sections": [
+              "Palabras reservadas",
+              "Sintaxis básica",
+              "Tipos de datos",
+              "Operadores",
+              "Estructuras de control",
+              "Funciones, clases y módulos",
+              "Funciones integradas útiles",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/python/py-cheat-sheet.html"
           }
         ]
       },
@@ -1832,6 +1897,22 @@ const DOCS_DATA = {
               "<i class=\"fa-solid fa-book-bookmark\"></i> Recursos Adicionales"
             ],
             "contentFile": "content/lenguajes/html/html-estructura-avanzada.html"
+          },
+          {
+            "id": "html-cheat-sheet",
+            "title": "11. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de HTML: estructura del documento, etiquetas semánticas, textos, listas, enlaces, imágenes, tablas, formularios, atributos y multimedia",
+            "sections": [
+              "Estructura básica del documento",
+              "Etiquetas semánticas",
+              "Textos, títulos y listas",
+              "Enlaces, imágenes y rutas",
+              "Tablas",
+              "Formularios y entradas",
+              "Atributos globales y multimedia",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/html/html-cheat-sheet.html"
           }
         ]
       },
@@ -2005,6 +2086,23 @@ const DOCS_DATA = {
               "<i class=\"fa-solid fa-rocket\"></i> Próximos pasos"
             ],
             "contentFile": "content/lenguajes/css/css-responsive-design.html"
+          },
+          {
+            "id": "css-cheat-sheet",
+            "title": "12. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de CSS: sintaxis, selectores, colores, unidades, texto, modelo de caja, posicionamiento, Flexbox, Grid, media queries y pseudoclases",
+            "sections": [
+              "Sintaxis básica",
+              "Selectores",
+              "Colores y unidades",
+              "Texto y fuentes",
+              "Modelo de caja y posicionamiento",
+              "Flexbox y Grid",
+              "Responsivo y media queries",
+              "Pseudoclases y pseudo-elementos",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/css/css-cheat-sheet.html"
           }
         ]
       },
@@ -2292,6 +2390,22 @@ const DOCS_DATA = {
               "Mejores prácticas Recomendado"
             ],
             "contentFile": "content/lenguajes/javascript/js-fetch-api.html"
+          },
+          {
+            "id": "js-cheat-sheet",
+            "title": "21. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de JavaScript: palabras reservadas, sintaxis, tipos de datos, operadores, estructuras de control, funciones, objetos, arrays y el DOM",
+            "sections": [
+              "Palabras reservadas",
+              "Sintaxis básica",
+              "Tipos de datos",
+              "Operadores",
+              "Estructuras de control",
+              "Funciones, objetos y arrays",
+              "Manipular el DOM y eventos",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/javascript/js-cheat-sheet.html"
           }
         ]
       },
@@ -2384,6 +2498,22 @@ const DOCS_DATA = {
               "Narrowing"
             ],
             "contentFile": "content/lenguajes/typescript/typescript-tipos-utilidades-y-narrowing.html"
+          },
+          {
+            "id": "typescript-cheat-sheet",
+            "title": "9. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de TypeScript: qué es, tipos básicos y avanzados, interfaces, funciones, clases, genéricos, módulos y diferencias con JavaScript",
+            "sections": [
+              "¿Qué es TypeScript?",
+              "Tipos básicos",
+              "Tipos avanzados e interfaces",
+              "Funciones y parámetros",
+              "Clases y POO",
+              "Genéricos y módulos",
+              "TypeScript vs JavaScript",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/typescript/typescript-cheat-sheet.html"
           }
         ]
       },
@@ -2477,6 +2607,22 @@ const DOCS_DATA = {
               "async / await"
             ],
             "contentFile": "content/lenguajes/csharp/csharp-c-moderno.html"
+          },
+          {
+            "id": "csharp-cheat-sheet",
+            "title": "9. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de C#: palabras reservadas, sintaxis, tipos de datos, operadores, estructuras de control, clases, POO, colecciones, excepciones y LINQ",
+            "sections": [
+              "Palabras reservadas",
+              "Sintaxis básica",
+              "Tipos de datos",
+              "Operadores",
+              "Estructuras de control",
+              "Clases, POO y colecciones",
+              "Manejo de excepciones y LINQ",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/csharp/csharp-cheat-sheet.html"
           }
         ]
       },
@@ -2564,6 +2710,22 @@ const DOCS_DATA = {
               "Compilación y herramientas"
             ],
             "contentFile": "content/lenguajes/cpp/cpp-buenas-practicas.html"
+          },
+          {
+            "id": "cpp-cheat-sheet",
+            "title": "9. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de C++: palabras reservadas, sintaxis, tipos de datos, operadores, estructuras de control, clases, POO, STL y punteros",
+            "sections": [
+              "Palabras reservadas",
+              "Sintaxis básica",
+              "Tipos de datos",
+              "Operadores",
+              "Estructuras de control",
+              "Funciones, clases y objetos",
+              "Biblioteca STL y punteros",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/cpp/cpp-cheat-sheet.html"
           }
         ]
       },
@@ -2651,6 +2813,22 @@ const DOCS_DATA = {
               "Herramientas"
             ],
             "contentFile": "content/lenguajes/go/go-proyectos-y-tests.html"
+          },
+          {
+            "id": "go-cheat-sheet",
+            "title": "9. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de Go: qué es, sintaxis, tipos de datos, operadores, estructuras de control, funciones, structs, métodos, paquetes, goroutines y canales",
+            "sections": [
+              "¿Qué es Go?",
+              "Sintaxis básica",
+              "Tipos de datos",
+              "Operadores",
+              "Estructuras de control",
+              "Funciones, structs y métodos",
+              "Paquetes, goroutines y canales",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/go/go-cheat-sheet.html"
           }
         ]
       },
@@ -2740,6 +2918,22 @@ const DOCS_DATA = {
               "Tests y build"
             ],
             "contentFile": "content/lenguajes/rust/rust-cargo-y-proyectos.html"
+          },
+          {
+            "id": "rust-cheat-sheet",
+            "title": "9. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de Rust: qué es, sintaxis, tipos de datos, propiedad y préstamos, estructuras de control, funciones, structs, traits, errores y Cargo",
+            "sections": [
+              "¿Qué es Rust?",
+              "Sintaxis básica",
+              "Tipos de datos",
+              "Propiedad, préstamos y referencias",
+              "Estructuras de control",
+              "Funciones, structs y traits",
+              "Manejo de errores y Cargo",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/rust/rust-cheat-sheet.html"
           }
         ]
       },
@@ -2829,6 +3023,22 @@ const DOCS_DATA = {
               "Dónde se usa Kotlin"
             ],
             "contentFile": "content/lenguajes/kotlin/kotlin-interoperabilidad-con-java.html"
+          },
+          {
+            "id": "kotlin-cheat-sheet",
+            "title": "9. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de Kotlin: qué es, sintaxis, tipos de datos, operadores, nulidad, estructuras de control, funciones, clases y data classes",
+            "sections": [
+              "¿Qué es Kotlin?",
+              "Sintaxis básica",
+              "Tipos de datos",
+              "Operadores",
+              "Nulidad y tipos nullable",
+              "Estructuras de control",
+              "Funciones, clases y data classes",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/kotlin/kotlin-cheat-sheet.html"
           }
         ]
       },
@@ -2917,6 +3127,22 @@ const DOCS_DATA = {
               "Composición"
             ],
             "contentFile": "content/lenguajes/swift/swift-introduccion-a-swiftui.html"
+          },
+          {
+            "id": "swift-cheat-sheet",
+            "title": "9. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de Swift: qué es, sintaxis, tipos de datos, operadores, opcionales, estructuras de control, funciones, clases y protocolos",
+            "sections": [
+              "¿Qué es Swift?",
+              "Sintaxis básica",
+              "Tipos de datos",
+              "Operadores",
+              "Opcionales (Optionals)",
+              "Estructuras de control",
+              "Funciones, clases y protocolos",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/swift/swift-cheat-sheet.html"
           }
         ]
       },
@@ -3070,6 +3296,22 @@ const DOCS_DATA = {
               "Depuración con gdb y sanitizers"
             ],
             "contentFile": "content/lenguajes/c/c-archivos-y-compilacion.html"
+          },
+          {
+            "id": "c-cheat-sheet",
+            "title": "7. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de C: palabras reservadas, sintaxis, tipos de datos, operadores, estructuras de control, funciones, punteros, arrays y cadenas",
+            "sections": [
+              "Palabras reservadas",
+              "Sintaxis básica",
+              "Tipos de datos",
+              "Operadores",
+              "Estructuras de control",
+              "Funciones y punteros",
+              "Arrays y cadenas",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/c/c-cheat-sheet.html"
           }
         ]
       },
@@ -4623,6 +4865,22 @@ const DOCS_DATA = {
               "Ejercicios prácticos"
             ],
             "contentFile": "content/lenguajes/pseint/ps-buenas-practicas.html"
+          },
+          {
+            "id": "ps-cheat-sheet",
+            "title": "11. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de PSeInt: palabras reservadas, sintaxis, tipos de datos, operadores, estructuras de control, subprocesos y conceptos clave",
+            "sections": [
+              "Palabras reservadas",
+              "Sintaxis básica",
+              "Tipos de datos",
+              "Operadores",
+              "Estructuras de control",
+              "Subprocesos y funciones",
+              "Funciones integradas clave",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/pseint/ps-cheat-sheet.html"
           }
         ]
       },
@@ -4759,6 +5017,21 @@ const DOCS_DATA = {
               "Desafíos finales de PseudoFlow"
             ],
             "contentFile": "content/lenguajes/pseudoflow/pf-proyectos-integradores.html"
+          },
+          {
+            "id": "pf-cheat-sheet",
+            "title": "11. Cheat Sheet: Referencia Rápida",
+            "content": "Hoja de referencia rápida de PseudoFlow: palabras reservadas, sintaxis, tipos de datos, operadores, estructuras de control, cadenas y conceptos clave",
+            "sections": [
+              "Palabras reservadas",
+              "Sintaxis básica",
+              "Tipos de datos y arreglos",
+              "Operadores",
+              "Estructuras de control",
+              "Cadenas y arreglos en la práctica",
+              "Conceptos importantes"
+            ],
+            "contentFile": "content/lenguajes/pseudoflow/pf-cheat-sheet.html"
           }
         ]
       }

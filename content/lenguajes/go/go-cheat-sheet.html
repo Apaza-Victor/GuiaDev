@@ -1,0 +1,255 @@
+<!-- Cheat Sheet de Go - Go (Lenguajes de Programación) -->
+
+  <section id="cheat-que-es-go">
+    <h2>¿Qué es Go?</h2>
+    <div class="doc-content">
+<p><strong>Go</strong> (también llamado <strong>Golang</strong>) es un lenguaje de sistemas creado por <strong>Google en 2009</strong> por <strong>Rob Pike</strong>, <strong>Ken Thompson</strong> y <strong>Robert Griesemer</strong>. Está diseñado para la simplicidad, la compilación muy rápida y la concurrencia nativa, lo que lo hace ideal para servidores, servicios de red, herramientas de línea de comandos y microservicios.</p>
+<pre><code class="language-go">// Tu primer programa: hola mundo
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("¡Hola, mundo!")
+}</code></pre>
+<table><thead><tr><th>Ventaja</th><th>Qué aporta</th></tr></thead><tbody><tr><td>Simplicidad</td><td>Un lenguaje pequeño con pocas palabras reservadas y una sintaxis limpia que se aprende rápido</td></tr><tr><td>Velocidad de compilación</td><td>Compila a binarios nativos en muy poco tiempo, incluso en proyectos grandes</td></tr><tr><td>Concurrencia con goroutines</td><td>Lanza miles de tareas ligeras con la palabra <code>go</code> y algunas líneas</td></tr><tr><td>Tipado estático</td><td>El compilador detecta errores de tipos antes de ejecutar el programa</td></tr><tr><td>Compilado a binarios</td><td>Genera un único ejecutable autónomo sin dependencias de runtime externas</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Go brilla en el lado servidor: APIs REST, aplicaciones CLI, herramientas de DevOps y sistemas concurrentes son su territorio natural.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-sintaxis-basica">
+    <h2>Sintaxis básica</h2>
+    <div class="doc-content">
+<p>Un programa en Go empieza con <code>package main</code> y una función <code>main</code> que es el punto de entrada. Go <strong>no usa punto y coma</strong> al final de cada línea (el compilador los inserta automáticamente) y se formatea automáticamente con la herramienta <strong>gofmt</strong>.</p>
+<pre><code class="language-go">package main
+
+import "fmt"
+
+func main() {
+	// Declarar una variable con var
+	var nombre string = "Ana"
+	// Declarar con inferencia (:=)
+	edad := 30
+
+	fmt.Println("Hola", nombre, "tienes", edad)
+
+	// Leer entrada del usuario
+	var entrada string
+	fmt.Scanf("%s", &amp;entrada)
+	fmt.Println("Escribiste:", entrada)
+}</code></pre>
+<table><thead><tr><th>Acción</th><th>Sintaxis</th><th>Ejemplo</th></tr></thead><tbody><tr><td>Declarar variable</td><td><code>var nombre tipo</code></td><td><code>var edad int</code></td></tr><tr><td>Declarar con inferencia</td><td><code>nombre := valor</code></td><td><code>edad := 30</code></td></tr><tr><td>Imprimir</td><td><code>fmt.Println(...)</code></td><td><code>fmt.Println("Hola")</code></td></tr><tr><td>Leer entrada</td><td><code>fmt.Scanf(...)</code></td><td><code>fmt.Scanf("%s", &amp;s)</code></td></tr><tr><td>Comentario de línea</td><td><code>// comentario</code></td><td><code>// esto se ignora</code></td></tr><tr><td>Comentario de bloque</td><td><code>/* ... */</code></td><td><code>/* varias semanas */</code></td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>No necesitas escribir punto y coma: <code>fmt.Println("hola")</code> y no <code>fmt.Println("hola");</code>. La herramienta <code>gofmt</code> normaliza el estilo de todo el equipo automáticamente.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-tipos-de-datos">
+    <h2>Tipos de datos</h2>
+    <div class="doc-content">
+<p>Go tiene <strong>tipado estático</strong>: cada variable tiene un tipo fijo decidido en compilación. Los tipos más habituales son:</p>
+<table><thead><tr><th>Tipo</th><th>Qué guarda</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>int</code></td><td>Número entero (según plataforma)</td><td><code>42</code></td></tr><tr><td><code>int32</code> / <code>int64</code></td><td>Entero con tamaño fijo</td><td><code>int64(100000)</code></td></tr><tr><td><code>float32</code> / <code>float64</code></td><td>Número decimal</td><td><code>3.14</code></td></tr><tr><td><code>string</code></td><td>Cadena de texto (UTF-8)</td><td><code>"hola"</code></td></tr><tr><td><code>bool</code></td><td>Verdadero o falso</td><td><code>true</code></td></tr><tr><td><code>byte</code></td><td>Un byte (alias de <code>uint8</code>)</td><td><code>byte(65)</code></td></tr><tr><td><code>rune</code></td><td>Un carácter Unicode (alias de <code>int32</code>)</td><td><code>'ñ'</code></td></tr><tr><td><code>array</code> <code>[N]T</code></td><td>Secuencia de tamaño fijo</td><td><code>[3]int{1,2,3}</code></td></tr><tr><td><code>slice</code> <code>[]T</code></td><td>Secuencia dinámica</td><td><code>[]string{"a","b"}</code></td></tr><tr><td><code>map</code></td><td>Diccionario clave→valor</td><td><code>map[string]int{"a":1}</code></td></tr><tr><td><code>struct</code></td><td>Agrupación de campos</td><td><code>Persona{Nombre:"Ana"}</code></td></tr></tbody></table>
+<pre><code class="language-go">// Slice: secuencia dinámica
+numeros := []int{1, 2, 3, 4, 5}
+numeros = append(numeros, 6) // añade al final
+fmt.Println(numeros[0], numeros[2:4]) // 1 [3 4]
+
+// Map: diccionario clave → valor
+edades := map[string]int{"Ana": 30, "Luis": 25}
+edades["Pepe"] = 40
+fmt.Println(edades["Ana"]) // 30</code></pre>
+<blockquote class="aside aside-tip"><p>Usa <strong>slices</strong> en lugar de arrays casi siempre: son dinámicos y son el tipo de secuencia por defecto en Go.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-operadores">
+    <h2>Operadores</h2>
+    <div class="doc-content">
+<h3>Aritméticos</h3>
+<table><thead><tr><th>Operador</th><th>Significado</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>+</code></td><td>Suma (o concatenación de strings)</td><td><code>2 + 3</code></td></tr><tr><td><code>-</code></td><td>Resta</td><td><code>10 - 4</code></td></tr><tr><td><code>*</code></td><td>Multiplicación</td><td><code>3 * 4</code></td></tr><tr><td><code>/</code></td><td>División</td><td><code>10 / 3</code></td></tr><tr><td><code>%</code></td><td>Módulo (resto)</td><td><code>10 % 3</code></td></tr></tbody></table>
+<h3>Relacionales y lógicos</h3>
+<table><thead><tr><th>Operador</th><th>Significado</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>==</code></td><td>Igual a</td><td><code>a == b</code></td></tr><tr><td><code>!=</code></td><td>Distinto de</td><td><code>a != b</code></td></tr><tr><td><code>&gt;</code></td><td>Mayor que</td><td><code>a &gt; b</code></td></tr><tr><td><code>&lt;</code></td><td>Menor que</td><td><code>a &lt; b</code></td></tr><tr><td><code>&gt;=</code></td><td>Mayor o igual</td><td><code>a &gt;= b</code></td></tr><tr><td><code>&lt;=</code></td><td>Menor o igual</td><td><code>a &lt;= b</code></td></tr><tr><td><code>&amp;&amp;</code></td><td>Y lógico</td><td><code>a &amp;&amp; b</code></td></tr><tr><td><code>||</code></td><td>O lógico</td><td><code>a || b</code></td></tr><tr><td><code>!</code></td><td>Negación</td><td><code>!a</code></td></tr></tbody></table>
+<p>También existen la <strong>asignación compuesta</strong> (<code>x += 1</code>) y el <strong>incremento</strong> <code>++</code> y <strong>decremento</strong> <code>--</code>.</p>
+<pre><code class="language-go">x := 10
+x += 5  // x = 15
+x++     // x = 16
+x--     // x = 15
+fmt.Println(x)
+
+// Punteros: & obtiene la dirección, * desreferencia
+num := 7
+p := &amp;num
+*p = 99
+fmt.Println(num) // 99</code></pre>
+<blockquote class="aside aside-caution"><p>En Go, <code>++</code> y <code>--</code> son sentencias, no expresiones: no puedes escribir <code>a = b++</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-estructuras-de-control">
+    <h2>Estructuras de control</h2>
+    <div class="doc-content">
+<p>Las condiciones en Go <strong>no llevan paréntesis</strong> (pero las llaves son obligatorias). Además, Go <strong>no tiene <code>while</code> ni <code>do-while</code></strong>: todo bucle se expresa con <code>for</code>.</p>
+<pre><code class="language-go">// if / else sin paréntesis
+edad := 20
+if edad &gt;= 18 {
+	fmt.Println("Mayor de edad")
+} else {
+	fmt.Println("Menor de edad")
+}
+
+// if con inicialización (la variable vive solo en el bloque)
+if total := suma(3, 4); total &gt; 5 {
+	fmt.Println("Mayor que 5")
+}
+
+// switch: break implícito, sin fallthrough salvo explícito
+switch dia := 3; dia {
+case 1:
+	fmt.Println("Lunes")
+case 2:
+	fmt.Println("Martes")
+default:
+	fmt.Println("Otro día")
+}</code></pre>
+<pre><code class="language-go">// for clásico
+for i := 0; i &lt; 5; i++ {
+	fmt.Println(i)
+}
+
+// for como while (no existe while en Go)
+n := 0
+for n &lt; 5 {
+	n++
+}
+
+// for infinito
+for {
+	break
+}
+
+// range: itera slices y maps
+nums := []int{10, 20, 30}
+for i, v := range nums {
+	fmt.Println("índice", i, "valor", v)
+}
+for clave, valor := range map[string]int{"a": 1, "b": 2} {
+	fmt.Println(clave, valor)
+}</code></pre>
+<blockquote class="aside aside-note"><p>Recuerda: en Go <strong>solo existe <code>for</code></strong>. Usa <code>for</code> clásico, <code>for condición</code> (como <code>while</code>) o <code>for</code> infinito. El <code>switch</code> no necesita <code>break</code>: cada caso sale solo salvo que escribas <code>fallthrough</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-funciones-y-structs">
+    <h2>Funciones, structs y métodos</h2>
+    <div class="doc-content">
+<p>Las funciones en Go se declaran con <code>func</code>, indicando tipos de parámetros y de retorno. Go admite <strong>múltiples valores de retorno</strong> (muy usado para devolver valores junto a errores), funciones variádicas y funciones que reciben funciones (callbacks).</p>
+<pre><code class="language-go">// Declaración básica
+func sumar(a int, b int) int {
+	return a + b
+}
+
+// Tipos iguales consecutivos
+func restar(a, b int) int {
+	return a - b
+}
+
+// Múltiples retornos
+func div(x, y int) (int, int) {
+	return x / y, x % y
+}
+
+// Variádica: acepta N argumentos
+func total(nums ...int) int {
+	s := 0
+	for _, n := range nums {
+		s += n
+	}
+	return s
+}
+
+// Recibe una función (callback)
+func aplicar(f func(int) int, v int) int {
+	return f(v)
+}</code></pre>
+<pre><code class="language-go">// Definir un struct
+type Persona struct {
+	Nombre string
+	Edad   int
+}
+
+// Crear una instancia
+p := Persona{Nombre: "Ana", Edad: 30}
+
+// Método con receiver (receptor)
+func (p Persona) Saludar() string {
+	return "Hola, soy " + p.Nombre
+}
+
+// Receiver de puntero para modificar
+func (p *Persona) CumplirAnios() {
+	p.Edad++
+}
+
+fmt.Println(p.Saludar()) // Hola, soy Ana
+p.CumplirAnios()
+fmt.Println(p.Edad) // 31</code></pre>
+<blockquote class="aside aside-tip"><p>Un <strong>método</strong> es una función con un <code>receiver</code> (receptor) que la vincula a un tipo. Usa receiver por valor para solo leer y receiver por puntero (<code>*Persona</code>) para modificar el struct.</p></blockquote>
+<blockquote class="aside aside-note"><p>Los <strong>callbacks</strong> (funciones que reciben funciones) son comunes en Go para ordenamiento, filtrado y manejo de eventos: <code>sort.Slice(s, func(i, j int) bool { ... })</code>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-paquetes-y-concurrencia">
+    <h2>Paquetes, goroutines y canales</h2>
+    <div class="doc-content">
+<p>Cada archivo <code>.go</code> <strong>pertenece a un paquete</strong> declarado con <code>package</code> en la primera línea. Con <code>import</code> usas paquetes de la biblioteca estándar o de terceros, y puedes crear tus propios paquetes reutilizables en tu proyecto.</p>
+<pre><code class="language-go">package main
+
+import "fmt"
+
+// Goroutine: se lanza con la palabra go
+func saludar(msg string) {
+	fmt.Println(msg)
+}
+
+func main() {
+	go saludar("Hola desde una goroutine")
+}
+
+// Canal: comunicación entre goroutines
+ch := make(chan int)
+
+// Hilo de goroutine espera las últimas modificaciones
+go func() {
+	ch &lt;- 42 // envía al canal
+}()
+
+v := &lt;-ch // recibe del canal
+fmt.Println(v)</code></pre>
+<table><thead><tr><th>Elemento</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>package</code></td><td>Agrupa el código; <code>package main</code> genera un ejecutable</td></tr><tr><td><code>import</code></td><td>Trae paquetes de la stdlib o de terceros</td></tr><tr><td><code>go funcion()</code></td><td>Lanza una <strong>goroutine</strong>: ejecución ligera y concurrente</td></tr><tr><td><code>chan</code></td><td>Canal para comunicar goroutines de forma segura</td></tr><tr><td><code>ch &lt;- v</code></td><td>Envía el valor <code>v</code> por el canal</td></tr><tr><td><code>v := &lt;-ch</code></td><td>Recibe un valor del canal</td></tr><tr><td><code>select</code></td><td>Espera varias operaciones de canal a la vez</td></tr></tbody></table>
+<pre><code class="language-go">// select: atiende la primera operación lista
+select {
+case msg := &lt;-ch:
+	fmt.Println("recibido:", msg)
+case &lt;-time.After(1 * time.Second):
+	fmt.Println("timeout")
+}</code></pre>
+<blockquote class="aside aside-tip"><p>No digas «hilos» en Go: di <strong>goroutines</strong>. Son miles de veces más ligeras que un hilo del sistema y se gestionan automáticamente.</p></blockquote>
+<blockquote class="aside aside-caution"><p>Los canales <strong>bloquean</strong>: enviar espera hasta que alguien reciba, y recibir espera hasta que alguien envíe. Usa <code>select</code> o canales con buffer para evitar bloqueos eternos.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-conceptos-importantes">
+    <h2>Conceptos importantes</h2>
+    <div class="doc-content">
+<table><thead><tr><th>Concepto</th><th>Qué significa</th></tr></thead><tbody><tr><td><code>package</code></td><td>Agrupación lógica de archivos Go; la unidad de organización</td></tr><tr><td><code>module</code></td><td>Raíz de un proyecto Go con su nombre y dependencias</td></tr><tr><td><code>import</code></td><td>Trae código de otros paquetes al archivo actual</td></tr><tr><td><code>go.mod</code></td><td>Archivo que define el módulo, la versión de Go y las dependencias</td></tr><tr><td><code>func</code></td><td>Palabra reservada para declarar funciones y métodos</td></tr><tr><td><code>main</code></td><td>Función principal y paquete que genera el ejecutable</td></tr><tr><td><code>variable</code></td><td>Dato con valor modificable y tipo fijo</td></tr><tr><td><code>constante</code></td><td>Valor inmutable conocido en compilación</td></tr><tr><td><code>slice</code></td><td>Secuencia dinámica y flexible de elementos</td></tr><tr><td><code>array</code></td><td>Secuencia de tamaño fijo</td></tr><tr><td><code>map</code></td><td>Diccionario de pares clave→valor</td></tr><tr><td><code>struct</code></td><td>Agrupación de campos que define un tipo complejo</td></tr><tr><td><code>método</code></td><td>Función vinculada a un tipo mediante un receiver</td></tr><tr><td><code>receiver</code></td><td>Parámetro que conecta un método a su tipo (<code>func (p Persona) ...</code>)</td></tr><tr><td><code>goroutine</code></td><td>Ejecución ligera y concurrente lanzada con <code>go</code></td></tr><tr><td><code>canal</code> (channel)</td><td>Conducto para comunicar goroutines de forma segura</td></tr><tr><td><code>select</code></td><td>Estructura que espera varias operaciones de canal</td></tr><tr><td><code>defer</code></td><td>Difiere una llamada hasta que la función termina (típico para cerrar recursos)</td></tr><tr><td><code>error</code></td><td>Interfaz estándar para representar errores, devuelta al final de funciones</td></tr><tr><td><code>nil</code></td><td>Valor cero de punteros, slices, maps, canales, funciones e interfaces</td></tr><tr><td><code>compilación</code></td><td>Conversión del código fuente en binario nativo</td></tr><tr><td><code>binario</code></td><td>Ejecutable autónomo generado por el compilador</td></tr><tr><td><code>gofmt</code></td><td>Herramienta que formatea automáticamente el código</td></tr><tr><td><code>go run</code></td><td>Compila y ejecuta un programa al momento</td></tr><tr><td><code>go build</code></td><td>Compila y genera el binario ejecutable</td></tr><tr><td><code>go test</code></td><td>Ejecuta las pruebas unitarias del paquete</td></tr><tr><td><code>pointer</code></td><td>Referencia a la dirección de memoria de un valor (<code>&amp;</code> y <code>*</code>)</td></tr><tr><td><code>interfaz</code></td><td>Conjunto de firmas de métodos que un tipo debe implementar</td></tr></tbody></table>
+<blockquote class="aside aside-tip"><p>Patrón de error habitual en Go: una función devuelve <code>(valor, error)</code> y siempre compruebas si <code>err != nil</code> antes de usar el valor.</p></blockquote>
+<blockquote class="aside aside-success"><p>Usa <code>defer</code> para liberar recursos: <code>defer archivo.Close()</code> garantiza que se cierre al salir de la función, aunque haya un error.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>

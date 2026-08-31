@@ -1,0 +1,194 @@
+<!-- Cheat Sheet de TypeScript - TypeScript (Lenguajes de Programación) -->
+<!-- Contenido local del proyecto -->
+
+  <section id="cheat-que-es-typescript">
+    <h2>¿Qué es TypeScript?</h2>
+    <div class="doc-content">
+<p><strong>TypeScript</strong> es un <strong>superset de JavaScript</strong> creado por Microsoft que <strong>añade tipos estáticos</strong> al lenguaje. Al ser un superset, todo código JavaScript válido también es TypeScript válido; la diferencia es que en TypeScript puedes declarar <em>qué tipo</em> guarda cada variable, y el compilador lo verifica <strong>antes de ejecutarse</strong>.</p>
+<pre><code class="language-typescript">// ? JavaScript: sin tipos, los errores aparecen al ejecutar
+let edad = 25;
+edad = "joven";     // ✔ en JS permitido (aunque sea un error de lógica)
+
+// ? TypeScript: con tipos, el compilador te avisa al instante
+let edad: number = 25;
+// edad = "joven";
+// ❌ Type 'string' is not assignable to type 'number'</code></pre>
+<p>TypeScript no corre en el navegador directamente: se <strong>compila (transpila) a JavaScript</strong> mediante el compilador oficial <code>tsc</code>, produciendo archivos <code>.js</code> que el navegador sí puede ejecutar.</p>
+<table><thead><tr><th>Ventaja</th><th>Qué aporta</th></tr></thead><tbody><tr><td>Tipos estáticos</td><td>Declaras el tipo de cada valor y el compilador lo garantiza</td></tr><tr><td>Detección de errores en compilación</td><td>Los errores de tipo se detectan al compilar, no al ejecutar</td></tr><tr><td>Autocompletado</td><td>El editor sugiere propiedades y métodos válidos de cada valor</td></tr><tr><td>Mejor mantenimiento</td><td>El tipo documenta la intención y facilita refactorizar proyectos grandes</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>TypeScript suele escribirse en archivos <code>.ts</code> y se compila con <code>tsc</code> a JavaScript antes de publicar o ejecutar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-tipos-basicos">
+    <h2>Tipos básicos</h2>
+    <div class="doc-content">
+<p>Los <strong>tipos básicos</strong> son los bloques fundamentales con los que describes qué puede guardar cada valor. TypeScript aporta los primitivos de JavaScript, ahora <em>verificables por el compilador</em>, además de arreglos, tuplas y enumeraciones.</p>
+<table><thead><tr><th>Tipo</th><th>Qué guarda</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>number</code></td><td>Enteros y decimales</td><td><code>let num: number = 5</code></td></tr><tr><td><code>string</code></td><td>Cadenas de texto</td><td><code>let nombre: string = "Ana"</code></td></tr><tr><td><code>boolean</code></td><td><code>true</code> o <code>false</code></td><td><code>let activo: boolean = true</code></td></tr><tr><td><code>any</code></td><td>Cualquier valor (desactiva la comprobación)</td><td><code>let dato: any = 42</code></td></tr><tr><td><code>void</code></td><td>Sin retorno (funciones que no devuelven)</td><td><code>function log(): void</code></td></tr><tr><td><code>null</code></td><td>El valor <code>null</code></td><td><code>let x: null = null</code></td></tr><tr><td><code>undefined</code></td><td>El valor <code>undefined</code></td><td><code>let y: undefined = undefined</code></td></tr><tr><td><code>number[]</code></td><td>Arreglo de números</td><td><code>let lista: number[] = [1,2]</code></td></tr><tr><td><code>Array&lt;number&gt;</code></td><td>Arreglo de números (sintaxis genérica)</td><td><code>let lista: Array&lt;number&gt; = [1,2]</code></td></tr><tr><td>tuple</td><td>Arreglo con tipos fijos por posición</td><td><code>let p: [string, number]</code></td></tr><tr><td>enum</td><td>Conjunto de constantes con nombre</td><td><code>enum Color { Rojo }</code></td></tr></tbody></table>
+<h3>Declaración con anotación de tipo</h3>
+<pre><code class="language-typescript">// Anotas el tipo de forma explícita con dos puntos
+let num: number = 5;
+let nombre: string = "Ana";
+let esValido: boolean = true;</code></pre>
+<h3>Inferencia de tipos</h3>
+<pre><code class="language-typescript">// El compilador deduce el tipo solo a partir del valor inicial
+let num = 5;          // tipo inferido: number
+let nombre = "Ana";   // tipo inferido: string
+let esValido = true;  // tipo inferido: boolean</code></pre>
+<blockquote class="aside aside-tip"><p>Cuando la variable local tiene valor inicial, deja que TypeScript <strong>infiera</strong> el tipo; así el código queda más limpio y sin errores.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-tipos-avanzados">
+    <h2>Tipos avanzados e interfaces</h2>
+    <div class="doc-content">
+<p>Además de los tipos primitivos, TypeScript permite describir estructuras de objetos y combinar tipos. Las <strong>interfaces</strong> definen <em>la forma</em> de un objeto; los <strong>type aliases</strong> crean nombres para cualquier tipo; los <strong>union types</strong> permiten que un valor acepte varios tipos.</p>
+<h3>Interface: la forma de un objeto</h3>
+<pre><code class="language-typescript">interface Usuario {
+  id: number;
+  nombre: string;
+  email?: string;      // opcional
+}
+
+const usuario: Usuario = { id: 1, nombre: "Ana" };</code></pre>
+<h3>Type alias: renombrar un tipo</h3>
+<pre><code class="language-typescript">type Nombre = string;               // alias de un primitivo
+type Identificador = number | string; // alias de una unión</code></pre>
+<h3>Union types y literal types</h3>
+<pre><code class="language-typescript">// Unión: acepta string O number
+let valor: string | number = "hola";
+valor = 42; // ✔ posible
+
+// Literal: solo admite los valores exactos listados
+type Estado = "pendiente" | "activo" | "bloqueado";
+let estado: Estado = "activo";</code></pre>
+<table><thead><tr><th>Característica</th><th>Qué hace</th></tr></thead><tbody><tr><td>Interface</td><td>Define la forma (propiedades) de un objeto; es extensible y se puede heredar</td></tr><tr><td>Type alias</td><td>Crea un nombre para cualquier tipo: primitivo, unión, tupla u objeto</td></tr><tr><td>Union type</td><td>Permite que un valor tenga varios tipos posibles (<code>a | b</code>)</td></tr><tr><td>Literal type</td><td>Restringe un valor a un conjunto exacto de literales</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p><strong>Diferencia clave:</strong> <code>interface</code> sirve para describir <em>objetos</em> y se puede <strong>extender/heredar</strong>; <code>type</code> es más flexible (sirve para cualquier tipo, incluidas uniones y alias) pero <strong>x</strong> puede reabrirse ni heredar.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-funciones-y-parametros">
+    <h2>Funciones y parámetros</h2>
+    <div class="doc-content">
+<p>Las <strong>funciones tipadas</strong> declaran el tipo de sus parámetros y de su retorno. Así el compilador sabe exactamente qué espera y qué devuelve cada función, detectando llamadas incorrectas desde el inicio.</p>
+<h3>Función con tipos en parámetros y retorno</h3>
+<pre><code class="language-typescript">function sumar(a: number, b: number): number {
+  return a + b;
+}
+const total = sumar(2, 3); // total: number</code></pre>
+<h3>Arrow functions tipadas</h3>
+<pre><code class="language-typescript">const multiplicar = (a: number, b: number): number =&gt; a * b;
+// Función completa también se puede tipar
+const dividir: (a: number, b: number) =&gt; number = (a, b) =&gt; a / b;</code></pre>
+<table><thead><tr><th>Elemento</th><th>Qué hace</th><th>Ejemplo</th></tr></thead><tbody><tr><td>Parámetros obligatorios</td><td>Todo parámetro sin <code>?</code> es requerido</td><td><code>function f(a: number)</code></td></tr><tr><td>Opcionales (<code>?</code>)</td><td>Puede omitirse al llamar</td><td><code>function f(a?: number)</code></td></tr><tr><td>Con valor por defecto</td><td>Se usa si no se pasa argumento</td><td><code>function f(a = 0)</code></td></tr><tr><td>Rest (<code>...args</code>)</td><td>Agrupa los argumentos restantes en un arreglo</td><td><code>function f(...nums: number[])</code></td></tr></tbody></table>
+<blockquote class="aside aside-warning"><p>Si una función <strong>no devuelve nada</strong>, declara su retorno como <code>void</code>. Esto comunica la intención de que no produce valor alguno.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-clases-y-poo">
+    <h2>Clases y POO</h2>
+    <div class="doc-content">
+<p>TypeScript potencia la POO de JavaScript añadiendo <strong>tipos en propiedades</strong>, un <strong>constructor tipado</strong>, <strong>modificadores de acceso</strong> y una sintaxis más concisa. Las propiedades deben declararse y tiparse antes de usarse en el constructor con <code>this</code>.</p>
+<h3>Definir una clase con propiedades y tipos</h3>
+<pre><code class="language-typescript">class Cuenta {
+  private saldo: number;         // propiedad privada
+  readonly titular: string;      // solo lectura
+
+  constructor(titular: string, saldoInicial: number) {
+    this.titular = titular;
+    this.saldo = saldoInicial;
+  }
+
+  depositar(monto: number): void {
+    this.saldo += monto;
+  }
+
+  obtenerSaldo(): number {
+    return this.saldo;
+  }
+}</code></pre>
+<table><thead><tr><th>Modificador</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>public</code></td><td>Accesible desde cualquier lugar (por defecto)</td></tr><tr><td><code>private</code></td><td>Solo accesible dentro de la propia clase</td></tr><tr><td><code>protected</code></td><td>Accesible en la clase y sus subclases heredadas</td></tr><tr><td><code>readonly</code></td><td>Solo asignable en la declaración o en el constructor; no puede cambiarse luego</td></tr></tbody></table>
+<h3>Herencia con extends</h3>
+<pre><code class="language-typescript">class CuentaAhorro extends Cuenta {
+  private interes: number;
+  constructor(titular: string, saldo: number, interes: number) {
+    super(titular, saldo);
+    this.interes = interes;
+  }
+}</code></pre>
+<h3>Implements de una interface</h3>
+<pre><code class="language-typescript">interface Repositorio {
+  guardar(dato: string): void;
+}
+
+class RepositorioLocal implements Repositorio {
+  guardar(dato: string): void {
+    console.log(dato);
+  }
+}</code></pre>
+<blockquote class="aside aside-tip"><p>Usa <code>extends</code> para <strong>heredar</strong> de una clase y <code>implements</code> para <strong>cumplir un contrato</strong> definido por una interface.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-genericos-y-modulos">
+    <h2>Genéricos y módulos</h2>
+    <div class="doc-content">
+<p>Los <strong>genéricos</strong> permiten escribir funciones, clases e interfaces que funcionan con <strong>cualquier tipo</strong> pero conservando el tipado. Los <strong>módulos</strong> organizan el código en archivos mediante <code>export</code> e <code>import</code>.</p>
+<h3>Función genérica</h3>
+<pre><code class="language-typescript">function identidad&lt;T&gt;(x: T): T {
+  return x;
+}
+
+const a = identidad&lt;string&gt;("hola"); // T = string
+const b = identidad(42);             // T se infiere: number</code></pre>
+<h3>Genéricos en clases e interfaces</h3>
+<pre><code class="language-typescript">interface Caja&lt;T&gt; {
+  contenido: T;
+}
+
+class Almacen&lt;T&gt; {
+  private items: T[] = [];
+  agregar(item: T): void {
+    this.items.push(item);
+  }
+}</code></pre>
+<h3>Módulos: export e import</h3>
+<pre><code class="language-typescript">// archivo: funciones.ts
+export function sumar(a: number, b: number): number {
+  return a + b;
+}
+export default function multiplicar(a: number, b: number): number {
+  return a * b;
+}</code></pre>
+<pre><code class="language-typescript">// import { x } from "./archivo"
+import { sumar } from "./funciones";
+import multiplicar from "./funciones"; // export default sin llaves</code></pre>
+<table><thead><tr><th>Sintaxis</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>export function</code></td><td>Expone una función para que otros archivos la importen</td></tr><tr><td><code>export default</code></td><td>Expone un único valor por defecto del módulo</td></tr><tr><td><code>import { a } from "./archivo"</code></td><td>Importa el valor nombrado <code>a</code> de otro archivo</td></tr><tr><td><code>import d from "./archivo"</code></td><td>Importa el valor por defecto (sin llaves)</td></tr></tbody></table>
+<blockquote class="aside aside-note"><p>Usa <code>export default</code> para un valor principal del módulo y <code>export</code> nombrado para exponer varias utilidades.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-typescript-vs-javascript">
+    <h2>TypeScript vs JavaScript</h2>
+    <div class="doc-content">
+<p>TypeScript <strong>extiende JavaScript</strong> añadiéndole tipos; al final de la cadena siempre se <strong>compila a JavaScript</strong> para que el navegador pueda ejecutarlo. Son el mismo lenguaje base, pero TypeScript añade una capa de verificación en tiempo de desarrollo.</p>
+<table><thead><tr><th>Aspecto</th><th>JavaScript</th><th>TypeScript</th></tr></thead><tbody><tr><td>Tipado</td><td>Dinámico: los tipos cambian en ejecución</td><td>Estático: tipos declarados y verificados</td></tr><tr><td>Detección de errores</td><td>En tiempo de ejecución en el navegador</td><td>En tiempo de compilación, antes de ejecutar</td></tr><tr><td>Compilación</td><td>No se compila; lo ejecuta el navegador/Node</td><td>Se compila (transpila) a JavaScript con <code>tsc</code></td></tr><tr><td>Archivos</td><td><code>.js</code>, <code>.mjs</code>, <code>.cjs</code></td><td><code>.ts</code> (que al compilar producen <code>.js</code>)</td></tr><tr><td>Uso en producción</td><td>Directamente en el navegador</td><td>Se compila a JS antes de publicarse</td></tr></tbody></table>
+<blockquote class="aside aside-success"><p>Todo código JS es código TS válido, por lo que migrar es gradual. TypeScript se <strong>compila a JavaScript</strong>, y ese JS <strong>es el que el navegador ejecuta</strong>.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="cheat-conceptos-importantes">
+    <h2>Conceptos importantes</h2>
+    <div class="doc-content">
+<p>Glosario rápido con los términos que más encontrarás al trabajar con TypeScript. Dominar este vocabulario facilita leer la documentación y entender los errores del compilador.</p>
+<table><thead><tr><th>Concepto</th><th>Qué significa</th></tr></thead><tbody><tr><td>Superset</td><td>Lenguaje que extiende a otro; todo JS válido es TS válido</td></tr><tr><td>Tipo</td><td>Descripción de qué clase de valor admite una variable</td></tr><tr><td>Anotación de tipo</td><td>Sintaxis <code>: tipo</code> que declara el tipo de un valor explícitamente</td></tr><tr><td>Inferencia de tipos</td><td>El compilador deduce el tipo automáticamente del valor inicial</td></tr><tr><td>Interface</td><td>Definición de la forma de un objeto, extensible</td></tr><tr><td>Type alias</td><td>Nombre alternativo creado con <code>type</code> para cualquier tipo</td></tr><tr><td>Union</td><td>Un valor que puede ser de varios tipos (<code>a | b</code>)</td></tr><tr><td>Genérico</td><td>Código reutilizable que conserva el tipo recibido (<code>&lt;T&gt;</code>)</td></tr><tr><td>Enum</td><td>Conjunto de constantes con nombre</td></tr><tr><td>Tuple</td><td>Arreglo con tipos fijos por posición</td></tr><tr><td>Any</td><td>Tipo que desactiva la comprobación (evita abusar de él)</td></tr><tr><td>Void</td><td>Ausencia de retorno en una función</td></tr><tr><td>Never</td><td>Tipo que nunca se alcanza (por ejemplo, una función que lanza siempre)</td></tr><tr><td>Compilador (tsc)</td><td>Herramienta oficial que convierte TS a JS</td></tr><tr><td>Transpilación</td><td>Convertir código de un lenguaje a otro equivalente (TS → JS)</td></tr><tr><td>tsconfig.json</td><td>Archivo de configuración del compilador de TypeScript</td></tr><tr><td>Módulo</td><td>Bloque de código separado en su propio archivo</td></tr><tr><td>Export/Import</td><td>Mecanismo para exponer y consumir valores entre módulos</td></tr><tr><td>Decorador</td><td>Función que añade comportamiento a clases/métodos (usado en frameworks)</td></tr><tr><td>Strict mode</td><td>Conjunto de comprobaciones estrictas activadas por defecto en tsconfig</td></tr></tbody></table>
+<blockquote class="aside aside-caution"><p>Evita usar <code>any</code> en exceso: apaga la verificación de tipos y pierdes las ventajas de TypeScript. El <strong>strict mode</strong> te ayuda a mantener el código seguro.</p></blockquote>
+<p>---</p>
+    </div>
+  </section>
