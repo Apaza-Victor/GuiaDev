@@ -1,0 +1,260 @@
+<!-- 04. Componentes y Layouts - Next.js (Frameworks) -->
+  <section id="4-1-componentes-react-en-nextjs">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> 4.1 Componentes React en Next.js</h2>
+    <div class="doc-content">
+<h3>Qué es un componente</h3>
+<p>Un componente es una función que devuelve JSX y se reutiliza en varias partes de la aplicación. Next.js usa exactamente los mismos componentes de React:</p>
+<pre><code class="language-tsx">// app/components/Boton.tsx
+interface BotonProps {
+  texto: string;
+  onClick?: () =&gt; void;
+}
+
+export default function Boton({ texto, onClick }: BotonProps) {
+  return (
+    &lt;button onClick={onClick} className="btn"&gt;
+      {texto}
+    &lt;/button&gt;
+  );
+}</code></pre>
+<h3>Usar el componente</h3>
+<pre><code class="language-tsx">// app/page.tsx
+import Boton from "./components/Boton";
+
+export default function Home() {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Inicio&lt;/h1&gt;
+      &lt;Boton texto="Guardar" /&gt;
+      &lt;Boton texto="Cancelar" /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-note">
+Los componentes que no usan eventos ni hooks se pueden usar sin la directiva `"use client"`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-2-el-archivo-layout-tsx">
+    <h2><i class="fa-solid fa-layer-group"></i> 4.2 El archivo layout.tsx</h2>
+    <div class="doc-content">
+<h3>Qué es un Layout</h3>
+<p>Un layout es la estructura compartida entre varias páginas. Contiene elementos como el header, footer o la navegación que se mantienen al cambiar de ruta:</p>
+<pre><code class="language-tsx">// app/layout.tsx
+import type { Metadata } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Mi Tienda",
+  description: "Tienda en línea creada con Next.js",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    &lt;html lang="es"&gt;
+      &lt;body&gt;
+        &lt;header&gt;Logotipo y menú&lt;/header&gt;
+        {children}
+        &lt;footer&gt;Pie de página&lt;/footer&gt;
+      &lt;/body&gt;
+    &lt;/html&gt;
+  );
+}</code></pre>
+<h3>Layouts anidados</h3>
+<p>Cada carpeta puede tener su propio layout que envuelve a sus páginas hijas:</p>
+<pre><code class="language-bash">app/
+├── layout.tsx          # Layout raíz
+├── dashboard/
+│   ├── layout.tsx      # Layout del dashboard
+│   ├── page.tsx        # /dashboard
+│   └── settings/
+│       └── page.tsx    # /dashboard/settings</code></pre>
+<blockquote class="aside aside-tip">
+Los layouts no se re-renderizan al navegar, por lo que el estado dentro de ellos se conserva.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-3-head-y-metadatos-con-metadata-api">
+    <h2><i class="fa-solid fa-heading"></i> 4.3 Head y metadatos con Metadata API</h2>
+    <div class="doc-content">
+<h3>Exportar metadatos estáticos</h3>
+<pre><code class="language-tsx">// app/contacto/page.tsx
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Contacto | Mi Tienda",
+  description: "Ponte en contacto con nosotros",
+  keywords: ["contacto", "soporte", "tienda"],
+};
+
+export default function Contacto() {
+  return &lt;h1&gt;Contacto&lt;/h1&gt;;
+}</code></pre>
+<h3>Metadatos más usados</h3>
+<table><thead><tr><th>Campo</th><th>Descripción</th></tr></thead><tbody><tr><td><code>title</code></td><td>Título de la pestaña del navegador</td></tr><tr><td><code>description</code></td><td>Descripción mostrada en buscadores</td></tr><tr><td><code>keywords</code></td><td>Palabras clave para SEO</td></tr><tr><td><code>openGraph</code></td><td>Metadatos para redes sociales</td></tr><tr><td><code>applicationName</code></td><td>Nombre de la aplicación</td></tr></tbody></table>
+<h3>Generar metadatos dinámicamente</h3>
+<pre><code class="language-tsx">// app/posts/[id]/page.tsx
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise&lt;Metadata&gt; {
+  const res = await fetch(
+    `https://api.example.com/posts/${params.id}`
+  );
+  const post = await res.json();
+
+  return { title: post.title, description: post.body };
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-4-metadatos-dinamicos-y-open-graph">
+    <h2><i class="fa-solid fa-share-nodes"></i> 4.4 Metadatos dinámicos y Open Graph</h2>
+    <div class="doc-content">
+<h3>Open Graph para redes sociales</h3>
+<pre><code class="language-tsx">import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Producto destacado",
+  openGraph: {
+    title: "Producto destacado | Mi Tienda",
+    description: "Un producto increíble con descuento",
+    url: "https://mitienda.com/producto",
+    images: [
+      {
+        url: "https://mitienda.com/imagen.jpg",
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
+};</code></pre>
+<h3>Metadatos desde una API (dinámicos)</h3>
+<pre><code class="language-tsx">// app/perfil/[usuario]/page.tsx
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { usuario: string };
+}): Promise&lt;Metadata&gt; {
+  const res = await fetch(
+    `https://api.example.com/usuarios/${params.usuario}`
+  );
+  const usuario = await res.json();
+
+  return {
+    title: `Perfil de ${usuario.nombre}`,
+    description: `Perfil del usuario ${usuario.nombre}`,
+  };
+}
+
+export default function Perfil() {
+  return &lt;h1&gt;Perfil&lt;/h1&gt;;
+}</code></pre>
+<blockquote class="aside aside-tip">
+La función `generateMetadata` recibe los mismos `params` que la página y debe devolver un objeto `Metadata`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-5-diferencias-entre-server-y-client-components">
+    <h2><i class="fa-solid fa-server"></i> 4.5 Diferencias entre Server y Client Components</h2>
+    <div class="doc-content">
+<h3>Dos tipos de componentes</h3>
+<table><thead><tr><th>Aspecto</th><th>Server Component</th><th>Client Component</th></tr></thead><tbody><tr><td>Ejecución</td><td>En el servidor</td><td>En el navegador</td></tr><tr><td>Hooks</td><td>No usa useState/useEffect</td><td>Sí usa hooks de estado</td></tr><tr><td>Acceso a BD</td><td>Directo y seguro</td><td>No directo</td></tr><tr><td>Directiva</td><td>Por defecto</td><td><code>"use client"</code> al inicio</td></tr><tr><td>Size del JSX</td><td>Sin agregar JS al cliente</td><td>Añade su código al bundle</td></tr></tbody></table>
+<h3>Marca un componente como cliente</h3>
+<pre><code class="language-tsx">// app/components/Contador.tsx
+"use client";
+
+import { useState } from "react";
+
+export default function Contador() {
+  const [n, setN] = useState(0);
+  return (
+    &lt;button onClick={() =&gt; setN(n + 1)}&gt;
+      Clicks: {n}
+    &lt;/button&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-note">
+Los Server Components son la estrategia por defecto en el App Router y mejoran el rendimiento al no enviar tanto JavaScript al cliente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-6-composicion-de-componentes-y-props">
+    <h2><i class="fa-solid fa-clone"></i> 4.6 Composición de componentes y props</h2>
+    <div class="doc-content">
+<h3>Pasar datos con props</h3>
+<pre><code class="language-tsx">// app/components/Tarjeta.tsx
+interface TarjetaProps {
+  titulo: string;
+  precio: number;
+  children: React.ReactNode;
+}
+
+export default function Tarjeta({
+  titulo,
+  precio,
+  children,
+}: TarjetaProps) {
+  return (
+    &lt;div className="tarjeta"&gt;
+      &lt;h3&gt;{titulo}&lt;/h3&gt;
+      &lt;p&gt;Precio: ${precio}&lt;/p&gt;
+      {children}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Composición con children</h3>
+<pre><code class="language-tsx">// app/page.tsx
+import Tarjeta from "./components/Tarjeta";
+
+export default function Home() {
+  return (
+    &lt;div&gt;
+      &lt;Tarjeta titulo="Laptop" precio={999}&gt;
+        &lt;button&gt;Comprar&lt;/button&gt;
+      &lt;/Tarjeta&gt;
+      &lt;Tarjeta titulo="Mouse" precio={29}&gt;
+        &lt;button&gt;Ver más&lt;/button&gt;
+      &lt;/Tarjeta&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-warning">
+Los props se pasan de componentes padres a hijos y no deben modificarse dentro del hijo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los componentes de React funcionan igual dentro de Next.js
+- <code>layout.tsx</code> define la estructura compartida de las páginas
+- Los layouts se pueden anidar por carpeta
+- La Metadata API controla títulos, descripciones y Open Graph
+- Los Server Components se ejecutan en el servidor por defecto
+- Los Client Components usan la directiva <code>"use client"</code>
+</blockquote>
+    </div>
+  </section>

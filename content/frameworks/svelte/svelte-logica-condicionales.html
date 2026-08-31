@@ -1,0 +1,138 @@
+<!-- 06. Lógica y condicionales - Svelte (Frameworks) -->
+  <section id="6-1-condicionales-if-else">
+    <h2><i class="fa-solid fa-code-branch"></i> 6.1 Condicionales {#if} y {:else}</h2>
+    <div class="doc-content">
+<h3>Renderizado condicional</h3>
+<p>En Svelte puedes renderizar contenido de forma condicional con el bloque <code>{#if}</code> y sus variantes <code>{:else}</code>, <code>{:else if}</code> y <code>{:else}</code>. Solo se añade al DOM el contenido que cumple la condición.</p>
+<p>La estructura es parecida a un <code>if</code> de JavaScript, pero escrita dentro del template con la sintaxis de llaves de Svelte.</p>
+<h3>Ejemplo: bloque if/else</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let conectado = true;
+&lt;/script&gt;
+
+{#if conectado}
+  &lt;p&gt;Usuario conectado&lt;/p&gt;
+{:else}
+  &lt;p&gt;Por favor, inicia sesión&lt;/p&gt;
+{/if}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-2-cadenas-else-if">
+    <h2><i class="fa-solid fa-sitemap"></i> 6.2 Cadenas {:else if}</h2>
+    <div class="doc-content">
+<h3>Múltiples condiciones</h3>
+<p>Puedes encadenar varias condiciones usando <code>{:else if}</code>, similar a un <code>else if</code> de JavaScript. Solo se evalúa la primera condición verdadera de la cadena.</p>
+<h3>Ejemplo: clasificación de notas</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let nota = 85;
+&lt;/script&gt;
+
+{#if nota >= 90}
+  &lt;p&gt;Sobresaliente&lt;/p&gt;
+{:else if nota >= 70}
+  &lt;p&gt;Bien&lt;/p&gt;
+{:else if nota >= 50}
+  &lt;p&gt;Aprobado&lt;/p&gt;
+{:else}
+  &lt;p&gt;Reprobado&lt;/p&gt;
+{/if}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-3-each-bucles-listas">
+    <h2><i class="fa-solid fa-list-ul"></i> 6.3 Bloques {#each} para listas</h2>
+    <div class="doc-content">
+<h3>Iterar sobre arreglos</h3>
+<p>El bloque <code>{#each}</code> recorre un arreglo u objeto iterable y repite el contenido por cada elemento. Puedes acceder al índice con una variable adicional separada por coma.</p>
+<h3>Ejemplo: renderizar una lista</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let frutas = ['Manzana', 'Pera', 'Uva', 'Melón'];
+&lt;/script&gt;
+
+&lt;ul&gt;
+  {#each frutas as fruta, indice}
+    &lt;li&gt;{indice + 1}. {fruta}&lt;/li&gt;
+  {/each}
+&lt;/ul&gt;</code></pre>
+<p>Combinar <code>{#each}</code> con la reactividad permite añadir o eliminar elementos de la lista y que la interfaz se actualice automáticamente.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-4-keyed-each">
+    <h2><i class="fa-solid fa-key"></i> 6.4 Keyed each</h2>
+    <div class="doc-content">
+<h3>Rendimiento con claves</h3>
+<p>Cuando la lista puede reordenarse o cambiar, conviene usar la forma <strong>keyed</strong>: <code>{#each items as item (item.id)}</code>. La clave entre paréntesis le indica a Svelte qué elemento es cada uno, para reutilizar el DOM y conservar el estado de cada elemento.</p>
+<p>Sin clave, Svelte reutiliza los nodos por posición, lo que puede provocar errores al eliminar o reordenar elementos.</p>
+<h3>Ejemplo: lista keyed</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let tareas = [
+    { id: 1, texto: 'Estudiar Svelte' },
+    { id: 2, texto: 'Hacer ejercicios' },
+    { id: 3, texto: 'Repasar la teoría' }
+  ];
+&lt;/script&gt;
+
+{#each tareas as tarea (tarea.id)}
+  &lt;p&gt;{tarea.texto}&lt;/p&gt;
+{/each}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-5-await-promesas">
+    <h2><i class="fa-solid fa-hourglass-half"></i> 6.5 Bloques {#await} para promesas</h2>
+    <div class="doc-content">
+<h3>Manejo de datos asíncronos</h3>
+<p>El bloque <code>{#await}</code> te permite renderizar el estado de una promesa directamente en el template: mientras carga, cuando se resuelve y cuando falla. No necesitas gestionar manualmente el estado de carga con variables.</p>
+<h3>Ejemplo: cargar datos de una API</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  async function obtenerUsuarios() {
+    const res = await fetch('/api/usuarios');
+    return res.json();
+  }
+&lt;/script&gt;
+
+{#await obtenerUsuarios()}
+  &lt;p&gt;Cargando usuarios...&lt;/p&gt;
+{:then usuarios}
+  &lt;ul&gt;
+    {#each usuarios as usuario}
+      &lt;li&gt;{usuario.nombre}&lt;/li&gt;
+    {/each}
+  &lt;/ul&gt;
+{:catch error}
+  &lt;p&gt;Error: {error.message}&lt;/p&gt;
+{/await}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-6-matriz-logica">
+    <h2><i class="fa-solid fa-table"></i> 6.6 Matriz de bloques de lógica</h2>
+    <div class="doc-content">
+<h3>Resumen de bloques de control</h3>
+<table><thead><tr><th>Bloque</th><th>Función</th></tr></thead><tbody><tr><td><strong>{#if}</strong></td><td>Renderizado condicional</td></tr><tr><td><strong>{:else}</strong></td><td>Rama alternativa del if</td></tr><tr><td><strong>{:else if}</strong></td><td>Nueva condición en la cadena</td></tr><tr><td><strong>{#each}</strong></td><td>Iterar sobre listas y arreglos</td></tr><tr><td><strong>{#each ... (key)}</strong></td><td>Iteración keyed para reordenar listas</td></tr><tr><td><strong>{#await}</strong></td><td>Manejar promesas con estados</td></tr></tbody></table>
+<p>Cierra cada bloque con su contraparte invertida: <code>{/if}</code>, <code>{/each}</code> y <code>{/await}</code>.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- {#if} renderiza contenido de forma condicional
+- {:else} y {:else if} permiten cadenas de condiciones
+- {#each} recorre listas y accede a su índice
+- La forma keyed conserva el estado al reordenar elementos
+- {#await} maneja promesas con estados de carga, éxito y error
+- Todo bloque se cierra con su marca {/...}
+</blockquote>
+    </div>
+  </section>

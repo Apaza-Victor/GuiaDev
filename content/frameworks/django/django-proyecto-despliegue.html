@@ -1,0 +1,249 @@
+<!-- 10. Proyecto completo y despliegue - Django (Frameworks) -->
+  <section id="10-1-organizacion-de-un-proyecto-real">
+    <h2><i class="fa-solid fa-folder"></i> 10.1 Organización de un proyecto real</h2>
+    <div class="doc-content">
+<h3>Estructura recomendada</h3>
+<pre><code class="language-text">mi_proyecto/
+├── manage.py
+├── requirements.txt         # Dependencias
+├── .env                     # Variables de entorno (no se sube a git)
+├── mi_proyecto/             # Configuración del proyecto
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── apps/                    # Aplicaciones agrupadas
+│   ├── blog/
+│   ├── usuarios/
+│   └── tienda/
+├── templates/               # Plantillas globales
+├── static/                  # CSS, JS, imágenes
+└── media/                   # Archivos subidos por usuarios</code></pre>
+<h3>Buenas prácticas</h3>
+<ul>
+<li><strong>Separar configuración por entornos</strong>: desarrollo, pruebas y producción</li>
+<li><strong>Usar variables de entorno</strong> para claves y datos sensibles</li>
+<li><strong>Módulos dentro de apps</strong>: cada app responsable de una sola funcionalidad</li>
+<li><strong>Versionar todo con Git</strong> desde el primer día</li>
+</ul>
+<h3>settings.py por entornos</h3>
+<pre><code class="language-python"># settings.py (base)
+import os
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "clave-dev")
+DEBUG = os.environ.get("DEBUG", "True") == "True"
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.environ.get("DB_NAME", "db.sqlite3"),
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-2-archivos-estaticos-y-media">
+    <h2><i class="fa-solid fa-image"></i> 10.2 Archivos estáticos y media</h2>
+    <div class="doc-content">
+<h3>Qué son los archivos estáticos</h3>
+<p>Los <strong>archivos estáticos</strong> son CSS, JavaScript e imágenes que el servidor entrega tal cual. Django los gestiona con la app <code>django.contrib.staticfiles</code>.</p>
+<h3>Configuración en settings.py</h3>
+<pre><code class="language-python"># settings.py
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# En producción: carpeta donde se copian todos los estáticos
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Archivos subidos por los usuarios
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"</code></pre>
+<h3>Uso en plantillas</h3>
+<pre><code class="language-html">&lt;!-- En la plantilla base: cargar y usar la etiqueta static --&gt;
+{% load static %}
+&lt;link rel="stylesheet" href="{% static 'css/styles.css' %}"&gt;
+&lt;script src="{% static 'js/app.js' %}"&gt;&lt;/script&gt;
+&lt;img src="{% static 'img/logo.png' %}" alt="Logo"&gt;</code></pre>
+<h3>Qué hace collectstatic</h3>
+<p>Reúne todos los archivos estáticos de las apps y de <code>STATICFILES_DIRS</code> en la carpeta <code>STATIC_ROOT</code>, lista para servirse en producción.</p>
+<pre><code class="language-bash"># Copiar todos los estáticos a STATIC_ROOT
+python manage.py collectstatic
+# 67 static files copied to 'C:\...\staticfiles'.</code></pre>
+<h3>Modelo con subida de archivos (media)</h3>
+<pre><code class="language-python"># blog/models.py
+from django.db import models
+
+def ruta_del_avatar(instance, filename):
+    return f"avatares/usuarios/{instance.usuario.username}/{filename}"
+
+class Perfil(models.Model):
+    usuario = models.OneToOneField(
+        "auth.User", on_delete=models.CASCADE, related_name="perfil"
+    )
+    avatar = models.ImageField(upload_to=ruta_del_avatar, blank=True)</code></pre>
+<blockquote class="aside aside-caution">
+Los campos ImageField requieren la librería Pillow: `pip install Pillow`. En producción, guardar media en disco local puede ser insuficiente; considera un bucket de S3.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-3-dependencias-y-variables-de-entorno">
+    <h2><i class="fa-solid fa-list-check"></i> 10.3 Dependencias (requirements.txt) y variables de entorno</h2>
+    <div class="doc-content">
+<h3>Generar el archivo de dependencias</h3>
+<pre><code class="language-bash"># Guarda todas las dependencias instaladas
+pip freeze &gt; requirements.txt</code></pre>
+<pre><code class="language-text">django==5.0.6
+gunicorn==22.0.0
+whitenoise==6.6.0
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+Pillow==10.3.0</code></pre>
+<h3>Instalar en otro entorno</h3>
+<pre><code class="language-bash"># Instalar todas las dependencias del proyecto
+pip install -r requirements.txt</code></pre>
+<h3>Variables de entorno con python-dotenv</h3>
+<pre><code class="language-python"># .env
+SECRET_KEY=cambia-esta-clave
+DEBUG=False
+ALLOWED_HOSTS=misitio.com,www.misitio.com
+DB_NAME=mi_bd
+DB_USER=usuario
+DB_PASSWORD=clave_segura</code></pre>
+<pre><code class="language-python"># settings.py
+from dotenv import load_dotenv
+load_dotenv()
+
+import os
+SECRET_KEY = os.environ["SECRET_KEY"]
+DEBUG = os.environ.get("DEBUG", "False") == "True"
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")</code></pre>
+<blockquote class="aside aside-warning">
+El archivo `.env` no debe subirse al repositorio. Agrégalo a `.gitignore` y documenta las variables en un `.env.example`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-4-configuracion-de-produccion">
+    <h2><i class="fa-solid fa-gear"></i> 10.4 Configuración de producción</h2>
+    <div class="doc-content">
+<h3>Cambios clave respecto a desarrollo</h3>
+<table><thead><tr><th>Ajuste</th><th>Desarrollo</th><th>Producción</th></tr></thead><tbody><tr><td><code>DEBUG</code></td><td><code>True</code></td><td><code>False</code></td></tr><tr><td><code>ALLOWED_HOSTS</code></td><td>Vacío o <code>localhost</code></td><td>Tu dominio real</td></tr><tr><td><code>SECRET_KEY</code></td><td>Valor cualquiera</td><td>Clave generada y oculta</td></tr><tr><td><code>DATABASES</code></td><td>SQLite</td><td>PostgreSQL u otro servidor</td></tr><tr><td><code>STATIC_ROOT</code></td><td>Innecesario</td><td>Carpeta de estáticos agrupados</td></tr></tbody></table>
+<h3>settings.py de producción (ejemplo)</h3>
+<pre><code class="language-python"># settings.py
+import os
+
+SECRET_KEY = os.environ["SECRET_KEY"]
+DEBUG = False
+ALLOWED_HOSTS = os.environ["ALLOWED_HOSTS"].split(",")
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ["DB_NAME"],
+        "USER": os.environ["DB_USER"],
+        "PASSWORD": os.environ["DB_PASSWORD"],
+        "HOST": os.environ["DB_HOST"],
+        "PORT": "5432",
+    }
+}
+
+# Seguridad extra con HTTPS
+SECURE_SSL_REDIRECT = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True</code></pre>
+<blockquote class="aside aside-warning">
+Nunca ejecutes producción con <code>DEBUG=True</code>: expone configuraciones, variables y mensajes de error sensibles.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-5-despliegue-con-gunicorn-y-nginx">
+    <h2><i class="fa-solid fa-rocket"></i> 10.5 Despliegue con Gunicorn y Nginx</h2>
+    <div class="doc-content">
+<h3>Flujo típico</h3>
+<table><thead><tr><th>Componente</th><th>Rol</th></tr></thead><tbody><tr><td><strong>Gunicorn</strong></td><td>Servidor WSGI que ejecuta la app Django</td></tr><tr><td><strong>Nginx</strong></td><td>Proxy inverso: sirve estáticos y redirige a Gunicorn</td></tr><tr><td><strong>PostgreSQL</strong></td><td>Base de datos de producción</td></tr></tbody></table>
+<h3>Comandos del servidor</h3>
+<pre><code class="language-bash"># Migraciones y estáticos antes de desplegar
+python manage.py migrate
+python manage.py collectstatic --noinput
+
+# Ejecutar Gunicorn (desarrollador)
+gunicorn mi_proyecto.wsgi:application --bind 127.0.0.1:8000</code></pre>
+<h3>Configuración de Nginx (ejemplo)</h3>
+<pre><code class="language-text"># /etc/nginx/sites-available/misitio
+server {
+    listen 80;
+    server_name misitio.com;
+
+    location /static/ {
+        alias /ruta/staticfiles/;
+    }
+    location /media/ {
+        alias /ruta/media/;
+    }
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}</code></pre>
+<h3>Alternativas PaaS</h3>
+<ul>
+<li><strong>Railway / Render</strong>: Deploy con un <code>Procfile</code> y base de datos en unos clics</li>
+<li><strong>Heroku</strong>: Usa <code>gunicorn</code> en el Procfile y add-ons de PostgreSQL</li>
+<li><strong>VPS</strong>: Ubuntu + Gunicorn + Nginx para máximo control</li>
+</ul>
+<h3>Procfile (Railway/Heroku)</h3>
+<pre><code class="language-text">web: gunicorn mi_proyecto.wsgi:application</code></pre>
+<blockquote class="aside aside-note">
+Gunicorn es para Linux. En Windows usa la librería `waitress` o despliega en un PaaS que lo gestione por ti.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-6-buenas-practicas-de-despliegue">
+    <h2><i class="fa-solid fa-circle-check"></i> 10.6 Buenas prácticas de despliegue</h2>
+    <div class="doc-content">
+<h3>Lista de verificación</h3>
+<ul>
+<li><strong>DEBUG=False</strong> siempre en producción</li>
+<li><strong>ALLOWED_HOSTS</strong> con tu dominio, nunca con un comodín innecesario</li>
+<li><strong>SECRET_KEY</strong> única y guardada en variables de entorno</li>
+<li><strong>HTTPS</strong> activado (redirige los accesos por HTTP)</li>
+<li><strong>Backups</strong> automáticos de la base de datos</li>
+<li><strong>Monitorización</strong> de logs y errores del servidor</li>
+<li><strong>Revisión de seguridad</strong> con <code>python manage.py check --deploy</code></li>
+</ul>
+<h3>Análisis de seguridad integrado</h3>
+<pre><code class="language-bash"># Django revisa la configuración buscando problemas serios
+python manage.py check --deploy
+# System check identified 6 issues (1 serious).</code></pre>
+<h3>Entornos de despliegue</h3>
+<table><thead><tr><th>Entorno</th><th>Uso</th></tr></thead><tbody><tr><td><strong>Local</strong></td><td>Desarrollo diario con <code>runserver</code></td></tr><tr><td><strong>Staging</strong></td><td>Mismo código de producción, sin tráfico real</td></tr><tr><td><strong>Producción</strong></td><td>Servicios estables y supervisados</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Automatiza el despliegue con GitHub Actions o la plataforma que uses: esto evita errores manuales y garantiza repetibilidad.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Organizar un proyecto real con apps separadas y configuración por entorno
+- Gestionar estáticos con `STATIC_URL` y `collectstatic`
+- Separar los archivos de media propios del usuario
+- Documentar dependencias con `requirements.txt` y usar variables de entorno
+- Configurar producción: DEBUG=False, ALLOWED_HOSTS y HTTPS
+- Desplegar con Gunicorn + Nginx o plataformas PaaS como Railway y Heroku
+- Seguir una checklist con el comando `python manage.py check --deploy`
+</blockquote>
+    </div>
+  </section>

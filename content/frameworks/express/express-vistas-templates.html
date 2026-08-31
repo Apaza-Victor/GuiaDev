@@ -1,0 +1,206 @@
+<!-- 06. Plantillas (templates) - Express (Frameworks) -->
+  <section id="6-1-html-estatico-con-express-static">
+    <h2><i class="fa-solid fa-file-code"></i> 6.1 Servir HTML estático (express.static)</h2>
+    <div class="doc-content">
+<h3>Qué es express.static</h3>
+<p><code>express.static()</code> es un middleware integrado que sirve archivos estáticos (HTML, CSS, imágenes, JavaScript del cliente) desde una carpeta del proyecto.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+// Sirve todo lo que esté en la carpeta /public
+app.use(express.static('public'));
+
+app.listen(3000);</code></pre>
+<h3>Estructura de ejemplo</h3>
+<pre><code class="language-text">public/
+|-- index.html
+|-- css/
+|   `-- estilos.css
+|-- js/
+|   `-- app.js
+`-- imagenes/
+    `-- logo.png</code></pre>
+<p>Con esto, <code>http://localhost:3000/index.html</code>, <code>http://localhost:3000/css/estilos.css</code> y los demás archivos serán accesibles directamente.</p>
+<blockquote class="aside aside-note">
+El parámetro de <code>express.static</code> es la carpeta relativa al directorio desde donde se ejecuta Node, por lo que es mejor usar rutas absolutas con <code>path.join</code>.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-2-virtual-static-path">
+    <h2><i class="fa-solid fa-folder-open"></i> 6.2 Prefijo virtual con express.static</h2>
+    <div class="doc-content">
+<h3>Montar estáticos en una ruta</h3>
+<p>Puedes hacer que los archivos estáticos se sirvan bajo un prefijo de URL específico pasando la ruta como primer argumento de <code>app.use</code>.</p>
+<pre><code class="language-javascript">const express = require('express');
+const path = require('path');
+const app = express();
+
+// /public/... mapea a la carpeta public
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
+// /assets/... mapea a la carpeta estilos
+app.use('/assets', express.static('estilos'));
+
+app.listen(3000);</code></pre>
+<h3>Acceso a archivos</h3>
+<pre><code class="language-text">http://localhost:3000/public/css/estilos.css
+http://localhost:3000/assets/app.js</code></pre>
+<blockquote class="aside aside-tip">
+Usar <code>path.join(__dirname, 'public')</code> garantiza que la carpeta se encuentre incluso si ejecutas Node desde otro directorio.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-3-template-engines-ejs-pug">
+    <h2><i class="fa-solid fa-cubes"></i> 6.3 Template engines (EJS y Pug)</h2>
+    <div class="doc-content">
+<h3>Qué son los motores de plantillas</h3>
+<p>Un <strong>template engine</strong> permite generar HTML dinámico combinando plantillas con datos. En lugar de escribir HTML estático, usas sintaxis especial para insertar variables y lógica.</p>
+<h3>Motores más usados con Express</h3>
+<table><thead><tr><th>Motor</th><th>Sintaxis</th><th>Curva</th></tr></thead><tbody><tr><td><strong>EJS</strong></td><td>HTML con <code>&lt;%= %&gt;</code></td><td>Baja</td></tr><tr><td><strong>Pug</strong></td><td>Indentación y etiquetas abreviadas</td><td>Media</td></tr><tr><td><strong>Handlebars</strong></td><td>Llaves dobles <code>{{}}</code></td><td>Media</td></tr></tbody></table>
+<h3>Configurar EJS en Express</h3>
+<pre><code class="language-javascript">npm install ejs</code></pre>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+// Indica a Express que use EJS
+app.set('view engine', 'ejs');
+app.set('views', './views');
+
+app.get('/', (req, res) =&gt; {
+  res.render('inicio', { titulo: 'Mi app' });
+});
+
+app.listen(3000);</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-4-res-render">
+    <h2><i class="fa-solid fa-display"></i> 6.4 Renderizar vistas con res.render</h2>
+    <div class="doc-content">
+<h3>Cómo funciona res.render</h3>
+<p><code>res.render(nombreVista, datos)</code> renderiza una plantilla y envía el HTML resultante al cliente. El primer argumento es el nombre del archivo (sin extensión) dentro de la carpeta <code>views</code>.</p>
+<h3>Plantilla EJS (views/inicio.ejs)</h3>
+<pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;title&gt;&lt;%= titulo %&gt;&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Bienvenido a &lt;%= titulo %&gt;&lt;/h1&gt;
+  &lt;p&gt;Número de usuarios: &lt;%= usuarios.length %&gt;&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<h3>Manejador en Express</h3>
+<pre><code class="language-javascript">app.get('/panel', (req, res) =&gt; {
+  const usr = [{ nombre: 'Ana' }, { nombre: 'Carlos' }];
+  res.render('inicio', { titulo: 'Panel de control', usuarios: usr });
+});</code></pre>
+<blockquote class="aside aside-warning">
+La carpeta que contiene las plantillas debe llamarse <code>views</code> por defecto, o configúrala con <code>app.set('views', ...)</code>.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-5-envio-de-variables-a-plantillas">
+    <h2><i class="fa-solid fa-truck-fast"></i> 6.5 Envío de variables a plantillas</h2>
+    <div class="doc-content">
+<h3>Pasar datos a la vista</h3>
+<p>Puedes pasar cualquier tipo de dato (strings, números, objetos, arrays) como segundo argumento de <code>res.render</code>, y usarlos dentro de la plantilla.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+app.set('view engine', 'ejs');
+
+const productos = [
+  { nombre: 'Laptop', precio: 999 },
+  { nombre: 'Mouse', precio: 29 }
+];
+
+app.get('/productos', (req, res) =&gt; {
+  res.render('productos', {
+    titulo: 'Catálogo',
+    productos,
+    usuario: { nombre: 'Ana', admin: true }
+  });
+});
+
+app.listen(3000);</code></pre>
+<h3>Plantilla productos.ejs</h3>
+<pre><code class="language-html">&lt;ul&gt;
+  &lt;% productos.forEach(p =&gt; { %&gt;
+    &lt;li&gt;&lt;%= p.nombre %&gt; - $&lt;%= p.precio %&gt;&lt;/li&gt;
+  &lt;% }) %&gt;
+&lt;/ul&gt;</code></pre>
+<blockquote class="aside aside-note">
+El bloque <code>&lt;% %&gt;</code> contiene código JavaScript que no imprime salida, mientras que <code>&lt;%= %&gt;</code> imprime el valor escapado.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-6-ejemplo-combinado">
+    <h2><i class="fa-solid fa-diagram-project"></i> 6.6 Ejemplo combinado de plantillas y estáticos</h2>
+    <div class="doc-content">
+<h3>Aplicación con estilos, plantilla y datos</h3>
+<pre><code class="language-javascript">const express = require('express');
+const path = require('path');
+const app = express();
+
+app.set('view engine', 'ejs');
+app.use(express.static(path.join(__dirname, 'public')));
+
+const tareas = [
+  { id: 1, texto: 'Estudiar Express', done: true },
+  { id: 2, texto: 'Hacer práctica de plantillas', done: false }
+];
+
+// Página principal con la lista de tareas
+app.get('/', (req, res) =&gt; {
+  res.render('tareas', { tareas });
+});
+
+app.listen(3000);</code></pre>
+<h3>views/tareas.ejs</h3>
+<pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html lang="es"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;link rel="stylesheet" href="/css/estilos.css"&gt;
+  &lt;title&gt;Mis tareas&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Mis tareas&lt;/h1&gt;
+  &lt;ul&gt;
+    &lt;% tareas.forEach(t =&gt; { %&gt;
+      &lt;li class="&lt;%= t.done ? 'completada' : '' %&gt;"&gt;&lt;%= t.texto %&gt;&lt;/li&gt;
+    &lt;% }) %&gt;
+  &lt;/ul&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<blockquote class="aside aside-tip">
+Esta combinación permite construir aplicaciones web completas con una parte estática, una capa de plantillas dinámicas y el servidor Express detrás.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- <code>express.static</code> sirve archivos estáticos como HTML, CSS y JS
+- Puedes montar estáticos bajo un prefijo virtual de URL
+- EJS y Pug son motores de plantillas para HTML dinámico
+- <code>res.render()</code> renderiza una vista y envía el HTML
+- Se pueden pasar variables, arrays y objetos a las plantillas
+- Plantillas y estáticos se combinan en aplicaciones completas
+</blockquote>
+    </div>
+  </section>

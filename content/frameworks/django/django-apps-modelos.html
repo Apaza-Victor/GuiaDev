@@ -1,0 +1,201 @@
+<!-- 03. Aplicaciones y modelos - Django (Frameworks) -->
+  <section id="3-1-crear-una-aplicacion-con-startapp">
+    <h2><i class="fa-solid fa-cubes"></i> 3.1 Crear una aplicación con startapp</h2>
+    <div class="doc-content">
+<h3>Qué es una aplicación</h3>
+<p>Una <strong>aplicación</strong> (app) es un módulo reutilizable dentro del proyecto que agrupa modelos, vistas y templates de una funcionalidad concreta. Por ejemplo: <code>blog</code>, <code>tienda</code> o <code>usuarios</code>.</p>
+<h3>Crear la aplicación</h3>
+<pre><code class="language-bash"># Desde la carpeta del proyecto (la de manage.py)
+python manage.py startapp blog</code></pre>
+<h3>Estructura generada</h3>
+<pre><code class="language-text">blog/
+├── migrations/
+│   └── __init__.py        # Control de migraciones
+├── __init__.py
+├── admin.py               # Configuración del admin
+├── apps.py                # Configuración de la app
+├── models.py              # Modelos (tablas)
+├── tests.py               # Tests
+└── views.py               # Vistas</code></pre>
+<h3>Registrar la aplicación en el proyecto</h3>
+<pre><code class="language-python"># settings.py
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "blog",  # Se agrega la nueva app
+]</code></pre>
+<blockquote class="aside aside-tip">
+Si no registras la app en `INSTALLED_APPS`, Django no ejecutará sus migraciones ni reconocerá sus modelos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-2-que-es-un-modelo">
+    <h2><i class="fa-solid fa-lightbulb"></i> 3.2 Qué es un modelo</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>modelo</strong> es una clase de Python que representa una tabla de la base de datos. Cada atributo de la clase es una columna y cada instancia una fila. Django traduce las clases a SQL automáticamente gracias a su ORM.</p>
+<h3>Modelo de ejemplo</h3>
+<pre><code class="language-python"># blog/models.py
+from django.db import models
+
+class Articulo(models.Model):
+    titulo = models.CharField(max_length=200)
+    contenido = models.TextField()
+    publicado = models.BooleanField(default=False)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.titulo</code></pre>
+<h3>Convenciones</h3>
+<ul>
+<li>Los nombres de las clases se escriben en <strong>PascalCase</strong> (singular)</li>
+<li>Cada modelo hereda de <code>models.Model</code></li>
+<li>Django agrega automáticamente un campo <code>id</code> si no defines una clave primaria</li>
+<li><code>__str__</code> devuelve una representación legible para el admin y la consola</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-3-campos-de-modelos">
+    <h2><i class="fa-solid fa-table"></i> 3.3 Campos de modelos</h2>
+    <div class="doc-content">
+<h3>Campos más comunes</h3>
+<table><thead><tr><th>Campo</th><th>Tipo de dato</th><th>Uso típico</th></tr></thead><tbody><tr><td><code>CharField</code></td><td>Texto corto</td><td>Títulos, nombres, slugs</td></tr><tr><td><code>TextField</code></td><td>Texto largo</td><td>Contenidos de artículos</td></tr><tr><td><code>IntegerField</code></td><td>Entero</td><td>Conteos, cantidades</td></tr><tr><td><code>DecimalField</code></td><td>Decimal exacto</td><td>Precios y montos</td></tr><tr><td><code>FloatField</code></td><td>Flotante</td><td>Mediciones aproximadas</td></tr><tr><td><code>BooleanField</code></td><td>Verdadero/Falso</td><td>Flags, estados activos</td></tr><tr><td><code>DateTimeField</code></td><td>Fecha y hora</td><td>Fechas de creación</td></tr><tr><td><code>DateField</code></td><td>Fecha</td><td>Fechas de nacimiento</td></tr><tr><td><code>EmailField</code></td><td>Email</td><td>Correos electrónicos</td></tr><tr><td><code>SlugField</code></td><td>Slug</td><td>URLs amigables</td></tr><tr><td><code>ForeignKey</code></td><td>Relación muchos a uno</td><td>Categoría de un artículo</td></tr><tr><td><code>ManyToManyField</code></td><td>Relación muchos a muchos</td><td>Etiquetas de un artículo</td></tr></tbody></table>
+<h3>Parámetros comunes</h3>
+<pre><code class="language-python">titulo = models.CharField(
+    max_length=200,          # Longitud máxima (obligatorio en CharField)
+    null=False,              # No permite valor NULL en BD
+    blank=False,             # El formulario lo exige
+    default="Sin título",    # Valor por defecto
+    unique=True,             # No permite duplicados
+)</code></pre>
+<blockquote class="aside aside-warning">
+Diferencia importante: `null` se refiere a la base de datos (valor NULL) y `blank` se refiere a los formularios (campo obligatorio o no).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-4-migraciones-makemigrations-y-migrate">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 3.4 Migraciones: makemigrations y migrate</h2>
+    <div class="doc-content">
+<h3>Qué son las migraciones</h3>
+<p>Las <strong>migraciones</strong> son archivos que describen los cambios de los modelos (crear tablas, agregar columnas, etc.). Permiten versionar el esquema de la base de datos.</p>
+<h3>Paso a paso</h3>
+<pre><code class="language-bash"># 1. Generar la migración según los modelos
+python manage.py makemigrations
+# Salida:
+# Migrations for 'blog':
+#   blog/migrations/0001_initial.py
+
+# 2. Ver el SQL que se ejecutará
+python manage.py sqlmigrate blog 0001
+
+# 3. Aplicar la migración a la base de datos
+python manage.py migrate
+# Operations to perform:
+#   Apply all migrations: admin, auth, blog, contenttypes, sessions
+# Running migrations:
+#   Applying blog.0001_initial... OK</code></pre>
+<table><thead><tr><th>Comando</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>makemigrations</code></td><td>Detecta cambios en los modelos y crea el archivo de migración</td></tr><tr><td><code>sqlmigrate</code></td><td>Muestra el SQL que se va a ejecutar sin aplicarlo</td></tr><tr><td><code>migrate</code></td><td>Aplica las migraciones pendientes a la base de datos</td></tr><tr><td><code>showmigrations</code></td><td>Lista el estado de las migraciones</td></tr></tbody></table>
+<blockquote class="aside aside-caution">
+Cada vez que modifiques un campo o agregues un modelo nuevo, ejecuta `makemigrations` y luego `migrate`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-5-el-admin-de-django">
+    <h2><i class="fa-solid fa-user-gear"></i> 3.5 El admin de Django</h2>
+    <div class="doc-content">
+<h3>Qué es</h3>
+<p>El <strong>admin de Django</strong> es un panel de administración automático que se genera a partir de tus modelos. Te permite crear, editar y eliminar registros sin escribir código.</p>
+<h3>Crear un superusuario</h3>
+<pre><code class="language-bash"># Crear usuario con permisos de administración
+python manage.py createsuperuser
+# Username: admin
+# Email address: admin@ejemplo.com
+# Password: ********</code></pre>
+<h3>Registrar un modelo</h3>
+<pre><code class="language-python"># blog/admin.py
+from django.contrib import admin
+from .models import Articulo
+
+admin.site.register(Articulo)</code></pre>
+<h3>Acceder al panel</h3>
+<pre><code class="language-bash"># Con el servidor corriendo:
+python manage.py runserver</code></pre>
+<p>Visita <code>http://127.0.0.1:8000/admin/</code> e inicia sesión con el superusuario. Ahí verás tus registros listos para gestionar.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-6-ejemplo-modelo-de-un-blog">
+    <h2><i class="fa-solid fa-pen"></i> 3.6 Ejemplo: modelo completo de un blog</h2>
+    <div class="doc-content">
+<h3>Modelos de un blog con categorías y comentarios</h3>
+<pre><code class="language-python"># blog/models.py
+from django.db import models
+from django.utils import timezone
+
+class Categoria(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.nombre
+
+class Articulo(models.Model):
+    titulo = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
+    contenido = models.TextField()
+    publicado = models.BooleanField(default=False)
+    fecha_publicacion = models.DateTimeField(default=timezone.now)
+    categoria = models.ForeignKey(
+        Categoria,
+        on_delete=models.CASCADE,
+        related_name="articulos",
+    )
+    etiquetas = models.ManyToManyField("Etiqueta", blank=True)
+
+    def __str__(self):
+        return self.titulo
+
+class Etiqueta(models.Model):
+    nombre = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.nombre</code></pre>
+<h3>Ciclo completo</h3>
+<pre><code class="language-bash"># Comandos en orden:
+python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver</code></pre>
+<blockquote class="aside aside-tip">
+Con solo estos comandos ya tendrás tres tablas gestionables desde el admin: Categoria, Articulo y Etiqueta.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Crear aplicaciones con `python manage.py startapp`
+- Definir modelos como clases Python que representan tablas
+- Usar campos como CharField, TextField, IntegerField y BooleanField
+- Generar migraciones con `makemigrations` y aplicarlas con `migrate`
+- Registrar modelos en el admin y crear un superusuario
+- Construir un modelo de blog completo con relaciones y campos
+</blockquote>
+    </div>
+  </section>

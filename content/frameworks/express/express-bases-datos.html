@@ -1,0 +1,208 @@
+<!-- 07. Conectar con base de datos - Express (Frameworks) -->
+  <section id="7-1-orientacion-general-a-bases-de-datos">
+    <h2><i class="fa-solid fa-database"></i> 7.1 Orientación general a bases de datos</h2>
+    <div class="doc-content">
+<h3>Por qué usar una base de datos</h3>
+<p>Una base de datos permite guardar, consultar, actualizar y eliminar información de forma persistente. Sin ella, los datos se pierden al reiniciar el servidor.</p>
+<h3>Tipos de bases de datos</h3>
+<table><thead><tr><th>Tipo</th><th>Ejemplos</th><th>Característica</th></tr></thead><tbody><tr><td><strong>Relacionales (SQL)</strong></td><td>MySQL, PostgreSQL</td><td>Tablas, filas y relaciones</td></tr><tr><td><strong>Documentales (NoSQL)</strong></td><td>MongoDB</td><td>Documentos tipo JSON</td></tr><tr><td><strong>Clave-valor</strong></td><td>Redis</td><td>Muy rápidas en memoria</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+Express no incluye una capa de base de datos integrada. Debes elegir el driver u ODM/ORM según la base de datos que uses.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-2-mongodb-mongoose">
+    <h2><i class="fa-solid fa-cubes"></i> 7.2 MongoDB con Mongoose</h2>
+    <div class="doc-content">
+<h3>Qué son MongoDB y Mongoose</h3>
+<p><strong>MongoDB</strong> es una base de datos NoSQL orientada a documentos. <strong>Mongoose</strong> es un ODM (Object Document Mapper) que facilita modelar los datos y realizar operaciones de forma cómoda desde Node.</p>
+<pre><code class="language-javascript">npm install mongoose</code></pre>
+<pre><code class="language-javascript">const mongoose = require('mongoose');
+
+// Conectar a MongoDB
+mongoose.connect('mongodb://localhost:27017/miapp', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() =&gt; console.log('Conectado a MongoDB'))
+  .catch(err =&gt; console.error('Error:', err.message));</code></pre>
+<h3>Definir un modelo</h3>
+<pre><code class="language-javascript">const usuarioSchema = new mongoose.Schema({
+  nombre: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  edad: Number
+});
+
+const Usuario = mongoose.model('Usuario', usuarioSchema);</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-3-mysql-y-postgresql">
+    <h2><i class="fa-solid fa-table"></i> 7.3 MySQL y PostgreSQL</h2>
+    <div class="doc-content">
+<h3>Bases relacionales desde Node</h3>
+<p>Para bases SQL puedes usar el paquete <code>mysql2</code> (MySQL) o <code>pg</code> (PostgreSQL), o un ORM como <strong>Sequelize</strong> que funciona con ambas.</p>
+<pre><code class="language-javascript">npm install mysql2</code></pre>
+<pre><code class="language-javascript">// conectar-mysql.js
+const mysql = require('mysql2/promise');
+
+async function main() {
+  const conexion = await mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'clave',
+    database: 'miapp'
+  });
+
+  const [filas] = await conexion.execute(
+    'SELECT * FROM usuarios WHERE id = ?',
+    [1]
+  );
+  console.log(filas);
+  conexion.end();
+}
+
+main();</code></pre>
+<h3>Sequelize (ORM)</h3>
+<pre><code class="language-javascript">npm install sequelize mysql2</code></pre>
+<pre><code class="language-javascript">const { Sequelize, DataTypes } = require('sequelize');
+const db = new Sequelize('miapp', 'root', 'clave', {
+  host: 'localhost',
+  dialect: 'mysql'
+});
+
+const Usuario = db.define('Usuario', {
+  nombre: { type: DataTypes.STRING, allowNull: false },
+  email: { type: DataTypes.STRING }
+});</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-4-operaciones-crud">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 7.4 Operaciones CRUD</h2>
+    <div class="doc-content">
+<h3>Qué es CRUD</h3>
+<p><strong>CRUD</strong> son las cuatro operaciones básicas sobre los datos: <strong>C</strong>reate (crear), <strong>R</strong>ead (leer), <strong>U</strong>pdate (actualizar) y <strong>D</strong>elete (eliminar).</p>
+<h3>CRUD con Mongoose</h3>
+<pre><code class="language-javascript">const Usuario = require('./models/Usuario');
+
+// Crear (Create)
+async function crearUsuario(datos) {
+  const usuario = new Usuario(datos);
+  await usuario.save();
+  return usuario;
+}
+
+// Leer (Read)
+async function obtenerUsuarios() {
+  return await Usuario.find();
+}
+
+async function obtenerPorId(id) {
+  return await Usuario.findById(id);
+}
+
+// Actualizar (Update)
+async function actualizarUsuario(id, cambios) {
+  return await Usuario.findByIdAndUpdate(id, cambios, { new: true });
+}
+
+// Eliminar (Delete)
+async function eliminarUsuario(id) {
+  return await Usuario.findByIdAndDelete(id);
+}</code></pre>
+<blockquote class="aside aside-note">
+Estas funciones se usan dentro de los handlers de las rutas Express para conectar los endpoints con la base de datos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-5-integracion-con-express">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> 7.5 Integración de la base de datos con Express</h2>
+    <div class="doc-content">
+<h3>Ejemplo: API conectada a MongoDB</h3>
+<pre><code class="language-javascript">const express = require('express');
+const mongoose = require('mongoose');
+const app = express();
+
+app.use(express.json());
+
+mongoose.connect('mongodb://localhost:27017/miapp');
+
+const Usuario = mongoose.model('Usuario', new mongoose.Schema({
+  nombre: String,
+  email: String
+}));
+
+app.post('/usuarios', async (req, res) =&gt; {
+  try {
+    const usuario = new Usuario(req.body);
+    await usuario.save();
+    res.status(201).json(usuario);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.get('/usuarios', async (req, res) =&gt; {
+  const usuarios = await Usuario.find();
+  res.json(usuarios);
+});
+
+app.listen(3000);</code></pre>
+<blockquote class="aside aside-tip">
+Al trabajar con operaciones asíncronas es recomendable usar <code>async/await</code> y envolverlas en <code>try/catch</code> para manejar los errores.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-6-variables-de-entorno-dotenv">
+    <h2><i class="fa-solid fa-lock"></i> 7.6 Variables de entorno (.env)</h2>
+    <div class="doc-content">
+<h3>Por qué usar variables de entorno</h3>
+<p>Los datos sensibles como cadenas de conexión, contraseñas y puertos no deben estar escritos en el código. Se almacenan en un archivo <code>.env</code> y se acceden mediante <code>process.env</code>.</p>
+<pre><code class="language-javascript">npm install dotenv</code></pre>
+<h3>Archivo .env</h3>
+<pre><code class="language-text">PORT=3000
+MONGO_URI=mongodb://localhost:27017/miapp
+DB_USER=root
+DB_PASS=clave_secreta</code></pre>
+<h3>Cargar y usar las variables</h3>
+<pre><code class="language-javascript">require('dotenv').config();
+
+const express = require('express');
+const mongoose = require('mongoose');
+const app = express();
+
+const PORT = process.env.PORT || 3000;
+const MONGO_URI = process.env.MONGO_URI;
+
+mongoose.connect(MONGO_URI);
+
+app.listen(PORT, () =&gt; console.log(`Servidor en el puerto ${PORT}`));</code></pre>
+<blockquote class="aside aside-warning">
+El archivo <code>.env</code> nunca debe subirse al repositorio. Agrégalo siempre al <code>.gitignore</code> para no exponer credenciales.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Express se conecta a bases de datos mediante drivers, ODM u ORM
+- MongoDB con Mongoose es una opción popular en el ecosistema Node
+- MySQL y PostgreSQL se integran con mysql2, pg o Sequelize
+- CRUD son las cuatro operaciones básicas sobre los datos
+- Las operaciones asíncronas de BD se usan dentro de los handlers
+- Las variables de entorno con dotenv protegen los datos sensibles
+</blockquote>
+    </div>
+  </section>

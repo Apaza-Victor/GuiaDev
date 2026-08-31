@@ -1,0 +1,175 @@
+<!-- 10. Despliegue en producción - Next.js (Frameworks) -->
+  <section id="10-1-preparar-el-proyecto-para-produccion">
+    <h2><i class="fa-solid fa-hammer"></i> 10.1 Preparar el proyecto para producción</h2>
+    <div class="doc-content">
+<h3>Compilar para producción</h3>
+<p>El primer paso es compilar la aplicación para generar la versión optimizada:</p>
+<pre><code class="language-bash">npm run build</code></pre>
+<p>La compilación genera una carpeta <code>.next</code> con las páginas estáticas (SSG), las funciones servidor (SSR/ISR) y el caché.</p>
+<h3>Ejecutar en modo producción</h3>
+<pre><code class="language-bash">npm start</code></pre>
+<h3>Errores a revisar antes del build</h3>
+<table><thead><tr><th>Problema</th><th>Cómo evitarlo</th></tr></thead><tbody><tr><td>Errores de TypeScript</td><td>Ejecuta <code>npm run build</code> y corrige los tipos</td></tr><tr><td>Fallos de ESLint</td><td>Corrige las reglas marcadas por <code>npm run lint</code></td></tr><tr><td>Imágenes sin optimizar</td><td>Usa <code>next/image</code> en todas las imágenes</td></tr></tbody></table>
+<blockquote class="aside aside-warning">
+Ejecuta siempre `npm run build` en local antes de desplegar para detectar errores temprano.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-2-configuracion-de-next-config">
+    <h2><i class="fa-solid fa-gear"></i> 10.2 Configuración de next.config</h2>
+    <div class="doc-content">
+<h3>El archivo next.config.mjs</h3>
+<pre><code class="language-js">// next.config.mjs
+/** @type {import("next").NextConfig} */
+const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "api.example.com",
+      },
+    ],
+  },
+  poweredByHeader: false,
+};
+
+export default nextConfig;</code></pre>
+<h3>Opciones de configuración comunes</h3>
+<table><thead><tr><th>Opción</th><th>Descripción</th></tr></thead><tbody><tr><td><code>images.remotePatterns</code></td><td>Permite optimizar imágenes de dominios externos</td></tr><tr><td><code>poweredByHeader</code></td><td>Elimina el header X-Powered-By (seguridad)</td></tr><tr><td><code>reactStrictMode</code></td><td>Activa el modo estricto de React</td></tr><tr><td><code>output: "standalone"</code></td><td>Genera un servidor autónomo para Docker</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Para servir imágenes desde dominios externos debes agregarlos en `images.remotePatterns`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-3-desplegar-en-vercel">
+    <h2><i class="fa-solid fa-rocket"></i> 10.3 Desplegar en Vercel</h2>
+    <div class="doc-content">
+<h3>Vercel: la plataforma oficial</h3>
+<p>Vercel es la empresa creadora de Next.js y su despliegue es el más sencillo. Conecta tu repositorio de GitHub y cada <em>push</em> genera una preview o producción:</p>
+<pre><code class="language-bash"># Instalar el CLI de Vercel
+npm i -g vercel
+
+# Desplegar en local
+vercel
+
+# Desplegar a producción
+vercel --prod</code></pre>
+<h3>Pasos en la web de Vercel</h3>
+<ul>
+<li>Crea una cuenta en vercel.com</li>
+<li>Conecta tu repositorio de GitHub</li>
+<li>Importa el proyecto (detecta Next.js automáticamente)</li>
+<li>Configura las variables de entorno</li>
+<li>Pulsa Deploy y obtén tu URL</li>
+</ul>
+<blockquote class="aside aside-tip">
+Cada push a la rama principal genera un nuevo despliegue de forma automática.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-4-variables-de-entorno-en-produccion">
+    <h2><i class="fa-solid fa-key"></i> 10.4 Variables de entorno en producción</h2>
+    <div class="doc-content">
+<h3>Cómo definirlas en producción</h3>
+<p>Las variables de entorno no se copian del proyecto; deben configurarse en la plataforma de despliegue. En Vercel se definen en el apartado <em>Settings &gt; Environment Variables</em>:</p>
+<pre><code class="language-bash"># Variables a configurar en producción
+DATABASE_URL=postgres://usuario:pass@produccion/db
+API_SECRET=otra-clave-distinta
+NEXT_PUBLIC_SITE_URL=https://miproyecto.vercel.app</code></pre>
+<h3>Variables por entorno</h3>
+<table><thead><tr><th>Variable</th><th>Desarrollo</th><th>Producción</th></tr></thead><tbody><tr><td><code>DATABASE_URL</code></td><td><code>.env.local</code></td><td>Panel de Vercel</td></tr><tr><td><code>API_SECRET</code></td><td><code>.env.local</code></td><td>Panel de Vercel</td></tr><tr><td><code>NEXT_PUBLIC_API_URL</code></td><td>localhost</td><td>URL pública</td></tr></tbody></table>
+<blockquote class="aside aside-warning">
+No valores distintas entre entornos. Nunca subas `.env.local` al repositorio.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-5-desplegar-en-otros-servicios-nodejs">
+    <h2><i class="fa-solid fa-server"></i> 10.5 Desplegar en otros servicios con Node.js</h2>
+    <div class="doc-content">
+<h3>Requirement para servidores Node.js</h3>
+<p>Puedes alojar tu app en cualquier servidor que ejecute Node.js. Necesitas compilar y arrancar el servidor de producción:</p>
+<pre><code class="language-bash"># Instalar dependencias
+npm install --production
+
+# Compilar
+npm run build
+
+# Arrancar en producción
+npm start</code></pre>
+<h3>Con Docker (standalone)</h3>
+<pre><code class="language-js">// next.config.mjs
+const nextConfig = {
+  output: "standalone",
+};</code></pre>
+<pre><code class="language-docker"># Dockerfile (simplificado)
+FROM node:20-alpine AS base
+
+WORKDIR /app
+COPY package.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build
+
+EXPOSE 3000
+CMD ["npm", "start"]</code></pre>
+<blockquote class="aside aside-tip">
+La opción `output: "standalone"` genera un servidor mínimo con todo lo necesario para ejecutarse solo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-6-buenas-practicas-en-produccion">
+    <h2><i class="fa-solid fa-clipboard-check"></i> 10.6 Buenas prácticas en producción</h2>
+    <div class="doc-content">
+<h3>Recomendaciones finales</h3>
+<table><thead><tr><th>Práctica</th><th>Por qué importa</th></tr></thead><tbody><tr><td>Usar HTTPS siempre</td><td>Seguridad y confianza del usuario</td></tr><tr><td>Configurar analytics</td><td>Mide el rendimiento y el uso</td></tr><tr><td>Revisar errores con logging</td><td>Detecta fallos rápidamente</td></tr><tr><td>Optimizar imágenes</td><td>Reduce el tiempo de carga</td></tr><tr><td>Añadir <code>error.tsx</code></td><td>Muestra errores elegantes</td></tr></tbody></table>
+<h3>Manejar errores en el cliente</h3>
+<pre><code class="language-jsx">// app/error.tsx
+"use client";
+
+export default function ErrorPage({ reset }: { reset: () =&gt; void }) {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Algo salió mal&lt;/h1&gt;
+      &lt;button onClick={reset}&gt;Reintentar&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Verificar el despliegue</h3>
+<ul>
+<li>Ejecuta Lighthouse en producción</li>
+<li>Comprueba que las variables de entorno son correctas</li>
+<li>Verifica que <code>sitemap.xml</code> y <code>robots.txt</code> responden</li>
+<li>Prueba todas las rutas dinámicas y subidas de archivos</li>
+</ul>
+<blockquote class="aside aside-note">
+Un despliegue correcto combina build sin errores, variables de entorno bien configuradas y monitoreo continuo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- `npm run build` genera la versión optimizada de producción
+- <code>next.config.mjs</code> controla imágenes y opciones avanzadas
+- Vercel es la plataforma más sencilla para desplegar Next.js
+- Las variables de entorno de producción se configuran en el panel
+- Se puede desplegar en cualquier servidor Node.js o con Docker
+- Las buenas prácticas incluyen HTTPS, analytics y manejo de errores
+</blockquote>
+    </div>
+  </section>

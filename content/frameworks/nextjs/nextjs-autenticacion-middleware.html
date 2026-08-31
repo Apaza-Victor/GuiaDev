@@ -1,0 +1,234 @@
+<!-- 08. Autenticación y middleware - Next.js (Frameworks) -->
+  <section id="8-1-que-es-el-middleware-en-nextjs">
+    <h2><i class="fa-solid fa-shield-halved"></i> 8.1 Qué es el middleware en Next.js</h2>
+    <div class="doc-content">
+<h3>Concepto</h3>
+<p>El <strong>middleware</strong> es una función que se ejecuta antes de que se procese una petición. Es perfecto para redirigir, proteger rutas o modificar headers. Se define en un archivo <code>middleware.ts</code> en la raíz del proyecto:</p>
+<pre><code class="language-tsx">// middleware.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(request: NextRequest) {
+  const token = request.cookies.get("token");
+
+  if (!token) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/dashboard/:path*"],
+};</code></pre>
+<h3>Cuándo se ejecuta</h3>
+<ul>
+<li>Antes del renderizado de la página</li>
+<li>En cada petición que coincida con el <code>matcher</code></li>
+<li>Tanto para navegación como para API routes</li>
+</ul>
+<blockquote class="aside aside-warning">
+El middleware no debe realizar operaciones pesadas; es de ejecución rápida y no tiene acceso a Node.js completo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-2-proteger-rutas-con-middleware">
+    <h2><i class="fa-solid fa-lock"></i> 8.2 Proteger rutas con middleware</h2>
+    <div class="doc-content">
+<h3>Proteger varias rutas con matcher</h3>
+<pre><code class="language-tsx">// middleware.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+const rutasProtegidas = ["/dashboard", "/perfil", "/admin"];
+
+export function middleware(request: NextRequest) {
+  const token = request.cookies.get("sesion");
+
+  const url = request.nextUrl.clone();
+  const esRutaProtegida = rutasProtegidas.some(
+    (ruta) =&gt; url.pathname.startsWith(ruta)
+  );
+
+  if (esRutaProtegida &amp;&amp; !token) {
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/dashboard/:path*", "/perfil/:path*", "/admin/:path*"],
+};</code></pre>
+<blockquote class="aside aside-tip">
+Usa `matcher` para definir qué rutas ejecutan el middleware y reducir el trabajo innecesario.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-3-redirecciones-y-reescrituras">
+    <h2><i class="fa-solid fa-arrow-right-arrow-left"></i> 8.3 Redirecciones y reescrituras</h2>
+    <div class="doc-content">
+<h3>Redireccionar (redirect)</h3>
+<pre><code class="language-tsx">// middleware.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Redirigir si el usuario está autenticado y entra al login
+  if (pathname === "/login" &amp;&amp; request.cookies.get("token")) {
+    return NextResponse.redirect(
+      new URL("/dashboard", request.url)
+    );
+  }
+
+  return NextResponse.next();
+}</code></pre>
+<h3>Reescribir (rewrite)</h3>
+<pre><code class="language-tsx">// Reescribir muestra otra ruta sin cambiar la URL
+return NextResponse.rewrite(
+  new URL("/alternativa", request.url)
+);</code></pre>
+<table><thead><tr><th>Función</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>redirect()</code></td><td>Cambia la URL del navegador</td></tr><tr><td><code>rewrite()</code></td><td>Muestra otra ruta sin cambiar la URL</td></tr><tr><td><code>next()</code></td><td>Continúa con la petición normal</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-4-manejo-de-sesiones-y-credenciales">
+    <h2><i class="fa-solid fa-user-lock"></i> 8.4 Manejo de sesiones y credenciales</h2>
+    <div class="doc-content">
+<h3>Concepto de sesión</h3>
+<p>Una sesión identifica al usuario entre peticiones. Las credenciales (email y contraseña) se verifican en el servidor y se genera un token que se guarda en una cookie:</p>
+<pre><code class="language-tsx">// app/api/login/route.ts
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(request: NextRequest) {
+  const { email, password } = await request.json();
+
+  // Verificar credenciales contra la base de datos
+  if (email === "admin@test.com" &amp;&amp; password === "123456") {
+    const token = generarToken(email); // firma el usuario
+
+    const response = NextResponse.json({ ok: true });
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24, // 1 día
+    });
+    return response;
+  }
+
+  return NextResponse.json(
+    { error: "Credenciales inválidas" },
+    { status: 401 }
+  );
+}</code></pre>
+<h3>Buenas prácticas de sesiones</h3>
+<ul>
+<li>Guarda el token en cookies <code>httpOnly</code></li>
+<li>Deja que librerías como Auth.js gestionen la sesión</li>
+<li>Expira las sesiones con <code>maxAge</code></li>
+<li>Usa HTTPS en producción para proteger las cookies</li>
+</ul>
+<blockquote class="aside aside-note">
+Para proyectos reales usa Auth.js (NextAuth) o Clerk; el ejemplo es solo ilustrativo del flujo de sesión.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-5-variables-de-entorno-env">
+    <h2><i class="fa-solid fa-key"></i> 8.5 Variables de entorno (ENV)</h2>
+    <div class="doc-content">
+<h3>Qué son y cómo se declaran</h3>
+<p>Las variables de entorno guardan secretos y configuración fuera del código. Se definen en archivos <code>.env</code>:</p>
+<pre><code class="language-bash"># .env.local (secreto, no se sube a git)
+DATABASE_URL=postgres://usuario:pass@localhost:5432/mibd
+API_SECRET=clave-super-secreta
+
+# Prefijo NEXT_PUBLIC_ para exponer al cliente
+NEXT_PUBLIC_API_URL=https://api.example.com</code></pre>
+<h3>Acceder a las variables</h3>
+<pre><code class="language-jsx">// En el servidor (seguro)
+const db = process.env.DATABASE_URL;
+
+// En el cliente (solo NEXT_PUBLIC_)
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;</code></pre>
+<h3>Archivos .env disponibles</h3>
+<table><thead><tr><th>Archivo</th><th>Uso</th></tr></thead><tbody><tr><td><code>.env.local</code></td><td>Variables del entorno local</td></tr><tr><td><code>.env.production</code></td><td>Variables de producción</td></tr><tr><td><code>.env.development</code></td><td>Variables de desarrollo</td></tr></tbody></table>
+<blockquote class="aside aside-warning">
+Añade `.env*` a tu `.gitignore`. Jamás subas claves secretas al repositorio.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-6-uso-de-authjs-para-autenticacion">
+    <h2><i class="fa-solid fa-right-to-bracket"></i> 8.6 Uso de Auth.js para autenticación</h2>
+    <div class="doc-content">
+<h3>Por qué usar una librería</h3>
+<p>Gestionar sesiones, proveedores OAuth y seguridad de forma manual es complejo. <strong>Auth.js</strong> (antes NextAuth) simplifica todo el flujo:</p>
+<pre><code class="language-jsx">// app/api/auth/[...nextauth]/route.ts
+import NextAuth from "next-auth";
+import GitHub from "next-auth/providers/github";
+import Credentials from "next-auth/providers/credentials";
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  providers: [
+    GitHub,
+    Credentials({
+      credentials: {
+        email: {},
+        password: {},
+      },
+      async authorize(creds) {
+        const user = await verificarCredenciales(
+          creds.email,
+          creds.password
+        );
+        return user || null;
+      },
+    }),
+  ],
+});</code></pre>
+<h3>Proteger una página con auth</h3>
+<pre><code class="language-jsx">// app/dashboard/page.tsx
+import { auth } from "../api/auth/[...nextauth]/route";
+
+export default async function Dashboard() {
+  const session = await auth();
+
+  if (!session) {
+    return &lt;p&gt;No has iniciado sesión&lt;/p&gt;;
+  }
+
+  return &lt;p&gt;Bienvenido, {session.user.name}&lt;/p&gt;;
+}</code></pre>
+<blockquote class="aside aside-tip">
+Auth.js ofrece proveedores de Google, GitHub, email y credenciales, además de adaptadores para bases de datos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El middleware se ejecuta antes de procesar cada petición
+- Protege rutas usando <code>matcher</code> y redirecciones
+- Las sesiones identifican al usuario entre peticiones
+- Los tokens se guardan en cookies httpOnly
+- Las variables de entorno se declaran en archivos <code>.env</code>
+- Auth.js simplifica la autenticación con proveedores OAuth
+</blockquote>
+    </div>
+  </section>

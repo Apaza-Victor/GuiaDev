@@ -1,0 +1,177 @@
+<!-- 08. APIs REST con ASP.NET Core - .NET (Frameworks) -->
+  <section id="8-1-que-es-una-api-web">
+    <h2><i class="fa-solid fa-server"></i> 8.1 Qué es una API web</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Una <strong>API web</strong> (Web API) es un servicio que expone datos y funcionalidad a través de HTTP. En lugar de devolver HTML, devuelve datos (normalmente JSON) que consumen otras aplicaciones, frontends o clientes móviles.</p>
+<h3>Diferencias con MVC</h3>
+<table><thead><tr><th>Aspecto</th><th>MVC</th><th>Web API</th></tr></thead><tbody><tr><td><strong>Respuesta</strong></td><td>HTML (vistas)</td><td>JSON / XML</td></tr><tr><td><strong>Consumidor</strong></td><td>Navegador</td><td>Clientes, apps, SPA</td></tr><tr><td><strong>Base</strong></td><td>Controller</td><td>ControllerBase</td></tr></tbody></table>
+<h3>Ejemplo: controlador de API</h3>
+<pre><code class="language-csharp">[ApiController]
+[Route("api/[controller]")]
+public class UsuariosController : ControllerBase
+{
+    [HttpGet]
+    public IActionResult ObtenerTodos()
+    {
+        return Ok(new[] { new { Id = 1, Nombre = "Ana" } });
+    }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-2-api-controller-y-json">
+    <h2><i class="fa-solid fa-brackets-curly"></i> 8.2 [ApiController] y JSON</h2>
+    <div class="doc-content">
+<h3>El atributo [ApiController]</h3>
+<p><code>[ApiController]</code> habilita convenciones para APIs:</p>
+<ul>
+<li>Validación automática del modelo (ModelState)</li>
+<li>Enlazado del body JSON por defecto</li>
+<li>Respuestas de error automáticas</li>
+</ul>
+<h3>Serialización JSON</h3>
+<p>La API convierte automáticamente los objetos C# a JSON y viceversa usando <code>System.Text.Json</code>.</p>
+<h3>Ejemplo: modelo a JSON</h3>
+<pre><code class="language-csharp">public class Producto
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; }
+    public decimal Precio { get; set; }
+}
+
+// Devuelve: {"id":1,"nombre":"Mouse","precio":29.99}
+[HttpGet("{id}")]
+public ActionResult&lt;Producto&gt; Obtener(int id)
+{
+    return new Producto { Id = id, Nombre = "Mouse", Precio = 29.99m };
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-3-metodos-http">
+    <h2><i class="fa-solid fa-arrows-up-down-left-right"></i> 8.3 Métodos HTTP</h2>
+    <div class="doc-content">
+<h3>Verbos HTTP y su propósito</h3>
+<table><thead><tr><th>Método</th><th>Acción</th><th>Atributo</th></tr></thead><tbody><tr><td>GET</td><td>Obtener recursos</td><td>[HttpGet]</td></tr><tr><td>POST</td><td>Crear recursos</td><td>[HttpPost]</td></tr><tr><td>PUT</td><td>Actualizar (completo)</td><td>[HttpPut]</td></tr><tr><td>PATCH</td><td>Actualizar parcial</td><td>[HttpPatch]</td></tr><tr><td>DELETE</td><td>Eliminar</td><td>[HttpDelete]</td></tr></tbody></table>
+<h3>Ejemplo: CRUD en una API</h3>
+<pre><code class="language-csharp">[ApiController]
+[Route("api/productos")]
+public class ProductosController : ControllerBase
+{
+    [HttpGet]
+    public IActionResult Listar() =&gt; Ok(new[] { new Producto() });
+
+    [HttpGet("{id}")]
+    public IActionResult Obtener(int id)
+        =&gt; id &gt; 0 ? Ok(new Producto()) : NotFound();
+
+    [HttpPost]
+    public IActionResult Crear(Producto producto)
+        =&gt; CreatedAtAction(nameof(Obtener), new { id = 1 }, producto);
+
+    [HttpPut("{id}")]
+    public IActionResult Actualizar(int id, Producto producto) =&gt; NoContent();
+
+    [HttpDelete("{id}")]
+    public IActionResult Borrar(int id) =&gt; NoContent();
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-4-codigos-de-estado">
+    <h2><i class="fa-solid fa-signal"></i> 8.4 Códigos de estado</h2>
+    <div class="doc-content">
+<h3>Códigos principales</h3>
+<p>Las APIs usan códigos de estado HTTP para comunicar el resultado de cada operación.</p>
+<table><thead><tr><th>Código</th><th>Significado</th><th>Método helper</th></tr></thead><tbody><tr><td>200 OK</td><td>Éxito</td><td>Ok()</td></tr><tr><td>201 Created</td><td>Recurso creado</td><td>CreatedAtAction()</td></tr><tr><td>204 No Content</td><td>Éxito sin contenido</td><td>NoContent()</td></tr><tr><td>400 Bad Request</td><td>Petición inválida</td><td>BadRequest()</td></tr><tr><td>401 Unauthorized</td><td>No autenticado</td><td>Unauthorized()</td></tr><tr><td>404 Not Found</td><td>Recurso no existe</td><td>NotFound()</td></tr></tbody></table>
+<h3>Ejemplo: respuesta 201</h3>
+<pre><code class="language-csharp">[HttpPost]
+public IActionResult Crear(Producto producto)
+{
+    // guardar en BD y obtener el nuevo Id
+    return CreatedAtAction(nameof(Obtener), new { id = producto.Id }, producto);
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-5-minimal-api">
+    <h2><i class="fa-solid fa-minus"></i> 8.5 Minimal APIs</h2>
+    <div class="doc-content">
+<h3>Qué son las Minimal APIs</h3>
+<p>Las <strong>Minimal APIs</strong> permiten crear APIs con el mínimo de código, sin controladores, definiendo endpoints directamente con lambdas.</p>
+<h3>Ejemplo: Minimal API completa</h3>
+<pre><code class="language-csharp">var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+var productos = new List&lt;Producto&gt;();
+
+app.MapGet("/productos", () =&gt; productos);
+app.MapGet("/productos/{id}", (int id) =&gt;
+
+    productos.FirstOrDefault(p =&gt; p.Id == id)
+        is { } p ? Results.Ok(p) : Results.NotFound());
+
+app.MapPost("/productos", (Producto producto) =&gt;
+{
+    productos.Add(producto);
+    return Results.Created($"/productos/{producto.Id}", producto);
+});
+
+app.MapDelete("/productos/{id}", (int id) =&gt;
+{
+    productos.RemoveAll(p =&gt; p.Id == id);
+    return Results.NoContent();
+});
+
+app.Run();</code></pre>
+<blockquote class="aside aside-tip">
+Elige Minimal APIs para servicios simples y controladores para apps grandes y organizadas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-6-probar-la-api">
+    <h2><i class="fa-solid fa-flask"></i> 8.6 Probar la API</h2>
+    <div class="doc-content">
+<h3>Herramientas para probar</h3>
+<p>Puedes probar las APIs con herramientas visuales o de línea de comandos:</p>
+<ul>
+<li><strong>Swagger UI</strong>: Documentación interactiva incluida en desarrollo</li>
+<li><strong>Postman</strong>: Cliente visual de APIs</li>
+<li><strong>Insomnia</strong>: Alternativa a Postman</li>
+<li><strong>curl</strong>: desde la terminal</li>
+</ul>
+<h3>Ejemplo con curl</h3>
+<pre><code class="language-bash"># Obtener todos los productos
+curl http://localhost:5000/api/productos
+
+# Crear un producto via POST
+curl -X POST http://localhost:5000/api/productos \
+     -H "Content-Type: application/json" \
+     -d '{"nombre":"Teclado","precio":49.99}'</code></pre>
+<p>En desarrollo, Swagger suele estar disponible en <code>/swagger</code>.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Una API web expone datos y funcionalidad vía HTTP
+- Devuelve JSON en lugar de HTML
+- [ApiController] habilita convenciones y validación
+- Los verbos HTTP definen las operaciones (GET, POST, PUT, DELETE)
+- Los códigos de estado comunican los resultados
+- Las Minimal APIs definen endpoints sin controladores
+- Swagger, Postman y curl ayudan a probar las APIs
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,171 @@
+<!-- 03. Modelo-Vista-Controlador (MVC) - .NET (Frameworks) -->
+  <section id="3-1-patron-mvc">
+    <h2><i class="fa-solid fa-layer-group"></i> 3.1 El patrón MVC</h2>
+    <div class="doc-content">
+<h3>Qué es MVC</h3>
+<p><strong>MVC</strong> (Model-View-Controller) es un patrón de diseño que separa la lógica de la aplicación en tres componentes: Modelo, Vista y Controlador. ASP.NET Core implementa este patrón de forma nativa para construir aplicaciones web.</p>
+<h3>Los tres roles</h3>
+<table><thead><tr><th>Componente</th><th>Responsabilidad</th></tr></thead><tbody><tr><td><strong>Modelo</strong></td><td>Datos y reglas de negocio</td></tr><tr><td><strong>Vista</strong></td><td>Presentación o interfaz (HTML)</td></tr><tr><td><strong>Controlador</strong></td><td>Maneja la petición y orquesta</td></tr></tbody></table>
+<h3>Flujo de una petición</h3>
+<pre><code class="language-csharp">// Flujo: Browser -&gt; Controlador -&gt; Modelo -&gt; Vista -&gt; HTML
+// 1. El navegador envía una petición a una URL
+// 2. El Controlador recibe la solicitud
+// 3. Consulta el Modelo (datos)
+// 4. Elige una Vista y devuelve la respuesta
+// 5. La Vista genera el HTML que ve el usuario</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-2-el-modelo">
+    <h2><i class="fa-solid fa-database"></i> 3.2 El Modelo</h2>
+    <div class="doc-content">
+<h3>Qué es el Modelo</h3>
+<p>El <strong>Modelo</strong> representa los datos de la aplicación y las reglas de negocio. Suele ser clases C# que mapean tablas de base de datos o representan estructuras de dominio.</p>
+<h3>Ejemplo: Modelo Producto</h3>
+<pre><code class="language-csharp">public class Producto
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; }
+    public decimal Precio { get; set; }
+    public string Categoria { get; set; }
+}</code></pre>
+<h3>Tipos de modelos</h3>
+<ul>
+<li><strong>Modelos de dominio</strong>: Representan entidades de negocio</li>
+<li><strong>ViewModels</strong>: Datos que consumirá una vista específica</li>
+<li><strong>DTOs</strong>: Objetos para transferir datos entre capas</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-3-la-vista">
+    <h2><i class="fa-solid fa-display"></i> 3.3 La Vista</h2>
+    <div class="doc-content">
+<h3>Qué es la Vista</h3>
+<p>La <strong>Vista</strong> es la capa de presentación. En ASP.NET Core se crean con archivos Razor <code>.cshtml</code> que combinan HTML con código C# usando la sintaxis <code>@</code>.</p>
+<h3>Ejemplo: Vista que muestra un producto</h3>
+<pre><code class="language-csharp">@model Producto
+
+&lt;h1&gt;Detalle del producto&lt;/h1&gt;
+&lt;p&gt;Nombre: @Model.Nombre&lt;/p&gt;
+&lt;p&gt;Precio: @Model.Precio&lt;/p&gt;
+&lt;p&gt;Categoría: @Model.Categoria&lt;/p&gt;</code></pre>
+<h3>Carpeta de vistas (convención)</h3>
+<pre><code class="language-csharp">Views/
+  Home/Index.cshtml
+  Producto/Detalle.cshtml
+  Cart/Ver.cshtml</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-4-el-controlador">
+    <h2><i class="fa-solid fa-sitemap"></i> 3.4 El Controlador</h2>
+    <div class="doc-content">
+<h3>Qué es el Controlador</h3>
+<p>El <strong>Controlador</strong> recibe la petición HTTP, procesa la lógica necesaria, consulta modelos y devuelve la vista correspondiente. Hereda de <code>Controller</code>.</p>
+<h3>Ejemplo: Controlador de Productos</h3>
+<pre><code class="language-csharp">public class ProductoController : Controller
+{
+    public IActionResult Detalle(int id)
+    {
+        var producto = new Producto
+        {
+            Id = id,
+            Nombre = "Laptop Gamer",
+            Precio = 1299.99m,
+            Categoria = "Tecnología"
+        };
+        return View(producto);
+    }
+}</code></pre>
+<h3>Acciones</h3>
+<p>Cada método público del controlador es una <strong>acción</strong> que responde a una ruta. Devuelve un <code>IActionResult</code> (vistas, JSON, redirecciones).</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-5-middleware-y-pipeline">
+    <h2><i class="fa-solid fa-ellipsis"></i> 3.5 Middleware y pipeline</h2>
+    <div class="doc-content">
+<h3>Qué es middleware</h3>
+<p>El <strong>middleware</strong> son componentes que forman el pipeline de procesamiento de cada petición. Cada middleware puede validar, modificar o pasar la petición al siguiente.</p>
+<h3>Orden típico del pipeline</h3>
+<ul>
+<li><strong>UseStaticFiles</strong>: Sirve archivos estáticos</li>
+<li><strong>UseRouting</strong>: Resuelve la ruta de la petición</li>
+<li><strong>UseAuthentication</strong>: Autentica al usuario</li>
+<li><strong>UseAuthorization</strong>: Autoriza el acceso</li>
+<li><strong>MapControllers</strong>: Enruta a los controladores</li>
+</ul>
+<h3>Ejemplo: Configurar el pipeline</h3>
+<pre><code class="language-csharp">var app = builder.Build();
+
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapDefaultControllerRoute();
+
+app.Run();</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-6-la-clase-program-y-di">
+    <h2><i class="fa-solid fa-gears"></i> 3.6 Program y la inyección de dependencias</h2>
+    <div class="doc-content">
+<h3>La clase Program</h3>
+<p>Con el modelo de hosting minimal, <code>Program.cs</code> construye la aplicación, registra servicios y configura el middleware.</p>
+<h3>Registro de servicios (DI)</h3>
+<pre><code class="language-csharp">var builder = WebApplication.CreateBuilder(args);
+
+// Registrar MVC
+builder.Services.AddControllersWithViews();
+
+// Registrar servicios personalizados
+builder.Services.AddScoped&lt;IProductoServicio, ProductoServicio&gt;();
+
+var app = builder.Build();
+
+app.UseStaticFiles();
+app.MapDefaultControllerRoute();
+app.Run();</code></pre>
+<h3>Inyección en un controlador</h3>
+<pre><code class="language-csharp">public class ProductoController : Controller
+{
+    private readonly IProductoServicio _servicio;
+
+    public ProductoController(IProductoServicio servicio)
+    {
+        _servicio = servicio;
+    }
+
+    public IActionResult Index()
+    {
+        return View(_servicio.ObtenerTodos());
+    }
+}</code></pre>
+<blockquote class="aside aside-tip">
+La inyección de dependencias reduces el acoplamiento y facilita las pruebas con mocks.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- MVC separa la aplicación en Modelo, Vista y Controlador
+- El Modelo maneja datos y reglas de negocio
+- Las Vistas son archivos Razor .cshtml con HTML y C#
+- El Controlador recibe la petición y coordina la respuesta
+- El pipeline usa middleware (static, routing, auth, controllers)
+- Program.cs registra servicios y configura la inyección de dependencias
+</blockquote>
+    </div>
+  </section>

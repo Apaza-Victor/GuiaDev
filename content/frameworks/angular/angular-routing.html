@@ -1,0 +1,270 @@
+<!-- 08. Routing y navegación - Angular (Frameworks) -->
+  <section id="8-1-routermodule-y-configuracion-de-rutas">
+    <h2><i class="fa-solid fa-route"></i> 8.1 RouterModule y configuración de rutas</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>El <strong>RouterModule</strong> es el módulo de Angular que gestiona la navegación interna de la aplicación (client-side routing). Permite mapear URLs a componentes sin recargar la página, convirtiendo la SPA en una experiencia fluida.</p>
+<h3>Configuración básica</h3>
+<pre><code class="language-typescript">import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { InicioComponent } from './inicio/inicio.component';
+import { ContactoComponent } from './contacto/contacto.component';
+
+const routes: Routes = [
+  { path: '', component: InicioComponent },
+  { path: 'contacto', component: ContactoComponent }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule {}</code></pre>
+<h3>Propiedades de una ruta</h3>
+<table><thead><tr><th>Propiedad</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>path</strong></td><td>La URL que se mapea (sin barra inicial)</td></tr><tr><td><strong>component</strong></td><td>El componente que se muestra al acceder a esa ruta</td></tr><tr><td><strong>children</strong></td><td>Rutas anidadas bajo esta ruta</td></tr><tr><td><strong> redirectTo</strong></td><td>Redirige a otra ruta</td></tr><tr><td><strong>pathMatch</strong></td><td>Estrategia de coincidencia ('full' o 'prefix')</td></tr><tr><td><strong>loadChildren</strong></td><td>Carga lazy de un módulo o componente</td></tr></tbody></table>
+<h3>Ejemplo con redirección</h3>
+<pre><code class="language-typescript">const routes: Routes = [
+  { path: '', redirectTo: '/inicio', pathMatch: 'full' },
+  { path: 'inicio', component: InicioComponent },
+  { path: '**', redirectTo: '/inicio' }
+];</code></pre>
+<blockquote class="aside aside-warning">
+Siempre coloca la ruta comodín `**` al final de la configuración. Angular evalúa las rutas en orden y la primera coincidencia gana.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-2-routerlink-y-navegacion">
+    <h2><i class="fa-solid fa-link"></i> 8.2 RouterLink y navegación</h2>
+    <div class="doc-content">
+<h3>¿Qué es RouterLink?</h3>
+<p><strong>RouterLink</strong> es la directiva que reemplaza al enlace <code>&lt;a&gt;</code> tradicional para navegar dentro de una SPA Angular. Evita recargas completas de página y mantiene el estado de la aplicación.</p>
+<h3>Sintaxis básica</h3>
+<pre><code class="language-html">&lt;!-- Navegación estática --&gt;
+&lt;a routerLink="/inicio"&gt;Inicio&lt;/a&gt;
+&lt;a routerLink="/contacto"&gt;Contacto&lt;/a&gt;
+
+&lt;!-- Navegación con array de rutas --&gt;
+&lt;a [routerLink]="['/productos']"&gt;Productos&lt;/a&gt;
+
+&lt;!-- Navegación relativa --&gt;
+&lt;a [routerLink]="['../']"&gt;Volver al padre&lt;/a&gt;</code></pre>
+<h3>Resaltado de ruta activa</h3>
+<pre><code class="language-html">&lt;a routerLink="/inicio" routerLinkActive="activo"&gt;Inicio&lt;/a&gt;
+&lt;a routerLink="/contacto" routerLinkActive="activo"&gt;Contacto&lt;/a&gt;
+
+&lt;!-- Excluir una ruta padre del resaltado --&gt;
+&lt;a routerLink="/inicio" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }"&gt;
+  Inicio
+&lt;/a&gt;</code></pre>
+<h3>Navegación programática</h3>
+<pre><code class="language-typescript">import { Router } from '@angular/router';
+
+@Component({ ... })
+export class LoginComponent {
+  constructor(private router: Router) {}
+
+  login(): void {
+    // lógica de autenticación...
+    this.router.navigate(['/inicio']);
+  }
+
+  irAProducto(id: number): void {
+    this.router.navigate(['/productos', id]);
+  }
+}</code></pre>
+<blockquote class="aside aside-tip">
+Usa `routerLink` para la navegación en templates y `router.navigate()` cuando necesitas navegar como respuesta a una lógica programática (después de un login, envío de formulario, etc.).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-3-routeroutlet-y-rutas-anidadas">
+    <h2><i class="fa-solid fa-window-restore"></i> 8.3 RouterOutlet y rutas anidadas</h2>
+    <div class="doc-content">
+<h3>¿Qué es RouterOutlet?</h3>
+<p><strong>RouterOutlet</strong> es una directiva que actúa como un <em>placeholder</em> en el template del componente padre: es donde Angular renderiza el componente de la ruta activa.</p>
+<h3>Sintaxis básica</h3>
+<pre><code class="language-html">&lt;!-- app.component.html --&gt;
+&lt;nav&gt;
+  &lt;a routerLink="/inicio"&gt;Inicio&lt;/a&gt;
+  &lt;a routerLink="/admin"&gt;Admin&lt;/a&gt;
+&lt;/nav&gt;
+&lt;router-outlet&gt;&lt;/router-outlet&gt;</code></pre>
+<h3>Rutas anidadas con children</h3>
+<pre><code class="language-typescript">const routes: Routes = [
+  {
+    path: 'admin',
+    component: AdminComponent,
+    children: [
+      { path: '', component: DashboardComponent },
+      { path: 'usuarios', component: UsuariosComponent },
+      { path: 'configuracion', component: ConfigComponent }
+    ]
+  }
+];</code></pre>
+<pre><code class="language-html">&lt;!-- admin.component.html --&gt;
+&lt;aside&gt;
+  &lt;a routerLink="/admin/usuarios"&gt;Usuarios&lt;/a&gt;
+  &lt;a routerLink="/admin/configuracion"&gt;Config&lt;/a&gt;
+&lt;/aside&gt;
+&lt;router-outlet&gt;&lt;/router-outlet&gt;</code></pre>
+<h3>RouterOutlet auxiliar (named outlets)</h3>
+<pre><code class="language-html">&lt;router-outlet&gt;&lt;/router-outlet&gt;
+&lt;router-outlet name="panel"&gt;&lt;/router-outlet&gt;</code></pre>
+<pre><code class="language-typescript">{ path: 'noticias', component: NoticiasComponent, outlet: 'panel' }</code></pre>
+<blockquote class="aside aside-note">
+Los named outlets permiten mostrar contenido en dos zonas de la pantalla simultáneamente. Son útiles para paneles laterales, modales o áreas de notificaciones persistentes.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-4-parametros-de-ruta-y-query-strings">
+    <h2><i class="fa-solid fa-sliders"></i> 8.4 Parámetros de ruta y query strings</h2>
+    <div class="doc-content">
+<h3>Parámetros en la URL</h3>
+<p>Angular permite recibir <strong>parámetros dinámicos</strong> en la ruta para identificar recursos: usuarios, productos, artículos, etc.</p>
+<h3>Definición de ruta con parámetro</h3>
+<pre><code class="language-typescript">const routes: Routes = [
+  { path: 'productos/:id', component: ProductoDetalleComponent }
+];</code></pre>
+<h3>Lectura del parámetro con ActivatedRoute</h3>
+<pre><code class="language-typescript">import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+@Component({
+  selector: 'app-producto-detalle',
+  template: '&lt;p&gt;Producto ID: {{ productoId }}&lt;/p&gt;'
+})
+export class ProductoDetalleComponent implements OnInit {
+  productoId: string = '';
+
+  constructor(private route: ActivatedRoute) {}
+
+  ngOnInit(): void {
+    this.productoId = this.route.snapshot.paramMap.get('id') ?? '';
+  }
+}</code></pre>
+<h3>Parámetros vs. Query Parameters vs. Data</h3>
+<table><thead><tr><th>Tipo</th><th>Sintaxis URL</th><th>Cómo se lee</th></tr></thead><tbody><tr><td><strong>Param</strong></td><td><code>/productos/42</code></td><td><code>route.snapshot.paramMap.get('id')</code></td></tr><tr><td><strong>Query</strong></td><td><code>/productos?page=2</code></td><td><code>route.snapshot.queryParamMap.get('page')</code></td></tr><tr><td><strong>Data</strong></td><td>Definida en la ruta</td><td><code>route.snapshot.data['titulo']</code></td></tr></tbody></table>
+<h3>Navegación con query parameters</h3>
+<pre><code class="language-typescript">// Navegar con query params
+this.router.navigate(['/productos'], {
+  queryParams: { page: 2, ordenar: 'precio' }
+});
+
+// Leer en el componente
+ngOnInit(): void {
+  this.route.queryParamMap.subscribe(params =&gt; {
+    const page = params.get('page') ?? '1';
+  });
+}</code></pre>
+<blockquote class="aside aside-tip">
+Usa `snapshot` cuando el componente no se reutiliza (la ruta cambia y se crea uno nuevo). Usa `subscribe` en `paramMap` o `queryParamMap` cuando el componente se reutiliza y el parámetro puede cambiar sin destruir el componente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-5-rutas-protegidas-y-guards">
+    <h2><i class="fa-solid fa-shield-halved"></i> 8.5 Rutas protegidas y guards</h2>
+    <div class="doc-content">
+<h3>¿Qué es un guard?</h3>
+<p>Un <strong>guard</strong> (guardia de ruta) es un servicio que Angular ejecuta antes de permitir la activación de una ruta. Se usa para proteger rutas que requieren autenticación o autorización.</p>
+<h3>Tipos de guards</h3>
+<table><thead><tr><th>Guard</th><th>¿Cuándo se ejecuta?</th><th>Uso típico</th></tr></thead><tbody><tr><td><strong>canActivate</strong></td><td>Antes de activar la ruta</td><td>Proteger rutas privadas</td></tr><tr><td><strong>canActivateChild</strong></td><td>Antes de activar una ruta hija</td><td>Proteger sub-rutas</td></tr><tr><td><strong>canDeactivate</strong></td><td>Antes de salir de la ruta</td><td>Confirmar si hay cambios sin guardar</td></tr><tr><td><strong>canMatch</strong></td><td>Antes de intentar hacer match con la ruta</td><td>Validaciones previas</td></tr></tbody></table>
+<h3>Ejemplo: guard funcional (Angular moderno)</h3>
+<pre><code class="language-typescript">// auth.guard.ts
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from './auth.service';
+
+export const authGuard: CanActivateFn = (route, state) =&gt; {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.estaAutenticado()) {
+    return true;
+  }
+
+  return router.createUrlTree(['/login'], {
+    queryParams: { returnUrl: state.url }
+  });
+};</code></pre>
+<h3>Uso en la configuración de rutas</h3>
+<pre><code class="language-typescript">const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  {
+    path: 'admin',
+    canActivate: [authGuard],
+    component: AdminComponent
+  }
+];</code></pre>
+<blockquote class="aside aside-warning">
+Los guards funcionales (forma moderna) reemplazan a las clases con `CanActivate`. Para proyectos nuevos, usa siempre la forma funcional; para proyectos existentes, verifica qué estilo usa el proyecto.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-6-lazy-loading-de-modulos">
+    <h2><i class="fa-solid fa-bolt"></i> 8.6 Lazy loading de módulos</h2>
+    <div class="doc-content">
+<h3>¿Qué es el lazy loading?</h3>
+<p>El <strong>lazy loading</strong> (carga perezosa) retrasa la carga de módulos o componentes hasta que el usuario navega a ellos por primera vez. Esto reduce el tamaño del bundle inicial y mejora el tiempo de carga de la aplicación.</p>
+<h3>Lazy loading con módulos (tradicional)</h3>
+<pre><code class="language-typescript">const routes: Routes = [
+  {
+    path: 'productos',
+    loadChildren: () =&gt;
+      import('./productos/productos.module').then(m =&gt; m.ProductosModule)
+  }
+];</code></pre>
+<pre><code class="language-typescript">// productos-routing.module.ts
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { ListaProductosComponent } from './lista/lista.component';
+
+const routes: Routes = [
+  { path: '', component: ListaProductosComponent }
+];
+
+@NgModule({
+  imports: [RouterModule.forChild(routes)],
+  exports: [RouterModule]
+})
+export class ProductosRoutingModule {}</code></pre>
+<h3>Lazy loading de componentes standalone</h3>
+<pre><code class="language-typescript">const routes: Routes = [
+  {
+    path: 'dashboard',
+    loadComponent: () =&gt;
+      import('./dashboard/dashboard.component').then(c =&gt; c.DashboardComponent)
+  }
+];</code></pre>
+<h3>Impacto en el rendimiento</h3>
+<table><thead><tr><th>Aspecto</th><th>Sin lazy loading</th><th>Con lazy loading</th></tr></thead><tbody><tr><td>Bundle inicial</td><td>Todo el código se carga de golpe</td><td>Solo el código necesario para la ruta inicial</td></tr><tr><td>Tiempo de carga</td><td>Más lento en apps grandes</td><td>Significativamente más rápido</td></tr><tr><td>Experiencia</td><td>Espera larga al abrir la app</td><td>Carga rápida, contenido bajo demanda</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Aplica lazy loading a todos los módulos de funcionalidades secundarias (admin, reportes, configuración). Solo los módulos necesarios para la ruta inicial se cargan de forma eagerly.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- **RouterModule** configura las rutas de la aplicación con el array de objetos `Routes`
+- **RouterLink** navega sin recargar la página y **routerLinkActive** resalta la ruta activa
+- **RouterOutlet** es el placeholder donde Angular renderiza el componente de la ruta activa
+- Los **parámetros de ruta** (`:id`) y **query parameters** pasan datos a través de la URL
+- Los **guards** protegen rutas antes de permitir la navegación (autenticación, autorización)
+- El **lazy loading** retrasa la carga de módulos/componentes y mejora el rendimiento inicial
+</blockquote>
+    </div>
+  </section>

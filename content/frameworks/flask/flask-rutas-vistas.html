@@ -1,0 +1,224 @@
+<!-- 03. Rutas y vistas - Flask (Frameworks) -->
+  <section id="3-1-decorador-app-route">
+    <h2><i class="fa-solid fa-road"></i> 3.1 El decorador @app.route</h2>
+    <div class="doc-content">
+<h3>Qué es una ruta</h3>
+<p>Una <strong>ruta</strong> es una URL que la aplicación reconoce, y la <strong>vista</strong> es la función Python que responde a esa URL. El decorador `@app.route()` conecta ambas cosas.</p>
+<h3>Sintaxis básica</h3>
+<pre><code class="language-python">from flask import Flask
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def inicio():
+    return "Página de inicio"
+
+
+@app.route("/acerca")
+def acerca():
+    return "Acerca de nosotros"</code></pre>
+<h3>Varias rutas con la misma vista</h3>
+<pre><code class="language-python">@app.route("/hola")
+@app.route("/saludo")
+def saludo():
+    return "Hola a todos"</code></pre>
+<h3>Nombres descriptivos de rutas</h3>
+<ul>
+<li><code>/</code> raíz</li>
+<li><code>/usuarios</code> listado de usuarios</li>
+<li><code>/productos</code> listado de productos</li>
+<li><code>/contacto</code> formulario de contacto</li>
+</ul>
+<blockquote class="aside aside-tip">
+Las rutas deben ser legibles y descriptivas, ya que forman parte de la URL pública de tu aplicación.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-2-rutas-con-metodos">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 3.2 Rutas con métodos (GET/POST)</h2>
+    <div class="doc-content">
+<h3>Métodos HTTP</h3>
+<p>Cada petición HTTP lleva un <strong>método</strong> que indica la acción a realizar. Por defecto, `@app.route` solo acepta GET.</p>
+<h3>Especificar métodos</h3>
+<pre><code class="language-python">from flask import Flask, request
+
+app = Flask(__name__)
+
+
+@app.route("/usuarios", methods=["GET", "POST"])
+def usuarios():
+    if request.method == "POST":
+        return "Creando un nuevo usuario"
+    return "Listando usuarios"</code></pre>
+<h3>Métodos más comunes</h3>
+<table><thead><tr><th>Método</th><th>Acción</th></tr></thead><tbody><tr><td><code>GET</code></td><td>Obtener datos (lectura)</td></tr><tr><td><code>POST</code></td><td>Crear recursos (envío de datos)</td></tr><tr><td><code>PUT</code></td><td>Actualizar un recurso completo</td></tr><tr><td><code>PATCH</code></td><td>Actualizar parcialmente</td></tr><tr><td><code>DELETE</code></td><td>Eliminar un recurso</td></tr></tbody></table>
+<h3>Ruta con método único</h3>
+<pre><code class="language-python">@app.route("/eliminar", methods=["DELETE"])
+def eliminar():
+    return "Recurso eliminado"</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-3-parametros-en-url">
+    <h2><i class="fa-solid fa-tag"></i> 3.3 Parámetros en la URL</h2>
+    <div class="doc-content">
+<h3>Parámetros dinámicos</h3>
+<p>Puedes capturar partes variables de la URL usando la sintaxis `&lt;variable&gt;`:</p>
+<pre><code class="language-python">from flask import Flask
+
+app = Flask(__name__)
+
+
+@app.route("/usuario/&lt;nombre&gt;")
+def perfil(nombre):
+    return f"Perfil de {nombre}"</code></pre>
+<h3>Múltiples parámetros</h3>
+<pre><code class="language-python">@app.route("/usuario/&lt;nombre&gt;/posts")
+def posts_usuario(nombre):
+    return f"Posts de {nombre}"</code></pre>
+<h3>Parámetros con tipo</h3>
+<pre><code class="language-python"># &lt;int:&gt; restringe el valor a números enteros
+@app.route("/producto/&lt;int:producto_id&gt;")
+def producto(producto_id):
+    return f"Producto número {producto_id}"
+
+
+# &lt;float:&gt; acepta números decimales
+@app.route("/precio/&lt;float:precio&gt;")
+def precio(precio):
+    return f"El precio es {precio}"</code></pre>
+<blockquote class="aside aside-note">
+`/usuario/123` devuelve "Perfil de 123" (string), mientras que `/producto/123` pasa `producto_id` como entero gracias al convertidor `&lt;int:`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-4-convertidores">
+    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> 3.4 Convertidores de tipo</h2>
+    <div class="doc-content">
+<h3>Qué es un convertidor</h3>
+<p>Los <strong>convertidores</strong> indican a Flask qué tipo de dato debe interpretar una parte de la URL y la convierten automáticamente.</p>
+<h3>Convertidores disponibles</h3>
+<table><thead><tr><th>Convertidor</th><th>Tipo</th><th>Ejemplo de URL</th></tr></thead><tbody><tr><td><code>string</code></td><td>Texto (por defecto)</td><td><code>/usuario/&lt;string:nombre&gt;</code></td></tr><tr><td><code>int</code></td><td>Entero</td><td><code>/producto/&lt;int:id&gt;</code></td></tr><tr><td><code>float</code></td><td>Decimal</td><td><code>/nota/&lt;float:valor&gt;</code></td></tr><tr><td><code>path</code></td><td>Ruta (acepta barras)</td><td><code>/archivos/&lt;path:ruta&gt;</code></td></tr><tr><td><code>uuid</code></td><td>Identificador UUID</td><td><code>/tarea/&lt;uuid:id&gt;</code></td></tr></tbody></table>
+<h3>Ejemplos completos</h3>
+<pre><code class="language-python">from flask import Flask
+
+app = Flask(__name__)
+
+
+@app.route("/archivos/&lt;path:ruta&gt;")
+def archivo(ruta):
+    return f"Buscando archivo: {ruta}"
+
+
+@app.route("/tarea/&lt;uuid:tarea_id&gt;")
+def tarea(tarea_id):
+    return f"Tarea con UUID: {tarea_id}"</code></pre>
+<blockquote class="aside aside-tip">
+Usa el convertidor `path` cuando necesites capturar rutas con varias carpetas, por ejemplo `/archivos/documentos/manual.pdf`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-5-redirecciones">
+    <h2><i class="fa-solid fa-share"></i> 3.5 Redirecciones (redirect)</h2>
+    <div class="doc-content">
+<h3>Qué es una redirección</h3>
+<p>Una <strong>redirección</strong> envía al usuario desde una URL a otra distinta. Flask usa la función <code>redirect()</code> y la constante <code>url_for()</code> para construir las URLs.</p>
+<h3>Redirección básica</h3>
+<pre><code class="language-python">from flask import Flask, redirect, url_for
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def inicio():
+    return "Página de inicio"
+
+
+@app.route("/antigua")
+def antigua():
+    return redirect(url_for("inicio"))</code></pre>
+<h3>Redirección con url_for</h3>
+<pre><code class="language-python"># url_for genera la URL a partir del NOMBRE de la función
+@app.route("/nuevo")
+def nuevo():
+    return redirect(url_for("perfil", nombre="Ana"))</code></pre>
+<h3>Redirección con código de estado</h3>
+<pre><code class="language-python">@app.route("/movido")
+def movido():
+    # 301 = movido permanentemente
+    return redirect(url_for("inicio"), code=301)</code></pre>
+<blockquote class="aside aside-warning">
+Usar `url_for` en lugar de escribir URLs a mano evita errores cuando el nombre de una función o ruta cambia.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-6-errores-abortar">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> 3.6 Manejo de errores y abortar</h2>
+    <div class="doc-content">
+<h3>La función abort</h3>
+<p><code>abort()</code> finaliza la petición inmediatamente devolviendo un código de error HTTP:</p>
+<pre><code class="language-python">from flask import Flask, abort
+
+app = Flask(__name__)
+
+usuarios = {1: "Ana", 2: "Carlos"}
+
+
+@app.route("/usuario/&lt;int:usuario_id&gt;")
+def obtener_usuario(usuario_id):
+    if usuario_id not in usuarios:
+        abort(404)  # Recurso no encontrado
+    return usuarios[usuario_id]
+
+
+@app.route("/solo-admin")
+def solo_admin():
+    # Simulación: sin permisos, devuelve 403 (prohibido)
+    abort(403)</code></pre>
+<h3>Códigos de error comunes</h3>
+<table><thead><tr><th>Código</th><th>Significado</th></tr></thead><tbody><tr><td><code>400</code></td><td>Petición incorrecta</td></tr><tr><td><code>401</code></td><td>No autenticado</td></tr><tr><td><code>403</code></td><td>Prohibido (sin permisos)</td></tr><tr><td><code>404</code></td><td>No encontrado</td></tr><tr><td><code>500</code></td><td>Error interno del servidor</td></tr></tbody></table>
+<h3>Personalizar páginas de error</h3>
+<pre><code class="language-python">from flask import Flask
+
+app = Flask(__name__)
+
+
+@app.errorhandler(404)
+def no_encontrado(error):
+    return "Página no encontrada", 404
+
+
+@app.errorhandler(500)
+def error_interno(error):
+    return "Ocurrió un error interno", 500</code></pre>
+<blockquote class="aside aside-tip">
+Los manejadores de error (`@app.errorhandler`) permiten mostrar páginas amigables en lugar de mensajes técnicos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- `@app.route()` conecta una URL con una función de vista
+- Puedes especificar métodos HTTP como GET, POST, PUT y DELETE
+- Las URLs dinámicas capturan valores con `&lt;variable&gt;`
+- Los convertidores (`int`, `float`, `path`, `uuid`) tipan los parámetros
+- `redirect()` junto a `url_for()` permiten redirigir entre rutas
+- `abort()` y `@app.errorhandler` gestionan errores HTTP
+</blockquote>
+    </div>
+  </section>

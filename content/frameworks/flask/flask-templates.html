@@ -1,0 +1,221 @@
+<!-- 04. Plantillas (Jinja2) - Flask (Frameworks) -->
+  <section id="4-1-render-template">
+    <h2><i class="fa-solid fa-file-lines"></i> 4.1 render_template</h2>
+    <div class="doc-content">
+<h3>Qué es render_template</h3>
+<p><code>render_template()</code> carga un archivo HTML desde la carpeta <code>templates/</code> y lo devuelve como respuesta. Es la forma recomendada de generar contenido HTML dinámico.</p>
+<h3>Estructura de la carpeta templates</h3>
+<pre><code class="language-python">miproyecto/
+├── app.py
+└── templates/
+    └── inicio.html</code></pre>
+<h3>Uso básico</h3>
+<pre><code class="language-python">from flask import Flask, render_template
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def inicio():
+    return render_template("inicio.html")
+
+
+@app.route("/acerca")
+def acerca():
+    return render_template("acerca.html")</code></pre>
+<blockquote class="aside aside-tip">
+Flask busca las plantillas automáticamente en la carpeta `templates/` que esté junto al archivo de la aplicación.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-2-sintaxis-jinja2">
+    <h2><i class="fa-solid fa-code"></i> 4.2 Sintaxis de Jinja2</h2>
+    <div class="doc-content">
+<h3>Las dos formas de expresiones</h3>
+<p>Jinja2 usa dos tipos de marcado dentro de las plantillas:</p>
+<ul>
+<li><strong>{{ variable }}</strong>: Muestra el valor de una variable</li>
+<li><strong>{% bloque %}</strong>: Ejecuta lógica (condiciones, bucles, herencia)</li>
+</ul>
+<h3>Ejemplo de variable</h3>
+<pre><code class="language-html">&lt;p&gt;Hola, {{ nombre }}&lt;/p&gt;</code></pre>
+<h3>Ejemplo de condición</h3>
+<pre><code class="language-html">{% if usuario %}
+  &lt;p&gt;Bienvenido, {{ usuario.nombre }}&lt;/p&gt;
+{% else %}
+  &lt;p&gt;Inicia sesión&lt;/p&gt;
+{% endif %}</code></pre>
+<h3>Ejemplo de bucle</h3>
+<pre><code class="language-html">&lt;ul&gt;
+{% for producto in productos %}
+  &lt;li&gt;{{ producto.nombre }} - {{ producto.precio }}&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;</code></pre>
+<h3>Comentarios</h3>
+<pre><code class="language-html">{# Esto es un comentario y no se muestra al usuario #}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-3-enviar-datos-a-la-plantilla">
+    <h2><i class="fa-solid fa-paper-plane"></i> 4.3 Enviar datos a la plantilla</h2>
+    <div class="doc-content">
+<h3>Pasar variables</h3>
+<p>Puedes pasar datos desde la vista a la plantilla con argumentos extra en <code>render_template()</code>:</p>
+<pre><code class="language-python">from flask import Flask, render_template
+
+app = Flask(__name__)
+
+
+@app.route("/perfil/&lt;nombre&gt;")
+def perfil(nombre):
+    return render_template("perfil.html", nombre=nombre, edad=25)</code></pre>
+<h3>Plantilla que recibe esos datos</h3>
+<pre><code class="language-html">&lt;h1&gt;Perfil de {{ nombre }}&lt;/h1&gt;
+&lt;p&gt;Edad: {{ edad }}&lt;/p&gt;</code></pre>
+<h3>Pasar una lista</h3>
+<pre><code class="language-python">@app.route("/productos")
+def listar_productos():
+    productos = ["Laptop", "Mouse", "Teclado"]
+    return render_template("productos.html", productos=productos)</code></pre>
+<h3>Pasar un diccionario</h3>
+<pre><code class="language-python">@app.route("/usuario")
+def usuario():
+    datos = {"nombre": "Ana", "email": "ana@correo.com"}
+    return render_template("usuario.html", datos=datos)</code></pre>
+<h3>Plantilla que recibe un diccionario</h3>
+<pre><code class="language-html">&lt;p&gt;{{ datos.nombre }} - {{ datos.email }}&lt;/p&gt;
+&lt;p&gt;{{ datos["nombre"] }} - {{ datos["email"] }}&lt;/p&gt;</code></pre>
+<blockquote class="aside aside-tip">
+En Jinja2 puedes acceder a los campos de un diccionario con punto (`datos.nombre`) o con corchetes (`datos["nombre"]`).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-4-herencia-con-extends-y-block">
+    <h2><i class="fa-solid fa-layer-group"></i> 4.4 Herencia con extends y block</h2>
+    <div class="doc-content">
+<h3>Qué es la herencia de plantillas</h3>
+<p>La <strong>herencia</strong> permite definir un layout base (estructura del HTML) y que las demás plantillas lo extiendan, rellenando solo las partes que cambian.</p>
+<h3>Plantilla base: base.html</h3>
+<pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;{% block titulo %}Mi Sitio{% endblock %}&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;header&gt;Cabecera común&lt;/header&gt;
+    &lt;main&gt;
+        {% block contenido %}{% endblock %}
+    &lt;/main&gt;
+    &lt;footer&gt;Pie de página común&lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<h3>Plantilla hija: inicio.html</h3>
+<pre><code class="language-html">{% extends "base.html" %}
+
+{% block titulo %}Inicio&lt;/title&gt;
+{% endblock %}
+
+{% block contenido %}
+    &lt;h1&gt;Bienvenido a mi sitio&lt;/h1&gt;
+{% endblock %}</code></pre>
+<h3>Ventajas de la herencia</h3>
+<ul>
+<li>Evitas repetir la estructura HTML en cada página</li>
+<li>Al cambiar el layout, todas las páginas se actualizan</li>
+<li>Los bloques permiten personalizar solo lo necesario</li>
+</ul>
+<blockquote class="aside aside-note">
+Cada plantilla hija comienza con `{% extends "base.html" %}` y define únicamente los bloques que necesita cambiar.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-5-filtros-y-urlen-for">
+    <h2><i class="fa-solid fa-filter"></i> 4.5 Filtros y url_for en plantillas</h2>
+    <div class="doc-content">
+<h3>Qué son los filtros</h3>
+<p>Los <strong>filtros</strong> transforman el valor de una variable dentro de la plantilla. Se aplican con el símbolo <code>|</code> (pipe).</p>
+<h3>Filtros más usados</h3>
+<table><thead><tr><th>Filtro</th><th>Función</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>upper</code></td><td>En mayúsculas</td><td><code>{{ nombre|upper }}</code></td></tr><tr><td><code>lower</code></td><td>En minúsculas</td><td><code>{{ nombre|lower }}</code></td></tr><tr><td><code>capitalize</code></td><td>Primera letra en mayúscula</td><td><code>{{ nombre|capitalize }}</code></td></tr><tr><td><code>length</code></td><td>Longitud de una lista</td><td><code>{{ lista|length }}</code></td></tr><tr><td><code>default</code></td><td>Valor por defecto</td><td><code>{{ edad|default(18) }}</code></td></tr><tr><td><code>join</code></td><td>Unir lista con separador</td><td><code>{{ tags|join(", ") }}</code></td></tr></tbody></table>
+<h3>url_for en plantillas</h3>
+<pre><code class="language-html">&lt;a href="{{ url_for('inicio') }}"&gt;Inicio&lt;/a&gt;
+&lt;a href="{{ url_for('perfil', nombre='Ana') }}"&gt;Ver perfil de Ana&lt;/a&gt;
+&lt;link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}"&gt;</code></pre>
+<blockquote class="aside aside-warning">
+Usa siempre `url_for()` para generar enlaces en las plantillas; así los enlaces se mantienen correctos aunque cambien las rutas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-6-ejemplo-practico">
+    <h2><i class="fa-solid fa-lightbulb"></i> 4.6 Ejemplo práctico completo</h2>
+    <div class="doc-content">
+<h3>Vista principal</h3>
+<pre><code class="language-python">from flask import Flask, render_template
+
+app = Flask(__name__)
+
+productos = [
+    {"nombre": "Laptop", "precio": 999, "stock": 10},
+    {"nombre": "Mouse", "precio": 25, "stock": 0},
+    {"nombre": "Teclado", "precio": 40, "stock": 3},
+]
+
+
+@app.route("/")
+def inicio():
+    return render_template("index.html", productos=productos)</code></pre>
+<h3>Plantilla index.html</h3>
+<pre><code class="language-html">{% extends "base.html" %}
+
+{% block contenido %}
+  &lt;h1&gt;Lista de productos&lt;/h1&gt;
+  &lt;table&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;&lt;th&gt;Nombre&lt;/th&gt;&lt;th&gt;Precio&lt;/th&gt;&lt;th&gt;Estado&lt;/th&gt;&lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+    {% for p in productos %}
+      &lt;tr&gt;
+        &lt;td&gt;{{ p.nombre }}&lt;/td&gt;
+        &lt;td&gt;{{ p.precio }}&lt;/td&gt;
+        &lt;td&gt;
+          {% if p.stock &gt; 0 %}
+            Disponible
+          {% else %}
+            Agotado
+          {% endif %}
+        &lt;/td&gt;
+      &lt;/tr&gt;
+    {% endfor %}
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+{% endblock %}</code></pre>
+<blockquote class="aside aside-tip">
+Combina `extends`, `block`, bucles y condiciones para construir páginas dinámicas sin repetir el diseño.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- `render_template()` renderiza archivos HTML desde la carpeta `templates/`
+- Jinja2 usa `{{ }}` para variables y `{% %}` para lógica
+- Puedes enviar variables, listas y diccionarios a las plantillas
+- `extends` y `block` permiten heredar de un layout base
+- Los filtros transforman valores y `url_for` genera enlaces seguros
+- Con bucles y condiciones creas contenido dinámico completo
+</blockquote>
+    </div>
+  </section>

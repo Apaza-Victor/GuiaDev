@@ -1,0 +1,247 @@
+<!-- 09. HTTP y peticiones externas - NestJS (Frameworks) -->
+  <section id="9-1-cliente-http-de-nestjs">
+    <h2><i class="fa-solid fa-globe"></i> 9.1 Cliente HTTP de NestJS</h2>
+    <div class="doc-content">
+<h3>Qué es @nestjs/axios</h3>
+<p><strong>@nestjs/axios</strong> es el módulo oficial que envuelve la biblioteca <strong>Axios</strong> dentro de NestJS. Permite hacer peticiones HTTP a servicios externos (APIs REST, servicios de terceros, microservicios) de forma integrada con la inyección de dependencias.</p>
+<h3>Instalar la dependencia</h3>
+<pre><code class="language-bash">npm install @nestjs/axios axios</code></pre>
+<h3>Registrar el módulo HttpModule</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
+import { ClimaService } from './clima.service';
+
+@Module({
+  imports: [HttpModule],
+  providers: [ClimaService],
+})
+export class ClimaModule {}</code></pre>
+<h3>Principales métodos del servicio</h3>
+<table><thead><tr><th>Método</th><th>Petición HTTP</th><th>Uso</th></tr></thead><tbody><tr><td><code>get(url)</code></td><td>GET</td><td>Obtener datos</td></tr><tr><td><code>post(url, data)</code></td><td>POST</td><td>Crear recursos</td></tr><tr><td><code>put(url, data)</code></td><td>PUT</td><td>Actualizar recursos</td></tr><tr><td><code>patch(url, data)</code></td><td>PATCH</td><td>Actualización parcial</td></tr><tr><td><code>delete(url)</code></td><td>DELETE</td><td>Eliminar recursos</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-2-inyeccion-del-servicio-http">
+    <h2><i class="fa-solid fa-plug"></i> 9.2 Inyección del servicio HTTP</h2>
+    <div class="doc-content">
+<h3>Inyectar HttpService</h3>
+<p>El <code>HttpService</code> se inyecta como cualquier provider. Sus métodos devuelven un <code>Observable</code> de RxJS, por lo que suelen convertirse a <code>Promise</code> con <code>firstValueFrom</code>.</p>
+<pre><code class="language-typescript">import { Injectable } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+
+@Injectable()
+export class ClimaService {
+  constructor(private readonly httpService: HttpService) {}
+
+  async obtenerClima(ciudad: string) {
+    const url = `https://api.clima.com/actual?ciudad=${ciudad}`;
+    const { data } = await firstValueFrom(this.httpService.get(url));
+    return data;
+  }
+}</code></pre>
+<h3>Manejar la respuesta</h3>
+<p>La respuesta de Axios contiene <code>data</code> (el cuerpo), <code>status</code>, <code>headers</code> y <code>statusText</code>. Solo: qué deseo extraer habitualmente es <code>data</code>.</p>
+<h3>Controlador que usa el servicio</h3>
+<pre><code class="language-typescript">import { Controller, Get, Param } from '@nestjs/common';
+import { ClimaService } from './clima.service';
+
+@Controller('clima')
+export class ClimaController {
+  constructor(private readonly climaService: ClimaService) {}
+
+  @Get(':ciudad')
+  clima(@Param('ciudad') ciudad: string) {
+    return this.climaService.obtenerClima(ciudad);
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-3-configuracion-del-client-http">
+    <h2><i class="fa-solid fa-sliders"></i> 9.3 Configuración del cliente HTTP</h2>
+    <div class="doc-content">
+<h3>Opciones de configuración</h3>
+<p>Con <code>HttpModule.register</code> se configuran opciones globales del cliente: baseURL, timeout, encabezados por defecto, autenticación y más.</p>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
+import { FacturasService } from './facturas.service';
+
+@Module({
+  imports: [
+    HttpModule.register({
+      baseURL: 'https://api.proveedor.com',
+      timeout: 5000,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': process.env.PROVEEDOR_API_KEY,
+      },
+    }),
+  ],
+  providers: [FacturasService],
+})
+export class FacturasModule {}</code></pre>
+<h3>Opciones más comunes</h3>
+<table><thead><tr><th>Opción</th><th>Descripción</th></tr></thead><tbody><tr><td><code>baseURL</code></td><td>URL base para todas las peticiones</td></tr><tr><td><code>timeout</code></td><td>Tiempo máximo de espera en milisegundos</td></tr><tr><td><code>headers</code></td><td>Encabezados enviados por defecto</td></tr><tr><td><code>auth</code></td><td>Credenciales básicas HTTP</td></tr><tr><td><code>validateStatus</code></td><td>Qué códigos se consideran exitosos</td></tr></tbody></table>
+<h3>Configuración asíncrona con variables de entorno</h3>
+<pre><code class="language-typescript">HttpModule.registerAsync({
+  useFactory: () =&gt; ({
+    baseURL: process.env.PROVEEDOR_URL,
+    timeout: +process.env.HTTP_TIMEOUT,
+  }),
+})</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-4-manejo-de-errores-en-peticiones">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> 9.4 Manejo de errores en peticiones</h2>
+    <div class="doc-content">
+<h3>Errores de Axios</h3>
+<p>Cuando un servicio externo responde con un código de error o falla la conexión, Axios lanza una excepción. Es importante capturarla y transformarla en excepciones HTTP de NestJS.</p>
+<pre><code class="language-typescript">import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+import { AxiosError } from 'axios';
+
+@Injectable()
+export class ProveedorService {
+  constructor(private readonly httpService: HttpService) {}
+
+  async consultar() {
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.get('/estado'),
+      );
+      return data;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const status = error.response?.status ?? HttpStatus.BAD_GATEWAY;
+        throw new HttpException(
+          `El proveedor respondió con error: ${error.message}`,
+          status,
+        );
+      }
+      throw error;
+    }
+  }
+}</code></pre>
+<h3>Códigos de error típicos</h3>
+<table><thead><tr><th>Código</th><th>Significado</th></tr></thead><tbody><tr><td><code>400</code></td><td>Petición inválida al proveedor</td></tr><tr><td><code>401</code> / <code>403</code></td><td>Autenticación o permisos del proveedor</td></tr><tr><td><code>404</code></td><td>Recurso inexistente</td></tr><tr><td><code>500</code> / <code>502</code> / <code>503</code></td><td>Error del servidor del proveedor</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Nunca dejes que errores crudos de Axios lleguen al cliente final: transforma los mensajes internos en respuestas claras y seguras.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-5-interceptores-y-observables">
+    <h2><i class="fa-solid fa-code"></i> 9.5 Interceptores y Observables</h2>
+    <div class="doc-content">
+<h3>Por qué RxJS</h3>
+<p><code>HttpService</code> devuelve <code>Observable</code> en lugar de <code>Promise</code>, lo que permite aplicar operadores RxJS como <code>map</code>, <code>retry</code>, <code>catchError</code> o <code>timeout</code> antes de resolver la respuesta.</p>
+<h3>Operadores útiles</h3>
+<pre><code class="language-typescript">import { Injectable } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom, timeout, retry, catchError, map } from 'rxjs';
+import { NotFoundException } from '@nestjs/common';
+
+@Injectable()
+export class TiendaService {
+  constructor(private readonly httpService: HttpService) {}
+
+  async producto(id: number) {
+    const observable = this.httpService.get(`/productos/${id}`).pipe(
+      timeout(3000),
+      retry(2),
+      map((respuesta) =&gt; respuesta.data),
+      catchError(() =&gt; {
+        throw new NotFoundException('Producto no disponible');
+      }),
+    );
+    return firstValueFrom(observable);
+  }
+}</code></pre>
+<h3>Tabla de operadores</h3>
+<table><thead><tr><th>Operador</th><th>Función</th></tr></thead><tbody><tr><td><code>map</code></td><td>Transforma los datos de la respuesta</td></tr><tr><td><code>retry(n)</code></td><td>Reintenta la petición n veces</td></tr><tr><td><code>timeout(ms)</code></td><td>Falla si tarda más de ms milisegundos</td></tr><tr><td><code>catchError</code></td><td>Captura el error y lanza una excepción</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+Usa `firstValueFrom` (o `lastValueFrom`) para convertir el `Observable` en `Promise` y poder usar `async`/`await`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-6-consumir-una-api-externa">
+    <h2><i class="fa-solid fa-diagram-project"></i> 9.6 Consumir una API externa</h2>
+    <div class="doc-content">
+<h3>Ejemplo completo con una API pública</h3>
+<p>Un servicio que consulta usuarios de una API pública de ejemplo y los expone en un endpoint propio.</p>
+<pre><code class="language-typescript">import { Injectable } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+
+@Injectable()
+export class UsuariosExternosService {
+  private readonly base = 'https://jsonplaceholder.typicode.com';
+
+  constructor(private readonly httpService: HttpService) {}
+
+  async listar() {
+    const { data } = await firstValueFrom(
+      this.httpService.get(`${this.base}/users`),
+    );
+    return data.map(({ id, name, email }: any) =&gt; ({
+      id,
+      nombre: name,
+      email,
+    }));
+  }
+
+  async uno(id: number) {
+    const { data } = await firstValueFrom(
+      this.httpService.get(`${this.base}/users/${id}`),
+    );
+    return data;
+  }
+}</code></pre>
+<h3>Controlador</h3>
+<pre><code class="language-typescript">import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { UsuariosExternosService } from './usuarios-externos.service';
+
+@Controller('externos')
+export class UsuariosExternosController {
+  constructor(private readonly service: UsuariosExternosService) {}
+
+  @Get('usuarios')
+  listar() {
+    return this.service.listar();
+  }
+
+  @Get('usuarios/:id')
+  uno(@Param('id', ParseIntPipe) id: number) {
+    return this.service.uno(id);
+  }
+}</code></pre>
+<h3>Probar el endpoint</h3>
+<pre><code class="language-text">GET /externos/usuarios        # lista todos
+GET /externos/usuarios/1      # el usuario con id 1</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- `@nestjs/axios` envuelve Axios e integra las peticiones HTTP en NestJS
+- `HttpService` se inyecta como provider y usa Observables de RxJS
+- `HttpModule.register` configura baseURL, timeout y encabezados
+- Los errores de Axios se transforman en excepciones HTTP de NestJS
+- RxJS permite mapear, reintentar y poner tiempo límite a las peticiones
+- Consumir una API externa es tan simple como inyectar el servicio y llamar a get/post
+</blockquote>
+    </div>
+  </section>

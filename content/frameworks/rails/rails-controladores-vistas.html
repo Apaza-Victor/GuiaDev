@@ -1,0 +1,254 @@
+<!-- 04. Controladores y vistas - Rails (Frameworks) -->
+  <section id="4-1-controladores-y-acciones">
+    <h2><i class="fa-solid fa-gamepad"></i> 4.1 Controladores y acciones</h2>
+    <div class="doc-content">
+<h3>Qué es un controlador</h3>
+<p>Un controlador recibe las peticiones HTTP y coordina la respuesta. Cada método público del controlador es una <strong>acción</strong> que se corresponde con una ruta.</p>
+<h3>Estructura de un controlador</h3>
+<pre><code class="language-ruby"># app/controllers/articulos_controller.rb
+class ArticulosController &lt; ApplicationController
+  def index
+    @articulos = Articulo.all
+  end
+
+  def show
+    @articulo = Articulo.find(params[:id])
+  end
+
+  def new
+    @articulo = Articulo.new
+  end
+
+  def create
+    @articulo = Articulo.new(articulo_params)
+    if @articulo.save
+      redirect_to @articulo, notice: "Artículo creado"
+    else
+      render :new
+    end
+  end
+
+  private
+
+  def articulo_params
+    params.require(:articulo).permit(:titulo, :contenido)
+  end
+end</code></pre>
+<h3>Convenciones</h3>
+<ul>
+<li>Los controladores heredan de <code>ApplicationController</code></li>
+<li>El nombre va en plural: <code>ArticulosController</code></li>
+<li>Cada acción por defecto renderiza la vista con el mismo nombre</li>
+<li>Las variables de instancia (<code>@articulo</code>) se comparten con la vista</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-2-render-y-redirecciones">
+    <h2><i class="fa-solid fa-rotate-right"></i> 4.2 Render y redirecciones</h2>
+    <div class="doc-content">
+<h3>Acciones de respuesta</h3>
+<p>Un controlador termina cada acción de una de estas formas:</p>
+<table><thead><tr><th>Método</th><th>Qué hace</th><th>Cuándo usarlo</th></tr></thead><tbody><tr><td><code>render</code></td><td>Muestra una vista específica</td><td>Formularios con errores</td></tr><tr><td><code>redirect_to</code></td><td>Envía una redirección HTTP</td><td>Después de crear o actualizar</td></tr><tr><td><code>head</code></td><td>Responde sin cuerpo</td><td>Operaciones sin contenido</td></tr></tbody></table>
+<h3>Ejemplos de render</h3>
+<pre><code class="language-ruby"># Renderizar la vista por defecto (mismo nombre de acción)
+def index
+  @productos = Producto.all
+  # Implícitamente render :index
+end
+
+# Render de otra vista dentro del mismo controlador
+def create
+  @producto = Producto.new(producto_params)
+  if @producto.save
+    redirect_to @producto
+  else
+    # Muestra de nuevo 'new' para corregir los errores
+    render :new, status: :unprocessable_entity
+  end
+end
+
+# Render de una vista de otro controlador
+render "compartido/error"
+
+# Render de JSON (muy útil en APIs)
+render json: @producto
+
+# Render de texto plano
+render plain: "Hola mundo"</code></pre>
+<blockquote class="aside aside-tip">
+Usa <code>redirect_to</code> tras mutar datos para evitar el doble envío de formularios al recargar la página (patrón PRG: Post-Redirect-Get).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-3-vistas-erb">
+    <h2><i class="fa-solid fa-file-code"></i> 4.3 Vistas ERB</h2>
+    <div class="doc-content">
+<h3>Qué es ERB</h3>
+<p><strong>ERB</strong> (Embedded Ruby) permite mezclar HTML con código Ruby. Las vistas tienen extensión <code>.html.erb</code> y viven en <code>app/views/nombre_controlador/</code>.</p>
+<h3>Etiquetas ERB</h3>
+<table><thead><tr><th>Etiqueta</th><th>Función</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>&lt;%= %&gt;</code></td><td>Evalúa y muestra el resultado</td><td><code>&lt;%= @producto.nombre %&gt;</code></td></tr><tr><td><code>&lt;% %&gt;</code></td><td>Ejecuta sin mostrar nada</td><td><code>&lt;% if @producto %&gt;</code></td></tr><tr><td><code>&lt;%# %&gt;</code></td><td>Comentario ERB</td><td><code>&lt;%# solo para ti %&gt;</code></td></tr></tbody></table>
+<h3>Ejemplo de vista</h3>
+<pre><code class="language-erb">&lt;h1&gt;Lista de productos&lt;/h1&gt;
+
+&lt;ul&gt;
+  &lt;% @productos.each do |producto| %&gt;
+    &lt;li&gt;
+      &lt;%= link_to producto.nombre, producto %&gt;
+      &lt;%= number_to_currency(producto.precio) %&gt;
+    &lt;/li&gt;
+  &lt;% end %&gt;
+&lt;/ul&gt;
+
+&lt;% if @productos.empty? %&gt;
+  &lt;p&gt;No hay productos registrados.&lt;/p&gt;
+&lt;% end %&gt;</code></pre>
+<blockquote class="aside aside-warning">
+Usa <code>&lt;%= %&gt;</code> con escape automático. Rails escapa el HTML por defecto para prevenir ataques XSS.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-4-layouts">
+    <h2><i class="fa-solid fa-border-all"></i> 4.4 Layouts</h2>
+    <div class="doc-content">
+<h3>Qué es un layout</h3>
+<p>Un <strong>layout</strong> es la plantilla común que envuelve todas las vistas. Define el esqueleto HTML: cabecera, menú, pie de página.</p>
+<h3>Layout por defecto</h3>
+<pre><code class="language-erb">&lt;!-- app/views/layouts/application.html.erb --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;title&gt;&lt;%= content_for(:title) || "Mi Tienda" %&gt;&lt;/title&gt;
+  &lt;meta name="viewport" content="width=device-width,initial-scale=1"&gt;
+  &lt;%= csrf_meta_tags %&gt;
+  &lt;%= csp_meta_tag %&gt;
+  &lt;%= stylesheet_link_tag "application", "data-turbo-track": "reload" %&gt;
+  &lt;%= javascript_importmap_tags %&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;
+    &lt;nav&gt;Menu principal&lt;/nav&gt;
+  &lt;/header&gt;
+
+  &lt;main&gt;
+    &lt;%= yield %&gt;
+  &lt;/main&gt;
+
+  &lt;footer&gt;
+    &lt;p&gt;Mi Tienda 2026&lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<h3>Uso de content_for y yield</h3>
+<p>Puedes definir bloques de contenido que el layout coloca en zonas concretas:</p>
+<pre><code class="language-erb">&lt;!-- En una vista --&gt;
+&lt;% content_for :title do %&gt;
+  Productos - Mi Tienda
+&lt;% end %&gt;
+
+&lt;!-- En el layout --&gt;
+&lt;title&gt;&lt;%= content_for(:title) %&gt;&lt;/title&gt;
+&lt;aside&gt;&lt;%= content_for(:sidebar) %&gt;&lt;/aside&gt;</code></pre>
+<h3>Layouts específicos por controlador</h3>
+<pre><code class="language-ruby">class AdminController &lt; ApplicationController
+  layout "admin"
+end</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-5-partials">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> 4.5 Partials</h2>
+    <div class="doc-content">
+<h3>Qué son los partials</h3>
+<p>Los <strong>partials</strong> son fragmentos de vista reutilizables. Su nombre empieza con guión bajo, por ejemplo <code>_producto.html.erb</code>, y se renderizan desde otras vistas.</p>
+<h3>Crear y renderizar un partial</h3>
+<pre><code class="language-erb">&lt;!-- app/views/productos/_producto.html.erb --&gt;
+&lt;div class="producto-card"&gt;
+  &lt;h3&gt;&lt;%= producto.nombre %&gt;&lt;/h3&gt;
+  &lt;p&gt;&lt;%= producto.descripcion %&gt;&lt;/p&gt;
+  &lt;span class="precio"&gt;&lt;%= number_to_currency(producto.precio) %&gt;&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+<pre><code class="language-erb">&lt;!-- app/views/productos/index.html.erb --&gt;
+&lt;h1&gt;Todos los productos&lt;/h1&gt;
+
+&lt;div class="grid"&gt;
+  &lt;%= render @productos %&gt;
+&lt;/div&gt;
+
+&lt;!-- También podemos pasarlo explícitamente --&gt;
+&lt;%= render "producto", producto: @producto %&gt;</code></pre>
+<h3>Partials con variables y colecciones</h3>
+<pre><code class="language-erb">&lt;!-- Render de una colección con variable local producto --&gt;
+&lt;%= render partial: "producto", collection: @productos %&gt;
+
+&lt;!-- Partial con una variable local específica --&gt;
+&lt;%= render "producto", producto: @producto %&gt;</code></pre>
+<h3>Partials compartidos entre vistas</h3>
+<pre><code class="language-erb">&lt;!-- app/views/compartido/_formulario_busqueda.html.erb --&gt;
+&lt;%= form_with url: buscar_path, method: :get do |form| %&gt;
+  &lt;%= form.text_field :q, placeholder: "Buscar..." %&gt;
+  &lt;%= form.submit "Buscar" %&gt;
+&lt;% end %&gt;</code></pre>
+<pre><code class="language-erb">&lt;!-- Usarlo en cualquier vista --&gt;
+&lt;%= render "compartido/formulario_busqueda" %&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-6-strong-parameters-y-csrf">
+    <h2><i class="fa-solid fa-shield-halved"></i> 4.6 Strong Parameters y CSRF</h2>
+    <div class="doc-content">
+<h3>Strong Parameters</h3>
+<p>Rails exige que indiques explícitamente qué parámetros se permiten en las peticiones. Esto evita ataques de asignación masiva:</p>
+<pre><code class="language-ruby">class ProductosController &lt; ApplicationController
+  def create
+    @producto = Producto.new(producto_params)
+    # ...
+  end
+
+  private
+
+  def producto_params
+    params.require(:producto).permit(:nombre, :precio, :stock, :categoria_id)
+  end
+end</code></pre>
+<h3>Nested parameters</h3>
+<pre><code class="language-ruby"># Permitir parámetros anidados
+params.require(:producto).permit(
+  :nombre,
+  categoria_attributes: [:id, :nombre, :_destroy]
+)</code></pre>
+<h3>Protección CSRF</h3>
+<p><strong>CSRF</strong> (Cross-Site Request Forgery) protege contra peticiones maliciosas. Rails lo habilita por defecto en <code>ApplicationController</code>:</p>
+<pre><code class="language-ruby">class ApplicationController &lt; ActionController::Base
+  # Evita ataques CSRF lanzando una excepción
+  protect_from_forgery with: :exception
+end</code></pre>
+<p>En las vistas se incluye el token automáticamente dentro de los formularios generados con <code>form_with</code>.</p>
+<blockquote class="aside aside-warning">
+Nunca uses <code>skip_forgery_protection</code> salvo que tengas una razon clara, como endpoints API con autenticación por token externo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los controladores organizan la lógica en acciones públicas
+- render muestra una vista; redirect_to envía una redirección
+- ERB mezcla HTML con Ruby usando &lt;%= %&gt; y &lt;% %&gt;
+- Los layouts definen el esqueleto común de la aplicación
+- Los partials reutilizan fragmentos de interfaz
+- Strong Parameters y CSRF protegen las peticiones
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,226 @@
+<!-- 06. ORM y consultas - Django (Frameworks) -->
+  <section id="6-1-que-es-el-orm-de-django">
+    <h2><i class="fa-solid fa-database"></i> 6.1 Qué es el ORM de Django</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>El <strong>ORM (Object Relational Mapper)</strong> de Django traduce las clases de Python (modelos) en tablas de la base de datos y permite consultarlas sin escribir SQL. Cada operación se resuelve en SQL de forma automática.</p>
+<h3>Ventajas</h3>
+<table><thead><tr><th>Ventaja</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Productividad</strong></td><td>No necesitas escribir SQL para el 95% de las consultas</td></tr><tr><td><strong>Portabilidad</strong></td><td>Cambia de SQLite a PostgreSQL sin cambiar el código</td></tr><tr><td><strong>Seguridad</strong></td><td>Previene SQL injection con consultas parametrizadas</td></tr><tr><td><strong>Mapeo automático</strong></td><td>Las relaciones entre modelos se vuelven atributos Python</td></tr></tbody></table>
+<h3>Modelo de ejemplo</h3>
+<pre><code class="language-python"># blog/models.py
+from django.db import models
+
+class Articulo(models.Model):
+    titulo = models.CharField(max_length=200)
+    contenido = models.TextField()
+    publicado = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.titulo</code></pre>
+<blockquote class="aside aside-tip">
+El manager `Articulo.objects` es el punto de entrada para todas las consultas y devuelve QuerySets.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-2-que-es-un-queryset">
+    <h2><i class="fa-solid fa-list"></i> 6.2 Qué es un QuerySet</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>QuerySet</strong> es una colección perezosa de objetos de un modelo. "Perezoso" significa que la consulta a la base de datos solo se ejecuta cuando realmente necesitas los datos (por ejemplo, al iterar o convertirlo a lista).</p>
+<h3>Ejemplo básico</h3>
+<pre><code class="language-python"># Consulta que NO se ejecuta aún (es perezosa)
+articulos = Articulo.objects.all()
+
+# La consulta se ejecuta aquí, al iterar
+for articulo in articulos:
+    print(articulo.titulo)
+
+# Convertir a lista fuerza la ejecución
+lista = list(Articulo.objects.all())</code></pre>
+<h3>Métodos que devuelven QuerySet</h3>
+<table><thead><tr><th>Método</th><th>Función</th></tr></thead><tbody><tr><td><code>all()</code></td><td>Todos los registros</td></tr><tr><td><code>filter()</code></td><td>Registros que cumplen condiciones</td></tr><tr><td><code>exclude()</code></td><td>Registros que NO cumplen condiciones</td></tr><tr><td><code>order_by()</code></td><td>Ordenar resultados</td></tr><tr><td><code>values()</code></td><td>Devuelve diccionarios en vez de objetos</td></tr><tr><td><code>distinct()</code></td><td>Eliminar duplicados</td></tr><tr><td><code>count()</code></td><td>Cuenta de registros</td></tr></tbody></table>
+<h3>Encadenar consultas</h3>
+<pre><code class="language-python">articulos = Articulo.objects.filter(publicado=True).order_by("-fecha_publicacion")</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-3-filtrar-y-buscar-registros">
+    <h2><i class="fa-solid fa-filter"></i> 6.3 Filtrar y buscar registros</h2>
+    <div class="doc-content">
+<h3>Métodos principales</h3>
+<pre><code class="language-python"># filter: devuelve los que cumplen (puede haber varios)
+publicados = Articulo.objects.filter(publicado=True)
+
+# exclude: devuelve los que NO cumplen
+borradores = Articulo.objects.exclude(publicado=True)
+
+# get: devuelve UN solo registro (error si hay 0 o más de 1)
+articulo = Articulo.objects.get(pk=1)</code></pre>
+<h3>Lookups (búsquedas) frecuentes</h3>
+<table><thead><tr><th>Lookup</th><th>Descripción</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>exact</code></td><td>Igualdad exacta</td><td><code>titulo__exact="Hola"</code></td></tr><tr><td><code>iexact</code></td><td>Igualdad sin distinguir mayúsculas</td><td><code>titulo__iexact="hola"</code></td></tr><tr><td><code>contains</code></td><td>Contiene el texto</td><td><code>titulo__contains="django"</code></td></tr><tr><td><code>icontains</code></td><td>Contiene sin distinguir mayúsculas</td><td><code>titulo__icontains="Django"</code></td></tr><tr><td><code>startswith</code></td><td>Empieza por</td><td><code>titulo__startswith="Guía"</code></td></tr><tr><td><code>gt / gte</code></td><td>Mayor / mayor o igual</td><td><code>precio__gte=100</code></td></tr><tr><td><code>lt / lte</code></td><td>Menor / menor o igual</td><td><code>precio__lte=500</code></td></tr><tr><td><code>in</code></td><td>Dentro de una lista</td><td><code>id__in=[1, 2, 3]</code></td></tr><tr><td><code>isnull</code></td><td>Es NULL o no</td><td><code>email__isnull=True</code></td></tr></tbody></table>
+<h3>Ejemplo combinado</h3>
+<pre><code class="language-python">resultados = Articulo.objects.filter(
+    publicado=True,
+    titulo__icontains="django",
+    precio__gte=50,
+).exclude(categoria__nombre="privada")
+
+print(resultados.count())</code></pre>
+<blockquote class="aside aside-note">
+El doble guion bajo (`__`) pasa de un campo a un lookup o a un campo de una relación, como `categoria__nombre`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-4-crear-actualizar-y-eliminar-registros">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 6.4 Crear, actualizar y eliminar registros</h2>
+    <div class="doc-content">
+<h3>Crear registros</h3>
+<pre><code class="language-python"># Opción 1: crear una instancia y guardarla
+articulo = Articulo(titulo="Nuevo artículo", publicado=False)
+articulo.save()
+
+# Opción 2: método create (lo hace en un paso)
+articulo = Articulo.objects.create(
+    titulo="Otro artículo",
+    contenido="Contenido",
+    publicado=True,
+)
+
+# get_or_create: busca o crea
+articulo, creado = Articulo.objects.get_or_create(titulo="Único")</code></pre>
+<h3>Actualizar registros</h3>
+<pre><code class="language-python"># Actualizar un campo y guardar
+articulo.titulo = "Título modificado"
+articulo.publicado = True
+articulo.save()
+
+# Actualizar con QuerySet (más rápido en lote)
+Articulo.objects.filter(publicado=False).update(publicado=True)</code></pre>
+<h3>Eliminar registros</h3>
+<pre><code class="language-python"># Eliminar un objeto
+articulo.delete()
+
+# Eliminar varios según filtro
+Articulo.objects.filter(publicado=False).delete()</code></pre>
+<h3>Métodos de QuerySet útiles</h3>
+<pre><code class="language-python">Articulo.objects.count()                       # Número total
+articulos = Articulo.objects.first()           # Primer registro
+Articulo.objects.latest("fecha_publicacion")   # Último por campo
+Articulo.objects.all().order_by("?")           # Orden aleatorio</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-5-relaciones-entre-modelos">
+    <h2><i class="fa-solid fa-link"></i> 6.5 Relaciones entre modelos</h2>
+    <div class="doc-content">
+<h3>Tipos de relaciones</h3>
+<table><thead><tr><th>Relación</th><th>Campo</th><th>Ejemplo real</th></tr></thead><tbody><tr><td>Muchos a uno</td><td><code>ForeignKey</code></td><td>Un artículo pertenece a una categoría</td></tr><tr><td>Uno a uno</td><td><code>OneToOneField</code></td><td>Un usuario tiene un perfil</td></tr><tr><td>Muchos a muchos</td><td><code>ManyToManyField</code></td><td>Un artículo tiene varias etiquetas</td></tr></tbody></table>
+<h3>Ejemplo de modelos con relaciones</h3>
+<pre><code class="language-python">from django.db import models
+from django.contrib.auth.models import User
+
+class Categoria(models.Model):
+    nombre = models.CharField(max_length=100)
+
+class Etiqueta(models.Model):
+    nombre = models.CharField(max_length=50)
+
+class Articulo(models.Model):
+    titulo = models.CharField(max_length=200)
+    autor = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="articulos"
+    )
+    categoria = models.ForeignKey(
+        Categoria, on_delete=models.SET_NULL, null=True
+    )
+    etiquetas = models.ManyToManyField(Etiqueta, related_name="articulos")
+
+class Perfil(models.Model):
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE)
+    biografia = models.TextField(blank=True)</code></pre>
+<h3>Consultar a través de las relaciones</h3>
+<pre><code class="language-python"># Acceso hacia delante (artículo -> autor)
+autor = articulo.autor.username
+
+# Acceso hacia atrás (relación inversa con related_name)
+articulos_de_autor = autor.articulos.all()
+
+# Filtro por relación
+articulos_python = Articulo.objects.filter(categoria__nombre="Python")
+
+# Agregar y quitar relaciones many-to-many
+articulo.etiquetas.add(etiqueta_django)
+articulo.etiquetas.remove(etiqueta_obsoleta)
+articulo.etiquetas.clear()</code></pre>
+<blockquote class="aside aside-warning">
+El parámetro `on_delete` es obligatorio en ForeignKey y OneToOne. Usa `CASCADE` para borrar en cadena o `PROTECT` para impedir el borrado si existen dependencias.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-6-ejemplo-practico-de-consultas">
+    <h2><i class="fa-solid fa-magnifying-glass"></i> 6.6 Ejemplo práctico de consultas</h2>
+    <div class="doc-content">
+<h3>Escenario: librería de artículos</h3>
+<pre><code class="language-python"># Todas las consultas sobre la base de datos
+
+# Los 5 artículos más recientes publicados
+recientes = Articulo.objects.filter(
+    publicado=True
+).order_by("-fecha_publicacion")[:5]
+
+# Artículos que mencionen "python" en el título o contenido
+busqueda = Articulo.objects.filter(
+    models.Q(titulo__icontains="python") |
+    models.Q(contenido__icontains="python")
+)
+
+# Artículos por autor con conteo
+autores = User.objects.annotate(num_articulos=models.Count("articulos"))
+
+# Agregar una relación many-to-many
+etiqueta_django = Etiqueta.objects.create(nombre="Django")
+articulo.etiquetas.add(etiqueta_django)
+
+# Consulta con valores concretos (no objetos)
+valores = Articulo.objects.values("titulo", "fecha_publicacion")
+
+# Combinar varios QuerySets (union)
+total = Articulo.objects.filter(publicado=True).union(
+    Articulo.objects.filter(titulo__startswith="Guía")
+)</code></pre>
+<h3>Operadores Q para búsquedas complejas</h3>
+<pre><code class="language-python">from django.db.models import Q
+
+# AND se simula con comas en filter; OR con Q y |
+resultados = Articulo.objects.filter(
+    Q(publicado=True) & Q(categoria__nombre="Python")
+)</code></pre>
+<blockquote class="aside aside-tip">
+Puedes probar todas estas consultas en la consola interactiva con `python manage.py shell`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El ORM traduce modelos Python a SQL de forma automática y segura
+- Un QuerySet es perezoso: la consulta se ejecuta al evaluarlo
+- `filter`, `exclude` y `get` son los métodos básicos de consulta
+- Crear, actualizar y eliminar registros con `save`, `create`, `update` y `delete`
+- Relaciones: `ForeignKey`, `OneToOneField` y `ManyToManyField`
+- Usar `Q` para consultas OR y `related_name` para la relación inversa
+</blockquote>
+    </div>
+  </section>

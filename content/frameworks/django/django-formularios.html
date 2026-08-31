@@ -1,0 +1,221 @@
+<!-- 07. Formularios y validación - Django (Frameworks) -->
+  <section id="7-1-que-son-los-formularios-en-django">
+    <h2><i class="fa-solid fa-file-pen"></i> 7.1 Qué son los formularios en Django</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Los <strong>formularios de Django</strong> permiten definir campos, validar datos y renderizar HTML de forma declarativa. Combinan la entrada del usuario con la lógica de validación y, si lo deseas, la persistencia en la base de datos.</p>
+<h3>Qué aportan</h3>
+<table><thead><tr><th>Ventaja</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Validación automática</strong></td><td>Comprueba tipos, longitudes y formatos</td></tr><tr><td><strong>Renderizado de HTML</strong></td><td>Genera los inputs con el formato adecuado</td></tr><tr><td><strong>Errores integrados</strong></td><td>Muestra mensajes de error por campo</td></tr><tr><td><strong>Seguridad CSRF</strong></td><td>Trabaja con la protección integrada</td></tr><tr><td><strong>Reutilización</strong></td><td>El mismo formulario sirve para crear y editar</td></tr></tbody></table>
+<h3>Tipos de formularios</h3>
+<ul>
+<li><strong><code>forms.Form</code></strong>: Formulario libre, no ligado a un modelo</li>
+<li><strong><code>forms.ModelForm</code></strong>: Genera formularios a partir de un modelo</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-2-formularios-con-forms-form">
+    <h2><i class="fa-solid fa-clipboard-list"></i> 7.2 Formularios con forms.Form</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<pre><code class="language-python"># blog/forms.py
+from django import forms
+
+class FormularioContacto(forms.Form):
+    nombre = forms.CharField(max_length=100)
+    email = forms.EmailField()
+    mensaje = forms.CharField(widget=forms.Textarea)
+    suscripcion = forms.BooleanField(required=False)
+    edad = forms.IntegerField(min_value=18, max_value=120)</code></pre>
+<h3>Tipos de campo más usados</h3>
+<table><thead><tr><th>Campo</th><th>Validación</th></tr></thead><tbody><tr><td><code>CharField</code></td><td>Texto con longitud máxima</td></tr><tr><td><code>EmailField</code></td><td>Debe ser un email válido</td></tr><tr><td><code>IntegerField</code></td><td>Número entero con rango</td></tr><tr><td><code>DecimalField</code></td><td>Decimal con precisión</td></tr><tr><td><code>BooleanField</code></td><td>Casilla de verificación</td></tr><tr><td><code>DateField</code> / <code>DateTimeField</code></td><td>Fecha en formato correcto</td></tr><tr><td><code>ChoiceField</code></td><td>Selección entre opciones</td></tr><tr><td><code>FileField</code></td><td>Subida de archivos</td></tr></tbody></table>
+<h3>Widgets para personalizar el HTML</h3>
+<pre><code class="language-python">mensaje = forms.CharField(
+    widget=forms.Textarea(attrs={
+        "rows": 5,
+        "class": "campo-formulario",
+        "placeholder": "Escribe tu mensaje",
+    })
+)</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-3-formularios-con-forms-modelform">
+    <h2><i class="fa-solid fa-database"></i> 7.3 Formularios con forms.ModelForm</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <code>ModelForm</code> genera automáticamente los campos a partir de un modelo, incluyendo validaciones y tipos.</p>
+<pre><code class="language-python"># blog/forms.py
+from django import forms
+from .models import Articulo
+
+class FormularioArticulo(forms.ModelForm):
+    class Meta:
+        model = Articulo
+        fields = ["titulo", "contenido", "publicado", "categoria"]
+        # fields = "__all__"  # para incluir todos los campos
+
+        widgets = {
+            "contenido": forms.Textarea(attrs={"rows": 8}),
+        }</code></pre>
+<h3>Usarlo para crear o editar</h3>
+<pre><code class="language-python"># Crear un registro nuevo
+form = FormularioArticulo(request.POST)
+articulo = form.save()
+
+# Editar un registro existente
+form = FormularioArticulo(request.POST, instance=articulo_existente)
+articulo = form.save()
+
+# Excluir campos
+class Meta:
+    model = Articulo
+    fields = ["titulo", "contenido"]
+    # Para excluir un campo que no quieres mostrar:
+    # exclude = ["slug"]</code></pre>
+<blockquote class="aside aside-tip">
+El atributo `instance` convierte el mismo formulario en una edición; sin él, crea registros nuevos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-4-renderizar-formularios-en-plantillas">
+    <h2><i class="fa-solid fa-display"></i> 7.4 Renderizar formularios en plantillas</h2>
+    <div class="doc-content">
+<h3>Pasar el formulario a la plantilla</h3>
+<pre><code class="language-python"># blog/views.py
+from django.shortcuts import render, redirect
+from .forms import FormularioContacto
+
+def contacto(request):
+    if request.method == "POST":
+        form = FormularioContacto(request.POST)
+        if form.is_valid():
+            # Procesar los datos
+            print(form.cleaned_data)
+            return redirect("inicio")
+    else:
+        form = FormularioContacto()
+
+    return render(request, "blog/contacto.html", {"form": form})</code></pre>
+<h3>Plantilla con el formulario</h3>
+<pre><code class="language-html">&lt;!-- templates/blog/contacto.html --&gt;
+&lt;form method="POST"&gt;
+  {% csrf_token %}
+
+  &lt;!-- Renderizado simple --&gt;
+  {{ form.as_p }}
+
+  &lt;!-- Renderizado por campos (más control) --&gt;
+  &lt;div&gt;
+    {{ form.nombre.label_tag }}
+    {{ form.nombre }}
+    {{ form.nombre.errors }}
+  &lt;/div&gt;
+
+  &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<h3>Métodos de renderizado</h3>
+<table><thead><tr><th>Método</th><th>Formato</th></tr></thead><tbody><tr><td><code>{{ form.as_p }}</code></td><td>Cada campo en un párrafo <code>&lt;p&gt;</code></td></tr><tr><td><code>{{ form.as_table }}</code></td><td>Dentro de una tabla</td></tr><tr><td><code>{{ form.as_ul }}</code></td><td>Dentro de una lista <code>&lt;li&gt;</code></td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-5-proteccion-csrf">
+    <h2><i class="fa-solid fa-shield-halved"></i> 7.5 Protección CSRF</h2>
+    <div class="doc-content">
+<h3>Qué es CSRF</h3>
+<p><strong>CSRF (Cross-Site Request Forgery)</strong> es un ataque donde un tercero envía peticiones falsas en nombre de un usuario autenticado. Django genera un token único por sesión para impedirlo.</p>
+<h3>Cómo activarlo</h3>
+<pre><code class="language-html">&lt;!-- Obligatorio dentro de formularios con metodo POST --&gt;
+&lt;form method="POST"&gt;
+  {% csrf_token %}
+  &lt;!-- ... campos ... --&gt;
+&lt;/form&gt;</code></pre>
+<h3>Qué genera la etiqueta</h3>
+<pre><code class="language-html">&lt;!-- La etiqueta genera un input oculto similar a este: --&gt;
+&lt;input type="hidden" name="csrfmiddlewaretoken" value="eRfWd8y4J5..."/&gt;</code></pre>
+<h3>Excepciones y buenas prácticas</h3>
+<ul>
+<li>Para APIs se usan decoradores como <code>@csrf_exempt</code>, pero mejor se maneja con tokens en el frontend</li>
+<li>Si el token falta o no coincide, Django devuelve un error 403</li>
+<li>Siempre usa <code>{% csrf_token %}</code> en formularios internos del sitio</li>
+</ul>
+<blockquote class="aside aside-warning">
+Nunca desactives la protección CSRF en formularios de producción sin una estrategia de token equivalente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-6-validacion-de-datos-y-procesado-post">
+    <h2><i class="fa-solid fa-circle-check"></i> 7.6 Validación de datos y procesado POST</h2>
+    <div class="doc-content">
+<h3>El método is_valid</h3>
+<p><code>form.is_valid()</code> ejecuta todas las validaciones. Si todo es correcto, los datos limpios quedan disponibles en <code>form.cleaned_data</code>.</p>
+<h3>Validaciones personalizadas</h3>
+<pre><code class="language-python"># blog/forms.py
+from django import forms
+import re
+
+class FormularioRegistro(forms.Form):
+    usuario = forms.CharField(max_length=30)
+    email = forms.EmailField()
+    password = forms.CharField(widget=forms.PasswordInput)
+    confirmar = forms.CharField(widget=forms.PasswordInput)
+
+    def clean_usuario(self):
+        # Validación solo para el campo "usuario"
+        usuario = self.cleaned_data["usuario"]
+        if not re.match(r"^[a-zA-Z0-9_]+$", usuario):
+            raise forms.ValidationError(
+                "El usuario solo puede tener letras, números y guión bajo"
+            )
+        return usuario
+
+    def clean(self):
+        # Validación global: comparar campos entre sí
+        datos = self.cleaned_data
+        if datos.get("password") != datos.get("confirmar"):
+            raise forms.ValidationError("Las contraseñas no coinciden")
+        return datos</code></pre>
+<h3>Procesar el POST completo</h3>
+<pre><code class="language-python"># blog/views.py
+from django.shortcuts import render, redirect
+from .forms import FormularioRegistro
+
+def registrar(request):
+    if request.method == "POST":
+        form = FormularioRegistro(request.POST)
+        if form.is_valid():
+            datos = form.cleaned_data
+            # Aquí crearías el usuario u otros registros
+            return redirect("login")
+    else:
+        form = FormularioRegistro()
+
+    return render(request, "blog/registro.html", {"form": form})</code></pre>
+<blockquote class="aside aside-note">
+Patrón clásico: si es POST y el formulario es válido se procesa y redirige (patrón PRG); si no, se vuelve a mostrar el formulario con errores.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los formularios de Django validan datos y generan HTML de forma automática
+- `forms.Form` para formularios libres y `forms.ModelForm` para los ligados a modelos
+- Renderizar con `{{ form.as_p }}` o campos individuales
+- Usar `{% csrf_token %}` en todo formulario POST
+- Validar campos con `clean_<campo>` y globalmente con `clean`
+- Procesar el POST con el patrón: POST + is_valid + redirigir
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,207 @@
+<!-- 06. Directivas - Angular (Frameworks) -->
+  <section id="6-1-que-es-una-directiva">
+    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> 6.1 Qué es una directiva</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Una <strong>directiva</strong> es una clase TypeScript decorada que permite <strong>extender el comportamiento del DOM</strong>: modificar el aspecto de un elemento, cambiar su estructura o añadirle nuevos comportamientos.</p>
+<p>En el template, una directiva se identifica porque se usa como un atributo. Ejemplos muy conocidos: <code>*ngIf</code>, <code>*ngFor</code>, <code>ngClass</code> y <code>ngStyle</code>.</p>
+<h3>Qué diferencian a las directivas de los componentes</h3>
+<table><thead><tr><th>Componente</th><th>Directiva</th></tr></thead><tbody><tr><td>Tiene template propio</td><td>No tiene template propio</td></tr><tr><td>Se usa como etiqueta (&lt;app-x&gt;)</td><td>Se usa como atributo de un elemento</td></tr><tr><td>Controla una vista completa</td><td>Añade comportamiento o modifica la vista existente</td></tr></tbody></table>
+<h3>Ejemplo de sintaxis en template</h3>
+<pre><code class="language-typescript">&lt;p *ngIf="mostrar"&gt;Este párrafo es condicional&lt;/p&gt;
+&lt;li *ngFor="let tarea of tareas"&gt;{{ tarea }}&lt;/li&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-2-tipos-de-directivas">
+    <h2><i class="fa-solid fa-shuffle"></i> 6.2 Tipos de directivas</h2>
+    <div class="doc-content">
+<h3>Clasificación principal</h3>
+<table><thead><tr><th>Tipo</th><th>Qué hace</th><th>Ejemplos</th></tr></thead><tbody><tr><td><strong>Estructurales</strong></td><td>Modifican el DOM: añaden, eliminan o reemplazan elementos</td><td><code>*ngIf</code>, <code>*ngFor</code>, <code>*ngSwitch</code></td></tr><tr><td><strong>De atributo</strong></td><td>Cambian la apariencia o el comportamiento de un elemento existente</td><td><code>ngClass</code>, <code>ngStyle</code>, <code>ngModel</code></td></tr><tr><td><strong>Componentes</strong></td><td>Directivas con template (vistas completas)</td><td>Los creados con <code>@Component</code></td></tr></tbody></table>
+<h3>Diferencia clave</h3>
+<ul>
+<li><strong>Estructurales</strong>: suelen llevar un asterisco (<code>*</code>) delante, que es azúcar sintáctico de Angular. Afectan a la estructura del documento.</li>
+<li><strong>De atributo</strong>: se escriben sin asterisco y afectan al elemento donde se aplican.</li>
+</ul>
+<h3>Ejemplos de uso</h3>
+<pre><code class="language-typescript">&lt;!-- Estructural: añade/elimina el elemento --&gt;
+&lt;div *ngIf="permitido"&gt;Contenido protegido&lt;/div&gt;
+
+&lt;!-- De atributo: modifica el elemento --&gt;
+&lt;div [ngClass]="{'activo': seleccionado}"&gt;Elemento&lt;/div&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-3-ngif">
+    <h2><i class="fa-solid fa-eye"></i> 6.3 Directiva *ngIf</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p><code>*ngIf</code> es una directiva estructural que <strong>incluye o elimina</strong> el elemento del DOM según el valor de una condición.</p>
+<h3>Sintaxis básica</h3>
+<pre><code class="language-typescript">&lt;div *ngIf="usuarioLogueado"&gt;
+  Bienvenido, {{ usuario.nombre }}
+&lt;/div&gt;</code></pre>
+<h3>Con bloque "else"</h3>
+<pre><code class="language-typescript">&lt;div *ngIf="usuarioLogueado; else noLogueado"&gt;
+  Bienvenido, {{ usuario.nombre }}
+&lt;/div&gt;
+
+&lt;ng-template #noLogueado&gt;
+  &lt;p&gt;Por favor, inicia sesión.&lt;/p&gt;
+&lt;/ng-template&gt;</code></pre>
+<h3>Con bloque "then" y "else"</h3>
+<pre><code class="language-typescript">&lt;div *ngIf="tieneDatos; then datos; else vacio"&gt;&lt;/div&gt;
+
+&lt;ng-template #datos&gt;
+  &lt;ul&gt;&lt;li *ngFor="let item of items"&gt;{{ item }}&lt;/li&gt;&lt;/ul&gt;
+&lt;/ng-template&gt;
+
+&lt;ng-template #vacio&gt;
+  &lt;p&gt;No hay datos que mostrar.&lt;/p&gt;
+&lt;/ng-template&gt;</code></pre>
+<h3>Ejemplo con condición combinada</h3>
+<pre><code class="language-typescript">export class LoginComponent {
+  autenticado: boolean = false;
+  rol: string = 'admin';
+}</code></pre>
+<pre><code class="language-typescript">&lt;p *ngIf="autenticado &amp;&amp; rol === 'admin'"&gt;
+  Panel de administración disponible
+&lt;/p&gt;</code></pre>
+<blockquote class="aside aside-note">
+`*ngIf` elimina el elemento del DOM, a diferencia de `hidden` (que solo lo oculta con CSS). Esto también destruye los componentes hijos y libera recursos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-4-ngfor">
+    <h2><i class="fa-solid fa-list"></i> 6.4 Directiva *ngFor</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p><code>*ngFor</code> es una directiva estructural que <strong>repite un elemento</strong> por cada elemento de una colección (array o <code>Observable</code>).</p>
+<h3>Sintaxis básica</h3>
+<pre><code class="language-typescript">export class TareasComponent {
+  tareas: string[] = ['Estudiar', 'Codear', 'Desplegar'];
+}</code></pre>
+<pre><code class="language-typescript">&lt;ul&gt;
+  &lt;li *ngFor="let tarea of tareas"&gt;{{ tarea }}&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+<h3>Índice, primero y último</h3>
+<pre><code class="language-typescript">&lt;ol&gt;
+  &lt;li *ngFor="let tarea of tareas; let i = index; let primero = first; let ultimo = last"&gt;
+    {{ i + 1 }}. {{ tarea }} &lt;span *ngIf="primero"&gt;(primera)&lt;/span&gt;&lt;span *ngIf="ultimo"&gt;(última)&lt;/span&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;</code></pre>
+<h3>Iterar sobre un array de objetos</h3>
+<pre><code class="language-typescript">export class ProductosComponent {
+  productos = [
+    { id: 1, nombre: 'Teclado', precio: 45 },
+    { id: 2, nombre: 'Monitor', precio: 250 },
+    { id: 3, nombre: 'Mouse', precio: 20 }
+  ];
+}</code></pre>
+<pre><code class="language-typescript">&lt;table&gt;
+  &lt;thead&gt;&lt;tr&gt;&lt;th&gt;Nombre&lt;/th&gt;&lt;th&gt;Precio&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr *ngFor="let p of productos"&gt;
+      &lt;td&gt;{{ p.nombre }}&lt;/td&gt;
+      &lt;td&gt;${{ p.precio }}&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+<blockquote class="aside aside-warning">
+Evita usar `let p of productos` con objetos que mutan con frecuencia sin una referencia estable; si quieres, añade `trackBy` para que Angular solo repinte lo que cambia y mejore el rendimiento.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-5-ngclass-y-ngstyle">
+    <h2><i class="fa-solid fa-palette"></i> 6.5 ngClass y ngStyle</h2>
+    <div class="doc-content">
+<h3>ngClass: clases condicionales</h3>
+<p><code>ngClass</code> permite añadir o quitar <strong>clases CSS</strong> de forma condicional o combinada.</p>
+<pre><code class="language-typescript">&lt;div [ngClass]="{'activo': estaActivo, 'peligro': tieneError}"&gt;
+  Estado del sistema
+&lt;/div&gt;</code></pre>
+<h3>ngClass con métodos</h3>
+<pre><code class="language-typescript">export class AlertaComponent {
+  nivel: string = 'error';
+
+  clasesAlerta(): any {
+    switch (this.nivel) {
+      case 'ok': return { 'alert-success': true };
+      case 'error': return { 'alert-danger': true };
+      default: return {};
+    }
+  }
+}</code></pre>
+<pre><code class="language-typescript">&lt;p [ngClass]="clasesAlerta()"&gt;Mensaje de alerta&lt;/p&gt;</code></pre>
+<h3>ngStyle: estilos inline condicionales</h3>
+<pre><code class="language-typescript">&lt;div [ngStyle]="{'color': peligro ? 'red' : 'green', 'font-weight': negrita ? 'bold' : 'normal'}"&gt;
+  Mensaje importante
+&lt;/div&gt;</code></pre>
+<h3>Comparativa</h3>
+<table><thead><tr><th>Directiva</th><th>Qué modifica</th><th>Cuándo usarla</th></tr></thead><tbody><tr><td><code>ngClass</code></td><td>Atributo <code>class</code></td><td>Gestos por diseño; mantiene estilos en la hoja CSS</td></tr><tr><td><code>ngStyle</code></td><td>Estilos inline</td><td>Valores dinámicos (position, colores calculados)</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Prefiere `ngClass` sobre `ngStyle` siempre que puedas: mantener la lógica de estilos en CSS separa presentación y comportamiento, y facilita el mantenimiento.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-6-directivas-propias">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> 6.6 Directivas propias (concepto)</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Angular permite crear <strong>directivas personalizadas</strong> con el decorador <code>@Directive</code>, tanto de atributo (comportamiento) como estructurales. Se usan para encapsular lógica repetitiva de UI.</p>
+<h3>Ejemplo: directiva de atributo que resalta</h3>
+<pre><code class="language-typescript">import { Directive, ElementRef, HostListener, Input } from '@angular/core';
+
+@Directive({
+  selector: '[appResaltar]'
+})
+export class ResaltarDirective {
+  @Input() color = 'yellow';
+
+  constructor(private el: ElementRef) {}
+
+  @HostListener('mouseenter') entrar() {
+    this.el.nativeElement.style.backgroundColor = this.color;
+  }
+
+  @HostListener('mouseleave') salir() {
+    this.el.nativeElement.style.backgroundColor = 'transparent';
+  }
+}</code></pre>
+<h3>Uso en el template</h3>
+<pre><code class="language-typescript">&lt;p appResaltar color="cyan"&gt;Pasa el ratón por encima de mí&lt;/p&gt;</code></pre>
+<h3>Cómo declararla</h3>
+<pre><code class="language-typescript">@NgModule({
+  declarations: [ResaltarDirective],
+  exports: [ResaltarDirective]
+})
+export class SharedModule {}</code></pre>
+<blockquote class="aside aside-note">
+En Angular moderno las directivas pueden marcarse como `standalone: true` y usarse sin pertenecer a un NgModule, importándolas directamente desde el componente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Las directivas extienden el comportamiento y la estructura del DOM
+- Hay tres tipos: estructurales, de atributo y componentes
+- *ngIf muestra u oculta elementos según una condición (con then/else)
+- *ngFor repite elementos iterando sobre colecciones (con index, first, last)
+- ngClass y ngStyle modifican clases y estilos de forma condicional
+- Puedes crear directivas propias con @Directive y @HostListener
+</blockquote>
+    </div>
+  </section>

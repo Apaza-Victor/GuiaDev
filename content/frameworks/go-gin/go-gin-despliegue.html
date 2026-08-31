@@ -1,0 +1,326 @@
+<!-- 10. Despliegue y buenas prácticas - Go (Frameworks) -->
+  <section id="10-1-go-build-binario">
+    <h2><i class="fa-solid fa-box"></i> 10.1 go build: el binario</h2>
+    <div class="doc-content">
+<h3>Compilar para producción</h3>
+<p><strong>go build</strong> genera un único binario ejecutable sin dependencias externas. Go compila directamente a código de máquina, por lo que no necesitas instalar Go ni gestionar librerías en el servidor de destino.</p>
+<pre><code class="language-bash"># Compilar en el directorio actual
+go build
+
+# Nombre del binario personalizado
+go build -o mi-api
+
+# Reducir el tamaño (quitar símbolos de depuración)
+go build -ldflags="-s -w" -o mi-api
+
+# Compilar para otra arquitectura (cross-compiling)
+GOOS=linux GOARCH=amd64 go build -o mi-api-linux
+GOOS=windows GOARCH=amd64 go build -o mi-api.exe
+GOOS=darwin GOARCH=amd64 go build -o mi-api-mac</code></pre>
+<h3>Binarios por plataforma</h3>
+<table><thead><tr><th>Variable</th><th>Valor</th><th>Resultado</th></tr></thead><tbody><tr><td><code>GOOS</code></td><td><code>linux</code></td><td>Binario para GNU/Linux</td></tr><tr><td><code>GOOS</code></td><td><code>windows</code></td><td>Binario para Windows (.exe)</td></tr><tr><td><code>GOOS</code></td><td><code>darwin</code></td><td>Binario para macOS</td></tr><tr><td><code>GOARCH</code></td><td><code>amd64</code> / <code>arm64</code></td><td>Arquitectura de 64 bits</td></tr></tbody></table>
+<h3>Verificar el binario</h3>
+<pre><code class="language-bash"># Ejecutar el binario en el servidor
+./mi-api
+
+# Ver el tamaño del archivo
+ls -lh mi-api
+# Normalmente menos de 20 MB para una API Gin</code></pre>
+<blockquote class="aside aside-note">
+Un binario Go es <strong>estático</strong>: no requiere un runtime, dependencias ni instalar nada en el servidor. Solo lo copias y lo ejecutas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-2-despliegue-en-servidor">
+    <h2><i class="fa-solid fa-server"></i> 10.2 Despliegue en servidor</h2>
+    <div class="doc-content">
+<h3>Opciones de servidor</h3>
+<table><thead><tr><th>Opción</th><th>Ventajas</th><th>Para qué</th></tr></thead><tbody><tr><td><strong>VPS / Cloud</strong></td><td>Control total, bajo costo</td><td>APIs pequeñas y medianas</td></tr><tr><td><strong>PaaS (Fly.io, Render)</strong></td><td>Escalado y SSL automáticos</td><td>Despliegues rápidos</td></tr><tr><td><strong>Kubernetes</strong></td><td>Orquestación completa</td><td>Sistemas grandes y distribuidos</td></tr><tr><td><strong>Serverless</strong></td><td>Pago por uso, sin servidor</td><td>Funciones puntuales</td></tr></tbody></table>
+<h3>Despliegue manual en VPS</h3>
+<pre><code class="language-bash"># 1. Compilar para Linux desde tu máquina
+GOOS=linux GOARCH=amd64 go build -o mi-api
+
+# 2. Copiar al servidor vía SCP
+scp mi-api usuario@servidor:/opt/mi-api/
+
+# 3. Ejecutar (preferiblemente con un daemon/systemd)
+nohup ./mi-api &amp;</code></pre>
+<h3>Servicio con systemd</h3>
+<pre><code class="language-text"># /etc/systemd/system/mi-api.service
+[Unit]
+Description=API Gin
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/mi-api
+ExecStart=/opt/mi-api/mi-api
+Restart=always
+User=www-data
+EnvironmentFile=/opt/mi-api/.env
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+<pre><code class="language-bash"># Activar el servicio
+sudo systemctl daemon-reload
+sudo systemctl enable --now mi-api
+sudo systemctl status mi-api
+sudo journalctl -u mi-api -f  # ver logs</code></pre>
+<blockquote class="aside aside-tip">
+Usa un <strong>reverse proxy</strong> (Nginx/Caddy) delante de Gin para TLS/SSL, HTTP/2 y balanceo de carga. Gin escucha en <code>127.0.0.1:8080</code> y Nginx reenvía el tráfico.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-3-variables-de-entorno">
+    <h2><i class="fa-solid fa-gear"></i> 10.3 Variables de entorno</h2>
+    <div class="doc-content">
+<h3>os.Getenv()</h3>
+<p>Las <strong>variables de entorno</strong> guardan configuración sensible (claves, conexiones, puertos) fuera del código. Se leen con <code>os.Getenv()</code>:</p>
+<pre><code class="language-go">import (
+    "os"
+)
+
+func main() {
+    // Leer con valor por defecto
+    puerto := os.Getenv("PORT")
+    if puerto == "" {
+        puerto = "8080"
+    }
+
+    // Forma compacta con default
+    puerto = getEnv("PORT", "8080")
+    modo := getEnv("GIN_MODE", "release")
+}
+
+func getEnv(clave, porDefecto string) string {
+    if v := os.Getenv(clave); v != "" {
+        return v
+    }
+    return porDefecto
+}</code></pre>
+<h3>Variables típicas de una API</h3>
+<table><thead><tr><th>Variable</th><th>Uso</th></tr></thead><tbody><tr><td><code>PORT</code></td><td>Puerto en que escucha el servidor</td></tr><tr><td><code>GIN_MODE</code></td><td><code>debug</code> o <code>release</code></td></tr><tr><td><code>DATABASE_URL</code></td><td>Cadena de conexión a la base de datos</td></tr><tr><td><code>JWT_SECRET</code></td><td>Clave secreta para firmar tokens</td></tr><tr><td><code>ALLOWED_ORIGINS</code></td><td>Orígenes permitidos para CORS</td></tr></tbody></table>
+<h3>Archivo .env</h3>
+<pre><code class="language-text"># .env (nunca commits en git)
+PORT=8080
+GIN_MODE=release
+DEBUG=false
+JWT_SECRET=cambiar_por_un_valor_largo_y_seguro</code></pre>
+<pre><code class="language-bash"># Cargar en Linux (desde systemd o script)
+set -a; source .env; set +a
+./mi-api</code></pre>
+<blockquote class="aside aside-warning">
+Nunca subas claves ni secretos a un repositorio. Agrega <code>.env</code> a tu <code>.gitignore</code> y usa variables de entorno o un gestor de secretos (SOPS, Vault, secrets de la plataforma).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-4-docker">
+    <h2><i class="fa-solid fa-cubes"></i> 10.4 Docker</h2>
+    <div class="doc-content">
+<h3>Dockerfile de una API Go</h3>
+<p><strong>Docker</strong> empaqueta la aplicación con su entorno en un contenedor reproducible. Go es ideal porque produce binarios estáticos pequeños.</p>
+<pre><code class="language-text"># Dockerfile
+# Etapa 1: compilar
+FROM golang:1.22 AS build
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o mi-api .
+
+# Etapa 2: imagen final mínima
+FROM alpine:latest
+RUN adduser -D appuser
+WORKDIR /app
+COPY --from=build /app/mi-api .
+COPY --from=build /app/.env .env
+USER appuser
+EXPOSE 8080
+CMD ["./mi-api"]</code></pre>
+<h3>Construir y ejecutar</h3>
+<pre><code class="language-bash"># Construir la imagen
+docker build -t mi-api .
+
+# Ejecutar con variables de entorno
+docker run -p 8080:8080 --env-file .env mi-api
+
+# Ejecutar en modo detached
+docker run -d --name api -p 8080:8080 --restart unless-stopped mi-api
+
+# Ver logs del contenedor
+docker logs -f api</code></pre>
+<h3>docker-compose.yml</h3>
+<pre><code class="language-yaml">version: "3.9"
+
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    restart: unless-stopped</code></pre>
+<blockquote class="aside aside-note">
+El <code>CGO_ENABLED=0</code> desactiva el binding con C, lo que produce un binario totalmente estático que funciona en casi cualquier imagen base (como alpine).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-5-testing-con-httptest">
+    <h2><i class="fa-solid fa-vial-circle-check"></i> 10.5 Testing con httptest</h2>
+    <div class="doc-content">
+<h3>httptest</h3>
+<p>La standard library <code>net/http/httptest</code> permite probar handlers de Gin sin levantar un servidor real. Es rápido y no requiere conexiones de red:</p>
+<pre><code class="language-go">// main_test.go
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "net/http"
+    "net/http/httptest"
+    "testing"
+)
+
+func TestApiSaludo(t *testing.T) {
+    // Crear el router
+    r := gin.Default()
+    r.GET("/saludo", func(c *gin.Context) {
+        c.JSON(200, gin.H{"mensaje": "hola"})
+    })
+
+    // Simular una petición GET
+    req := httptest.NewRequest("GET", "/saludo", nil)
+    w := httptest.NewRecorder()
+    r.ServeHTTP(w, req)
+
+    // Verificar el código de estado
+    if w.Code != http.StatusOK {
+        t.Errorf("se esperaba 200, se obtuvo %d", w.Code)
+    }
+
+    // Verificar el cuerpo
+    var resp map[string]string
+    json.Unmarshal(w.Body.Bytes(), &amp;resp)
+    if resp["mensaje"] != "hola" {
+        t.Errorf("mensaje inesperado: %v", resp)
+    }
+}</code></pre>
+<h3>Probar un POST con JSON</h3>
+<pre><code class="language-go">func TestCrearUsuario(t *testing.T) {
+    r := gin.Default()
+    r.POST("/usuarios", crearUsuarioHandler)
+
+    cuerpo := `{"nombre":"Ana","email":"ana@mail.com"}`
+    req := httptest.NewRequest(
+        "POST", "/usuarios", bytes.NewBufferString(cuerpo),
+    )
+    req.Header.Set("Content-Type", "application/json")
+    w := httptest.NewRecorder()
+    r.ServeHTTP(w, req)
+
+    if w.Code != http.StatusCreated {
+        t.Errorf("se esperaba 201, se obtuvo %d: %s", w.Code, w.Body.String())
+    }
+}</code></pre>
+<h3>Tabla de casos de prueba</h3>
+<pre><code class="language-go">func TestValidacionUsuario(t *testing.T) {
+    casos := []struct {
+        nombre   string
+        cuerpo   string
+        esperado int
+    }{
+        {"datos válidos", `{"nombre":"Ana","email":"ana@mail.com"}`, 201},
+        {"sin nombre", `{"email":"ana@mail.com"}`, 400},
+        {"email inválido", `{"nombre":"Ana","email":"no-es-email"}`, 400},
+        {"cuerpo vacío", `{}`, 400},
+    }
+
+    r := gin.Default()
+    r.POST("/usuarios", crearUsuarioHandler)
+
+    for _, c := range casos {
+        t.Run(c.nombre, func(t *testing.T) {
+            req := httptest.NewRequest("POST", "/usuarios",
+                bytes.NewBufferString(c.cuerpo))
+            req.Header.Set("Content-Type", "application/json")
+            w := httptest.NewRecorder()
+            r.ServeHTTP(w, req)
+            if w.Code != c.esperado {
+                t.Errorf("%s: se esperaba %d, se obtuvo %d",
+                    c.nombre, c.esperado, w.Code)
+            }
+        })
+    }
+}</code></pre>
+<h3>Ejecutar las pruebas</h3>
+<pre><code class="language-bash"># Probar todos los paquetes
+go test ./...
+
+# Probar con cobertura
+go test -cover ./...
+
+# Probar una función específica
+go test -run TestCrearUsuario -v</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-6-buenas-practicas">
+    <h2><i class="fa-solid fa-thumbs-up"></i> 10.6 Buenas prácticas</h2>
+    <div class="doc-content">
+<h3>Configuración del modo producción</h3>
+<pre><code class="language-go">func main() {
+    // Modo release (sin logs de debug)
+    gin.SetMode(gin.ReleaseMode)
+    // O mediante variable de entorno
+    // GIN_MODE=release ./mi-api
+}</code></pre>
+<h3>Guía de buenas prácticas</h3>
+<table><thead><tr><th>Área</th><th>Recomendación</th></tr></thead><tbody><tr><td><strong>Seguridad</strong></td><td>Secretos en variables de entorno, HTTPS, headers de seguridad</td></tr><tr><td><strong>Rendimiento</strong></td><td>Compilar con <code>-ldflags="-s -w"</code>, usar modo release</td></tr><tr><td><strong>Configuración</strong></td><td>Puerto y claves configurables, nunca hardcodear</td></tr><tr><td><strong>Errores</strong></td><td>Loggear con contexto, responder JSON consistente</td></tr><tr><td><strong>Pruebas</strong></td><td>Escribir tests con httptest para cada handler</td></tr><tr><td><strong>Logs</strong></td><td>Logs estructurados, incluir request_id y timestamps</td></tr></tbody></table>
+<h3>Checklist antes de desplegar</h3>
+<ul>
+<li>Usa <code>gin.SetMode(gin.ReleaseMode)</code> o <code>GIN_MODE=release</code></li>
+<li>Configura <code>PORT</code> y <code>JWT_SECRET</code> como variables de entorno</li>
+<li>Valida todos los inputs de usuario (body, query, headers)</li>
+<li>Limita los tamaños de archivos y requests (<code>MaxMultipartMemory</code>)</li>
+<li>Configura CORS solo con los orígenes permitidos</li>
+<li>Restringe cabeceras expuestas y usa HTTPS con certificado válido</li>
+<li>Prueba con <code>go test ./...</code> antes de compilar</li>
+<li>Crea backups de la base de datos y revisa los logs</li>
+</ul>
+<h3>Headers de seguridad recomendados</h3>
+<pre><code class="language-go">func headersSeguridad() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        c.Header("X-Content-Type-Options", "nosniff")
+        c.Header("X-Frame-Options", "DENY")
+        c.Header("Referrer-Policy", "no-referrer")
+        c.Next()
+    }
+}
+
+r.Use(headersSeguridad())</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste:**
+- <code>go build</code> genera un binario estático sin dependencias externas
+- El despliegue en VPS/systemd o contenedores es reproducible y seguro
+- Las variables de entorno guardan configuración sensible con <code>os.Getenv()</code>
+- Docker empaqueta la API en una imagen lista para ejecutar
+- httptest permite probar handlers sin levantar un servidor real
+- Las buenas prácticas incluyen modo release, seguridad, logs y pruebas
+</blockquote>
+    </div>
+  </section>

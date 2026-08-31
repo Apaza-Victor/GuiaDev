@@ -1,0 +1,435 @@
+<!-- 08. Autenticación y seguridad - Go (Frameworks) -->
+  <section id="8-1-jwt">
+    <h2><i class="fa-solid fa-key"></i> 8.1 JWT</h2>
+    <div class="doc-content">
+<h3>Qué es JWT</h3>
+<p><strong>JWT</strong> (JSON Web Token) es un estándar para transmitir datos de autenticación de forma segura. El token contiene tres partes: header, payload y firma, codificadas en base64url separadas por puntos.</p>
+<pre><code class="language-text">header.payload.firma
+ejemplo: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.iw3d0yeMQCJzQ</code></pre>
+<h3>Instalación</h3>
+<pre><code class="language-bash">go get github.com/golang-jwt/jwt/v5</code></pre>
+<h3>Generar y validar tokens</h3>
+<pre><code class="language-go">package auth
+
+import (
+    "time"
+    "github.com/golang-jwt/jwt/v5"
+)
+
+var llave = []byte("mi_clave_secreta_super_segura")
+
+func GenerarToken(usuarioID int, email string) (string, error) {
+    claims := jwt.MapClaims{
+        "usuario_id": usuarioID,
+        "email":      email,
+        "exp":        time.Now().Add(24 * time.Hour).Unix(),
+        "iat":        time.Now().Unix(),
+    }
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    return token.SignedString(llave)
+}
+
+func VerificarToken(tokenString string) (*jwt.MapClaims, error) {
+    token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+        return llave, nil
+    })
+    if err != nil || !token.Valid {
+        return nil, err
+    }
+    claims, ok := token.Claims.(jwt.MapClaims)
+    if !ok {
+        return nil, err
+    }
+    return &amp;claims, nil
+}</code></pre>
+<h3>Partes del token</h3>
+<table><thead><tr><th>Parte</th><th>Contenido</th></tr></thead><tbody><tr><td><strong>Header</strong></td><td>Algoritmo de firma y tipo</td></tr><tr><td><strong>Payload</strong></td><td>Claims: usuario, email, expiración</td></tr><tr><td><strong>Firma</strong></td><td>Header + Payload firmados con clave secreta</td></tr></tbody></table>
+<blockquote class="aside aside-warning">
+La clave secreta para firmar JWT debe ser larga y guardada en una variable de entorno, nunca en el código fuente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-2-hashing-con-bcrypt">
+    <h2><i class="fa-solid fa-lock"></i> 8.2 Hashing con bcrypt</h2>
+    <div class="doc-content">
+<h3>Por qué hashear contraseñas</h3>
+<p>Nunca guardes contraseñas en texto plano. <strong>bcrypt</strong> aplica un hash con salt, dificultando los ataques de fuerza bruta y de tablas de arcoíris.</p>
+<pre><code class="language-bash">go get golang.org/x/crypto/bcrypt</code></pre>
+<h3>Registro de usuarios</h3>
+<pre><code class="language-go">package handlers
+
+import (
+    "net/http"
+    "golang.org/x/crypto/bcrypt"
+    "github.com/gin-gonic/gin"
+)
+
+func Registrar(c *gin.Context) {
+    var input struct {
+        Nombre   string `json:"nombre" binding:"required"`
+        Email    string `json:"email" binding:"required,email"`
+        Password string `json:"password" binding:"required,min=8"`
+    }
+    if err := c.ShouldBindJSON(&amp;input); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // Hashear la contraseña
+    hash, err := bcrypt.GenerateFromPassword(
+        []byte(input.Password),
+        bcrypt.DefaultCost,
+    )
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "no se pudo registrar"})
+        return
+    }
+
+    // Guardar en base de datos (en este ejemplo, imprimir)
+    c.JSON(http.StatusCreated, gin.H{
+        "mensaje":   "usuario registrado",
+        "email":     input.Email,
+        "hash_len":  len(hash),
+    })
+}
+
+func CompararPassword(hashed, password string) bool {
+    err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(password))
+    return err == nil
+}</code></pre>
+<h3>Flujo de login</h3>
+<pre><code class="language-go">func Login(c *gin.Context) {
+    var input struct {
+        Email    string `json:"email" binding:"required"`
+        Password string `json:"password" binding:"required"`
+    }
+    if err := c.ShouldBindJSON(&amp;input); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+
+    // 1. Buscar usuario por email en la BD
+    hashGuardado := getHashDelUsuario(input.Email) // simulado
+
+    // 2. Comparar contraseña hasheada
+    if !CompararPassword(hashGuardado, input.Password) {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "credenciales inválidas"})
+        return
+    }
+
+    // 3. Generar JWT
+    token, _ := auth.GenerarToken(1, input.Email)
+    c.JSON(http.StatusOK, gin.H{"token": token})
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-3-middleware-de-autorizacion">
+    <h2><i class="fa-solid fa-user-shield"></i> 8.3 Middleware de autorización</h2>
+    <div class="doc-content">
+<h3>Middleware que valida JWT</h3>
+<pre><code class="language-go">package middleware
+
+import (
+    "net/http"
+    "strings"
+    "miapi/auth"
+    "github.com/gin-gonic/gin"
+)
+
+func AuthRequerida() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        // 1. Extraer el header Authorization
+        header := c.GetHeader("Authorization")
+        if header == "" {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+                "error": "header Authorization requerido",
+            })
+            return
+        }
+
+        // 2. Formato esperado: "Bearer &lt;token&gt;"
+        partes := strings.Split(header, " ")
+        if len(partes) != 2 || partes[0] != "Bearer" {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+                "error": "formato de token inválido",
+            })
+            return
+        }
+
+        // 3. Verificar el token
+        claims, err := auth.VerificarToken(partes[1])
+        if err != nil {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+                "error": "token inválido o expirado",
+            })
+            return
+        }
+
+        // 4. Guardar datos del usuario en el contexto
+        c.Set("usuario_id", (*claims)["usuario_id"])
+        c.Set("email", (*claims)["email"])
+        c.Next()
+    }
+}</code></pre>
+<h3>Aplicarlo a rutas</h3>
+<pre><code class="language-go">r := gin.Default()
+
+// Rutas públicas
+r.POST("/login", handlers.Login)
+r.POST("/registro", handlers.Registrar)
+
+// Rutas protegidas
+autenticadas := r.Group("/api", middleware.AuthRequerida())
+{
+    autenticadas.GET("/perfil", func(c *gin.Context) {
+        c.JSON(200, gin.H{
+            "usuario_id": c.GetString("usuario_id"),
+            "email":      c.GetString("email"),
+        })
+    })
+    autenticadas.GET("/carrito", handlers.Carrito)
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-4-proteccion-de-rutas">
+    <h2><i class="fa-solid fa-shield-halved"></i> 8.4 Protección de rutas</h2>
+    <div class="doc-content">
+<h3>Niveles de acceso</h3>
+<p>Puedes crear middlewares específicos por rol:</p>
+<pre><code class="language-go">// middleware/roles.go
+package middleware
+
+import (
+    "net/http"
+    "github.com/gin-gonic/gin"
+)
+
+func RequiereRol(rol string) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        rolUsuario := c.GetString("rol") // seteado por AuthRequerida
+        if rolUsuario != rol {
+            c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+                "error": "permisos insuficientes",
+            })
+            return
+        }
+        c.Next()
+    }
+}
+
+// Uso
+admin := r.Group("/api/admin", middleware.AuthRequerida(), middleware.RequiereRol("admin"))
+{
+    admin.GET("/usuarios", handlers.ListarTodosUsuarios)
+    admin.DELETE("/usuarios/:id", handlers.BorrarUsuario)
+}</code></pre>
+<h3>Rate limiting básico</h3>
+<pre><code class="language-go">func LimitadorPorIP(limite int) gin.HandlerFunc {
+    contador := map[string]int{}
+    var mutex sync.Mutex
+
+    return func(c *gin.Context) {
+        ip := c.ClientIP()
+        mutex.Lock()
+        contador[ip]++
+        if contador[ip] &gt; limite {
+            mutex.Unlock()
+            c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+                "error": "demasiadas peticiones",
+            })
+            return
+        }
+        mutex.Unlock()
+        c.Next()
+    }
+}</code></pre>
+<h3>Buenas prácticas de seguridad</h3>
+<ul>
+<li>Protege el login contra fuerza bruta con rate limiting</li>
+<li>Expira los tokens (JWT con <code>exp</code>) y renóvalos</li>
+<li>Usa HTTPS en producción</li>
+<li>Valida todo input: headers, body, query strings</li>
+<li>Revisa vulnerabilidades: <a href="https://owasp.org/www-project-top-ten/">OWASP Top 10</a></li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-5-headers-y-tokens">
+    <h2><i class="fa-solid fa-tag"></i> 8.5 Headers y tokens</h2>
+    <div class="doc-content">
+<h3>Leer y enviar headers</h3>
+<pre><code class="language-go">// LEER headers del request
+r.GET("/info", func(c *gin.Context) {
+    userAgent := c.GetHeader("User-Agent")
+    token := c.GetHeader("Authorization")
+    appVersion := c.GetHeader("X-App-Version")
+    contentType := c.GetHeader("Content-Type")
+
+    c.JSON(200, gin.H{
+        "user_agent":    userAgent,
+        "authorization": token,
+        "app_version":   appVersion,
+        "content_type":  contentType,
+    })
+})
+
+// ENVIAR headers en la respuesta
+r.GET("/login", func(c *gin.Context) {
+    c.Header("Authorization", "Bearer abc123")
+    c.Header("Set-Cookie", "sesion=valor; Max-Age=3600; HttpOnly")
+    c.JSON(200, gin.H{"ok": true})
+})</code></pre>
+<h3>Configuración de cookies</h3>
+<pre><code class="language-go">// Guardar token en cookie (alternativa al header)
+c.SetCookie(
+    "token",               // nombre
+    token,                 // valor
+    3600,                  // maxAge (segundos)
+    "/",                   // path
+    "",                    // dominio (vacío = actual)
+    false,                 // secure (true en HTTPS)
+    true,                  // httpOnly
+)
+
+// Leer cookie
+token, err := c.Cookie("token")
+if err != nil {
+    c.JSON(401, gin.H{"error": "cookie no encontrada"})
+    return
+}</code></pre>
+<h3>Comparativa de métodos de autenticación</h3>
+<table><thead><tr><th>Método</th><th>Ventajas</th><th>Desventajas</th></tr></thead><tbody><tr><td><strong>Header Authorization</strong></td><td>Simple, estándar, funciona con SPAs</td><td>Debe protegerse contra XSS</td></tr><tr><td><strong>HttpOnly Cookie</strong></td><td>Inaccesible desde JS, resistente a XSS</td><td>Más complejo con CORS y móviles</td></tr><tr><td><strong>Basic Auth</strong></td><td>Muy simple</td><td>Credenciales en cada request</td></tr><tr><td><strong>Session ID</strong></td><td>Revocables en servidor</td><td>Requiere storage en servidor</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-6-ejemplo-completo">
+    <h2><i class="fa-solid fa-laptop-code"></i> 8.6 Ejemplo completo</h2>
+    <div class="doc-content">
+<h3>API con registro, login y rutas protegidas</h3>
+<pre><code class="language-go">package main
+
+import (
+    "net/http"
+    "time"
+    "golang.org/x/crypto/bcrypt"
+    "github.com/gin-gonic/gin"
+    "github.com/golang-jwt/jwt/v5"
+)
+
+var usuarios = map[string]string{} // email -&gt; hash
+var llave = []byte("clave_secreta_de_ejemplo")
+
+func generarToken(email string) string {
+    claims := jwt.MapClaims{
+        "email": email,
+        "exp":   time.Now().Add(2 * time.Hour).Unix(),
+    }
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    s, _ := token.SignedString(llave)
+    return s
+}
+
+func proteger() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        token := c.GetHeader("Authorization")
+        if token == "" {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "no autorizado"})
+            return
+        }
+        parsed, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+            return llave, nil
+        })
+        if err != nil || !parsed.Valid {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "token inválido"})
+            return
+        }
+        c.Next()
+    }
+}
+
+func main() {
+    r := gin.Default()
+
+    // Registro
+    r.POST("/registro", func(c *gin.Context) {
+        var in struct {
+            Email    string `json:"email" binding:"required,email"`
+            Password string `json:"password" binding:"required,min=6"`
+        }
+        if err := c.ShouldBindJSON(&amp;in); err != nil {
+            c.JSON(400, gin.H{"error": err.Error()})
+            return
+        }
+        hash, _ := bcrypt.GenerateFromPassword([]byte(in.Password), bcrypt.DefaultCost)
+        usuarios[in.Email] = string(hash)
+        c.JSON(http.StatusCreated, gin.H{"mensaje": "registro exitoso"})
+    })
+
+    // Login
+    r.POST("/login", func(c *gin.Context) {
+        var in struct {
+            Email    string `json:"email"`
+            Password string `json:"password"`
+        }
+        c.ShouldBindJSON(&amp;in)
+
+        hash, existe := usuarios[in.Email]
+        if !existe || bcrypt.CompareHashAndPassword([]byte(hash), []byte(in.Password)) != nil {
+            c.JSON(http.StatusUnauthorized, gin.H{"error": "credenciales inválidas"})
+            return
+        }
+        c.JSON(http.StatusOK, gin.H{"token": generarToken(in.Email)})
+    })
+
+    // Ruta protegida
+    protegidas := r.Group("/api", proteger())
+    {
+        protegidas.GET("/perfil", func(c *gin.Context) {
+            c.JSON(http.StatusOK, gin.H{"mensaje": "acceso autorizado"})
+        })
+    }
+
+    r.Run(":8080")
+}</code></pre>
+<h3>Probar el flujo</h3>
+<pre><code class="language-bash"># 1. Registrar
+curl -X POST http://localhost:8080/registro \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ana@mail.com","password":"secreto123"}'
+
+# 2. Login y obtener token
+curl -X POST http://localhost:8080/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ana@mail.com","password":"secreto123"}'
+
+# 3. Acceder a ruta protegida con el token
+curl http://localhost:8080/api/perfil -H "Authorization: &lt;token&gt;"</code></pre>
+<blockquote class="aside aside-tip">
+Para producción usa variables de entorno para la clave JWT, vencimientos cortos (2-24h) y agrega refresh tokens.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste:**
+- JWT transmite claims firmados en header.payload.firma
+- bcrypt hashea contraseñas con salt para protegerlas
+- El middleware AuthRequerida valida tokens de cada request
+- Los roles controlan el acceso a rutas administrativas
+- Los tokens viajan en headers (Authorization) o cookies HttpOnly
+- Nunca guardes claves secretas en el código fuente
+</blockquote>
+    </div>
+  </section>

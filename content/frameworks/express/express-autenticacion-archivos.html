@@ -1,0 +1,253 @@
+<!-- 09. Autenticación, sesiones y subida de archivos - Express (Frameworks) -->
+  <section id="9-1-que-es-la-autenticacion">
+    <h2><i class="fa-solid fa-user-lock"></i> 9.1 Qué es la autenticación</h2>
+    <div class="doc-content">
+<h3>Autenticación vs autorización</h3>
+<p>La <strong>autenticación</strong> verifica la identidad de un usuario (quién eres), mientras que la <strong>autorización</strong> determina qué puede hacer (qué puedes hacer).</p>
+<h3>Enfoques comunes</h3>
+<table><thead><tr><th>Enfoque</th><th>Cómo funciona</th><th>Uso</th></tr></thead><tbody><tr><td><strong>Sesiones</strong></td><td>El servidor guarda el estado en cookies</td><td>Apps web tradicionales</td></tr><tr><td><strong>Tokens JWT</strong></td><td>Token firmado que viaja en cada petición</td><td>APIs y SPA</td></tr><tr><td><strong>OAuth</strong></td><td>Delegar login a terceros (Google, GitHub)</td><td>Login social</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+Para APIs REST y aplicaciones modernas, los tokens JWT son el estándar más habitual por su naturaleza sin estado.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-2-concepto-de-jwt">
+    <h2><i class="fa-solid fa-key"></i> 9.2 JWT (concepto)</h2>
+    <div class="doc-content">
+<h3>Qué es JWT</h3>
+<p><strong>JWT</strong> (JSON Web Token) es un estándar para transmitir información de forma segura entre cliente y servidor. Un token está formado por tres partes codificadas en Base64 separadas por puntos: <code>cabecera.payload.firma</code>.</p>
+<h3>Estructura de un JWT</h3>
+<pre><code class="language-text">cabecera.payload.firma
+eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.seK2w...</code></pre>
+<table><thead><tr><th>Parte</th><th>Contiene</th></tr></thead><tbody><tr><td><strong>Cabecera</strong></td><td>Algoritmo de firma y tipo de token</td></tr><tr><td><strong>Payload</strong></td><td>Datos (claims) como el id del usuario</td></tr><tr><td><strong>Firma</strong></td><td>Hash que garantiza que no fue alterado</td></tr></tbody></table>
+<h3>Generar y verificar con jsonwebtoken</h3>
+<pre><code class="language-javascript">npm install jsonwebtoken</code></pre>
+<pre><code class="language-javascript">const jwt = require('jsonwebtoken');
+
+const SECRETO = process.env.JWT_SECRET;
+
+// Firmar un token
+const token = jwt.sign(
+  { id: 1, rol: 'admin' },
+  SECRETO,
+  { expiresIn: '1h' }
+);
+
+// Verificar el token
+jwt.verify(token, SECRETO, (err, payload) =&gt; {
+  if (err) return console.error('Token inválido');
+  console.log('Usuario:', payload);
+});</code></pre>
+<blockquote class="aside aside-warning">
+La clave secreta (SECRETO) debe almacenarse en variables de entorno y nunca en el código.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-3-bcrypt-para-contrasenas">
+    <h2><i class="fa-solid fa-shield-halved"></i> 9.3 bcrypt para contraseñas</h2>
+    <div class="doc-content">
+<h3>Por qué no guardar contraseñas en texto plano</h3>
+<p>Nunca almacenes contraseñas directamente. Debes aplicar un <strong>hash</strong> (función unidireccional) para que no sean legibles ni siquiera si la base de datos se ve comprometida.</p>
+<pre><code class="language-javascript">npm install bcryptjs</code></pre>
+<pre><code class="language-javascript">const bcrypt = require('bcryptjs');
+
+async function registrar(nombre, contrasena) {
+  const salt = await bcrypt.genSalt(10);
+  const hash = await bcrypt.hash(contrasena, salt);
+  // Guardar 'hash' en la base de datos, nunca 'contrasena'
+  return { nombre, hash };
+}
+
+async function verificarContrasena(contrasena, hashGuardado) {
+  const coincide = await bcrypt.compare(contrasena, hashGuardado);
+  return coincide; // true o false
+}</code></pre>
+<h3>Flujo de login</h3>
+<pre><code class="language-javascript">app.post('/login', async (req, res) =&gt; {
+  const { email, contrasena } = req.body;
+
+  // 1. Buscar usuario en BD
+  // 2. Comparar la contraseña
+  const coincide = await bcrypt.compare(contrasena, usuario.hash);
+  if (!coincide) {
+    return res.status(401).json({ error: 'Credenciales inválidas' });
+  }
+
+  // 3. Generar token JWT
+  const token = jwt.sign({ id: usuario.id }, SECRETO, { expiresIn: '1h' });
+  res.json({ token });
+});</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-4-sesiones-y-tokens">
+    <h2><i class="fa-solid fa-fingerprint"></i> 9.4 Manejo de sesiones o tokens</h2>
+    <div class="doc-content">
+<h3>Proteger rutas con un middleware de autenticación</h3>
+<p>Puedes crear un middleware que verifique el JWT en cada petición protegida.</p>
+<pre><code class="language-javascript">// middleware/auth.js
+const jwt = require('jsonwebtoken');
+
+function proteger(req, res, next) {
+  const cabecera = req.headers['authorization'];
+  if (!cabecera) {
+    return res.status(401).json({ error: 'Token requerido' });
+  }
+
+  const token = cabecera.split(' ')[1]; // 'Bearer token'
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    req.usuario = payload;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Token inválido o expirado' });
+  }
+}
+
+module.exports = proteger;</code></pre>
+<h3>Aplicar a una ruta</h3>
+<pre><code class="language-javascript">const proteger = require('./middleware/auth');
+
+app.get('/perfil', proteger, (req, res) =&gt; {
+  res.json({ mensaje: 'Datos del perfil', usuario: req.usuario });
+});</code></pre>
+<blockquote class="aside aside-note">
+Con este patrón, cualquier ruta protegida exige un token válido. El middleware se puede reutilizar en todas las rutas que lo necesiten.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-5-subida-de-archivos-multer">
+    <h2><i class="fa-solid fa-file-arrow-up"></i> 9.5 Subida de archivos con Multer (concepto)</h2>
+    <div class="doc-content">
+<h3>Qué es Multer</h3>
+<p><strong>Multer</strong> es un middleware de Express para gestionar la subida de archivos. Procesa las peticiones de tipo <code>multipart/form-data</code> y guarda los archivos en disco o en memoria.</p>
+<pre><code class="language-javascript">npm install multer</code></pre>
+<pre><code class="language-javascript">const multer = require('multer');
+const path = require('path');
+
+// Configurar destino y nombre de archivo
+const storage = multer.diskStorage({
+  destination: (req, file, cb) =&gt; cb(null, 'uploads/'),
+  filename: (req, file, cb) =&gt; {
+    const ext = path.extname(file.originalname);
+    cb(null, Date.now() + ext);
+  }
+});
+
+const upload = multer({ storage });
+
+// Ruta que recibe un archivo en el campo 'archivo'
+app.post('/subir', upload.single('archivo'), (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No se subió ningún archivo' });
+  }
+  res.json({ mensaje: 'Archivo subido', nombre: req.file.filename });
+});</code></pre>
+<h3>Límites y validación</h3>
+<pre><code class="language-javascript">const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB
+  fileFilter: (req, file, cb) =&gt; {
+    const permitidos = ['.png', '.jpg', '.jpeg'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!permitidos.includes(ext)) {
+      return cb(new Error('Tipo de archivo no permitido'));
+    }
+    cb(null, true);
+  }
+});</code></pre>
+<blockquote class="aside aside-warning">
+Siempre valida el tamaño y el tipo de los archivos subidos para evitar riesgos de seguridad.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-6-ejemplo-completo">
+    <h2><i class="fa-solid fa-diagram-project"></i> 9.6 Ejemplo completo de autenticación</h2>
+    <div class="doc-content">
+<h3>Registro, login y ruta protegida</h3>
+<pre><code class="language-javascript">const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const app = express();
+
+app.use(express.json());
+
+const SECRETO = process.env.JWT_SECRET || 'clave-secreta';
+const usuarios = []; // simula la base de datos
+
+// Registro
+app.post('/registro', async (req, res) =&gt; {
+  const { email, contrasena } = req.body;
+  if (!email || !contrasena) {
+    return res.status(400).json({ error: 'Faltan datos' });
+  }
+  const existe = usuarios.find(u =&gt; u.email === email);
+  if (existe) {
+    return res.status(409).json({ error: 'Email ya registrado' });
+  }
+  const hash = await bcrypt.hash(contrasena, 10);
+  const usuario = { id: usuarios.length + 1, email, hash };
+  usuarios.push(usuario);
+  res.status(201).json({ mensaje: 'Usuario registrado' });
+});
+
+// Login
+app.post('/login', async (req, res) =&gt; {
+  const { email, contrasena } = req.body;
+  const usuario = usuarios.find(u =&gt; u.email === email);
+  if (!usuario) {
+    return res.status(401).json({ error: 'Credenciales inválidas' });
+  }
+  const valida = await bcrypt.compare(contrasena, usuario.hash);
+  if (!valida) {
+    return res.status(401).json({ error: 'Credenciales inválidas' });
+  }
+  const token = jwt.sign({ id: usuario.id, email }, SECRETO, { expiresIn: '1h' });
+  res.json({ token });
+});
+
+// Middleware de protección
+function proteger(req, res, next) {
+  const cabecera = req.headers['authorization'];
+  if (!cabecera) return res.status(401).json({ error: 'Token requerido' });
+  try {
+    req.usuario = jwt.verify(cabecera.split(' ')[1], SECRETO);
+    next();
+  } catch {
+    res.status(401).json({ error: 'Token inválido' });
+  }
+}
+
+// Ruta protegida
+app.get('/perfil', proteger, (req, res) =&gt; {
+  res.json({ mensaje: 'Acceso concedido', usuario: req.usuario });
+});
+
+app.listen(3000);</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- La autenticación verifica identidad; la autorización define permisos
+- JWT es un token firmado que viaja en cada petición sin estado
+- bcrypt genera y verifica hashes seguros de contraseñas
+- Un middleware reusable protege las rutas con tokens
+- Multer gestiona la subida de archivos con límites y validación
+- Un flujo registro/login mayor une todos estos conceptos
+</blockquote>
+    </div>
+  </section>

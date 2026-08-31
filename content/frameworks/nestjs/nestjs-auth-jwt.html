@@ -1,0 +1,253 @@
+<!-- 08. Autenticación con JWT - NestJS (Frameworks) -->
+  <section id="8-1-que-es-jwt-y-la-autenticacion">
+    <h2><i class="fa-solid fa-lock"></i> 8.1 Qué es JWT y la autenticación</h2>
+    <div class="doc-content">
+<h3>Qué es JWT</h3>
+<p><strong>JWT</strong> (JSON Web Token) es un estándar abierto (RFC 7519) que define una forma compacta y segura de transmitir información entre partes como un objeto JSON. En el contexto de una API, se usa para verificar la identidad de un usuario y autorizar el acceso a recursos protegidos.</p>
+<h3>Estructura de un token JWT</h3>
+<p>Un token JWT se compone de tres partes separadas por puntos, cada una codificada en Base64Url:</p>
+<table><thead><tr><th>Parte</th><th>Contenido</th></tr></thead><tbody><tr><td><strong>Header</strong></td><td>Tipo de token y algoritmo de firma (p. ej. HS256)</td></tr><tr><td><strong>Payload</strong></td><td>Claims: datos del usuario, expiración, emisor, etc.</td></tr><tr><td><strong>Signature</strong></td><td>Firma generada con una clave secreta</td></tr></tbody></table>
+<h3>Flujo de autenticación</h3>
+<pre><code class="language-text">Usuario -&gt; POST /auth/login -&gt; valida credenciales -&gt; devuelve JWT
+Cliente -&gt; GET /protegido (Authorization: Bearer &lt;JWT&gt;) -&gt; guard verifica -&gt; responde</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-2-instalacion-de-paquetes-y-configuracion">
+    <h2><i class="fa-solid fa-terminal"></i> 8.2 Instalación de paquetes y configuración</h2>
+    <div class="doc-content">
+<h3>Dependencias necesarias</h3>
+<pre><code class="language-bash"># Módulos oficiales de autenticación para NestJS
+npm install @nestjs/jwt @nestjs/passport passport passport-jwt
+
+# Biblioteca para encriptar contraseñas
+npm install bcrypt
+
+# Tipos para TypeScript (solo desarrollo)
+npm install -D @types/passport-jwt @types/bcrypt</code></pre>
+<h3>Configurar variables de entorno</h3>
+<pre><code class="language-bash"># .env
+JWT_SECRET=mi_clave_secreta_super_segura
+JWT_EXPIRES_IN=1h</code></pre>
+<h3>Módulo de autenticación</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
+
+@Module({
+  imports: [
+    PassportModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN },
+    }),
+  ],
+  controllers: [AuthController],
+  providers: [AuthService],
+})
+export class AuthModule {}</code></pre>
+<blockquote class="aside aside-warning">
+Nunca guardes la clave secreta del JWT en el código fuente. Usa siempre variables de entorno y mantén la clave fuera del repositorio.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-3-servicio-de-autenticacion-y-bcrypt">
+    <h2><i class="fa-solid fa-user-lock"></i> 8.3 Servicio de autenticación y bcrypt</h2>
+    <div class="doc-content">
+<h3>Encriptar las contraseñas</h3>
+<p>Las contraseñas nunca deben almacenarse en texto plano. Se encriptan con <strong>bcrypt</strong>, que aplica un hash con sal automática y es resistente a ataques de fuerza bruta.</p>
+<pre><code class="language-typescript">import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { Usuario } from './usuario.entity';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    @InjectRepository(Usuario)
+    private readonly usuarios: Repository&lt;Usuario&gt;,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async validarUsuario(email: string, password: string) {
+    const usuario = await this.usuarios.findOne({ where: { email } });
+    if (!usuario) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+    const valida = await bcrypt.compare(password, usuario.password);
+    if (!valida) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+    return usuario;
+  }
+
+  async login(usuario: Usuario) {
+    const payload = { sub: usuario.id, email: usuario.email, rol: usuario.rol };
+    return { access_token: this.jwtService.sign(payload) };
+  }
+}</code></pre>
+<h3>Al registrar un usuario</h3>
+<pre><code class="language-typescript">async registrar(email: string, password: string) {
+  const encriptada = await bcrypt.hash(password, 10);
+  const usuario = this.usuarios.create({ email, password: encriptada });
+  return this.usuarios.save(usuario);
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-4-estrategia-jwt-con-passport">
+    <h2><i class="fa-solid fa-shield-halved"></i> 8.4 Estrategia JWT con Passport</h2>
+    <div class="doc-content">
+<h3>Qué es una estrategia</h3>
+<p>Passport usa <strong>estrategias</strong> para autenticar peticiones. La estrategia <code>passport-jwt</code> extrae el token del encabezado <code>Authorization</code> (tipo Bearer) y verifica su firma y expiración.</p>
+<h3>Servicio de estrategia</h3>
+<pre><code class="language-typescript">import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor() {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: process.env.JWT_SECRET,
+    });
+  }
+
+  async validate(payload: any) {
+    return { userId: payload.sub, email: payload.email, rol: payload.rol };
+  }
+}</code></pre>
+<blockquote class="aside aside-note">
+El método `validate` se ejecuta cuando el token es válido. Lo que devuelva se asigna al objeto `request.user` y queda disponible en el controlador.
+</blockquote>
+<h3>Registrar la estrategia en el módulo</h3>
+<pre><code class="language-typescript">providers: [AuthService, JwtStrategy],
+exports: [JwtStrategy, PassportModule],</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-5-guard-de-autenticacion-y-controlador">
+    <h2><i class="fa-solid fa-user-shield"></i> 8.5 Guard de autenticación y controlador</h2>
+    <div class="doc-content">
+<h3>Guard con AuthGuard de Passport</h3>
+<p>El <code>AuthGuard</code> de Passport se usa como decorador para proteger rutas. Al aplicar <code>AuthGuard('jwt')</code>, la estrategia JWT protege el endpoint.</p>
+<h3>Proteger una ruta</h3>
+<pre><code class="language-typescript">import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Controller('perfil')
+export class PerfilController {
+  @Get()
+  @UseGuards(AuthGuard('jwt'))
+  verPerfil(@Request() req) {
+    return { mensaje: 'Acceso concedido', usuario: req.user };
+  }
+}</code></pre>
+<h3>Controlador de autenticación</h3>
+<pre><code class="language-typescript">import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { AuthService } from './auth.service';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('login')
+  async login(@Body() { email, password }: any) {
+    const usuario = await this.authService.validarUsuario(email, password);
+    return this.authService.login(usuario);
+  }
+
+  @Post('registro')
+  async registrar(@Body() { email, password }: any) {
+    return this.authService.registrar(email, password);
+  }
+
+  @Get('protegido')
+  @UseGuards(AuthGuard('jwt'))
+  protegido() {
+    return { mensaje: 'Ruta protegida por JWT' };
+  }
+}</code></pre>
+<h3>Prueba con curl o Postman</h3>
+<pre><code class="language-bash"># Obtener el token
+curl -X POST http://localhost:3000/auth/login -H "Content-Type: application/json" -d "{\"email\":\"ana@mail.com\",\"password\":\"123456\"}"
+
+# Usar el token
+curl http://localhost:3000/perfil -H "Authorization: Bearer &lt;TOKEN&gt;"</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-6-roles-y-control-de-acceso">
+    <h2><i class="fa-solid fa-user-tag"></i> 8.6 Roles y control de acceso</h2>
+    <div class="doc-content">
+<h3>Autorización por roles</h3>
+<p>La autenticación verifica <strong>quién</strong> es el usuario; la <strong>autorización</strong> decide <strong>qué</strong> puede hacer. Se suele implementar con un guard que lee los roles del token.</p>
+<h3>Decorador personalizado de roles</h3>
+<pre><code class="language-typescript">import { SetMetadata } from '@nestjs/common';
+
+export const Roles = (...roles: string[]) =&gt; SetMetadata('roles', roles);</code></pre>
+<h3>Guard de roles</h3>
+<pre><code class="language-typescript">import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+
+@Injectable()
+export class RolesGuard implements CanActivate {
+  constructor(private readonly reflector: Reflector) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const roles = this.reflector.getAllAndOverride&lt;string[]&gt;('roles', [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (!roles || roles.length === 0) {
+      return true;
+    }
+
+    const request = context.switchToHttp().getRequest();
+    const rolUsuario = request.user?.rol;
+
+    if (!roles.includes(rolUsuario)) {
+      throw new ForbiddenException('No tienes permisos');
+    }
+    return true;
+  }
+}</code></pre>
+<h3>Aplicar roles a un endpoint</h3>
+<pre><code class="language-typescript">@Get('admin')
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles('admin')
+adminSolo() {
+  return { mensaje: 'Solo administradores' };
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- JWT es un token compacto y firmado que transmite la identidad del usuario
+- Se compone de header, payload y firma, separados por puntos
+- Se instala con `@nestjs/jwt`, `@nestjs/passport` y `passport-jwt`
+- Las contraseñas se encriptan con bcrypt antes de guardarlas
+- La estrategia JWT valida el token y expone los datos en `request.user`
+- Los guards protegen rutas y los roles controlan los permisos
+</blockquote>
+    </div>
+  </section>

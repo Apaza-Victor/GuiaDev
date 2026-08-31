@@ -1,0 +1,211 @@
+<!-- 05. Props y eventos - Svelte (Frameworks) -->
+  <section id="5-1-props-con-export-let">
+    <h2><i class="fa-solid fa-envelope"></i> 5.1 Props con export let</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Las <strong>props</strong> son los datos que un componente padre pasa a un componente hijo. En Svelte se declaran con la palabra clave <code>export</code> delante de <code>let</code>.</p>
+<pre><code class="language-svelte"><!-- Tarjeta.svelte -->
+&lt;script&gt;
+  export let titulo;
+  export let descripcion = 'Sin descripción'; // valor por defecto
+  export let precio = 0;
+&lt;/script&gt;
+
+&lt;article class="tarjeta"&gt;
+  &lt;h3&gt;{titulo}&lt;/h3&gt;
+  &lt;p&gt;{descripcion}&lt;/p&gt;
+  &lt;p&gt;Precio: {precio} €&lt;/p&gt;
+&lt;/article&gt;</code></pre>
+<h3>Valores por defecto</h3>
+<p>Al declarar <code>export let nombre = 'valor'</code> defines un valor predeterminado que se usa cuando el padre no envía esa prop. De esta forma el componente es más robusto.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-2-pasar-datos-entre-componentes">
+    <h2><i class="fa-solid fa-share-nodes"></i> 5.2 Pasar datos entre componentes</h2>
+    <div class="doc-content">
+<h3>Consumo de componentes</h3>
+<p>El componente padre importa el hijo y le pasa las props como atributos. Puedes pasar literales, variables o expresiones:</p>
+<pre><code class="language-svelte"><!-- App.svelte -->
+&lt;script&gt;
+  import Tarjeta from './Tarjeta.svelte';
+
+  let producto = {
+    titulo: 'Svelte desde cero',
+    descripcion: 'Curso de Svelte para principiantes',
+    precio: 19.99
+  };
+&lt;/script&gt;
+
+&lt;Tarjeta
+  titulo={producto.titulo}
+  descripcion={producto.descripcion}
+  precio={producto.precio}
+/&gt;
+
+&lt;!-- Con variables individuales --&gt;
+&lt;Tarjeta titulo="Guía HTML" descripcion="Base de la web" precio={9.99} /&gt;</code></pre>
+<h3>Atajo para actualizar props</h3>
+<p>Si el nombre del atributo coincide con la prop, puedes usar la sintaxis breve:</p>
+<pre><code class="language-svelte">&lt;script&gt;
+  import Tarjeta from './Tarjeta.svelte';
+
+  let titulo = 'Astro';
+  let descripcion = 'Framework de contenido';
+&lt;/script&gt;
+
+&lt;!-- Equivale a titulo={titulo} y descripcion={descripcion} --&gt;
+&lt;Tarjeta {titulo} {descripcion} /&gt;</code></pre>
+<blockquote class="aside aside-tip">
+También puedes pasar todos los props de un objeto con el operador de propagación: <code>&lt;Tarjeta {...producto} /&gt;</code>.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-3-eventos-con-on-click">
+    <h2><i class="fa-solid fa-mouse-pointer"></i> 5.3 Eventos con on:click</h2>
+    <div class="doc-content">
+<h3>Escuchar eventos</h3>
+<p>Svelte usa el prefijo <code>on:</code> seguido del nombre del evento DOM para escuchar cada evento nativo: <code>on:click</code>, <code>on:input</code>, <code>on:keydown</code>, <code>on:submit</code>, entre otros.</p>
+<h3>Ejemplo con el objeto del evento</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let x = 0;
+  let y = 0;
+
+  function manejarMover(evento) {
+    x = evento.clientX;
+    y = evento.clientY;
+  }
+
+  function manejarClick(evento) {
+    alert(`Clic en (${x}, ${y})`);
+  }
+&lt;/script&gt;
+
+&lt;button on:click={manejarClick} on:mousemove={manejarMover}&gt;
+  Mueve y haz clic sobre este botón
+&lt;/button&gt;
+
+&lt;p&gt;Posición: {x}, {y}&lt;/p&gt;</code></pre>
+<h3>Modificadores de eventos</h3>
+<pre><code class="language-svelte"><!-- ejecuta solo una vez -->
+&lt;button on:click|once={funcion} &gt;Clic único&lt;/button&gt;
+
+&lt;!-- detiene la propagación y previene el comportamiento por defecto --&gt;
+&lt;a href="/" on:click|preventDefault|stopPropagation={funcion}&gt;Enlace&lt;/a&gt;
+
+&lt;!-- ejecuta solo si tienes la tecla Enter pulsada --&gt;
+&lt;input on:keydown|enter={funcion} /&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-4-event-forwarding">
+    <h2><i class="fa-solid fa-forward"></i> 5.4 Event forwarding</h2>
+    <div class="doc-content">
+<h3>Reenviar eventos del hijo al padre</h3>
+<p>Cuando un componente hijo escucha un evento, los componentes padre <strong>no lo reciben automáticamente</strong>. Para "subir" el evento, el hijo debe reemitirlo con <code>createEventDispatcher</code> o usar la sintaxis de reenvío.</p>
+<h3>Con createEventDispatcher</h3>
+<pre><code class="language-svelte"><!-- Hijo.svelte -->
+&lt;script&gt;
+  import { createEventDispatcher } from 'svelte';
+
+  const dispatch = createEventDispatcher();
+
+  export let nombre = 'Hijo';
+
+  function avisarPadre() {
+    dispatch('mensaje', { texto: `Hola, soy ${nombre}` });
+  }
+&lt;/script&gt;
+
+&lt;button on:click={avisarPadre}&gt;Enviar mensaje al padre&lt;/button&gt;</code></pre>
+<pre><code class="language-svelte"><!-- Padre.svelte -->
+&lt;script&gt;
+  import Hijo from './Hijo.svelte';
+
+  function recibirMensaje(evento) {
+    console.log('Mensaje del hijo:', evento.detail);
+  }
+&lt;/script&gt;
+
+&lt;Hijo on:mensaje={recibirMensaje} /&gt;</code></pre>
+<h3>Sintaxis de reenvío directo</h3>
+<p>Si solo quieres exponer un evento DOM hacia el padre, puedes escribirlo sin pasar una función:</p>
+<pre><code class="language-svelte"><!-- Boton.svelte -->
+&lt;script&gt;
+  export let texto = 'Pulsar';
+&lt;/script&gt;
+
+&lt;button on:click&gt;{texto}&lt;/button&gt;</code></pre>
+<p>El padre escucha <code>on:click</code> normalmente y recibe el evento original.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-5-cadenas-de-eventos">
+    <h2><i class="fa-solid fa-link"></i> 5.5 Cadenas de eventos</h2>
+    <div class="doc-content">
+<h3>Orquestar eventos entre varios componentes</h3>
+<p>La combinación de props (hacia abajo) y eventos (hacia arriba) permite construir flujos de datos claros y predecibles entre componentes:</p>
+<pre><code class="language-svelte"><!-- ContadorPadre.svelte -->
+&lt;script&gt;
+  import Boton from './Boton.svelte';
+
+  let contador = 0;
+
+  function incrementar() {
+    contador += 1;
+  }
+
+  function reiniciar() {
+    contador = 0;
+  }
+&lt;/script&gt;
+
+&lt;h1&gt;Contador: {contador}&lt;/h1&gt;
+&lt;div class="acciones"&gt;
+  &lt;Boton texto="Incrementar" on:click={incrementar} /&gt;
+  &lt;Boton texto="Reiniciar" on:click={reiniciar} /&gt;
+&lt;/div&gt;</code></pre>
+<pre><code class="language-svelte"><!-- Boton.svelte (hijo reutilizable) -->
+&lt;script&gt;
+  export let texto = 'Pulsar';
+  export let deshabilitado = false;
+&lt;/script&gt;
+
+&lt;button disabled={deshabilitado} on:click&gt;{texto}&lt;/button&gt;
+
+&lt;style&gt;
+  button {
+    padding: 8px 14px;
+    margin-right: 8px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+&lt;/style&gt;</code></pre>
+<blockquote class="aside aside-note">
+Recuerda el flujo de datos en Svelte: los datos bajan por props (padre a hijo) y los eventos suben mediante dispatcher (hijo a padre).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Las props se declaran con `export let` y llegan del componente padre
+- Puedes definir valores por defecto para cada prop
+- Se pasan como atributos, con variables o con la sintaxis breve `{prop}`
+- Los eventos se escuchan con `on:click` y otros prefijos `on:`
+- Existen modificadores como `once`, `preventDefault` y `stopPropagation`
+- El hijo puede reenviar eventos con `createEventDispatcher`
+- Los eventos se encadenan para crear flujos de datos entre componentes
+</blockquote>
+    </div>
+  </section>

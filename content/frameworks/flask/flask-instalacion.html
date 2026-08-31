@@ -1,0 +1,175 @@
+<!-- 02. Instalación y primer proyecto - Flask (Frameworks) -->
+  <section id="2-1-entorno-virtual">
+    <h2><i class="fa-solid fa-box"></i> 2.1 Entorno virtual</h2>
+    <div class="doc-content">
+<h3>Qué es un entorno virtual</h3>
+<p>Un <strong>entorno virtual</strong> es una carpeta aislada en la que se instalan las dependencias de tu proyecto sin afectar al resto del sistema. De esta forma, cada proyecto tiene sus propias versiones de paquetes.</p>
+<h3>Crear un entorno virtual</h3>
+<pre><code class="language-python"># Windows (PowerShell)
+python -m venv venv</code></pre>
+<pre><code class="language-python"># macOS / Linux
+python3 -m venv venv</code></pre>
+<h3>Activar el entorno virtual</h3>
+<pre><code class="language-python"># Windows (PowerShell)
+venv\Scripts\activate</code></pre>
+<pre><code class="language-python"># macOS / Linux
+source venv/bin/activate</code></pre>
+<h3>Desactivar el entorno</h3>
+<pre><code class="language-python">deactivate</code></pre>
+<blockquote class="aside aside-warning">
+No olvides añadir la carpeta `venv` a tu archivo `.gitignore` para no subir las dependencias al repositorio.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-2-instalar-flask">
+    <h2><i class="fa-solid fa-crown"></i> 2.2 Instalar Flask</h2>
+    <div class="doc-content">
+<h3>Instalación con pip</h3>
+<p>Con el entorno virtual activado, instala Flask usando <strong>pip</strong>:</p>
+<pre><code class="language-python">pip install flask</code></pre>
+<h3>Verificar la instalación</h3>
+<pre><code class="language-python">pip show flask</code></pre>
+<pre><code class="language-python">python -c "import flask; print(flask.__version__)"</code></pre>
+<h3>Instalar una versión específica</h3>
+<pre><code class="language-python">pip install flask==3.0.0</code></pre>
+<h3>Dependencias instaladas junto a Flask</h3>
+<table><thead><tr><th>Paquete</th><th>Función</th></tr></thead><tbody><tr><td><strong>Werkzeug</strong></td><td>Servidor WSGI y utilidades HTTP</td></tr><tr><td><strong>Jinja2</strong></td><td>Sistema de plantillas</td></tr><tr><td><strong>click</strong></td><td>Interfaz de línea de comandos</td></tr><tr><td><strong>itsdangerous</strong></td><td>Firmado de cookies y sesiones</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Al instalar Flask, pip también instala sus dependencias automáticamente, así que no tienes que hacer nada más para empezar.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-3-primer-proyecto">
+    <h2><i class="fa-solid fa-rocket"></i> 2.3 Crear el primer proyecto</h2>
+    <div class="doc-content">
+<h3>Crea la estructura básica</h3>
+<p>Empieza por crear una carpeta para tu proyecto y un archivo principal de Python:</p>
+<pre><code class="language-python">miproyecto/
+├── app.py</code></pre>
+<h3>Código de la aplicación mínima</h3>
+<pre><code class="language-python">from flask import Flask
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def inicio():
+    return "¡Hola, Mundo!"
+
+
+if __name__ == "__main__":
+    app.run()</code></pre>
+<h3>Explicación del código</h3>
+<ul>
+<li><strong>Flask(__name__)</strong>: Crea la aplicación; `__name__` ayuda a Flask a encontrar recursos</li>
+<li><strong>@app.route("/")</strong>: Asocia una URL a una función</li>
+<li><strong>def inicio()</strong>: La función que responde en la raíz</li>
+<li><strong>app.run()</strong>: Levanta el servidor de desarrollo</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-4-ejecutar-el-servidor">
+    <h2><i class="fa-solid fa-play"></i> 2.4 Ejecutar el servidor</h2>
+    <div class="doc-content">
+<h3>Ejecutar la aplicación</h3>
+<p>Con el entorno activado y dentro de la carpeta del proyecto, ejecuta:</p>
+<pre><code class="language-python">python app.py</code></pre>
+<h3>Salida esperada</h3>
+<pre><code class="language-python"> * Running on http://127.0.0.1:5000</code></pre>
+<p>Ahora abre `http://127.0.0.1:5000` en tu navegador: verás el mensaje "¡Hola, Mundo!".</p>
+<h3>Usar el comando flask run</h3>
+<p>También puedes usar el comando integrado de Flask:</p>
+<pre><code class="language-python"># Importante: define la variable FLASK_APP
+set FLASK_APP=app.py     # Windows
+export FLASK_APP=app     # macOS / Linux
+
+flask run</code></pre>
+<h3>Cambiar el puerto y la IP</h3>
+<pre><code class="language-python">app.run(host="0.0.0.0", port=8080)</code></pre>
+<blockquote class="aside aside-note">
+El valor `0.0.0.0` hace que el servidor sea accesible desde otras máquinas de la red, no solo desde tu equipo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-5-modo-debug">
+    <h2><i class="fa-solid fa-bug"></i> 2.5 Modo debug</h2>
+    <div class="doc-content">
+<h3>Qué es el modo debug</h3>
+<p>El <strong>modo debug</strong> es una herramienta de desarrollo que ofrece dos ventajas:</p>
+<ul>
+<li><strong>Recarga automática</strong>: El servidor se reinicia solo al guardar cambios</li>
+<li><strong>Depurador interactivo</strong>: Muestra errores detallados en el navegador</li>
+</ul>
+<h3>Activar el modo debug</h3>
+<pre><code class="language-python">from flask import Flask
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def inicio():
+    return "¡Hola, Mundo!"
+
+
+if __name__ == "__main__":
+    app.run(debug=True)</code></pre>
+<h3>Activar desde variables de entorno</h3>
+<pre><code class="language-python"># Windows
+set FLASK_DEBUG=1
+flask run</code></pre>
+<pre><code class="language-python"># macOS / Linux
+export FLASK_DEBUG=1
+flask run</code></pre>
+<blockquote class="aside aside-warning">
+Nunca actives el modo debug en producción: expone información sensible y el depurador interactivo puede ejecutar código arbitrario.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-6-estructura-minima">
+    <h2><i class="fa-solid fa-folder"></i> 2.6 Estructura mínima de un proyecto</h2>
+    <div class="doc-content">
+<h3>Estructura recomendada al empezar</h3>
+<pre><code class="language-python">miproyecto/
+├── app.py              # Aplicación principal
+├── templates/          # Plantillas HTML (Jinja2)
+├── static/             # CSS, JS e imágenes
+├── requirements.txt    # Dependencias del proyecto
+└── venv/               # Entorno virtual (no se sube a git)</code></pre>
+<h3>requirements.txt</h3>
+<p>Guarda las dependencias congeladas para poder reproducir el entorno:</p>
+<pre><code class="language-python">pip freeze &gt; requirements.txt</code></pre>
+<h3>Contenido típico de requirements.txt</h3>
+<pre><code class="language-python">flask==3.0.0
+Werkzeug==3.0.1
+Jinja2==3.1.2</code></pre>
+<blockquote class="aside aside-tip">
+En otra máquina, basta con ejecutar `pip install -r requirements.txt` para instalar todas las dependencias a la vez.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Un entorno virtual aísla las dependencias de cada proyecto
+- Flask se instala con `pip install flask` y trae Werkzeug y Jinja2
+- Una aplicación mínima necesita crear `Flask(__name__)` y definir rutas
+- El servidor se ejecuta con `python app.py` o `flask run`
+- El modo debug activa recarga automática y un depurador interactivo
+- Una estructura mínima incluye `app.py`, `templates/`, `static/` y `requirements.txt`
+</blockquote>
+    </div>
+  </section>

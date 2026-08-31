@@ -1,0 +1,217 @@
+<!-- 05. Métodos HTTP y respuestas - Express (Frameworks) -->
+  <section id="5-1-manejo-de-req-y-res">
+    <h2><i class="fa-solid fa-right-left"></i> 5.1 Manejo de req y res</h2>
+    <div class="doc-content">
+<h3>Objetos req y res</h3>
+<p>Cada handler de ruta recibe dos objetos principales: la petición (<code>req</code>) y la respuesta (<code>res</code>). Puedes añadir un tercer parámetro <code>next</code> para continuar con el siguiente middleware.</p>
+<h3>Propiedades útiles de req</h3>
+<table><thead><tr><th>Propiedad</th><th>Descripción</th></tr></thead><tbody><tr><td><code>req.method</code></td><td>Verbo HTTP (GET, POST, etc.)</td></tr><tr><td><code>req.url</code></td><td>URL solicitada</td></tr><tr><td><code>req.params</code></td><td>Parámetros de ruta</td></tr><tr><td><code>req.query</code></td><td>Query string</td></tr><tr><td><code>req.body</code></td><td>Cuerpo de la petición</td></tr><tr><td><code>req.headers</code></td><td>Cabeceras HTTP</td></tr></tbody></table>
+<h3>Ejemplo</h3>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+app.get('/info', (req, res) =&gt; {
+  console.log('Método:', req.method);
+  console.log('URL:', req.url);
+  console.log('Cabeceras:', req.headers['user-agent']);
+  res.send('Información de la petición registrada');
+});
+
+app.listen(3000);</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-2-cuerpo-de-la-solicitud">
+    <h2><i class="fa-solid fa-inbox"></i> 5.2 Cuerpo de la solicitud (req.body)</h2>
+    <div class="doc-content">
+<h3>Leer datos enviados por el cliente</h3>
+<p>El cuerpo de la petición contiene los datos que el cliente envía (generalmente en POST o PUT). Para leerlo en JSON debes usar el middleware <code>express.json()</code>.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+app.post('/usuarios', (req, res) =&gt; {
+  const { nombre, email } = req.body;
+
+  if (!nombre || !email) {
+    return res.status(400).json({ error: 'Faltan datos' });
+  }
+
+  res.status(201).json({
+    mensaje: 'Usuario creado',
+    usuario: { nombre, email }
+  });
+});
+
+app.listen(3000);</code></pre>
+<blockquote class="aside aside-note">
+<code>req.body</code> solo está disponible si se registró antes un middleware que lo analice, como <code>express.json()</code> o <code>express.urlencoded()</code>.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-3-parametros-y-query">
+    <h2><i class="fa-solid fa-bezier-curve"></i> 5.3 Parámetros de ruta y query combinados</h2>
+    <div class="doc-content">
+<h3>Combinar parámetros</h3>
+<p>En una misma ruta puedes leer parámetros de ruta y de query string para construir respuestas flexibles.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+// URL: /reportes/2024/enero?formato=pdf&amp;idioma=es
+app.get('/reportes/:anio/:mes', (req, res) =&gt; {
+  const { anio, mes } = req.params;
+  const { formato = 'html', idioma = 'es' } = req.query;
+
+  res.json({
+    reporte: `${mes}/${anio}`,
+    formato,
+    idioma
+  });
+});
+
+app.listen(3000);</code></pre>
+<h3>Uso de valores por defecto</h3>
+<p>Al desestructurar <code>req.query</code> puedes asignar valores por defecto con el operador <code>=</code>, de modo que si el cliente no los envía, se usa el valor predeterminado.</p>
+<blockquote class="aside aside-tip">
+Esta técnica es habitual para paginación: <code>const pagina = Number(req.query.pagina) || 1</code>.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-4-codigos-de-estado-detallados">
+    <h2><i class="fa-solid fa-flag"></i> 5.4 Códigos de estado detallados</h2>
+    <div class="doc-content">
+<h3>Usar res.status()</h3>
+<p>Para indicar el resultado de la operación, usa <code>res.status(codigo)</code> encadenado con un método de respuesta.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+app.get('/recursos/:id', (req, res) =&gt; {
+  const encontrado = req.params.id === '42';
+
+  if (!encontrado) {
+    return res.status(404).json({ error: 'Recurso no encontrado' });
+  }
+
+  res.status(200).json({ id: 42, nombre: 'Recurso especial' });
+});
+
+app.listen(3000);</code></pre>
+<h3>Grupos de códigos</h3>
+<table><thead><tr><th>Grupo</th><th>Rango</th><th>Significado</th></tr></thead><tbody><tr><td><strong>Informativos</strong></td><td>100-199</td><td>Información provisional</td></tr><tr><td><strong>Éxito</strong></td><td>200-299</td><td>La petición se completó</td></tr><tr><td><strong>Redirección</strong></td><td>300-399</td><td>Atención adicional requerida</td></tr><tr><td><strong>Error del cliente</strong></td><td>400-499</td><td>Error en la petición</td></tr><tr><td><strong>Error del servidor</strong></td><td>500-599</td><td>Error interno del servidor</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-5-cabeceras-headers">
+    <h2><i class="fa-solid fa-tag"></i> 5.5 Cabeceras (headers)</h2>
+    <div class="doc-content">
+<h3>Leer y enviar cabeceras</h3>
+<p>Las cabeceras HTTP transportan metadatos de la petición y la respuesta. Se leen con <code>req.get()</code> o <code>req.headers</code> y se envían con <code>res.set()</code>.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+app.get('/version', (req, res) =&gt; {
+  // Leer una cabecera específica
+  const usuarioAgente = req.get('User-Agent');
+
+  // Establecer cabeceras en la respuesta
+  res.set('X-Version', '1.0.0');
+  res.set('Cache-Control', 'no-store');
+
+  res.json({
+    mensaje: 'Cabeceras',
+    tuAgente: usuarioAgente
+  });
+});
+
+app.listen(3000);</code></pre>
+<h3>Cabeceras comunes</h3>
+<table><thead><tr><th>Cabecera</th><th>Función</th></tr></thead><tbody><tr><td><code>Content-Type</code></td><td>Formato de la respuesta (application/json)</td></tr><tr><td><code>Authorization</code></td><td>Credenciales o token</td></tr><tr><td><code>User-Agent</code></td><td>Navegador o cliente que hace la petición</td></tr><tr><td><code>X-Custom-*</code></td><td>Cabeceras personalizadas de la aplicación</td></tr></tbody></table>
+<blockquote class="aside aside-warning">
+Por convención, las cabeceras personalizadas se nombran con el prefijo <code>X-</code> y usan mayúsculas separadas por guiones.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-6-ejemplo-completo">
+    <h2><i class="fa-solid fa-diagram-project"></i> 5.6 Ejemplo completo de manejo HTTP</h2>
+    <div class="doc-content">
+<h3>API de tareas con métodos HTTP</h3>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+let tareas = [];
+let idActual = 1;
+
+app.get('/tareas', (req, res) =&gt; {
+  res.status(200).json(tareas);
+});
+
+app.get('/tareas/:id', (req, res) =&gt; {
+  const tarea = tareas.find(t =&gt; t.id === Number(req.params.id));
+  if (!tarea) {
+    return res.status(404).json({ error: 'Tarea no encontrada' });
+  }
+  res.status(200).json(tarea);
+});
+
+app.post('/tareas', (req, res) =&gt; {
+  const { titulo } = req.body;
+  if (!titulo) {
+    return res.status(400).json({ error: 'El título es obligatorio' });
+  }
+  const nueva = { id: idActual++, titulo, completada: false };
+  tareas.push(nueva);
+  res.status(201).json(nueva);
+});
+
+app.put('/tareas/:id', (req, res) =&gt; {
+  const tarea = tareas.find(t =&gt; t.id === Number(req.params.id));
+  if (!tarea) {
+    return res.status(404).json({ error: 'Tarea no encontrada' });
+  }
+  const { titulo, completada } = req.body;
+  if (titulo !== undefined) tarea.titulo = titulo;
+  if (completada !== undefined) tarea.completada = completada;
+  res.status(200).json(tarea);
+});
+
+app.delete('/tareas/:id', (req, res) =&gt; {
+  const index = tareas.findIndex(t =&gt; t.id === Number(req.params.id));
+  if (index === -1) {
+    return res.status(404).json({ error: 'Tarea no encontrada' });
+  }
+  tareas.splice(index, 1);
+  res.status(204).end();
+});
+
+app.listen(3000);</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- <code>req</code> contiene la información de la petición y <code>res</code> envía la respuesta
+- <code>req.body</code> lee el cuerpo de la petición usando <code>express.json()</code>
+- Se pueden combinar parámetros de ruta y query
+- <code>res.status()</code> permite devolver códigos de estado concretos
+- Las cabeceras se leen con <code>req.get()</code> y se envían con <code>res.set()</code>
+- Un ejemplo CRUD completo combina todos estos conceptos
+</blockquote>
+    </div>
+  </section>

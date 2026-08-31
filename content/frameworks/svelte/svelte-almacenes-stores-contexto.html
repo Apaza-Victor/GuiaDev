@@ -1,0 +1,135 @@
+<!-- 08. Stores y contexto - Svelte (Frameworks) -->
+  <section id="8-1-repaso-writable">
+    <h2><i class="fa-solid fa-box-open"></i> 8.1 Repaso de tiendas writable</h2>
+    <div class="doc-content">
+<h3>Estado compartido</h3>
+<p>La tienda <code>writable</code> es la más común en Svelte. Almacena un valor que cualquier componente puede leer y modificar, lo que libera a los componentes de pasarse datos por cadenas largas de props.</p>
+<p>Se crea con <code>writable(valorInicial)</code> y devuelve un objeto con los métodos <code>set</code>, <code>update</code> y <code>subscribe</code>.</p>
+<h3>Ejemplo: tienda simple</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  import { writable } from 'svelte/store';
+
+  export const usuario = writable(null);
+&lt;/script&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-2-metodos-set-update-get">
+    <h2><i class="fa-solid fa-sliders"></i> 8.2 Métodos set, update y get</h2>
+    <div class="doc-content">
+<h3>Modificar el estado</h3>
+<p>Para cambiar el valor de una tienda writable se usan los métodos <code>set</code> (sustituir) y <code>update</code> (calcular a partir del valor actual). El método <code>get</code> lee el valor de forma síncrona fuera de un componente o de la suscripción.</p>
+<h3>Ejemplo: usar los tres métodos</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  import { contador, get } from './stores.js';
+
+  const limpiar = () =&gt; contador.set(0);
+  const incrementar = () =&gt; contador.update(n =&gt; n + 1);
+  const verValor = () =&gt; {
+    console.log(get(contador));
+  };
+
+  contador.subscribe((valor) =&gt; {
+    console.log('Cambió a', valor);
+  });
+&lt;/script&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-3-tiendas-derived">
+    <h2><i class="fa-solid fa-project-diagram"></i> 8.3 Tiendas derived</h2>
+    <div class="doc-content">
+<h3>Derivar valores calculados</h3>
+<p>Una tienda <code>derived</code> calcula un nuevo valor a partir de una o varias tiendas fuente. Se recalcula automáticamente cada vez que alguna de sus fuentes cambia, sin necesidad de lógica manual.</p>
+<h3>Ejemplo: derivar el doble</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  import { writable, derived } from 'svelte/store';
+
+  const contador = writable(5);
+  const doble = derived(contador, ($contador) =&gt; $contador * 2);
+&lt;/script&gt;
+
+&lt;p&gt;Contador: {$contador}&lt;/p&gt;
+&lt;p&gt;Doble: {$doble}&lt;/p&gt;</code></pre>
+<p>También puedes derivar de varias tiendas pasando un arreglo como primera fuente.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-4-suscripcion-manual">
+    <h2><i class="fa-solid fa-rss"></i> 8.4 Suscripción manual</h2>
+    <div class="doc-content">
+<h3>Suscribirse sin el prefijo $</h3>
+<p>Aunque el prefijo <code>$</code> automatiza la suscripción en los componentes, a veces necesitas hacerlo manualmente, por ejemplo en código outside de un componente o en un función. El método <code>subscribe</code> recibe un callback que se ejecuta con cada cambio y devuelve una función para cancelar la suscripción.</p>
+<h3>Ejemplo: suscribirse y desuscribirse</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  import { contador } from './stores.js';
+
+  let valor;
+
+  const sinSuscripcion = contador.subscribe((n) =&gt; {
+    valor = n;
+  });
+
+  function detener() {
+    sinSuscripcion();
+  }
+&lt;/script&gt;
+
+&lt;p&gt;Valor actual: {valor}&lt;/p&gt;
+&lt;button on:click={detener}&gt;Detener suscripción&lt;/button&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-5-contexto-set-get">
+    <h2><i class="fa-solid fa-sitemap"></i> 8.5 Contexto con setContext y getContext</h2>
+    <div class="doc-content">
+<h3>Compartir datos en el árbol</h3>
+<p>El <strong>contexto</strong> de Svelte permite compartir datos entre un componente y sus descendientes sin pasarlos por cada prop intermedia. Se usa <code>setContext(clave, valor)</code> en el ancestro y <code>getContext(clave)</code> en los componentes hijos.</p>
+<p>A diferencia de los stores, el contexto no es global: solo es visible en el subárbol del componente que lo definió.</p>
+<h3>Ejemplo: compartir una función</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  import { setContext, getContext } from 'svelte';
+
+  const CLAVE = 'usuario';
+
+  function proveedor() {
+    setContext(CLAVE, { nombre: 'Ana', rol: 'admin' });
+  }
+
+  function consumidor() {
+    const usuario = getContext(CLAVE);
+    return usuario;
+  }
+&lt;/script&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-6-stores-vs-contexto">
+    <h2><i class="fa-solid fa-scale-balanced"></i> 8.6 Store vs Contexto</h2>
+    <div class="doc-content">
+<h3>Cuándo usar cada uno</h3>
+<table><thead><tr><th>Aspecto</th><th>Store</th><th>Contexto</th></tr></thead><tbody><tr><td><strong>Alcance</strong></td><td>Global a toda la app</td><td>Solo al subárbol del componente</td></tr><tr><td><strong>Por defecto</strong></td><td>Tiene valor inicial</td><td>Solo existe si el ancestro lo define</td></tr><tr><td><strong>Motivo común</strong></td><td>Estado compartido entre rutas</td><td>Pasar dependencias jerárquicas</td></tr><tr><td><strong>Suscripción</strong></td><td>Reactiva con $</td><td>Re-renderiza el componente</td></tr></tbody></table>
+<p>Regla práctica: usa <strong>stores</strong> para estado global de aplicación y <strong>contexto</strong> para dependencias de componentes dentro de un contenedor.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- writable crea tiendas de estado legibles y modificables
+- set reemplaza el valor y update lo calcula desde el actual
+- get lee el valor de forma síncrona
+- derived calcula valores a partir de otras tiendas
+- subscribe permite la suscripción manual y su cancelación
+- setContext y getContext comparten datos en un subárbol
+</blockquote>
+    </div>
+  </section>

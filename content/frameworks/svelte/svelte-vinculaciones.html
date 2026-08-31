@@ -1,0 +1,121 @@
+<!-- 07. Bindings y tiendas - Svelte (Frameworks) -->
+  <section id="7-1-enlace-bidireccional">
+    <h2><i class="fa-solid fa-arrows-left-right"></i> 7.1 Enlace bidireccional con bind</h2>
+    <div class="doc-content">
+<h3>Qué es el binding</h3>
+<p>Svelte permite la <strong>comunicación bidireccional</strong> entre el estado del componente y los elementos del DOM mediante la directiva <code>bind:</code>. Cuando el usuario modifica un formulario, la variable se actualiza automáticamente y viceversa.</p>
+<p>No hace falta escuchar eventos manualmente ni leer valores con JavaScript: el binding se encarga de todo.</p>
+<h3>Ejemplo: enlazar un input</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let nombre = 'Ana';
+&lt;/script&gt;
+
+&lt;input type="text" bind:value={nombre} /&gt;
+&lt;p&gt;Hola, {nombre}&lt;/p&gt;</code></pre>
+<p>Al escribir en el input, el texto del párrafo se actualiza al instante.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-2-bind-value-y-otros">
+    <h2><i class="fa-solid fa-keyboard"></i> 7.2 bind:value y tipos de bind</h2>
+    <div class="doc-content">
+<h3>Bindings más usados</h3>
+<table><thead><tr><th>Directiva</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>bind:value</strong></td><td>Enlaza el valor de inputs, textarea y select</td></tr><tr><td><strong>bind:checked</strong></td><td>Enlaza el estado de casillas de verificación</td></tr><tr><td><strong>bind:group</strong></td><td>Agrupa varios inputs de tipo radio o checkbox</td></tr><tr><td><strong>bind:files</strong></td><td>Enlaza los archivos seleccionados en un input file</td></tr><tr><td><strong>bind:this</strong></td><td>Obtiene una referencia al elemento del DOM</td></tr></tbody></table>
+<h3>Ejemplo: checkbox y grupo</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let acepto = false;
+  let frutas = [];
+&lt;/script&gt;
+
+&lt;label&gt;
+  &lt;input type="checkbox" bind:checked={acepto} /&gt;
+  Acepto los términos
+&lt;/label&gt;
+
+{#each ['Manzana', 'Pera'] as fruta}
+  &lt;label&gt;
+    &lt;input type="checkbox" bind:group={frutas} value={fruta} /&gt;
+    {fruta}
+  &lt;/label&gt;
+{/each}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-3-tiendas-writable">
+    <h2><i class="fa-solid fa-box-open"></i> 7.3 Tiendas writable</h2>
+    <div class="doc-content">
+<h3>Estado global compartido</h3>
+<p>Los <strong>stores o tiendas</strong> permiten compartir estado entre componentes sin pasar props por cada nivel. Un store <code>writable</code> puede ser leído y modificado desde cualquier componente.</p>
+<p>Se crean con <code>writable(valorInicial)</code> y ofrecen métodos como <code>set</code>, <code>update</code> y <code>subscribe</code>.</p>
+<h3>Ejemplo: crear una tienda</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  import { writable } from 'svelte/store';
+
+  export const contador = writable(0);
+&lt;/script&gt;</code></pre>
+<p>Este código se guarda normalmente en un archivo como <code>stores.js</code> para importarlo desde varios componentes.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-4-suscripcion-auto-prefijo">
+    <h2><i class="fa-solid fa-dollar-sign"></i> 7.4 Suscripción automática con $</h2>
+    <div class="doc-content">
+<h3>Prefijo $</h3>
+<p>Dentro de un componente puedes acceder al valor de un store anteponiendo el símbolo <code>$</code> al nombre del store. Svelte se encarga de suscribirse y desuscribirse automáticamente, sin necesidad de llamar a <code>subscribe</code> ni liberar recursos manualmente.</p>
+<h3>Ejemplo: leer y modificar un store</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  import { contador } from './stores.js';
+
+  function incrementar() {
+    contador.update(n =&gt; n + 1);
+  }
+&lt;/script&gt;
+
+&lt;p&gt;Valor: {$contador}&lt;/p&gt;
+&lt;button on:click={incrementar}&gt;Sumar 1&lt;/button&gt;</code></pre>
+<p>Usar <code>$contador</code> funciona de forma automática y reactiva en el template y en el script.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-5-readable-y-custom">
+    <h2><i class="fa-solid fa-glasses"></i> 7.5 Tiendas readable y custom</h2>
+    <div class="doc-content">
+<h3>Tiendas de solo lectura</h3>
+<p>Un store <code>readable</code> expone un valor que no se puede modificar desde fuera: ideal para datos de configuración, relojes o valores calculados en el servidor. Solo se actualiza internamente.</p>
+<h3>Ejemplo: reloj con readable</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  import { readable } from 'svelte/store';
+
+  export const hora = readable(new Date(), function start(set) {
+    const intervalo = setInterval(() =&gt; {
+      set(new Date());
+    }, 1000);
+
+    return function stop() {
+      clearInterval(intervalo);
+    };
+  });
+&lt;/script&gt;</code></pre>
+<p>Las tiendas <strong>custom</strong> implementan manualmente el contrato <code>subscribe</code>, lo que permite añadir lógica propia antes de notificar a los suscriptores.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- bind: realiza la comunicación bidireccional con el DOM
+- bind:value enlaza inputs, select y textarea
+- Las tiendas writable permiten compartir estado global
+- El prefijo $ suscribe y desuscribe automáticamente
+- Las tiendas readable son de solo lectura
+- Las tiendas custom controlan el contrato de suscripción
+</blockquote>
+    </div>
+  </section>

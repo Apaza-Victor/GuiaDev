@@ -1,0 +1,370 @@
+<!-- 07. Almacenamiento en memoria y sql - Go (Frameworks) -->
+  <section id="7-1-crud-en-memoria">
+    <h2><i class="fa-solid fa-database"></i> 7.1 CRUD en memoria</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>El almacenamiento en memoria usa estructuras de Go (slices, maps) para guardar datos. Es ideal para prototipos, aprendizaje y APIs que no requieren persistencia real.</p>
+<pre><code class="language-go">package main
+
+import (
+    "strconv"
+    "net/http"
+    "github.com/gin-gonic/gin"
+)
+
+type Usuario struct {
+    ID     int    `json:"id"`
+    Nombre string `json:"nombre"`
+    Email  string `json:"email"`
+}
+
+// Almacenamiento en memoria
+var usuarios = map[int]Usuario{}
+var siguienteID = 1
+
+func main() {
+    r := gin.Default()
+
+    // CREATE
+    r.POST("/usuarios", func(c *gin.Context) {
+        var u Usuario
+        if err := c.ShouldBindJSON(&amp;u); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+        u.ID = siguienteID
+        usuarios[u.ID] = u
+        siguienteID++
+        c.JSON(http.StatusCreated, u)
+    })
+
+    // READ (todos)
+    r.GET("/usuarios", func(c *gin.Context) {
+        lista := []Usuario{}
+        for _, u := range usuarios {
+            lista = append(lista, u)
+        }
+        c.JSON(http.StatusOK, lista)
+    })
+
+    // READ (uno)
+    r.GET("/usuarios/:id", func(c *gin.Context) {
+        id, _ := strconv.Atoi(c.Param("id"))
+        u, existe := usuarios[id]
+        if !existe {
+            c.JSON(http.StatusNotFound, gin.H{"error": "no existe"})
+            return
+        }
+        c.JSON(http.StatusOK, u)
+    })
+
+    // UPDATE
+    r.PUT("/usuarios/:id", func(c *gin.Context) {
+        id, _ := strconv.Atoi(c.Param("id"))
+        var u Usuario
+        if err := c.ShouldBindJSON(&amp;u); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+        u.ID = id
+        usuarios[id] = u
+        c.JSON(http.StatusOK, u)
+    })
+
+    // DELETE
+    r.DELETE("/usuarios/:id", func(c *gin.Context) {
+        id, _ := strconv.Atoi(c.Param("id"))
+        delete(usuarios, id)
+        c.Status(http.StatusNoContent)
+    })
+
+    r.Run(":8080")
+}</code></pre>
+<h3>Ventajas y desventajas</h3>
+<table><thead><tr><th>Aspecto</th><th>En memoria</th><th>Base de datos</th></tr></thead><tbody><tr><td><strong>Persistencia</strong></td><td>Se pierde al reiniciar</td><td>Permanente</td></tr><tr><td><strong>Velocidad</strong></td><td>Muy rápida</td><td>Más lenta (disco/red)</td></tr><tr><td><strong>Escalabilidad</strong></td><td>Limitada a un proceso</td><td>Múltiples instancias</td></tr><tr><td><strong>Complejidad</strong></td><td>Baja</td><td>Mayor</td></tr><tr><td><strong>Caso de uso</strong></td><td>Prototipos, cachés</td><td>Producción</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-2-conexion-con-database-sql">
+    <h2><i class="fa-solid fa-plug"></i> 7.2 Conexión con database/sql</h2>
+    <div class="doc-content">
+<h3>database/sql</h3>
+<p>La standard library <code>database/sql</code> proporciona una interfaz unificada para bases de datos SQL. Necesitas un driver específico (mysql, postgres, sqlite).</p>
+<pre><code class="language-bash"># Instalar driver de PostgreSQL
+go get github.com/lib/pq
+
+# Instalar driver de MySQL
+go get github.com/go-sql-driver/mysql
+
+# Instalar driver de SQLite
+go get github.com/mattn/go-sqlite3</code></pre>
+<h3>Conexión básica</h3>
+<pre><code class="language-go">package db
+
+import (
+    "database/sql"
+    _ "github.com/lib/pq" // driver de PostgreSQL
+)
+
+func Conectar() (*sql.DB, error) {
+    dsn := "postgres://usuario:password@localhost:5432/miapi?sslmode=disable"
+    db, err := sql.Open("postgres", dsn)
+    if err != nil {
+        return nil, err
+    }
+    if err := db.Ping(); err != nil {
+        return nil, err
+    }
+    return db, nil
+}</code></pre>
+<h3>Operaciones básicas</h3>
+<pre><code class="language-go">// CREATE
+res, err := db.Exec(
+    "INSERT INTO usuarios (nombre, email) VALUES ($1, $2)",
+    "Ana", "ana@mail.com",
+)
+
+// READ
+var nombre, email string
+err = db.QueryRow(
+    "SELECT nombre, email FROM usuarios WHERE id = $1", 1,
+).Scan(&amp;nombre, &amp;email)
+
+// READ (varios)
+rows, err := db.Query("SELECT id, nombre FROM usuarios")
+for rows.Next() {
+    var id int
+    var nombre string
+    rows.Scan(&amp;id, &amp;nombre)
+}
+rows.Close()
+
+// UPDATE
+db.Exec("UPDATE usuarios SET nombre = $1 WHERE id = $2", "Ana María", 1)
+
+// DELETE
+db.Exec("DELETE FROM usuarios WHERE id = $1", 1)</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-3-orm-con-gorm">
+    <h2><i class="fa-solid fa-cube"></i> 7.3 ORM con GORM</h2>
+    <div class="doc-content">
+<h3>Qué es un ORM</h3>
+<p>Un <strong>ORM</strong> (Object-Relational Mapping) mapea tablas a structs de Go, eliminando el SQL manual. <strong>GORM</strong> es el ORM más popular para Go.</p>
+<pre><code class="language-bash">go get -u gorm.io/gorm
+go get -u gorm.io/driver/sqlite
+go get -u gorm.io/driver/postgres</code></pre>
+<h3>Modelo con GORM</h3>
+<pre><code class="language-go">package models
+
+import "gorm.io/gorm"
+
+type Usuario struct {
+    gorm.Model          // incluye ID, CreatedAt, UpdatedAt, DeletedAt
+    Nombre  string      `gorm:"size:100;not null" json:"nombre"`
+    Email   string      `gorm:"uniqueIndex;not null" json:"email"`
+    Edad    int         `json:"edad"`
+    Posts   []Post      `json:"posts,omitempty"`
+}
+
+type Post struct {
+    gorm.Model
+    Titulo string  `json:"titulo"`
+    UsuarioID uint  `json:"usuario_id"`
+}</code></pre>
+<h3>Conexión y migración</h3>
+<pre><code class="language-go">package main
+
+import (
+    "gorm.io/driver/sqlite"
+    "gorm.io/gorm"
+    "miapi/models"
+)
+
+func main() {
+    db, err := gorm.Open(sqlite.Open("miapi.db"), &amp;gorm.Config{})
+    if err != nil {
+        panic("fallo la conexión: " + err.Error())
+    }
+
+    // AutoMigrate crea o actualiza las tablas
+    db.AutoMigrate(&amp;models.Usuario{}, &amp;models.Post{})
+}</code></pre>
+<h3>Tags de GORM</h3>
+<table><thead><tr><th>Tag</th><th>Efecto</th></tr></thead><tbody><tr><td><code>size:100</code></td><td>Longitud del campo</td></tr><tr><td><code>not null</code></td><td>Campo obligatorio</td></tr><tr><td><code>uniqueIndex</code></td><td>Índice único</td></tr><tr><td><code>default:0</code></td><td>Valor por defecto</td></tr><tr><td><code>foreignKey</code></td><td>Relación con otra tabla</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-4-operaciones-crud-en-sql">
+    <h2><i class="fa-solid fa-table"></i> 7.4 Operaciones CRUD en SQL</h2>
+    <div class="doc-content">
+<h3>CRUD con database/sql en handlers</h3>
+<pre><code class="language-go">package main
+
+import (
+    "database/sql"
+    "net/http"
+    "strconv"
+    "github.com/gin-gonic/gin"
+)
+
+func main() {
+    db, _ := db.Conectar()
+    defer db.Close()
+
+    r := gin.Default()
+
+    // CREATE
+    r.POST("/usuarios", func(c *gin.Context) {
+        var u struct {
+            Nombre string `json:"nombre"`
+            Email  string `json:"email"`
+        }
+        if err := c.ShouldBindJSON(&amp;u); err != nil {
+            c.JSON(400, gin.H{"error": err.Error()})
+            return
+        }
+        res, err := db.Exec(
+            "INSERT INTO usuarios (nombre, email) VALUES ($1, $2)",
+            u.Nombre, u.Email,
+        )
+        if err != nil {
+            c.JSON(500, gin.H{"error": "no se pudo crear"})
+            return
+        }
+        id, _ := res.LastInsertId()
+        c.JSON(http.StatusCreated, gin.H{"id": id})
+    })
+
+    // READ (uno)
+    r.GET("/usuarios/:id", func(c *gin.Context) {
+        id, _ := strconv.Atoi(c.Param("id"))
+        var usuario struct {
+            ID     int
+            Nombre string
+            Email  string
+        }
+        err := db.QueryRow(
+            "SELECT id, nombre, email FROM usuarios WHERE id = $1", id,
+        ).Scan(&amp;usuario.ID, &amp;usuario.Nombre, &amp;usuario.Email)
+        if err == sql.ErrNoRows {
+            c.JSON(http.StatusNotFound, gin.H{"error": "usuario no existe"})
+            return
+        }
+        c.JSON(http.StatusOK, usuario)
+    })
+
+    // DELETE
+    r.DELETE("/usuarios/:id", func(c *gin.Context) {
+        id, _ := strconv.Atoi(c.Param("id"))
+        res, err := db.Exec("DELETE FROM usuarios WHERE id = $1", id)
+        if err != nil {
+            c.JSON(500, gin.H{"error": err.Error()})
+            return
+        }
+        afectadas, _ := res.RowsAffected()
+        if afectadas == 0 {
+            c.JSON(http.StatusNotFound, gin.H{"error": "no existe"})
+            return
+        }
+        c.Status(http.StatusNoContent)
+    })
+
+    r.Run(":8080")
+}</code></pre>
+<h3>Ejemplo con GORM</h3>
+<pre><code class="language-go">// db ya configurado con gorm.Open
+usuarios := []models.Usuario{}
+db.Find(&amp;usuarios)                    // SELECT * FROM usuarios
+
+db.Create(&amp;models.Usuario{Nombre: "Ana", Email: "ana@mail.com"}) // INSERT
+
+usuario := models.Usuario{}
+db.First(&amp;usuario, 1)                 // SELECT ... WHERE id = 1
+
+usuario.Nombre = "Ana María"
+db.Save(&amp;usuario)                      // UPDATE
+
+db.Delete(&amp;usuario)                    // DELETE (soft delete si usar gorm.Model)</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-5-patrones-de-diseno">
+    <h2><i class="fa-solid fa-diagram-project"></i> 7.5 Patrones de diseño</h2>
+    <div class="doc-content">
+<h3>Patrón Repository</h3>
+<p>Separa la lógica de acceso a datos del handler. Facilita testear y cambiar de base de datos:</p>
+<pre><code class="language-go">package repos
+
+// Interfaz del repositorio
+type UsuarioRepo interface {
+    Obtener(id int) (*models.Usuario, error)
+    Listar() ([]models.Usuario, error)
+    Crear(u *models.Usuario) error
+}
+
+// Implementación con GORM
+type UsuarioGorm struct {
+    db *gorm.DB
+}
+
+func NewUsuarioGorm(db *gorm.DB) *UsuarioGorm {
+    return &amp;UsuarioGorm{db: db}
+}
+
+func (r *UsuarioGorm) Obtener(id int) (*models.Usuario, error) {
+    var u models.Usuario
+    err := r.db.First(&amp;u, id).Error
+    return &amp;u, err
+}
+
+func (r *UsuarioGorm) Crear(u *models.Usuario) error {
+    return r.db.Create(u).Error
+}</code></pre>
+<h3>Capa de servicio</h3>
+<pre><code class="language-go">package services
+
+type UsuarioService struct {
+    repo repos.UsuarioRepo
+}
+
+func NewUsuarioService(repo repos.UsuarioRepo) *UsuarioService {
+    return &amp;UsuarioService{repo: repo}
+}
+
+func (s *UsuarioService) Obtener(id int) (*models.Usuario, error) {
+    return s.repo.Obtener(id)
+}</code></pre>
+<h3>Inyección en handlers</h3>
+<pre><code class="language-go">handler := handlers.NuevoUsuarioHandler(service)
+r.GET("/usuarios/:id", handler.Obtener)</code></pre>
+<h3>Beneficios</h3>
+<ul>
+<li><strong>Testabilidad</strong>: Puedes simular el repositorio con mocks</li>
+<li><strong>Separación de responsabilidades</strong>: Cada capa hace una sola cosa</li>
+<li><strong>Flexibilidad</strong>: Cambiar de SQL a GORM no afecta los handlers</li>
+<li><strong>Mantenibilidad</strong>: Código más ordenado y predecible</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste:**
+- Los datos en memoria (maps/slices) son ideales para prototipos y cachés
+- <code>database/sql</code> ofrece una interfaz unificada para bases SQL
+- GORM es el ORM más popular y mapea tablas a structs de Go
+- Los tags de GORM definen restricciones, índices y relaciones
+- Los handlers se integran con consultas parametrizadas para evitar SQL injection
+- El patrón Repository separa datos y lógica para mejor testabilidad
+</blockquote>
+    </div>
+  </section>

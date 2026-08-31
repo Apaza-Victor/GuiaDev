@@ -1,0 +1,245 @@
+<!-- 10. SEO y despliegue - Nuxt (Frameworks) -->
+  <section id="10-1-metadatos-y-seo-con-nuxt">
+    <h2><i class="fa-solid fa-magnifying-glass-chart"></i> 10.1 Metadatos y SEO con Nuxt</h2>
+    <div class="doc-content">
+<h3>SEO nativo en Nuxt</h3>
+<p>Gracias al SSR y SSG, Nuxt ofrece un SEO excelente desde el principio: el contenido llega renderizado en el HTML y puede añadir metadatos completos de forma reactiva.</p>
+<h3>Definir metadatos del sitio</h3>
+<pre><code class="language-ts">// nuxt.config.ts
+export default defineNuxtConfig({
+  app: {
+    head: {
+      htmlAttrs: { lang: 'es' },
+      title: 'Mi Sitio',
+      titleTemplate: '%s | Mi Sitio',
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'description', content: 'Descripción principal del sitio' }
+      ],
+      link: [
+        { rel: 'icon', href: '/favicon.ico' }
+      ]
+    }
+  }
+})</code></pre>
+<h3>Metadatos por página con useSeoMeta</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+useSeoMeta({
+  title: 'Productos destacados',
+  description: 'Los mejores productos con ofertas exclusivas',
+  ogTitle: 'Productos destacados',
+  ogDescription: 'Descubre nuestras ofertas',
+  ogType: 'website'
+})
+&lt;/script&gt;</code></pre>
+<h3>Estructuras de datos (Schema.org)</h3>
+<p>Nuxt permite inyectar JSON-LD para que los motores de búsqueda entiendan mejor el contenido.</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+useHead({
+  script: [{
+    type: 'application/ld+json',
+    children: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'Mi Sitio',
+      url: 'https://mistiio.com'
+    })
+  }]
+})
+&lt;/script&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-2-open-graph-y-redes-sociales">
+    <h2><i class="fa-solid fa-share-nodes"></i> 10.2 Open Graph y redes sociales</h2>
+    <div class="doc-content">
+<h3>Qué es Open Graph</h3>
+<p>Open Graph (og:) son metadatos que permiten controlar cómo se muestra el sitio al compartirse en redes sociales (Facebook, WhatsApp, etc.).</p>
+<h3>Ejemplo: Metadatos Open Graph completos</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+useSeoMeta({
+  ogTitle: 'Mi entrada del blog',
+  ogDescription: 'Resumen de la publicación',
+  ogImage: 'https://mistiio.com/img/portada.jpg',
+  ogUrl: 'https://mistiio.com/blog/mi-entrada',
+  ogSiteName: 'Mi Sitio',
+  ogLocale: 'es_ES',
+  twitterCard: 'summary_large_image',
+  twitterTitle: 'Mi entrada del blog',
+  twitterImage: 'https://mistiio.com/img/portada.jpg'
+})
+&lt;/script&gt;</code></pre>
+<h3>Recomendaciones de imagen</h3>
+<table><thead><tr><th>Plataforma</th><th>Tamaño recomendado</th></tr></thead><tbody><tr><td>Open Graph estándar</td><td>1200 x 630 px</td></tr><tr><td>Twitter Card</td><td>1200 x 675 px</td></tr><tr><td>Mínimo aceptable</td><td>600 x 315 px</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Usa el validador de Open Graph para comprobar cómo se muestra tu contenido al compartir el enlace.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-3-sitemap-y-robots-txt">
+    <h2><i class="fa-solid fa-sitemap"></i> 10.3 Sitemap y robots.txt</h2>
+    <div class="doc-content">
+<h3>Generar sitemap y robots de forma automática</h3>
+<p>El módulo <code>@nuxtjs/sitemap</code> y <code>@nuxtjs/robots</code> (o el paquete combinado <code>@nuxtjs/seo</code>) generan el sitemap.xml y el robots.txt automáticamente a partir de tus rutas.</p>
+<h3>Instalar el módulo de SEO</h3>
+<pre><code class="language-bash">npm install @nuxtjs/seo</code></pre>
+<pre><code class="language-ts">// nuxt.config.ts
+export default defineNuxtConfig({
+  modules: ['@nuxtjs/seo'],
+
+  sitemap: {
+    hostname: 'https://mistiio.com'
+  },
+  robots: {
+    disallow: ['/privado/']
+  }
+})</code></pre>
+<h3>Resultado esperado</h3>
+<pre><code class="language-text">/sitemap.xml   -&gt; lista de todas las rutas públicas
+/robots.txt    -&gt; reglas para rastreadores de motores de búsqueda
+</code></pre>
+<h3>Personalizar el sitemap</h3>
+<pre><code class="language-ts">// nuxt.config.ts
+export default defineNuxtConfig({
+  sitemap: {
+    hostname: 'https://mistiio.com',
+    exclude: ['/admin/**'],
+    defaults: {
+      changefreq: 'weekly',
+      priority: 0.8
+    }
+  }
+})</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-4-build-y-generate-para-produccion">
+    <h2><i class="fa-solid fa-hammer"></i> 10.4 build y generate para producción</h2>
+    <div class="doc-content">
+<h3>Diferencias entre build y generate</h3>
+<table><thead><tr><th>Comando</th><th>Resultado</th></tr></thead><tbody><tr><td><code>npm run build</code></td><td>Genera una app de servidor (SSR) en <code>.output/</code></td></tr><tr><td><code>npm run generate</code></td><td>Genera archivos estáticos (SSG) en <code>.output/public/</code></td></tr></tbody></table>
+<h3>Compilar para el servidor</h3>
+<pre><code class="language-bash"># Build SSR
+npm run build
+
+# El output queda en la carpeta .output/
+# Incluye servidor + assets para desplegar en Node o serverless</code></pre>
+<h3>Generar estático</h3>
+<pre><code class="language-bash"># Build SSG
+npm run generate
+
+# Genera el HTML estático en .output/public/
+# Ideal para desplegar en un hosting estático</code></pre>
+<h3>Configurar el modo de pre-renderizado</h3>
+<pre><code class="language-ts">// nuxt.config.ts
+export default defineNuxtConfig({
+  nitro: {
+    prerender: {
+      routes: ['/', '/acerca', '/contacto']
+    }
+  }
+})</code></pre>
+<blockquote class="aside aside-note">
+`npm run preview` te deja probar localmente la build de producción ya generada.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-5-desplegar-en-vercel-netlify-o-node">
+    <h2><i class="fa-solid fa-cloud-arrow-up"></i> 10.5 Desplegar en Vercel, Netlify o Node</h2>
+    <div class="doc-content">
+<h3>Opciones de despliegue</h3>
+<p>Nuxt se puede desplegar en casi cualquier plataforma gracias a Nitro. Solo necesitas el <strong>preset</strong> adecuado.</p>
+<h3>Despliegue en Vercel</h3>
+<pre><code class="language-bash"># Vercel detecta y configura Nuxt automáticamente
+npm i -g vercel
+vercel deploy</code></pre>
+<pre><code class="language-ts">// nuxt.config.ts
+export default defineNuxtConfig({
+  nitro: {
+    preset: 'vercel'
+  }
+})</code></pre>
+<h3>Despliegue en Netlify</h3>
+<pre><code class="language-bash"># Netlify también detecta Nuxt
+netlify deploy</code></pre>
+<pre><code class="language-ts">// nuxt.config.ts
+export default defineNuxtConfig({
+  nitro: {
+    preset: 'netlify'
+  }
+})</code></pre>
+<h3>Despliegue en un servidor Node</h3>
+<pre><code class="language-bash"># Generar la build SSR
+npm run build
+
+# Iniciar el servidor de producción en Node
+node .output/server/index.mjs</code></pre>
+<h3>Despliegue estático con cualquier hosting</h3>
+<pre><code class="language-bash"># Generar SSG y subir la carpeta public
+npm run generate
+
+# Subir .output/public a Netlify, GitHub Pages, etc.</code></pre>
+<table><thead><tr><th>Plataforma</th><th>Preset</th></tr></thead><tbody><tr><td>Vercel</td><td>vercel</td></tr><tr><td>Netlify</td><td>netlify</td></tr><tr><td>Node.js</td><td>node-server (por defecto)</td></tr><tr><td>Static</td><td>static (con generate)</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-6-buenas-practicas-de-produccion">
+    <h2><i class="fa-solid fa-list-check"></i> 10.6 Buenas prácticas de producción</h2>
+    <div class="doc-content">
+<h3>Recomendaciones finales</h3>
+<ul>
+<li>Establece metadatos y SEO desde el inicio</li>
+<li>Genera sitemap y robots.txt antes del lanzamiento</li>
+<li>Optimiza imágenes con componentes y formatos modernos</li>
+<li>Usa variables de entorno específicas de producción</li>
+<li>Configura caché con routeRules para contenido estático</li>
+<li>Realiza pruebas de rendimiento en la build de producción</li>
+</ul>
+<h3>Configuración de caché con routeRules</h3>
+<pre><code class="language-ts">// nuxt.config.ts
+export default defineNuxtConfig({
+  routeRules: {
+    '/': { prerender: true },
+    '/blog/**': { isr: 60 },
+    '/api/**': { proxy: '/api/**' },
+    '/admin/**': { ssr: false }
+  }
+})</code></pre>
+<h3>Variables de producción</h3>
+<pre><code class="language-text"># .env.production
+NUXT_PUBLIC_API_URL=https://api.produccion.com
+API_SECRETA=clave-segura-de-produccion
+</code></pre>
+<h3>Checklist de lanzamiento</h3>
+<table><thead><tr><th>Punto</th><th>Estado</th></tr></thead><tbody><tr><td>Metadatos y SEO configurados</td><td>Listo</td></tr><tr><td>Sitemap y robots generados</td><td>Listo</td></tr><tr><td>Prueba de la build local</td><td>Listo</td></tr><tr><td>Variables de producción definidas</td><td>Listo</td></tr><tr><td>Caché y rutas configuradas</td><td>Listo</td></tr><tr><td>Despliegue en la plataforma elegida</td><td>Listo</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Después de desplegar, revisa Google Search Console para validar el sitemap y monitorizar el índice.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Nuxt ofrece SEO nativo gracias a SSR y SSG
+- useSeoMeta y useHead controlan los metadatos de cada página
+- Open Graph define cómo se comparte el sitio en redes sociales
+- El módulo @nuxtjs/seo genera sitemap.xml y robots.txt
+- npm run build genera SSR y npm run generate genera estático
+- Despliegas en Vercel, Netlify o Node con el preset correcto
+- Las routeRules permiten cachear y controlar rutas en producción
+- Sigue las buenas prácticas para un lanzamiento sólido
+</blockquote>
+    </div>
+  </section>

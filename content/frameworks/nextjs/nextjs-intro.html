@@ -1,0 +1,177 @@
+<!-- 01. Introducción a Next.js - Next.js (Frameworks) -->
+  <section id="1-1-que-es-nextjs">
+    <h2><i class="fa-solid fa-bullseye"></i> 1.1 Qué es Next.js</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p><strong>Next.js</strong> es un framework de React para construir aplicaciones web del lado del servidor (SSR) y estáticas (SSG). Se basa en React y añade enrutamiento, renderizado híbrido, optimización de imágenes y más funcionalidades listas para producción.</p>
+<p>Fue creado por la empresa <strong>Vercel</strong> y es uno de los frameworks de React más populares del ecosistema, usado por empresas como Netflix, TikTok y Twitch.</p>
+<h3>Características principales</h3>
+<table><thead><tr><th>Característica</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>SSR y SSG</strong></td><td>Renderizado en servidor y generación estática</td></tr><tr><td><strong>App Router</strong></td><td>Sistema de rutas basado en el sistema de ficheros</td></tr><tr><td><strong>Optimización de imágenes</strong></td><td>Componente <code>next/image</code> con carga diferida</td></tr><tr><td><strong>API Routes</strong></td><td>Crear endpoints backend dentro del proyecto</td></tr><tr><td><strong>TypeScript</strong></td><td>Soporte nativo de primera clase</td></tr></tbody></table>
+<h3>Ejemplo: Página mínima con JSX</h3>
+<pre><code class="language-jsx">// app/page.tsx
+export default function Home() {
+  return (
+    &lt;main&gt;
+      &lt;h1&gt;Hola, Next.js&lt;/h1&gt;
+      &lt;p&gt;Esta página se renderiza en el servidor.&lt;/p&gt;
+    &lt;/main&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-2-por-que-usar-nextjs-en-vez-de-react-puro">
+    <h2><i class="fa-solid fa-question"></i> 1.2 Por qué usar Next.js en vez de React puro</h2>
+    <div class="doc-content">
+<h3>Ventajas sobre React puro</h3>
+<p>React es una librería para construir interfaces, pero deja muchas decisiones a tu cargo. Next.js es un framework que incorpora soluciones probadas:</p>
+<ul>
+<li><strong>Enrutamiento</strong>: React necesita react-router; Next.js usa el sistema de ficheros</li>
+<li><strong>SEO</strong>: React renderiza en cliente (malo para SEO); Next.js renderiza en servidor</li>
+<li><strong>Rendimiento</strong>: Code splitting y optimización automática</li>
+<li><strong>Backend integrado</strong>: API routes sin montar un servidor aparte</li>
+<li><strong>Configuración</strong>: Cero configuración con <code>create-next-app</code></li>
+</ul>
+<h3>Cuándo elegir cada uno</h3>
+<table><thead><tr><th>Necesidad</th><th>React puro</th><th>Next.js</th></tr></thead><tbody><tr><td>SEO e indexación</td><td>Complicado</td><td><i class="fa-solid fa-circle-check"></i> Óptimo</td></tr><tr><td>SPA simple</td><td><i class="fa-solid fa-circle-check"></i> Ideal</td><td>Posible</td></tr><tr><td>Aplicación completa</td><td>Mucho trabajo manual</td><td><i class="fa-solid fa-circle-check"></i> Ideal</td></tr><tr><td>Rutas dinámicas</td><td>Configuración manual</td><td>Automático</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Si necesitas una SPA puramente interactiva usa React con Vite. Si quieres una app completa, con SEO y backend, elige Next.js.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-3-ssr-ssg-isr-y-csr">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 1.3 SSR, SSG, ISR y CSR: estrategias de renderizado</h2>
+    <div class="doc-content">
+<h3>Las cuatro estrategias de renderizado</h3>
+<table><thead><tr><th>Estrategia</th><th>Siglas</th><th>Qué hace</th><th>Cuándo usar</th></tr></thead><tbody><tr><td><strong>Client Side Rendering</strong></td><td>CSR</td><td>Renderiza en el navegador con JavaScript</td><td>Panel de usuario, apps interactivas</td></tr><tr><td><strong>Server Side Rendering</strong></td><td>SSR</td><td>Renderiza en el servidor en cada petición</td><td>Datos dinámicos en tiempo real</td></tr><tr><td><strong>Static Site Generation</strong></td><td>SSG</td><td>Genera HTML estático en build time</td><td>Blogs, docs, páginas públicas</td></tr><tr><td><strong>Incremental Static Regeneration</strong></td><td>ISR</td><td>SSG con regeneración en segundo plano</td><td>Catálogos, noticias, datos semi-dinámicos</td></tr></tbody></table>
+<h3>SSR: renderizado en servidor</h3>
+<pre><code class="language-jsx">// app/products/page.tsx (SSR - se renderiza en cada petición)
+export default async function Products() {
+  const res = await fetch(
+    "https://api.example.com/products",
+    { cache: "no-store" }
+  );
+  const products = await res.json();
+
+  return (
+    &lt;ul&gt;
+      {products.map((p) =&gt; (
+        &lt;li key={p.id}&gt;{p.name}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-note">
+La estrategia por defecto en Next.js depende de cada ruta. Las rutas estáticas se generan en build time y las dinámicas se renderizan en servidor.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-4-ssg-e-isr-con-revalidate">
+    <h2><i class="fa-solid fa-clock"></i> 1.4 SSG e ISR con revalidate</h2>
+    <div class="doc-content">
+<h3>SSG y cache por defecto</h3>
+<p>Cuando una ruta <code>app/</code> no usa datos dinámicos, Next.js la genera como estática (SSG) en tiempo de compilación.</p>
+<h3>ISR con revalidate</h3>
+<p>Para datos que cambian de vez en cuando puedes usar regeneración estática incremental:</p>
+<pre><code class="language-jsx">// app/posts/page.tsx (ISR - se regenera cada 60 segundos)
+export default async function Posts() {
+  const res = await fetch("https://api.example.com/posts", {
+    next: { revalidate: 60 },
+  });
+  const posts = await res.json();
+
+  return (
+    &lt;ul&gt;
+      {posts.map((post) =&gt; (
+        &lt;li key={post.id}&gt;{post.title}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>Diferencias de un vistazo</h3>
+<table><thead><tr><th>Estrategia</th><th>Comportamiento</th></tr></thead><tbody><tr><td>SSG</td><td>Se genera una vez al compilar, no cambia</td></tr><tr><td>ISR</td><td>Se regenera cada <code>revalidate</code> segundos</td></tr><tr><td>SSR</td><td>Se renderiza en cada petición</td></tr><tr><td>CSR</td><td>Se renderiza en el navegador</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-5-versiones-y-ecosistema-destacado">
+    <h2><i class="fa-solid fa-box-open"></i> 1.5 Versiones y ecosistema destacado</h2>
+    <div class="doc-content">
+<h3>Evolución de las versiones</h3>
+<table><thead><tr><th>Versión</th><th>Año</th><th>Aportación clave</th></tr></thead><tbody><tr><td>Next.js 12</td><td>2021</td><td>Middleware y compilador nativo en Rust</td></tr><tr><td>Next.js 13</td><td>2022</td><td>App Router y Server Components (beta)</td></tr><tr><td>Next.js 14</td><td>2023</td><td>App Router estable, Turbopack</td></tr><tr><td>Next.js 15</td><td>2024</td><td>Async request APIs, mejoras de rendimiento</td></tr></tbody></table>
+<h3>Ecosistema que lo rodea</h3>
+<ul>
+<li><strong>React</strong>: La librería base de todo</li>
+<li><strong>Tailwind CSS</strong>: Estilos preferidos por defecto</li>
+<li><strong>Vercel</strong>: Plataforma de despliegue oficial</li>
+<li><strong>Auth.js</strong>: Autenticación para aplicaciones</li>
+<li><strong>Prisma</strong>: ORM para bases de datos</li>
+</ul>
+<blockquote class="aside aside-warning">
+A partir de Next.js 13 el App Router es la forma recomendada de trabajar. El Pages Router sigue disponible pero está en modo de compatibilidad.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-6-casos-de-uso-en-el-mundo-real">
+    <h2><i class="fa-solid fa-briefcase"></i> 1.6 Casos de uso en el mundo real</h2>
+    <div class="doc-content">
+<h3>Empresas que usan Next.js</h3>
+<ul>
+<li><strong>Vercel</strong>: Plataforma oficial de despliegue</li>
+<li><strong>Netflix</strong>: Algunas de sus experiencias de usuario</li>
+<li><strong>TikTok</strong>: Páginas de marketing</li>
+<li><strong>Twitch</strong>: Interfaces de su plataforma</li>
+<li><strong>Notion</strong>: Documentación y marketing</li>
+</ul>
+<h3>Tipos de proyectos ideales</h3>
+<ul>
+<li><strong>E-commerce</strong>: Catálogos con ISR y carritos</li>
+<li><strong>Blogs</strong>: SSG con gran rendimiento y SEO</li>
+<li><strong>Dashboards</strong>: SSR y CSR combinados</li>
+<li><strong>Dashboards comerciales</strong>: SaaS completos con API propia</li>
+</ul>
+<h3>Ejemplo: Capa de datos combinada</h3>
+<pre><code class="language-jsx">// app/blog/[slug]/page.tsx
+export default async function Post({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const res = await fetch(
+    `https://api.example.com/posts/${params.slug}`,
+    { next: { revalidate: 3600 } }
+  );
+  const post = await res.json();
+
+  return (
+    &lt;article&gt;
+      &lt;h1&gt;{post.title}&lt;/h1&gt;
+      &lt;p&gt;{post.body}&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Next.js es un framework de React que funciona como herramienta completa para producción
+- Ofrece SSR, SSG, ISR y CSR según la ruta y las necesidades
+- Mejora el SEO y el rendimiento respecto a React puro
+- Usa el App Router basado en el sistema de ficheros
+- Vercel es la plataforma de despliegue oficial
+- A partir de la versión 13 el App Router es la vía recomendada
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,293 @@
+<!-- 07. Base de datos con TypeORM - NestJS (Frameworks) -->
+  <section id="7-1-conexion-a-typeorm">
+    <h2><i class="fa-solid fa-plug"></i> 7.1 Conexión a TypeORM</h2>
+    <div class="doc-content">
+<h3>Qué es TypeORM</h3>
+<p><strong>TypeORM</strong> es un ORM (Object Relational Mapper) para TypeScript y JavaScript que permite trabajar con bases de datos relacionales usando clases y decoradores en lugar de SQL manual.</p>
+<h3>Instalar las dependencias</h3>
+<pre><code class="language-bash"># Módulo de TypeORM para NestJS
+npm install @nestjs/typeorm typeorm
+
+# Driver de la base de datos (elige el tuyo)
+npm install pg            # PostgreSQL
+npm install mysql2        # MySQL
+npm install sqlite3       # SQLite</code></pre>
+<h3>Configurar la conexión en el módulo raíz</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { GatosModule } from './gatos/gatos.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'localhost',
+      port: 5432,
+      username: 'postgres',
+      password: 'secret',
+      database: 'catalogo',
+      autoLoadEntities: true,
+      synchronize: true,
+    }),
+    GatosModule,
+  ],
+})
+export class AppModule {}</code></pre>
+<blockquote class="aside aside-warning">
+La opción `synchronize: true` crea y modifica las tablas automáticamente. Úsala solo en desarrollo; en producción, usa migraciones.
+</blockquote>
+<h3>Opciones principales</h3>
+<table><thead><tr><th>Opción</th><th>Descripción</th></tr></thead><tbody><tr><td><code>type</code></td><td>Motor: postgres, mysql, sqlite, mssql, etc.</td></tr><tr><td><code>host</code> / <code>port</code></td><td>Dirección y puerto del servidor</td></tr><tr><td><code>username</code> / <code>password</code></td><td>Credenciales de acceso</td></tr><tr><td><code>autoLoadEntities</code></td><td>Carga las entidades registradas con <code>forFeature</code></td></tr><tr><td><code>synchronize</code></td><td>Sincroniza el esquema automáticamente (solo desarrollo)</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-2-entidades-entities">
+    <h2><i class="fa-solid fa-table"></i> 7.2 Entidades (Entities)</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Una <strong>entidad</strong> es una clase que representa una tabla de la base de datos. Cada propiedad de la clase se mapea a una columna, y cada instancia a una fila.</p>
+<h3>Decoradores principales</h3>
+<table><thead><tr><th>Decorador</th><th>Función</th></tr></thead><tbody><tr><td><code>@Entity()</code></td><td>Marca la clase como tabla</td></tr><tr><td><code>@PrimaryGeneratedColumn()</code></td><td>Columna clave primaria autogenerada</td></tr><tr><td><code>@Column()</code></td><td>Columna normal de la tabla</td></tr></tbody></table>
+<h3>Ejemplo: entidad Gato</h3>
+<pre><code class="language-typescript">// gato.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+
+@Entity('gatos')
+export class Gato {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ length: 50 })
+  nombre: string;
+
+  @Column({ type: 'int' })
+  edad: number;
+
+  @Column({ nullable: true })
+  raza: string;
+
+  @Column({ default: true })
+  activo: boolean;
+}</code></pre>
+<h3>Tipos comunes de columna</h3>
+<table><thead><tr><th>Tipo</th><th>Descripción</th></tr></thead><tbody><tr><td><code>varchar</code> / <code>text</code></td><td>Cadenas de texto</td></tr><tr><td><code>int</code> / <code>bigint</code></td><td>Enteros</td></tr><tr><td><code>float</code> / <code>decimal</code></td><td>Decimales y precios</td></tr><tr><td><code>boolean</code></td><td>Verdadero o falso</td></tr><tr><td><code>timestamp</code></td><td>Fechas y horas</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-3-repositorios">
+    <h2><i class="fa-solid fa-database"></i> 7.3 Repositorios</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>repositorio</strong> es el objeto que TypeORM ofrece para hacer operaciones contra una entidad: consultas, inserciones, actualizaciones y borrados, sin escribir SQL.</p>
+<h3>Registrar entidades en el módulo</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Gato } from './gato.entity';
+import { GatosController } from './gatos.controller';
+import { GatosService } from './gatos.service';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Gato])],
+  controllers: [GatosController],
+  providers: [GatosService],
+})
+export class GatosModule {}</code></pre>
+<h3>Inyectar el repositorio en el servicio</h3>
+<pre><code class="language-typescript">import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Gato } from './gato.entity';
+
+@Injectable()
+export class GatosService {
+  constructor(
+    @InjectRepository(Gato)
+    private readonly repositorio: Repository&lt;Gato&gt;,
+  ) {}
+}</code></pre>
+<h3>Métodos principales del repositorio</h3>
+<table><thead><tr><th>Método</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>find()</code></td><td>Devuelve todas las filas</td></tr><tr><td><code>findOne(...)</code></td><td>Devuelve una fila que cumple condiciones</td></tr><tr><td><code>save(entity)</code></td><td>Inserta o actualiza</td></tr><tr><td><code>remove(entity)</code></td><td>Elimina</td></tr><tr><td><code>count(...)</code></td><td>Cuenta filas</td></tr><tr><td><code>createQueryBuilder(...)</code></td><td>Consultas avanzadas</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-4-crud-con-typeorm">
+    <h2><i class="fa-solid fa-bolt"></i> 7.4 CRUD con TypeORM</h2>
+    <div class="doc-content">
+<h3>Servicio con operaciones completas</h3>
+<pre><code class="language-typescript">import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Gato } from './gato.entity';
+
+@Injectable()
+export class GatosService {
+  constructor(
+    @InjectRepository(Gato)
+    private readonly repositorio: Repository&lt;Gato&gt;,
+  ) {}
+
+  crear(datos: Partial&lt;Gato&gt;): Promise&lt;Gato&gt; {
+    return this.repositorio.save(datos);
+  }
+
+  listar(): Promise&lt;Gato[]&gt; {
+    return this.repositorio.find();
+  }
+
+  async obtenerUno(id: number): Promise&lt;Gato&gt; {
+    const gato = await this.repositorio.findOne({ where: { id } });
+    if (!gato) {
+      throw new NotFoundException('Gato no encontrado');
+    }
+    return gato;
+  }
+
+  async actualizar(id: number, datos: Partial&lt;Gato&gt;): Promise&lt;Gato&gt; {
+    const gato = await this.obtenerUno(id);
+    Object.assign(gato, datos);
+    return this.repositorio.save(gato);
+  }
+
+  async eliminar(id: number): Promise&lt;void&gt; {
+    const gato = await this.obtenerUno(id);
+    await this.repositorio.remove(gato);
+  }
+}</code></pre>
+<h3>Controlador que expone el CRUD</h3>
+<pre><code class="language-typescript">import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { GatosService } from './gatos.service';
+import { Gato } from './gato.entity';
+
+@Controller('gatos')
+export class GatosController {
+  constructor(private readonly gatosService: GatosService) {}
+
+  @Post()
+  crear(@Body() datos: Partial&lt;Gato&gt;): Promise&lt;Gato&gt; {
+    return this.gatosService.crear(datos);
+  }
+
+  @Get()
+  listar(): Promise&lt;Gato[]&gt; {
+    return this.gatosService.listar();
+  }
+
+  @Get(':id')
+  obtenerUno(@Param('id') id: string): Promise&lt;Gato&gt; {
+    return this.gatosService.obtenerUno(Number(id));
+  }
+
+  @Put(':id')
+  actualizar(@Param('id') id: string, @Body() datos: Partial&lt;Gato&gt;) {
+    return this.gatosService.actualizar(Number(id), datos);
+  }
+
+  @Delete(':id')
+  eliminar(@Param('id') id: string) {
+    return this.gatosService.eliminar(Number(id));
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-5-migraciones">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 7.5 Migraciones</h2>
+    <div class="doc-content">
+<h3>Concepto</h3>
+<p>Una <strong>migración</strong> es un archivo que describe cambios controlados del esquema de la base de datos: crear tablas, agregar columnas, índices o claves foráneas. Permiten evolucionar el esquema de forma segura en equipos y en producción.</p>
+<h3>Sincronización automática vs migraciones</h3>
+<table><thead><tr><th>Aspecto</th><th><code>synchronize</code></th><th>Migraciones</th></tr></thead><tbody><tr><td>Enfoque</td><td>Automático en cada arranque</td><td>Archivos versionados</td></tr><tr><td>Producción</td><td>Riesgoso</td><td>Recomendado</td></tr><tr><td>Control</td><td>Nulo</td><td>Total</td></tr><tr><td>Colaboración</td><td>Problemas entre equipos</td><td>Conflictos detectables</td></tr></tbody></table>
+<h3>Comandos típicos</h3>
+<pre><code class="language-bash"># Generar una migración a partir de las entidades
+npm run typeorm migration:generate -- src/database/migrations/Inicial
+
+# Ejecutar las migraciones pendientes
+npm run typeorm migration:run
+
+# Revertir la última migración
+npm run typeorm migration:revert</code></pre>
+<h3>Ejemplo de archivo de migración</h3>
+<pre><code class="language-typescript">import { MigrationInterface, QueryRunner } from 'typeorm';
+
+export class CrearTablaGatos1234567890123 implements MigrationInterface {
+  public async up(queryRunner: QueryRunner): Promise&lt;void&gt; {
+    await queryRunner.query(`
+      CREATE TABLE "gatos" (
+        "id" SERIAL PRIMARY KEY,
+        "nombre" character varying(50) NOT NULL,
+        "edad" integer NOT NULL
+      )
+    `);
+  }
+
+  public async down(queryRunner: QueryRunner): Promise&lt;void&gt; {
+    await queryRunner.query(`DROP TABLE "gatos"`);
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-6-relaciones-entre-entidades">
+    <h2><i class="fa-solid fa-diagram-project"></i> 7.6 Relaciones entre entidades</h2>
+    <div class="doc-content">
+<h3>Tipos de relación</h3>
+<table><thead><tr><th>Relación</th><th>Decoradores</th><th>Ejemplo</th></tr></thead><tbody><tr><td>Uno a uno</td><td><code>@OneToOne</code></td><td>Un usuario y su perfil</td></tr><tr><td>Uno a muchos</td><td><code>@OneToMany</code> / <code>@ManyToOne</code></td><td>Un dueño y sus gatos</td></tr><tr><td>Muchos a muchos</td><td><code>@ManyToMany</code></td><td>Gatos y adoptantes</td></tr></tbody></table>
+<h3>Ejemplo: dueño con varios gatos</h3>
+<pre><code class="language-typescript">// dueno.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Gato } from './gato.entity';
+
+@Entity('duenos')
+export class Dueno {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  nombre: string;
+
+  @OneToMany(() =&gt; Gato, (gato) =&gt; gato.dueno)
+  gatos: Gato[];
+}</code></pre>
+<pre><code class="language-typescript">// gato.entity.ts (fragmento)
+import { Entity, ManyToOne, JoinColumn } from 'typeorm';
+import { Dueno } from './dueno.entity';
+
+@Entity('gatos')
+export class Gato {
+  // columnas anteriores...
+
+  @ManyToOne(() =&gt; Dueno, (dueno) =&gt; dueno.gatos)
+  @JoinColumn({ name: 'dueno_id' })
+  dueno: Dueno;
+}</code></pre>
+<h3>Consultar con la relación</h3>
+<pre><code class="language-typescript">// Cargar los gatos junto con su dueño
+const gatos = await repositorio.find({
+  relations: { dueno: true },
+});</code></pre>
+<blockquote class="aside aside-tip">
+Genera el módulo de base de datos de una aplicación completa con `nest g resource nombre`: el CLI crea la entidad, el DTO, el servicio y el controlador con CRUD listos para editar.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- TypeORM mapea clases a tablas de bases de datos relacionales
+- La conexión se configura con `TypeOrmModule.forRoot`
+- Las entidades usan `@Entity`, `@PrimaryGeneratedColumn` y `@Column`
+- Los repositorios se inyectan con `@InjectRepository` para hacer CRUD
+- Las migraciones versionan los cambios del esquema en producción
+- Las relaciones (`@OneToMany`, `@ManyToOne`, etc.) modelan los vínculos
+</blockquote>
+    </div>
+  </section>

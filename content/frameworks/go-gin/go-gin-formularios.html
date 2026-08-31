@@ -1,0 +1,330 @@
+<!-- 09. Formularios y archivos - Go (Frameworks) -->
+  <section id="9-1-recibir-formularios">
+    <h2><i class="fa-solid fa-file-lines"></i> 9.1 Recibir formularios</h2>
+    <div class="doc-content">
+<h3>c.PostForm()</h3>
+<p>Los formularios enviados con <code>Content-Type: application/x-www-form-urlencoded</code> se leen con <code>c.PostForm()</code>:</p>
+<pre><code class="language-go">r.POST("/contacto", func(c *gin.Context) {
+    nombre := c.PostForm("nombre")
+    email := c.PostForm("email")
+    mensaje := c.DefaultPostForm("mensaje", "sin mensaje")
+
+    c.JSON(200, gin.H{
+        "nombre":  nombre,
+        "email":   email,
+        "mensaje": mensaje,
+    })
+})</code></pre>
+<h3>Leer todos los campos</h3>
+<pre><code class="language-go">r.POST("/multi", func(c *gin.Context) {
+    // GetPostForm devuelve también si el campo existe
+    valor, existe := c.GetPostForm("campo_requerido")
+    if !existe {
+        c.JSON(400, gin.H{"error": "campo_requerido es obligatorio"})
+        return
+    }
+
+    // PostFormArray para múltiples valores con el mismo nombre
+    intereses := c.PostFormArray("intereses")
+
+    // PostFormMap para datos con prefijo como "telefono[casa]"
+    telefonos := c.PostFormMap("telefono")
+
+    c.JSON(200, gin.H{
+        "campo":     valor,
+        "intereses": intereses,
+        "telefonos": telefonos,
+    })
+})</code></pre>
+<h3>Binding de formulario a struct</h3>
+<pre><code class="language-go">type Contacto struct {
+    Nombre string `form:"nombre" binding:"required"`
+    Email  string `form:"email" binding:"required,email"`
+    Edad   int    `form:"edad" binding:"gte=18"`
+}
+
+r.POST("/registro-form", func(c *gin.Context) {
+    var contacto Contacto
+    if err := c.ShouldBind(&amp;contacto); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(201, contacto)
+})</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-2-subida-de-archivos">
+    <h2><i class="fa-solid fa-upload"></i> 9.2 Subida de archivos</h2>
+    <div class="doc-content">
+<h3>c.FormFile()</h3>
+<p>Para subir archivos, el formulario debe usar <code>enctype="multipart/form-data"</code>. Gin expone el archivo con <code>c.FormFile()</code>:</p>
+<pre><code class="language-go">r.POST("/subir", func(c *gin.Context) {
+    // Archivo con nombre de campo "archivo"
+    archivo, err := c.FormFile("archivo")
+    if err != nil {
+        c.JSON(400, gin.H{"error": "archivo requerido"})
+        return
+    }
+
+    // Guardar en el servidor
+    ruta := "./uploads/" + archivo.Filename
+    if err := c.SaveUploadedFile(archivo, ruta); err != nil {
+        c.JSON(500, gin.H{"error": "no se pudo guardar"})
+        return
+    }
+
+    c.JSON(200, gin.H{
+        "mensaje":  "archivo subido",
+        "nombre":   archivo.Filename,
+        "tamaño":   archivo.Size, // en bytes
+        "cabecera": archivo.Header.Get("Content-Type"),
+    })
+})</code></pre>
+<h3>Restricciones de tamaño</h3>
+<pre><code class="language-go">// Límite global (máximo 8 MB)
+r.MaxMultipartMemory = 8 &lt;&lt; 20 // 8 MB
+
+// O por handler con http.MaxBytesReader
+r.POST("/subir", func(c *gin.Context) {
+    c.Request.Body = http.MaxBytesReader(
+        c.Writer, c.Request.Body, 5&lt;&lt;20, // 5 MB
+    )
+    // ...
+})</code></pre>
+<h3>Validar tipo y extensión</h3>
+<pre><code class="language-go">func archivoImagenValido(c *gin.Context) bool {
+    archivo, err := c.FormFile("imagen")
+    if err != nil {
+        return false
+    }
+    tipo := archivo.Header.Get("Content-Type")
+    permitidos := map[string]bool{
+        "image/jpeg": true,
+        "image/png":  true,
+        "image/webp": true,
+    }
+    return permitidos[tipo]
+}</code></pre>
+<blockquote class="aside aside-warning">
+Nunca guardes archivos con el nombre original del usuario sin sanitizarlo. Usa nombres generados (UUID) para evitar path traversal y sobreescrituras maliciosas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-3-archivos-estaticos">
+    <h2><i class="fa-solid fa-images"></i> 9.3 Archivos estáticos</h2>
+    <div class="doc-content">
+<h3>Servir el directorio completo</h3>
+<pre><code class="language-go">r := gin.Default()
+
+// Sirve todo el directorio ./public en /public/*
+r.Static("/public", "./public")
+
+// Sirve un archivo individual
+r.StaticFile("/favicon.ico", "./assets/favicon.ico")
+
+// Sirve templates HTML (assets en memoria con embed)
+r.StaticFS("/assets", http.Dir("./assets"))</code></pre>
+<h3>Estructura de carpetas</h3>
+<pre><code class="language-text">public/
+├── img/
+│   ├── logo.png
+│   └── avatar.png
+├── css/
+│   └── estilos.css
+├── js/
+│   └── app.js
+└── index.html</code></pre>
+<pre><code class="language-go">// Uso: el navegador accede a
+// http://localhost:8080/public/img/logo.png
+// http://localhost:8080/public/css/estilos.css
+// http://localhost:8080/public/js/app.js</code></pre>
+<h3>Middleware para servir con caché</h3>
+<pre><code class="language-go">func cachéEstaticos() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        c.Header("Cache-Control", "public, max-age=86400")
+        c.Next()
+    }
+}
+
+r.Use(cachéEstaticos())
+r.Static("/public", "./public")</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-4-multipart-form">
+    <h2><i class="fa-solid fa-paperclip"></i> 9.4 Multipart form</h2>
+    <div class="doc-content">
+<h3>Campos y archivos juntos</h3>
+<p>Un formulario multipart puede enviar campos simples y varios archivos en una sola petición:</p>
+<pre><code class="language-go">r.POST("/publicar", func(c *gin.Context) {
+    titulo := c.PostForm("titulo")
+    descripcion := c.DefaultPostForm("descripcion", "")
+
+    // Un archivo
+    principal, _ := c.FormFile("imagen_principal")
+
+    // Varios archivos con el mismo nombre de campo
+    galeria, err := c.MultipartForm()
+    if err != nil {
+        c.JSON(400, gin.H{"error": "formato inválido"})
+        return
+    }
+    fotos := galeria.File["fotos"]
+
+    c.JSON(200, gin.H{
+        "titulo":          titulo,
+        "descripcion":     descripcion,
+        "imagen_principal": principal.Filename,
+        "cantidad_fotos":  len(fotos),
+    })
+})</code></pre>
+<h3>Guardar todos los archivos</h3>
+<pre><code class="language-go">r.POST("/galeria", func(c *gin.Context) {
+    form, err := c.MultipartForm()
+    if err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    archivos := form.File["imagenes"]
+
+    guardados := []string{}
+    for _, archivo := range archivos {
+        ruta := "./uploads/" + archivo.Filename
+        if err := c.SaveUploadedFile(archivo, ruta); err == nil {
+            guardados = append(guardados, ruta)
+        }
+    }
+    c.JSON(200, gin.H{
+        "total_subidos": len(guardados),
+        "archivos":      guardados,
+    })
+})</code></pre>
+<h3>Probar con curl</h3>
+<pre><code class="language-bash">curl -X POST http://localhost:8080/galeria \
+  -F "imagenes=@foto1.png" \
+  -F "imagenes=@foto2.jpg" \
+  -F "titulo=Vacaciones"</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-5-ejemplo-practico">
+    <h2><i class="fa-solid fa-laptop-code"></i> 9.5 Ejemplo práctico</h2>
+    <div class="doc-content">
+<h3>API completa: formulario + archivos + estáticos</h3>
+<pre><code class="language-go">package main
+
+import (
+    "net/http"
+    "os"
+    "github.com/gin-gonic/gin"
+)
+
+func main() {
+    // Crear carpeta de uploads
+    os.MkdirAll("./uploads", 0755)
+
+    r := gin.Default()
+    r.MaxMultipartMemory = 8 &lt;&lt; 20 // 8 MB
+
+    // Servir archivos estáticos
+    r.Static("/uploads", "./uploads")
+
+    // Crear un avatar (campo + archivo)
+    r.POST("/perfil/:id/avatar", func(c *gin.Context) {
+        id := c.Param("id")
+
+        // Validar que venga archivo
+        archivo, err := c.FormFile("avatar")
+        if err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "sube un avatar"})
+            return
+        }
+
+        // Validar extensión (PNG/JPG)
+        tipo := archivo.Header.Get("Content-Type")
+        if tipo != "image/png" &amp;&amp; tipo != "image/jpeg" {
+            c.JSON(http.StatusBadRequest, gin.H{
+                "error":   "solo se permiten PNG o JPG",
+                "recibido": tipo,
+            })
+            return
+        }
+
+        // Guardar con nombre seguro
+        nombreUnico := "avatar_" + id + "_" + archivo.Filename
+        c.SaveUploadedFile(archivo, "./uploads/"+nombreUnico)
+
+        c.JSON(http.StatusOK, gin.H{
+            "mensaje":      "avatar actualizado",
+            "url":          "/uploads/" + nombreUnico,
+            "tamaño_bytes": archivo.Size,
+        })
+    })
+
+    // Formulario de publicacion completa
+    r.POST("/posts", func(c *gin.Context) {
+        titulo := c.PostForm("titulo")
+        contenido := c.PostForm("contenido")
+        etiqueta := c.DefaultPostForm("etiqueta", "general")
+
+        // Archivos opcionales
+        var adjuntos []string
+        form, _ := c.MultipartForm()
+        if form != nil {
+            for _, f := range form.File["adjuntos"] {
+                c.SaveUploadedFile(f, "./uploads/"+f.Filename)
+                adjuntos = append(adjuntos, f.Filename)
+            }
+        }
+
+        c.JSON(http.StatusCreated, gin.H{
+            "titulo":     titulo,
+            "contenido":  contenido,
+            "etiqueta":   etiqueta,
+            "adjuntos":   adjuntos,
+        })
+    })
+
+    r.Run(":8080")
+}</code></pre>
+<h3>Probar los endpoints</h3>
+<pre><code class="language-bash"># Subir avatar
+curl -X POST http://localhost:8080/perfil/1/avatar \
+  -F "avatar=@mi_foto.png"
+
+# Crear post con adjuntos
+curl -X POST http://localhost:8080/posts \
+  -F "titulo=Mi primer post" \
+  -F "contenido=Hola mundo" \
+  -F "etiqueta=go" \
+  -F "adjuntos=@doc.pdf"
+
+# Ver archivo subido
+curl http://localhost:8080/uploads/mi_foto.png</code></pre>
+<blockquote class="aside aside-note">
+Siempre limita el tamaño de las subidas y valida el tipo de archivo antes de guardarlo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste:**
+- <code>c.PostForm()</code> lee campos de formularios x-www-form-urlencoded
+- <code>c.FormFile()</code> obtiene un archivo de un multipart
+- <code>c.SaveUploadedFile()</code> guarda archivos en el servidor
+- <code>c.MultipartForm()</code> accede a todos los campos y archivos
+- <code>r.Static()</code> sirve directorios de archivos estáticos
+- Valida tipo, tamaño y evade nombres seguros de archivo
+</blockquote>
+    </div>
+  </section>

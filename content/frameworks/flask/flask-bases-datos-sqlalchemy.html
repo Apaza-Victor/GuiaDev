@@ -1,0 +1,232 @@
+<!-- 07. Bases de datos con SQLAlchemy - Flask (Frameworks) -->
+  <section id="7-1-flask-sqlalchemy">
+    <h2><i class="fa-solid fa-database"></i> 7.1 Flask-SQLAlchemy</h2>
+    <div class="doc-content">
+<h3>Qué es Flask-SQLAlchemy</h3>
+<p><strong>Flask-SQLAlchemy</strong> es la extensión oficial recomendada que integra el ORM <strong>SQLAlchemy</strong> con Flask. Permite trabajar con bases de datos relacionales usando objetos Python en lugar de escribir SQL a mano.</p>
+<h3>Instalación</h3>
+<pre><code class="language-python">pip install flask-sqlalchemy</code></pre>
+<h3>Configuración básica</h3>
+<pre><code class="language-python">from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///datos.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)</code></pre>
+<h3>Tipos de bases de datos soportadas</h3>
+<table><thead><tr><th>Base de datos</th><th>URI de conexión</th></tr></thead><tbody><tr><td>SQLite</td><td>sqlite:///archivo.db</td></tr><tr><td>PostgreSQL</td><td>postgresql://usuario:clave@host/nombre</td></tr><tr><td>MySQL</td><td>mysql://usuario:clave@host/nombre</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+SQLite es perfecto para desarrollo y pruebas porque no requiere servidor: guarda todo en un archivo local.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-2-definir-modelos">
+    <h2><i class="fa-solid fa-table"></i> 7.2 Definir modelos</h2>
+    <div class="doc-content">
+<h3>Qué es un modelo</h3>
+<p>Un <strong>modelo</strong> es una clase Python que representa una tabla de la base de datos. Cada atributo de la clase es una columna.</p>
+<h3>Definir un modelo Usuario</h3>
+<pre><code class="language-python">from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
+
+class Usuario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    edad = db.Column(db.Integer, default=18)
+
+    def __repr__(self):
+        return f"&lt;Usuario {self.nombre}&gt;"</code></pre>
+<h3>Tipos de columna más comunes</h3>
+<table><thead><tr><th>Tipo</th><th>Descripción</th></tr></thead><tbody><tr><td><code>Integer</code></td><td>Número entero</td></tr><tr><td><code>String(n)</code></td><td>Texto de longitud limitada</td></tr><tr><td><code>Text</code></td><td>Texto largo</td></tr><tr><td><code>Float</code></td><td>Número decimal</td></tr><tr><td><code>Boolean</code></td><td>Verdadero o falso</td></tr><tr><td><code>DateTime</code></td><td>Fecha y hora</td></tr></tbody></table>
+<h3>Opciones de columna</h3>
+<ul>
+<li><code>primary_key=True</code>: Clave primaria</li>
+<li><code>nullable=False</code>: Campo obligatorio</li>
+<li><code>unique=True</code>: Valor único</li>
+<li><code>default=valor</code>: Valor por defecto</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-3-crear-consultar-actualizar-eliminar">
+    <h2><i class="fa-solid fa-circle-arrow-right"></i> 7.3 Operaciones CRUD</h2>
+    <div class="doc-content">
+<h3>Crear y guardar registros</h3>
+<pre><code class="language-python"># Crear una instancia
+nuevo = Usuario(nombre="Ana", email="ana@correo.com", edad=25)
+
+# Añadir a la sesión y guardar
+db.session.add(nuevo)
+db.session.commit()</code></pre>
+<h3>Consultar registros</h3>
+<pre><code class="language-python"># Todos los usuarios
+todos = Usuario.query.all()
+
+# Primero que coincida
+primer_ana = Usuario.query.filter_by(nombre="Ana").first()
+
+# Filtrar por ID
+usuario = Usuario.query.get(1)
+
+# Filtrar con condiciones
+mayores = Usuario.query.filter(Usuario.edad &gt;= 18).all()
+
+# Ordenar
+ordenados = Usuario.query.order_by(Usuario.nombre).all()</code></pre>
+<h3>Actualizar registros</h3>
+<pre><code class="language-python">usuario = Usuario.query.get(1)
+usuario.edad = 26
+db.session.commit()</code></pre>
+<h3>Eliminar registros</h3>
+<pre><code class="language-python">usuario = Usuario.query.get(1)
+db.session.delete(usuario)
+db.session.commit()</code></pre>
+<blockquote class="aside aside-warning">
+Si usas `.filter()` con objetos, recuerda que el valor devuelto es una consulta; debes finalizarla con `.all()`, `.first()` o `.get()`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-4-relaciones">
+    <h2><i class="fa-solid fa-link"></i> 7.4 Relaciones entre tablas</h2>
+    <div class="doc-content">
+<h3>Relación uno a muchos</h3>
+<p>Un usuario puede tener muchos posts. Se usa <code>ForeignKey</code> y <code>relationship</code>:</p>
+<pre><code class="language-python">class Usuario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100))
+    posts = db.relationship("Post", backref="autor", lazy=True)
+
+
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(200))
+    usuario_id = db.Column(db.Integer, db.ForeignKey("usuario.id"))</code></pre>
+<h3>Usar la relación</h3>
+<pre><code class="language-python"># Acceder a los posts de un usuario
+usuario = Usuario.query.get(1)
+for post in usuario.posts:
+    print(post.titulo)
+
+# Acceder al autor de un post
+post = Post.query.get(1)
+print(post.autor.nombre)</code></pre>
+<h3>Tipos de relaciones</h3>
+<table><thead><tr><th>Relación</th><th>Definición típica</th></tr></thead><tbody><tr><td>Uno a muchos</td><td><code>ForeignKey</code> + <code>relationship</code></td></tr><tr><td>Muchos a muchos</td><td>Tabla de asociación intermedia</td></tr><tr><td>Uno a uno</td><td><code>ForeignKey</code> con <code>unique=True</code></td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+La tabla intermedia para relaciones muchos a muchos se define con `db.Table()` y luego se referencia en `relationship()`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-5-migraciones">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 7.5 Migraciones con Flask-Migrate</h2>
+    <div class="doc-content">
+<h3>Qué son las migraciones</h3>
+<p>Las <strong>migraciones</strong> permiten versionar los cambios en el esquema de la base de datos. Con Flask-Migrate puedes crear, modificar y eliminar tablas sin perder datos.</p>
+<h3>Instalación y configuración</h3>
+<pre><code class="language-python">pip install flask-migrate</code></pre>
+<pre><code class="language-python">from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+
+app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///datos.db"
+
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)</code></pre>
+<h3>Comandos de migración (terminal)</h3>
+<pre><code class="language-python"># Inicializar la carpeta de migraciones (una vez)
+flask db init
+
+# Generar una migración a partir de los modelos
+flask db migrate -m "crear tabla usuarios"
+
+# Aplicar la migración a la base de datos
+flask db upgrade</code></pre>
+<h3>Flujo de trabajo</h3>
+<ol>
+<li>Modificas tus modelos en Python</li>
+<li>Ejecutas <code>flask db migrate</code> para generar el script</li>
+<li>Ejecutas <code>flask db upgrade</code> para aplicarlo</li>
+</ol>
+<blockquote class="aside aside-note">
+Flask-Migrate detecta los cambios en tus modelos y genera scripts SQL de forma automática. Es imprescindible en proyectos que crecen.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-6-ejemplo-practico">
+    <h2><i class="fa-solid fa-lightbulb"></i> 7.6 Ejemplo práctico completo</h2>
+    <div class="doc-content">
+<h3>Aplicación completa con base de datos</h3>
+<pre><code class="language-python">from flask import Flask, request, render_template, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///tareas.db"
+
+db = SQLAlchemy(app)
+
+
+class Tarea(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(200), nullable=False)
+    completada = db.Column(db.Boolean, default=False)
+
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        nuevo = Tarea(titulo=request.form.get("titulo"))
+        db.session.add(nuevo)
+        db.session.commit()
+        return redirect(url_for("index"))
+    tareas = Tarea.query.all()
+    return render_template("index.html", tareas=tareas)
+
+
+@app.route("/completar/&lt;int:tarea_id&gt;")
+def completar(tarea_id):
+    tarea = Tarea.query.get(tarea_id)
+    tarea.completada = not tarea.completada
+    db.session.commit()
+    return redirect(url_for("index"))
+
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)</code></pre>
+<blockquote class="aside aside-tip">
+`db.create_all()` crea las tablas a partir de los modelos. Para proyectos con cambios frecuentes en el esquema, usa migraciones.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Flask-SQLAlchemy integra el ORM SQLAlchemy con Flask
+- Los modelos son clases Python que representan tablas
+- Las operaciones CRUD usan `db.session` y `db.session.commit()`
+- Las relaciones se crean con `ForeignKey` y `relationship`
+- Flask-Migrate versiona los cambios de esquema con migraciones
+- `db.create_all()` crea tablas rápidamente en desarrollo
+</blockquote>
+    </div>
+  </section>

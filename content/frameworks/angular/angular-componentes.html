@@ -1,0 +1,236 @@
+<!-- 03. Componentes en Angular - Angular (Frameworks) -->
+  <section id="3-1-que-es-un-componente">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> 3.1 Qué es un componente</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>componente</strong> es la unidad básica de construcción de una aplicación Angular. Controla una parte de la pantalla: su presentación (template), su lógica (clase TypeScript) y su estilo.</p>
+<table><thead><tr><th>Característica</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Responsabilidad</strong></td><td>Una parte concreta de la interfaz de usuario</td></tr><tr><td><strong>Reutilizable</strong></td><td>Se puede usar varias veces en la aplicación</td></tr><tr><td><strong>Encapsula</strong></td><td>Template, estilos y lógica en una sola entidad</td></tr><tr><td><strong>Comunicación</strong></td><td>Recibe datos (inputs) y emite eventos (outputs)</td></tr></tbody></table>
+<h3>Anatomía de un componente</h3>
+<pre><code class="language-text">Un componente Angular se compone de tres partes:
+1. Decorador @Component → metadatos (selector, template o templateUrl, estilos)
+2. Clase TypeScript → lógica, propiedades y métodos
+3. Template → la parte visual (HTML)</code></pre>
+<h3>Ejemplo visual</h3>
+<pre><code class="language-typescript">// Componente sin template separado (template inline)
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-boton',
+  template: '&lt;button&gt;Pulsa aquí&lt;/button&gt;',
+  styles: ['button { color: white; background: blue; }']
+})
+export class BotonComponent {}
+
+// Componente con template en archivos separados (recomendado)
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-tarjeta',
+  templateUrl: './tarjeta.component.html',
+  styleUrls: ['./tarjeta.component.css']
+})
+export class TarjetaComponent {}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-2-decorador-component">
+    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> 3.2 El decorador @Component</h2>
+    <div class="doc-content">
+<h3>¿Qué es un decorador?</h3>
+<p>Un <strong>decorador</strong> es una función especial de TypeScript que añade metadatos a una clase. El decorador <code>@Component</code> le indica a Angular que la clase es un componente.</p>
+<h3>Sintaxis del decorador</h3>
+<pre><code class="language-typescript">import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-ejemplo',
+  templateUrl: './ejemplo.component.html',
+  styleUrls: ['./ejemplo.component.css']
+})
+export class EjemploComponent {
+  titulo: string = 'Mi componente';
+}</code></pre>
+<h3>Propiedades principales del decorador</h3>
+<table><thead><tr><th>Propiedad</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>selector</strong></td><td>Nombre de la etiqueta HTML con la que se usa el componente</td></tr><tr><td><strong>template / templateUrl</strong></td><td>HTML del componente (inline o archivo externo)</td></tr><tr><td><strong>styles / styleUrls</strong></td><td>Estilos CSS/SCSS del componente</td></tr><tr><td><strong>providers</strong></td><td>Servicios disponibles en este componente y sus hijos</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+El prefijo <code>app-</code> en el selector es la convención por defecto de Angular CLI. Así se evitan colisiones con elementos HTML nativos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-3-selector-template-y-styles">
+    <h2><i class="fa-solid fa-ruler-combined"></i> 3.3 Selector, template y estilos</h2>
+    <div class="doc-content">
+<h3>El selector</h3>
+<p>El <strong>selector</strong> define cómo se usará el componente dentro de otros templates. Puede ser por etiqueta, atributo o clase.</p>
+<table><thead><tr><th>Tipo de selector</th><th>Ejemplo</th><th>Uso en el template</th></tr></thead><tbody><tr><td>Elemento</td><td><code>app-navbar</code></td><td><code>&lt;app-navbar&gt;&lt;/app-navbar&gt;</code></td></tr><tr><td>Atributo</td><td><code>[appNavbar]</code></td><td><code>&lt;div appNavbar&gt;&lt;/div&gt;</code></td></tr><tr><td>Clase</td><td><code>.app-navbar</code></td><td><code>&lt;div class="app-navbar"&gt;&lt;/div&gt;</code></td></tr></tbody></table>
+<h3>Template inline vs. templateUrl</h3>
+<pre><code class="language-typescript">// Inline: el HTML va dentro del decorador
+@Component({
+  selector: 'app-hola',
+  template: '&lt;h2&gt;Hola mundo&lt;/h2&gt;'
+})
+export class HolaComponent {}
+
+// Externo: el HTML vive en un archivo .html
+@Component({
+  selector: 'app-hola',
+  templateUrl: './hola.component.html'
+})
+export class HolaComponent {}</code></pre>
+<h3>Estilos del componente</h3>
+<pre><code class="language-typescript">// En línea
+@Component({
+  selector: 'app-caja',
+  template: '&lt;p&gt;Caja&lt;/p&gt;',
+  styles: ['p { border: 1px solid #ccc; padding: 10px; }']
+})
+export class CajaComponent {}
+
+// Desde un archivo
+@Component({
+  selector: 'app-caja',
+  templateUrl: './caja.component.html',
+  styleUrls: ['./caja.component.css']
+})
+export class CajaComponent {}</code></pre>
+<blockquote class="aside aside-note">
+Los estilos de un componente son <strong>encapsulados</strong>: solo afectan a su propio template y no a otros componentes. Esto es una enorme ventaja de Angular.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-4-clase-del-componente">
+    <h2><i class="fa-solid fa-file-code"></i> 3.4 La clase del componente</h2>
+    <div class="doc-content">
+<h3>¿Qué contiene la clase?</h3>
+<p>La <strong>clase TypeScript</strong> del componente alberga la lógica de negocio: propiedades (datos), métodos (comportamiento) y hooks del ciclo de vida (ngOnInit, etc.).</p>
+<h3>Propiedades y métodos</h3>
+<pre><code class="language-typescript">import { Component, OnInit } from '@angular/core';
+
+export interface Tarea {
+  id: number;
+  nombre: string;
+  completada: boolean;
+}
+
+@Component({
+  selector: 'app-tareas',
+  templateUrl: './tareas.component.html'
+})
+export class TareasComponent implements OnInit {
+  // Propiedades del componente
+  titulo: string = 'Mis tareas';
+  contador: number = 0;
+  tareas: Tarea[] = [];
+
+  // Método del ciclo de vida: se ejecuta al inicializar
+  ngOnInit(): void {
+    this.tareas = [
+      { id: 1, nombre: 'Aprender Angular', completada: false },
+      { id: 2, nombre: 'Crear un proyecto', completada: true }
+    ];
+  }
+
+  // Método propio
+  completarTarea(tarea: Tarea): void {
+    tarea.completada = !tarea.completada;
+    this.contador++;
+  }
+}</code></pre>
+<h3>Uso en el template</h3>
+<pre><code class="language-html">&lt;h2&gt;{{ titulo }}&lt;/h2&gt;
+&lt;p&gt;Tareas completadas: {{ contador }}&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li *ngFor="let tarea of tareas" (click)="completarTarea(tarea)"&gt;
+    {{ tarea.nombre }} - {{ tarea.completada ? 'Hecha' : 'Pendiente' }}
+  &lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+<blockquote class="aside aside-tip">
+La clase se escribe en TypeScript, por lo que tienes tipado, interfaces y autocompletado en tu editor en todo momento.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-5-metadata-del-componente">
+    <h2><i class="fa-solid fa-table-list"></i> 3.5 Metadatos del componente</h2>
+    <div class="doc-content">
+<h3>Otras propiedaddes del decorador</h3>
+<p>Más allá de selector, template y estilos, <code>@Component</code> acepta más metadatos para controlar el comportamiento del componente:</p>
+<table><thead><tr><th>Propiedad</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>providers</strong></td><td>Registra servicios disponibles para este componente</td></tr><tr><td><strong>encapsulation</strong></td><td>Controla la encapsulación de estilos (Emulated, None, ShadowDom)</td></tr><tr><td><strong>changeDetection</strong></td><td>Estrategia de detección de cambios (Default, OnPush)</td></tr><tr><td><strong>standalone</strong></td><td>Marca el componente como independiente (sin necesidad de NgModule)</td></tr><tr><td><strong>host</strong></td><td>Permite añadir atributos, clases o listeners al elemento host</td></tr><tr><td><strong>animations</strong></td><td>Define animaciones asociadas al componente</td></tr></tbody></table>
+<h3>Ejemplos de uso</h3>
+<pre><code class="language-typescript">import { Component, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+
+@Component({
+  selector: 'app-listado',
+  templateUrl: './listado.component.html',
+  encapsulation: ViewEncapsulation.Emulated,   // estilos aislados por defecto
+  changeDetection: ChangeDetectionStrategy.OnPush, // render más eficiente
+  providers: []  // aquí se podrían registrar servicios
+})
+export class ListadoComponent {}</code></pre>
+<blockquote class="aside aside-note">
+La mayoría de los proyectos usan los valores por defecto. Los metadatos avanzados se ajustan cuando se necesita mejorar el rendimiento o cambiar la encapsulación.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-6-crear-y-usar-componentes">
+    <h2><i class="fa-solid fa-plus"></i> 3.6 Crear y usar componentes</h2>
+    <div class="doc-content">
+<h3>Crear un componente con la CLI</h3>
+<pre><code class="language-bash"># Genera: navbar.component.ts, .html, .css y .spec.ts
+ng generate component componentes/navbar
+
+# Abreviatura
+ng g c componentes/navbar</code></pre>
+<h3>Registro en el módulo</h3>
+<p>En las aplicaciones clásicas (con NgModule), el componente debe declararse en su módulo para poder usarse:</p>
+<pre><code class="language-typescript">import { NgModule } from '@angular/core';
+import { AppComponent } from './app.component';
+import { NavbarComponent } from './components/navbar/navbar.component';
+
+@NgModule({
+  declarations: [AppComponent, NavbarComponent],
+  bootstrap: [AppComponent]
+})
+export class AppModule {}</code></pre>
+<h3>Usar el componente en un template</h3>
+<pre><code class="language-html">&lt;!-- Una vez declarado, se usa con su selector --&gt;
+&lt;app-navbar&gt;&lt;/app-navbar&gt;
+
+&lt;!-- Reutilizable cuantas veces quieras --&gt;
+&lt;app-navbar&gt;&lt;/app-navbar&gt;</code></pre>
+<h3>Estructura de archivos generada</h3>
+<pre><code class="language-text">app/
+└── componentes/
+    └── navbar/
+        ├── navbar.component.ts     # Clase con el decorador @Component
+        ├── navbar.component.html   # Template
+        ├── navbar.component.css    # Estilos
+        └── navbar.component.spec.ts # Pruebas unitarias</code></pre>
+<blockquote class="aside aside-tip">
+Crea siempre los componentes con <code>ng generate</code>: se generan los 4 archivos y visualiza la estructura correcta automáticamente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Un **componente** es la unidad básica: template + clase TypeScript + estilos
+- El decorador <code>@Component</code> añade los **metadatos** que Angular necesita
+- El **selector** define la etiqueta con la que se usa el componente
+- El **template** puede ser inline o externo (<code>templateUrl</code>), igual que los estilos
+- La **clase** contiene propiedades, métodos y hooks del ciclo de vida
+- Los componentes se generan con <code>ng generate component</code> y se declaran en su módulo
+</blockquote>
+    </div>
+  </section>

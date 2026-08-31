@@ -1,0 +1,326 @@
+<!-- 05. Layouts y diseño - Flutter (Frameworks) -->
+  <section id="1-1-estructuras-de-layout">
+    <h2><i class="fa-solid fa-grip-lines"></i> 1.1 Estructuras de layout</h2>
+    <div class="doc-content">
+<h3>Widgets de layout principales</h3>
+<p>Flutter ofrece varios widgets para organizar los elementos en pantalla. Los más importantes son Row, Column, Stack y Expanded.</p>
+<table><thead><tr><th>Widget</th><th>Dirección</th><th>Uso</th></tr></thead><tbody><tr><td><strong>Row</strong></td><td>Horizontal</td><td>Elementos en línea</td></tr><tr><td><strong>Column</strong></td><td>Vertical</td><td>Elementos apilados</td></tr><tr><td><strong>Stack</strong></td><td>Superposición</td><td>Elementos encima de otros</td></tr><tr><td><strong>Expanded</strong></td><td>Espacio flexible</td><td>Reparto proporcional del espacio</td></tr></tbody></table>
+<h3>Ejemplo: Row y Column</h3>
+<pre><code class="language-dart">import 'package:flutter/material.dart';
+
+class LayoutBasico extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Fila horizontal
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Icon(Icons.star, color: Colors.amber),
+            Icon(Icons.favorite, color: Colors.red),
+            Icon(Icons.thumb_up, color: Colors.blue),
+          ],
+        ),
+        SizedBox(height: 20),
+        // Columna vertical
+        Text('Elemento 1'),
+        Text('Elemento 2'),
+        Text('Elemento 3'),
+      ],
+    );
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-2-row-column">
+    <h2><i class="fa-solid fa-bars-staggered"></i> 1.2 Row y Column</h2>
+    <div class="doc-content">
+<h3>Row (fila horizontal)</h3>
+<p><strong>Row</strong> coloca a sus hijos en una línea horizontal. Útil para elementos que van de izquierda a derecha.</p>
+<pre><code class="language-dart">Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    Text('Izquierda'),
+    Text('Centro'),
+    Text('Derecha'),
+  ],
+)</code></pre>
+<h3>Column (columna vertical)</h3>
+<p><strong>Column</strong> coloca a sus hijos de arriba hacia abajo. Ideal para listas o paneles.</p>
+<pre><code class="language-dart">Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Text('Primer elemento'),
+    Text('Segundo elemento'),
+    Text('Tercer elemento'),
+  ],
+)</code></pre>
+<h3>Propiedades de alineación</h3>
+<table><thead><tr><th>Propiedad</th><th>Opciones</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>mainAxisAlignment</strong></td><td>start, center, end, spaceBetween, spaceEvenly</td><td>Alineación en el eje principal</td></tr><tr><td><strong>crossAxisAlignment</strong></td><td>start, center, end, stretch</td><td>Alineación en el eje cruzado</td></tr><tr><td><strong>mainAxisSize</strong></td><td>min, max</td><td>Tamaño en el eje principal</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-3-stack">
+    <h2><i class="fa-solid fa-layer-group"></i> 1.3 Stack</h2>
+    <div class="doc-content">
+<h3>¿Qué es Stack?</h3>
+<p><strong>Stack</strong> permite superponer widgets uno encima de otro. El primer hijo está al fondo, y los siguientes se apilan encima. Útil para overlays, badges, capas de diseño.</p>
+<pre><code class="language-dart">import 'package:flutter/material.dart';
+
+class EjemploStack extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Fondo: imagen o color
+        Container(
+          width: 200,
+          height: 200,
+          color: Colors.blueGrey,
+        ),
+        // Encima: un círculo
+        Positioned(
+          top: 20,
+          left: 20,
+          child: CircleAvatar(
+            radius: 40,
+            child: Text('Logo'),
+          ),
+        ),
+        // Encima: badge
+        Positioned(
+          top: 10,
+          right: 10,
+          child: Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+            child: Text('3'),
+          ),
+        ),
+      ],
+    );
+  }
+}</code></pre>
+<h3>Widget Positioned</h3>
+<p>Dentro de un Stack puedes usar <code>Positioned</code> para colocar elementos en coordenadas específicas:</p>
+<ul>
+<li><strong>top</strong>: Distancia desde arriba</li>
+<li><strong>bottom</strong>: Distancia desde abajo</li>
+<li><strong>left</strong>: Distancia desde la izquierda</li>
+<li><strong>right</strong>: Distancia desde la derecha</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-4-expanded">
+    <h2><i class="fa-solid fa-expand"></i> 1.4 Expanded</h2>
+    <div class="doc-content">
+<h3>¿Qué es Expanded?</h3>
+<p><strong>Expanded</strong> hace que un widget dentro de un Row o Column ocupe todo el espacio disponible, repartiéndolo proporcionalmente entre las Expanded presentes.</p>
+<pre><code class="language-dart">import 'package:flutter/material.dart';
+
+class EjemploExpanded extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        // Ocupa 1 parte del espacio
+        Expanded(
+          flex: 1,
+          child: Container(
+            color: Colors.red,
+            height: 100,
+          ),
+        ),
+        // Widget fijo
+        Container(
+          width: 100,
+          color: Colors.green,
+        ),
+        // Ocupa 2 partes del espacio
+        Expanded(
+          flex: 2,
+          child: Container(
+            color: Colors.blue,
+            height: 100,
+          ),
+        ),
+      ],
+    );
+  }
+}</code></pre>
+<h3>Propiedad flex</h3>
+<p>El parámetro <code>flex</code> determina la proporción del espacio que ocupa cada Expanded:</p>
+<ul>
+<li><strong>flex: 1</strong>: Ocupa 1 parte del espacio disponible</li>
+<li><strong>flex: 2</strong>: Ocupa 2 partes (el doble que flex: 1)</li>
+<li><strong>Sin flex</strong>: Todas las Expanded se reparten en partes iguales</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-5-padding-edgeinsets">
+    <h2><i class="fa-solid fa-arrows-to-dot"></i> 1.5 Padding y EdgeInsets</h2>
+    <div class="doc-content">
+<h3>Padding</h3>
+<p><strong>Padding</strong> agrega espacio interno alrededor de un widget. Se usa para separar contenido del borde de su contenedor.</p>
+<pre><code class="language-dart">Padding(
+  padding: EdgeInsets.all(16),
+  child: Text('Contenido con padding'),
+)</code></pre>
+<h3>EdgeInsets</h3>
+<p><strong>EdgeInsets</strong> define cuánto padding agregar en cada lado:</p>
+<table><thead><tr><th>Constructor</th><th>Efecto</th></tr></thead><tbody><tr><td><code>EdgeInsets.all(16)</code></td><td>16px en los 4 lados</td></tr><tr><td><code>EdgeInsets.only(top: 8)</code></td><td>Solo 8px arriba</td></tr><tr><td><code>EdgeInsets.symmetric(horizontal: 16)</code></td><td>16px izquierda y derecha</td></tr><tr><td><code>EdgeInsets.fromLTRB(t,r,b,l)</code></td><td>Valores individuales</td></tr></tbody></table>
+<h3>Ejemplo: Combinar Padding y Container</h3>
+<pre><code class="language-dart">Container(
+  margin: EdgeInsets.all(12),
+  decoration: BoxDecoration(
+    color: Colors.blueGrey.shade50,
+    borderRadius: BorderRadius.circular(8),
+  ),
+  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  child: Text('Tarjeta con padding y margen'),
+)</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-6-alineacion-y-diseno">
+    <h2><i class="fa-solid fa-object-group"></i> 1.6 Alineación y diseño de interfaces</h2>
+    <div class="doc-content">
+<h3>Controlando la alineación</h3>
+<p>Para alinear un solo widget dentro de un área, usa <code>Center</code>, <code>Align</code> o <code>Align</code> con Alignment.</p>
+<pre><code class="language-dart">// Centrar un widget
+Center(child: Text('Centrado'))
+
+// Alinear a una esquina
+Align(
+  alignment: Alignment.topRight,
+  child: Text('Esquina superior derecha'),
+)
+
+// Alinear con coordenadas (-1 a 1)
+Align(
+  alignment: Alignment(0.5, 0.5),
+  child: Text('Centrado con coordenadas'),
+)</code></pre>
+<h3>Ejemplo: Diseño completo de una pantalla</h3>
+<pre><code class="language-dart">class DiseñoCompleto extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Título
+            Text(
+              'Mi perfil',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 24),
+            // Avatar centrado
+            Center(
+              child: CircleAvatar(
+                radius: 40,
+                child: Icon(Icons.person, size: 50),
+              ),
+            ),
+            SizedBox(height: 24),
+            // Nombre
+            Text(
+              'Ana García',
+              style: TextStyle(fontSize: 22),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Desarrolladora Flutter',
+              style: TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 32),
+            // Estadísticas con Expanded
+            Row(
+              children: [
+                Expanded(
+                  child: _Estadistica(valor: '12', etiqueta: 'Proyectos'),
+                ),
+                Expanded(
+                  child: _Estadistica(valor: '98', etiqueta: 'GitHub'),
+                ),
+                Expanded(
+                  child: _Estadistica(valor: '150', etiqueta: 'Seguidores'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Widget reutilizable de estadística
+class _Estadistica extends StatelessWidget {
+  final String valor;
+  final String etiqueta;
+
+  _Estadistica({required this.valor, required this.etiqueta});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.all(12),
+        child: Column(
+          children: [
+            Text(
+              valor,
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            Text(etiqueta, style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      ),
+    );
+  }
+}</code></pre>
+<h3>Buenas prácticas de diseño</h3>
+<ul>
+<li>Usa EdgeInsets en lugar de valores hardcodeados</li>
+<li>Extrae secciones en widgets privados</li>
+<li>Usa Expanded para layouts responsivos</li>
+<li>Mantén un espaciado consistente con SizedBox</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Row dispone hijos horizontalmente y Column verticalmente
+- Stack superpone widgets uno sobre otro
+- Expanded reparte el espacio disponible flexiblemente
+- Padding y EdgeInsets controlan el espaciado interno
+- Center y Align controlan la posición de un widget
+- Combinando estos widgets puedes crear interfaces completas
+</blockquote>
+    </div>
+  </section>

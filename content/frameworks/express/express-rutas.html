@@ -1,0 +1,193 @@
+<!-- 03. Rutas y manejo de solicitudes - Express (Frameworks) -->
+  <section id="3-1-metodos-de-ruta">
+    <h2><i class="fa-solid fa-road"></i> 3.1 Métodos de ruta (GET, POST, PUT, DELETE)</h2>
+    <div class="doc-content">
+<h3>Qué son los métodos de ruta</h3>
+<p>Los métodos de ruta definen cómo responde el servidor ante las diferentes acciones HTTP. Express proporciona un método para cada verbo HTTP.</p>
+<table><thead><tr><th>Método</th><th>Función</th><th>Uso típico</th></tr></thead><tbody><tr><td><code>GET</code></td><td>Obtener datos</td><td>Listar o consultar recursos</td></tr><tr><td><code>POST</code></td><td>Crear datos</td><td>Crear un nuevo recurso</td></tr><tr><td><code>PUT</code></td><td>Actualizar datos</td><td>Actualizar un recurso completo</td></tr><tr><td><code>DELETE</code></td><td>Eliminar datos</td><td>Borrar un recurso</td></tr></tbody></table>
+<h3>Ejemplo de rutas básicas</h3>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+app.get('/usuarios', (req, res) =&gt; {
+  res.send('Lista de usuarios');
+});
+
+app.post('/usuarios', (req, res) =&gt; {
+  res.send('Crear un usuario');
+});
+
+app.put('/usuarios/:id', (req, res) =&gt; {
+  res.send(`Actualizar usuario ${req.params.id}`);
+});
+
+app.delete('/usuarios/:id', (req, res) =&gt; {
+  res.send(`Eliminar usuario ${req.params.id}`);
+});
+
+app.listen(3000);</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-2-parametros-de-ruta">
+    <h2><i class="fa-solid fa-hashtag"></i> 3.2 Parámetros de ruta (/:id)</h2>
+    <div class="doc-content">
+<h3>Qué son los parámetros de ruta</h3>
+<p>Los parámetros de ruta son segmentos dinámicos de la URL que se capturan con el prefijo dos puntos <code>:</code>. Se acceden a través de <code>req.params</code>.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+app.get('/usuarios/:id', (req, res) =&gt; {
+  const id = req.params.id;
+  res.send(`Mostrando el usuario con id: ${id}`);
+});
+
+app.get('/productos/:categoria/:productoId', (req, res) =&gt; {
+  res.json(req.params);
+});
+
+app.listen(3000);</code></pre>
+<h3>Reglas de los parámetros</h3>
+<ul>
+<li>Siempre van precedidos por <code>:</code></li>
+<li>Son valores de cadena (string), aunque contengan números</li>
+<li>Pueden combinarse varios en una misma ruta</li>
+<li>Se recorren con <code>req.params</code></li>
+</ul>
+<blockquote class="aside aside-tip">
+Con valores como <code>id</code> numérico, recuerda convertirlos con <code>Number(req.params.id)</code> antes de compararlos o usarlos en cálculos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-3-query-string">
+    <h2><i class="fa-solid fa-circle-question"></i> 3.3 Query string (req.query)</h2>
+    <div class="doc-content">
+<h3>Qué es la query string</h3>
+<p>La query string es la parte de la URL que va después del signo <code>?</code> y permite enviar parámetros adicionales, como filtros o paginación. Se accede a ella mediante <code>req.query</code>.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+// URL: /productos?categoria=electronica&limite=10
+app.get('/productos', (req, res) =&gt; {
+  const { categoria, limite } = req.query;
+  res.json({
+    categoria,
+    limite: limite || 20,
+    mensaje: 'Filtrando productos'
+  });
+});
+
+app.listen(3000);</code></pre>
+<h3>Ejemplos de query string</h3>
+<table><thead><tr><th>URL</th><th>req.query</th></tr></thead><tbody><tr><td><code>/buscar?q=express</code></td><td><code>{ q: "express" }</code></td></tr><tr><td><code>/listar?pagina=2&amp;tam=10</code></td><td><code>{ pagina: "2", tam: "10" }</code></td></tr><tr><td><code>/filtro?a=1&amp;a=2</code></td><td><code>{ a: ["1", "2"] }</code></td></tr></tbody></table>
+<blockquote class="aside aside-note">
+A diferencia de los parámetros de ruta, la query string es opcional y suele usarse para filtros, orden y paginación.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-4-respuestas-res-json-y-res-send">
+    <h2><i class="fa-solid fa-envelope-open-text"></i> 3.4 Respuestas con res.json y res.send</h2>
+    <div class="doc-content">
+<h3>Métodos de respuesta</h3>
+<p>Express ofrece varios métodos en el objeto <code>res</code> para enviar respuestas al cliente:</p>
+<table><thead><tr><th>Método</th><th>Descripción</th></tr></thead><tbody><tr><td><code>res.send()</code></td><td>Envía una respuesta de texto o HTML</td></tr><tr><td><code>res.json()</code></td><td>Envía una respuesta en formato JSON</td></tr><tr><td><code>res.redirect()</code></td><td>Redirige a otra URL</td></tr><tr><td><code>res.status()</code></td><td>Establece el código de estado HTTP</td></tr></tbody></table>
+<h3>Ejemplos de respuestas</h3>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+app.get('/texto', (req, res) =&gt; {
+  res.send('Esto es texto plano');
+});
+
+app.get('/html', (req, res) =&gt; {
+  res.send('&lt;h1&gt;Página en HTML&lt;/h1&gt;');
+});
+
+app.get('/json', (req, res) =&gt; {
+  res.json({
+    nombre: 'Ana',
+    rol: 'admin',
+    activo: true
+  });
+});
+
+app.get('/error', (req, res) =&gt; {
+  res.status(404).json({ error: 'Recurso no encontrado' });
+});
+
+app.listen(3000);</code></pre>
+<blockquote class="aside aside-tip">
+<code>res.json()</code> y <code>res.send()</code> cierran la respuesta automáticamente. Solo debes llamar a uno por petición.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-5-multiples-rutas-y-orden">
+    <h2><i class="fa-solid fa-shuffle"></i> 3.5 Multiple manejo y orden de rutas</h2>
+    <div class="doc-content">
+<h3>Encadenar handlers</h3>
+<p>Express permite pasar varios callbacks a una misma ruta, que se ejecutan en orden. Esto es útil para validar o transformar datos.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+const verificarAdmin = (req, res, next) =&gt; {
+  if (req.query.rol !== 'admin') {
+    return res.status(403).json({ error: 'No autorizado' });
+  }
+  next();
+};
+
+// Varios handlers para una misma ruta
+app.get('/admin', verificarAdmin, (req, res) =&gt; {
+  res.json({ mensaje: 'Bienvenido, administrador' });
+});
+
+app.listen(3000);</code></pre>
+<h3>Enrutamiento con app.route</h3>
+<pre><code class="language-javascript">app.route('/libros')
+  .get((req, res) =&gt; res.send('Listar libros'))
+  .post((req, res) =&gt; res.send('Crear libro'));</code></pre>
+<blockquote class="aside aside-warning">
+El orden de definición de las rutas importa. Express evalúa las rutas en el orden en que se declaran, por lo que las rutas específicas deben ir antes que las genéricas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-6-codigos-de-estado">
+    <h2><i class="fa-solid fa-list-check"></i> 3.6 Códigos de estado HTTP</h2>
+    <div class="doc-content">
+<h3>Códigos más usados en Express</h3>
+<table><thead><tr><th>Código</th><th>Significado</th><th>Cuándo usarlo</th></tr></thead><tbody><tr><td><code>200</code></td><td>OK</td><td>Respuesta correcta</td></tr><tr><td><code>201</code></td><td>Created</td><td>Recurso creado con POST</td></tr><tr><td><code>204</code></td><td>No Content</td><td>Operación correcta sin contenido</td></tr><tr><td><code>400</code></td><td>Bad Request</td><td>Petición inválida</td></tr><tr><td><code>401</code></td><td>Unauthorized</td><td>Falta autenticación</td></tr><tr><td><code>403</code></td><td>Forbidden</td><td>Sin permisos</td></tr><tr><td><code>404</code></td><td>Not Found</td><td>Recurso no encontrado</td></tr><tr><td><code>500</code></td><td>Internal Server Error</td><td>Error interno del servidor</td></tr></tbody></table>
+<h3>Ejemplo</h3>
+<pre><code class="language-javascript">app.post('/crear', (req, res) =&gt; {
+  const creado = true;
+  if (creado) {
+    return res.status(201).json({ mensaje: 'Creado correctamente' });
+  }
+  return res.status(400).json({ error: 'No se pudo crear' });
+});</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Express ofrece métodos de ruta para cada verbo HTTP (GET, POST, PUT, DELETE)
+- Los parámetros de ruta (<code>:id</code>) se acceden con <code>req.params</code>
+- La query string se accede con <code>req.query</code>
+- <code>res.send()</code> envía texto/HTML y <code>res.json()</code> envía JSON
+- Se pueden encadenar varios handlers en una misma ruta
+- Los códigos de estado comunican el resultado de la operación
+</blockquote>
+    </div>
+  </section>

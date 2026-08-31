@@ -1,0 +1,219 @@
+<!-- 05. Obtención de datos (composables) - Nuxt (Frameworks) -->
+  <section id="5-1-use-fetch">
+    <h2><i class="fa-solid fa-cloud-arrow-down"></i> 5.1 useFetch</h2>
+    <div class="doc-content">
+<h3>Qué es useFetch</h3>
+<p><code>useFetch</code> es el composable recomendado de Nuxt para obtener datos en una página o componente. Funciona tanto en el servidor como en el cliente y devuelve un objeto con <code>data</code>, <code>error</code> y <code>status</code>.</p>
+<h3>Ejemplo: Obtener una lista de productos</h3>
+<pre><code class="language-vue">&lt;!-- pages/productos.vue --&gt;
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;h1&gt;Productos&lt;/h1&gt;
+    &lt;ul v-if="data"&gt;
+      &lt;li v-for="p in data" :key="p.id"&gt;{{ p.nombre }}&lt;/li&gt;
+    &lt;/ul&gt;
+    &lt;p v-if="error"&gt;Error al cargar: {{ error.message }}&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+const { data, error, status } = await useFetch('/api/productos')
+&lt;/script&gt;</code></pre>
+<h3>Parámetros útiles</h3>
+<table><thead><tr><th>Opción</th><th>Descripción</th></tr></thead><tbody><tr><td><code>method</code></td><td>Método HTTP (GET, POST, ...)</td></tr><tr><td><code>body</code></td><td>Cuerpo de la petición</td></tr><tr><td><code>headers</code></td><td>Encabezados de la petición</td></tr><tr><td><code>watch</code></td><td>Vuelve a ejecutar cuando cambian ciertos valores</td></tr><tr><td><code>key</code></td><td>Identificador único para el cacheado</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+useFetch reutiliza los datos entre servidor y cliente, evitando peticiones dobles.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-2-use-async-data-y-watch-como-reactividad">
+    <h2><i class="fa-solid fa-rotate"></i> 5.2 useAsyncData y watch como reactividad</h2>
+    <div class="doc-content">
+<h3>Qué es useAsyncData</h3>
+<p><code>useAsyncData</code> es el composable de más bajo nivel para obtener datos. A diferencia de useFetch, tú controlas la petición (por ejemplo con $fetch u otra librería), lo que da más flexibilidad.</p>
+<h3>Ejemplo: Datos con lógica propia</h3>
+<pre><code class="language-vue">&lt;!-- pages/detalle.vue --&gt;
+&lt;script setup&gt;
+const { data: detalle, refresh } = await useAsyncData(
+  'detalle-producto',
+  () =&gt; $fetch(`/api/productos/${id}`)
+)
+&lt;/script&gt;</code></pre>
+<h3>Recargar datos con refresh</h3>
+<p>El objeto devuelto incluye una función <code>refresh()</code> para volver a ejecutar la petición manualmente:</p>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;button @click="refresh"&gt;Recargar&lt;/button&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+const { data, refresh } = await useAsyncData('datos', () =&gt; $fetch('/api/datos'))
+&lt;/script&gt;</code></pre>
+<h3>Reactividad con watch</h3>
+<p>Puedes hacer que la petición se repita cuando cambie una dependencia usando la opción <code>watch</code>:</p>
+<pre><code class="language-vue">const pagina = ref(1)
+
+const { data } = await useAsyncData(
+  'lista',
+  () =&gt; $fetch(`/api/items?pag=${pagina.value}`),
+  { watch: [pagina] }
+)</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-3-servidor-vs-cliente-y-hidratacion">
+    <h2><i class="fa-solid fa-server"></i> 5.3 Servidor vs cliente e hidratación</h2>
+    <div class="doc-content">
+<h3>Cómo se obtienen los datos</h3>
+<p>Con SSR, las peticiones de datos se ejecutan primero en el servidor. El HTML ya llega renderizado con los datos. Después, Nuxt "hidrata" la página en el cliente, reutilizando los datos <code>payload</code> sin hacer una segunda petición.</p>
+<h3>El payload</h3>
+<pre><code class="language-text">Servidor -&gt; ejecuta useFetch -&gt; HTML + payload
+Cliente  -&gt; hidrata usando el payload (sin repetir petición)
+</code></pre>
+<h3>Controlar ejecución según entorno</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Solo se ejecuta en el servidor
+const { data: serverData } = await useAsyncData('server', () =&gt; $fetch('/api/server'))
+
+// Solo en el cliente
+if (import.meta.client) {
+  // lógica de cliente
+}
+&lt;/script&gt;</code></pre>
+<table><thead><tr><th>Valor</th><th>Entorno</th></tr></thead><tbody><tr><td><code>import.meta.server</code></td><td>true solo en el servidor</td></tr><tr><td><code>import.meta.client</code></td><td>true solo en el navegador</td></tr></tbody></table>
+<h3>Ventajas del renderizado en servidor</h3>
+<ul>
+<li>El usuario ve contenido real antes de que cargue JavaScript</li>
+<li>Mejor SEO porque el HTML contiene los datos</li>
+<li>Menos peticiones redundantes</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-4-isr-con-revalidate">
+    <h2><i class="fa-solid fa-clock-rotate-left"></i> 5.4 ISR con revalidate</h2>
+    <div class="doc-content">
+<h3>Qué es ISR</h3>
+<p>La <strong>Revalidación Estática Incremental (ISR)</strong> combina páginas estáticas con la posibilidad de regenerarlas después de un tiempo. Es ideal para contenido que cambia con poca frecuencia pero que debe permanecer nuevo.</p>
+<h3>Ejemplo: Fuente de datos con revalidación</h3>
+<pre><code class="language-vue">&lt;!-- pages/dashboard.vue --&gt;
+&lt;script setup&gt;
+const { data } = await useFetch('/api/estadisticas', {
+  // Revalidar la página cada 60 segundos
+  revalidate: 60,
+  defer: true
+})
+&lt;/script&gt;</code></pre>
+<h3>Cómo funciona</h3>
+<ul>
+<li>La primera petición se sirve y se guarda como estática</li>
+<li>Durante 60 segundos se sirve la versión guardada (rápida)</li>
+<li>Pasado ese tiempo, la siguiente visita regenera la página en segundo plano</li>
+</ul>
+<h3>Configuración a nivel de ruta</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+definePageMeta({
+  // marcar esta ruta para ISR
+  isr: true
+})
+&lt;/script&gt;</code></pre>
+<h3>ISR vs SSG</h3>
+<table><thead><tr><th>Modo</th><th>Comportamiento</th></tr></thead><tbody><tr><td><strong>SSG</strong></td><td>Contenido fijo, se regenera solo al hacer deploy</td></tr><tr><td><strong>ISR</strong></td><td>Estático pero se revalida tras un intervalo</td></tr><tr><td><strong>SSR</strong></td><td>Se renderiza en cada petición (siempre actual)</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-5-use-spo-meta-y-metadatos">
+    <h2><i class="fa-solid fa-tag"></i> 5.5 useSeoMeta y metadatos</h2>
+    <div class="doc-content">
+<h3>Qué es useSeoMeta</h3>
+<p><code>useSeoMeta</code> es un composable de Nuxt que simplifica la gestión de metadatos para SEO: título, descripción, Open Graph, etc., de forma reactiva.</p>
+<h3>Ejemplo: SEO de una página</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+useSeoMeta({
+  title: 'Mi tienda de productos',
+  description: 'Compra los mejores productos con descuento',
+  ogTitle: 'Mi tienda online',
+  ogDescription: 'Productos de calidad al mejor precio',
+  ogImage: '/imagen-portada.jpg',
+  ogType: 'website'
+})
+&lt;/script&gt;</code></pre>
+<h3>Metadatos estáticos en nuxt.config</h3>
+<pre><code class="language-ts">// nuxt.config.ts
+export default defineNuxtConfig({
+  app: {
+    head: {
+      htmlAttrs: { lang: 'es' },
+      titleTemplate: '%s | Mi Sitio',
+      meta: [
+        { name: 'charset', content: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+      ]
+    }
+  }
+})</code></pre>
+<h3>Metadatos dinámicos según datos</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+const { data: producto } = await useFetch(`/api/productos/${id}`)
+
+useSeoMeta({
+  title: () =&gt; producto.value?.nombre || 'Producto',
+  description: () =&gt; producto.value?.descripcion || ''
+})
+&lt;/script&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-6-suspense-y-carga-asincrona-de-paginas">
+    <h2><i class="fa-solid fa-hourglass-half"></i> 5.6 Suspense y carga asíncrona de páginas</h2>
+    <div class="doc-content">
+<h3>Qué es Suspense</h3>
+<p><strong>Suspense</strong> es el mecanismo de Vue/Nuxt para manejar componentes que necesitan datos antes de renderizar. Con <code>await</code> dentro de <code>script setup</code>, Nuxt espera la resolución de los datos antes de completar la navegación.</p>
+<h3>Cómo funciona con Nuxt</h3>
+<p>Cuando usas <code>await useFetch</code> o <code>await useAsyncData</code> en el top-level de una página, Nuxt hace lo siguiente:</p>
+<ol>
+<li>Carga los datos mientras se prepara la página</li>
+<li>Mientras espera, usa la página en estado de carga</li>
+<li>Cuando los datos están listos, renderiza la página final</li>
+</ol>
+<h3>Ejemplo: Controlar la carga</h3>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;div&gt;
+    &lt;p v-if="status === 'pending'"&gt;Cargando...&lt;/p&gt;
+    &lt;ul v-else-if="data"&gt;
+      &lt;li v-for="item in data" :key="item.id"&gt;{{ item.nombre }}&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+const { data, status } = await useFetch('/api/items')
+&lt;/script&gt;</code></pre>
+<h3>Estado de la petición</h3>
+<table><thead><tr><th>Estado</th><th>Significado</th></tr></thead><tbody><tr><td><code>pending</code></td><td>La petición está en curso</td></tr><tr><td><code>error</code></td><td>La petición falló</td></tr><tr><td><code>success</code></td><td>La petición se completó correctamente</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Usa el atributo <code>defer</code> cuando no quieras bloquear la renderización esperando los datos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- useFetch es el composable recomendado para obtener datos
+- useAsyncData ofrece más control sobre la petición
+- Los datos se obtienen en el servidor y se hidratan en el cliente
+- ISR con revalidate permite contenido estático actualizable
+- useSeoMeta gestiona metadatos reactivos para SEO
+- Suspense y los states (pending, error, success) controlan la carga
+</blockquote>
+    </div>
+  </section>

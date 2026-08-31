@@ -1,0 +1,338 @@
+<!-- 07. Scroll y Listas - Flutter (Frameworks) -->
+  <section id="1-1-listview">
+    <h2><i class="fa-solid fa-list"></i> 1.1 ListView</h2>
+    <div class="doc-content">
+<h3>¿Qué es ListView?</h3>
+<p><strong>ListView</strong> es un widget que muestra una lista desplazable de elementos. Es uno de los widgets más usados en Flutter para mostrar colecciones de datos.</p>
+<h3>Formas de construir un ListView</h3>
+<table><thead><tr><th>Tipo</th><th>Uso</th></tr></thead><tbody><tr><td><code>ListView()</code></td><td>Con hijos explícitos (lista estática)</td></tr><tr><td><code>ListView.builder()</code></td><td>Con generador (lista dinámica y eficiente)</td></tr><tr><td><code>ListView.separated()</code></td><td>Con separadores entre elementos</td></tr></tbody></table>
+<h3>Ejemplo: ListView estática</h3>
+<pre><code class="language-dart">import 'package:flutter/material.dart';
+
+class ListaEstatica extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: [
+        ListTile(
+          leading: Icon(Icons.home),
+          title: Text('Inicio'),
+        ),
+        ListTile(
+          leading: Icon(Icons.person),
+          title: Text('Perfil'),
+        ),
+        ListTile(
+          leading: Icon(Icons.settings),
+          title: Text('Configuración'),
+        ),
+      ],
+    );
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-2-listview-builder">
+    <h2><i class="fa-solid fa-list-check"></i> 1.2 ListView.builder</h2>
+    <div class="doc-content">
+<h3>Listas dinámicas y eficientes</h3>
+<p><strong>ListView.builder</strong> construye los elementos solo cuando son visibles. Es la opción recomendada para listas con muchos elementos, ya que es eficiente en memoria.</p>
+<pre><code class="language-dart">import 'package:flutter/material.dart';
+
+class ListaDinamica extends StatelessWidget {
+  final List&lt;String&gt; nombres = [
+    'Ana', 'Carlos', 'Luis', 'María', 'Pedro',
+    'Sofía', 'Javier', 'Lucía', 'Andrés', 'Valentina',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: nombres.length,
+      itemBuilder: (context, indice) {
+        return ListTile(
+          leading: CircleAvatar(child: Text(nombres[indice][0])),
+          title: Text(nombres[indice]),
+          trailing: Icon(Icons.arrow_forward_ios, size: 16),
+        );
+      },
+    );
+  }
+}</code></pre>
+<h3>Parámetros clave</h3>
+<table><thead><tr><th>Parámetro</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>itemCount</strong></td><td>Número total de elementos</td></tr><tr><td><strong>itemBuilder</strong></td><td>Función que construye cada elemento según su índice</td></tr><tr><td><strong>separatorBuilder</strong></td><td>Construye separadores entre elementos (con separated)</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-3-gridview">
+    <h2><i class="fa-solid fa-table-cells"></i> 1.3 GridView</h2>
+    <div class="doc-content">
+<h3>¿Qué es GridView?</h3>
+<p><strong>GridView</strong> muestra los elementos en una cuadrícula de varias columnas. Es ideal para galerías, catálogos de productos, etc.</p>
+<pre><code class="language-dart">import 'package:flutter/material.dart';
+
+class Galeria extends StatelessWidget {
+  final List&lt;String&gt; colores = [
+    'FF0000', '00FF00', '0000FF', 'FFFF00',
+    'FF00FF', '00FFFF', 'FFA500', '800080',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2, // Número de columnas
+        crossAxisSpacing: 8, // Separación horizontal
+        mainAxisSpacing: 8, // Separación vertical
+      ),
+      itemCount: colores.length,
+      itemBuilder: (context, indice) {
+        return Container(
+          color: Color(int.parse('0xFF${colores[indice]}')),
+        );
+      },
+    );
+  }
+}</code></pre>
+<h3>SliverGridDelegate</h3>
+<table><thead><tr><th>Delegate</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>SliverGridDelegateWithFixedCrossAxisCount</strong></td><td>Número fijo de columnas</td></tr><tr><td><strong>SliverGridDelegateWithMaxCrossAxisExtent</strong></td><td>Tamaño máximo de cada celda</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-4-ontap-y-callbacks">
+    <h2><i class="fa-solid fa-hand-pointer"></i> 1.4 onTap y callbacks</h2>
+    <div class="doc-content">
+<h3>Interacción con elementos de la lista</h3>
+<p>Cada elemento de una lista puede responder a eventos de toque mediante callbacks como <code>onTap</code>.</p>
+<pre><code class="language-dart">import 'package:flutter/material.dart';
+
+class ListaInteractiva extends StatelessWidget {
+  final List&lt;Map&lt;String, dynamic&gt;&gt; productos = [
+    {'nombre': 'Laptop', 'precio': 999.99},
+    {'nombre': 'Mouse', 'precio': 29.99},
+    {'nombre': 'Teclado', 'precio': 89.99},
+  ];
+
+  void _mostrarDetalle(context, producto) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Seleccionaste ${producto['nombre']}')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: productos.length,
+      itemBuilder: (context, indice) {
+        final producto = productos[indice];
+        return Card(
+          child: ListTile(
+            leading: Icon(Icons.shopping_bag),
+            title: Text(producto['nombre']),
+            subtitle: Text('\$${producto['precio']}'),
+            trailing: Icon(Icons.chevron_right),
+            onTap: () =&gt; _mostrarDetalle(context, producto),
+          ),
+        );
+      },
+    );
+  }
+}</code></pre>
+<h3>Callbacks comunes</h3>
+<table><thead><tr><th>Callback</th><th>Evento</th></tr></thead><tbody><tr><td><code>onTap</code></td><td>Toque corto</td></tr><tr><td><code>onLongPress</code></td><td>Mantener presionado</td></tr><tr><td><code>onDoubleTap</code></td><td>Doble toque</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-5-listas-anidadas">
+    <h2><i class="fa-solid fa-diagram-project"></i> 1.5 Listas anidadas</h2>
+    <div class="doc-content">
+<h3>Anidar listas y otros widgets</h3>
+<p>A veces necesitas combinar una lista con otros elementos, como encabezados, o anidar secciones. Para ello usa <code>CustomScrollView</code> o listas separadas.</p>
+<pre><code class="language-dart">// Combinar título con lista usando Column y Expanded
+class PantallaConEncabezado extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Encabezado fijo
+        Padding(
+          padding: EdgeInsets.all(16),
+          child: Text(
+            'Mis contactos',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ),
+        // Lista desplazable
+        Expanded(
+          child: ListView.builder(
+            itemCount: 20,
+            itemBuilder: (context, indice) {
+              return ListTile(
+                leading: Icon(Icons.person),
+                title: Text('Contacto $indice'),
+                onTap: () {},
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}</code></pre>
+<h3>CustomScrollView con slivers</h3>
+<p>Para composiciones más avanzadas, CustomScrollView permite combinar encabezados fijos, listas y grids:</p>
+<pre><code class="language-dart">CustomScrollView(
+  slivers: [
+    SliverAppBar(
+      title: Text('Tienda'),
+      expandedHeight: 150,
+    ),
+    SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, indice) =&gt; ListTile(
+          leading: Icon(Icons.store),
+          title: Text('Producto $indice'),
+        ),
+        childCount: 10,
+      ),
+    ),
+    SliverGrid(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
+      delegate: SliverChildBuilderDelegate(
+        (context, indice) =&gt; Container(color: Colors.primaries[indice % 18]),
+        childCount: 9,
+      ),
+    ),
+  ],
+)</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-6-personalizacion-de-listas">
+    <h2><i class="fa-solid fa-palette"></i> 1.6 Personalización de listas</h2>
+    <div class="doc-content">
+<h3>Diseño avanzado de elementos</h3>
+<p>Puedes personalizar completamente cada elemento con Containers, Cards y otros widgets de layout.</p>
+<pre><code class="language-dart">import 'package:flutter/material.dart';
+
+// Elemento de tarjeta personalizado
+class TarjetaProducto extends StatelessWidget {
+  final String nombre;
+  final String imagen;
+  final double precio;
+  final VoidCallback onTap;
+
+  TarjetaProducto({
+    required this.nombre,
+    required this.imagen,
+    required this.precio,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Imagen con esquinas redondeadas
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  imagen,
+                  height: 120,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                nombre,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '\$$precio',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Icon(Icons.add_shopping_cart, color: Colors.blue),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Uso en GridView
+class Catalogo extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: EdgeInsets.all(12),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.8,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: 10,
+      itemBuilder: (context, indice) {
+        return TarjetaProducto(
+          nombre: 'Producto $indice',
+          imagen: 'https://via.placeholder.com/300',
+          precio: 49.99 + indice,
+          onTap: () {},
+        );
+      },
+    );
+  }
+}</code></pre>
+<h3>Buenas prácticas</h3>
+<ul>
+<li>Usa ListView.builder para listas largas</li>
+<li>Extrae elementos complejos en widgets dedicados</li>
+<li>Aprovecha Card y InkWell para interacción</li>
+<li>Mantén los callbacks como parámetros para desacoplar</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- ListView muestra listas desplazables de elementos
+- ListView.builder es eficiente para listas dinámicas grandes
+- GridView muestra elementos en cuadrícula
+- onTap y otros callbacks permiten interactuar con los elementos
+- Puedes combinar listas con otros widgets usando Expanded
+- CustomScrollView con slivers permite composiciones avanzadas
+</blockquote>
+    </div>
+  </section>

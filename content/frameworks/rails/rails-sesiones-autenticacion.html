@@ -1,0 +1,258 @@
+<!-- 07. Sesiones y autenticación - Rails (Frameworks) -->
+  <section id="7-1-cookies-y-sesiones">
+    <h2><i class="fa-solid fa-cookie"></i> 7.1 Cookies y sesiones</h2>
+    <div class="doc-content">
+<h3>Qué es una cookie</h3>
+<p>Una <strong>cookie</strong> es un pequeño dato que el servidor envía al navegador y que se almacena en el cliente. Rails las usa internamente para guardar el identificador de sesión y otros datos.</p>
+<h3>Sesión en Rails</h3>
+<p>La <strong>sesión</strong> es un hash de Ruby disponible en el controlador mediante <code>session</code>. Permite conservar datos entre peticiones del mismo usuario:</p>
+<pre><code class="language-ruby">class CarritoController &lt; ApplicationController
+  def añadir
+    # Guardar un valor en la sesión
+    session[:carrito] ||= []
+    session[:carrito] &lt;&lt; params[:producto_id]
+
+    # Leer un valor de la sesión
+    carrito = session[:carrito]
+
+    # Eliminar un valor
+    session.delete(:descuento)
+
+    # Limpiar toda la sesión
+    reset_session
+  end
+end</code></pre>
+<h3>Dónde se guardan las sesiones</h3>
+<table><thead><tr><th>Backend</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>CookieStore</strong></td><td>(Por defecto) Se guarda en la cookie cifrada del navegador</td></tr><tr><td><strong>Cache</strong></td><td>Se guarda en la caché del servidor (memcached, Redis)</td></tr><tr><td><strong>Base de datos</strong></td><td>Se guarda en una tabla de la base de datos</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Las sesiones no deben usarse para datos grandes o sensibles. Guarda solo identificadores o datos pequeños; la información completa ve a la base de datos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-2-autenticacion-manual">
+    <h2><i class="fa-solid fa-user-lock"></i> 7.2 Autenticación manual</h2>
+    <div class="doc-content">
+<h3>Modelo de usuario</h3>
+<p>Para autenticar necesitas un modelo <code>Usuario</code>. La contraseña debe guardarse cifrada con un hash, no en texto plano:</p>
+<pre><code class="language-bash">rails generate model Usuario email:string password_digest:string
+rails db:migrate</code></pre>
+<pre><code class="language-ruby"># app/models/usuario.rb
+class Usuario &lt; ApplicationRecord
+  has_secure_password
+  validates :email, presence: true, uniqueness: true
+end</code></pre>
+<pre><code class="language-ruby"># Gemfile (añade la gema bcrypt y ejecuta bundle install)
+gem "bcrypt", "~&gt; 3.1"</code></pre>
+<h3>Registro e inicio de sesión</h3>
+<pre><code class="language-ruby"># app/controllers/sesiones_controller.rb
+class SesionesController &lt; ApplicationController
+  def create
+    usuario = Usuario.find_by(email: params[:email])
+
+    if usuario &amp;&amp; usuario.authenticate(params[:password])
+      session[:usuario_id] = usuario.id
+      redirect_to root_path, notice: "Sesión iniciada"
+    else
+      flash.now[:alert] = "Credenciales incorrectas"
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    session.delete(:usuario_id)
+    redirect_to root_path, notice: "Sesión cerrada"
+  end
+end</code></pre>
+<h3>Registro de un usuario</h3>
+<pre><code class="language-ruby">usuario = Usuario.new(email: "ana@correo.com",
+                      password: "secreto123",
+                      password_confirmation: "secreto123")
+if usuario.save
+  session[:usuario_id] = usuario.id
+else
+  # El error de validación aparece en usuario.errors
+end</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-3-gemas-de-autenticacion">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> 7.3 Gemas de autenticación</h2>
+    <div class="doc-content">
+<h3>Alternativas populares</h3>
+<table><thead><tr><th>Gema</th><th>Características</th></tr></thead><tbody><tr><td><strong>Devise</strong></td><td>Completa: registros, recuperación, confirmación, OmniAuth</td></tr><tr><td><strong>Rodauth</strong></td><td>Modular y segura, configuración flexible</td></tr><tr><td><strong>has_secure_password</strong></td><td>Integrada en Rails, mínima y simple</td></tr><tr><td><strong>Token de API</strong></td><td>Para APIs, autenticación basada en tokens</td></tr></tbody></table>
+<h3>Devise de un vistazo</h3>
+<pre><code class="language-bash"># Instalar Devise
+bundle add devise
+rails generate devise:install
+rails generate devise Usuario
+rails db:migrate</code></pre>
+<p>Devise genera el modelo <code>Usuario</code> y rutas de registro, inicio de sesión y recuperación:</p>
+<pre><code class="language-bash">rails routes | grep devise</code></pre>
+<h3>Restringir el acceso con Devise</h3>
+<pre><code class="language-ruby"># app/controllers/application_controller.rb
+class ApplicationController &lt; ActionController::Base
+  before_action :authenticate_usuario!
+end</code></pre>
+<pre><code class="language-ruby"># En vistas
+&lt;% if usuario_signed_in? %&gt;
+  &lt;p&gt;Hola, &lt;%= current_usuario.email %&gt;&lt;/p&gt;
+  &lt;%= button_to "Cerrar sesión", destroy_usuario_session_path, method: :delete %&gt;
+&lt;% else %&gt;
+  &lt;%= link_to "Iniciar sesión", new_usuario_session_path %&gt;
+&lt;% end %&gt;</code></pre>
+<blockquote class="aside aside-note">
+Devise acelera el desarrollo, pero conviene entender qué hace bajo el capó: usa has_secure_password, sesiones y strong parameters igual que el resto de Rails.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-4-autorizacion">
+    <h2><i class="fa-solid fa-shield-halved"></i> 7.4 Autorización</h2>
+    <div class="doc-content">
+<h3>Autenticación vs autorización</h3>
+<p>La <strong>autenticación</strong> verifica quién eres. La <strong>autorización</strong> determina qué puedes hacer. Ambas son necesarias en aplicaciones con roles o permisos.</p>
+<h3>Roles de usuario</h3>
+<pre><code class="language-bash"># Añadir una columna rol al modelo
+rails generate migration AddRolToUsuarios rol:integer
+rails db:migrate</code></pre>
+<pre><code class="language-ruby"># app/models/usuario.rb
+class Usuario &lt; ApplicationRecord
+  has_secure_password
+
+  enum rol: { usuario: 0, admin: 1 }
+end
+
+# Uso
+admin = Usuario.find_by(email: "admin@correo.com")
+admin.admin?   # true
+admin.usuario? # false</code></pre>
+<h3>Comprobar el rol en el controlador</h3>
+<pre><code class="language-ruby"># app/controllers/admin/base_controller.rb
+class Admin::BaseController &lt; ApplicationController
+  before_action :requiere_admin
+
+  private
+
+  def requiere_admin
+    unless current_usuario.admin?
+      redirect_to root_path, alert: "No tienes permisos"
+    end
+  end
+end</code></pre>
+<h3>Gemas de autorización</h3>
+<table><thead><tr><th>Gema</th><th>Enfoque</th></tr></thead><tbody><tr><td><strong>Pundit</strong></td><td>Clases de políticas por recurso</td></tr><tr><td><strong>CanCanCan</strong></td><td>Habilidades declarativas de forma centralizada</td></tr></tbody></table>
+<pre><code class="language-ruby"># Ejemplo con Pundit
+class ProductoPolicy
+  attr_reader :usuario, :producto
+
+  def initialize(usuario, producto)
+    @usuario = usuario
+    @producto = producto
+  end
+
+  def update?
+    usuario.admin? || producto.usuario == usuario
+  end
+end</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-5-remember-me-y-tokens">
+    <h2><i class="fa-solid fa-key"></i> 7.5 Remember me y tokens</h2>
+    <div class="doc-content">
+<h3>Recordar la sesión</h3>
+<p>Para mantener la sesión del usuario después de cerrar el navegador, se guarda un token en una cookie persistente:</p>
+<pre><code class="language-ruby"># app/models/usuario.rb
+class Usuario &lt; ApplicationRecord
+  has_secure_password
+
+  before_create :generar_token
+
+  private
+
+  def generar_token
+    self.remember_token = SecureRandom.urlsafe_base64
+  end
+end</code></pre>
+<h3>Guardar la cookie persistente</h3>
+<pre><code class="language-ruby"># En el inicio de sesión
+def recordar(usuario)
+  token = usuario.remember_token
+  cookies.permanent.signed[:usuario_id] = usuario.id
+  cookies.permanent.signed[:remember_token] = token
+end</code></pre>
+<h3>Autenticación con tokens de API</h3>
+<p>En APIs, el cliente envía un token en cada petición mediante la cabecera <code>Authorization</code>:</p>
+<pre><code class="language-ruby">class Api::V1::BaseController &lt; ApplicationController
+  before_action :autenticar_con_token
+
+  private
+
+  def autenticar_con_token
+    token = request.headers["Authorization"]&amp;.split(" ")&amp;.last
+    @usuario = Usuario.find_by(api_token: token)
+    head :unauthorized unless @usuario
+  end
+end</code></pre>
+<h3>Ejemplo de respuesta no autorizada</h3>
+<pre><code class="language-ruby">head :unauthorized
+# HTTP/1.1 401 Unauthorized</code></pre>
+<blockquote class="aside aside-warning">
+Nunca guardes contraseñas ni tokens en texto plano. Usa <code>has_secure_password</code> (bcrypt) para contraseñas y tokens firmados para los "remember me".
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-6-flash-y-seguridad">
+    <h2><i class="fa-solid fa-bell"></i> 7.6 Flash y seguridad</h2>
+    <div class="doc-content">
+<h3>Mensajes flash</h3>
+<p><strong>Flash</strong> son mensajes temporales que se muestran una sola vez tras una redirección. Se definen en el controlador y se leen en la vista:</p>
+<pre><code class="language-ruby"># En el controlador
+redirect_to root_path, notice: "Bienvenido de nuevo"
+redirect_to root_path, alert: "Acción no permitida"
+
+# Con flash directo
+flash[:success] = "Datos guardados correctamente"
+flash.now[:error] = "Revisa los campos del formulario"</code></pre>
+<pre><code class="language-erb">&lt;!-- En el layout --&gt;
+&lt;% flash.each do |tipo, mensaje| %&gt;
+  &lt;div class="<%= "alert alert-#{tipo}" %&gt;"&gt;
+    &lt;%= mensaje %&gt;
+  &lt;/div&gt;
+&lt;% end %&gt;</code></pre>
+<h3>Buenas prácticas de seguridad</h3>
+<table><thead><tr><th>Medida</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Contraseñas cifradas</strong></td><td>Siempre con bcrypt, nunca en texto plano</td></tr><tr><td><strong>Protección CSRF</strong></td><td>Mantener <code>protect_from_forgery</code> activo</td></tr><tr><td><strong>Escape de salida</strong></td><td>Usar &lt;%= %&gt; para escapar HTML automáticamente</td></tr><tr><td><strong>Rutas protegidas</strong></td><td>Usar <code>before_action</code> para restringir acceso</td></tr><tr><td><strong>Tokens seguros</strong></td><td>Generar con <code>SecureRandom</code> y expirarlos</td></tr></tbody></table>
+<h3>Ejemplo de cierre de sesión seguro</h3>
+<pre><code class="language-ruby">def destroy
+  # Invalidar la sesión y la cookie
+  reset_session
+  cookies.delete(:usuario_id)
+  cookies.delete(:remember_token)
+
+  redirect_to root_path, notice: "Sesión cerrada correctamente"
+end</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Las cookies y sesiones permiten conservar datos entre peticiones
+- has_secure_password cifra las contraseñas con bcrypt
+- Devise ofrece autenticación completa lista para usar
+- La autorización controla qué puede hacer cada usuario según sus roles
+- Los tokens y cookies persistentes implementan el "remember me"
+- El flash muestra mensajes temporales y la seguridad es una prioridad
+</blockquote>
+    </div>
+  </section>

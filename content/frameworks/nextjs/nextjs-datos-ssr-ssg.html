@@ -1,0 +1,232 @@
+<!-- 05. Obtención de datos (SSR, SSG, ISR) - Next.js (Frameworks) -->
+  <section id="5-1-server-components-y-fetching-de-datos">
+    <h2><i class="fa-solid fa-database"></i> 5.1 Server Components y fetching de datos</h2>
+    <div class="doc-content">
+<h3>Cómo obtener datos en el servidor</h3>
+<p>En los Server Components puedes hacer <code>fetch</code> directamente dentro del componente. Next.js detecta si la ruta es estática o dinámica automáticamente:</p>
+<pre><code class="language-tsx">// app/posts/page.tsx
+export default async function Posts() {
+  const res = await fetch("https://api.example.com/posts");
+  const posts = await res.json();
+
+  return (
+    &lt;ul&gt;
+      {posts.map((post) =&gt; (
+        &lt;li key={post.id}&gt;{post.title}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>Comportamientos del fetch</h3>
+<table><thead><tr><th>Opción</th><th>Comportamiento</th></tr></thead><tbody><tr><td>Sin opciones</td><td>Se cachea como SSG</td></tr><tr><td><code>{ cache: "no-store" }</code></td><td>SSR, se renderiza en cada petición</td></tr><tr><td><code>{ next: { revalidate } }</code></td><td>ISR, se regenera cada N segundos</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Hacer `fetch` directamente en la función del componente es posible gracias a que este se ejecuta en el servidor.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-2-componentes-cliente-con-la-directiva-use-client">
+    <h2><i class="fa-solid fa-user"></i> 5.2 Componentes cliente con la directiva "use client"</h2>
+    <div class="doc-content">
+<h3>Cuándo usar un componente cliente</h3>
+<p>Usa la directiva <code>"use client"</code> cuando necesites estado, eventos o efectos. Estos componentes se ejecutan en el navegador:</p>
+<pre><code class="language-tsx">// app/components/FormularioLogin.tsx
+"use client";
+
+import { useState } from "react";
+
+export default function FormularioLogin() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = (e) =&gt; {
+    e.preventDefault();
+    console.log("Iniciar sesión con", email);
+  };
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;input
+        type="email"
+        value={email}
+        onChange={(e) =&gt; setEmail(e.target.value)}
+        placeholder="Email"
+      /&gt;
+      &lt;input
+        type="password"
+        value={password}
+        onChange={(e) =&gt; setPassword(e.target.value)}
+        placeholder="Contraseña"
+      /&gt;
+      &lt;button type="submit"&gt;Entrar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-warning">
+La directiva `"use client"` debe ir en la primera línea del archivo, antes de cualquier import.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-3-fetch-de-datos-en-componentes-cliente">
+    <h2><i class="fa-solid fa-cloud-arrow-down"></i> 5.3 Fetch de datos en componentes cliente (CSR)</h2>
+    <div class="doc-content">
+<h3>Obtener datos con useEffect</h3>
+<pre><code class="language-tsx">// app/components/ListaProductos.tsx
+"use client";
+
+import { useEffect, useState } from "react";
+
+interface Producto {
+  id: number;
+  nombre: string;
+}
+
+export default function ListaProductos() {
+  const [productos, setProductos] = useState&lt;Producto[]&gt;([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() =&gt; {
+    fetch("https://api.example.com/productos")
+      .then((res) =&gt; res.json())
+      .then((data) =&gt; {
+        setProductos(data);
+        setCargando(false);
+      });
+  }, []);
+
+  if (cargando) {
+    return &lt;p&gt;Cargando productos...&lt;/p&gt;;
+  }
+
+  return (
+    &lt;ul&gt;
+      {productos.map((p) =&gt; (
+        &lt;li key={p.id}&gt;{p.nombre}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-tip">
+Para datos que cambian constantemente (notificaciones, precios en vivo) puede ser útil un renderizado en cliente (CSR).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-4-revalidacion-incremental-isr">
+    <h2><i class="fa-solid fa-rotate"></i> 5.4 Revalidación incremental (ISR)</h2>
+    <div class="doc-content">
+<h3>Qué es ISR</h3>
+<p>ISR combina lo mejor de SSG y SSR: sirve HTML estático rápido, pero se regenera en segundo plano cada cierto tiempo definido por <code>revalidate</code>:</p>
+<pre><code class="language-tsx">// app/noticias/page.tsx
+export default async function Noticias() {
+  const res = await fetch("https://api.example.com/noticias", {
+    next: { revalidate: 300 }, // regenerar cada 5 minutos
+  });
+  const noticias = await res.json();
+
+  return (
+    &lt;ul&gt;
+      {noticias.map((n) =&gt; (
+        &lt;li key={n.id}&gt;{n.titulo}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<h3>Usos típicos de ISR</h3>
+<ul>
+<li><strong>Catálogos de productos</strong>: precios y stock actualizados</li>
+<li><strong>Blogs</strong>: nuevas entradas sin recompilar</li>
+<li><strong>Noticias</strong>: contenidos con frecuencia moderada</li>
+</ul>
+<h3>Ventajas respecto a SSG puro</h3>
+<table><thead><tr><th>SSG</th><th>ISR</th></tr></thead><tbody><tr><td>Contenido congelado al compilar</td><td>Se actualiza cada revalidate</td></tr><tr><td>No refleja datos nuevos</td><td>Muestra datos frescos</td></tr><tr><td>Debes recompilar para cambios</td><td>Regenera en segundo plano</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-5-generate-static-params-para-rutas-dinamicas">
+    <h2><i class="fa-solid fa-cubes"></i> 5.5 generateStaticParams para rutas dinámicas</h2>
+    <div class="doc-content">
+<h3>Generar rutas estáticas con datos</h3>
+<p>Para pre-generar páginas dinámicas conocidas de antemano, usa <code>generateStaticParams</code>:</p>
+<pre><code class="language-tsx">// app/posts/[id]/page.tsx
+export async function generateStaticParams() {
+  const res = await fetch("https://api.example.com/posts");
+  const posts = await res.json();
+
+  return posts.map((post) =&gt; ({ id: String(post.id) }));
+}
+
+export default async function Post({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const res = await fetch(
+    `https://api.example.com/posts/${params.id}`
+  );
+  const post = await res.json();
+
+  return (
+    &lt;article&gt;
+      &lt;h1&gt;{post.title}&lt;/h1&gt;
+      &lt;p&gt;{post.body}&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-note">
+Las rutas no enumeradas en `generateStaticParams` se renderizan bajo demanda si se visitan.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-6-consejos-para-elegir-la-estrategia-correcta">
+    <h2><i class="fa-solid fa-scale-balanced"></i> 5.6 Consejos para elegir la estrategia correcta</h2>
+    <div class="doc-content">
+<h3>Guía rápida de decisión</h3>
+<table><thead><tr><th>¿Tipo de contenido?</th><th>Estrategia</th></tr></thead><tbody><tr><td>Público y casi no cambia</td><td>SSG</td></tr><tr><td>Público pero cambia a veces</td><td>ISR</td></tr><tr><td>Personalizado por usuario</td><td>SSR o CSR</td></tr><tr><td>Interactivo en tiempo real</td><td>CSR</td></tr></tbody></table>
+<h3>Buenas prácticas</h3>
+<ul>
+<li>Prefiere <strong>Server Components</strong> cuando no necesites estado</li>
+<li>Usa <strong>ISR</strong> en lugar de SSR para contenidos con tráfico alto</li>
+<li>Separa los componentes que sí usan hooks en archivos cliente</li>
+<li>Combina SSR para el esqueleto y CSR para la interacción</li>
+</ul>
+<h3>Ejemplo combinado</h3>
+<pre><code class="language-tsx">// app/usuario/page.tsx (Server Component)
+import PerfilCliente from "./PerfilCliente";
+
+export default async function Usuario() {
+  const res = await fetch("https://api.example.com/perfil");
+  const perfil = await res.json();
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Hola, {perfil.nombre}&lt;/h1&gt;
+      &lt;PerfilCliente datos={perfil} /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los Server Components permiten hacer fetch directamente en el componente
+- La directiva <code>"use client"</code> convierte un componente en cliente
+- En client components se obtienen datos con useEffect (CSR)
+- ISR con <code>revalidate</code> regenera las páginas estáticas en segundo plano
+- <code>generateStaticParams</code> pre-genera rutas dinámicas
+- Elige la estrategia según cuánto cambie tu contenido
+</blockquote>
+    </div>
+  </section>

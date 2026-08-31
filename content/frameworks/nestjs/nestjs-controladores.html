@@ -1,0 +1,249 @@
+<!-- 04. Controladores y rutas - NestJS (Frameworks) -->
+  <section id="4-1-que-es-un-controlador">
+    <h2><i class="fa-solid fa-bullseye"></i> 4.1 Qué es un controlador</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>controlador</strong> en NestJS es una clase anotada con <code>@Controller</code> que se encarga de recibir las peticiones HTTP, aplicar los decoradores de ruta y devolver la respuesta. Es la primera capa que procesa una solicitud entrante.</p>
+<h3>Responsabilidades</h3>
+<table><thead><tr><th>Responsabilidad</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Definir rutas</strong></td><td>Mapea URLs y métodos HTTP a funciones</td></tr><tr><td><strong>Recibir datos</strong></td><td>Extrae params, query y body de la petición</td></tr><tr><td><strong>Responder</strong></td><td>Devuelve datos, códigos de estado y encabezados</td></tr><tr><td><strong>Delegar lógica</strong></td><td>Llama a los servicios para la lógica de negocio</td></tr></tbody></table>
+<h3>Cómo crear un controlador</h3>
+<pre><code class="language-bash"># Generar con el CLI
+nest g co gatos</code></pre>
+<h3>Ejemplo: controlador con prefijo de ruta</h3>
+<pre><code class="language-typescript">import { Controller, Get } from '@nestjs/common';
+
+@Controller('gatos')
+export class GatosController {
+  @Get()
+  obtenerTodos() {
+    return ['Gato 1', 'Gato 2'];
+  }
+}</code></pre>
+<p>El prefijo <code>'gatos'</code> hace que el controlador responda en <code>GET /gatos</code>.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-2-decoradores-de-metodos-http">
+    <h2><i class="fa-solid fa-route"></i> 4.2 Decoradores de métodos HTTP</h2>
+    <div class="doc-content">
+<h3>Decoradores disponibles</h3>
+<table><thead><tr><th>Decorador</th><th>Método HTTP</th><th>Uso típico</th></tr></thead><tbody><tr><td><code>@Get()</code></td><td>GET</td><td>Obtener recursos</td></tr><tr><td><code>@Post()</code></td><td>POST</td><td>Crear recursos</td></tr><tr><td><code>@Put()</code></td><td>PUT</td><td>Actualizar recursos completos</td></tr><tr><td><code>@Patch()</code></td><td>PATCH</td><td>Actualizar parcialmente</td></tr><tr><td><code>@Delete()</code></td><td>DELETE</td><td>Eliminar recursos</td></tr><tr><td><code>@All()</code></td><td>Cualquiera</td><td>Responder a todos los métodos</td></tr></tbody></table>
+<h3>Ejemplo: CRUD básico</h3>
+<pre><code class="language-typescript">import { Controller, Get, Post, Put, Patch, Delete } from '@nestjs/common';
+
+@Controller('gatos')
+export class GatosController {
+  @Get()
+  obtenerTodos() {
+    return 'Lista de gatos';
+  }
+
+  @Post()
+  crear() {
+    return 'Gato creado';
+  }
+
+  @Put()
+  actualizar() {
+    return 'Gato actualizado';
+  }
+
+  @Patch()
+  actualizarParcial() {
+    return 'Gato actualizado parcialmente';
+  }
+
+  @Delete()
+  eliminar() {
+    return 'Gato eliminado';
+  }
+}</code></pre>
+<blockquote class="aside aside-tip">
+Puedes combinar cada decorador con una subruta: `@Get('buscar')` se mapea a `GET /gatos/buscar`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-3-parametros-de-ruta">
+    <h2><i class="fa-solid fa-link"></i> 4.3 Parámetros de ruta</h2>
+    <div class="doc-content">
+<h3>Capturar valores de la URL</h3>
+<p>Los <strong>parámetros de ruta</strong> son valores dentro de la URL definidos con <code>:</code> y extraídos con el decorador <code>@Param()</code>.</p>
+<h3>Ejemplo: obtener un recurso por id</h3>
+<pre><code class="language-typescript">import { Controller, Get, Param } from '@nestjs/common';
+
+@Controller('gatos')
+export class GatosController {
+  @Get(':id')
+  obtenerUno(@Param('id') id: string) {
+    return `El gato solicitado es el ${id}`;
+  }
+
+  @Get(':id/historial')
+  historial(@Param('id') id: string) {
+    return `Historial del gato ${id}`;
+  }
+}</code></pre>
+<h3>Varios parámetros</h3>
+<pre><code class="language-typescript">import { Controller, Get, Param } from '@nestjs/common';
+
+@Controller('tienda')
+export class TiendaController {
+  @Get(':categoria/:producto')
+  obtenerProducto(
+    @Param('categoria') categoria: string,
+    @Param('producto') producto: string,
+  ) {
+    return `Producto ${producto} de la categoría ${categoria}`;
+  }
+}</code></pre>
+<h3>Todo el objeto de parámetros</h3>
+<pre><code class="language-typescript">import { Controller, Get, Param } from '@nestjs/common';
+
+@Controller('tienda')
+export class TiendaController {
+  @Get(':categoria/:producto')
+  obtenerTodo(@Param() params: Record&lt;string, string&gt;) {
+    return params;
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-4-query-params-y-request-body">
+    <h2><i class="fa-solid fa-envelope"></i> 4.4 Query params y request body</h2>
+    <div class="doc-content">
+<h3>Parámetros de consulta (query params)</h3>
+<p>Los parámetros de consulta llegan después del signo <code>?</code> en la URL y se capturan con <code>@Query()</code>. Son ideales para filtros y paginación.</p>
+<pre><code class="language-typescript">import { Controller, Get, Query } from '@nestjs/common';
+
+@Controller('gatos')
+export class GatosController {
+  @Get()
+  filtrar(
+    @Query('edad') edad?: string,
+    @Query('raza') raza?: string,
+  ) {
+    return `Filtros aplicados: edad=${edad}, raza=${raza}`;
+  }
+}</code></pre>
+<h3>Body de la petición</h3>
+<p>Los datos enviados en el cuerpo de la petición (normalmente JSON) se capturan con <code>@Body()</code>. En aplicaciones reales se valida con un DTO.</p>
+<pre><code class="language-typescript">import { Controller, Post, Body } from '@nestjs/common';
+
+interface CrearGatoDto {
+  nombre: string;
+  edad: number;
+  raza?: string;
+}
+
+@Controller('gatos')
+export class GatosController {
+  @Post()
+  crear(@Body() datos: CrearGatoDto) {
+    return `Gato creado: ${datos.nombre} (${datos.edad} años)`;
+  }
+}</code></pre>
+<h3>Extraer una propiedad concreta</h3>
+<pre><code class="language-typescript">@Post()
+crear(@Body('nombre') nombre: string) {
+  return `Nombre recibido: ${nombre}`;
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-5-acceso-al-objeto-request-y-response">
+    <h2><i class="fa-solid fa-code"></i> 4.5 Acceso al objeto Request y Response</h2>
+    <div class="doc-content">
+<h3>Objeto Request</h3>
+<p>El decorador <code>@Req()</code> inyecta el objeto <code>Request</code> de Express, que contiene toda la información de la petición: encabezados, método, cookies y URL.</p>
+<pre><code class="language-typescript">import { Controller, Get, Req } from '@nestjs/common';
+import { Request } from 'express';
+
+@Controller('gatos')
+export class GatosController {
+  @Get('info')
+  informacion(@Req() req: Request): string {
+    const ip = req.ip;
+    const metodo = req.method;
+    const url = req.originalUrl;
+    return `Petición ${metodo} a ${url} desde ${ip}`;
+  }
+}</code></pre>
+<h3>Decoradores específicos compositivos</h3>
+<p>NestJS ofrece atajos para no depender del objeto completo:</p>
+<table><thead><tr><th>Decorador</th><th>Qué expone</th></tr></thead><tbody><tr><td><code>@Req()</code> / <code>@Request()</code></td><td>Objeto request completo</td></tr><tr><td><code>@Res()</code> / <code>@Response()</code></td><td>Objeto response completo</td></tr><tr><td><code>@Headers('nombre')</code></td><td>Un encabezado concreto</td></tr><tr><td><code>@Ip()</code></td><td>Dirección IP del cliente</td></tr><tr><td><code>@HostParam()</code></td><td>Parámetro de host</td></tr></tbody></table>
+<h3>Leer un encabezado</h3>
+<pre><code class="language-typescript">import { Controller, Get, Headers } from '@nestjs/common';
+
+@Controller('gatos')
+export class GatosController {
+  @Get('lenguaje')
+  idioma(@Headers('accept-language') idioma: string) {
+    return `Idioma preferido: ${idioma}`;
+  }
+}</code></pre>
+<blockquote class="aside aside-warning">
+Evita usar `@Res()` fuera de librerías específicas (como descargas de archivos), porque obligas a NestJS a devolver la respuesta manualmente y pierdes interceptores y filtros de respuesta automáticos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-6-respuestas-con-codigos-de-estado">
+    <h2><i class="fa-solid fa-server"></i> 4.6 Respuestas con códigos de estado</h2>
+    <div class="doc-content">
+<h3>Códigos de estado HTTP más usados</h3>
+<table><thead><tr><th>Código</th><th>Significado</th><th>Uso</th></tr></thead><tbody><tr><td><code>200</code></td><td>OK</td><td>Respuesta correcta</td></tr><tr><td><code>201</code></td><td>Created</td><td>Recurso creado (POST)</td></tr><tr><td><code>204</code></td><td>No Content</td><td>Eliminación correcta</td></tr><tr><td><code>400</code></td><td>Bad Request</td><td>Datos inválidos</td></tr><tr><td><code>401</code></td><td>Unauthorized</td><td>No autenticado</td></tr><tr><td><code>403</code></td><td>Forbidden</td><td>Sin permisos</td></tr><tr><td><code>404</code></td><td>Not Found</td><td>Recurso inexistente</td></tr><tr><td><code>500</code></td><td>Internal Server Error</td><td>Error del servidor</td></tr></tbody></table>
+<h3>Cambiar el código por defecto</h3>
+<p>Por defecto, <code>POST</code> devuelve <code>201</code> y el resto <code>200</code>. Se puede cambiar con <code>@HttpCode()</code>.</p>
+<pre><code class="language-typescript">import { Controller, Get, Post, HttpCode } from '@nestjs/common';
+
+@Controller('gatos')
+export class GatosController {
+  @Get('especial')
+  @HttpCode(202)
+  aceptado() {
+    return 'Solicitud aceptada en proceso';
+  }
+
+  @Post()
+  crear() {
+    return 'Creado (201 por defecto)';
+  }
+}</code></pre>
+<h3>Lanzar excepciones</h3>
+<pre><code class="language-typescript">import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+
+@Controller('gatos')
+export class GatosController {
+  @Get(':id')
+  obtenerUno(@Param('id') id: string) {
+    if (id === '0') {
+      throw new NotFoundException('Gato no encontrado');
+    }
+    return `Gato ${id}`;
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los controladores usan `@Controller` y manejan las peticiones HTTP
+- Los decoradores `@Get`, `@Post`, `@Put`, `@Patch` y `@Delete` definen los métodos
+- `@Param` captura parámetros de ruta y `@Query` los parámetros de consulta
+- `@Body` recibe el cuerpo de la petición, normalmente con un DTO
+- `@Req` y `@Res` dan acceso directo a los objetos de Express
+- `@HttpCode` cambia el estado de respuesta y `NotFoundException` envía errores
+</blockquote>
+    </div>
+  </section>

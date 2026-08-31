@@ -1,0 +1,191 @@
+<!-- 03. Páginas y enrutamiento - Nuxt (Frameworks) -->
+  <section id="3-1-file-based-routing-en-pages">
+    <h2><i class="fa-solid fa-route"></i> 3.1 File-based routing en pages</h2>
+    <div class="doc-content">
+<h3>El sistema de rutas</h3>
+<p>Nuxt convierte cada archivo dentro de <code>pages/</code> en una ruta de la aplicación. Esta convención se llama <strong>file-based routing</strong> y elimina la necesidad de configurar un enrutador manualmente.</p>
+<h3>Ejemplos de mapeo archivo-ruta</h3>
+<table><thead><tr><th>Archivo</th><th>Ruta resultante</th></tr></thead><tbody><tr><td><code>pages/index.vue</code></td><td><code>/</code></td></tr><tr><td><code>pages/acerca.vue</code></td><td><code>/acerca</code></td></tr><tr><td><code>pages/contacto/index.vue</code></td><td><code>/contacto</code></td></tr><tr><td><code>pages/blog/novedades.vue</code></td><td><code>/blog/novedades</code></td></tr><tr><td><code>pages/tienda/[id].vue</code></td><td><code>/tienda/:id</code></td></tr></tbody></table>
+<h3>Ejemplo: Página simple</h3>
+<pre><code class="language-vue">&lt;!-- pages/acerca.vue --&gt;
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;h1&gt;Acerca de nosotros&lt;/h1&gt;
+    &lt;p&gt;Esta es la página de información.&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<blockquote class="aside aside-note">
+La página index.vue siempre corresponde a la raíz (<code>/</code>) de tu aplicación.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-2-paginas-dinamicas-con-parametros">
+    <h2><i class="fa-solid fa-database"></i> 3.2 Páginas dinámicas con parámetros</h2>
+    <div class="doc-content">
+<h3>Rutas dinámicas</h3>
+<p>Cuando un archivo usa corchetes <code>[...]</code> en su nombre, se crea una ruta dinámica que captura un segmento de la URL como parámetro.</p>
+<pre><code class="language-text">pages/blog/[slug].vue   -&gt;  /blog/:slug
+pages/productos/[id].vue -&gt;  /productos/:id
+pages/[[categoria]]/index.vue -&gt; opcional
+</code></pre>
+<h3>Acceder al parámetro</h3>
+<p>Se usa el composable <code>useRoute()</code> para obtener los parámetros de la ruta actual.</p>
+<pre><code class="language-vue">&lt;!-- pages/productos/[id].vue --&gt;
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;h1&gt;Producto {{ id }}&lt;/h1&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+const route = useRoute()
+const id = computed(() =&gt; route.params.id)
+&lt;/script&gt;</code></pre>
+<h3>Catch-all y rutas opcionales</h3>
+<table><thead><tr><th>Convención</th><th>Comportamiento</th></tr></thead><tbody><tr><td><code>[id].vue</code></td><td>Requiere un segmento obligatorio</td></tr><tr><td><code>[[pagina]].vue</code></td><td>Segmento opcional</td></tr><tr><td><code>[...slug].vue</code></td><td>Catch-all, captura varios segmentos</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-3-navigation-con-nuxt-link">
+    <h2><i class="fa-solid fa-link"></i> 3.3 Navegación con NuxtLink</h2>
+    <div class="doc-content">
+<h3>El componente NuxtLink</h3>
+<p><code>&lt;NuxtLink&gt;</code> es el componente de Nuxt para navegar entre páginas. Acepta una prop <code>to</code> con la ruta de destino y optimiza el prefetch de las páginas.</p>
+<h3>Ejemplo: Menú de navegación</h3>
+<pre><code class="language-vue">&lt;!-- app/components/NavBar.vue --&gt;
+&lt;template&gt;
+  &lt;nav&gt;
+    &lt;NuxtLink to="/"&gt;Inicio&lt;/NuxtLink&gt;
+    &lt;NuxtLink to="/acerca"&gt;Acerca&lt;/NuxtLink&gt;
+    &lt;NuxtLink to="/productos"&gt;Productos&lt;/NuxtLink&gt;
+    &lt;NuxtLink :to="`/productos/${id}`"&gt;Ver producto&lt;/NuxtLink&gt;
+  &lt;/nav&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+const id = ref(5)
+&lt;/script&gt;</code></pre>
+<h3>Ventajas de NuxtLink vs una etiqueta a</h3>
+<table><thead><tr><th>Característica</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Prefetch</strong></td><td>Carga la página destino al pasar el ratón</td></tr><tr><td><strong>Client-side navigation</strong></td><td>No recarga completamente la página</td></tr><tr><td><strong>Rutas internas</strong></td><td>Detecta automáticamente rutas internas</td></tr><tr><td><strong>Active state</strong></td><td>Permite añadir clases cuando la ruta está activa</td></tr></tbody></table>
+<h3>Ejemplo: Enlace con clase activa</h3>
+<pre><code class="language-vue">&lt;NuxtLink to="/acerca" active-class="activo" exact-active-class="exacto"&gt;
+  Acerca
+&lt;/NuxtLink&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-4-navegacion-programatica">
+    <h2><i class="fa-solid fa-code"></i> 3.4 Navegación programática</h2>
+    <div class="doc-content">
+<h3>Qué es la navegación programática</h3>
+<p>A veces necesitas navegar desde JavaScript, por ejemplo al completar un formulario o tras una acción. Para eso se usa el composable <code>useRouter()</code>.</p>
+<h3>Ejemplo: Redirigir tras envío</h3>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;button @click="guardar"&gt;Guardar y volver&lt;/button&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+const router = useRouter()
+
+function guardar() {
+  // guardar los datos...
+  router.push('/productos')
+}
+&lt;/script&gt;</code></pre>
+<h3>Métodos útiles del router</h3>
+<ul>
+<li><code>router.push(ruta)</code>: navega a una nueva ruta (apila)</li>
+<li><code>router.replace(ruta)</code>: navega sin añadir entrada al historial</li>
+<li><code>router.back()</code>: retrocede en el historial</li>
+<li><code>router.forward()</code>: avanza en el historial</li>
+</ul>
+<h3>Ejemplo: Navegar con parámetros de consulta</h3>
+<pre><code class="language-vue">const router = useRouter()
+
+router.push({
+  path: '/busqueda',
+  query: { termino: 'vue', pagina: 2 }
+})
+// Resultado: /busqueda?termino=vue&amp;pagina=2</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-5-uso-de-useroute-y-parametros-de-consulta">
+    <h2><i class="fa-solid fa-magnifying-glass"></i> 3.5 Uso de useRoute y parámetros de consulta</h2>
+    <div class="doc-content">
+<h3>El composable useRoute</h3>
+<p><code>useRoute()</code> devuelve el objeto de ruta actual con información como la URL, los parámetros y la consulta.</p>
+<h3>Ejemplo: Leer la query string</h3>
+<pre><code class="language-vue">&lt;!-- pages/busqueda.vue --&gt;
+&lt;template&gt;
+  &lt;p&gt;Buscando: {{ termino }}&lt;/p&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+const route = useRoute()
+
+// /busqueda?termino=nuxt -&gt; "nuxt"
+const termino = computed(() =&gt; route.query.termino || '')
+&lt;/script&gt;</code></pre>
+<h3>Propiedades útiles del objeto route</h3>
+<table><thead><tr><th>Propiedad</th><th>Descripción</th></tr></thead><tbody><tr><td><code>route.path</code></td><td>Camino de la ruta (<code>/productos/5</code>)</td></tr><tr><td><code>route.params</code></td><td>Parámetros dinámicos (<code>{ id: '5' }</code>)</td></tr><tr><td><code>route.query</code></td><td>Parámetros de consulta (<code>{ termino: 'nuxt' }</code>)</td></tr><tr><td><code>route.fullPath</code></td><td>Ruta completa incluyendo query</td></tr><tr><td><code>route.hash</code></td><td>Fragmento de la URL (anclas)</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-6-pagina-404-y-manejo-de-errores">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> 3.6 Página 404 y manejo de errores</h2>
+    <div class="doc-content">
+<h3>Página de error personalizada</h3>
+<p>Puedes crear un archivo <code>app/error.vue</code> para personalizar la página que se muestra ante errores (no encontrado, error del servidor, etc.).</p>
+<h3>Ejemplo: error.vue</h3>
+<pre><code class="language-vue">&lt;!-- app/error.vue --&gt;
+&lt;template&gt;
+  &lt;div class="error"&gt;
+    &lt;h1&gt;{{ error.statusCode }}&lt;/h1&gt;
+    &lt;p&gt;{{ error.statusMessage || 'Algo salió mal' }}&lt;/p&gt;
+    &lt;NuxtLink to="/"&gt;Volver al inicio&lt;/NuxtLink&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+const props = defineProps({ error: Object })
+const handleError = () =&gt; clearError({ redirect: '/' })
+&lt;/script&gt;</code></pre>
+<h3>Iniciar un error desde el código</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+const { data: producto } = await useFetch(`/api/productos/999`)
+
+if (!producto.value) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Producto no encontrado'
+  })
+}
+&lt;/script&gt;</code></pre>
+<h3>Función clearError</h3>
+<p>El composable <code>clearError</code> limpia el error actual y, opcionalmente, redirige a otra página:</p>
+<pre><code class="language-ts">clearError({ redirect: '/productos' })</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El file-based routing convierte archivos de pages/ en rutas
+- Las rutas dinámicas usan corchetes como [id].vue
+- NuxtLink permite navegación eficiente entre páginas
+- useRouter() y uso programático controlan la navegación
+- useRoute() lee parámetros y query de la URL actual
+- Crea app/error.vue para personalizar los errores y el 404
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,181 @@
+<!-- 07. Base de datos con EF Core - .NET (Frameworks) -->
+  <section id="7-1-que-es-entity-framework-core">
+    <h2><i class="fa-solid fa-database"></i> 7.1 Qué es Entity Framework Core</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p><strong>Entity Framework Core</strong> (EF Core) es un ORM (Object-Relational Mapper) para .NET. Permite trabajar con una base de datos usando objetos C# y LINQ, sin escribir SQL manual para las operaciones comunes.</p>
+<h3>Beneficios</h3>
+<table><thead><tr><th>Beneficio</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Productividad</strong></td><td>No escribir SQL repetitivo</td></tr><tr><td><strong>Tipado seguro</strong></td><td>Consultas con LINQ compiladas</td></tr><tr><td><strong>Multi-BD</strong></td><td>SQL Server, SQLite, PostgreSQL, MySQL</td></tr><tr><td><strong>Migrations</strong></td><td>Sincronizan el esquema de la BD</td></tr></tbody></table>
+<h3>Instalar</h3>
+<pre><code class="language-bash">dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+dotnet add package Microsoft.EntityFrameworkCore.Tools</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-2-dbcontext">
+    <h2><i class="fa-solid fa-cubes-stacked"></i> 7.2 El DbContext</h2>
+    <div class="doc-content">
+<h3>Qué es el DbContext</h3>
+<p>El <code>DbContext</code> es la clase principal de EF Core. Representa una sesión con la base de datos y contiene conjuntos de entidades (DbSet).</p>
+<h3>Ejemplo: DbContext de una tienda</h3>
+<pre><code class="language-csharp">public class TiendaContext : DbContext
+{
+    public TiendaContext(DbContextOptions&lt;TiendaContext&gt; options)
+        : base(options)
+    {
+    }
+
+    public DbSet&lt;Producto&gt; Productos { get; set; }
+    public DbSet&lt;Categoria&gt; Categorias { get; set; }
+}</code></pre>
+<p>Los <code>DbSet&lt;T&gt;</code> exponen cada tabla como una colección consultable.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-3-modelos-y-entidades">
+    <h2><i class="fa-solid fa-shapes"></i> 7.3 Modelos y entidades</h2>
+    <div class="doc-content">
+<h3>Qué es una entidad</h3>
+<p>Una <strong>entidad</strong> es una clase C# que se mapea a una tabla de la base de datos. Sus propiedades se convierten en columnas.</p>
+<h3>Ejemplo: entidades y sus relaciones</h3>
+<pre><code class="language-csharp">public class Producto
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; }
+    public decimal Precio { get; set; }
+
+    public int CategoriaId { get; set; }
+    public Categoria Categoria { get; set; }
+}
+
+public class Categoria
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; }
+    public List&lt;Producto&gt; Productos { get; set; } = new();
+}</code></pre>
+<h3>Convenciones clave</h3>
+<ul>
+<li><strong>Id</strong>: se convierte en clave primaria</li>
+<li><strong>PropiedadId</strong>: clave externa</li>
+<li><strong>Propiedad de navegación</strong>: relación entre entidades</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-4-migrations">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 7.4 Migraciones</h2>
+    <div class="doc-content">
+<h3>Qué son las migraciones</h3>
+<p>Las <strong>migraciones</strong> son versiones del esquema de la base de datos generadas a partir de los modelos. Permiten crear, actualizar y sincronizar la BD sin escribir SQL.</p>
+<h3>Comandos</h3>
+<pre><code class="language-bash"># Crear una migración
+dotnet ef migrations add Inicial
+
+# Aplicar migraciones a la BD
+dotnet ef database update</code></pre>
+<h3>Ciclo típico</h3>
+<ul>
+<li>Modificar o crear modelos</li>
+<li><code>add migration</code>: genera una migración</li>
+<li><code>database update</code>: aplica los cambios</li>
+</ul>
+<blockquote class="aside aside-tip">
+Consulta todas las migraciones con `dotnet ef migrations list`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-5-crud-con-linq">
+    <h2><i class="fa-solid fa-rectangle-list"></i> 7.5 CRUD con LINQ</h2>
+    <div class="doc-content">
+<h3>Operaciones CRUD</h3>
+<p>Con EF Core se hace CRUD (Create, Read, Update, Delete) usando LINQ y métodos del contexto.</p>
+<h3>Crear y leer</h3>
+<pre><code class="language-csharp">// Crear
+var nuevo = new Producto { Nombre = "Mouse", Precio = 29.99m };
+_context.Productos.Add(nuevo);
+await _context.SaveChangesAsync();
+
+// Leer todos
+var todos = await _context.Productos.ToListAsync();
+
+// Leer con filtro
+var caros = await _context.Productos
+    .Where(p =&gt; p.Precio &gt; 100)
+    .OrderByDescending(p =&gt; p.Precio)
+    .ToListAsync();</code></pre>
+<h3>Actualizar y eliminar</h3>
+<pre><code class="language-csharp">// Actualizar
+var producto = await _context.Productos.FindAsync(1);
+if (producto != null)
+{
+    producto.Precio = 39.99m;
+    await _context.SaveChangesAsync();
+}
+
+// Eliminar
+var eliminar = await _context.Productos.FindAsync(2);
+if (eliminar != null)
+{
+    _context.Productos.Remove(eliminar);
+    await _context.SaveChangesAsync();
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-6-inyeccion-en-un-controlador">
+    <h2><i class="fa-solid fa-plug"></i> 7.6 EF Core en un controlador</h2>
+    <div class="doc-content">
+<h3>Registrar el DbContext</h3>
+<p>El <code>DbContext</code> se registra en el contenedor de dependencias de <code>Program.cs</code>:</p>
+<pre><code class="language-csharp">var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext&lt;TiendaContext&gt;(options =&gt;
+    options.UseSqlServer(builder.Configuration
+        .GetConnectionString("Tienda")));
+
+var app = builder.Build();
+app.Run();</code></pre>
+<h3>Usarlo en un controlador</h3>
+<pre><code class="language-csharp">public class ProductoController : Controller
+{
+    private readonly TiendaContext _context;
+
+    public ProductoController(TiendaContext context)
+    {
+        _context = context;
+    }
+
+    public async Task&lt;IActionResult&gt; Index()
+    {
+        var productos = await _context.Productos.ToListAsync();
+        return View(productos);
+    }
+}</code></pre>
+<blockquote class="aside aside-note">
+La conexión se define en appsettings.json en la sección ConnectionStrings.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- EF Core es un ORM para trabajar con bases de datos usando C#
+- El DbContext define las tablas con DbSet y la conexión
+- Las entidades se mapean a tablas y columnas
+- Las migraciones sincronizan el esquema de la BD
+- CRUD se hace con LINQ y SaveChangesAsync
+- El DbContext se inyecta en controladores y servicios
+</blockquote>
+    </div>
+  </section>

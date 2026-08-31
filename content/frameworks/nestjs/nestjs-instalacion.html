@@ -1,0 +1,187 @@
+<!-- 02. Instalación y primer proyecto - NestJS (Frameworks) -->
+  <section id="2-1-requisitos-previos">
+    <h2><i class="fa-solid fa-box"></i> 2.1 Requisitos previos</h2>
+    <div class="doc-content">
+<h3>Requisitos para instalar NestJS</h3>
+<table><thead><tr><th>Requisito</th><th>Versión recomendada</th></tr></thead><tbody><tr><td><strong>Node.js</strong></td><td>20.x o superior (compilación nativa de esbuild y SWC)</td></tr><tr><td><strong>npm</strong></td><td>10.x o superior (incluido con Node.js)</td></tr><tr><td><strong>Editor de código</strong></td><td>VS Code con la extensión de ESLint y Prettier</td></tr><tr><td><strong>Git</strong></td><td>Opcional, recomendado para control de versiones</td></tr></tbody></table>
+<h3>Verificar la instalación de Node.js</h3>
+<pre><code class="language-bash"># Verificar versión de Node.js
+node --version
+# v20.11.0
+
+# Verificar versión de npm
+npm --version
+# 10.2.4</code></pre>
+<blockquote class="aside aside-note">
+Si no tienes Node.js instalado, descárgalo desde el sitio oficial de Node.js y usa la versión LTS para proyectos de producción.
+</blockquote>
+<h3>Node.js vs NestJS</h3>
+<p>NestJS es un framework de Node.js: necesita <strong>Node</strong> instalado para crear el proyecto, instalar dependencias y ejecutar la aplicación. NestJS 10 requiere Node 16 o superior, mientras que NestJS 11 requiere Node 20 o superior.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-2-instalacion-de-nest-cli">
+    <h2><i class="fa-solid fa-terminal"></i> 2.2 Instalación de Nest CLI</h2>
+    <div class="doc-content">
+<h3>Qué es Nest CLI</h3>
+<p><strong>Nest CLI</strong> es la herramienta de línea de comandos oficial que permite crear proyectos, generar módulos, controladores y servicios, y ejecutar la aplicación con un solo comando.</p>
+<h3>Instalar Nest CLI de forma global</h3>
+<pre><code class="language-bash"># Instalación global con npm
+npm install -g @nestjs/cli
+
+# Verificar la instalación
+nest --version
+# 10.3.0
+
+# Ver la ayuda del CLI
+nest --help</code></pre>
+<h3>Opciones de instalación</h3>
+<table><thead><tr><th>Opción</th><th>Descripción</th></tr></thead><tbody><tr><td><code>npm install -g @nestjs/cli</code></td><td>Instala el CLI globalmente (recomendado)</td></tr><tr><td><code>npx @nestjs/cli</code></td><td>Usa el CLI sin instalarlo (por proyecto)</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Si usas `npx`, puedes ejecutar comandos como `npx @nestjs/cli new mi-proyecto` sin instalar nada de forma global.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-3-crear-el-primer-proyecto-con-nest-new">
+    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> 2.3 Crear el primer proyecto con nest new</h2>
+    <div class="doc-content">
+<h3>Comando nest new</h3>
+<pre><code class="language-bash"># Crear un nuevo proyecto
+nest new mi-primer-api
+
+# Crear un proyecto sin git
+nest new mi-primer-api --no-git
+
+# Crear un proyecto con el gestor de paquetes indicado
+nest new mi-primer-api --package-manager npm</code></pre>
+<p>El comando genera la estructura base, instala las dependencias y pregunta por el gestor de paquetes preferido.</p>
+<h3>Entrar y explorar el proyecto</h3>
+<pre><code class="language-bash"># Entrar a la carpeta del proyecto
+cd mi-primer-api
+
+# Ver los scripts disponibles
+npm run</code></pre>
+<h3>Flags principales</h3>
+<table><thead><tr><th>Flag</th><th>Descripción</th></tr></thead><tbody><tr><td><code>--skip-git</code> / <code>--no-git</code></td><td>No inicializar un repositorio git</td></tr><tr><td><code>--package-manager</code></td><td>Define npm, yarn o pnpm</td></tr><tr><td><code>--strict</code></td><td>Habilita el modo estricto de TypeScript</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-4-estructura-de-carpetas">
+    <h2><i class="fa-solid fa-folder"></i> 2.4 Estructura de carpetas</h2>
+    <div class="doc-content">
+<h3>Estructura generada por nest new</h3>
+<pre><code class="language-text">mi-primer-api/
+├── src/
+│   ├── app.controller.ts     # Controlador raíz
+│   ├── app.controller.spec.ts# Pruebas del controlador
+│   ├── app.module.ts         # Módulo raíz
+│   ├── app.service.ts        # Servicio raíz
+│   └── main.ts               # Punto de entrada
+├── test/
+│   ├── app.e2e-spec.ts       # Pruebas de integración
+│   └── jest-e2e.json         # Configuración de pruebas e2e
+├── node_modules/             # Dependencias
+├── package.json
+├── nest-cli.json             # Configuración del CLI
+├── tsconfig.json             # Configuración de TypeScript
+├── tsconfig.build.json
+├── eslint.config.mjs         # Configuración de ESLint
+├── prettierrc               # Configuración de Prettier
+└── .gitignore
+</code></pre>
+<h3>Archivos esenciales</h3>
+<table><thead><tr><th>Archivo</th><th>Rol</th></tr></thead><tbody><tr><td><code>main.ts</code></td><td>Arranca la aplicación y configura el puerto</td></tr><tr><td><code>app.module.ts</code></td><td>Módulo raíz que agrupa toda la aplicación</td></tr><tr><td><code>app.controller.ts</code></td><td>Controlador del endpoint raíz <code>/</code></td></tr><tr><td><code>app.service.ts</code></td><td>Servicio con la lógica de negocio principal</td></tr></tbody></table>
+<h3>Contenido de main.ts</h3>
+<pre><code class="language-typescript">import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  await app.listen(3000);
+}
+
+bootstrap();</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-5-ejecutar-la-aplicacion">
+    <h2><i class="fa-solid fa-play"></i> 2.5 Ejecutar la aplicación</h2>
+    <div class="doc-content">
+<h3>Modos de ejecución</h3>
+<table><thead><tr><th>Comando</th><th>Descripción</th></tr></thead><tbody><tr><td><code>npm run start</code></td><td>Compila y ejecuta la aplicación</td></tr><tr><td><code>npm run start:dev</code></td><td>Ejecuta con recarga automática (watch mode)</td></tr><tr><td><code>npm run start:debug</code></td><td>Ejecuta con recarga y el inspector de Node.js</td></tr><tr><td><code>npm run start:prod</code></td><td>Ejecuta la compilación de producción desde <code>dist</code></td></tr></tbody></table>
+<h3>Ejecutar en modo desarrollo</h3>
+<pre><code class="language-bash">npm run start:dev
+
+# Salida esperada:
+# [Nest] 12345  - Logging  => Starting Nest application...
+# [Nest] 12345  - RoutesResolver => Mapped {/ , GET} route
+# [Nest] 12345  - Nest application successfully started</code></pre>
+<p>El modo de desarrollo usa <code>nest start --watch</code>, que reinicia la aplicación automáticamente cuando detecta cambios en el código.</p>
+<h3>Probar la aplicación</h3>
+<pre><code class="language-text"># Abrir en el navegador
+http://localhost:3000
+
+# Respuesta esperada (Hola Mundo)
+Hello World!</code></pre>
+<blockquote class="aside aside-warning">
+Nunca uses `start:dev` en producción: el modo watch y los logs extras reducen el rendimiento y pueden reiniciar el servicio inesperadamente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-6-comandos-utiles-del-cli">
+    <h2><i class="fa-solid fa-list-check"></i> 2.6 Comandos útiles del CLI</h2>
+    <div class="doc-content">
+<h3>Comandos de generación</h3>
+<pre><code class="language-bash"># Generar un módulo
+nest generate module usuarios
+
+# Generar un controlador dentro de un módulo
+nest generate controller productos
+
+# Generar un servicio
+nest generate service pedidos
+
+# Generar un recurso completo (CRUD con migas de pan)
+nest generate resource catalogo
+
+# Generar un guard
+nest generate guard auth
+
+# Generar un pipe
+nest generate pipe validar-dni</code></pre>
+<h3>Formas abreviadas</h3>
+<table><thead><tr><th>Comando largo</th><th>Abreviatura</th></tr></thead><tbody><tr><td><code>nest generate module X</code></td><td><code>nest g mo X</code></td></tr><tr><td><code>nest generate controller X</code></td><td><code>nest g co X</code></td></tr><tr><td><code>nest generate service X</code></td><td><code>nest g s X</code></td></tr><tr><td><code>nest generate resource X</code></td><td><code>nest g res X</code></td></tr></tbody></table>
+<h3>Otros comandos</h3>
+<pre><code class="language-bash"># Ver la información del proyecto y sus dependencias
+nest info
+
+# Compilar la aplicación
+npm run build
+
+# Ejecutar las pruebas unitarias
+npm run test</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- NestJS requiere Node.js 20.x o superior
+- Se instala el CLI global con `npm install -g @nestjs/cli`
+- `nest new nombre-proyecto` crea la estructura base con dependencias
+- La carpeta `src` contiene módulos, controladores, servicios y `main.ts`
+- `npm run start:dev` ejecuta la aplicación con recarga automática
+- El CLI genera código con comandos como `nest g co`, `nest g s` y `nest g res`
+</blockquote>
+    </div>
+  </section>

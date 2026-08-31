@@ -1,0 +1,185 @@
+<!-- 09. Autenticación y autorización - .NET (Frameworks) -->
+  <section id="9-1-autenticacion-vs-autorizacion">
+    <h2><i class="fa-solid fa-user-shield"></i> 9.1 Autenticación vs autorización</h2>
+    <div class="doc-content">
+<h3>Diferencias</h3>
+<p>Dos conceptos similares pero distintos:</p>
+<table><thead><tr><th>Concepto</th><th>Pregunta</th><th>Significado</th></tr></thead><tbody><tr><td><strong>Autenticación</strong></td><td>Quién eres</td><td>Verifica la identidad (login)</td></tr><tr><td><strong>Autorización</strong></td><td>Qué puedes hacer</td><td>Controla los permisos de acceso</td></tr></tbody></table>
+<h3>Flujo típico</h3>
+<pre><code class="language-csharp">// 1. El usuario inicia sesión (autenticación)
+// 2. El sistema emite una credencial (cookie o token)
+// 3. En cada petición se valida la credencial
+// 4. Se decide si el usuario puede acceder (autorización)</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-2-aspnet-core-identity">
+    <h2><i class="fa-solid fa-id-badge"></i> 9.2 ASP.NET Core Identity</h2>
+    <div class="doc-content">
+<h3>Qué es Identity</h3>
+<p><strong>ASP.NET Core Identity</strong> es el sistema integrado de gestión de usuarios: registro, login, contraseñas, roles y claims. Se integra con EF Core y almacena los usuarios en la base de datos.</p>
+<h3>Instalar y registrar</h3>
+<pre><code class="language-bash">dotnet add package Microsoft.AspNetCore.Identity.EntityFrameworkCore</code></pre>
+<pre><code class="language-csharp">var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext&lt;AppDbContext&gt;(options =&gt;
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Conexion")));
+
+builder.Services.AddDefaultIdentity&lt;IdentityUser&gt;()
+    .AddEntityFrameworkStores&lt;AppDbContext&gt;();
+
+var app = builder.Build();
+app.UseAuthentication();
+app.UseAuthorization();
+app.Run();</code></pre>
+<blockquote class="aside aside-note">
+Usa el comando `dotnet new mvc` con autenticación individual para obtener las plantillas de login y registro.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-3-autenticacion-con-cookies">
+    <h2><i class="fa-solid fa-cookie-bite"></i> 9.3 Autenticación con cookies</h2>
+    <div class="doc-content">
+<h3>Qué es el esquema de cookies</h3>
+<p>En aplicaciones web MVC, la autenticación suele usar <strong>cookies</strong>: tras el login, el servidor guarda una cookie cifrada en el navegador que identifica al usuario en cada petición.</p>
+<h3>Iniciar sesión</h3>
+<pre><code class="language-csharp">[HttpPost]
+public async Task&lt;IActionResult&gt; Login(LoginViewModel modelo)
+{
+    var resultado = await _signInManager
+        .PasswordSignInAsync(modelo.Email, modelo.Password,
+            persistente: true, lockoutOnFailure: false);
+
+    if (resultado.Succeeded)
+        return RedirectToAction("Index", "Home");
+
+    ModelState.AddModelError("", "Credenciales inválidas");
+    return View(modelo);
+}
+</code></pre>
+<h3>Cerrar sesión</h3>
+<pre><code class="language-csharp">[HttpPost]
+public async Task&lt;IActionResult&gt; Logout()
+{
+    await _signInManager.SignOutAsync();
+    return RedirectToAction("Index", "Home");
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-4-jwt-bearer">
+    <h2><i class="fa-solid fa-key"></i> 9.4 JWT Bearer para APIs</h2>
+    <div class="doc-content">
+<h3>Qué es JWT</h3>
+<p>En las APIs REST se suele usar <strong>JWT</strong> (JSON Web Tokens): el cliente envía un token firmado en la cabecera <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+<h3>Configurar la autenticación JWT</h3>
+<pre><code class="language-csharp">var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =&gt;
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidIssuer = "mi-api",
+            ValidAudience = "mis-clientes",
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes("clave-super-secreta-de-prueba-123"))
+        };
+    });
+
+var app = builder.Build();
+app.UseAuthentication();
+app.UseAuthorization();
+app.Run();</code></pre>
+<blockquote class="aside aside-warning">
+Nunca guardes claves secretas en el código; configúralas en variables de entorno o secrets de usuario.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-5-attribute-authorize">
+    <h2><i class="fa-solid fa-lock"></i> 9.5 El atributo [Authorize]</h2>
+    <div class="doc-content">
+<h3>Proteger rutas</h3>
+<p>El atributo <code>[Authorize]</code> exige que el usuario esté autenticado (y opcionalmente autorizado) para acceder a una acción o controlador.</p>
+<h3>Ejemplos de uso</h3>
+<pre><code class="language-csharp">public class CuentaController : Controller
+{
+    // Requiere iniciar sesión
+    [Authorize]
+    public IActionResult Perfil()
+    {
+        return View();
+    }
+
+    // Requiere un rol específico
+    [Authorize(Roles = "Admin")]
+    public IActionResult GestionUsuarios()
+    {
+        return View();
+    }
+
+    // Requiere una claim concreta
+    [Authorize(Policy = "SoloAdultos")]
+    public IActionResult ContenidoRestringido()
+    {
+        return View();
+    }
+}</code></pre>
+<h3>Proteger toda la app o un controlador</h3>
+<pre><code class="language-csharp">[Authorize]
+public class PedidosController : Controller
+{
+    // Todas las acciones requieren autenticación
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-6-roles-y-claims">
+    <h2><i class="fa-solid fa-user-tag"></i> 9.6 Roles y claims</h2>
+    <div class="doc-content">
+<h3>Diferencias</h3>
+<p>Ambos otorgan información sobre el usuario:</p>
+<table><thead><tr><th>Elemento</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Rol</strong></td><td>Grupo de permisos (Admin, Editor, Usuario)</td></tr><tr><td><strong>Claim</strong></td><td>Afirmación concreta (edad, departamento, permiso)</td></tr></tbody></table>
+<h3>Asignar un rol</h3>
+<pre><code class="language-csharp">var usuario = new IdentityUser { UserName = email, Email = email };
+var resultado = await _userManager.CreateAsync(usuario, password);
+if (resultado.Succeeded)
+{
+    await _userManager.AddToRoleAsync(usuario, "Admin");
+}</code></pre>
+<h3>Crear un rol</h3>
+<pre><code class="language-csharp">if (!await _roleManager.RoleExistsAsync("Admin"))
+{
+    await _roleManager.CreateAsync(new IdentityRole("Admin"));
+}</code></pre>
+<blockquote class="aside aside-tip">
+Combina roles y claims según la complejidad: roles para grupos generales y claims para permisos específicos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Autenticación verifica la identidad; autorización controla permisos
+- ASP.NET Core Identity gestiona usuarios, roles y claims
+- Las apps MVC suelen usar autenticación con cookies
+- Las APIs REST usan JWT con la cabecera Bearer
+- [Authorize] protege rutas con roles y políticas
+- Roles agrupan permisos; claims expresan afirmaciones concretas
+</blockquote>
+    </div>
+  </section>

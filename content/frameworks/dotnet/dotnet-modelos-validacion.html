@@ -1,0 +1,168 @@
+<!-- 06. Modelos y validación - .NET (Frameworks) -->
+  <section id="6-1-modelos-de-dominio">
+    <h2><i class="fa-solid fa-database"></i> 6.1 Modelos de dominio</h2>
+    <div class="doc-content">
+<h3>Qué es un modelo de dominio</h3>
+<p>Un <strong>modelo de dominio</strong> es una clase C# que representa una entidad de negocio. Se usa tanto para guardar datos como para recibirlos de formularios.</p>
+<h3>Ejemplo: Modelo Usuario</h3>
+<pre><code class="language-csharp">public class Usuario
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; }
+    public string Email { get; set; }
+    public int Edad { get; set; }
+    public bool Activo { get; set; }
+}</code></pre>
+<h3>Combinar con las acciones</h3>
+<pre><code class="language-csharp">[HttpPost]
+public IActionResult Crear(Usuario usuario)
+{
+    if (ModelState.IsValid)
+    {
+        // guardar el usuario
+        return RedirectToAction("Lista");
+    }
+    return View(usuario);
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-2-data-annotations">
+    <h2><i class="fa-solid fa-clipboard-check"></i> 6.2 Data Annotations</h2>
+    <div class="doc-content">
+<h3>Qué son</h3>
+<p>Los <strong>Data Annotations</strong> son atributos que decoran las propiedades del modelo para definir reglas de validación, formato y mapeo.</p>
+<h3>Atributos más usados</h3>
+<table><thead><tr><th>Atributo</th><th>Función</th></tr></thead><tbody><tr><td><code>[Required]</code></td><td>Campo obligatorio</td></tr><tr><td><code>[StringLength(20)]</code></td><td>Longitud máxima</td></tr><tr><td><code>[Range(1, 120)]</code></td><td>Rango numérico</td></tr><tr><td><code>[EmailAddress]</code></td><td>Debe ser un email válido</td></tr><tr><td><code>[RegularExpression]</code></td><td>Coincide con una expresión</td></tr></tbody></table>
+<h3>Ejemplo: modelo validado</h3>
+<pre><code class="language-csharp">public class Usuario
+{
+    [Required(ErrorMessage = "El nombre es obligatorio")]
+    [StringLength(50)]
+    public string Nombre { get; set; }
+
+    [Required]
+    [EmailAddress(ErrorMessage = "Email inválido")]
+    public string Email { get; set; }
+
+    [Range(18, 120, ErrorMessage = "Edad entre 18 y 120")]
+    public int Edad { get; set; }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-3-modelstate">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> 6.3 Validación con ModelState</h2>
+    <div class="doc-content">
+<h3>Qué es ModelState</h3>
+<p><code>ModelState</code> almacena el estado de la validación del modelo enlazado. Contiene los errores de validación detectados automáticamente por las data annotations.</p>
+<h3>Ejemplo: comprobar la validación</h3>
+<pre><code class="language-csharp">[HttpPost]
+public IActionResult Guardar(Usuario usuario)
+{
+    if (!ModelState.IsValid)
+    {
+        // Devuelve la vista con los errores
+        return View(usuario);
+    }
+
+    // Datos válidos, continuar
+    return RedirectToAction("Lista");
+}</code></pre>
+<h3>Añadir errores manualmente</h3>
+<pre><code class="language-csharp">if (usuario.Edad &lt; 18)
+{
+    ModelState.AddModelError("Edad", "Debes ser mayor de edad");
+}</code></pre>
+<blockquote class="aside aside-note">
+La validación del servidor es imprescindible; la del cliente solo mejora la experiencia.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-4-tag-helpers-de-validacion">
+    <h2><i class="fa-solid fa-tags"></i> 6.4 Tag Helpers de validación</h2>
+    <div class="doc-content">
+<h3>Mostrar errores en la vista</h3>
+<p>Los <strong>Tag Helpers</strong> de validación muestran los mensajes de error junto a los campos del formulario.</p>
+<h3>Ejemplo: formulario con validación</h3>
+<pre><code class="language-csharp">@model Usuario
+
+&lt;form asp-action="Guardar" method="post"&gt;
+    &lt;div&gt;
+        &lt;label asp-for="Nombre"&gt;&lt;/label&gt;
+        &lt;input asp-for="Nombre" /&gt;
+        &lt;span asp-validation-for="Nombre" class="text-danger"&gt;&lt;/span&gt;
+    &lt;/div&gt;
+
+    &lt;div&gt;
+        &lt;label asp-for="Email"&gt;&lt;/label&gt;
+        &lt;input asp-for="Email" /&gt;
+        &lt;span asp-validation-for="Email" class="text-danger"&gt;&lt;/span&gt;
+    &lt;/div&gt;
+
+    &lt;div asp-validation-summary="ModelOnly"&gt;&lt;/div&gt;
+    &lt;button type="submit"&gt;Guardar&lt;/button&gt;
+&lt;/form&gt;
+
+@section Scripts {
+    &lt;partial name="_ValidationScriptsPartial" /&gt;
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-5-enlazado-de-modelos">
+    <h2><i class="fa-solid fa-link"></i> 6.5 Enlazado de modelos</h2>
+    <div class="doc-content">
+<h3>Qué es el model binding</h3>
+<p>El <strong>model binding</strong> convierte los datos de la petición (formulario, query, ruta, JSON) en instancias de modelos C# automáticamente.</p>
+<h3>Formas de enlazar datos</h3>
+<ul>
+<li><strong>Formulario</strong>: body por defecto en POST</li>
+<li><strong>Query string</strong>: parámetros en la URL</li>
+<li><strong>Ruta</strong>: segmentos de la URL</li>
+<li><strong>Cabeceras y body JSON</strong>: para APIs</li>
+</ul>
+<h3>Ejemplo: distintos orígenes</h3>
+<pre><code class="language-csharp">// /Producto/Buscar?nombre=laptop
+public IActionResult Buscar(string nombre)
+{
+    return Content(nombre);
+}
+
+[HttpPost]
+public IActionResult Crear(Producto producto)
+{
+    // Enlazado desde el form del cuerpo
+    return Content(producto.Nombre);
+}</code></pre>
+<h3>Evitar sobre-enlazado</h3>
+<pre><code class="language-csharp">[Bind("Nombre", "Precio")]
+public class ProductoViewModel
+{
+    public string Id { get; set; }  // no se enlaza
+    public string Nombre { get; set; }
+    public decimal Precio { get; set; }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los modelos de dominio representan entidades de negocio
+- Las Data Annotations definen reglas de validación en el modelo
+- ModelState centraliza el estado y los errores de validación
+- Los Tag Helpers de validación muestran errores en la vista
+- El model binding convierte datos de la petición en objetos
+- Conviene usar ViewModels para evitar el sobre-enlazado
+</blockquote>
+    </div>
+  </section>

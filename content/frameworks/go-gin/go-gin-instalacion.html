@@ -1,0 +1,213 @@
+<!-- 02. Instalación y primer proyecto - Go (Frameworks) -->
+  <section id="2-1-instalar-go">
+    <h2><i class="fa-solid fa-download"></i> 2.1 Instalar Go</h2>
+    <div class="doc-content">
+<h3>Descarga e instalación</h3>
+<p>Visita <code>https://go.dev/dl/</code> y descarga el instalador para tu sistema operativo. Go está disponible para Windows, macOS y Linux.</p>
+<h3>Verificar instalación</h3>
+<pre><code class="language-bash">go version
+# Salida esperada: go version go1.22.0 windows/amd64
+
+go env GOROOT
+# Ruta donde está instalado Go
+
+go env GOPATH
+# Ruta del directorio de trabajo de Go (por defecto: ~/go)</code></pre>
+<h3>Variables de entorno importantes</h3>
+<table><thead><tr><th>Variable</th><th>Descripción</th><th>Valor típico</th></tr></thead><tbody><tr><td><code>GOROOT</code></td><td>Directorio raíz de la instalación de Go</td><td><code>C:/Go</code> o <code>/usr/local/go</code></td></tr><tr><td><code>GOPATH</code></td><td>Directorio de trabajo y caché de módulos</td><td><code>~/go</code></td></tr><tr><td><code>GOBIN</code></td><td>Directorio donde se instalan binarios</td><td><code>$GOPATH/bin</code></td></tr><tr><td><code>PATH</code></td><td>Debe incluir <code>$GOPATH/bin</code></td><td>Automático en instaladores</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+Los instaladores oficiales de Go configuran GOROOT y PATH automáticamente. Solo verifica con <code>go version</code> después de instalar.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-2-estructura-del-proyecto">
+    <h2><i class="fa-solid fa-folder-tree"></i> 2.2 Estructura del proyecto</h2>
+    <div class="doc-content">
+<h3>Organización recomendada</h3>
+<p>Un proyecto Go con Gin sigue esta estructura:</p>
+<pre><code class="language-bash">mi-api/
+├── main.go           # Punto de entrada
+├── go.mod            # Definición del módulo y dependencias
+├── go.sum            # Sumas de verificación de dependencias
+├── handlers/         # Handlers de rutas
+│   └── usuarios.go
+├── models/           # Modelos de datos (structs)
+│   └── usuario.go
+├── middleware/        # Middleware personalizado
+│   └── auth.go
+├── config/           # Configuración
+│   └── config.go
+└── tests/            # Pruebas
+    └── main_test.go</code></pre>
+<h3>Convenciones</h3>
+<ul>
+<li>Los nombres de paquetes usan <strong>minúsculas sin guiones</strong> (no <code>mi-paquete</code>)</li>
+<li>Los archivos de Go usan <strong>snake_case</strong> (<code>usuarios.go</code>)</li>
+<li>El archivo <code>main.go</code> siempre está en el paquete <code>main</code></li>
+<li>Los exportables (funciones, tipos) comienzan con <strong>mayúscula</strong></li>
+</ul>
+<h3>Crear el proyecto</h3>
+<pre><code class="language-bash"># Crear directorio
+mkdir mi-api && cd mi-api
+
+# Inicializar módulo Go
+go mod init mi-api
+
+# Crear archivos básicos
+touch main.go
+mkdir handlers models middleware config tests</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-3-gestion-de-modulos">
+    <h2><i class="fa-solid fa-cube"></i> 2.3 Gestión de módulos</h2>
+    <div class="doc-content">
+<h3>go.mod</h3>
+<p>El archivo <code>go.mod</code> define el módulo y sus dependencias:</p>
+<pre><code class="language-go">module mi-api
+
+go 1.22
+
+require (
+    github.com/gin-gonic/gin v1.9.1
+    github.com/google/uuid v1.6.0
+)</code></pre>
+<h3>Comandos de módulos</h3>
+<table><thead><tr><th>Comando</th><th>Función</th></tr></thead><tbody><tr><td><code>go mod init nombre</code></td><td>Inicializa un nuevo módulo</td></tr><tr><td><code>go mod tidy</code></td><td>Agrega dependencias faltantes y elimina las no usadas</td></tr><tr><td><code>go mod download</code></td><td>Descarga todas las dependencias</td></tr><tr><td><code>go mod graph</code></td><td>Muestra el grafo de dependencias</td></tr><tr><td><code>go mod vendor</code></td><td>Copia dependencias al directorio vendor/</td></tr></tbody></table>
+<h3>Agregar una dependencia</h3>
+<pre><code class="language-bash"># Agregar Gin al proyecto
+go get github.com/gin-gonic/gin
+
+# Agregar una versión específica
+go get github.com/gin-gonic/gin@v1.9.1
+
+# Actualizar todas las dependencias
+go get -u ./...</code></pre>
+<blockquote class="aside aside-tip">
+Go descarga las dependencias automáticamente al ejecutar <code>go get</code>. El archivo <code>go.sum</code> se genera automáticamente y no debe editarse manualmente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-4-instalar-gin">
+    <h2><i class="fa-solid fa-plus-circle"></i> 2.4 Instalar Gin</h2>
+    <div class="doc-content">
+<h3>Paso a paso</h3>
+<pre><code class="language-bash"># 1. Crear el proyecto
+mkdir mi-api-gin && cd mi-api-gin
+
+# 2. Inicializar módulo
+go mod init mi-api-gin
+
+# 3. Instalar Gin
+go get github.com/gin-gonic/gin
+
+# 4. Verificar que se agregó a go.mod
+cat go.mod</code></pre>
+<h3>go.mod resultante</h3>
+<pre><code class="language-go">module mi-api-gin
+
+go 1.22
+
+require github.com/gin-gonic/gin v1.9.1</code></pre>
+<h3>Estructura de dependencias de Gin</h3>
+<table><thead><tr><th>Paquete</th><th>Función</th></tr></thead><tbody><tr><td><code>gin-gonic/gin</code></td><td>Framework principal</td></tr><tr><td><code>gin-gonic/httprouter</code></td><td>Motor de enrutamiento</td></tr><tr><td><code>go-playground/validator</code></td><td>Validación de structs</td></tr><tr><td><code>goccy/go-json</code></td><td>Serialización JSON</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-5-servidor-basico">
+    <h2><i class="fa-solid fa-server"></i> 2.5 Servidor básico</h2>
+    <div class="doc-content">
+<h3>Código completo</h3>
+<pre><code class="language-go">package main
+
+import (
+    "net/http"
+    "github.com/gin-gonic/gin"
+)
+
+func main() {
+    // Crear router con middleware por defecto
+    router := gin.Default()
+
+    // Ruta raíz
+    router.GET("/", func(c *gin.Context) {
+        c.JSON(http.StatusOK, gin.H{
+            "status":  "activo",
+            "mensaje": "API funcionando con Gin",
+        })
+    })
+
+    // Ruta con parámetro
+    router.GET("/usuarios/:id", func(c *gin.Context) {
+        id := c.Param("id")
+        c.JSON(http.StatusOK, gin.H{
+            "usuario_id": id,
+            "nombre":     "Juan Perez",
+        })
+    })
+
+    // Iniciar servidor
+    router.Run(":8080")
+}</code></pre>
+<h3>Componentes clave</h3>
+<ul>
+<li><code>gin.Default()</code>: Crea router con Logger y Recovery middleware</li>
+<li><code>c.JSON(status, objeto)</code>: Responde con JSON</li>
+<li><code>c.Param("nombre")</code>: Extrae parámetro de la URL</li>
+<li><code>router.Run(":8080")</code>: Escucha en el puerto especificado</li>
+</ul>
+<h3>Probar</h3>
+<pre><code class="language-bash">go run main.go
+# Abre http://localhost:8080
+# Abre http://localhost:8080/usuarios/42</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="2-6-comandos-go-run-y-go-build">
+    <h2><i class="fa-solid fa-terminal"></i> 2.6 Comandos go run y go build</h2>
+    <div class="doc-content">
+<h3>go run</h3>
+<p>Compila y ejecuta el programa directamente. Ideal para desarrollo:</p>
+<pre><code class="language-bash">go run main.go
+go run .                    # Ejecuta todos los .go del directorio
+go run ./handlers/          # Ejecuta un paquete específico</code></pre>
+<h3>go build</h3>
+<p>Compila el programa y genera un ejecutable binario:</p>
+<pre><code class="language-bash">go build                     # Genera binario con nombre del módulo
+go build -o mi-api.exe       # Nombre personalizado
+go build -ldflags="-s -w"    # Binario más pequeño (sin symbols)</code></pre>
+<h3>Diferencias</h3>
+<table><thead><tr><th>Comando</th><th>Resultado</th><th>Uso</th></tr></thead><tbody><tr><td><code>go run</code></td><td>Ejecuta directamente</td><td>Desarrollo y pruebas</td></tr><tr><td><code>go build</code></td><td>Genera binario en disco</td><td>Despliegue en producción</td></tr><tr><td><code>go install</code></td><td>Instala en $GOPATH/bin</td><td>Herramientas CLI</td></tr></tbody></table>
+<h3>Comandos útiles adicionales</h3>
+<pre><code class="language-bash">go vet ./...          # Analiza errores comunes
+go fmt ./...          # Formatea el código
+go test ./...          # Ejecuta las pruebas
+go clean               # Limpia archivos temporales</code></pre>
+<blockquote class="aside aside-tip">
+En desarrollo usa <code>go run</code> para ejecución rápida. En producción usa <code>go build</code> para generar un binario optimizado que se despliega sin necesidad de instalar Go en el servidor.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste:**
+- Go se instala desde go.dev y se verifica con <code>go version</code>
+- Los proyectos usan go.mod para gestionar módulos y dependencias
+- <code>go get</code> descarga e instala paquetes como Gin
+- Un servidor Gin se crea con gin.Default() y se ejecuta con r.Run()
+- <code>go run</code> ejecuta directamente; <code>go build</code> genera un binario
+- La estructura de proyecto separa handlers, models, middleware y config
+</blockquote>
+    </div>
+  </section>

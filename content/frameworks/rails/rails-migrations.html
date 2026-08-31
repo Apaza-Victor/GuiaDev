@@ -1,0 +1,202 @@
+<!-- 06. Migraciones y base de datos - Rails (Frameworks) -->
+  <section id="6-1-que-son-las-migraciones">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 6.1 Qué son las migraciones</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Las <strong>migraciones</strong> son archivos Ruby que describen cambios en el esquema de la base de datos de forma versionada y reproducible. Permiten crear, modificar o eliminar tablas y columnas usando código en lugar de SQL manual.</p>
+<h3>Ventajas de usar migraciones</h3>
+<table><thead><tr><th>Ventaja</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Versionado</strong></td><td>Cada cambio queda registrado con fecha y orden</td></tr><tr><td><strong>Reproducible</strong></td><td>Se aplica el mismo esquema en cualquier entorno</td></tr><tr><td><strong>Reversible</strong></td><td>Permite deshacer cambios con rollback</td></tr><tr><td><strong>Independencia</strong></td><td>Funciona con SQLite, PostgreSQL, MySQL, etc.</td></tr><tr><td><strong>Colaborativo</strong></td><td>Todo el equipo aplica los mismos cambios</td></tr></tbody></table>
+<h3>Estructura de una migración</h3>
+<pre><code class="language-ruby"># db/migrate/20260101120000_create_productos.rb
+class CreateProductos &lt; ActiveRecord::Migration[7.0]
+  def change
+    create_table :productos do |t|
+      t.string :nombre
+      t.decimal :precio
+
+      t.timestamps
+    end
+  end
+end</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-2-generar-migraciones">
+    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> 6.2 Generar migraciones</h2>
+    <div class="doc-content">
+<h3>Generador de migraciones</h3>
+<p>Rails ofrece un generador que crea archivos de migración siguiendo convenciones de nombres:</p>
+<pre><code class="language-bash"># Generar una tabla
+rails generate migration CreateProductos nombre:string precio:decimal
+
+# Añadir una columna
+rails generate migration AddStockToProductos stock:integer
+
+# Eliminar una columna
+rails generate migration RemoveStockFromProductos stock:integer
+
+# Crear una tabla vacía con solo timestamps
+rails generate migration CreateCategorias</code></pre>
+<h3>Convenciones de nombres</h3>
+<table><thead><tr><th>Nombre</th><th>Qué genera</th></tr></thead><tbody><tr><td><code>CreateXXX</code></td><td>Crea una tabla</td></tr><tr><td><code>AddCampoToTabla</code></td><td>Añade una columna</td></tr><tr><td><code>RemoveCampoFromTabla</code></td><td>Elimina una columna</td></tr><tr><td><code>ChangeCampoInTabla</code></td><td>Modifica una columna</td></tr></tbody></table>
+<h3>La migración de un modelo con generate model</h3>
+<pre><code class="language-ruby"># rails generate model Producto nombre:string
+# db/migrate/xxxx_create_productos.rb
+class CreateProductos &lt; ActiveRecord::Migration[7.0]
+  def change
+    create_table :productos do |t|
+      t.string :nombre
+
+      t.timestamps
+    end
+  end
+end</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-3-tipos-de-datos-y-columnas">
+    <h2><i class="fa-solid fa-table-list"></i> 6.3 Tipos de datos y columnas</h2>
+    <div class="doc-content">
+<h3>Tipos de datos soportados</h3>
+<table><thead><tr><th>Tipo</th><th>Uso</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>string</code></td><td>Texto corto</td><td>nombre, email</td></tr><tr><td><code>text</code></td><td>Texto largo</td><td>contenido, descripción</td></tr><tr><td><code>integer</code></td><td>Números enteros</td><td>stock, cantidad</td></tr><tr><td><code>decimal</code></td><td>Números decimales</td><td>precio, total</td></tr><tr><td><code>float</code></td><td>Números con coma flotante</td><td>calificación</td></tr><tr><td><code>boolean</code></td><td>Verdadero o falso</td><td>publicado, activo</td></tr><tr><td><code>date</code></td><td>Fecha</td><td>fecha_nacimiento</td></tr><tr><td><code>datetime</code></td><td>Fecha y hora</td><td>created_at</td></tr></tbody></table>
+<h3>Opciones de columnas</h3>
+<pre><code class="language-ruby">create_table :productos do |t|
+  t.string :nombre, null: false
+  t.string :sku, null: false, default: "SIN-SKU", limit: 50
+  t.decimal :precio, precision: 10, scale: 2
+  t.boolean :publicado, default: false
+  t.references :categoria, null: true, foreign_key: true
+
+  t.timestamps
+end</code></pre>
+<h3>Índices y unicidad</h3>
+<pre><code class="language-ruby">add_index :productos, :sku, unique: true
+add_index :productos, :categoria_id</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-4-modificar-el-esquema">
+    <h2><i class="fa-solid fa-pen"></i> 6.4 Modificar el esquema</h2>
+    <div class="doc-content">
+<h3>Métodos principales de cambio</h3>
+<pre><code class="language-ruby">class ModifyProductos &lt; ActiveRecord::Migration[7.0]
+  def change
+    # Añadir columna
+    add_column :productos, :marca, :string
+
+    # Eliminar columna
+    remove_column :productos, :obsoleto
+
+    # Cambiar tipo
+    change_column :productos, :descripcion, :text
+
+    # Cambiar el nombre
+    rename_column :productos, :nombre, :titulo
+
+    # Añadir una tabla
+    create_table :categorias do |t|
+      t.string :nombre
+      t.timestamps
+    end
+
+    # Reasignar la asociación
+    add_reference :productos, :categoria, foreign_key: true
+  end
+end</code></pre>
+<h3>Cambios no reversibles</h3>
+<p>Algunas operaciones como <code>remove_column</code> o <code>change_column</code> no se pueden revertir automáticamente. Para ello usa <code>up</code> y <code>down</code>:</p>
+<pre><code class="language-ruby">class RemoveStockFromProductos &lt; ActiveRecord::Migration[7.0]
+  def up
+    remove_column :productos, :stock
+  end
+
+  def down
+    add_column :productos, :stock, :integer
+  end
+end</code></pre>
+<blockquote class="aside aside-tip">
+Si el cambio no es reversible, define los métodos <code>up</code> y <code>down</code> manualmente. Rails lanzará un error si intentas revertir una migración irreversible.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-5-comandos-de-migracion">
+    <h2><i class="fa-solid fa-terminal"></i> 6.5 Comandos de migración</h2>
+    <div class="doc-content">
+<h3>Comandos principales</h3>
+<table><thead><tr><th>Comando</th><th>Descripción</th></tr></thead><tbody><tr><td><code>rails db:migrate</code></td><td>Aplica las migraciones pendientes</td></tr><tr><td><code>rails db:rollback</code></td><td>Deshace la última migración</td></tr><tr><td><code>rails db:migrate:status</code></td><td>Muestra el estado de cada migración</td></tr><tr><td><code>rails db:migrate:redo</code></td><td>Rollback y migrate de nuevo</td></tr><tr><td><code>rails db:schema:load</code></td><td>Carga el esquema desde schema.rb</td></tr></tbody></table>
+<h3>Ver el estado de las migraciones</h3>
+<pre><code class="language-bash">rails db:migrate:status
+
+# Salida orientativa:
+#   up    20260101120000  Create productos
+#   up    20260102090000  Add stock to productos
+#   down  20260103080000  Create categorias</code></pre>
+<h3>Esquema de la base de datos</h3>
+<p>Tras migrar, Rails mantiene el esquema actualizado en <code>db/schema.rb</code>. Este archivo refleja el estado real de la base de datos y es la fuente para <code>db:schema:load</code>:</p>
+<pre><code class="language-ruby"># db/schema.rb
+create_table "productos", force: :cascade do |t|
+  t.string "nombre"
+  t.decimal "precio"
+  t.datetime "created_at", null: false
+  t.datetime "updated_at", null: false
+end</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-6-seeds-y-configuracion">
+    <h2><i class="fa-solid fa-seedling"></i> 6.6 Seeds y configuración</h2>
+    <div class="doc-content">
+<h3>Archivo seeds</h3>
+<p>El archivo <code>db/seeds.rb</code> crea datos iniciales de la base de datos. Se ejecuta con <code>rails db:seed</code>:</p>
+<pre><code class="language-ruby"># db/seeds.rb
+categoria = Categoria.create!(nombre: "Electrónica")
+categoria2 = Categoria.create!(nombre: "Ropa")
+
+Producto.create!(nombre: "Laptop", precio: 999.99, categoria: categoria)
+Producto.create!(nombre: "Mouse", precio: 29.99, categoria: categoria)
+Producto.create!(nombre: "Camiseta", precio: 19.99, categoria: categoria2)</code></pre>
+<h3>Ejecutar los seeds</h3>
+<pre><code class="language-bash">rails db:seed</code></pre>
+<pre><code class="language-bash"># Resetear la base de datos (drop + create + migrate + seed)
+rails db:reset</code></pre>
+<h3>Configuración de la base de datos</h3>
+<pre><code class="language-ruby"># config/database.yml
+default: &amp;default
+  adapter: sqlite3
+  pool: &lt;%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %&gt;
+  timeout: 5000
+
+development:
+  &lt;&lt;: *default
+  database: db/development.sqlite3
+
+test:
+  &lt;&lt;: *default
+  database: db/test.sqlite3</code></pre>
+<blockquote class="aside aside-note">
+Usa <code>rails db:seed</code> para cargar datos iniciales y <code>rails db:reset</code> para reconstruir la base de datos completa. Nunca pongas datos sensibles en los seeds.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Las migraciones versionan los cambios del esquema de forma reproducible
+- El generador crea migraciones con convenciones de nombres claras
+- Rails soporta tipos de datos como string, text, decimal y boolean
+- add_column, remove_column y change_column modifican el esquema
+- rails db:migrate, rollback y status gestionan las migraciones
+- db/seeds.rb carga datos iniciales y db/schema.rb refleja el esquema
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,227 @@
+<!-- 09. Panel de administración y shell - Django (Frameworks) -->
+  <section id="9-1-que-es-el-panel-de-administracion">
+    <h2><i class="fa-solid fa-toolbox"></i> 9.1 Qué es el panel de administración</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>El <strong>admin de Django</strong> es una interfaz web generada automáticamente a partir de los modelos. Permite gestionar registros, usuarios y permisos sin escribir una sola línea de HTML para el panel.</p>
+<h3>Características</h3>
+<table><thead><tr><th>Característica</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>CRUD automático</strong></td><td>Crear, leer, actualizar y eliminar registros</td></tr><tr><td><strong>Búsqueda y filtros</strong></td><td>Filtra por campo y búsqueda integrada</td></tr><tr><td><strong>Acceso por roles</strong></td><td>Separado por permisos y grupos</td></tr><tr><td><strong>Historial</strong></td><td>Registro de cambios sobre cada objeto</td></tr><tr><td><strong>Personalizable</strong></td><td>Se puede adaptar totalmente al negocio</td></tr></tbody></table>
+<h3>Acceso</h3>
+<pre><code class="language-bash"># Crear el superusuario (si aún no lo tienes)
+python manage.py createsuperuser
+
+# Con el servidor activo, visita:
+# http://127.0.0.1:8000/admin/</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-2-registrar-modelos-en-el-admin">
+    <h2><i class="fa-solid fa-box"></i> 9.2 Registrar modelos en el admin</h2>
+    <div class="doc-content">
+<h3>Registro básico</h3>
+<pre><code class="language-python"># blog/admin.py
+from django.contrib import admin
+from .models import Articulo, Categoria, Etiqueta
+
+admin.site.register(Articulo)
+admin.site.register(Categoria)
+admin.site.register(Etiqueta)</code></pre>
+<h3>Registro con decorador</h3>
+<pre><code class="language-python"># blog/admin.py
+from django.contrib import admin
+from .models import Articulo
+
+@admin.register(Articulo)
+class ArticuloAdmin(admin.ModelAdmin):
+    pass</code></pre>
+<h3>Orden de aparición</h3>
+<p>Los modelos registrados aparecen agrupados por la aplicación (<code>BLOG</code>) con el nombre legible definido en <code>verbose_name</code> del modelo.</p>
+<blockquote class="aside aside-tip">
+El listado se mejora añadiendo en el ModelAdmin opciones como `list_display` para que el panel sea más útil.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-3-personalizar-el-admin">
+    <h2><i class="fa-solid fa-palette"></i> 9.3 Personalizar el admin</h2>
+    <div class="doc-content">
+<h3>Opciones de ModelAdmin más usadas</h3>
+<pre><code class="language-python"># blog/admin.py
+from django.contrib import admin
+from .models import Articulo
+
+@admin.register(Articulo)
+class ArticuloAdmin(admin.ModelAdmin):
+    # Columnas que se muestran en el listado
+    list_display = ("titulo", "categoria", "publicado", "fecha_publicacion")
+
+    # Campos por los que se puede editar directamente
+    list_editable = ("publicado",)
+
+    # Filtros laterales
+    list_filter = ("publicado", "categoria", "fecha_publicacion")
+
+    # Búsqueda
+    search_fields = ("titulo", "slug", "contenido")
+
+    # Cantidad de registros por página
+    list_per_page = 20
+
+    # Ordenar por defecto
+    ordering = ("-fecha_publicacion",)
+
+    # Campos de solo lectura
+    readonly_fields = ("fecha_publicacion",)</code></pre>
+<h3>Secciones de campos</h3>
+<pre><code class="language-python">class ArticuloAdmin(admin.ModelAdmin):
+    fieldsets = (
+        ("Contenido", {
+            "fields": ("titulo", "slug", "contenido"),
+        }),
+        ("Publicación", {
+            "fields": ("publicado", "fecha_publicacion", "categoria"),
+        }),
+    )</code></pre>
+<h3>Ejemplo de sobrescritura de métodos</h3>
+<pre><code class="language-python">class ArticuloAdmin(admin.ModelAdmin):
+    def save_model(self, request, obj, form, change):
+        # Si no tiene autor y el usuario agrega el registro...
+        if not obj.autor:
+            obj.autor = request.user
+        super().save_model(request, obj, form, change)</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-4-shell-interactivo">
+    <h2><i class="fa-solid fa-terminal"></i> 9.4 Shell interactivo</h2>
+    <div class="doc-content">
+<h3>Qué es</h3>
+<p>El <strong>shell</strong> es una consola de Python con Django ya configurado. Sirve para probar consultas, crear datos de prueba y depurar sin levantar el servidor.</p>
+<h3>Abrir la consola</h3>
+<pre><code class="language-bash"># Desde la carpeta de manage.py
+python manage.py shell
+# Python 3.12.0 (default, ...)
+# (InteractiveConsole)
+# &gt;&gt;&gt;</code></pre>
+<h3>Comandos útiles</h3>
+<pre><code class="language-python"># Crear datos de prueba
+from blog.models import Articulo, Categoria
+
+cat, _ = Categoria.objects.get_or_create(nombre="Backend")
+
+a = Articulo.objects.create(
+    titulo="Primer artículo",
+    contenido="Contenido de prueba",
+    publicado=True,
+    categoria=cat,
+)
+
+# Consultar con Python normal
+print(a.titulo)
+print(a.categoria.nombre)
+
+# Salir de la consola con exit() o Ctrl+D (Linux/Mac)
+exit()</code></pre>
+<blockquote class="aside aside-tip">
+Con la sintaxis <code>shell_plus</code> de la librería `django-extensions` salen los modelos importados automáticamente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-5-consultas-y-comandos-en-la-consola">
+    <h2><i class="fa-solid fa-magnifying-glass"></i> 9.5 Consultas y comandos en la consola</h2>
+    <div class="doc-content">
+<h3>Pruebas de QuerySet en shell</h3>
+<pre><code class="language-bash">python manage.py shell</code></pre>
+<pre><code class="language-python">from blog.models import Articulo
+
+# Todas las consultas se pueden probar como en el ORM
+Articulo.objects.count()
+# 3
+
+Articulo.objects.filter(publicado=True)
+# &lt;QuerySet [&lt;Articulo: Primer artículo&gt;, ...]&gt;
+
+Articulo.objects.get(pk=1).titulo
+# 'Primer artículo'
+
+# Shell de tipo "mejorado": ejecutar scripts enteros
+from blog.models import Articulo, Categoria
+for c in Categoria.objects.all():
+    print(c.nombre, c.articulos.count())</code></pre>
+<h3>Cargar dumps de datos</h3>
+<pre><code class="language-bash"># Volcar los datos a un archivo JSON
+python manage.py dumpdata blog --indent 2 &gt; blog_data.json
+
+# Cargar datos desde un archivo
+python manage.py loaddata blog_data.json</code></pre>
+<h3>Comandos de depuración</h3>
+<pre><code class="language-bash"># Ver SQL generado por las consultas
+python manage.py shell -e "print(str(Articulo.objects.filter(publicado=True).query))"</code></pre>
+<blockquote class="aside aside-note">
+`dumpdata` y `loaddata` son útiles para migrar datos entre entornos o crear fixtures de prueba.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-6-ejemplo-practico-con-shell">
+    <h2><i class="fa-solid fa-lightbulb"></i> 9.6 Ejemplo práctico con shell</h2>
+    <div class="doc-content">
+<h3>Script completo de pruebas</h3>
+<pre><code class="language-bash">python manage.py shell</code></pre>
+<pre><code class="language-python">from django.contrib.auth.models import User
+from blog.models import Articulo, Categoria, Etiqueta
+
+# 1. Crear usuarios de prueba
+usuario, _ = User.objects.get_or_create(
+    username="editor",
+    defaults={"email": "editor@ejemplo.com"},
+)
+
+# 2. Crear categorías y etiquetas
+backend = Categoria.objects.create(nombre="Backend")
+etiqueta = Etiqueta.objects.create(nombre="Python")
+
+# 3. Crear artículos con autor
+for i in range(5):
+    art = Articulo.objects.create(
+        titulo=f"Artículo {i + 1}",
+        contenido="Contenido de ejemplo",
+        publicado=(i % 2 == 0),
+        autor=usuario,
+        categoria=backend,
+    )
+    art.etiquetas.add(etiqueta)
+
+# 4. Verificar cuántos registros hay
+print("Artículos:", Articulo.objects.count())
+print("Publicados:", Articulo.objects.filter(publicado=True).count())
+
+# 5. Salir
+exit()</code></pre>
+<blockquote class="aside aside-tip">
+Este patrón es ideal para generar "datos semilla" antes de desarrollar la interfaz.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El admin de Django genera un CRUD automático desde tus modelos
+- Registrar modelos con `admin.site.register()` o el decorador `@admin.register`
+- Personalizar con `list_display`, `list_filter`, `search_fields` y `fieldsets`
+- Usar el shell con `python manage.py shell` para probar consultas
+- Ejecutar consultas, crear datos de prueba y volcar datos con dumpdata/loaddata
+- Crear datos semilla directo desde la consola
+</blockquote>
+    </div>
+  </section>

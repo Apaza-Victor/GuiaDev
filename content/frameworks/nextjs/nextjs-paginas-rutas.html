@@ -1,0 +1,208 @@
+<!-- 03. Páginas y rutas - Next.js (Frameworks) -->
+  <section id="3-1-el-sistema-de-ficheros-como-enrutador">
+    <h2><i class="fa-solid fa-diagram-project"></i> 3.1 El sistema de ficheros como enrutador</h2>
+    <div class="doc-content">
+<h3>Rutas basadas en archivos</h3>
+<p>En Next.js no se configuran rutas en un archivo central. Cada carpeta con un <code>page.tsx</code> dentro de <code>app/</code> se convierte en una ruta de la URL:</p>
+<table><thead><tr><th>Archivo/carpeta</th><th>URL resultante</th></tr></thead><tbody><tr><td><code>app/page.tsx</code></td><td><code>/</code></td></tr><tr><td><code>app/about/page.tsx</code></td><td><code>/about</code></td></tr><tr><td><code>app/blog/page.tsx</code></td><td><code>/blog</code></td></tr><tr><td><code>app/contacto/page.tsx</code></td><td><code>/contacto</code></td></tr></tbody></table>
+<h3>Estructura de ejemplo</h3>
+<pre><code class="language-bash">app/
+├── page.tsx          # /
+├── layout.tsx        # Layout raíz
+├── about/
+│   └── page.tsx      # /about
+└── blog/
+    └── page.tsx      # /blog</code></pre>
+<blockquote class="aside aside-tip">
+La ruta que devuelve JSX se nombra siempre `page.tsx`. No uses otros nombres para las páginas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-2-crear-paginas-basicas-en-app">
+    <h2><i class="fa-solid fa-file-circle-plus"></i> 3.2 Crear páginas básicas en app/</h2>
+    <div class="doc-content">
+<h3>Crear una página "Acerca de"</h3>
+<pre><code class="language-tsx">// app/about/page.tsx
+export default function About() {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Acerca de nosotros&lt;/h1&gt;
+      &lt;p&gt;Somos una empresa que usa Next.js.&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Varias rutas hijas</h3>
+<pre><code class="language-bash">app/
+└── productos/
+    ├── page.tsx      # /productos
+    ├── destacados/
+    │   └── page.tsx  # /productos/destacados
+    └── ofertas/
+        └── page.tsx  # /productos/ofertas</code></pre>
+<h3>Rutas anidadas</h3>
+<p>Las carpetas se anidan para crear rutas jerárquicas de forma natural:</p>
+<pre><code class="language-bash"># /productos/destacados
+app/productos/destacados/page.tsx</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-3-rutas-dinamicas-con-corchetes">
+    <h2><i class="fa-solid fa-brackets-curly"></i> 3.3 Rutas dinámicas con corchetes</h2>
+    <div class="doc-content">
+<h3>Segmentos dinámicos [id]</h3>
+<p>Para rutas que cambian según un parámetro, usa corchetes en el nombre de la carpeta:</p>
+<pre><code class="language-bash">app/
+└── posts/
+    ├── page.tsx       # /posts
+    └── [id]/
+        └── page.tsx   # /posts/1, /posts/2, ...</code></pre>
+<h3>Acceder al parámetro</h3>
+<pre><code class="language-tsx">// app/posts/[id]/page.tsx
+export default async function Post({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const res = await fetch(
+    `https://api.example.com/posts/${params.id}`
+  );
+  const post = await res.json();
+
+  return (
+    &lt;article&gt;
+      &lt;h1&gt;{post.title}&lt;/h1&gt;
+      &lt;p&gt;{post.body}&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+<h3>Rutas dinámicas múltiples</h3>
+<pre><code class="language-bash"># app/blog/[year]/[slug]/page.tsx -> /blog/2024/titulo-post</code></pre>
+<blockquote class="aside aside-warning">
+En Next.js 15 los parámetros de una página deben declararse como `async` y acceder a ellos mediante `params`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-4-catch-all-y-rutas-opcionales">
+    <h2><i class="fa-solid fa-ellipsis"></i> 3.4 Catch-all y rutas opcionales</h2>
+    <div class="doc-content">
+<h3>Catch-all con tres puntos</h3>
+<p>Una carpeta <code>[...slug]</code> captura todos los segmentos restantes:</p>
+<pre><code class="language-bash">app/docs/[...slug]/page.tsx
+
+# /docs -> []
+# /docs/guia -> ["guia"]
+# /docs/guia/instalacion -> ["guia", "instalacion"]</code></pre>
+<h3>Rutas opcionales [[...slug]]</h3>
+<p>Con doble corchete el segmento puede no existir:</p>
+<pre><code class="language-bash">app/shop/[[...filtros]]/page.tsx
+
+# /shop -> []
+# /shop/hombre -> ["hombre"]
+# /shop/hombre/zapatos -> ["hombre", "zapatos"]</code></pre>
+<h3>Ejemplo de catch-all</h3>
+<pre><code class="language-tsx">// app/docs/[...slug]/page.tsx
+export default function Docs({
+  params,
+}: {
+  params: { slug: string[] };
+}) {
+  const ruta = params.slug.join(" / ");
+  return &lt;p&gt;Documento en: {ruta}&lt;/p&gt;;
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-5-navegacion-con-componente-link">
+    <h2><i class="fa-solid fa-link"></i> 3.5 Navegación con el componente Link</h2>
+    <div class="doc-content">
+<h3>Cómo navegar entre páginas</h3>
+<p>Sustituye las etiquetas <code>&lt;a&gt;</code> por el componente <code>Link</code> para navegación en cliente sin recargar la página:</p>
+<pre><code class="language-tsx">// app/components/Nav.tsx
+import Link from "next/link";
+
+export default function Nav() {
+  return (
+    &lt;nav&gt;
+      &lt;Link href="/"&gt;Inicio&lt;/Link&gt;
+      &lt;Link href="/about"&gt;Acerca de&lt;/Link&gt;
+      &lt;Link href="/blog"&gt;Blog&lt;/Link&gt;
+    &lt;/nav&gt;
+  );
+}</code></pre>
+<h3>Rutas dinámicas con Link</h3>
+<pre><code class="language-tsx">import Link from "next/link";
+
+export default function PostList({ posts }) {
+  return (
+    &lt;ul&gt;
+      {posts.map((post) =&gt; (
+        &lt;li key={post.id}&gt;
+          &lt;Link href={`/posts/${post.id}`}&gt;
+            {post.title}
+          &lt;/Link&gt;
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-tip">
+El componente `Link` hace prefetch de las rutas visibles, mejorando la velocidad de navegación.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-6-navegacion-programatica-con-userouter">
+    <h2><i class="fa-solid fa-route"></i> 3.6 Navegación programática con useRouter</h2>
+    <div class="doc-content">
+<h3>Redireccionar desde el código</h3>
+<p>Para redirigir tras una acción (submit, login, etc.) usa <code>useRouter</code> en un componente cliente:</p>
+<pre><code class="language-tsx">// app/components/Formulario.tsx
+"use client";
+
+import { useRouter } from "next/navigation";
+
+export default function Formulario() {
+  const router = useRouter();
+
+  const alEnviar = (e) =&gt; {
+    e.preventDefault();
+    // ... validación y envío ...
+    router.push("/gracias");
+  };
+
+  return (
+    &lt;form onSubmit={alEnviar}&gt;
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>Métodos de useRouter</h3>
+<table><thead><tr><th>Método</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>router.push()</code></td><td>Navega a una nueva ruta</td></tr><tr><td><code>router.replace()</code></td><td>Reemplaza la ruta sin historial</td></tr><tr><td><code>router.refresh()</code></td><td>Recarga los datos de la página</td></tr><tr><td><code>router.back()</code></td><td>Vuelve a la página anterior</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+`useRouter` de `next/navigation` funciona en componentes cliente marcados con `"use client"`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El enrutamiento se basa en el sistema de ficheros con <code>page.tsx</code>
+- Cada carpeta dentro de <code>app/</code> es una ruta de la URL
+- Las rutas dinámicas usan corchetes tipo <code>[id]</code>
+- Catch-all con <code>[...slug]</code> y opcionales con <code>[[...slug]]</code>
+- El componente <code>Link</code> navega sin recargar la página
+- <code>useRouter</code> permite navegación programática en client components
+</blockquote>
+    </div>
+  </section>

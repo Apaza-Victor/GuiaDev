@@ -1,0 +1,190 @@
+<!-- 04. Módulos (NgModules) - Angular (Frameworks) -->
+  <section id="4-1-que-es-un-ngmodule">
+    <h2><i class="fa-solid fa-cubes"></i> 4.1 Qué es un NgModule</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>NgModule</strong> es una clase decorada con <code>@NgModule</code> que agrupa componentes, directivas, pipes y servicios relacionados, y define cómo se combinan para formar una funcionalidad o la aplicación completa.</p>
+<table><thead><tr><th>Concepto</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Contenedor</strong></td><td>Organiza el código en unidades lógicas y reutilizables</td></tr><tr><td><strong>Alcance</strong></td><td>Puede agrupar una característica completa (ej. módulo de autenticación)</td></tr><tr><td><strong>Compilación</strong></td><td>Define qué componentes se reconocen dentro de sus templates</td></tr><tr><td><strong>Estándar</strong></td><td>Fue la forma clásica de Angular desde la versión 2</td></tr></tbody></table>
+<h3>Por qué se usa un módulo</h3>
+<ul>
+<li><strong>Organizar</strong>: Agrupar componentes, directivas y pipes relacionados</li>
+<li><strong>Encapsular</strong>: Controlar qué partes se exportan al resto de la app</li>
+<li><strong>Reutilizar</strong>: Importar la misma funcionalidad en varias aplicaciones</li>
+<li><strong>Lazy loading</strong>: Cargar módulos completos solo cuando se necesitan</li>
+</ul>
+<blockquote class="aside aside-note">
+En la práctica, un NgModule es una pieza de la aplicación: una feature (productos, carrito, login) o el propio AppModule raíz.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-2-decorador-ngmodule">
+    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> 4.2 El decorador @NgModule</h2>
+    <div class="doc-content">
+<h3>Sintaxis básica</h3>
+<pre><code class="language-typescript">import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { LoginComponent } from './login/login.component';
+
+@NgModule({
+  declarations: [LoginComponent],
+  imports: [CommonModule],
+  exports: [LoginComponent],
+  providers: []
+})
+export class LoginModule {}</code></pre>
+<h3>Propiedades del decorador</h3>
+<table><thead><tr><th>Propiedad</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>declarations</strong></td><td>Componentes, directivas y pipes que pertenecen al módulo</td></tr><tr><td><strong>imports</strong></td><td>Otros módulos cuyas declaraciones y exports se necesitan</td></tr><tr><td><strong>exports</strong></td><td>Qué declaraciones se hacen visibles para otros módulos</td></tr><tr><td><strong>providers</strong></td><td>Servicios disponibles para toda la aplicación o el módulo</td></tr><tr><td><strong>bootstrap</strong></td><td>El componente raíz que se inicia (solo en AppModule)</td></tr></tbody></table>
+<blockquote class="aside aside-warning">
+Un componente, directiva o pipe solo puede pertenecer a <strong>un</strong> NgModule. Declararlo en dos módulos produce un error de compilación.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-3-declaraciones-imports-exports">
+    <h2><i class="fa-solid fa-arrows-spin"></i> 4.3 Declarations, imports y exports</h2>
+    <div class="doc-content">
+<h3>Declarations</h3>
+<p>En <code>declarations</code> se listan todos los <strong>componentes, directivas y pipes</strong> que pertenecen a este módulo. Angular los compila dentro del contexto del módulo.</p>
+<pre><code class="language-typescript">@NgModule({
+  declarations: [
+    ProductosComponent,   // componente declarado
+    CardDirective,        // directiva declarada
+    PrecioPipe            // pipe declarado
+  ]
+})
+export class ProductosModule {}</code></pre>
+<h3>Imports</h3>
+<p>En <code>imports</code> se incluyen otros módulos que exportan funcionalidades que este módulo necesita. Al importar <code>CommonModule</code> obtienes <code>ngIf</code>, <code>ngFor</code>, etc.</p>
+<pre><code class="language-typescript">@NgModule({
+  declarations: [ProductosComponent],
+  imports: [
+    CommonModule,          // directivas de Angular
+    FormsModule,           // formularios template-driven
+    RouterModule           // directivas de routing
+  ]
+})
+export class ProductosModule {}</code></pre>
+<h3>Exports</h3>
+<p>Con <code>exports</code> decides qué piezas declaradas en este módulo serán <strong>visibles</strong> para otros módulos que lo importen.</p>
+<pre><code class="language-typescript">@NgModule({
+  declarations: [MiBotonComponent],
+  exports: [MiBotonComponent]  // ahora es usable fuera de este módulo
+})
+export class UiModule {}</code></pre>
+<table><thead><tr><th>Bloque</th><th>Qué contiene</th><th>¿Visible fuera?</th></tr></thead><tbody><tr><td>declarations</td><td>Componentes, directivas y pipes propios</td><td>No</td></tr><tr><td>imports</td><td>Módulos externos necesarios</td><td>No</td></tr><tr><td>exports</td><td>Declaraciones que se comparten</td><td>Sí</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-4-providers-y-bootstrap">
+    <h2><i class="fa-solid fa-plug"></i> 4.4 Providers y bootstrap</h2>
+    <div class="doc-content">
+<h3>Providers</h3>
+<p>La propiedad <code>providers</code> registra <strong>servicios</strong> en el inyector. Según el módulo donde se registren, estarán disponibles a nivel de aplicación o de módulo con lazy loading.</p>
+<pre><code class="language-typescript">import { NgModule } from '@angular/core';
+import { ApiService } from './api.service';
+
+@NgModule({
+  providers: [ApiService]  // se inyectará donde se solicite
+})
+export class CoreModule {}</code></pre>
+<h3>Bootstrap</h3>
+<p>La propiedad <code>bootstrap</code> solo está presente en el <strong>módulo raíz</strong> y define el componente que se instancia al arrancar la aplicación. Por convención es <code>AppComponent</code>.</p>
+<pre><code class="language-typescript">import { NgModule } from '@angular/core';
+import { AppComponent } from './app.component';
+
+@NgModule({
+  declarations: [AppComponent],
+  imports: [],
+  providers: [],
+  bootstrap: [AppComponent]  // componente de arranque
+})
+export class AppModule {}</code></pre>
+<h3>Cómo arranca una app Angular</h3>
+<pre><code class="language-typescript">// main.ts - Punto de entrada
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { AppModule } from './app/app.module';
+
+platformBrowserDynamic()
+  .bootstrapModule(AppModule)
+  .catch((err) => console.error(err));</code></pre>
+<blockquote class="aside aside-tip">
+La CLI genera <code>main.ts</code>, <code>AppModule</code> y <code>AppComponent</code> automáticamente cuando ejecutas <code>ng new</code>.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-5-appmodule">
+    <h2><i class="fa-solid fa-house"></i> 4.5 AppModule: el módulo raíz</h2>
+    <div class="doc-content">
+<h3>¿Qué es AppModule?</h3>
+<p><code>AppModule</code> es el <strong>módulo raíz</strong> de toda aplicación Angular creada con la CLI. Es el encargado de declarar los componentes iniciales, importar los módulos globales y arrancar la app.</p>
+<h3>Estructura típica generada por la CLI</h3>
+<pre><code class="language-typescript">import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+
+import { AppComponent } from './app.component';
+import { AppRoutingModule } from './app-routing.module';
+
+@NgModule({
+  declarations: [AppComponent],
+  imports: [BrowserModule, AppRoutingModule, FormsModule, HttpClientModule],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule {}</code></pre>
+<h3>Módulos que suele importar</h3>
+<table><thead><tr><th>Módulo</th><th>Proporciona</th></tr></thead><tbody><tr><td><strong>BrowserModule</strong></td><td>Funcionalidades para aplicaciones en el navegador</td></tr><tr><td><strong>AppRoutingModule</strong></td><td>La configuración del router</td></tr><tr><td><strong>FormsModule</strong></td><td><code>ngModel</code> y formularios template-driven</td></tr><tr><td><strong>HttpClientModule</strong></td><td>Peticiones HTTP</td></tr><tr><td><strong>ReactiveFormsModule</strong></td><td>Formularios reactivos</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+En las aplicaciones standalone (más modernas) el <code>AppModule</code> desaparece y el bootstrap se hace directamente con <code>bootstrapApplication(AppComponent)</code>.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-6-modulos-vs-standalone">
+    <h2><i class="fa-solid fa-code-branch"></i> 4.6 Módulos vs. standalone components</h2>
+    <div class="doc-content">
+<h3>¿Qué son los standalone components?</h3>
+<p>Desde Angular 14+ existen los <strong>standalone components</strong>: componentes que no necesitan pertenecer a ningún NgModule. Se marcan con la propiedad <code>standalone: true</code> e importan directamente sus dependencias.</p>
+<h3>Comparativa</h3>
+<table><thead><tr><th>Aspecto</th><th>Con NgModule</th><th>Standalone</th></tr></thead><tbody><tr><td>Dependencias</td><td>Se declaran imports del módulo</td><td>Se importan en el propio decorador</td></tr><tr><td>Configuración</td><td>Más archivos y boilerplate</td><td>Menos código repetitivo</td></tr><tr><td>Lazy loading</td><td>Se cargan módulos completos</td><td>Se cargan rutas/componentes sueltos</td></tr><tr><td>Curva de aprendizaje</td><td>Más conceptos</td><td>Más simple</td></tr><tr><td>Tendencia</td><td>Legado/establecido</td><td>Recomendado en Angular moderno</td></tr></tbody></table>
+<h3>Componente standalone</h3>
+<pre><code class="language-typescript">import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { NavbarComponent } from '../navbar/navbar.component';
+
+@Component({
+  selector: 'app-pagina',
+  standalone: true,                 // no requiere NgModule
+  imports: [CommonModule, NavbarComponent],  // deps directas
+  templateUrl: './pagina.component.html'
+})
+export class PaginaComponent {}</code></pre>
+<blockquote class="aside aside-tip">
+Entender los NgModules es clave porque encontrarás miles de proyectos y documentación que los usan. Para proyectos nuevos, la comunidad recomienda empezar con standalone.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Un **NgModule** agrupa componentes, directivas, pipes y servicios en unidades lógicas
+- <code>declarations</code> lista las piezas propias; <code>imports</code> trae módulos externos; <code>exports</code> comparte piezas
+- <code>providers</code> registra servicios y <code>bootstrap</code> define el componente raíz
+- **AppModule** es el módulo raíz que arranca la aplicación desde <code>main.ts</code>
+- Angular moderno ofrece **standalone components** que no requieren módulos
+- Un elemento solo puede declararse en <strong>un</strong> módulo
+</blockquote>
+    </div>
+  </section>

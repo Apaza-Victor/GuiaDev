@@ -1,0 +1,223 @@
+<!-- 03. Módulos (Modules) - NestJS (Frameworks) -->
+  <section id="3-1-que-es-un-modulo">
+    <h2><i class="fa-solid fa-cube"></i> 3.1 Qué es un módulo</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>módulo</strong> en NestJS es una clase anotada con el decorador <code>@Module</code> que agrupa una funcionalidad relacionada de la aplicación. Es la unidad fundamental de organización y encapsulación en NestJS.</p>
+<p>Cada aplicación tiene al menos un módulo: el <strong>módulo raíz</strong> (<code>AppModule</code>). A medida que la aplicación crece, se crean módulos para cada funcionalidad: usuarios, pedidos, productos, etc.</p>
+<h3>Beneficios de la modularidad</h3>
+<table><thead><tr><th>Beneficio</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Organización</strong></td><td>Cada funcionalidad vive en su propia carpeta</td></tr><tr><td><strong>Reutilización</strong></td><td>Un módulo se importa en varios lugares</td></tr><tr><td><strong>Encapsulación</strong></td><td>Oculta los proveedores internos que no deben exponerse</td></tr><tr><td><strong>Escalabilidad</strong></td><td>Agregar características no rompe el resto</td></tr><tr><td><strong>Pruebas</strong></td><td>Facilita probar cada módulo de forma aislada</td></tr></tbody></table>
+<h3>Ejemplo: módulo raíz</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { UsuariosModule } from './usuarios/usuarios.module';
+
+@Module({
+  imports: [UsuariosModule],
+})
+export class AppModule {}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-2-la-estructura-de-module">
+    <h2><i class="fa-solid fa-table"></i> 3.2 La estructura de @Module</h2>
+    <div class="doc-content">
+<h3>Propiedades del decorador</h3>
+<p>El decorador <code>@Module</code> recibe un objeto con cuatro propiedades principales:</p>
+<table><thead><tr><th>Propiedad</th><th>Función</th></tr></thead><tbody><tr><td><code>imports</code></td><td>Lista de módulos que este módulo necesita importar</td></tr><tr><td><code>controllers</code></td><td>Instancia los controladores definidos en este módulo</td></tr><tr><td><code>providers</code></td><td>Servicios y proveedores que Nest podrá inyectar</td></tr><tr><td><code>exports</code></td><td>Subconjunto de providers que otros módulos pueden usar</td></tr></tbody></table>
+<h3>Ejemplo: módulo con todas las propiedades</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { UsuariosController } from './usuarios.controller';
+import { UsuariosService } from './usuarios.service';
+import { DatabaseModule } from '../database/database.module';
+
+@Module({
+  imports: [DatabaseModule],
+  controllers: [UsuariosController],
+  providers: [UsuariosService],
+  exports: [UsuariosService],
+})
+export class UsuariosModule {}</code></pre>
+<blockquote class="aside aside-note">
+Si un provider se exporta, otros módulos pueden inyectarlo. Si no se exporta, solo es visible dentro del propio módulo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-3-modulos-de-caracteristicas">
+    <h2><i class="fa-solid fa-layer-group"></i> 3.3 Módulos de características</h2>
+    <div class="doc-content">
+<h3>Qué es un módulo de características</h3>
+<p>Un <strong>módulo de características</strong> organiza el código relacionado con una funcionalidad concreta: sus controladores, servicios, pipes, guards y submodulos. Es la forma recomendada de estructurar aplicaciones NestJS de cualquier tamaño.</p>
+<h3>Generar un módulo de características</h3>
+<pre><code class="language-bash"># Generar el módulo con su carpeta
+nest g mo usuarios
+
+# Crear los archivos del módulo (se integran automáticamente)
+nest g co usuarios
+nest g s usuarios</code></pre>
+<h3>Estructura resultante</h3>
+<pre><code class="language-text">src/usuarios/
+├── usuarios.module.ts
+├── usuarios.controller.ts
+├── usuarios.service.ts
+└── usuarios.service.spec.ts</code></pre>
+<h3>Ejemplo: módulo de características</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { UsuariosController } from './usuarios.controller';
+import { UsuariosService } from './usuarios.service';
+
+@Module({
+  controllers: [UsuariosController],
+  providers: [UsuariosService],
+})
+export class UsuariosModule {}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-4-modulos-compartidos">
+    <h2><i class="fa-solid fa-share-nodes"></i> 3.4 Módulos compartidos</h2>
+    <div class="doc-content">
+<h3>Qué es un módulo compartido</h3>
+<p>Un <strong>módulo compartido</strong> exporta sus providers para que otros módulos puedan usarlos. Es la forma de centralizar servicios comunes como el acceso a bases de datos, la configuración o servicios de terceros.</p>
+<h3>Mecanismo de exportación</h3>
+<p>Cuando un módulo <code>A</code> importa un módulo compartido <code>B</code>, los providers que <code>B</code> exporta quedan disponibles dentro de <code>A</code> para su inyección.</p>
+<h3>Ejemplo: módulo de base de datos compartido</h3>
+<pre><code class="language-typescript">// database.module.ts
+import { Module } from '@nestjs/common';
+import { DatabaseService } from './database.service';
+
+@Module({
+  providers: [DatabaseService],
+  exports: [DatabaseService],
+})
+export class DatabaseModule {}</code></pre>
+<pre><code class="language-typescript">// usuarios.module.ts
+import { Module } from '@nestjs/common';
+import { DatabaseModule } from '../database/database.module';
+import { UsuariosService } from './usuarios.service';
+
+@Module({
+  imports: [DatabaseModule],
+  providers: [UsuariosService],
+})
+export class UsuariosModule {
+  // Dentro de UsuariosService se puede inyectar DatabaseService
+}</code></pre>
+<h3>Ventajas</h3>
+<ul>
+<li><strong>Reutilización</strong>: el servicio se define una sola vez</li>
+<li><strong>Consistencia</strong>: todos usan la misma instancia y configuración</li>
+<li><strong>Mantenimiento</strong>: los cambios se hacen en un solo lugar</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-5-modulos-globales-y-reexportacion">
+    <h2><i class="fa-solid fa-globe"></i> 3.5 Módulos globales y reexportación</h2>
+    <div class="doc-content">
+<h3>Módulos globales con @Global</h3>
+<p>El decorador <code>@Global</code> hace que el módulo sea visible en toda la aplicación sin necesidad de importarlo en cada módulo. Es útil para servicios que se usan en casi todos los lugares, como configuración o logging.</p>
+<pre><code class="language-typescript">import { Module, Global } from '@nestjs/common';
+import { ConfiguracionService } from './configuracion.service';
+
+@Global()
+@Module({
+  providers: [ConfiguracionService],
+  exports: [ConfiguracionService],
+})
+export class ConfiguracionModule {}</code></pre>
+<pre><code class="language-typescript">// app.module.ts: solo se importa una vez
+import { Module } from '@nestjs/common';
+import { ConfiguracionModule } from './configuracion/configuracion.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
+
+@Module({
+  imports: [ConfiguracionModule, UsuariosModule],
+})
+export class AppModule {}</code></pre>
+<blockquote class="aside aside-warning">
+Un módulo marcado con `@Global` debe registrarse una sola vez, idealmente en el módulo raíz. Abusar de la globalidad dificulta entender las dependencias.
+</blockquote>
+<h3>Reexportación de módulos</h3>
+<p>Un módulo puede <strong>reexportar</strong> los módulos que importa, propagando sus providers a otros módulos sin exponer internamente la importación completa.</p>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { DatabaseModule } from '../database/database.module';
+
+@Module({
+  imports: [DatabaseModule],
+  exports: [DatabaseModule],
+})
+export class CoreModule {}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-6-ejemplo-completo-de-modulos">
+    <h2><i class="fa-solid fa-diagram-project"></i> 3.6 Ejemplo completo de módulos</h2>
+    <div class="doc-content">
+<h3>Aplicación con varias características</h3>
+<p>Una aplicación de tienda con autenticación, productos y pedidos:</p>
+<pre><code class="language-text">src/
+├── main.ts
+├── app.module.ts
+├── auth/
+│   ├── auth.module.ts
+│   ├── auth.controller.ts
+│   └── auth.service.ts
+├── productos/
+│   ├── productos.module.ts
+│   ├── productos.controller.ts
+│   └── productos.service.ts
+└── pedidos/
+    ├── pedidos.module.ts
+    ├── pedidos.controller.ts
+    └── pedidos.service.ts</code></pre>
+<h3>Módulo raíz</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { AuthModule } from './auth/auth.module';
+import { ProductosModule } from './productos/productos.module';
+import { PedidosModule } from './pedidos/pedidos.module';
+
+@Module({
+  imports: [AuthModule, ProductosModule, PedidosModule],
+})
+export class AppModule {}</code></pre>
+<h3>Pedidos necesita productos y usuarios</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
+import { ProductosModule } from '../productos/productos.module';
+import { PedidosController } from './pedidos.controller';
+import { PedidosService } from './pedidos.service';
+
+@Module({
+  imports: [AuthModule, ProductosModule],
+  controllers: [PedidosController],
+  providers: [PedidosService],
+  exports: [PedidosService],
+})
+export class PedidosModule {}</code></pre>
+<blockquote class="aside aside-tip">
+El CLI usa el comando `nest g mo` para generar cada módulo. Todos son independientes por defecto: controladores y servicios también deben generarse dentro de la misma carpeta.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Un módulo es una clase anotada con `@Module` que agrupa funcionalidad
+- Las propiedades son `imports`, `controllers`, `providers` y `exports`
+- Los módulos de características organizan cada funcionalidad en una carpeta
+- Los módulos compartidos exportan providers reutilizables
+- `@Global` hace un módulo visible en toda la aplicación
+- La reexportación propaga providers entre módulos
+</blockquote>
+    </div>
+  </section>

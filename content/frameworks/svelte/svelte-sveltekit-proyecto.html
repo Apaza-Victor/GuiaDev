@@ -1,0 +1,119 @@
+<!-- 10. SvelteKit y proyecto final - Svelte (Frameworks) -->
+  <section id="10-1-que-es-sveltekit">
+    <h2><i class="fa-solid fa-compass"></i> 10.1 Qué es SvelteKit</h2>
+    <div class="doc-content">
+<h3>El framework de aplicación</h3>
+<p><strong>SvelteKit</strong> es el framework de aplicación construido sobre Svelte. Aporta el conjunto completo de herramientas para crear aplicaciones web: enrutamiento, renderizado en servidor (SSR), optimización de recursos, generación de sitios estáticos y despliegue en distintas plataformas.</p>
+<p>Mientras Svelte se encarga de los componentes, SvelteKit orquesta todo el proyecto: rutas, layouts, carga de datos y adaptadores de despliegue.</p>
+<h3>Características principales</h3>
+<table><thead><tr><th>Característica</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Routing por archivos</strong></td><td>Cada archivo en <code>src/routes</code> define una ruta</td></tr><tr><td><strong>SSR y SSG</strong></td><td>Renderizado en servidor y estático opcional</td></tr><tr><td><strong>Adaptadores</strong></td><td>Despliegue en Node, Vercel, Netlify, etc.</td></tr><tr><td><strong>Carga de datos</strong></td><td>Funciones +page.js y +layout.js</td></tr><tr><td><strong>Optimización</strong></td><td>Code splitting, preloading y lazy loading</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-2-routing-archivos">
+    <h2><i class="fa-solid fa-folder-tree"></i> 10.2 Routing por archivos</h2>
+    <div class="doc-content">
+<h3>Las rutas son carpetas</h3>
+<p>SvelteKit usa el <strong>routing por archivos</strong>: la estructura de carpetas dentro de <code>src/routes</code> define las URL de tu aplicación. Cada carpeta puede contener un archivo <code>+page.svelte</code> que representa la página de esa ruta.</p>
+<h3>Estructura de ejemplo</h3>
+<pre><code class="language-plaintext">src/routes/
+  +page.svelte        &lt;!-- / --&gt;
+  +layout.svelte      &lt;!-- layout global --&gt;
+  about/
+    +page.svelte      &lt;!-- /about --&gt;
+  blog/
+    +page.svelte      &lt;!-- /blog --&gt;
+    [slug]/
+      +page.svelte    &lt;!-- /blog/:slug (dinámica) --&gt;</code></pre>
+<p>Las carpetas entre corchetes <code>[slug]</code> crean rutas dinámicas que capturan un segmento de la URL.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-3-archivos-mas-page">
+    <h2><i class="fa-solid fa-file-lines"></i> 10.3 El archivo +page.svelte</h2>
+    <div class="doc-content">
+<h3>Página de una ruta</h3>
+<p>El archivo <code>+page.svelte</code> contiene el componente que se muestra en su ruta. Puede recibir datos mediante la prop <code>data</code>, que se rellena con las funciones de carga <code>load</code> definidas en <code>+page.js</code> o <code>+page.server.js</code>.</p>
+<h3>Ejemplo: página simple</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  export let data;
+&lt;/script&gt;
+
+&lt;h1&gt;{data.titulo}&lt;/h1&gt;
+&lt;p&gt;{data.contenido}&lt;/p&gt;</code></pre>
+<p>El archivo <code>+layout.svelte</code> define la estructura común (header, footer) que envuelve a las páginas de su carpeta.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-4-ssr-y-carga-datos">
+    <h2><i class="fa-solid fa-server"></i> 10.4 SSR y carga de datos</h2>
+    <div class="doc-content">
+<h3>Renderizado en el servidor</h3>
+<p>Por defecto SvelteKit hace <strong>SSR (Server-Side Rendering)</strong>: las páginas se renderizan en el servidor y se envían como HTML al navegador, mejorando el SEO y el tiempo de carga inicial. Después se hidrata en el cliente.</p>
+<p>Los datos se cargan con la función <code>load</code> exportada desde <code>+page.js</code> o <code>+page.server.js</code>.</p>
+<h3>Ejemplo: función load</h3>
+<pre><code class="language-plaintext">// src/routes/blog/+page.js
+export function load() {
+  return {
+    posts: [
+      { titulo: 'Primer post', resumen: 'Hola' },
+      { titulo: 'Segundo post', resumen: 'Adiós' }
+    ]
+  };
+}</code></pre>
+<p>Los datos devueltos por <code>load</code> llegan al componente a través de <code>data</code>.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-5-adaptadores-despliegue">
+    <h2><i class="fa-solid fa-rocket"></i> 10.5 Adaptadores de despliegue</h2>
+    <div class="doc-content">
+<h3>Publicar la aplicación</h3>
+<p>Los <strong>adaptadores</strong> transforman la aplicación para desplegarla en plataformas específicas. Se instalan como dependencias y se configuran en <code>svelte.config.js</code>.</p>
+<h3>Adaptadores comunes</h3>
+<table><thead><tr><th>Adaptador</th><th>Plataforma</th></tr></thead><tbody><tr><td><strong>@sveltejs/adapter-node</strong></td><td>Servidor Node.js propio</td></tr><tr><td><strong>@sveltejs/adapter-static</strong></td><td>Sitios estáticos (SSG)</td></tr><tr><td><strong>@sveltejs/adapter-vercel</strong></td><td>Vercel</td></tr><tr><td><strong>@sveltejs/adapter-netlify</strong></td><td>Netlify</td></tr><tr><td><strong>@sveltejs/adapter-cloudflare</strong></td><td>Cloudflare Pages</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-6-proyecto-final">
+    <h2><i class="fa-solid fa-trophy"></i> 10.6 Proyecto final</h2>
+    <div class="doc-content">
+<h3>Paso a paso</h3>
+<ol>
+<li>Crear el proyecto con <code>npm create svelte@latest</code></li>
+<li>Instalar las dependencias con <code>npm install</code></li>
+<li>Definir las rutas con archivos <code>+page.svelte</code> en <code>src/routes</code></li>
+<li>Compartir estado con stores y el prefijo <code>$</code></li>
+<li>Cargar datos con funciones <code>load</code></li>
+<li>Estilizar con las directivas de transición y animación</li>
+<li>Desplegar usando un adaptador según la plataforma</li>
+</ol>
+<h3>Ejemplo: arrancar el servidor de desarrollo</h3>
+<pre><code class="language-bash">npm create svelte@latest mi-app
+cd mi-app
+npm install
+npm run dev</code></pre>
+<p>Con esto tienes las bases completas para construir y publicar aplicaciones modernas con Svelte y SvelteKit.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- SvelteKit es el framework de aplicación construido sobre Svelte
+- El routing se define por archivos y carpetas en src/routes
+- +page.svelte representa la página de cada ruta
+- SSR renderiza en el servidor y mejora el SEO
+- Los adaptadores preparan el despliegue en distintas plataformas
+- Completaste el recorrido de Svelte hasta un proyecto final
+</blockquote>
+    </div>
+  </section>

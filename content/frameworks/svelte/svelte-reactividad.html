@@ -1,0 +1,205 @@
+<!-- 04. Reactividad - Svelte (Frameworks) -->
+  <section id="4-1-reactividad-con-let">
+    <h2><i class="fa-solid fa-bolt"></i> 4.1 Reactividad con let</h2>
+    <div class="doc-content">
+<h3>Reactividad por asignación</h3>
+<p>En Svelte, la reactividad es automática. Cuando una variable declarada con <code>let</code> cambia su valor mediante una asignación, el componente se actualiza por sí solo sin llamar a ninguna API especial.</p>
+<h3>Ejemplo: contador</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let contador = 0;
+
+  function incrementar() {
+    contador = contador + 1;
+  }
+
+  function decrementar() {
+    contador -= 1;
+  }
+&lt;/script&gt;
+
+&lt;h1&gt;Contador: {contador}&lt;/h1&gt;
+&lt;button on:click={incrementar}&gt;+1&lt;/button&gt;
+&lt;button on:click={decrementar}&gt;-1&lt;/button&gt;</code></pre>
+<h3>¿Qué dispara la reactividad?</h3>
+<ul>
+<li>Asignación a una variable: <code>contador = 5</code></li>
+<li>Actualización que reasigna la variable: <code>contador += 1</code></li>
+<li>No se usa el Virtual DOM: el compilador genera el código que actualiza solo lo necesario</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-2-statements-reactivos-con-dolar">
+    <h2><i class="fa-solid fa-wave-square"></i> 4.2 Statements reactivos con $:</h2>
+    <div class="doc-content">
+<h3>Declaraciones reactivas</h3>
+<p>El prefijo <code>$:</code> convierte una declaración en <strong>reactiva</strong>: se re-ejecuta automáticamente cuando cualquiera de las variables que usa cambia. Es una de las señas de identidad de Svelte.</p>
+<h3>Ejemplo básico</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let precio = 100;
+  let impuesto = 0.21;
+
+  $: total = precio * (1 + impuesto);
+  $: mensaje = total &gt; 100 ? 'Precio alto' : 'Precio razonable';
+&lt;/script&gt;
+
+&lt;p&gt;Precio: {precio} €&lt;/p&gt;
+&lt;input type="range" bind:value={precio} min="0" max="500" /&gt;
+&lt;p&gt;Total con impuesto: {total.toFixed(2)} €&lt;/p&gt;
+&lt;p&gt;{mensaje}&lt;/p&gt;</code></pre>
+<h3>Statements con bloques</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let contador = 0;
+
+  $: if (contador &gt;= 10) {
+    console.log('¡Llegaste a la meta!');
+  }
+&lt;/script&gt;
+
+&lt;button on:click={() =&gt; contador += 1}&gt;Sumar ({contador})&lt;/button&gt;</code></pre>
+<blockquote class="aside aside-tip">
+Las declaraciones reactivas solo se activan cuando los valores que dependen directamente de ellas cambian. Se ejecutan antes de que se actualice el DOM.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-3-actualizacion-de-arrays-y-objetos">
+    <h2><i class="fa-solid fa-list-check"></i> 4.3 Actualización de arrays y objetos</h2>
+    <div class="doc-content">
+<h3>La asignación debe dispararse</h3>
+<p>Por razones de rendimiento, Svelte solo detecta cambios cuando la variable se <strong>reasigna</strong>. Por eso, métodos como <code>push()</code>, <code>pop()</code> o <code>splice()</code> que mutan el array original <strong>no</strong> activan la reactividad.</p>
+<h3>Forma correcta con arrays</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let lista = ['manzana', 'pera'];
+
+  function agregar(fruta) {
+    lista = [...lista, fruta]; // reasignar
+  }
+
+  function eliminar(fruta) {
+    lista = lista.filter((item) =&gt; item !== fruta);
+  }
+&lt;/script&gt;
+
+&lt;ul&gt;
+  {#each lista as fruta}
+    &lt;li&gt;{fruta}&lt;/li&gt;
+  {/each}
+&lt;/ul&gt;
+&lt;button on:click={() =&gt; agregar('uva')}&gt;Agregar uva&lt;/button&gt;
+&lt;button on:click={() =&gt; eliminar('pera')}&gt;Quitar pera&lt;/button&gt;</code></pre>
+<h3>Forma correcta con objetos</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let usuario = { nombre: 'Ana', edad: 28 };
+
+  function cumplirAnios() {
+    usuario = { ...usuario, edad: usuario.edad + 1 };
+  }
+
+  function cambiarNombre(nombre) {
+    usuario = { ...usuario, nombre };
+  }
+&lt;/script&gt;
+
+&lt;p&gt;{usuario.nombre} tiene {usuario.edad} años&lt;/p&gt;
+&lt;button on:click={cumplirAnios}&gt;Cumplir años&lt;/button&gt;
+&lt;button on:click={() =&gt; cambiarNombre('María')}&gt;Cambiar nombre&lt;/button&gt;</code></pre>
+<blockquote class="aside aside-note">
+En Svelte puedes mutar y reasignar en el mismo lugar: por ejemplo <code>usuario.edad = usuario.edad + 1</code> también activa la reactividad porque Svelte compila la actualización del objeto. La regla de oro es "reasignar para garantizar la detección".
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-4-reactivdad-avanzada-y-multiples-asignaciones">
+    <h2><i class="fa-solid fa-magic"></i> 4.4 Reactividad avanzada y múltiples asignaciones</h2>
+    <div class="doc-content">
+<h3>Múltiples asignaciones</h3>
+<p>Svelte agrupa las asignaciones del mismo tick en una sola actualización del DOM. Es seguro actualizar varias variables a la vez en un mismo controlador de eventos.</p>
+<pre><code class="language-svelte">&lt;script&gt;
+  let ancho = 0;
+  let alto = 0;
+
+  function reiniciar() {
+    ancho = 0;
+    alto = 0;
+  }
+&lt;/script&gt;
+
+&lt;p&gt;Ancho: {ancho} - Alto: {alto}&lt;/p&gt;
+&lt;input type="range" bind:value={ancho} min="0" max="100" /&gt;
+&lt;input type="range" bind:value={alto} min="0" max="100" /&gt;
+&lt;button on:click={reiniciar}&gt;Reiniciar&lt;/button&gt;</code></pre>
+<h3>Reactividad entre componentes y stores</h3>
+<ul>
+<li>Las props (<code>export let</code>) son reactivas dentro del componente hijo</li>
+<li>Los stores se suscriben automáticamente con el prefijo <code>$</code></li>
+<li>Las declaraciones <code>$:</code> pueden depender de otras declaraciones</li>
+</ul>
+<pre><code class="language-svelte">&lt;script&gt;
+  let primera = 'Hola';
+  let segunda = 'Mundo';
+
+  $: saludo = `${primera} ${segunda}`;
+  $: enMayusculas = saludo.toUpperCase();
+&lt;/script&gt;
+
+&lt;p&gt;{enMayusculas}&lt;/p&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-5-ejemplo-practico-completo">
+    <h2><i class="fa-solid fa-wrench"></i> 4.5 Ejemplo práctico completo</h2>
+    <div class="doc-content">
+<h3>Calculadora de propinas</h3>
+<p>Este ejemplo junta asignaciones, statements reactivos y bindings:</p>
+<pre><code class="language-svelte">&lt;script&gt;
+  let cuenta = 50;
+  let porcentaje = 10;
+
+  $: propina = cuenta * (porcentaje / 100);
+  $: total = cuenta + propina;
+  $: formateado = (valor) =&gt; valor.toFixed(2);
+&lt;/script&gt;
+
+&lt;h2&gt;Calculadora de propinas&lt;/h2&gt;
+
+&lt;label&gt;
+  Total de la cuenta:
+  &lt;input type="number" bind:value={cuenta} /&gt;
+&lt;/label&gt;
+
+&lt;label&gt;
+  Propina ({porcentaje}%):
+  &lt;input type="range" bind:value={porcentaje} min="0" max="30" /&gt;
+&lt;/label&gt;
+
+&lt;p&gt;Propina: {formateado(propina)} €&lt;/p&gt;
+&lt;p&gt;Total a pagar: {formateado(total)} €&lt;/p&gt;</code></pre>
+<h3>Práctica sugerida</h3>
+<ul>
+<li>Agrega un botón para reiniciar los valores</li>
+<li>Divide el total entre el número de personas</li>
+<li>Muestra la propina en verde si el porcentaje es mayor o igual a 15</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- La reactividad en Svelte es automática por asignación
+- Los statements `$:` recalculan valores automáticamente
+- Los arrays y objetos deben reasignarse para garantizar la detección de cambios
+- Múltiples asignaciones se agrupan en una sola actualización del DOM
+- La reactividad funciona también con props y stores
+- Los bindings permiten sincronizar inputs con variables
+</blockquote>
+    </div>
+  </section>

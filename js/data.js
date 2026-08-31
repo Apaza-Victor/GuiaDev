@@ -6903,6 +6903,1877 @@ const DOCS_DATA = {
             "contentFile": "content/frameworks/spring/spring-orm.html"
           }
         ]
+      },
+      {
+        "id": "angular",
+        "title": "Angular",
+        "icon": "fa-brands fa-angular",
+        "lessons": [
+          {
+            "id": "angular-intro",
+            "title": "01. Introducción a Angular",
+            "content": "Qué es Angular, el concepto de SPA, diferencias con React y Vue, ventajas, estructura de un proyecto y Angular CLI.",
+            "sections": [
+              "<i class=\"fa-solid fa-gears\"></i> 1.1 Qué es Angular",
+              "<i class=\"fa-solid fa-window-restore\"></i> 1.2 Concepto de SPA (Single Page Application)",
+              "<i class=\"fa-solid fa-code-compare\"></i> 1.3 Diferencias con React y Vue",
+              "<i class=\"fa-solid fa-star\"></i> 1.4 Ventajas de Angular",
+              "<i class=\"fa-solid fa-folder-tree\"></i> 1.5 Estructura de un proyecto Angular",
+              "<i class=\"fa-solid fa-terminal\"></i> 1.6 Angular CLI",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/angular/angular-intro.html"
+          },
+          {
+            "id": "angular-instalacion",
+            "title": "02. Instalación y configuración del entorno",
+            "content": "Requisitos de Node.js y npm, instalación de Angular CLI, creación de proyectos con ng new, estructura de carpetas y el servidor de desarrollo.",
+            "sections": [
+              "<i class=\"fa-solid fa-box\"></i> 2.1 Requisitos: Node.js y npm",
+              "<i class=\"fa-solid fa-download\"></i> 2.2 Instalación de Angular CLI",
+              "<i class=\"fa-solid fa-rocket\"></i> 2.3 Creación de un nuevo proyecto (ng new)",
+              "<i class=\"fa-solid fa-folder\"></i> 2.4 Estructura de carpetas",
+              "<i class=\"fa-solid fa-play\"></i> 2.5 Ejecutar el servidor de desarrollo (ng serve)",
+              "<i class=\"fa-solid fa-list-check\"></i> 2.6 Comandos útiles de la CLI",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/angular/angular-instalacion.html"
+          },
+          {
+            "id": "angular-componentes",
+            "title": "03. Componentes en Angular",
+            "content": "Qué es un componente, el decorador @Component, selector y template, la clase del componente, metadatos y creación de componentes.",
+            "sections": [
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 3.1 Qué es un componente",
+              "<i class=\"fa-solid fa-wand-magic-sparkles\"></i> 3.2 El decorador @Component",
+              "<i class=\"fa-solid fa-ruler-combined\"></i> 3.3 Selector, template y estilos",
+              "<i class=\"fa-solid fa-file-code\"></i> 3.4 La clase del componente",
+              "<i class=\"fa-solid fa-table-list\"></i> 3.5 Metadatos del componente",
+              "<i class=\"fa-solid fa-plus\"></i> 3.6 Crear y usar componentes",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/angular/angular-componentes.html"
+          },
+          {
+            "id": "angular-modulos",
+            "title": "04. Módulos (NgModules)",
+            "content": "Qué es un NgModule, el decorador @NgModule, declarations e imports y exports, providers y bootstrap, AppModule y standalone components.",
+            "sections": [
+              "<i class=\"fa-solid fa-cubes\"></i> 4.1 Qué es un NgModule",
+              "<i class=\"fa-solid fa-wand-magic-sparkles\"></i> 4.2 El decorador @NgModule",
+              "<i class=\"fa-solid fa-arrows-spin\"></i> 4.3 Declarations, imports y exports",
+              "<i class=\"fa-solid fa-plug\"></i> 4.4 Providers y bootstrap",
+              "<i class=\"fa-solid fa-house\"></i> 4.5 AppModule: el módulo raíz",
+              "<i class=\"fa-solid fa-code-branch\"></i> 4.6 Módulos vs. standalone components",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/angular/angular-modulos.html"
+          },
+          {
+            "id": "angular-templates-data-binding",
+            "title": "05. Templates y Data Binding",
+            "content": "Interpolación, property binding, event binding, two-way binding con ngModel, comparativa de bindings y FormsModule.",
+            "sections": [
+              "<i class=\"fa-solid fa-braces\"></i> 5.1 Interpolación {{ }}",
+              "<i class=\"fa-solid fa-caret-right\"></i> 5.2 Property binding [ ]",
+              "<i class=\"fa-solid fa-bolt\"></i> 5.3 Event binding ( )",
+              "<i class=\"fa-solid fa-right-left\"></i> 5.4 Two-way binding [(ngModel)]",
+              "<i class=\"fa-solid fa-table\"></i> 5.5 Comparativa de bindings",
+              "<i class=\"fa-solid fa-database\"></i> 5.6 ngModel y FormsModule",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/angular/angular-templates-data-binding.html"
+          },
+          {
+            "id": "angular-directivas",
+            "title": "06. Directivas",
+            "content": "Qué es una directiva, tipos, *ngIf, *ngFor, ngClass y ngStyle, y creación de directivas propias.",
+            "sections": [
+              "<i class=\"fa-solid fa-wand-magic-sparkles\"></i> 6.1 Qué es una directiva",
+              "<i class=\"fa-solid fa-shuffle\"></i> 6.2 Tipos de directivas",
+              "<i class=\"fa-solid fa-eye\"></i> 6.3 Directiva *ngIf",
+              "<i class=\"fa-solid fa-list\"></i> 6.4 Directiva *ngFor",
+              "<i class=\"fa-solid fa-palette\"></i> 6.5 ngClass y ngStyle",
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 6.6 Directivas propias (concepto)",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/angular/angular-directivas.html"
+          },
+          {
+            "id": "angular-servicios-di",
+            "title": "07. Servicios e inyección de dependencias",
+            "content": "Qué es un servicio, el decorador @Injectable, inyección de dependencias, providers, uso en componentes y compartición de datos.",
+            "sections": [
+              "<i class=\"fa-solid fa-gears\"></i> 7.1 Qué es un servicio",
+              "<i class=\"fa-solid fa-stamp\"></i> 7.2 El decorador @Injectable",
+              "<i class=\"fa-solid fa-plug\"></i> 7.3 Inyección de dependencias",
+              "<i class=\"fa-solid fa-box\"></i> 7.4 Providers: dónde se registran",
+              "<i class=\"fa-solid fa-bolt\"></i> 7.5 Uso de servicios en componentes",
+              "<i class=\"fa-solid fa-share-nodes\"></i> 7.6 Compartir datos entre componentes",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/angular/angular-servicios-di.html"
+          },
+          {
+            "id": "angular-routing",
+            "title": "08. Routing y navegación",
+            "content": "RouterModule y configuración de rutas, RouterLink y RouterOutlet, rutas anidadas, parámetros, guards y lazy loading.",
+            "sections": [
+              "<i class=\"fa-solid fa-route\"></i> 8.1 RouterModule y configuración de rutas",
+              "<i class=\"fa-solid fa-link\"></i> 8.2 RouterLink y navegación",
+              "<i class=\"fa-solid fa-window-restore\"></i> 8.3 RouterOutlet y rutas anidadas",
+              "<i class=\"fa-solid fa-sliders\"></i> 8.4 Parámetros de ruta y query strings",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 8.5 Rutas protegidas y guards",
+              "<i class=\"fa-solid fa-bolt\"></i> 8.6 Lazy loading de módulos",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/angular/angular-routing.html"
+          },
+          {
+            "id": "angular-http-formularios",
+            "title": "09. Peticiones HTTP y formularios",
+            "content": "HttpClient y consumo de APIs, peticiones CRUD, manejo de errores e interceptores, y formularios template-driven y reactivos.",
+            "sections": [
+              "<i class=\"fa-solid fa-plug\"></i> 9.1 HttpClient: configuración",
+              "<i class=\"fa-solid fa-arrows-left-right\"></i> 9.2 Peticiones GET, POST, PUT, DELETE",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> 9.3 Manejo de errores e interceptores",
+              "<i class=\"fa-solid fa-file-lines\"></i> 9.4 Formularios template-driven",
+              "<i class=\"fa-solid fa-code\"></i> 9.5 Formularios reactivos",
+              "<i class=\"fa-solid fa-check-double\"></i> 9.6 Validación y envío de formularios",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/angular/angular-http-formularios.html"
+          },
+          {
+            "id": "angular-buenas-practicas",
+            "title": "10. Buenas prácticas y despliegue",
+            "content": "Organización del proyecto, standalone components, estilos y arquitectura, ng build, despliegue y testing.",
+            "sections": [
+              "<i class=\"fa-solid fa-folder-tree\"></i> 10.1 Organización del proyecto",
+              "<i class=\"fa-solid fa-code-branch\"></i> 10.2 Standalone components en Angular moderno",
+              "<i class=\"fa-solid fa-palette\"></i> 10.3 Estilos y arquitectura de componentes",
+              "<i class=\"fa-solid fa-hammer\"></i> 10.4 Compilación para producción (ng build)",
+              "<i class=\"fa-solid fa-cloud-arrow-up\"></i> 10.5 Despliegue de la aplicación",
+              "<i class=\"fa-solid fa-list-check\"></i> 10.6 Testing y buenas prácticas",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/angular/angular-buenas-practicas.html"
+          }
+        ]
+      },
+      {
+        "id": "nextjs",
+        "title": "Next.js",
+        "icon": "fa-solid fa-arrow-right-long",
+        "lessons": [
+          {
+            "id": "nextjs-intro",
+            "title": "01. Introducción a Next.js",
+            "content": "Qué es Next.js, por qué usarlo sobre React puro, SSR/SSG/ISR/CSR, diferencias, características y versiones",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 1.1 Qué es Next.js",
+              "<i class=\"fa-solid fa-question\"></i> 1.2 Por qué usar Next.js en vez de React puro",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 1.3 SSR, SSG, ISR y CSR: estrategias de renderizado",
+              "<i class=\"fa-solid fa-clock\"></i> 1.4 SSG e ISR con revalidate",
+              "<i class=\"fa-solid fa-box-open\"></i> 1.5 Versiones y ecosistema destacado",
+              "<i class=\"fa-solid fa-briefcase\"></i> 1.6 Casos de uso en el mundo real",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nextjs/nextjs-intro.html"
+          },
+          {
+            "id": "nextjs-instalacion",
+            "title": "02. Instalación y primer proyecto",
+            "content": "Requisitos Node.js, create-next-app, estructura de carpetas (app/ vs pages/), npm run dev, npm run build",
+            "sections": [
+              "<i class=\"fa-solid fa-box\"></i> 2.1 Requisitos previos: Node.js y npm",
+              "<i class=\"fa-solid fa-rocket\"></i> 2.2 Crear un proyecto con create-next-app",
+              "<i class=\"fa-solid fa-folder\"></i> 2.3 Estructura de carpetas: app/ y pages/",
+              "<i class=\"fa-solid fa-file-lines\"></i> 2.4 Archivos principales: layout y page",
+              "<i class=\"fa-solid fa-play\"></i> 2.5 Ejecutar el servidor de desarrollo",
+              "<i class=\"fa-solid fa-hammer\"></i> 2.6 Compilar el proyecto con npm run build",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nextjs/nextjs-instalacion.html"
+          },
+          {
+            "id": "nextjs-paginas-rutas",
+            "title": "03. Páginas y rutas",
+            "content": "Sistema de ficheros, crear páginas en app/, rutas dinámicas [id], linking con Link y useRouter",
+            "sections": [
+              "<i class=\"fa-solid fa-diagram-project\"></i> 3.1 El sistema de ficheros como enrutador",
+              "<i class=\"fa-solid fa-file-circle-plus\"></i> 3.2 Crear páginas básicas en app/",
+              "<i class=\"fa-solid fa-brackets-curly\"></i> 3.3 Rutas dinámicas con corchetes",
+              "<i class=\"fa-solid fa-ellipsis\"></i> 3.4 Catch-all y rutas opcionales",
+              "<i class=\"fa-solid fa-link\"></i> 3.5 Navegación con el componente Link",
+              "<i class=\"fa-solid fa-route\"></i> 3.6 Navegación programática con useRouter",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nextjs/nextjs-paginas-rutas.html"
+          },
+          {
+            "id": "nextjs-componentes-layouts",
+            "title": "04. Componentes y Layouts",
+            "content": "Componentes React en Next, layout.tsx, head/meta, metadatos (Metadata API)",
+            "sections": [
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 4.1 Componentes React en Next.js",
+              "<i class=\"fa-solid fa-layer-group\"></i> 4.2 El archivo layout.tsx",
+              "<i class=\"fa-solid fa-heading\"></i> 4.3 Head y metadatos con Metadata API",
+              "<i class=\"fa-solid fa-share-nodes\"></i> 4.4 Metadatos dinámicos y Open Graph",
+              "<i class=\"fa-solid fa-server\"></i> 4.5 Diferencias entre Server y Client Components",
+              "<i class=\"fa-solid fa-clone\"></i> 4.6 Composición de componentes y props",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nextjs/nextjs-componentes-layouts.html"
+          },
+          {
+            "id": "nextjs-datos-ssr-ssg",
+            "title": "05. Obtención de datos (SSR, SSG, ISR)",
+            "content": "Componente cliente/servidor (\"use client\"), server components, fetching de datos, revalidate ISR, CSR",
+            "sections": [
+              "<i class=\"fa-solid fa-database\"></i> 5.1 Server Components y fetching de datos",
+              "<i class=\"fa-solid fa-user\"></i> 5.2 Componentes cliente con la directiva \"use client\"",
+              "<i class=\"fa-solid fa-cloud-arrow-down\"></i> 5.3 Fetch de datos en componentes cliente (CSR)",
+              "<i class=\"fa-solid fa-rotate\"></i> 5.4 Revalidación incremental (ISR)",
+              "<i class=\"fa-solid fa-cubes\"></i> 5.5 generateStaticParams para rutas dinámicas",
+              "<i class=\"fa-solid fa-scale-balanced\"></i> 5.6 Consejos para elegir la estrategia correcta",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nextjs/nextjs-datos-ssr-ssg.html"
+          },
+          {
+            "id": "nextjs-apis-server-actions",
+            "title": "06. APIs y Server Actions",
+            "content": "Route handlers (app/api), crear endpoints, Server Actions (concepto), interacción con formularios",
+            "sections": [
+              "<i class=\"fa-solid fa-code-branch\"></i> 6.1 Route Handlers en app/api",
+              "<i class=\"fa-solid fa-file-arrow-up\"></i> 6.2 Crear endpoints con POST y PUT",
+              "<i class=\"fa-solid fa-server\"></i> 6.3 Qué son las Server Actions",
+              "<i class=\"fa-solid fa-file-signature\"></i> 6.4 Uso de Server Actions con formularios",
+              "<i class=\"fa-solid fa-hourglass-half\"></i> 6.5 Interacción con estado y pendiente",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 6.6 Buenas prácticas de APIs y acciones",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nextjs/nextjs-apis-server-actions.html"
+          },
+          {
+            "id": "nextjs-estilos-imagenes",
+            "title": "07. Estilos e imágenes",
+            "content": "CSS modules, Tailwind/global CSS, next/image (optimización), fuentes con next/font",
+            "sections": [
+              "<i class=\"fa-solid fa-box\"></i> 7.1 CSS Modules en Next.js",
+              "<i class=\"fa-solid fa-palette\"></i> 7.2 CSS global y Tailwind CSS",
+              "<i class=\"fa-solid fa-toggle-on\"></i> 7.3 Estilado condicional y dinámico",
+              "<i class=\"fa-solid fa-image\"></i> 7.4 Optimización de imágenes con next/image",
+              "<i class=\"fa-solid fa-font\"></i> 7.5 Fuentes optimizadas con next/font",
+              "<i class=\"fa-solid fa-moon\"></i> 7.6 Tema claro/oscuro con CSS",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nextjs/nextjs-estilos-imagenes.html"
+          },
+          {
+            "id": "nextjs-autenticacion-middleware",
+            "title": "08. Autenticación y middleware",
+            "content": "middleware.ts, protección de rutas, manejo de sesiones/credenciales (concepto), entorno variables ENV",
+            "sections": [
+              "<i class=\"fa-solid fa-shield-halved\"></i> 8.1 Qué es el middleware en Next.js",
+              "<i class=\"fa-solid fa-lock\"></i> 8.2 Proteger rutas con middleware",
+              "<i class=\"fa-solid fa-arrow-right-arrow-left\"></i> 8.3 Redirecciones y reescrituras",
+              "<i class=\"fa-solid fa-user-lock\"></i> 8.4 Manejo de sesiones y credenciales",
+              "<i class=\"fa-solid fa-key\"></i> 8.5 Variables de entorno (ENV)",
+              "<i class=\"fa-solid fa-right-to-bracket\"></i> 8.6 Uso de Auth.js para autenticación",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nextjs/nextjs-autenticacion-middleware.html"
+          },
+          {
+            "id": "nextjs-optimizacion-seo",
+            "title": "09. Optimización y SEO",
+            "content": "Metadatos dinámicos, sitemap/robots, rendimiento, lazy loading, web vitals",
+            "sections": [
+              "<i class=\"fa-solid fa-chart-line\"></i> 9.1 Metadatos dinámicos para SEO",
+              "<i class=\"fa-solid fa-sitemap\"></i> 9.2 Sitemap y robots.txt",
+              "<i class=\"fa-solid fa-gauge-high\"></i> 9.3 Rendimiento y métricas Web Vitals",
+              "<i class=\"fa-solid fa-ban\"></i> 9.4 Carga diferida (lazy loading)",
+              "<i class=\"fa-solid fa-bolt\"></i> 9.5 Optimización automática y streaming",
+              "<i class=\"fa-solid fa-circle-check\"></i> 9.6 Buenas prácticas de SEO y rendimiento",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nextjs/nextjs-optimizacion-seo.html"
+          },
+          {
+            "id": "nextjs-despliegue",
+            "title": "10. Despliegue en producción",
+            "content": "next build, deploy en Vercel, variables de entorno en producción, buenas prácticas",
+            "sections": [
+              "<i class=\"fa-solid fa-hammer\"></i> 10.1 Preparar el proyecto para producción",
+              "<i class=\"fa-solid fa-gear\"></i> 10.2 Configuración de next.config",
+              "<i class=\"fa-solid fa-rocket\"></i> 10.3 Desplegar en Vercel",
+              "<i class=\"fa-solid fa-key\"></i> 10.4 Variables de entorno en producción",
+              "<i class=\"fa-solid fa-server\"></i> 10.5 Desplegar en otros servicios con Node.js",
+              "<i class=\"fa-solid fa-clipboard-check\"></i> 10.6 Buenas prácticas en producción",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nextjs/nextjs-despliegue.html"
+          }
+        ]
+      },
+      {
+        "id": "svelte",
+        "title": "Svelte",
+        "icon": "fa-solid fa-fan",
+        "lessons": [
+          {
+            "id": "svelte-intro",
+            "title": "01. Introducción a Svelte",
+            "content": "Qué es Svelte, el compilador vs Virtual DOM, ventajas y comparación con SvelteKit y React",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 1.1 Qué es Svelte",
+              "<i class=\"fa-solid fa-microchip\"></i> 1.2 Compilador vs Virtual DOM",
+              "<i class=\"fa-solid fa-rocket\"></i> 1.3 Ventajas de Svelte",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 1.4 Svelte vs SvelteKit vs React",
+              "<i class=\"fa-solid fa-star\"></i> 1.5 Características principales",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/svelte/svelte-intro.html"
+          },
+          {
+            "id": "svelte-instalacion",
+            "title": "02. Instalación y configuración",
+            "content": "Requisitos previos, creación de proyectos con Vite y SvelteKit, estructura y servidor de desarrollo",
+            "sections": [
+              "<i class=\"fa-solid fa-circle-check\"></i> 2.1 Requisitos previos (Node.js)",
+              "<i class=\"fa-solid fa-terminal\"></i> 2.2 Crear proyecto con Vite",
+              "<i class=\"fa-solid fa-wand-magic-sparkles\"></i> 2.3 Crear proyecto con SvelteKit",
+              "<i class=\"fa-solid fa-folder-tree\"></i> 2.4 Estructura de carpetas",
+              "<i class=\"fa-solid fa-play\"></i> 2.5 Ejecutar el servidor de desarrollo",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/svelte/svelte-instalacion.html"
+          },
+          {
+            "id": "svelte-componentes-sintaxis",
+            "title": "03. Componentes y sintaxis",
+            "content": "Qué es un componente .svelte, bloques script y style, estructura del template y renderizado",
+            "sections": [
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 3.1 Qué es un componente .svelte",
+              "<i class=\"fa-solid fa-code\"></i> 3.2 El bloque &lt;script&gt;",
+              "<i class=\"fa-solid fa-palette\"></i> 3.3 El bloque &lt;style&gt;",
+              "<i class=\"fa-solid fa-window-restore\"></i> 3.4 Estructura del template",
+              "<i class=\"fa-solid fa-display\"></i> 3.5 Renderizado de variables",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/svelte/svelte-componentes-sintaxis.html"
+          },
+          {
+            "id": "svelte-reactividad",
+            "title": "04. Reactividad",
+            "content": "Reactividad con let, statements reactivos con $:, arrays, objetos y ejemplos prácticos",
+            "sections": [
+              "<i class=\"fa-solid fa-bolt\"></i> 4.1 Reactividad con let",
+              "<i class=\"fa-solid fa-wave-square\"></i> 4.2 Statements reactivos con $:",
+              "<i class=\"fa-solid fa-list-check\"></i> 4.3 Actualización de arrays y objetos",
+              "<i class=\"fa-solid fa-magic\"></i> 4.4 Reactividad avanzada y múltiples asignaciones",
+              "<i class=\"fa-solid fa-wrench\"></i> 4.5 Ejemplo práctico completo",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/svelte/svelte-reactividad.html"
+          },
+          {
+            "id": "svelte-props-eventos",
+            "title": "05. Props y eventos",
+            "content": "Props con export let, comunicación entre componentes, eventos on:click y event forwarding",
+            "sections": [
+              "<i class=\"fa-solid fa-envelope\"></i> 5.1 Props con export let",
+              "<i class=\"fa-solid fa-share-nodes\"></i> 5.2 Pasar datos entre componentes",
+              "<i class=\"fa-solid fa-mouse-pointer\"></i> 5.3 Eventos con on:click",
+              "<i class=\"fa-solid fa-forward\"></i> 5.4 Event forwarding",
+              "<i class=\"fa-solid fa-link\"></i> 5.5 Cadenas de eventos",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/svelte/svelte-props-eventos.html"
+          },
+          {
+            "id": "svelte-logica-condicionales",
+            "title": "06. Lógica y condicionales",
+            "content": "Bloques {#if}, {:else}, {#each}, keyed each y {#await} para promesas",
+            "sections": [
+              "<i class=\"fa-solid fa-code-branch\"></i> 6.1 Condicionales {#if} y {:else}",
+              "<i class=\"fa-solid fa-sitemap\"></i> 6.2 Cadenas {:else if}",
+              "<i class=\"fa-solid fa-list-ul\"></i> 6.3 Bloques {#each} para listas",
+              "<i class=\"fa-solid fa-key\"></i> 6.4 Keyed each",
+              "<i class=\"fa-solid fa-hourglass-half\"></i> 6.5 Bloques {#await} para promesas",
+              "<i class=\"fa-solid fa-table\"></i> 6.6 Matriz de bloques de lógica",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/svelte/svelte-logica-condicionales.html"
+          },
+          {
+            "id": "svelte-vinculaciones",
+            "title": "07. Bindings y tiendas",
+            "content": "Enlace bidireccional con bind:value, tiendas writable y suscripción automática con $",
+            "sections": [
+              "<i class=\"fa-solid fa-arrows-left-right\"></i> 7.1 Enlace bidireccional con bind",
+              "<i class=\"fa-solid fa-keyboard\"></i> 7.2 bind:value y tipos de bind",
+              "<i class=\"fa-solid fa-box-open\"></i> 7.3 Tiendas writable",
+              "<i class=\"fa-solid fa-dollar-sign\"></i> 7.4 Suscripción automática con $",
+              "<i class=\"fa-solid fa-glasses\"></i> 7.5 Tiendas readable y custom",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/svelte/svelte-vinculaciones.html"
+          },
+          {
+            "id": "svelte-almacenes-stores-contexto",
+            "title": "08. Stores y contexto",
+            "content": "Tiendas writable, derived, métodos set/update/get y contexto con setContext/getContext",
+            "sections": [
+              "<i class=\"fa-solid fa-box-open\"></i> 8.1 Repaso de tiendas writable",
+              "<i class=\"fa-solid fa-sliders\"></i> 8.2 Métodos set, update y get",
+              "<i class=\"fa-solid fa-project-diagram\"></i> 8.3 Tiendas derived",
+              "<i class=\"fa-solid fa-rss\"></i> 8.4 Suscripción manual",
+              "<i class=\"fa-solid fa-sitemap\"></i> 8.5 Contexto con setContext y getContext",
+              "<i class=\"fa-solid fa-scale-balanced\"></i> 8.6 Store vs Contexto",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/svelte/svelte-almacenes-stores-contexto.html"
+          },
+          {
+            "id": "svelte-estilos-transiciones",
+            "title": "09. Estilos, transiciones y animaciones",
+            "content": "Estilos scoped, clases dinámicas, transiciones fade/fly y animaciones flip",
+            "sections": [
+              "<i class=\"fa-solid fa-palette\"></i> 9.1 Estilos con scope",
+              "<i class=\"fa-solid fa-wand-magic-sparkles\"></i> 9.2 Clases dinámicas",
+              "<i class=\"fa-solid fa-fade\"></i> 9.3 Transiciones fade y fly",
+              "<i class=\"fa-solid fa-right-left\"></i> 9.4 Transiciones in y out",
+              "<i class=\"fa-solid fa-arrows-up-down-left-right\"></i> 9.5 Animaciones flip",
+              "<i class=\"fa-solid fa-film\"></i> 9.6 Directivas de movimiento",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/svelte/svelte-estilos-transiciones.html"
+          },
+          {
+            "id": "svelte-sveltekit-proyecto",
+            "title": "10. SvelteKit y proyecto final",
+            "content": "SvelteKit, routing por archivos, +page.svelte, SSR y adaptadores de despliegue",
+            "sections": [
+              "<i class=\"fa-solid fa-compass\"></i> 10.1 Qué es SvelteKit",
+              "<i class=\"fa-solid fa-folder-tree\"></i> 10.2 Routing por archivos",
+              "<i class=\"fa-solid fa-file-lines\"></i> 10.3 El archivo +page.svelte",
+              "<i class=\"fa-solid fa-server\"></i> 10.4 SSR y carga de datos",
+              "<i class=\"fa-solid fa-rocket\"></i> 10.5 Adaptadores de despliegue",
+              "<i class=\"fa-solid fa-trophy\"></i> 10.6 Proyecto final",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/svelte/svelte-sveltekit-proyecto.html"
+          }
+        ]
+      },
+      {
+        "id": "nuxt",
+        "title": "Nuxt",
+        "icon": "fa-solid fa-cubes-stacked",
+        "lessons": [
+          {
+            "id": "nuxt-intro",
+            "title": "01. Introducción a Nuxt",
+            "content": "Qué es Nuxt, por qué sobre Vue, SSR/SSG/ISR, superpoderes y características de Nuxt 3",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 1.1 Qué es Nuxt",
+              "<i class=\"fa-solid fa-question\"></i> 1.2 Por qué Nuxt en vez de Vue",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 1.3 SSR, SSG e ISR",
+              "<i class=\"fa-solid fa-wand-magic-sparkles\"></i> 1.4 Superpoderes de Nuxt",
+              "<i class=\"fa-solid fa-grip\"></i> 1.5 Estructura y convenciones",
+              "<i class=\"fa-solid fa-rocket\"></i> 1.6 Nuxt 3 y nuevas funcionalidades",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nuxt/nuxt-intro.html"
+          },
+          {
+            "id": "nuxt-instalacion",
+            "title": "02. Instalación y primer proyecto",
+            "content": "Requisitos Node, nuxi init, estructura de carpetas, nuxt.config y servidor de desarrollo",
+            "sections": [
+              "<i class=\"fa-solid fa-list-check\"></i> 2.1 Requisitos previos",
+              "<i class=\"fa-solid fa-box\"></i> 2.2 Crear un proyecto Nuxt",
+              "<i class=\"fa-solid fa-folder-open\"></i> 2.3 Estructura de carpetas del proyecto",
+              "<i class=\"fa-solid fa-gear\"></i> 2.4 Configuración inicial (nuxt.config)",
+              "<i class=\"fa-solid fa-play\"></i> 2.5 Ejecutar el servidor de desarrollo",
+              "<i class=\"fa-solid fa-screwdriver-wrench\"></i> 2.6 Verificar el proyecto con Nuxt DevTools",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nuxt/nuxt-instalacion.html"
+          },
+          {
+            "id": "nuxt-paginas-rutas",
+            "title": "03. Páginas y enrutamiento",
+            "content": "File-based routing en pages/, páginas dinámicas, NuxtLink, useRoute y navegación",
+            "sections": [
+              "<i class=\"fa-solid fa-route\"></i> 3.1 File-based routing en pages",
+              "<i class=\"fa-solid fa-database\"></i> 3.2 Páginas dinámicas con parámetros",
+              "<i class=\"fa-solid fa-link\"></i> 3.3 Navegación con NuxtLink",
+              "<i class=\"fa-solid fa-code\"></i> 3.4 Navegación programática",
+              "<i class=\"fa-solid fa-magnifying-glass\"></i> 3.5 Uso de useRoute y parámetros de consulta",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> 3.6 Página 404 y manejo de errores",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nuxt/nuxt-paginas-rutas.html"
+          },
+          {
+            "id": "nuxt-componentes-layouts",
+            "title": "04. Componentes y Layouts",
+            "content": "Componentes con auto-import, NuxtLayout, layouts y NuxtPage",
+            "sections": [
+              "<i class=\"fa-solid fa-cubes\"></i> 4.1 Componentes con auto-import",
+              "<i class=\"fa-solid fa-layer-group\"></i> 4.2 Nuestro primer layout",
+              "<i class=\"fa-solid fa-wand-sparkles\"></i> 4.3 Definir layouts personalizados",
+              "<i class=\"fa-solid fa-grip-lines\"></i> 4.4 NuxtLayout y NuxtPage",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 4.5 Ejemplo completo de componentes y layouts",
+              "<i class=\"fa-solid fa-broom\"></i> 4.6 Buenas prácticas organizando componentes",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nuxt/nuxt-componentes-layouts.html"
+          },
+          {
+            "id": "nuxt-fetching-datos",
+            "title": "05. Obtención de datos (composables)",
+            "content": "useFetch, useAsyncData, server vs client, ISR con revalidate y Suspense",
+            "sections": [
+              "<i class=\"fa-solid fa-cloud-arrow-down\"></i> 5.1 useFetch",
+              "<i class=\"fa-solid fa-rotate\"></i> 5.2 useAsyncData y watch como reactividad",
+              "<i class=\"fa-solid fa-server\"></i> 5.3 Servidor vs cliente e hidratación",
+              "<i class=\"fa-solid fa-clock-rotate-left\"></i> 5.4 ISR con revalidate",
+              "<i class=\"fa-solid fa-tag\"></i> 5.5 useSeoMeta y metadatos",
+              "<i class=\"fa-solid fa-hourglass-half\"></i> 5.6 Suspense y carga asíncrona de páginas",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nuxt/nuxt-fetching-datos.html"
+          },
+          {
+            "id": "nuxt-state-plugins",
+            "title": "06. Estado global y Plugins",
+            "content": "useState, Pinia, plugins, middleware de navegación y composables",
+            "sections": [
+              "<i class=\"fa-solid fa-globe\"></i> 6.1 Estado global con useState",
+              "<i class=\"fa-solid fa-store\"></i> 6.2 Introducción a Pinia en Nuxt",
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 6.3 Plugins en Nuxt",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 6.4 Middleware de navegación",
+              "<i class=\"fa-solid fa-boxes-stacked\"></i> 6.5 Composables personalizados",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 6.6 Resumen de estado y ciclo de vida",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nuxt/nuxt-state-plugins.html"
+          },
+          {
+            "id": "nuxt-store-pinia",
+            "title": "07. State con Pinia y composables",
+            "content": "Instalar Pinia, definir stores, acciones asíncronas y hydration con SSR",
+            "sections": [
+              "<i class=\"fa-solid fa-download\"></i> 7.1 Instalar y configurar Pinia",
+              "<i class=\"fa-solid fa-file-code\"></i> 7.2 Definir un store con state, getters y actions",
+              "<i class=\"fa-solid fa-plug-circle-plus\"></i> 7.3 Usar el store en componentes",
+              "<i class=\"fa-solid fa-arrow-right-arrow-left\"></i> 7.4 Actions asíncronas con Pinia",
+              "<i class=\"fa-solid fa-boxes-stacked\"></i> 7.5 Composables que usan Pinia",
+              "<i class=\"fa-solid fa-sync\"></i> 7.6 Pinia hydration y SSR",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nuxt/nuxt-store-pinia.html"
+          },
+          {
+            "id": "nuxt-api-server",
+            "title": "08. Server API y Server Routes",
+            "content": "El servidor Nitro, server/api endpoints, rutas dinámicas y $fetch",
+            "sections": [
+              "<i class=\"fa-solid fa-server\"></i> 8.1 El servidor Nitro",
+              "<i class=\"fa-solid fa-code\"></i> 8.2 Server API endpoints HTTP",
+              "<i class=\"fa-solid fa-database\"></i> 8.3 Rutas y parámetros dinámicos en server",
+              "<i class=\"fa-solid fa-plug\"></i> 8.4 Consumir la API con $fetch",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> 8.5 Manejar errores en la API",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 8.6 Middleware de servidor y buenas prácticas",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nuxt/nuxt-api-server.html"
+          },
+          {
+            "id": "nuxt-modulos-contenido",
+            "title": "09. Módulos y content",
+            "content": "Ecosistema de módulos, @nuxt/content, runtime config y seguridad",
+            "sections": [
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 9.1 El ecosistema de módulos",
+              "<i class=\"fa-solid fa-file-lines\"></i> 9.2 Content con archivos Markdown",
+              "<i class=\"fa-solid fa-arrows-spin\"></i> 9.3 De archivos a páginas con content",
+              "<i class=\"fa-solid fa-key\"></i> 9.4 Variables de entorno y runtime config",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 9.5 Middleware de seguridad (concepto)",
+              "<i class=\"fa-solid fa-user-shield\"></i> 9.6 Gestionar runtime config y seguridad",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nuxt/nuxt-modulos-contenido.html"
+          },
+          {
+            "id": "nuxt-seo-despliegue",
+            "title": "10. SEO y despliegue",
+            "content": "Metadatos y SEO, sitemap/robots, build y generate, despliegue y buenas prácticas",
+            "sections": [
+              "<i class=\"fa-solid fa-magnifying-glass-chart\"></i> 10.1 Metadatos y SEO con Nuxt",
+              "<i class=\"fa-solid fa-share-nodes\"></i> 10.2 Open Graph y redes sociales",
+              "<i class=\"fa-solid fa-sitemap\"></i> 10.3 Sitemap y robots.txt",
+              "<i class=\"fa-solid fa-hammer\"></i> 10.4 build y generate para producción",
+              "<i class=\"fa-solid fa-cloud-arrow-up\"></i> 10.5 Desplegar en Vercel, Netlify o Node",
+              "<i class=\"fa-solid fa-list-check\"></i> 10.6 Buenas prácticas de producción",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nuxt/nuxt-seo-despliegue.html"
+          }
+        ]
+      },
+      {
+        "id": "django",
+        "title": "Django",
+        "icon": "fa-brands fa-python",
+        "lessons": [
+          {
+            "id": "django-intro",
+            "title": "01. Introducción a Django",
+            "content": "Qué es Django, su patrón MVT, las baterías incluidas y por qué elegirlo",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 1.1 Qué es Django",
+              "<i class=\"fa-solid fa-sitemap\"></i> 1.2 El patrón MVT",
+              "<i class=\"fa-solid fa-battery-full\"></i> 1.3 Baterías incluidas (batteries included)",
+              "<i class=\"fa-solid fa-circle-check\"></i> 1.4 Por qué usar Django",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 1.5 Diferencias entre Django y Flask",
+              "<i class=\"fa-solid fa-building\"></i> 1.6 Cloud hosting y empresas que usan Django",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/django/django-intro.html"
+          },
+          {
+            "id": "django-instalacion",
+            "title": "02. Instalación y primer proyecto",
+            "content": "Entorno virtual, instalar Django, crear proyecto y levantar el servidor de desarrollo",
+            "sections": [
+              "<i class=\"fa-solid fa-box\"></i> 2.1 Entorno virtual de Python",
+              "<i class=\"fa-solid fa-download\"></i> 2.2 Instalar Django con pip",
+              "<i class=\"fa-solid fa-certificate\"></i> 2.3 Crear el proyecto con django-admin",
+              "<i class=\"fa-solid fa-folder\"></i> 2.4 Estructura de carpetas del proyecto",
+              "<i class=\"fa-solid fa-file-code\"></i> 2.5 Archivos clave: manage.py, settings.py y urls.py",
+              "<i class=\"fa-solid fa-play\"></i> 2.6 Servidor de desarrollo (runserver)",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/django/django-instalacion.html"
+          },
+          {
+            "id": "django-apps-modelos",
+            "title": "03. Aplicaciones y modelos",
+            "content": "Crear aplicaciones, definir modelos, campos, migraciones y el admin de Django",
+            "sections": [
+              "<i class=\"fa-solid fa-cubes\"></i> 3.1 Crear una aplicación con startapp",
+              "<i class=\"fa-solid fa-lightbulb\"></i> 3.2 Qué es un modelo",
+              "<i class=\"fa-solid fa-table\"></i> 3.3 Campos de modelos",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 3.4 Migraciones: makemigrations y migrate",
+              "<i class=\"fa-solid fa-user-gear\"></i> 3.5 El admin de Django",
+              "<i class=\"fa-solid fa-pen\"></i> 3.6 Ejemplo: modelo completo de un blog",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/django/django-apps-modelos.html"
+          },
+          {
+            "id": "django-vistas-urls",
+            "title": "04. Vistas y URLs",
+            "content": "Vistas por función y por clase, patrones de URL con path e include y renderizado de templates",
+            "sections": [
+              "<i class=\"fa-solid fa-eye\"></i> 4.1 Qué es una vista en Django",
+              "<i class=\"fa-solid fa-code\"></i> 4.2 Vistas por función (FBV)",
+              "<i class=\"fa-solid fa-cube\"></i> 4.3 Vistas por clase (CBV)",
+              "<i class=\"fa-solid fa-road\"></i> 4.4 Patrones de URL con path",
+              "<i class=\"fa-solid fa-link\"></i> 4.5 Mapeo URL a vistas",
+              "<i class=\"fa-solid fa-file\"></i> 4.6 Renderizado de templates",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/django/django-vistas-urls.html"
+          },
+          {
+            "id": "django-templates",
+            "title": "05. Plantillas (templates)",
+            "content": "El sistema de plantillas DTL: variables, etiquetas, herencia, includes y filtros",
+            "sections": [
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 5.1 Qué es el sistema de plantillas (DTL)",
+              "<i class=\"fa-solid fa-code\"></i> 5.2 Variables con {{ }}",
+              "<i class=\"fa-solid fa-tag\"></i> 5.3 Etiquetas con {% %}",
+              "<i class=\"fa-solid fa-layer-group\"></i> 5.4 Herencia de plantillas (extends y block)",
+              "<i class=\"fa-solid fa-box-open\"></i> 5.5 Includes y reutilización",
+              "<i class=\"fa-solid fa-filter\"></i> 5.6 Filtros de plantilla",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/django/django-templates.html"
+          },
+          {
+            "id": "django-orm-queries",
+            "title": "06. ORM y consultas",
+            "content": "El ORM de Django, QuerySets, filtros, creación/actualización/eliminación y relaciones",
+            "sections": [
+              "<i class=\"fa-solid fa-database\"></i> 6.1 Qué es el ORM de Django",
+              "<i class=\"fa-solid fa-list\"></i> 6.2 Qué es un QuerySet",
+              "<i class=\"fa-solid fa-filter\"></i> 6.3 Filtrar y buscar registros",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 6.4 Crear, actualizar y eliminar registros",
+              "<i class=\"fa-solid fa-link\"></i> 6.5 Relaciones entre modelos",
+              "<i class=\"fa-solid fa-magnifying-glass\"></i> 6.6 Ejemplo práctico de consultas",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/django/django-orm-queries.html"
+          },
+          {
+            "id": "django-formularios",
+            "title": "07. Formularios y validación",
+            "content": "Formularios con forms.Form y ModelForm, renderizado, protección CSRF y validación POST",
+            "sections": [
+              "<i class=\"fa-solid fa-file-pen\"></i> 7.1 Qué son los formularios en Django",
+              "<i class=\"fa-solid fa-clipboard-list\"></i> 7.2 Formularios con forms.Form",
+              "<i class=\"fa-solid fa-database\"></i> 7.3 Formularios con forms.ModelForm",
+              "<i class=\"fa-solid fa-display\"></i> 7.4 Renderizar formularios en plantillas",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 7.5 Protección CSRF",
+              "<i class=\"fa-solid fa-circle-check\"></i> 7.6 Validación de datos y procesado POST",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/django/django-formularios.html"
+          },
+          {
+            "id": "django-auth-usuarios",
+            "title": "08. Autenticación y usuarios",
+            "content": "Sistema de autenticación integrado, login/logout, modelo User, permisos y grupos",
+            "sections": [
+              "<i class=\"fa-solid fa-user-lock\"></i> 8.1 Sistema de autenticación integrado",
+              "<i class=\"fa-solid fa-right-to-bracket\"></i> 8.2 Login y logout",
+              "<i class=\"fa-solid fa-user\"></i> 8.3 El modelo de usuario",
+              "<i class=\"fa-solid fa-users\"></i> 8.4 Permisos y grupos",
+              "<i class=\"fa-solid fa-lock\"></i> 8.5 Proteger vistas con login_required",
+              "<i class=\"fa-solid fa-user-plus\"></i> 8.6 Ejemplo completo: registro de usuarios",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/django/django-auth-usuarios.html"
+          },
+          {
+            "id": "django-admin-shell",
+            "title": "09. Panel de administración y shell",
+            "content": "El panel de administración, su personalización con ModelAdmin y el shell interactivo",
+            "sections": [
+              "<i class=\"fa-solid fa-toolbox\"></i> 9.1 Qué es el panel de administración",
+              "<i class=\"fa-solid fa-box\"></i> 9.2 Registrar modelos en el admin",
+              "<i class=\"fa-solid fa-palette\"></i> 9.3 Personalizar el admin",
+              "<i class=\"fa-solid fa-terminal\"></i> 9.4 Shell interactivo",
+              "<i class=\"fa-solid fa-magnifying-glass\"></i> 9.5 Consultas y comandos en la consola",
+              "<i class=\"fa-solid fa-lightbulb\"></i> 9.6 Ejemplo práctico con shell",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/django/django-admin-shell.html"
+          },
+          {
+            "id": "django-proyecto-despliegue",
+            "title": "10. Proyecto completo y despliegue",
+            "content": "Organización de un proyecto real, estáticos y media, producción y despliegue con Gunicorn y Nginx",
+            "sections": [
+              "<i class=\"fa-solid fa-folder\"></i> 10.1 Organización de un proyecto real",
+              "<i class=\"fa-solid fa-image\"></i> 10.2 Archivos estáticos y media",
+              "<i class=\"fa-solid fa-list-check\"></i> 10.3 Dependencias (requirements.txt) y variables de entorno",
+              "<i class=\"fa-solid fa-gear\"></i> 10.4 Configuración de producción",
+              "<i class=\"fa-solid fa-rocket\"></i> 10.5 Despliegue con Gunicorn y Nginx",
+              "<i class=\"fa-solid fa-circle-check\"></i> 10.6 Buenas prácticas de despliegue",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/django/django-proyecto-despliegue.html"
+          }
+        ]
+      },
+      {
+        "id": "flask",
+        "title": "Flask",
+        "icon": "fa-solid fa-flask",
+        "lessons": [
+          {
+            "id": "flask-intro",
+            "title": "01. Introducción a Flask",
+            "content": "Qué es Flask, características, diferencias con Django y FastAPI y por qué elegirlo",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 1.1 Qué es Flask",
+              "<i class=\"fa-solid fa-scale-balanced\"></i> 1.2 Microframework vs full-stack",
+              "<i class=\"fa-solid fa-face-smile\"></i> 1.3 Por qué elegir Flask",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 1.4 Diferencias con Django y FastAPI",
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 1.5 Extensiones de Flask",
+              "<i class=\"fa-solid fa-briefcase\"></i> 1.6 Casos de uso",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flask/flask-intro.html"
+          },
+          {
+            "id": "flask-instalacion",
+            "title": "02. Instalación y primer proyecto",
+            "content": "Entorno virtual, instalación de Flask y creación del primer proyecto",
+            "sections": [
+              "<i class=\"fa-solid fa-box\"></i> 2.1 Entorno virtual",
+              "<i class=\"fa-solid fa-crown\"></i> 2.2 Instalar Flask",
+              "<i class=\"fa-solid fa-rocket\"></i> 2.3 Crear el primer proyecto",
+              "<i class=\"fa-solid fa-play\"></i> 2.4 Ejecutar el servidor",
+              "<i class=\"fa-solid fa-bug\"></i> 2.5 Modo debug",
+              "<i class=\"fa-solid fa-folder\"></i> 2.6 Estructura mínima de un proyecto",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flask/flask-instalacion.html"
+          },
+          {
+            "id": "flask-rutas-vistas",
+            "title": "03. Rutas y vistas",
+            "content": "Rutas con @app.route, métodos HTTP, parámetros y redirecciones",
+            "sections": [
+              "<i class=\"fa-solid fa-road\"></i> 3.1 El decorador @app.route",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 3.2 Rutas con métodos (GET/POST)",
+              "<i class=\"fa-solid fa-tag\"></i> 3.3 Parámetros en la URL",
+              "<i class=\"fa-solid fa-wand-magic-sparkles\"></i> 3.4 Convertidores de tipo",
+              "<i class=\"fa-solid fa-share\"></i> 3.5 Redirecciones (redirect)",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> 3.6 Manejo de errores y abortar",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flask/flask-rutas-vistas.html"
+          },
+          {
+            "id": "flask-templates",
+            "title": "04. Plantillas (Jinja2)",
+            "content": "Plantillas Jinja2 con render_template, herencia, filtros y url_for",
+            "sections": [
+              "<i class=\"fa-solid fa-file-lines\"></i> 4.1 render_template",
+              "<i class=\"fa-solid fa-code\"></i> 4.2 Sintaxis de Jinja2",
+              "<i class=\"fa-solid fa-paper-plane\"></i> 4.3 Enviar datos a la plantilla",
+              "<i class=\"fa-solid fa-layer-group\"></i> 4.4 Herencia con extends y block",
+              "<i class=\"fa-solid fa-filter\"></i> 4.5 Filtros y url_for en plantillas",
+              "<i class=\"fa-solid fa-lightbulb\"></i> 4.6 Ejemplo práctico completo",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flask/flask-templates.html"
+          },
+          {
+            "id": "flask-http-request",
+            "title": "05. Métodos HTTP y datos del request",
+            "content": "El objeto request de Flask: form, args, json y manejo de GET y POST",
+            "sections": [
+              "<i class=\"fa-solid fa-box-open\"></i> 5.1 El objeto request",
+              "<i class=\"fa-solid fa-rectangle-list\"></i> 5.2 request.form",
+              "<i class=\"fa-solid fa-filter\"></i> 5.3 request.args",
+              "<i class=\"fa-solid fa-database\"></i> 5.4 request.json",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 5.5 Manejo de GET y POST",
+              "<i class=\"fa-solid fa-bell\"></i> 5.6 Mensajes flash",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flask/flask-http-request.html"
+          },
+          {
+            "id": "flask-formularios-flash",
+            "title": "06. Formularios y mensajes flash",
+            "content": "Formularios con Flask-WTF, validación, mensajes flash y patrón PRG",
+            "sections": [
+              "<i class=\"fa-solid fa-rectangle-list\"></i> 6.1 Manejar formularios",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 6.2 Flask-WTF (concepto)",
+              "<i class=\"fa-solid fa-circle-check\"></i> 6.3 Validación manual",
+              "<i class=\"fa-solid fa-bell\"></i> 6.4 Mensajes flash",
+              "<i class=\"fa-solid fa-link\"></i> 6.5 url_for y redirección",
+              "<i class=\"fa-solid fa-shuffle\"></i> 6.6 Patrón POST/Redirect/GET",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flask/flask-formularios-flash.html"
+          },
+          {
+            "id": "flask-bases-datos-sqlalchemy",
+            "title": "07. Bases de datos con SQLAlchemy",
+            "content": "Flask-SQLAlchemy: modelos, CRUD, relaciones y migraciones",
+            "sections": [
+              "<i class=\"fa-solid fa-database\"></i> 7.1 Flask-SQLAlchemy",
+              "<i class=\"fa-solid fa-table\"></i> 7.2 Definir modelos",
+              "<i class=\"fa-solid fa-circle-arrow-right\"></i> 7.3 Operaciones CRUD",
+              "<i class=\"fa-solid fa-link\"></i> 7.4 Relaciones entre tablas",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 7.5 Migraciones con Flask-Migrate",
+              "<i class=\"fa-solid fa-lightbulb\"></i> 7.6 Ejemplo práctico completo",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flask/flask-bases-datos-sqlalchemy.html"
+          },
+          {
+            "id": "flask-rest-api",
+            "title": "08. Construir APIs REST con Flask",
+            "content": "APIs REST con jsonify, métodos HTTP, errores y consumo de la API",
+            "sections": [
+              "<i class=\"fa-solid fa-server\"></i> 8.1 Qué es una REST API",
+              "<i class=\"fa-solid fa-file-code\"></i> 8.2 Devolver JSON con jsonify",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 8.3 Métodos en las rutas",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> 8.4 Manejo de errores en la API",
+              "<i class=\"fa-solid fa-cloud-arrow-down\"></i> 8.5 Consumir la API",
+              "<i class=\"fa-solid fa-sitemap\"></i> 8.6 Estructura de una REST API",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flask/flask-rest-api.html"
+          },
+          {
+            "id": "flask-blueprints-auth",
+            "title": "09. Blueprints y autenticación",
+            "content": "Organización con Blueprints, autenticación por sesiones y protección de rutas",
+            "sections": [
+              "<i class=\"fa-solid fa-cubes\"></i> 9.1 Qué son los Blueprints",
+              "<i class=\"fa-solid fa-layer-group\"></i> 9.2 Crear un Blueprint",
+              "<i class=\"fa-solid fa-floppy-disk\"></i> 9.3 Register_blueprint",
+              "<i class=\"fa-solid fa-user-lock\"></i> 9.4 Autenticación básica",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 9.5 Proteger rutas",
+              "<i class=\"fa-solid fa-users\"></i> 9.6 Manejo de usuarios (concepto)",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flask/flask-blueprints-auth.html"
+          },
+          {
+            "id": "flask-proyecto-despliegue",
+            "title": "10. Proyecto completo y despliegue",
+            "content": "Estructura profesional, variables de entorno, Gunicorn y seguridad",
+            "sections": [
+              "<i class=\"fa-solid fa-folder-tree\"></i> 10.1 Estructura profesional de un proyecto",
+              "<i class=\"fa-solid fa-file-circle-check\"></i> 10.2 requirements.txt",
+              "<i class=\"fa-solid fa-gears\"></i> 10.3 Variables de entorno",
+              "<i class=\"fa-solid fa-cloud-arrow-up\"></i> 10.4 Despliegue con Gunicorn",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 10.5 Buenas prácticas de seguridad",
+              "<i class=\"fa-solid fa-lightbulb\"></i> 10.6 Ejemplo completo organizado",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flask/flask-proyecto-despliegue.html"
+          }
+        ]
+      },
+      {
+        "id": "express",
+        "title": "Express",
+        "icon": "fa-solid fa-server",
+        "lessons": [
+          {
+            "id": "express-intro",
+            "title": "01. Introducción a Express",
+            "content": "Qué es Express, por qué usarlo, diferencias con NestJS y Fastify y middleware",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 1.1 Qué es Express",
+              "<i class=\"fa-solid fa-star\"></i> 1.2 Por qué usar Express",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 1.3 Diferencias con NestJS y Fastify",
+              "<i class=\"fa-solid fa-plug\"></i> 1.4 Middleware en línea",
+              "<i class=\"fa-solid fa-box-open\"></i> 1.5 Ecosistema npm",
+              "<i class=\"fa-solid fa-folder-tree\"></i> 1.6 Cuándo usar Express",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/express/express-intro.html"
+          },
+          {
+            "id": "express-instalacion",
+            "title": "02. Instalación y primer proyecto",
+            "content": "Requisitos Node.js/npm, instalar Express, primer servidor, Nodemon y estructura básica",
+            "sections": [
+              "<i class=\"fa-solid fa-box\"></i> 2.1 Requisitos: Node.js y npm",
+              "<i class=\"fa-solid fa-file-lines\"></i> 2.2 Inicializar el proyecto con npm init",
+              "<i class=\"fa-solid fa-download\"></i> 2.3 Instalar Express",
+              "<i class=\"fa-solid fa-server\"></i> 2.4 Crear el primer servidor",
+              "<i class=\"fa-solid fa-rotate\"></i> 2.5 Uso de Nodemon (recarga automática)",
+              "<i class=\"fa-solid fa-folder\"></i> 2.6 Estructura básica de un proyecto",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/express/express-instalacion.html"
+          },
+          {
+            "id": "express-rutas",
+            "title": "03. Rutas y manejo de solicitudes",
+            "content": "Métodos HTTP, parámetros de ruta, query string, respuestas y códigos de estado",
+            "sections": [
+              "<i class=\"fa-solid fa-road\"></i> 3.1 Métodos de ruta (GET, POST, PUT, DELETE)",
+              "<i class=\"fa-solid fa-hashtag\"></i> 3.2 Parámetros de ruta (/:id)",
+              "<i class=\"fa-solid fa-circle-question\"></i> 3.3 Query string (req.query)",
+              "<i class=\"fa-solid fa-envelope-open-text\"></i> 3.4 Respuestas con res.json y res.send",
+              "<i class=\"fa-solid fa-shuffle\"></i> 3.5 Multiple manejo y orden de rutas",
+              "<i class=\"fa-solid fa-list-check\"></i> 3.6 Códigos de estado HTTP",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/express/express-rutas.html"
+          },
+          {
+            "id": "express-middleware",
+            "title": "04. Middleware",
+            "content": "Qué es el middleware, app.use, express.json(), orden de ejecución y Morgan",
+            "sections": [
+              "<i class=\"fa-solid fa-plug\"></i> 4.1 Qué es el middleware",
+              "<i class=\"fa-solid fa-layer-group\"></i> 4.2 Middleware de aplicación (app.use)",
+              "<i class=\"fa-solid fa-braille\"></i> 4.3 express.json() para datos JSON",
+              "<i class=\"fa-solid fa-arrow-down-wide-short\"></i> 4.4 Orden de ejecución del middleware",
+              "<i class=\"fa-solid fa-wand-magic-sparkles\"></i> 4.5 Middleware personalizado",
+              "<i class=\"fa-solid fa-chart-line\"></i> 4.6 Morgan (registro de peticiones)",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/express/express-middleware.html"
+          },
+          {
+            "id": "express-request-http",
+            "title": "05. Métodos HTTP y respuestas",
+            "content": "Manejo de req y res, req.body, cabeceras, códigos de estado y ejemplo CRUD",
+            "sections": [
+              "<i class=\"fa-solid fa-right-left\"></i> 5.1 Manejo de req y res",
+              "<i class=\"fa-solid fa-inbox\"></i> 5.2 Cuerpo de la solicitud (req.body)",
+              "<i class=\"fa-solid fa-bezier-curve\"></i> 5.3 Parámetros de ruta y query combinados",
+              "<i class=\"fa-solid fa-flag\"></i> 5.4 Códigos de estado detallados",
+              "<i class=\"fa-solid fa-tag\"></i> 5.5 Cabeceras (headers)",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 5.6 Ejemplo completo de manejo HTTP",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/express/express-request-http.html"
+          },
+          {
+            "id": "express-vistas-templates",
+            "title": "06. Plantillas (templates)",
+            "content": "Servir HTML estático, motores EJS/Pug, res.render y envío de variables",
+            "sections": [
+              "<i class=\"fa-solid fa-file-code\"></i> 6.1 Servir HTML estático (express.static)",
+              "<i class=\"fa-solid fa-folder-open\"></i> 6.2 Prefijo virtual con express.static",
+              "<i class=\"fa-solid fa-cubes\"></i> 6.3 Template engines (EJS y Pug)",
+              "<i class=\"fa-solid fa-display\"></i> 6.4 Renderizar vistas con res.render",
+              "<i class=\"fa-solid fa-truck-fast\"></i> 6.5 Envío de variables a plantillas",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 6.6 Ejemplo combinado de plantillas y estáticos",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/express/express-vistas-templates.html"
+          },
+          {
+            "id": "express-bases-datos",
+            "title": "07. Conectar con base de datos",
+            "content": "MongoDB con Mongoose, SQL con Sequelize, CRUD, integración y dotenv",
+            "sections": [
+              "<i class=\"fa-solid fa-database\"></i> 7.1 Orientación general a bases de datos",
+              "<i class=\"fa-solid fa-cubes\"></i> 7.2 MongoDB con Mongoose",
+              "<i class=\"fa-solid fa-table\"></i> 7.3 MySQL y PostgreSQL",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 7.4 Operaciones CRUD",
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 7.5 Integración de la base de datos con Express",
+              "<i class=\"fa-solid fa-lock\"></i> 7.6 Variables de entorno (.env)",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/express/express-bases-datos.html"
+          },
+          {
+            "id": "express-apis-rest",
+            "title": "08. Construir APIs REST",
+            "content": "Principios REST, diseño de endpoints, respuestas JSON, errores y validación",
+            "sections": [
+              "<i class=\"fa-solid fa-book\"></i> 8.1 Principios de una API REST",
+              "<i class=\"fa-solid fa-map\"></i> 8.2 Diseño de endpoints REST",
+              "<i class=\"fa-solid fa-file-export\"></i> 8.3 Responder en JSON",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> 8.4 Manejo de errores en la API",
+              "<i class=\"fa-solid fa-circle-check\"></i> 8.5 Validación de datos",
+              "<i class=\"fa-solid fa-plug-circle-plus\"></i> 8.6 Consumir la API con fetch y axios",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/express/express-apis-rest.html"
+          },
+          {
+            "id": "express-autenticacion-archivos",
+            "title": "09. Autenticación, sesiones y subida de archivos",
+            "content": "Autenticación vs autorización, JWT, bcrypt, protección de rutas y Multer",
+            "sections": [
+              "<i class=\"fa-solid fa-user-lock\"></i> 9.1 Qué es la autenticación",
+              "<i class=\"fa-solid fa-key\"></i> 9.2 JWT (concepto)",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 9.3 bcrypt para contraseñas",
+              "<i class=\"fa-solid fa-fingerprint\"></i> 9.4 Manejo de sesiones o tokens",
+              "<i class=\"fa-solid fa-file-arrow-up\"></i> 9.5 Subida de archivos con Multer (concepto)",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 9.6 Ejemplo completo de autenticación",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/express/express-autenticacion-archivos.html"
+          },
+          {
+            "id": "express-proyecto-despliegue",
+            "title": "10. Proyecto completo y despliegue",
+            "content": "Estructura real, Routers, CORS, errores globales, despliegue y buenas prácticas",
+            "sections": [
+              "<i class=\"fa-solid fa-folder-tree\"></i> 10.1 Estructura de un proyecto Express real",
+              "<i class=\"fa-solid fa-shuffle\"></i> 10.2 Uso de Routers para separar módulos",
+              "<i class=\"fa-solid fa-earth-americas\"></i> 10.3 CORS y seguridad básica",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> 10.4 Manejo de errores global",
+              "<i class=\"fa-solid fa-cloud-arrow-up\"></i> 10.5 Opciones de despliegue",
+              "<i class=\"fa-solid fa-circle-check\"></i> 10.6 Buenas prácticas",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/express/express-proyecto-despliegue.html"
+          }
+        ]
+      },
+      {
+        "id": "nestjs",
+        "title": "NestJS",
+        "icon": "fa-solid fa-diagram-project",
+        "lessons": [
+          {
+            "id": "nestjs-intro",
+            "title": "01. Introducción a NestJS",
+            "content": "Qué es NestJS, por qué elegirlo, diferencias con Express, arquitectura y características",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 1.1 Qué es NestJS",
+              "<i class=\"fa-solid fa-star\"></i> 1.2 Por qué elegir NestJS",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 1.3 NestJS vs Express",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 1.4 Arquitectura de NestJS",
+              "<i class=\"fa-solid fa-list-check\"></i> 1.5 Características principales",
+              "<i class=\"fa-solid fa-briefcase\"></i> 1.6 Empresas que usan NestJS",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nestjs/nestjs-intro.html"
+          },
+          {
+            "id": "nestjs-instalacion",
+            "title": "02. Instalación y primer proyecto",
+            "content": "Requisitos, instalación del CLI, creación del proyecto, estructura y ejecución",
+            "sections": [
+              "<i class=\"fa-solid fa-box\"></i> 2.1 Requisitos previos",
+              "<i class=\"fa-solid fa-terminal\"></i> 2.2 Instalación de Nest CLI",
+              "<i class=\"fa-solid fa-wand-magic-sparkles\"></i> 2.3 Crear el primer proyecto con nest new",
+              "<i class=\"fa-solid fa-folder\"></i> 2.4 Estructura de carpetas",
+              "<i class=\"fa-solid fa-play\"></i> 2.5 Ejecutar la aplicación",
+              "<i class=\"fa-solid fa-list-check\"></i> 2.6 Comandos útiles del CLI",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nestjs/nestjs-instalacion.html"
+          },
+          {
+            "id": "nestjs-modulos",
+            "title": "03. Módulos (Modules)",
+            "content": "Qué es un módulo, la estructura de @Module, módulos de características, compartidos y globales",
+            "sections": [
+              "<i class=\"fa-solid fa-cube\"></i> 3.1 Qué es un módulo",
+              "<i class=\"fa-solid fa-table\"></i> 3.2 La estructura de @Module",
+              "<i class=\"fa-solid fa-layer-group\"></i> 3.3 Módulos de características",
+              "<i class=\"fa-solid fa-share-nodes\"></i> 3.4 Módulos compartidos",
+              "<i class=\"fa-solid fa-globe\"></i> 3.5 Módulos globales y reexportación",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 3.6 Ejemplo completo de módulos",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nestjs/nestjs-modulos.html"
+          },
+          {
+            "id": "nestjs-controladores",
+            "title": "04. Controladores y rutas",
+            "content": "Controladores, decoradores HTTP, parámetros, query/body y códigos de estado",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 4.1 Qué es un controlador",
+              "<i class=\"fa-solid fa-route\"></i> 4.2 Decoradores de métodos HTTP",
+              "<i class=\"fa-solid fa-link\"></i> 4.3 Parámetros de ruta",
+              "<i class=\"fa-solid fa-envelope\"></i> 4.4 Query params y request body",
+              "<i class=\"fa-solid fa-code\"></i> 4.5 Acceso al objeto Request y Response",
+              "<i class=\"fa-solid fa-server\"></i> 4.6 Respuestas con códigos de estado",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nestjs/nestjs-controladores.html"
+          },
+          {
+            "id": "nestjs-servicios-di",
+            "title": "05. Servicios e inyección de dependencias",
+            "content": "Servicios, @Injectable, inyección de dependencias, providers y ámbitos",
+            "sections": [
+              "<i class=\"fa-solid fa-gear\"></i> 5.1 Qué es un servicio",
+              "<i class=\"fa-solid fa-syringe\"></i> 5.2 La anotación @Injectable",
+              "<i class=\"fa-solid fa-plug\"></i> 5.3 Inyección de dependencias",
+              "<i class=\"fa-solid fa-list-check\"></i> 5.4 Registro de providers",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 5.5 Ámbito de los providers",
+              "<i class=\"fa-solid fa-wand-magic-sparkles\"></i> 5.6 Providers personalizados",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nestjs/nestjs-servicios-di.html"
+          },
+          {
+            "id": "nestjs-pipes-guards",
+            "title": "06. Pipes y Guards",
+            "content": "Pipes integrados, validación con class-validator y ValidationPipe, guards y protección de rutas",
+            "sections": [
+              "<i class=\"fa-solid fa-filter\"></i> 6.1 Qué son los Pipes",
+              "<i class=\"fa-solid fa-list-check\"></i> 6.2 Pipes integrados en NestJS",
+              "<i class=\"fa-solid fa-clipboard-check\"></i> 6.3 Validación con class-validator y ValidationPipe",
+              "<i class=\"fa-solid fa-code\"></i> 6.4 Pipes personalizados",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 6.5 Qué son los Guards",
+              "<i class=\"fa-solid fa-lock\"></i> 6.6 Proteger rutas con Guards",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nestjs/nestjs-pipes-guards.html"
+          },
+          {
+            "id": "nestjs-db-typeorm",
+            "title": "07. Base de datos con TypeORM",
+            "content": "Conexión a TypeORM, entidades, repositorios, CRUD, migraciones y relaciones",
+            "sections": [
+              "<i class=\"fa-solid fa-plug\"></i> 7.1 Conexión a TypeORM",
+              "<i class=\"fa-solid fa-table\"></i> 7.2 Entidades (Entities)",
+              "<i class=\"fa-solid fa-database\"></i> 7.3 Repositorios",
+              "<i class=\"fa-solid fa-bolt\"></i> 7.4 CRUD con TypeORM",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 7.5 Migraciones",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 7.6 Relaciones entre entidades",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nestjs/nestjs-db-typeorm.html"
+          },
+          {
+            "id": "nestjs-auth-jwt",
+            "title": "08. Autenticación con JWT",
+            "content": "JWT, bcrypt, Passport, guard de autenticación y roles",
+            "sections": [
+              "<i class=\"fa-solid fa-lock\"></i> 8.1 Qué es JWT y la autenticación",
+              "<i class=\"fa-solid fa-terminal\"></i> 8.2 Instalación de paquetes y configuración",
+              "<i class=\"fa-solid fa-user-lock\"></i> 8.3 Servicio de autenticación y bcrypt",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 8.4 Estrategia JWT con Passport",
+              "<i class=\"fa-solid fa-user-shield\"></i> 8.5 Guard de autenticación y controlador",
+              "<i class=\"fa-solid fa-user-tag\"></i> 8.6 Roles y control de acceso",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nestjs/nestjs-auth-jwt.html"
+          },
+          {
+            "id": "nestjs-modulo-http",
+            "title": "09. HTTP y peticiones externas",
+            "content": "Cliente HTTP, HttpService, manejo de errores, RxJS y consumo de APIs",
+            "sections": [
+              "<i class=\"fa-solid fa-globe\"></i> 9.1 Cliente HTTP de NestJS",
+              "<i class=\"fa-solid fa-plug\"></i> 9.2 Inyección del servicio HTTP",
+              "<i class=\"fa-solid fa-sliders\"></i> 9.3 Configuración del cliente HTTP",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> 9.4 Manejo de errores en peticiones",
+              "<i class=\"fa-solid fa-code\"></i> 9.5 Interceptores y Observables",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 9.6 Consumir una API externa",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nestjs/nestjs-modulo-http.html"
+          },
+          {
+            "id": "nestjs-proyecto-final",
+            "title": "10. Proyecto final y despliegue",
+            "content": "Planificación, entidades, autenticación, CRUD protegido y despliegue",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 10.1 Planificación del proyecto",
+              "<i class=\"fa-solid fa-table\"></i> 10.2 Entidades del proyecto",
+              "<i class=\"fa-solid fa-user-lock\"></i> 10.3 Autenticación integrada",
+              "<i class=\"fa-solid fa-list-check\"></i> 10.4 CRUD de tareas protegido",
+              "<i class=\"fa-solid fa-rocket\"></i> 10.5 Despliegue en producción",
+              "<i class=\"fa-solid fa-cloud\"></i> 10.6 Buenas prácticas y despliegue en la nube",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/nestjs/nestjs-proyecto-final.html"
+          }
+        ]
+      },
+      {
+        "id": "rails",
+        "title": "Ruby on Rails",
+        "icon": "fa-solid fa-gem",
+        "lessons": [
+          {
+            "id": "rails-intro",
+            "title": "01. Introducción a Ruby on Rails",
+            "content": "Qué es Rails, filosofía, ventajas, casos de uso, características y estructura",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 1.1 Qué es Rails",
+              "<i class=\"fa-solid fa-lightbulb\"></i> 1.2 Filosofía de Rails",
+              "<i class=\"fa-solid fa-rocket\"></i> 1.3 Ventajas de Rails",
+              "<i class=\"fa-solid fa-briefcase\"></i> 1.4 Casos de uso de Rails",
+              "<i class=\"fa-solid fa-cubes\"></i> 1.5 Características principales",
+              "<i class=\"fa-solid fa-folder-tree\"></i> 1.6 Estructura de Rails",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/rails/rails-intro.html"
+          },
+          {
+            "id": "rails-instalacion",
+            "title": "02. Instalación y primer proyecto",
+            "content": "Instalar Ruby, RubyGems/Bundler, rails new, estructura MVC y servidor",
+            "sections": [
+              "<i class=\"fa-solid fa-download\"></i> 2.1 Instalar Ruby",
+              "<i class=\"fa-solid fa-gem\"></i> 2.2 RubyGems y Bundler",
+              "<i class=\"fa-solid fa-bolt\"></i> 2.3 Crear un proyecto con rails new",
+              "<i class=\"fa-solid fa-folder-tree\"></i> 2.4 Estructura de carpetas MVC",
+              "<i class=\"fa-solid fa-wand-magic-sparkles\"></i> 2.5 Generadores de Rails",
+              "<i class=\"fa-solid fa-server\"></i> 2.6 Iniciar el servidor (rails server)",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/rails/rails-instalacion.html"
+          },
+          {
+            "id": "rails-mvc-rutas",
+            "title": "03. MVC y rutas",
+            "content": "Arquitectura MVC, config/routes.rb, routing RESTful y parámetros",
+            "sections": [
+              "<i class=\"fa-solid fa-layer-group\"></i> 3.1 Arquitectura MVC",
+              "<i class=\"fa-solid fa-route\"></i> 3.2 Configuración de rutas (config/routes.rb)",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 3.3 Routing RESTful",
+              "<i class=\"fa-solid fa-cubes-stacked\"></i> 3.4 Recursos y rutas personalizadas",
+              "<i class=\"fa-solid fa-sliders\"></i> 3.5 Rutas con parámetros",
+              "<i class=\"fa-solid fa-link\"></i> 3.6 Helpers de rutas y URLs",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/rails/rails-mvc-rutas.html"
+          },
+          {
+            "id": "rails-controladores-vistas",
+            "title": "04. Controladores y vistas",
+            "content": "Controladores, acciones, render, vistas ERB, layouts y partials",
+            "sections": [
+              "<i class=\"fa-solid fa-gamepad\"></i> 4.1 Controladores y acciones",
+              "<i class=\"fa-solid fa-rotate-right\"></i> 4.2 Render y redirecciones",
+              "<i class=\"fa-solid fa-file-code\"></i> 4.3 Vistas ERB",
+              "<i class=\"fa-solid fa-border-all\"></i> 4.4 Layouts",
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 4.5 Partials",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 4.6 Strong Parameters y CSRF",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/rails/rails-controladores-vistas.html"
+          },
+          {
+            "id": "rails-modelos-activerecord",
+            "title": "05. Modelos y Active Record",
+            "content": "Modelos, validaciones, consultas Active Record, asociaciones y CRUD",
+            "sections": [
+              "<i class=\"fa-solid fa-database\"></i> 5.1 Modelos y Active Record",
+              "<i class=\"fa-solid fa-circle-check\"></i> 5.2 Validaciones",
+              "<i class=\"fa-solid fa-magnifying-glass\"></i> 5.3 Consultas con Active Record",
+              "<i class=\"fa-solid fa-link\"></i> 5.4 Asociaciones",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 5.5 CRUD con Active Record",
+              "<i class=\"fa-solid fa-bell\"></i> 5.6 Callbacks y scopes",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/rails/rails-modelos-activerecord.html"
+          },
+          {
+            "id": "rails-migrations",
+            "title": "06. Migraciones y base de datos",
+            "content": "Migraciones, tipos de datos, modificar esquema, comandos y seeds",
+            "sections": [
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 6.1 Qué son las migraciones",
+              "<i class=\"fa-solid fa-wand-magic-sparkles\"></i> 6.2 Generar migraciones",
+              "<i class=\"fa-solid fa-table-list\"></i> 6.3 Tipos de datos y columnas",
+              "<i class=\"fa-solid fa-pen\"></i> 6.4 Modificar el esquema",
+              "<i class=\"fa-solid fa-terminal\"></i> 6.5 Comandos de migración",
+              "<i class=\"fa-solid fa-seedling\"></i> 6.6 Seeds y configuración",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/rails/rails-migrations.html"
+          },
+          {
+            "id": "rails-sesiones-autenticacion",
+            "title": "07. Sesiones y autenticación",
+            "content": "Cookies y sesiones, autenticación, gemas, autorización y tokens",
+            "sections": [
+              "<i class=\"fa-solid fa-cookie\"></i> 7.1 Cookies y sesiones",
+              "<i class=\"fa-solid fa-user-lock\"></i> 7.2 Autenticación manual",
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 7.3 Gemas de autenticación",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 7.4 Autorización",
+              "<i class=\"fa-solid fa-key\"></i> 7.5 Remember me y tokens",
+              "<i class=\"fa-solid fa-bell\"></i> 7.6 Flash y seguridad",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/rails/rails-sesiones-autenticacion.html"
+          },
+          {
+            "id": "rails-vistas-bootstrap",
+            "title": "08. Vistas con Bootstrap y helpers",
+            "content": "Integrar Bootstrap, layouts, grid, formularios y helpers",
+            "sections": [
+              "<i class=\"fa-solid fa-palette\"></i> 8.1 Integrar Bootstrap en Rails",
+              "<i class=\"fa-solid fa-house\"></i> 8.2 Plantillas Bootstrap en layouts",
+              "<i class=\"fa-solid fa-table-cells-large\"></i> 8.3 Vistas con Bootstrap y grid",
+              "<i class=\"fa-solid fa-square-pen\"></i> 8.4 Formularios con Bootstrap",
+              "<i class=\"fa-solid fa-wrench\"></i> 8.5 Helpers de Rails",
+              "<i class=\"fa-solid fa-bolt\"></i> 8.6 Generadores de vistas y Stimulus",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/rails/rails-vistas-bootstrap.html"
+          },
+          {
+            "id": "rails-api",
+            "title": "09. Rails como API",
+            "content": "Modo API, rutas versionadas, respuesta JSON, serializers y autenticación",
+            "sections": [
+              "<i class=\"fa-solid fa-server\"></i> 9.1 Modo API de Rails",
+              "<i class=\"fa-solid fa-route\"></i> 9.2 Rutas de API versionada",
+              "<i class=\"fa-solid fa-code\"></i> 9.3 Respuesta JSON",
+              "<i class=\"fa-solid fa-layer-group\"></i> 9.4 Serialización con serializers",
+              "<i class=\"fa-solid fa-lock\"></i> 9.5 Autenticación de API",
+              "<i class=\"fa-solid fa-flask\"></i> 9.6 Pruebas y documentación de API",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/rails/rails-api.html"
+          },
+          {
+            "id": "rails-despliegue",
+            "title": "10. Pruebas y despliegue",
+            "content": "Testing, pruebas de modelo/sistema, despliegue y buenas prácticas",
+            "sections": [
+              "<i class=\"fa-solid fa-circle-check\"></i> 10.1 Por qué probar",
+              "<i class=\"fa-solid fa-box\"></i> 10.2 Pruebas de modelo",
+              "<i class=\"fa-solid fa-boxes-stacked\"></i> 10.3 test dir y FactoryBot",
+              "<i class=\"fa-solid fa-display\"></i> 10.4 Pruebas de sistema",
+              "<i class=\"fa-solid fa-cloud-arrow-up\"></i> 10.5 Despliegue y producción",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 10.6 Seguridad y buenas prácticas",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/rails/rails-despliegue.html"
+          }
+        ]
+      },
+      {
+        "id": "dotnet",
+        "title": "ASP.NET / .NET Core",
+        "icon": "fa-solid fa-window-maximize",
+        "lessons": [
+          {
+            "id": "dotnet-intro",
+            "title": "01. Introducción a ASP.NET Core",
+            "content": "Qué es .NET y ASP.NET Core, relación con C#, tipos de aplicaciones y características",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 1.1 Qué es .NET",
+              "<i class=\"fa-solid fa-layer-group\"></i> 1.2 Tipos de aplicaciones",
+              "<i class=\"fa-solid fa-star\"></i> 1.3 Por qué usar .NET",
+              "<i class=\"fa-solid fa-cubes\"></i> 1.4 Características clave",
+              "<i class=\"fa-solid fa-window-maximize\"></i> 1.5 ASP.NET Core",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/dotnet/dotnet-intro.html"
+          },
+          {
+            "id": "dotnet-instalacion",
+            "title": "02. Instalación y primer proyecto",
+            "content": "Instalar el SDK, dotnet new, estructura, .csproj y dotnet run",
+            "sections": [
+              "<i class=\"fa-solid fa-download\"></i> 2.1 Instalar el SDK de .NET",
+              "<i class=\"fa-solid fa-folder-plus\"></i> 2.2 Crear un proyecto con dotnet new",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 2.3 Estructura de un proyecto",
+              "<i class=\"fa-solid fa-file-code\"></i> 2.4 El archivo .csproj",
+              "<i class=\"fa-solid fa-play\"></i> 2.5 Ejecutar con dotnet run",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/dotnet/dotnet-instalacion.html"
+          },
+          {
+            "id": "dotnet-mvc",
+            "title": "03. Modelo-Vista-Controlador (MVC)",
+            "content": "El patrón MVC, Middleware, Program y la inyección de dependencias",
+            "sections": [
+              "<i class=\"fa-solid fa-layer-group\"></i> 3.1 El patrón MVC",
+              "<i class=\"fa-solid fa-database\"></i> 3.2 El Modelo",
+              "<i class=\"fa-solid fa-display\"></i> 3.3 La Vista",
+              "<i class=\"fa-solid fa-sitemap\"></i> 3.4 El Controlador",
+              "<i class=\"fa-solid fa-ellipsis\"></i> 3.5 Middleware y pipeline",
+              "<i class=\"fa-solid fa-gears\"></i> 3.6 Program y la inyección de dependencias",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/dotnet/dotnet-mvc.html"
+          },
+          {
+            "id": "dotnet-controladores",
+            "title": "04. Controladores y rutas",
+            "content": "Controladores, acciones, routing, IActionResult y enlazado de modelos",
+            "sections": [
+              "<i class=\"fa-solid fa-sitemap\"></i> 4.1 Qué es un controlador",
+              "<i class=\"fa-solid fa-bolt\"></i> 4.2 Acciones",
+              "<i class=\"fa-solid fa-route\"></i> 4.3 Routing",
+              "<i class=\"fa-solid fa-reply-all\"></i> 4.4 IActionResult y los resultados",
+              "<i class=\"fa-solid fa-sliders\"></i> 4.5 Parámetros y enlace de modelos",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/dotnet/dotnet-controladores.html"
+          },
+          {
+            "id": "dotnet-views",
+            "title": "05. Vistas y Razor",
+            "content": "Razor .cshtml, layouts, vistas parciales, Tag Helpers y ViewData/Model",
+            "sections": [
+              "<i class=\"fa-solid fa-code\"></i> 5.1 Qué es Razor",
+              "<i class=\"fa-solid fa-file-lines\"></i> 5.2 Archivos .cshtml",
+              "<i class=\"fa-solid fa-object-group\"></i> 5.3 Layout y plantillas",
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 5.4 Vistas parciales",
+              "<i class=\"fa-solid fa-tags\"></i> 5.5 Tag Helpers",
+              "<i class=\"fa-solid fa-forward\"></i> 5.6 ViewData, ViewBag y Model",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/dotnet/dotnet-views.html"
+          },
+          {
+            "id": "dotnet-modelos-validacion",
+            "title": "06. Modelos y validación",
+            "content": "Modelos de dominio, Data Annotations, ModelState y enlazado",
+            "sections": [
+              "<i class=\"fa-solid fa-database\"></i> 6.1 Modelos de dominio",
+              "<i class=\"fa-solid fa-clipboard-check\"></i> 6.2 Data Annotations",
+              "<i class=\"fa-solid fa-triangle-exclamation\"></i> 6.3 Validación con ModelState",
+              "<i class=\"fa-solid fa-tags\"></i> 6.4 Tag Helpers de validación",
+              "<i class=\"fa-solid fa-link\"></i> 6.5 Enlazado de modelos",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/dotnet/dotnet-modelos-validacion.html"
+          },
+          {
+            "id": "dotnet-efcore",
+            "title": "07. Base de datos con EF Core",
+            "content": "Entity Framework Core, DbContext, migraciones y CRUD con LINQ",
+            "sections": [
+              "<i class=\"fa-solid fa-database\"></i> 7.1 Qué es Entity Framework Core",
+              "<i class=\"fa-solid fa-cubes-stacked\"></i> 7.2 El DbContext",
+              "<i class=\"fa-solid fa-shapes\"></i> 7.3 Modelos y entidades",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 7.4 Migraciones",
+              "<i class=\"fa-solid fa-rectangle-list\"></i> 7.5 CRUD con LINQ",
+              "<i class=\"fa-solid fa-plug\"></i> 7.6 EF Core en un controlador",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/dotnet/dotnet-efcore.html"
+          },
+          {
+            "id": "dotnet-apis-rest",
+            "title": "08. APIs REST con ASP.NET Core",
+            "content": "Controladores API, [ApiController], JSON, métodos HTTP y Minimal APIs",
+            "sections": [
+              "<i class=\"fa-solid fa-server\"></i> 8.1 Qué es una API web",
+              "<i class=\"fa-solid fa-brackets-curly\"></i> 8.2 [ApiController] y JSON",
+              "<i class=\"fa-solid fa-arrows-up-down-left-right\"></i> 8.3 Métodos HTTP",
+              "<i class=\"fa-solid fa-signal\"></i> 8.4 Códigos de estado",
+              "<i class=\"fa-solid fa-minus\"></i> 8.5 Minimal APIs",
+              "<i class=\"fa-solid fa-flask\"></i> 8.6 Probar la API",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/dotnet/dotnet-apis-rest.html"
+          },
+          {
+            "id": "dotnet-auth",
+            "title": "09. Autenticación y autorización",
+            "content": "Identity, cookies, JWT bearer, [Authorize] y roles/claims",
+            "sections": [
+              "<i class=\"fa-solid fa-user-shield\"></i> 9.1 Autenticación vs autorización",
+              "<i class=\"fa-solid fa-id-badge\"></i> 9.2 ASP.NET Core Identity",
+              "<i class=\"fa-solid fa-cookie-bite\"></i> 9.3 Autenticación con cookies",
+              "<i class=\"fa-solid fa-key\"></i> 9.4 JWT Bearer para APIs",
+              "<i class=\"fa-solid fa-lock\"></i> 9.5 El atributo [Authorize]",
+              "<i class=\"fa-solid fa-user-tag\"></i> 9.6 Roles y claims",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/dotnet/dotnet-auth.html"
+          },
+          {
+            "id": "dotnet-despliegue",
+            "title": "10. Publicación y despliegue",
+            "content": "dotnet publish, publish profiles, Kestrel/IIS, Docker y appsettings",
+            "sections": [
+              "<i class=\"fa-solid fa-box-open\"></i> 10.1 dotnet publish",
+              "<i class=\"fa-solid fa-bars-staggered\"></i> 10.2 Publish profiles",
+              "<i class=\"fa-solid fa-gears\"></i> 10.3 Kestrel e IIS",
+              "<i class=\"fa-solid fa-box\"></i> 10.4 Despliegue con Docker",
+              "<i class=\"fa-solid fa-sliders\"></i> 10.5 Variables de entorno y appsettings",
+              "<i class=\"fa-solid fa-list-check\"></i> 10.6 Buenas prácticas de despliegue",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/dotnet/dotnet-despliegue.html"
+          }
+        ]
+      },
+      {
+        "id": "flutter",
+        "title": "Flutter",
+        "icon": "fa-solid fa-mobile-screen-button",
+        "lessons": [
+          {
+            "id": "flutter-intro",
+            "title": "01. Introducción a Flutter",
+            "content": "Introducción a Flutter, el SDK de UI de Google basado en Dart, ventajas, hot reload y plataformas target",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 1.1 Qué es Flutter",
+              "<i class=\"fa-solid fa-code\"></i> 1.2 Lenguaje Dart",
+              "<i class=\"fa-solid fa-layer-group\"></i> 1.3 Compilación nativa y multiplataforma",
+              "<i class=\"fa-solid fa-rocket\"></i> 1.4 Ventajas de Flutter",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 1.5 Hot Reload",
+              "<i class=\"fa-solid fa-mobile-screen-button\"></i> 1.6 Plataformas objetivo",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flutter/flutter-intro.html"
+          },
+          {
+            "id": "flutter-instalacion",
+            "title": "02. Instalación y primer proyecto",
+            "content": "Instalación del SDK de Flutter y Dart, configuración del editor, flutter create, flutter run y estructura",
+            "sections": [
+              "<i class=\"fa-solid fa-clipboard-list\"></i> 1.1 Requisitos previos",
+              "<i class=\"fa-solid fa-download\"></i> 1.2 Instalar Flutter SDK",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> 1.3 Configurar el editor",
+              "<i class=\"fa-solid fa-folder-plus\"></i> 1.4 Crear el primer proyecto",
+              "<i class=\"fa-solid fa-play\"></i> 1.5 Ejecutar la aplicación",
+              "<i class=\"fa-solid fa-folder-tree\"></i> 1.6 Estructura de carpetas",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flutter/flutter-instalacion.html"
+          },
+          {
+            "id": "flutter-widgets",
+            "title": "03. Widgets en Flutter",
+            "content": "Qué es un widget, StatelessWidget vs StatefulWidget, árbol de widgets, widgets básicos y build",
+            "sections": [
+              "<i class=\"fa-solid fa-cube\"></i> 1.1 Qué es un widget",
+              "<i class=\"fa-solid fa-code-branch\"></i> 1.2 StatelessWidget vs StatefulWidget",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 1.3 Árbol de widgets",
+              "<i class=\"fa-solid fa-puzzle-piece\"></i> 1.4 Widgets básicos",
+              "<i class=\"fa-solid fa-hammer\"></i> 1.5 Método build",
+              "<i class=\"fa-solid fa-layer-group\"></i> 1.6 Componer widgets",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flutter/flutter-widgets.html"
+          },
+          {
+            "id": "flutter-estado",
+            "title": "04. Estado y setState",
+            "content": "Gestión del estado, setState(), StatefulWidget e interacción con el usuario",
+            "sections": [
+              "<i class=\"fa-solid fa-database\"></i> 1.1 Qué es el estado",
+              "<i class=\"fa-solid fa-sync\"></i> 1.2 setState()",
+              "<i class=\"fa-solid fa-hand-pointer\"></i> 1.3 Interacción con el usuario",
+              "<i class=\"fa-solid fa-chart-simple\"></i> 1.4 Estado en aplicaciones pequeñas",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 1.5 Estado en aplicaciones grandes",
+              "<i class=\"fa-solid fa-thumbs-up\"></i> 1.6 Buenas prácticas",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flutter/flutter-estado.html"
+          },
+          {
+            "id": "flutter-layouts",
+            "title": "05. Layouts y diseño",
+            "content": "Diseño con Row, Column, Stack, Expanded, Padding y EdgeInsets",
+            "sections": [
+              "<i class=\"fa-solid fa-grip-lines\"></i> 1.1 Estructuras de layout",
+              "<i class=\"fa-solid fa-bars-staggered\"></i> 1.2 Row y Column",
+              "<i class=\"fa-solid fa-layer-group\"></i> 1.3 Stack",
+              "<i class=\"fa-solid fa-expand\"></i> 1.4 Expanded",
+              "<i class=\"fa-solid fa-arrows-to-dot\"></i> 1.5 Padding y EdgeInsets",
+              "<i class=\"fa-solid fa-object-group\"></i> 1.6 Alineación y diseño de interfaces",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flutter/flutter-layouts.html"
+          },
+          {
+            "id": "flutter-navegacion",
+            "title": "06. Navegación entre pantallas",
+            "content": "Navigator, rutas nombradas, push/pop, argumentos y Navigator 2.0",
+            "sections": [
+              "<i class=\"fa-solid fa-compass\"></i> 1.1 Navigator y rutas",
+              "<i class=\"fa-solid fa-arrows-up-down\"></i> 1.2 push y pop",
+              "<i class=\"fa-solid fa-road\"></i> 1.3 Rutas nombradas",
+              "<i class=\"fa-solid fa-envelope\"></i> 1.4 Pasar argumentos",
+              "<i class=\"fa-solid fa-route\"></i> 1.5 Navigator 2.0",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 1.6 Ejemplo práctico de navegación",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flutter/flutter-navegacion.html"
+          },
+          {
+            "id": "flutter-scroll-listas",
+            "title": "07. Scroll y Listas",
+            "content": "ListView, GridView, listas dinámicas, onTap y personalización",
+            "sections": [
+              "<i class=\"fa-solid fa-list\"></i> 1.1 ListView",
+              "<i class=\"fa-solid fa-list-check\"></i> 1.2 ListView.builder",
+              "<i class=\"fa-solid fa-table-cells\"></i> 1.3 GridView",
+              "<i class=\"fa-solid fa-hand-pointer\"></i> 1.4 onTap y callbacks",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 1.5 Listas anidadas",
+              "<i class=\"fa-solid fa-palette\"></i> 1.6 Personalización de listas",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flutter/flutter-scroll-listas.html"
+          },
+          {
+            "id": "flutter-formularios",
+            "title": "08. Formularios y entrada de datos",
+            "content": "TextField, TextEditingController, Form, validación y recogida de datos",
+            "sections": [
+              "<i class=\"fa-solid fa-keyboard\"></i> 1.1 TextField",
+              "<i class=\"fa-solid fa-code-branch\"></i> 1.2 TextEditingController",
+              "<i class=\"fa-solid fa-file-signature\"></i> 1.3 Form y FormField",
+              "<i class=\"fa-solid fa-check-double\"></i> 1.4 Validación",
+              "<i class=\"fa-solid fa-database\"></i> 1.5 Recoger datos",
+              "<i class=\"fa-solid fa-sliders\"></i> 1.6 Tipos de entrada",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flutter/flutter-formularios.html"
+          },
+          {
+            "id": "flutter-http-api",
+            "title": "09. Peticiones HTTP y APIs",
+            "content": "Paquetes http/dio, GET/POST, FutureBuilder, JSON y consumo de APIs REST",
+            "sections": [
+              "<i class=\"fa-solid fa-globe\"></i> 1.1 Paquete http",
+              "<i class=\"fa-solid fa-code-compare\"></i> 1.2 http vs dio",
+              "<i class=\"fa-solid fa-arrows-up-down\"></i> 1.3 Peticiones GET y POST",
+              "<i class=\"fa-solid fa-clock\"></i> 1.4 FutureBuilder",
+              "<i class=\"fa-solid fa-code\"></i> 1.5 Decodificación JSON",
+              "<i class=\"fa-solid fa-server\"></i> 1.6 Consumo de APIs REST",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flutter/flutter-http-api.html"
+          },
+          {
+            "id": "flutter-despliegue",
+            "title": "10. Build y despliegue",
+            "content": "Build de release, flutter build apk, pubspec.yaml, flutter_dotenv y publicación",
+            "sections": [
+              "<i class=\"fa-solid fa-gem\"></i> 1.1 Build de release",
+              "<i class=\"fa-solid fa-mobile\"></i> 1.2 flutter build apk",
+              "<i class=\"fa-solid fa-box\"></i> 1.3 pubspec.yaml y dependencias",
+              "<i class=\"fa-solid fa-key\"></i> 1.4 flutter_dotenv",
+              "<i class=\"fa-solid fa-store\"></i> 1.5 Publicar en tiendas",
+              "<i class=\"fa-solid fa-thumbs-up\"></i> 1.6 Buenas prácticas de despliegue",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/flutter/flutter-despliegue.html"
+          }
+        ]
+      },
+      {
+        "id": "go-gin",
+        "title": "Gin / Echo",
+        "icon": "fa-solid fa-location-arrow",
+        "lessons": [
+          {
+            "id": "go-gin-intro",
+            "title": "01. Introducción a Gin y Echo",
+            "content": "Qué es Gin y Echo, comparación, por qué Go para APIs, características y primer servidor",
+            "sections": [
+              "<i class=\"fa-solid fa-bullseye\"></i> 1.1 Qué es Gin",
+              "<i class=\"fa-solid fa-arrows-rotate\"></i> 1.2 Gin vs Echo: comparación",
+              "<i class=\"fa-solid fa-bolt\"></i> 1.3 Por qué Go para APIs",
+              "<i class=\"fa-solid fa-star\"></i> 1.4 Características de Gin",
+              "<i class=\"fa-solid fa-table-list\"></i> 1.5 Frameworks web en Go",
+              "<i class=\"fa-solid fa-code\"></i> 1.6 Primer servidor con Gin",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/go-gin/go-gin-intro.html"
+          },
+          {
+            "id": "go-gin-instalacion",
+            "title": "02. Instalación y primer proyecto",
+            "content": "Instalar Go, estructura del proyecto, módulos, instalar Gin, servidor básico y comandos",
+            "sections": [
+              "<i class=\"fa-solid fa-download\"></i> 2.1 Instalar Go",
+              "<i class=\"fa-solid fa-folder-tree\"></i> 2.2 Estructura del proyecto",
+              "<i class=\"fa-solid fa-cube\"></i> 2.3 Gestión de módulos",
+              "<i class=\"fa-solid fa-plus-circle\"></i> 2.4 Instalar Gin",
+              "<i class=\"fa-solid fa-server\"></i> 2.5 Servidor básico",
+              "<i class=\"fa-solid fa-terminal\"></i> 2.6 Comandos go run y go build",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/go-gin/go-gin-instalacion.html"
+          },
+          {
+            "id": "go-gin-rutas",
+            "title": "03. Rutas y handler",
+            "content": "Definir rutas, métodos HTTP, parámetros, grupos de rutas y router",
+            "sections": [
+              "<i class=\"fa-solid fa-route\"></i> 3.1 Definir rutas",
+              "<i class=\"fa-solid fa-bars\"></i> 3.2 Métodos HTTP",
+              "<i class=\"fa-solid fa-map-pin\"></i> 3.3 Parámetros en rutas",
+              "<i class=\"fa-solid fa-layer-group\"></i> 3.4 Grupos de rutas",
+              "<i class=\"fa-solid fa-sitemap\"></i> 3.5 Estructura de router",
+              "<i class=\"fa-solid fa-code\"></i> 3.6 Ejemplo completo de rutas",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/go-gin/go-gin-rutas.html"
+          },
+          {
+            "id": "go-gin-middleware",
+            "title": "04. Middleware",
+            "content": "Qué es middleware, global, por grupo, CORS, logging y panic recovery",
+            "sections": [
+              "<i class=\"fa-solid fa-layer-group\"></i> 4.1 Qué es middleware",
+              "<i class=\"fa-solid fa-globe\"></i> 4.2 Middleware global",
+              "<i class=\"fa-solid fa-folder-open\"></i> 4.3 Middleware por grupo",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 4.4 CORS",
+              "<i class=\"fa-solid fa-chart-line\"></i> 4.5 Logging y panic recovery",
+              "<i class=\"fa-solid fa-code\"></i> 4.6 Ejemplo práctico",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/go-gin/go-gin-middleware.html"
+          },
+          {
+            "id": "go-gin-json-api",
+            "title": "05. APIs JSON y binding",
+            "content": "Respuestas JSON, structs, binding de request, validación y códigos de estado",
+            "sections": [
+              "<i class=\"fa-solid fa-code\"></i> 5.1 Respuestas JSON",
+              "<i class=\"fa-solid fa-cubes\"></i> 5.2 Structs y modelos",
+              "<i class=\"fa-solid fa-right-left\"></i> 5.3 Binding de request",
+              "<i class=\"fa-solid fa-check-double\"></i> 5.4 Validación de datos",
+              "<i class=\"fa-solid fa-circle-info\"></i> 5.5 Códigos de estado",
+              "<i class=\"fa-solid fa-laptop-code\"></i> 5.6 Ejemplo de API JSON",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/go-gin/go-gin-json-api.html"
+          },
+          {
+            "id": "go-gin-datos",
+            "title": "06. Parámetros y consultas",
+            "content": "Path parameters, query strings, formularios y validación de entrada",
+            "sections": [
+              "<i class=\"fa-solid fa-link\"></i> 6.1 Path parameters",
+              "<i class=\"fa-solid fa-magnifying-glass\"></i> 6.2 Query strings",
+              "<i class=\"fa-solid fa-file-lines\"></i> 6.3 Formularios",
+              "<i class=\"fa-solid fa-circle-check\"></i> 6.4 Validación de entrada",
+              "<i class=\"fa-solid fa-briefcase\"></i> 6.5 Ejemplo práctico",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/go-gin/go-gin-datos.html"
+          },
+          {
+            "id": "go-gin-almacenamiento",
+            "title": "07. Almacenamiento en memoria y sql",
+            "content": "CRUD en memoria, database/sql, GORM y operaciones CRUD en SQL",
+            "sections": [
+              "<i class=\"fa-solid fa-database\"></i> 7.1 CRUD en memoria",
+              "<i class=\"fa-solid fa-plug\"></i> 7.2 Conexión con database/sql",
+              "<i class=\"fa-solid fa-cube\"></i> 7.3 ORM con GORM",
+              "<i class=\"fa-solid fa-table\"></i> 7.4 Operaciones CRUD en SQL",
+              "<i class=\"fa-solid fa-diagram-project\"></i> 7.5 Patrones de diseño",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/go-gin/go-gin-almacenamiento.html"
+          },
+          {
+            "id": "go-gin-auth",
+            "title": "08. Autenticación y seguridad",
+            "content": "JWT, bcrypt, middleware de autorización, protección de rutas y tokens",
+            "sections": [
+              "<i class=\"fa-solid fa-key\"></i> 8.1 JWT",
+              "<i class=\"fa-solid fa-lock\"></i> 8.2 Hashing con bcrypt",
+              "<i class=\"fa-solid fa-user-shield\"></i> 8.3 Middleware de autorización",
+              "<i class=\"fa-solid fa-shield-halved\"></i> 8.4 Protección de rutas",
+              "<i class=\"fa-solid fa-tag\"></i> 8.5 Headers y tokens",
+              "<i class=\"fa-solid fa-laptop-code\"></i> 8.6 Ejemplo completo",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/go-gin/go-gin-auth.html"
+          },
+          {
+            "id": "go-gin-formularios",
+            "title": "09. Formularios y archivos",
+            "content": "Recibir formularios, subida de archivos, estáticos y multipart form",
+            "sections": [
+              "<i class=\"fa-solid fa-file-lines\"></i> 9.1 Recibir formularios",
+              "<i class=\"fa-solid fa-upload\"></i> 9.2 Subida de archivos",
+              "<i class=\"fa-solid fa-images\"></i> 9.3 Archivos estáticos",
+              "<i class=\"fa-solid fa-paperclip\"></i> 9.4 Multipart form",
+              "<i class=\"fa-solid fa-laptop-code\"></i> 9.5 Ejemplo práctico",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/go-gin/go-gin-formularios.html"
+          },
+          {
+            "id": "go-gin-despliegue",
+            "title": "10. Despliegue y buenas prácticas",
+            "content": "go build, despliegue en servidor, variables de entorno, Docker, testing y buenas prácticas",
+            "sections": [
+              "<i class=\"fa-solid fa-box\"></i> 10.1 go build: el binario",
+              "<i class=\"fa-solid fa-server\"></i> 10.2 Despliegue en servidor",
+              "<i class=\"fa-solid fa-gear\"></i> 10.3 Variables de entorno",
+              "<i class=\"fa-solid fa-cubes\"></i> 10.4 Docker",
+              "<i class=\"fa-solid fa-vial-circle-check\"></i> 10.5 Testing con httptest",
+              "<i class=\"fa-solid fa-thumbs-up\"></i> 10.6 Buenas prácticas",
+              "<i class=\"fa-solid fa-pen-to-square\"></i> Resumen"
+            ],
+            "contentFile": "content/frameworks/go-gin/go-gin-despliegue.html"
+          }
+        ]
       }
     ]
   },

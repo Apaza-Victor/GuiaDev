@@ -1,0 +1,230 @@
+<!-- 05. Modelos y Active Record - Rails (Frameworks) -->
+  <section id="5-1-modelos-y-active-record">
+    <h2><i class="fa-solid fa-database"></i> 5.1 Modelos y Active Record</h2>
+    <div class="doc-content">
+<h3>Qué es Active Record</h3>
+<p><strong>Active Record</strong> es el ORM (Object Relational Mapping) de Rails. Convierte tablas de una base de datos en clases de Ruby y filas en objetos, siguiendo el patrón Active Record.</p>
+<h3>Convenciones de mapeo</h3>
+<table><thead><tr><th>Base de datos</th><th>Ruby</th><th>Ejemplo</th></tr></thead><tbody><tr><td><strong>Tabla</strong></td><td><strong>Clase</strong></td><td><code>productos</code> → <code>Producto</code></td></tr><tr><td><strong>Columna</strong></td><td><strong>Atributo</strong></td><td><code>precio</code> → <code>producto.precio</code></td></tr><tr><td><strong>Fila</strong></td><td><strong>Objeto</strong></td><td>Una fila → una instancia</td></tr><tr><td><strong>Llave primaria</strong></td><td><code>id</code></td><td>Columna <code>id</code> automática</td></tr><tr><td><strong>Llaves foráneas</strong></td><td><code>modelo_id</code></td><td><code>categoria_id</code></td></tr></tbody></table>
+<h3>Definir un modelo</h3>
+<pre><code class="language-ruby"># app/models/producto.rb
+class Producto &lt; ApplicationRecord
+  belongs_to :categoria
+end
+
+# Herencia de una clase base que ya trae Active Record configurado</code></pre>
+<blockquote class="aside aside-tip">
+Los nombres de modelos se singularizan en Ruby, mientras que las tablas se pluralizan: <code>Producto</code> ←→ tabla <code>productos</code>.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-2-validaciones">
+    <h2><i class="fa-solid fa-circle-check"></i> 5.2 Validaciones</h2>
+    <div class="doc-content">
+<h3>Para qué sirven las validaciones</h3>
+<p>Las validaciones aseguran que solo se guarden datos correctos. Se ejecutan antes de guardar y evitan que lleguen datos inválidos a la base de datos.</p>
+<h3>Validaciones más comunes</h3>
+<pre><code class="language-ruby">class Producto &lt; ApplicationRecord
+  validates :nombre, presence: true
+  validates :precio, numericality: { greater_than_or_equal_to: 0 }
+  validates :sku, uniqueness: true
+  validates :descripcion, length: { maximum: 500 }
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :cantidad, numericality: { only_integer: true }
+end</code></pre>
+<table><thead><tr><th>Validación</th><th>Qué comprueba</th></tr></thead><tbody><tr><td><code>presence</code></td><td>El atributo no está vacío</td></tr><tr><td><code>uniqueness</code></td><td>El valor no se repite</td></tr><tr><td><code>numericality</code></td><td>Es un número y cumple la condición</td></tr><tr><td><code>length</code></td><td>Cumple el rango de longitud</td></tr><tr><td><code>format</code></td><td>Coincide con una expresión regular</td></tr><tr><td><code>inclusion</code></td><td>Está dentro de una lista de valores</td></tr></tbody></table>
+<h3>Comprobar errores</h3>
+<pre><code class="language-ruby">producto = Producto.new(nombre: "", precio: -5)
+
+producto.valid?                     # false
+producto.errors.full_messages
+# =&gt; ["Nombre no puede estar vacío", "Precio debe ser mayor o igual a 0"]</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-3-consultas-con-active-record">
+    <h2><i class="fa-solid fa-magnifying-glass"></i> 5.3 Consultas con Active Record</h2>
+    <div class="doc-content">
+<h3>Métodos de búsqueda comunes</h3>
+<pre><code class="language-ruby"># Todos los registros
+Producto.all
+
+# Primero y último
+Producto.first
+Producto.last
+
+# Por llave primaria
+Producto.find(3)
+
+# Por atributos
+Producto.find_by(nombre: "Laptop")
+Producto.find_by!(nombre: "Laptop")  # lanza excepción si no existe
+
+# With chain de condiciones
+Producto.where(precio: 100..500)
+Producto.where("precio &gt; ?", 100)
+Producto.order(:nombre)
+Producto.order(precio: :desc)
+
+# Limitar resultados
+Producto.limit(10).offset(20)
+
+# Contar
+Producto.count</code></pre>
+<h3>Consultas encadenadas (lazy)</h3>
+<pre><code class="language-ruby">articulos = Articulo.where(publicado: true)
+                    .order(:fecha)
+                    .limit(5)
+
+# La consulta SQL se ejecuta al usar la relación
+articulos.each { |a| puts a.titulo }
+# SELECT articulos.* FROM articulos
+# WHERE publicado = 1 ORDER BY fecha LIMIT 5</code></pre>
+<h3>Agregaciones</h3>
+<pre><code class="language-ruby">Producto.sum(:precio)
+Producto.average(:precio)
+Producto.maximum(:precio)
+Producto.minimum(:precio)
+Producto.group(:categoria_id).count</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-4-asociaciones">
+    <h2><i class="fa-solid fa-link"></i> 5.4 Asociaciones</h2>
+    <div class="doc-content">
+<h3>Tipos de asociaciones</h3>
+<p>Las asociaciones definen las relaciones entre modelos y generan métodos para acceder a datos relacionados:</p>
+<table><thead><tr><th>Tipo</th><th>Relación</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>belongs_to</code></td><td>1 → 1 (hijo)</td><td>Producto pertenece a Categoría</td></tr><tr><td><code>has_many</code></td><td>1 → muchos</td><td>Categoría tiene muchos Productos</td></tr><tr><td><code>has_one</code></td><td>1 → 1 (padre)</td><td>Perfil tiene un Avatar</td></tr><tr><td><code>has_and_belongs_to_many</code></td><td>muchos → muchos</td><td>Estudiante tiene muchos Cursos</td></tr></tbody></table>
+<h3>Ejemplo de asociaciones</h3>
+<pre><code class="language-ruby">class Categoria &lt; ApplicationRecord
+  has_many :productos, dependent: :destroy
+end
+
+class Producto &lt; ApplicationRecord
+  belongs_to :categoria
+  has_many :imagenes
+  has_one :ficha_tecnica
+end
+
+class Estudiante &lt; ApplicationRecord
+  has_and_belongs_to_many :cursos
+end</code></pre>
+<h3>Métodos generados por has_many</h3>
+<pre><code class="language-ruby">categoria = Categoria.find(1)
+
+categoria.productos            # Colección de productos
+categoria.productos.create(...) # Crea un producto asociado
+categoria.productos.build(...)  # Construye sin guardar
+categoria.productos.empty?     # true/false
+categoria.productos.size       # Cantidad</code></pre>
+<blockquote class="aside aside-note">
+Usa <code>dependent: :destroy</code> (o <code>:nullify</code>) para definir qué pasa con los registros relacionados cuando se elimina el padre.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-5-crud-con-active-record">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 5.5 CRUD con Active Record</h2>
+    <div class="doc-content">
+<h3>Crear (Create)</h3>
+<pre><code class="language-ruby"># Con new y save
+producto = Producto.new(nombre: "Laptop", precio: 999.99)
+producto.save
+
+# Con create (new + save en un solo paso)
+Producto.create(nombre: "Mouse", precio: 29.99)
+
+# Con create! lanza excepción si falla la validación
+Producto.create!(nombre: "", precio: 10)
+
+# Build de una asociación
+categoria.productos.create(nombre: "Teclado", precio: 49.99)</code></pre>
+<h3>Leer (Read)</h3>
+<pre><code class="language-ruby">Producto.all                      # Todos
+Producto.find(1)                  # Por id
+Producto.find_by(nombre: "Laptop")
+Producto.where(precio: 0..50).order(:nombre)</code></pre>
+<h3>Actualizar (Update)</h3>
+<pre><code class="language-ruby">producto = Producto.find(1)
+
+producto.precio = 899.99
+producto.save
+
+# O directamente
+producto.update(precio: 849.99)
+
+# Actualizar varios a la vez
+Producto.update_all("precio = precio * 0.9")</code></pre>
+<h3>Eliminar (Delete)</h3>
+<pre><code class="language-ruby"># destroy ejecuta callbacks y dependencias
+producto.destroy
+
+# delete omite callbacks y validaciones
+producto.delete
+
+# Eliminar varios
+Producto.where(precio: 0).destroy_all</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-6-callbacks-y-scopes">
+    <h2><i class="fa-solid fa-bell"></i> 5.6 Callbacks y scopes</h2>
+    <div class="doc-content">
+<h3>Callbacks</h3>
+<p>Los <strong>callbacks</strong> ejecutan código en momentos clave del ciclo de vida de un registro:</p>
+<pre><code class="language-ruby">class Pedido &lt; ApplicationRecord
+  before_validation :asignar_referencia
+  before_save :calcular_total
+  after_create :enviar_confirmacion
+
+  private
+
+  def asignar_referencia
+    self.referencia = "PED-" + SecureRandom.hex(4).upcase
+  end
+
+  def calcular_total
+    self.total = items.sum(&amp;:subtotal)
+  end
+
+  def enviar_confirmacion
+    PedidoMailer.confirmacion(self).deliver_later
+  end
+end</code></pre>
+<h3>Scopes</h3>
+<p>Los <strong>scopes</strong> son consultas reutilizables definidas en el modelo:</p>
+<pre><code class="language-ruby">class Producto &lt; ApplicationRecord
+  scope :economicos, -&gt; { where("precio &lt; 50") }
+  scope :en_stock, -&gt; { where("stock &gt; 0") }
+  scope :recientes, -&gt; { order(created_at: :desc) }
+  scope :de_categoria, -&gt;(categoria) { where(categoria: categoria) }
+end
+
+# Uso
+Producto.economicos.en_stock
+Producto.recientes.de_categoria(2)</code></pre>
+<table><thead><tr><th>Callback</th><th>Momento</th></tr></thead><tbody><tr><td><code>before_save</code></td><td>Antes de guardar</td></tr><tr><td><code>after_create</code></td><td>Después de crear</td></tr><tr><td><code>before_destroy</code></td><td>Antes de eliminar</td></tr><tr><td><code>after_update</code></td><td>Después de actualizar</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Active Record mapea tablas a clases y filas a objetos
+- Las validaciones aseguran que solo se guarden datos correctos
+- where, find, find_by y order permiten consultar la base de datos
+- Las asociaciones relacionan modelos y generan métodos útiles
+- Active Record implementa CRUD completo con create, update, destroy
+- Los callbacks y scopes encapsulan lógica reutilizable del modelo
+</blockquote>
+    </div>
+  </section>

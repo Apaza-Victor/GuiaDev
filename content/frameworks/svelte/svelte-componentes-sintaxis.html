@@ -1,0 +1,188 @@
+<!-- 03. Componentes y sintaxis básica - Svelte (Frameworks) -->
+  <section id="3-1-que-es-un-componente-svelte">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> 3.1 Qué es un componente .svelte</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un componente en Svelte es un archivo con extensión <code>.svelte</code> que encapsula un fragmento reutilizable de interfaz junto con su lógica y sus estilos. Cada componente tiene tres bloques opcionales: <code>&lt;script&gt;</code>, template HTML y <code>&lt;style&gt;</code>.</p>
+<h3>Estructura de un componente</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  // Lógica en JavaScript
+  let titulo = 'Mi componente';
+&lt;/script&gt;
+
+&lt;!-- Template HTML --&gt;
+&lt;h1&gt;{titulo}&lt;/h1&gt;
+&lt;p&gt;Este es el contenido visible.&lt;/p&gt;
+
+&lt;style&gt;
+  /* Estilos scoped del componente */
+  h1 {
+    color: #ff3e00;
+  }
+&lt;/style&gt;</code></pre>
+<h3>Idea clave</h3>
+<p>Cada componente es independiente y puede reutilizarse en otros componentes. Esto permite construir interfaces complejas a partir de piezas pequeñas y mantenibles.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-2-el-bloque-script">
+    <h2><i class="fa-solid fa-code"></i> 3.2 El bloque &lt;script&gt;</h2>
+    <div class="doc-content">
+<h3>Propósito</h3>
+<p>El bloque <code>&lt;script&gt;</code> contiene la lógica del componente: variables, funciones, importaciones y props. Solo se ejecuta una vez al crear una instancia del componente.</p>
+<h3>Cómo usarlo</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let nombre = 'Ana';
+  let edad = 30;
+
+  function saludar() {
+    console.log(`Hola, soy ${nombre}`);
+  }
+
+  const frutas = ['manzana', 'pera', 'uva'];
+&lt;/script&gt;
+
+&lt;p&gt;Nombre: {nombre}&lt;/p&gt;
+&lt;p&gt;Edad: {edad}&lt;/p&gt;
+&lt;button on:click={saludar}&gt;Saludar&lt;/button&gt;</code></pre>
+<h3>Reglas básicas</h3>
+<ul>
+<li>Puedes importar otros componentes y librerías</li>
+<li>Las variables declaradas con <code>let</code> y <code>const</code> se pueden usar en el template</li>
+<li>Las funciones se definen como funciones normales o flecha</li>
+<li>Los datos se "renderizan" en el HTML usando <code>{variable}</code></li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-3-el-bloque-style">
+    <h2><i class="fa-solid fa-palette"></i> 3.3 El bloque &lt;style&gt;</h2>
+    <div class="doc-content">
+<h3>Estilos con alcance (scoped)</h3>
+<p>Los estilos definidos en un componente <code>.svelte</code> son <strong>scoped</strong>: solo afectan a ese componente. Svelte añade una clase única a cada elemento para garantizar que los estilos no se filtren a otros componentes.</p>
+<h3>Ejemplo de estilos scoped</h3>
+<pre><code class="language-svelte">&lt;div class="tarjeta"&gt;
+  &lt;h2&gt;Título de la tarjeta&lt;/h2&gt;
+  &lt;p&gt;Contenido interno.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;style&gt;
+  .tarjeta {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    max-width: 300px;
+  }
+
+  h2 {
+    color: #ff3e00;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    color: #444;
+    margin: 0;
+  }
+&lt;/style&gt;</code></pre>
+<blockquote class="aside aside-note">
+Aunque los estilos son scoped, los selectores de etiqueta como <code>h2</code> solo afectan a las etiquetas de ese mismo componente, no a las de los componentes hijos importados.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-4-estructura-del-template">
+    <h2><i class="fa-solid fa-window-restore"></i> 3.4 Estructura del template</h2>
+    <div class="doc-content">
+<h3>El HTML del componente</h3>
+<p>La parte central del archivo es el template: HTML regular enriquecido con la sintaxis de Svelte para interpolar datos, ejecutar lógica, manejar eventos y enlazar valores.</p>
+<h3>Interpolación de variables</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let usuario = {
+    nombre: 'Carlos',
+    rol: 'admin'
+  };
+  let precio = 12.5;
+  let activo = true;
+&lt;/script&gt;
+
+&lt;p&gt;Nombre: {usuario.nombre}&lt;/p&gt;
+&lt;p&gt;Rol: {usuario.rol}&lt;/p&gt;
+&lt;p&gt;Precio: {precio} €&lt;/p&gt;
+{#if activo}
+  &lt;p class="ok"&gt;Cuenta activa&lt;/p&gt;
+{:else}
+  &lt;p class="error"&gt;Cuenta inactiva&lt;/p&gt;
+{/if}
+
+&lt;style&gt;
+  .ok { color: green; }
+  .error { color: red; }
+&lt;/style&gt;</code></pre>
+<h3>Interpolar expresiones</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let base = 10;
+  let cantidades = [3, 5].join(' y ');
+&lt;/script&gt;
+
+&lt;p&gt;Doble: {base * 2}&lt;/p&gt;
+&lt;p&gt;Cantidades: {cantidades}&lt;/p&gt;
+&lt;p&gt;¿Mayor que 5? {base &gt; 5 ? 'Sí' : 'No'}&lt;/p&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-5-renderizado-de-variables">
+    <h2><i class="fa-solid fa-display"></i> 3.5 Renderizado de variables</h2>
+    <div class="doc-content">
+<h3>Cómo mostrar datos</h3>
+<p>Cualquier valor definido en el <code>&lt;script&gt;</code> se puede mostrar en el template usando llaves <code>{ }</code>. Svelte actualiza automáticamente el valor en pantalla cuando la variable cambia.</p>
+<h3>Ejemplo completo</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let primerNombre = 'María';
+  let apellidos = 'López García';
+  let ciudad = 'Madrid';
+  let anioNacimiento = 1995;
+
+  $: nombreCompleto = `${primerNombre} ${apellidos}`;
+  $: edad = new Date().getFullYear() - anioNacimiento;
+&lt;/script&gt;
+
+&lt;h1&gt;{nombreCompleto}&lt;/h1&gt;
+&lt;p&gt;Vive en {ciudad}&lt;/p&gt;
+&lt;p&gt;Edad aprox.: {edad} años&lt;/p&gt;
+&lt;label&gt;
+  Cambia el nombre:
+  &lt;input bind:value={primerNombre} /&gt;
+&lt;/label&gt;</code></pre>
+<h3>Casos especiales</h3>
+<ul>
+<li><code>{variable}</code>: muestra el valor</li>
+<li><code>{expresion}</code>: evalúa una expresión JavaScript</li>
+<li><code>{@html miHtml}</code>: inyecta HTML crudo (útil pero peligroso con datos externos)</li>
+<li><code>{variable ?? 'valor por defecto'}</code>: maneja valores nulos</li>
+</ul>
+<blockquote class="aside aside-warning">
+Ten cuidado con <code>{@html ...}</code>: inyecta HTML directamente sin escapar. Solo úsalo con contenido de confianza para evitar ataques XSS.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Un componente Svelte es un archivo <code>.svelte</code>
+- Se estructura en <code>&lt;script&gt;</code>, template HTML y <code>&lt;style&gt;</code>
+- El bloque <code>&lt;script&gt;</code> guarda la lógica del componente
+- Los estilos son scoped y no afectan a otros componentes
+- El template es HTML enriquecido con sintaxis de Svelte
+- Las variables se muestran con llaves <code>{variable}</code>
+- <code>{@html ...}</code> inyecta HTML crudo y debe usarse con precaución
+</blockquote>
+    </div>
+  </section>

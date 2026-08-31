@@ -1,0 +1,262 @@
+<!-- 06. Pipes y Guards - NestJS (Frameworks) -->
+  <section id="6-1-que-son-los-pipes">
+    <h2><i class="fa-solid fa-filter"></i> 6.1 Qué son los Pipes</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>pipe</strong> en NestJS es una clase con el decorador <code>@Injectable()</code> que implementa la interfaz <code>PipeTransform</code>. Cada pipe procesa los argumentos de una petición antes de que lleguen al controlador y cumple dos funciones: <strong>transformación</strong> y <strong>validación</strong>.</p>
+<h3>Funciones de un pipe</h3>
+<table><thead><tr><th>Función</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Transformación</strong></td><td>Convierte los datos: string a number, minúsculas, etc.</td></tr><tr><td><strong>Validación</strong></td><td>Rechaza datos inválidos lanzando una excepción</td></tr></tbody></table>
+<h3>Ciclo de una petición con pipe</h3>
+<pre><code class="language-text">Petición -&gt; Pipes de validación -&gt; Controlador -&gt; Servicio</code></pre>
+<pre><code class="language-typescript">import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
+
+@Injectable()
+export class TransformarTextoPipe implements PipeTransform {
+  transform(value: any) {
+    if (typeof value !== 'string') {
+      throw new BadRequestException('El valor debe ser texto');
+    }
+    return value.toLowerCase();
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-2-pipes-integrados-en-nestjs">
+    <h2><i class="fa-solid fa-list-check"></i> 6.2 Pipes integrados en NestJS</h2>
+    <div class="doc-content">
+<h3>Pipes disponibles</h3>
+<table><thead><tr><th>Pipe</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>ValidationPipe</code></td><td>Valida y transforma según DTOs y class-validator</td></tr><tr><td><code>ParseIntPipe</code></td><td>Convierte a número entero</td></tr><tr><td><code>ParseFloatPipe</code></td><td>Convierte a número con decimales</td></tr><tr><td><code>ParseBoolPipe</code></td><td>Convierte a booleano</td></tr><tr><td><code>ParseUUIDPipe</code></td><td>Valida que sea un UUID y lo devuelve</td></tr><tr><td><code>ParseArrayPipe</code></td><td>Valida y convierte arreglos</td></tr><tr><td><code>DefaultValuePipe</code></td><td>Asigna un valor por defecto</td></tr></tbody></table>
+<h3>Ejemplo con ParseIntPipe</h3>
+<pre><code class="language-typescript">import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+
+@Controller('gatos')
+export class GatosController {
+  @Get(':id')
+  obtenerUno(@Param('id', ParseIntPipe) id: number) {
+    // id ya es un number. "abc" lanzaría 400 Bad Request
+    return `Gato con id numérico: ${id + 1}`;
+  }
+}</code></pre>
+<h3>Ejemplo con DefaultValuePipe</h3>
+<pre><code class="language-typescript">import { Controller, Get, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+
+@Controller('gatos')
+export class GatosController {
+  @Get()
+  paginar(
+    @Query('pagina', new DefaultValuePipe(1), ParseIntPipe) pagina: number,
+  ) {
+    return `Página solicitada: ${pagina}`;
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-3-validacion-con-class-validator-y-validationpipe">
+    <h2><i class="fa-solid fa-clipboard-check"></i> 6.3 Validación con class-validator y ValidationPipe</h2>
+    <div class="doc-content">
+<h3>Instalar las dependencias</h3>
+<pre><code class="language-bash">npm install class-validator class-transformer</code></pre>
+<h3>Activar el ValidationPipe global</h3>
+<pre><code class="language-typescript">// main.ts
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  await app.listen(3000);
+}
+
+bootstrap();</code></pre>
+<h3>DTO con decoradores de validación</h3>
+<pre><code class="language-typescript">// crear-gato.dto.ts
+import { IsString, IsInt, Min, MaxLength, IsOptional } from 'class-validator';
+
+export class CrearGatoDto {
+  @IsString()
+  @MaxLength(50)
+  nombre: string;
+
+  @IsInt()
+  @Min(0)
+  edad: number;
+
+  @IsOptional()
+  @IsString()
+  raza?: string;
+}</code></pre>
+<h3>Controlador que valida el body</h3>
+<pre><code class="language-typescript">import { Controller, Post, Body } from '@nestjs/common';
+import { CrearGatoDto } from './crear-gato.dto';
+
+@Controller('gatos')
+export class GatosController {
+  @Post()
+  crear(@Body() datos: CrearGatoDto) {
+    return `Gato válido: ${datos.nombre}`;
+  }
+}</code></pre>
+<blockquote class="aside aside-tip">
+La opción `whitelist: true` elimina automáticamente las propiedades que no están declaradas en el DTO, evitando ataques de sobrerescritura de propiedades.
+</blockquote>
+<h3>Errores de validación devueltos</h3>
+<pre><code class="language-text">POST /gatos  {"nombre": 123, "edad": -5}
+
+{
+  "statusCode": 400,
+  "message": [
+    "nombre must be a string",
+    "edad must not be less than 0"
+  ],
+  "error": "Bad Request"
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-4-pipes-personalizados">
+    <h2><i class="fa-solid fa-code"></i> 6.4 Pipes personalizados</h2>
+    <div class="doc-content">
+<h3>Interfaz PipeTransform</h3>
+<p>Para crear un pipe personalizado se implementa la interfaz <code>PipeTransform</code>, que exige el método <code>transform</code>.</p>
+<pre><code class="language-typescript">import { PipeTransform, Injectable, ArgumentMetadata, BadRequestException } from '@nestjs/common';
+
+@Injectable()
+export class ValidarEmailPipe implements PipeTransform {
+  transform(value: any, metadata: ArgumentMetadata) {
+    if (typeof value !== 'string' || !value.includes('@')) {
+      throw new BadRequestException('El correo no es válido');
+    }
+    return value.trim().toLowerCase();
+  }
+}</code></pre>
+<h3>Usar el pipe en un endpoint</h3>
+<pre><code class="language-typescript">import { Controller, Post, Body, UsePipes } from '@nestjs/common';
+import { ValidarEmailPipe } from './validar-email.pipe';
+
+@Controller('usuarios')
+export class UsuariosController {
+  @Post('registro')
+  @UsePipes(new ValidarEmailPipe())
+  registrar(@Body('email') email: string) {
+    return `Correo registrado: ${email}`;
+  }
+}</code></pre>
+<h3>Pipe a nivel de parámetro</h3>
+<pre><code class="language-typescript">@Post('registro')
+registrar(@Body('email', ValidarEmailPipe) email: string) {
+  return email;
+}</code></pre>
+<h3>Niveles de aplicación de un pipe</h3>
+<table><thead><tr><th>Nivel</th><th>Alcance</th></tr></thead><tbody><tr><td>Global</td><td>Toda la aplicación</td></tr><tr><td>Controlador</td><td>Todos los handlers del controlador</td></tr><tr><td>Método</td><td>Un único handler</td></tr><tr><td>Parámetro</td><td>Un único argumento</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-5-que-son-los-guards">
+    <h2><i class="fa-solid fa-shield-halved"></i> 6.5 Qué son los Guards</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Los <strong>guards</strong> determinan si una petición debe continuar o rechazarse. Se usan sobre todo para <strong>autorización</strong>: verificar permisos, roles o autenticación antes de ejecutar el handler.</p>
+<h3>Diferencias con los middlewares</h3>
+<table><thead><tr><th>Guard</th><th>Middleware</th></tr></thead><tbody><tr><td>Se ejecuta después del middleware</td><td>Se ejecuta antes</td></tr><tr><td>Conoce la ruta y el método invocados</td><td>No conoce el destino final</td></tr><tr><td>Implementa <code>CanActivate</code></td><td>Función o clase con <code>NestMiddleware</code></td></tr></tbody></table>
+<h3>Ejemplo: guard que autentica con token</h3>
+<pre><code class="language-typescript">import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+
+@Injectable()
+export class ApiKeyGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+    const apiKey = request.headers['x-api-key'];
+
+    if (apiKey !== 'clave-super-secreta') {
+      throw new UnauthorizedException('API key inválida');
+    }
+    return true;
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-6-proteger-rutas-con-guards">
+    <h2><i class="fa-solid fa-lock"></i> 6.6 Proteger rutas con Guards</h2>
+    <div class="doc-content">
+<h3>Aplicar un guard a un endpoint</h3>
+<pre><code class="language-typescript">import { Controller, Get, UseGuards } from '@nestjs/common';
+import { ApiKeyGuard } from './api-key.guard';
+
+@Controller('privado')
+export class PrivadoController {
+  @Get()
+  @UseGuards(ApiKeyGuard)
+  secreto() {
+    return 'Información protegida';
+  }
+}</code></pre>
+<h3>Aplicar un guard a todo un controlador</h3>
+<pre><code class="language-typescript">import { Controller, Get, UseGuards } from '@nestjs/common';
+import { ApiKeyGuard } from './api-key.guard';
+
+@UseGuards(ApiKeyGuard)
+@Controller('privado')
+export class PrivadoController {
+  @Get()
+  secreto() {
+    return 'Todo este controlador está protegido';
+  }
+}</code></pre>
+<h3>Guard global con roles</h3>
+<pre><code class="language-typescript">import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { ROLES_KEY } from './roles.decorator';
+
+@Injectable()
+export class RolesGuard implements CanActivate {
+  constructor(private readonly reflector: Reflector) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const rolesRequeridos = this.reflector.getAllAndOverride&lt;string[]&gt;(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (!rolesRequeridos || rolesRequeridos.length === 0) {
+      return true;
+    }
+
+    const request = context.switchToHttp().getRequest();
+    const rolUsuario = request.user?.rol;
+
+    if (!rolesRequeridos.includes(rolUsuario)) {
+      throw new ForbiddenException('No tienes permisos suficientes');
+    }
+    return true;
+  }
+}</code></pre>
+<blockquote class="aside aside-tip">
+Genera guards con el CLI: `nest g guard nombre`. Se registran automáticamente como providers en el módulo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los pipes transforman y validan los datos antes de llegar al controlador
+- NestJS incluye pipes integrados como `ParseIntPipe` y `ValidationPipe`
+- `class-validator` y `class-transformer` habilitan la validación con DTOs
+- Los pipes personalizados implementan la interfaz `PipeTransform`
+- Los guards autorizan o rechazan peticiones con `CanActivate`
+- Los guards se aplican con `@UseGuards` a nivel de handler o controlador
+</blockquote>
+    </div>
+  </section>

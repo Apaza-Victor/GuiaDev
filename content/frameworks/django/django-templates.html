@@ -1,0 +1,179 @@
+<!-- 05. Plantillas (templates) - Django (Frameworks) -->
+  <section id="5-1-que-es-el-sistema-de-plantillas-dtl">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> 5.1 Qué es el sistema de plantillas (DTL)</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Aunque puedes usar cualquier motor (como Jinja2), Django incluye su propio sistema llamado <strong>Django Template Language (DTL)</strong>. Son archivos HTML con marcadores especiales que se rellenan con datos.</p>
+<h3>Sintaxis básica</h3>
+<table><thead><tr><th>Sintaxis</th><th>Qué hace</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>{{ variable }}</code></td><td>Muestra el valor de una variable</td><td><code>{{ usuario.nombre }}</code></td></tr><tr><td><code>{% etiqueta %}</code></td><td>Ejecuta lógica (if, for, block)</td><td><code>{% if usuario %}</code></td></tr><tr><td><code>{{ dato|filtro }}</code></td><td>Transforma el valor con un filtro</td><td><code>{{ precio|floatformat:2 }}</code></td></tr><tr><td><code>{# comentario #}</code></td><td>Comentario ignorado al renderizar</td><td><code>{# solo desarrollo #}</code></td></tr></tbody></table>
+<h3>Características</h3>
+<ul>
+<li>Diseñado para <strong>separar lógica de presentación</strong>: no permite código Python arbitrario</li>
+<li>Muy seguro: escapa HTML automáticamente</li>
+<li>Rápido de aprender y con amplia documentación</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-2-variables-con-corchetes-dobles">
+    <h2><i class="fa-solid fa-code"></i> 5.2 Variables con {{ }}</h2>
+    <div class="doc-content">
+<h3>Cómo funciona</h3>
+<p>Las variables se escriben entre dobles llaves <code>{{ }}</code>. Django busca el valor en el contexto pasado por la vista y lo imprime.</p>
+<h3>Acceso a datos</h3>
+<pre><code class="language-html">&lt;!-- templates/blog/detalle.html --&gt;
+&lt;p&gt;Título: {{ articulo.titulo }}&lt;/p&gt;
+&lt;p&gt;Slug: {{ articulo.slug }}&lt;/p&gt;
+&lt;p&gt;Categoría: {{ articulo.categoria.nombre }}&lt;/p&gt;
+&lt;p&gt;Precio: {{ articulo.precio }}&lt;/p&gt;
+
+{# Acceso a índices y claves #}
+{{ lista.0 }}          {# Primer elemento de una lista #}
+{{ diccionario.clave }} {# Valor de una clave #}</code></pre>
+<h3>Desde la vista</h3>
+<pre><code class="language-python"># views.py
+def detalle(request, pk):
+    articulo = Articulo.objects.get(pk=pk)
+    return render(request, "blog/detalle.html", {
+        "articulo": articulo,
+        "etiquetas": ["django", "python", "web"],
+    })</code></pre>
+<h3>Variables condicionales (default)</h3>
+<pre><code class="language-html">{{ articulo.resumen|default:"Sin resumen" }}
+{{ user.username|default:"Invitado" }}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-3-etiquetas-con-llaves-y-porcentaje">
+    <h2><i class="fa-solid fa-tag"></i> 5.3 Etiquetas con {% %}</h2>
+    <div class="doc-content">
+<h3>Etiquetas más usadas</h3>
+<table><thead><tr><th>Etiqueta</th><th>Función</th></tr></thead><tbody><tr><td><code>{% if %}</code></td><td>Condicional</td></tr><tr><td><code>{% for %}</code></td><td>Recorrer listas o querysets</td></tr><tr><td><code>{% url %}</code></td><td>Generar una URL por su nombre</td></tr><tr><td><code>{% extends %}</code></td><td>Heredar de una plantilla base</td></tr><tr><td><code>{% block %}</code></td><td>Definir una zona reemplazable</td></tr><tr><td><code>{% include %}</code></td><td>Insertar otra plantilla</td></tr><tr><td><code>{% load %}</code></td><td>Cargar filtros o etiquetas de apps</td></tr><tr><td><code>{% static %}</code></td><td>Apuntar a archivos estáticos</td></tr></tbody></table>
+<h3>Ejemplo: condicional y bucle</h3>
+<pre><code class="language-html">&lt;ul&gt;
+  {% for articulo in articulos %}
+    {% if articulo.publicado %}
+      &lt;li&gt;{{ articulo.titulo }} - {{ articulo.fecha_publicacion }}&lt;/li&gt;
+    {% else %}
+      &lt;li&gt;{{ articulo.titulo }} (borrador)&lt;/li&gt;
+    {% endif %}
+  {% empty %}
+    &lt;li&gt;No hay artículos disponibles.&lt;/li&gt;
+  {% endfor %}
+&lt;/ul&gt;</code></pre>
+<h3>Variables del bucle</h3>
+<ul>
+<li><code>forloop.counter</code>: Número de iteración (1, 2, 3...)</li>
+<li><code>forloop.counter0</code>: Número de iteración empezando en 0</li>
+<li><code>forloop.first</code>: Verdadero en la primera vuelta</li>
+<li><code>forloop.last</code>: Verdadero en la última vuelta</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-4-herencia-de-plantillas-heredity">
+    <h2><i class="fa-solid fa-layer-group"></i> 5.4 Herencia de plantillas (extends y block)</h2>
+    <div class="doc-content">
+<h3>Qué es</h3>
+<p>La <strong>herencia</strong> te permite definir una plantilla base con la estructura común (header, nav, footer) y que cada página solo rellene sus bloques específicos.</p>
+<h3>Plantilla base</h3>
+<pre><code class="language-html">&lt;!-- templates/base.html --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html lang="es"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;title&gt;{% block titulo %}Mi Sitio{% endblock %}&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;Logo y navegación&lt;/header&gt;
+  &lt;main&gt;
+    {% block contenido %}{% endblock %}
+  &lt;/main&gt;
+  &lt;footer&gt;&amp;copy; 2026 Mi Sitio&lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<h3>Plantilla hija</h3>
+<pre><code class="language-html">&lt;!-- templates/blog/lista.html --&gt;
+{% extends "base.html" %}
+
+{% block titulo %}Listado de artículos{% endblock %}
+
+{% block contenido %}
+  &lt;h1&gt;Artículos&lt;/h1&gt;
+  &lt;ul&gt;
+    {% for articulo in articulos %}
+      &lt;li&gt;&lt;a href="{% url 'detalle' articulo.slug %}"&gt;{{ articulo.titulo }}&lt;/a&gt;&lt;/li&gt;
+    {% endfor %}
+  &lt;/ul&gt;
+{% endblock %}</code></pre>
+<blockquote class="aside aside-note">
+La plantilla hija debe empezar con `{% extends %}` y solo puede definir bloques: cualquier otro contenido externo se ignora.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-5-includes-y-reutilizacion">
+    <h2><i class="fa-solid fa-box-open"></i> 5.5 Includes y reutilización</h2>
+    <div class="doc-content">
+<h3>Qué es un include</h3>
+<p>La etiqueta <code>{% include %}</code> inserta el contenido de otra plantilla dentro de la actual. Ideal para componentes repetidos como una tarjeta o un formulario parcial.</p>
+<h3>Componente de tarjeta</h3>
+<pre><code class="language-html">&lt;!-- templates/blog/tarjeta_articulo.html --&gt;
+&lt;article&gt;
+  &lt;h3&gt;{{ articulo.titulo }}&lt;/h3&gt;
+  &lt;p&gt;{{ articulo.contenido|truncatewords:20 }}&lt;/p&gt;
+  &lt;a href="{% url 'detalle' articulo.slug %}"&gt;Leer más&lt;/a&gt;
+&lt;/article&gt;</code></pre>
+<h3>Usar el include</h3>
+<pre><code class="language-html">&lt;!-- templates/blog/inicio.html --&gt;
+{% extends "base.html" %}
+{% block contenido %}
+  &lt;h1&gt;Últimos artículos&lt;/h1&gt;
+  {% for articulo in articulos %}
+    {% include "blog/tarjeta_articulo.html" %}
+  {% endfor %}
+{% endblock %}</code></pre>
+<h3>Pasar variables extra</h3>
+<pre><code class="language-html">{% include "blog/tarjeta_articulo.html" with titulo_personalizado="Destacado" %}</code></pre>
+<blockquote class="aside aside-tip">
+Diferencia clave: `{% extends %}` construye un documento a partir de la base; `{% include %}` reutiliza un fragmento dentro de un documento.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-6-filtros-de-plantilla">
+    <h2><i class="fa-solid fa-filter"></i> 5.6 Filtros de plantilla</h2>
+    <div class="doc-content">
+<h3>Qué son</h3>
+<p>Los <strong>filtros</strong> transforman el valor de una variable antes de mostrarlo. Se aplican con el símbolo <code>|</code>.</p>
+<h3>Filtros más usados</h3>
+<table><thead><tr><th>Filtro</th><th>Qué hace</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>lower</code></td><td>Convierte a minúsculas</td><td><code>{{ nombre|lower }}</code></td></tr><tr><td><code>upper</code></td><td>Convierte a mayúsculas</td><td><code>{{ nombre|upper }}</code></td></tr><tr><td><code>title</code></td><td>Capitaliza cada palabra</td><td><code>{{ nombre|title }}</code></td></tr><tr><td><code>length</code></td><td>Cuenta caracteres o elementos</td><td><code>{{ texto|length }}</code></td></tr><tr><td><code>default</code></td><td>Valor si está vacío</td><td><code>{{ email|default:"—" }}</code></td></tr><tr><td><code>date</code></td><td>Formatea fechas</td><td><code>{{ fecha|date:"d/m/Y" }}</code></td></tr><tr><td><code>truncatewords</code></td><td>Corta por número de palabras</td><td><code>{{ texto|truncatewords:30 }}</code></td></tr><tr><td><code>floatformat</code></td><td>Redondea decimales</td><td><code>{{ precio|floatformat:2 }}</code></td></tr><tr><td><code>safe</code></td><td>Marca HTML como seguro</td><td><code>{{ html|safe }}</code></td></tr></tbody></table>
+<h3>Encadenar filtros</h3>
+<pre><code class="language-html">{{ articulo.resumen|truncatewords:20|title }}
+{{ usuario.email|lower|default:"Sin correo" }}</code></pre>
+<blockquote class="aside aside-warning">
+Usa `|safe` solo con contenido en el que confíes: evita que Django escape el HTML, lo que puede abrir brechas XSS si el dato es de usuarios.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El motor de plantillas de Django se llama DTL (Django Template Language)
+- Las variables se escriben con `{{ }}` y las etiquetas con `{% %}`
+- La herencia con `{% extends %}` y `{% block %}` evita repetir HTML
+- `{% include %}` reutiliza fragmentos de plantilla
+- Los filtros permiten transformar valores con `|`
+- Django escapa el HTML por defecto para proteger contra XSS
+</blockquote>
+    </div>
+  </section>

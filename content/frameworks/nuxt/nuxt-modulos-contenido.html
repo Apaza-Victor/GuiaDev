@@ -1,0 +1,224 @@
+<!-- 09. Módulos y content - Nuxt (Frameworks) -->
+  <section id="9-1-el-ecosistema-de-modulos">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> 9.1 El ecosistema de módulos</h2>
+    <div class="doc-content">
+<h3>Qué son los módulos</h3>
+<p>Los <strong>módulos</strong> son paquetes que extienden Nuxt añadiendo funcionalidades: integraciones de CSS, autenticación, contenido, SEO y mucho más. Se instalan vía npm y se registran en <code>nuxt.config.ts</code>.</p>
+<h3>Módulos populares</h3>
+<table><thead><tr><th>Módulo</th><th>Finalidad</th></tr></thead><tbody><tr><td>@pinia/nuxt</td><td>Integración de Pinia para estado global</td></tr><tr><td>@nuxt/content</td><td>Manejar contenido basado en archivos</td></tr><tr><td>@nuxtjs/tailwindcss</td><td>Soporte de Tailwind CSS</td></tr><tr><td>@nuxtjs/seo</td><td>Herramientas de SEO (sitemap, robots)</td></tr><tr><td>@nuxt/image</td><td>Optimización de imágenes</td></tr></tbody></table>
+<h3>Instalar un módulo</h3>
+<pre><code class="language-bash">npm install @nuxtjs/tailwindcss</code></pre>
+<pre><code class="language-ts">// nuxt.config.ts
+export default defineNuxtConfig({
+  modules: ['@pinia/nuxt', '@nuxtjs/tailwindcss', '@nuxt/content']
+})</code></pre>
+<blockquote class="aside aside-note">
+Los módulos suelen venir con su propia configuración y opciones para personalizarlos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-2-content-con-archivos-markdown">
+    <h2><i class="fa-solid fa-file-lines"></i> 9.2 Content con archivos Markdown</h2>
+    <div class="doc-content">
+<h3>Qué es @nuxt/content</h3>
+<p>El módulo <code>@nuxt/content</code> permite crear contenido basado en archivos (Markdown, JSON, YAML) y mostrarlo de forma reactiva en tu aplicación. Es ideal para blogs, documentación y páginas de contenido.</p>
+<h3>Estructura del contenido</h3>
+<pre><code class="language-text">content/
+├── index.md
+└── blog/
+    ├── primer-post.md
+    └── segundo-post.md
+</code></pre>
+<h3>Ejemplo: Un archivo Markdown</h3>
+<pre><code class="language-md">---
+title: Primer post del blog
+description: Mi primera publicación
+date: 2026-08-30
+---
+
+# Bienvenido a mi blog
+
+Este es el contenido de mi primera **publicación** usando Nuxt Content.
+</code></pre>
+<h3>Mostrar el contenido en una página</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+const { data: posts } = await useAsyncData('posts', () =&gt;
+  queryContent('/blog').find()
+)
+&lt;/script&gt;</code></pre>
+<h3>Rutas dinámicas con content</h3>
+<pre><code class="language-vue">&lt;!-- pages/blog/[slug].vue --&gt;
+&lt;script setup&gt;
+const route = useRoute()
+
+const { data: post } = await useAsyncData(`post-${route.params.slug}`, () =&gt;
+  queryContent(`/blog/${route.params.slug}`).findOne()
+)
+&lt;/script&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-3-de-archivos-a-paginas-con-content">
+    <h2><i class="fa-solid fa-arrows-spin"></i> 9.3 De archivos a páginas con content</h2>
+    <div class="doc-content">
+<h3>Consultar el contenido</h3>
+<p>El módulo ofrece una API de consulta (<code>queryContent</code>) para filtrar, ordenar y limitar los archivos de contenido.</p>
+<h3>Ejemplo: Consultas comunes</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+// Todos los posts
+const posts = await queryContent('/blog').find()
+
+// Solo los publicados, ordenados por fecha
+const publicados = await queryContent('/blog')
+  .where({ publicado: true })
+  .sort({ fecha: -1 })
+  .limit(5)
+  .find()
+
+// Un solo documento
+const unPost = await queryContent('/blog/primer-post').findOne()
+&lt;/script&gt;</code></pre>
+<h3>Integración con navegación</h3>
+<pre><code class="language-vue">&lt;template&gt;
+  &lt;ul&gt;
+    &lt;li v-for="post in posts" :key="post._path"&gt;
+      &lt;NuxtLink :to="post._path"&gt;{{ post.title }}&lt;/NuxtLink&gt;
+    &lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/template&gt;</code></pre>
+<h3>Ventajas de Nuxt Content</h3>
+<ul>
+<li>Escribe en Markdown y got HTML renderizado</li>
+<li>Rutas generadas automáticamente desde la estructura de archivos</li>
+<li>Consulta flexible con filtros y ordenación</li>
+<li>Ideal para blogs, documentación y sitios de contenido</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-4-variables-de-entorno-y-runtime-config">
+    <h2><i class="fa-solid fa-key"></i> 9.4 Variables de entorno y runtime config</h2>
+    <div class="doc-content">
+<h3>Qué es runtimeConfig</h3>
+<p><code>runtimeConfig</code> expone variables de configuración a tu aplicación. Es la forma correcta y segura de usar variables de entorno en Nuxt, tanto en el servidor como en el cliente.</p>
+<h3>Definir config en nuxt.config</h3>
+<pre><code class="language-ts">// nuxt.config.ts
+export default defineNuxtConfig({
+  runtimeConfig: {
+    // Solo está disponible en el servidor
+    apiSecreta: process.env.API_SECRETA,
+    public: {
+      // Disponible también en el cliente (prefijo NUXT_PUBLIC_)
+      apiUrl: process.env.NUXT_PUBLIC_API_URL || 'https://api.ejemplo.com'
+    }
+  }
+})</code></pre>
+<h3>Variables de entorno en .env</h3>
+<pre><code class="language-text"># .env
+API_SECRETA=super-secreto-servidor
+NUXT_PUBLIC_API_URL=https://api.ejemplo.com
+</code></pre>
+<h3>Usar runtimeConfig en el código</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+const config = useRuntimeConfig()
+
+// En el servidor: /api/secretos
+const { data } = await useFetch(config.apiUrl)
+
+// En el cliente y servidor
+console.log(config.public.apiUrl)
+&lt;/script&gt;</code></pre>
+<table><thead><tr><th>Valor</th><th>Accesible en</th></tr></thead><tbody><tr><td><code>runtimeConfig.apiSecreta</code></td><td>Solo servidor (usa <code>useRuntimeConfig()</code>)</td></tr><tr><td><code>runtimeConfig.public.*</code></td><td>Servidor y cliente</td></tr></tbody></table>
+<blockquote class="aside aside-warning">
+Nunca pongas secretos en la propiedad `public`; solo lo que debe ver el navegador.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-5-middleware-de-seguridad-concepto">
+    <h2><i class="fa-solid fa-shield-halved"></i> 9.5 Middleware de seguridad (concepto)</h2>
+    <div class="doc-content">
+<h3>Seguridad en la aplicación y el servidor</h3>
+<p>La seguridad en Nuxt se aborda en varias capas: validación de entrada, autenticación, cabeceras HTTP y protección de rutas. Los middlewares de servidor y de navegación juegan un papel clave.</p>
+<h3>Capas de seguridad</h3>
+<table><thead><tr><th>Capa</th><th>Función</th></tr></thead><tbody><tr><td><strong>Validación de entrada</strong></td><td>Verificar los datos antes de procesarlos</td></tr><tr><td><strong>Autenticación</strong></td><td>Confirmar la identidad del usuario</td></tr><tr><td><strong>Cabeceras HTTP</strong></td><td>Proteger contra XSS y otras amenazas</td></tr><tr><td><strong>Middleware de rutas</strong></td><td>Proteger páginas privadas en el cliente</td></tr><tr><td><strong>Middleware de servidor</strong></td><td>Proteger endpoints de la API</td></tr></tbody></table>
+<h3>Ejemplo: Cabeceras de seguridad globales</h3>
+<pre><code class="language-ts">// nuxt.config.ts
+export default defineNuxtConfig({
+  routeRules: {
+    '/**': {
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY'
+      }
+    }
+  }
+})</code></pre>
+<h3>Conceptos clave de seguridad</h3>
+<ul>
+<li>Nunca confíes en los datos del cliente: valida en el servidor</li>
+<li>Usa diferentes claves secretas para producción</li>
+<li>Limpia y escapa el contenido generado por el usuario</li>
+<li>Mantén las dependencias actualizadas</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-6-gestionar-runtime-config-y-seguridad">
+    <h2><i class="fa-solid fa-user-shield"></i> 9.6 Gestionar runtime config y seguridad</h2>
+    <div class="doc-content">
+<h3>Variables por entorno</h3>
+<p>Puedes tener configuraciones distintas para desarrollo y producción usando archivos de entorno por entorno.</p>
+<pre><code class="language-text">.env                # común
+.env.development    # solo desarrollo
+.env.production     # solo producción
+</code></pre>
+<h3>Ejemplo: Configurar secretos de forma segura</h3>
+<pre><code class="language-ts">// nuxt.config.ts
+export default defineNuxtConfig({
+  runtimeConfig: {
+    jwtSecreto: process.env.JWT_SECRETO,
+    public: {
+      apiUrl: process.env.NUXT_PUBLIC_API_URL
+    }
+  },
+  // No exponer archivos sensibles
+  nitro: {
+    publicAssets: [{ baseURL: '/privado/' }]
+  }
+})</code></pre>
+<h3>Buenas prácticas de seguridad</h3>
+<ul>
+<li>Mantén las variables de entorno fuera del repositorio (.gitignore)</li>
+<li>Usa <code>useRuntimeConfig</code> en lugar de process.env directo en el código</li>
+<li>Protege rutas privadas con middleware de navegación</li>
+<li>Valida y sanitiza toda la entrada del servidor</li>
+</ul>
+<blockquote class="aside aside-tip">
+Para aplicaciones con usuarios, considera un módulo de autenticación como Nuxt Auth y gestiona las sesiones de forma segura.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los módulos extienden Nuxt con funcionalidades adicionales
+- @nuxt/content gestiona contenido basado en archivos Markdown
+- queryContent permite consultar y filtrar el contenido
+- runtimeConfig expone variables de entorno de forma segura
+- Las claves públicas y secretas se separan correctamente
+- La seguridad se aplica en varias capas: validación, auth, cabeceras y middleware
+- Nunca expongas secretos en la parte pública del config
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,232 @@
+<!-- 08. Autenticación y usuarios - Django (Frameworks) -->
+  <section id="8-1-sistema-de-autenticacion-integrado">
+    <h2><i class="fa-solid fa-user-lock"></i> 8.1 Sistema de autenticación integrado</h2>
+    <div class="doc-content">
+<h3>Qué incluye Django</h3>
+<p>Django trae un sistema de autenticación completo, sin instalar nada extra. Forma parte de <code>django.contrib.auth</code> y de <code>django.contrib.sessions</code>.</p>
+<h3>Componentes disponibles</h3>
+<table><thead><tr><th>Componente</th><th>Función</th></tr></thead><tbody><tr><td><strong>Modelo User</strong></td><td>Usuarios con username, password, email y permisos</td></tr><tr><td><strong>Vistas de login/logout</strong></td><td>Funciones y vistas listas para usar</td></tr><tr><td><strong>Decoradores</strong></td><td><code>@login_required</code> para proteger vistas</td></tr><tr><td><strong>Permisos y grupos</strong></td><td>Control de acceso por modelo y por grupo</td></tr><tr><td><strong>Hashing de contraseñas</strong></td><td>Con hash seguros y actualizables</td></tr></tbody></table>
+<h3>Instalar y preparar</h3>
+<pre><code class="language-bash"># Las migraciones crean las tablas de autenticación
+python manage.py migrate
+
+# Crear un superusuario para probar
+python manage.py createsuperuser</code></pre>
+<p>Con esto ya puedes entrar en el admin y gestionar usuarios.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-2-login-y-logout">
+    <h2><i class="fa-solid fa-right-to-bracket"></i> 8.2 Login y logout</h2>
+    <div class="doc-content">
+<h3>Usar las vistas integradas</h3>
+<pre><code class="language-python"># urls.py del proyecto
+from django.urls import path, include
+
+urlpatterns = [
+    path("accounts/", include("django.contrib.auth.urls")),
+]</code></pre>
+<p>Esta línea incluye rutas ya hechas:</p>
+<table><thead><tr><th>URL</th><th>Vista</th></tr></thead><tbody><tr><td><code>/accounts/login/</code></td><td>Formulario de login</td></tr><tr><td><code>/accounts/logout/</code></td><td>Cerrar sesión</td></tr><tr><td><code>/accounts/password_change/</code></td><td>Cambiar contraseña</td></tr></tbody></table>
+<h3>Login manual con authenticate + login</h3>
+<pre><code class="language-python"># blog/views.py
+from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import render, redirect
+
+def iniciar_sesion(request):
+    if request.method == "POST":
+        username = request.POST["username"]
+        password = request.POST["password"]
+        usuario = authenticate(request, username=username, password=password)
+        if usuario is not None:
+            login(request, usuario)
+            return redirect("inicio")
+        # Credenciales inválidas
+        return render(request, "blog/login.html", {"error": True})
+    return render(request, "blog/login.html")
+
+def cerrar_sesion(request):
+    logout(request)
+    return redirect("inicio")</code></pre>
+<blockquote class="aside aside-tip">
+`login()` guarda la sesión del usuario; `logout()` la cierra. Verifica siempre primero con `authenticate()` que las credenciales sean válidas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-3-el-modelo-de-usuario">
+    <h2><i class="fa-solid fa-user"></i> 8.3 El modelo de usuario</h2>
+    <div class="doc-content">
+<h3>Campos principales</h3>
+<table><thead><tr><th>Campo</th><th>Tipo</th><th>Uso</th></tr></thead><tbody><tr><td><code>username</code></td><td>CharField</td><td>Nombre de usuario único</td></tr><tr><td><code>password</code></td><td>Hash</td><td>Contraseña cifrada</td></tr><tr><td><code>email</code></td><td>EmailField</td><td>Correo del usuario</td></tr><tr><td><code>first_name</code></td><td>CharField</td><td>Nombre</td></tr><tr><td><code>last_name</code></td><td>CharField</td><td>Apellido</td></tr><tr><td><code>is_staff</code></td><td>BooleanField</td><td>Puede entrar al admin</td></tr><tr><td><code>is_superuser</code></td><td>BooleanField</td><td>Tiene todos los permisos</td></tr><tr><td><code>is_active</code></td><td>BooleanField</td><td>Cuenta habilitada</td></tr><tr><td><code>date_joined</code></td><td>DateTimeField</td><td>Fecha de registro</td></tr></tbody></table>
+<h3>Acceso al usuario en la petición</h3>
+<pre><code class="language-python">def perfil(request):
+    # request.user disponible en toda vista
+    usuario = request.user
+    nombre = usuario.username
+    es_admin = usuario.is_superuser
+
+    # En plantillas se usa la misma variable
+    return render(request, "blog/perfil.html", {
+        "usuario": usuario,
+    })</code></pre>
+<pre><code class="language-html">&lt;!-- En plantillas: request.user también está disponible --&gt;
+{% if user.is_authenticated %}
+  Hola, {{ user.username }}
+{% else %}
+  &lt;a href="{% url 'login' %}"&gt;Inicia sesión&lt;/a&gt;
+{% endif %}</code></pre>
+<blockquote class="aside aside-note">
+El usuario anónimo está representado por `AnonymousUser`; su atributo `is_authenticated` siempre es False.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-4-permisos-y-grupos">
+    <h2><i class="fa-solid fa-users"></i> 8.4 Permisos y grupos</h2>
+    <div class="doc-content">
+<h3>Permisos por modelo</h3>
+<p>Django crea permisos automáticos para cada modelo: <code>add</code>, <code>change</code>, <code>delete</code> y <code>view</code>.</p>
+<h3>Asignar y comprobar permisos</h3>
+<pre><code class="language-python"># Asignar un permiso directo
+from django.contrib.auth.models import Permission
+
+permiso = Permission.objects.get(codename="change_articulo")
+usuario.user_permissions.add(permiso)
+
+# Comprobar permisos en el código
+def vista_editor(request):
+    if request.user.has_perm("blog.change_articulo"):
+        # Puede editar artículos
+        pass</code></pre>
+<h3>Grupos</h3>
+<pre><code class="language-python"># Los grupos agrupan permisos y se asignan a usuarios
+from django.contrib.auth.models import Group, User
+
+editores, _ = Group.objects.get_or_create(name="Editores")
+
+# Añadir un permisos al grupo
+permiso = Permission.objects.get(codename="change_articulo")
+editores.permissions.add(permiso)
+
+# Asignar el grupo a un usuario
+usuario.groups.add(editores)</code></pre>
+<h3>Permisos en plantillas</h3>
+<pre><code class="language-html">{% if perms.blog.change_articulo %}
+  &lt;a href="{% url 'editar' articulo.pk %}"&gt;Editar&lt;/a&gt;
+{% endif %}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-5-proteger-vistas-con-login-required">
+    <h2><i class="fa-solid fa-lock"></i> 8.5 Proteger vistas con login_required</h2>
+    <div class="doc-content">
+<h3>Decorador login_required</h3>
+<p>El decorador <code>@login_required</code> redirige al login si el visitante no está autenticado.</p>
+<pre><code class="language-python"># blog/views.py
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
+@login_required
+def mi_perfil(request):
+    return render(request, "blog/perfil.html", {
+        "usuario": request.user,
+    })
+
+# Redirigir a otra URL tras el login
+@login_required(login_url="/accounts/login/")
+def perfil_admin(request):
+    return render(request, "blog/admin.html")</code></pre>
+<h3>Redirigir después del login</h3>
+<pre><code class="language-python"># 1. En las vistas integradas de auth, la URL
+#    /accounts/login/?next=/perfil/ te devuelve a /perfil/
+
+# 2. Configura el LOGIN_URL y LOGIN_REDIRECT_URL en settings.py
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/inicio/"
+LOGOUT_REDIRECT_URL = "/"</code></pre>
+<h3>Proteger vistas por clase (CBV)</h3>
+<pre><code class="language-python">from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView
+
+class Perfil(LoginRequiredMixin, TemplateView):
+    template_name = "blog/perfil.html"
+    login_url = "/accounts/login/"</code></pre>
+<blockquote class="aside aside-tip">
+Para controlar además por permisos usa `PermissionRequiredMixin` y el atributo `permission_required` en vistas por clase.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-6-ejemplo-completo-registro-de-usuarios">
+    <h2><i class="fa-solid fa-user-plus"></i> 8.6 Ejemplo completo: registro de usuarios</h2>
+    <div class="doc-content">
+<h3>Formulario de registro con ModelForm de User</h3>
+<pre><code class="language-python"># blog/forms.py
+from django import forms
+from django.contrib.auth.models import User
+
+class FormularioUsuario(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput)
+    confirmar = forms.CharField(widget=forms.PasswordInput)
+
+    class Meta:
+        model = User
+        fields = ["username", "email"]
+
+    def clean(self):
+        datos = self.cleaned_data
+        if datos.get("password") != datos.get("confirmar"):
+            raise forms.ValidationError("Las contraseñas no coinciden")
+        return datos
+
+    def save(self, commit=True):
+        usuario = super().save(commit=False)
+        # Guarda la contraseña con hash seguro
+        usuario.set_password(self.cleaned_data["password"])
+        if commit:
+            usuario.save()
+        return usuario</code></pre>
+<h3>Vista de registro</h3>
+<pre><code class="language-python"># blog/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth import login
+from .forms import FormularioUsuario
+
+def registrar(request):
+    if request.method == "POST":
+        form = FormularioUsuario(request.POST)
+        if form.is_valid():
+            usuario = form.save()
+            # Inicia sesión automáticamente tras registrarse
+            login(request, usuario)
+            return redirect("inicio")
+    else:
+        form = FormularioUsuario()
+    return render(request, "blog/registro.html", {"form": form})</code></pre>
+<blockquote class="aside aside-warning">
+Nunca guardes contraseñas en texto plano. Usa siempre <code>set_password()</code> para almacenar el hash.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Django incluye autenticación completa en `django.contrib.auth`
+- Login con vistas integradas o manualmente con `authenticate` y `login`
+- El modelo User trae campos y flags como `is_staff` y `is_superuser`
+- Permisos por modelo y grupos con `groups` y `user_permissions`
+- Proteger vistas con `@login_required` y `LoginRequiredMixin`
+- Registrar usuarios con `set_password()` para cifrar contraseñas
+</blockquote>
+    </div>
+  </section>

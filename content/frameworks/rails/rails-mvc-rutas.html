@@ -1,0 +1,199 @@
+<!-- 03. MVC y rutas - Rails (Frameworks) -->
+  <section id="3-1-arquitectura-mvc">
+    <h2><i class="fa-solid fa-layer-group"></i> 3.1 Arquitectura MVC</h2>
+    <div class="doc-content">
+<h3>Qué es el patrón MVC</h3>
+<p>Rails implementa el patrón de diseño <strong>Modelo-Vista-Controlador</strong>, que separa la aplicación en tres capas con responsabilidades claras:</p>
+<table><thead><tr><th>Capa</th><th>Responsabilidad</th><th>Ubicación</th></tr></thead><tbody><tr><td><strong>Modelo</strong></td><td>Datos, validaciones y lógica de negocio</td><td><code>app/models</code></td></tr><tr><td><strong>Vista</strong></td><td>Presentación y HTML de la interfaz</td><td><code>app/views</code></td></tr><tr><td><strong>Controlador</strong></td><td>Recibe peticiones, orquesta y responde</td><td><code>app/controllers</code></td></tr></tbody></table>
+<h3>Ciclo de una petición en Rails</h3>
+<pre><code class="language-text">1. El navegador envía GET /productos
+2. Rails busca la ruta en config/routes.rb
+3. El router envía la petición a ProductosController#index
+4. El controlador consulta el modelo Producto
+5. El controlador renderiza la vista index.html.erb
+6. La vista genera HTML y se envía al navegador</code></pre>
+<h3>Ejemplo: Flujo completo</h3>
+<pre><code class="language-ruby"># config/routes.rb
+Rails.application.routes.draw do
+  resources :productos
+end
+
+# app/controllers/productos_controller.rb
+class ProductosController &lt; ApplicationController
+  def index
+    @productos = Producto.all
+  end
+end
+
+# app/views/productos/index.html.erb
+&lt;ul&gt;
+  &lt;% @productos.each do |producto| %&gt;
+    &lt;li&gt;&lt;%= producto.nombre %&gt;&lt;/li&gt;
+  &lt;% end %&gt;
+&lt;/ul&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-2-configuracion-de-rutas-configroutesrb">
+    <h2><i class="fa-solid fa-route"></i> 3.2 Configuración de rutas (config/routes.rb)</h2>
+    <div class="doc-content">
+<h3>El archivo de rutas</h3>
+<p>El archivo <code>config/routes.rb</code> es el mapa de la aplicación. Define qué controlador y acción responde a cada URL:</p>
+<pre><code class="language-ruby"># config/routes.rb
+Rails.application.routes.draw do
+  # Ruta raíz
+  root "bienvenidos#index"
+
+  # Ruta simple: GET /acerca
+  get "acerca", to: "paginas#acerca"
+
+  # Ruta con parámetro
+  get "productos/:id", to: "productos#show"
+
+  # Ruta que envía a otra URL
+  get "inicio", to: redirect("/")
+end</code></pre>
+<h3>Formato de una ruta</h3>
+<p>Cada ruta asocia una <strong>URL</strong> con un <strong>controlador#acción</strong>:</p>
+<table><thead><tr><th>URL</th><th>Controlador#Acción</th><th>Resultado</th></tr></thead><tbody><tr><td><code>/</code></td><td><code>bienvenidos#index</code></td><td>Muestra la página principal</td></tr><tr><td><code>/blog</code></td><td><code>articulos#index</code></td><td>Lista los artículos</td></tr><tr><td><code>/blog/5</code></td><td><code>articulos#show</code></td><td>Muestra el artículo 5</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Puedes ver todas las rutas de tu aplicación ejecutando <code>rails routes</code> en la terminal.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-3-routing-restful">
+    <h2><i class="fa-solid fa-diagram-project"></i> 3.3 Routing RESTful</h2>
+    <div class="doc-content">
+<h3>Recursos y las 7 acciones REST</h3>
+<p>Rails combina verbos HTTP y URLs para definir las operaciones CRUD de forma RESTful:</p>
+<pre><code class="language-ruby">resources :articulos</code></pre>
+<table><thead><tr><th>Verbo</th><th>Ruta</th><th>Acción</th><th>Descripción</th></tr></thead><tbody><tr><td>GET</td><td>/articulos</td><td>index</td><td>Listar todos</td></tr><tr><td>GET</td><td>/articulos/new</td><td>new</td><td>Formulario de nuevo</td></tr><tr><td>POST</td><td>/articulos</td><td>create</td><td>Crear artículo</td></tr><tr><td>GET</td><td>/articulos/:id</td><td>show</td><td>Ver un artículo</td></tr><tr><td>GET</td><td>/articulos/:id/edit</td><td>edit</td><td>Formulario de edición</td></tr><tr><td>PATCH</td><td>/articulos/:id</td><td>update</td><td>Actualizar artículo</td></tr><tr><td>DELETE</td><td>/articulos/:id</td><td>destroy</td><td>Eliminar artículo</td></tr></tbody></table>
+<h3>Rutas anidadas</h3>
+<pre><code class="language-ruby">Rails.application.routes.draw do
+  resources :articulos do
+    resources :comentarios
+  end
+end
+# Genera rutas como /articulos/1/comentarios</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-4-recursos-y-rutas-personalizadas">
+    <h2><i class="fa-solid fa-cubes-stacked"></i> 3.4 Recursos y rutas personalizadas</h2>
+    <div class="doc-content">
+<h3>Modificar los recursos por defecto</h3>
+<p>Puedes limitar o ampliar las rutas de un recurso según tus necesidades:</p>
+<pre><code class="language-ruby">Rails.application.routes.draw do
+  # Solo algunas acciones
+  resources :articulos, only: [:index, :show]
+
+  # Todas excepto destroy
+  resources :usuarios, except: [:destroy]
+
+  # Cambiar la ruta de la URL
+  resources :articulos, path: "publicaciones"
+end</code></pre>
+<h3>Rutas de colección y de miembro</h3>
+<pre><code class="language-ruby">resources :articulos do
+  # Ruta de colección: actúa sobre todos
+  collection do
+    get :recientes
+  end
+
+  # Ruta de miembro: actúa sobre un elemento
+  member do
+    patch :publicar
+    get :estadisticas
+  end
+end
+
+# Genera:
+#   GET    /articulos/recientes
+#   PATCH  /articulos/:id/publicar
+#   GET    /articulos/:id/estadisticas</code></pre>
+<h3>Otras formas de rutas</h3>
+<pre><code class="language-ruby">get "dashboard", to: "usuarios#dashboard"
+post "login", to: "sesiones#create"
+match "buscar", to: "busquedas#index", via: [:get, :post]</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-5-rutas-con-parametros">
+    <h2><i class="fa-solid fa-sliders"></i> 3.5 Rutas con parámetros</h2>
+    <div class="doc-content">
+<h3>Parámetros en la URL</h3>
+<p>Puedes definir segmentos dinámicos en las rutas precedidos por dos puntos:</p>
+<pre><code class="language-ruby">Rails.application.routes.draw do
+  get "categoria/:categoria/:id", to: "productos#show"
+end</code></pre>
+<pre><code class="language-ruby"># app/controllers/productos_controller.rb
+class ProductosController &lt; ApplicationController
+  def show
+    @producto = Producto.where(categoria: params[:categoria])
+                        .find(params[:id])
+  end
+end</code></pre>
+<h3>Parámetros de query string</h3>
+<pre><code class="language-bash">/productos?categoria=electronica&amp;orden=precio</code></pre>
+<pre><code class="language-ruby"># Se acceden con params
+params[:categoria]   # "electronica"
+params[:orden]       # "precio"</code></pre>
+<h3>Restricciones de formato</h3>
+<pre><code class="language-ruby"># Limitar el formato de los parámetros con constraints
+get "productos/:id", to: "productos#show",
+                     constraints: { id: /\d+/ }
+
+# Con formato activo/default
+get "articulos/:id(.:formato)", to: "articulos#show"</code></pre>
+<blockquote class="aside aside-warning">
+Rails siempre entrega <code>params</code> como strings. Convierte los valores numéricos usando <code>to_i</code> o las constraints de tipo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-6-helpers-de-rutas-y-urls">
+    <h2><i class="fa-solid fa-link"></i> 3.6 Helpers de rutas y URLs</h2>
+    <div class="doc-content">
+<h3>Generar URLs sin escribirlas a mano</h3>
+<p>Rails genera helpers de rutas basados en los nombres del recurso:</p>
+<pre><code class="language-ruby">resources :articulos</code></pre>
+<table><thead><tr><th>Helper</th><th>URL generada</th></tr></thead><tbody><tr><td><code>articulos_path</code></td><td>/articulos</td></tr><tr><td><code>nuevo_articulo_path</code></td><td>/articulos/new</td></tr><tr><td><code>articulo_path(3)</code></td><td>/articulos/3</td></tr><tr><td><code>editar_articulo_path(3)</code></td><td>/articulos/3/edit</td></tr><tr><td><code>articulos_url</code></td><td>http://localhost:3000/articulos</td></tr></tbody></table>
+<h3>Uso en vistas</h3>
+<pre><code class="language-erb">&lt;%= link_to "Todos los artículos", articulos_path %&gt;
+&lt;%= link_to "Leer", articulo_path(@articulo) %&gt;
+&lt;%= link_to "Editar", edit_articulo_path(@articulo) %&gt;</code></pre>
+<h3>Redirecciones en el controlador</h3>
+<pre><code class="language-ruby">class ArticulosController &lt; ApplicationController
+  def create
+    @articulo = Articulo.new(articulo_params)
+    if @articulo.save
+      redirect_to @articulo, notice: "Artículo creado"
+    else
+      render :new
+    end
+  end
+end</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- MVC separa la app en Modelo, Vista y Controlador
+- config/routes.rb mapea URLs a controlador#acción
+- resources genera las 7 acciones RESTful automáticamente
+- Las rutas anidadas y personalizadas organizan recursos relacionados
+- Los parámetros de ruta se acceden mediante params
+- Los helpers path generan URLs dinámicamente en vistas y controladores
+</blockquote>
+    </div>
+  </section>

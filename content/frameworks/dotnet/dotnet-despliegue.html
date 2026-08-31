@@ -1,0 +1,149 @@
+<!-- 10. Publicación y despliegue - .NET (Frameworks) -->
+  <section id="10-1-dotnet-publish">
+    <h2><i class="fa-solid fa-box-open"></i> 10.1 dotnet publish</h2>
+    <div class="doc-content">
+<h3>Qué es publicar</h3>
+<p><code>dotnet publish</code> compila la aplicación y genera todos los archivos necesarios para desplegarla (binarios, dependencias, vistas y estáticos) en la carpeta de publicación.</p>
+<h3>Comando básico</h3>
+<pre><code class="language-bash">dotnet publish -c Release -o /ruta/publicacion</code></pre>
+<h3>Opciones importantes</h3>
+<table><thead><tr><th>Opción</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>-c Release</strong></td><td>Publica en modo Release</td></tr><tr><td><strong>-o</strong></td><td>Carpeta de salida</td></tr><tr><td><strong>-r</strong></td><td>Runtime específico (win-x64, linux-x64)</td></tr><tr><td><strong>--self-contained</strong></td><td>Incluye el runtime de .NET</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-2-publish-profile">
+    <h2><i class="fa-solid fa-bars-staggered"></i> 10.2 Publish profiles</h2>
+    <div class="doc-content">
+<h3>Qué son</h3>
+<p>Un <strong>publish profile</strong> guarda la configuración de publicación (destino, modo, runtime) para reutilizarla. Se generan al publicar desde Visual Studio.</p>
+<h3>Publicar con un profile</h3>
+<pre><code class="language-bash">dotnet publish -p:PublishProfile=MiServidor -p:Configuration=Release</code></pre>
+<h3>Ejemplo de profile (Properties/PublishProfiles)</h3>
+<pre><code class="language-xml">&lt;Project&gt;
+  &lt;PropertyGroup&gt;
+    &lt;PublishProtocol&gt;FileSystem&lt;/PublishProtocol&gt;
+    &lt;PublishDir&gt;bin\Release\net8.0\publish\&lt;/PublishDir&gt;
+    &lt;Configuration&gt;Release&lt;/Configuration&gt;
+  &lt;/PropertyGroup&gt;
+&lt;/Project&gt;</code></pre>
+<blockquote class="aside aside-tip">
+Los profiles facilitan publicar a varios entornos (dev, staging, producción) con configuraciones distintas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-3-kestrel-e-iis">
+    <h2><i class="fa-solid fa-gears"></i> 10.3 Kestrel e IIS</h2>
+    <div class="doc-content">
+<h3>El servidor Kestrel</h3>
+<p><strong>Kestrel</strong> es el servidor web integrado y multiplataforma de ASP.NET Core. Es el que se usa por defecto para servir la aplicación.</p>
+<h3>Despliegue en Windows con IIS</h3>
+<p>IIS suele actuar como proxy inverso delante de Kestrel, agregando gestión de procesos y seguridad:</p>
+<ul>
+<li>Instalar el <strong>ASP.NET Core Hosting Bundle</strong></li>
+<li>Publicar la app en una carpeta (por ejemplo <code>C:\inetpub\apps\miapp</code>)</li>
+<li>Crear un sitio o aplicación en IIS apuntando a esa carpeta</li>
+<li>Asignar el grupo de aplicaciones (Sin código administrado)</li>
+</ul>
+<pre><code class="language-bash">dotnet publish -c Release -o C:\inetpub\apps\miapp</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-4-docker">
+    <h2><i class="fa-solid fa-box"></i> 10.4 Despliegue con Docker</h2>
+    <div class="doc-content">
+<h3>Qué es Docker (concepto)</h3>
+<p><strong>Docker</strong> empaqueta la aplicación y sus dependencias en un contenedor ligero y portátil que se ejecuta igual en cualquier entorno (Windows, Linux, nube).</p>
+<h3>Ejemplo: Dockerfile</h3>
+<pre><code class="language-docker"># Imagen base para publicación
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY . .
+RUN dotnet publish -c Release -o /app/publish
+
+# Imagen de ejecución
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/publish .
+EXPOSE 80
+ENTRYPOINT ["dotnet", "MiApp.dll"]</code></pre>
+<h3>Comandos</h3>
+<pre><code class="language-bash">docker build -t miapp .
+docker run -p 8080:80 miapp</code></pre>
+<blockquote class="aside aside-note">
+Docker facilita el despliegue consistente en desarrollo, CI/CD y producción.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-5-variables-de-entorno-y-appsettings">
+    <h2><i class="fa-solid fa-sliders"></i> 10.5 Variables de entorno y appsettings</h2>
+    <div class="doc-content">
+<h3>Configuración por entornos</h3>
+<p>ASP.NET Core lee la configuración de varios orígenes: <code>appsettings.json</code>, <code>appsettings.{Environment}.json</code> y variables de entorno (que tienen prioridad).</p>
+<h3>Ejemplo: appsettings.json</h3>
+<pre><code class="language-json">{
+  "ConnectionStrings": {
+    "Conexion": "Server=.;Database=MiDB;Trusted_Connection=True;"
+  },
+  "Logging": {
+    "LogLevel": { "Default": "Information" }
+  }
+}</code></pre>
+<h3>Variables de entorno</h3>
+<p>Para producción conviene sobreescribir valores sensibles sin modificar el código:</p>
+<pre><code class="language-powershell">$env:ConnectionStrings__Conexion = "Server=prod;Database=MiDB;..."; dotnet run</code></pre>
+<p>La doble barra baja (<code>__</code>) representa la anidación de secciones.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-6-buenas-practicas">
+    <h2><i class="fa-solid fa-list-check"></i> 10.6 Buenas prácticas de despliegue</h2>
+    <div class="doc-content">
+<h3>Recomendaciones</h3>
+<ul>
+<li><strong>Publicar en Release</strong>: nunca desplegar una compilación Debug</li>
+<li><strong>No guardar secretos</strong>: usar variables de entorno o secretos administrados</li>
+<li><strong>Habilitar logging</strong>: registrar errores y excepciones correctamente</li>
+<li><strong>Usar migraciones</strong>: aplicar cambios de BD de forma controlada</li>
+<li><strong>Configurar HTTPS</strong>: forzar conexiones seguras</li>
+<li><strong>CI/CD</strong>: automatizar build, pruebas y despliegue</li>
+</ul>
+<h3>Ejemplo: forzar HTTPS y redirigir</h3>
+<pre><code class="language-csharp">var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.MapDefaultControllerRoute();
+app.Run();</code></pre>
+<blockquote class="aside aside-tip">
+Ejecuta las migraciones de la base de datos como paso previo al despliegue de la aplicación.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- `dotnet publish` genera los archivos listos para producción
+- Los publish profiles guardan configuraciones de publicación reutilizables
+- Kestrel sirve la app; IIS actúa como proxy inverso en Windows
+- Docker empaqueta la app en contenedores portátiles
+- La configuración se organiza por entornos con appsettings y variables
+- Sigue buenas prácticas: secrets, logging, migraciones, HTTPS y CI/CD
+</blockquote>
+    </div>
+  </section>

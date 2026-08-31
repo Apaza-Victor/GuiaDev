@@ -1,0 +1,244 @@
+<!-- 04. Componentes y Layouts - Nuxt (Frameworks) -->
+  <section id="4-1-componentes-con-auto-import">
+    <h2><i class="fa-solid fa-cubes"></i> 4.1 Componentes con auto-import</h2>
+    <div class="doc-content">
+<h3>Qué es el auto-import de componentes</h3>
+<p>Todo lo que coloques en <code>app/components/</code> estará disponible en cualquier plantilla sin necesidad de importarlo manualmente. Nuxt detecta los archivos y registra los componentes automáticamente.</p>
+<h3>Ejemplo: Componente de botón</h3>
+<pre><code class="language-text">app/components/
+├── BotonPrincipal.vue
+└── Tarjeta.vue
+</code></pre>
+<pre><code class="language-vue">&lt;!-- app/components/BotonPrincipal.vue --&gt;
+&lt;template&gt;
+  &lt;button class="btn" @click="onClick"&gt;
+    &lt;slot /&gt;
+  &lt;/button&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+const props = defineProps({
+  type: { type: String, default: 'button' }
+})
+&lt;/script&gt;</code></pre>
+<h3>Usar el componente sin importar</h3>
+<pre><code class="language-vue">&lt;!-- pages/index.vue --&gt;
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;BotonPrincipal type="submit"&gt;Enviar&lt;/BotonPrincipal&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<h3>Componentes en subcarpetas</h3>
+<p>Si usas subcarpetas, el nombre del componente incluye el prefijo de la ruta:</p>
+<pre><code class="language-text">app/components/ui/Card.vue  -&gt;  &lt;UiCard /&gt;
+app/components/blog/PostCard.vue  -&gt;  &lt;BlogPostCard /&gt;
+</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-2-nuestro-primer-layout">
+    <h2><i class="fa-solid fa-layer-group"></i> 4.2 Nuestro primer layout</h2>
+    <div class="doc-content">
+<h3>Qué es un layout</h3>
+<p>Un <strong>layout</strong> define la estructura común de las páginas: la barra de navegación, el pie de página, la barra lateral, etc. Las páginas se renderizan dentro de un layout.</p>
+<h3>Layout por defecto</h3>
+<pre><code class="language-vue">&lt;!-- app/layouts/default.vue --&gt;
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;header&gt;
+      &lt;NavBar /&gt;
+    &lt;/header&gt;
+    &lt;main&gt;
+      &lt;slot /&gt;
+    &lt;/main&gt;
+    &lt;footer&gt;
+      &lt;p&gt;© 2025 Mi Sitio&lt;/p&gt;
+    &lt;/footer&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<h3>Cuándo usar layouts</h3>
+<ul>
+<li>Mantener la misma navegación en muchas páginas</li>
+<li>Diferenciar secciones: una página de login sin navbar</li>
+<li>Estructurar el contenido de manera consistente</li>
+</ul>
+<blockquote class="aside aside-tip">
+El layout <code>default.vue</code> se aplica automáticamente si no especificas otro.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-3-definir-layouts-personalizados">
+    <h2><i class="fa-solid fa-wand-sparkles"></i> 4.3 Definir layouts personalizados</h2>
+    <div class="doc-content">
+<h3>Crear un layout personalizado</h3>
+<p>Puedes crear múltiples layouts y asignar cada página al que necesites. Los layouts se guardan en <code>app/layouts/</code>.</p>
+<pre><code class="language-vue">&lt;!-- app/layouts/auth.vue --&gt;
+&lt;template&gt;
+  &lt;div class="auth"&gt;
+    &lt;main&gt;
+      &lt;slot /&gt;
+    &lt;/main&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<h3>Asignar un layout a una página</h3>
+<p>Se usa la propiedad <code>definePageMeta</code> dentro de la página para indicar qué layout usar.</p>
+<pre><code class="language-vue">&lt;!-- pages/login.vue --&gt;
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;h1&gt;Iniciar sesión&lt;/h1&gt;
+    &lt;!-- formulario --&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+definePageMeta({
+  layout: 'auth'
+})
+&lt;/script&gt;</code></pre>
+<h3>Layout dinámico por ruta</h3>
+<p>También puedes elegir el layout de forma dinámica con <code>setPageLayout</code> según alguna lógica.</p>
+<pre><code class="language-ts">if (esPanelAdmin) {
+  setPageLayout('admin')
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-4-nuxtlayout-y-nuxtpage">
+    <h2><i class="fa-solid fa-grip-lines"></i> 4.4 NuxtLayout y NuxtPage</h2>
+    <div class="doc-content">
+<h3>Componentes especiales</h3>
+<p>Dos componentes clave controlan cómo se renderizan layouts y páginas:</p>
+<table><thead><tr><th>Componente</th><th>Función</th></tr></thead><tbody><tr><td><code>&lt;NuxtLayout&gt;</code></td><td>Renderiza la estructura del layout y su contenido</td></tr><tr><td><code>&lt;NuxtPage&gt;</code></td><td>Renderiza la página activa dentro del layout</td></tr></tbody></table>
+<h3>app.vue con layouts y páginas</h3>
+<pre><code class="language-vue">&lt;!-- app/app.vue --&gt;
+&lt;template&gt;
+  &lt;NuxtLayout&gt;
+    &lt;NuxtPage /&gt;
+  &lt;/NuxtLayout&gt;
+&lt;/template&gt;</code></pre>
+<h3>Uso con transiciones</h3>
+<p>Nuxt ofrece soporte integrado para transiciones entre páginas:</p>
+<pre><code class="language-vue">&lt;!-- app/app.vue --&gt;
+&lt;template&gt;
+  &lt;NuxtLayout&gt;
+    &lt;NuxtPage transition="page" /&gt;
+  &lt;/NuxtLayout&gt;
+&lt;/template&gt;
+
+&lt;style&gt;
+.page-enter-active, .page-leave-active {
+  transition: opacity 0.3s;
+}
+.page-enter-from, .page-leave-to {
+  opacity: 0;
+}
+&lt;/style&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-5-ejemplo-completo-de-componentes-y-layouts">
+    <h2><i class="fa-solid fa-diagram-project"></i> 4.5 Ejemplo completo de componentes y layouts</h2>
+    <div class="doc-content">
+<h3>Estructura de una ficha de producto</h3>
+<p>Veamos un ejemplo combinando componentes y un layout para una tienda sencilla.</p>
+<pre><code class="language-text">app/
+├── layouts/
+│   ├── default.vue        # Navbar + footer
+│   └── auth.vue           # Sin navbar
+├── components/
+│   ├── NavBar.vue
+│   ├── PiePagina.vue
+│   └── ProductoCard.vue
+└── pages/
+    ├── index.vue
+    └── login.vue
+</code></pre>
+<h3>Componente ProductoCard</h3>
+<pre><code class="language-vue">&lt;!-- app/components/ProductoCard.vue --&gt;
+&lt;template&gt;
+  &lt;article class="producto"&gt;
+    &lt;h3&gt;{{ producto.nombre }}&lt;/h3&gt;
+    &lt;p&gt;{{ producto.precio }} €&lt;/p&gt;
+    &lt;slot name="acciones" /&gt;
+  &lt;/article&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+defineProps({
+  producto: { type: Object, required: true }
+})
+&lt;/script&gt;</code></pre>
+<h3>Uso del componente en una página</h3>
+<pre><code class="language-vue">&lt;!-- pages/index.vue --&gt;
+&lt;template&gt;
+  &lt;div class="grid"&gt;
+    &lt;ProductoCard
+      v-for="producto in productos"
+      :key="producto.id"
+      :producto="producto"
+    &gt;
+      &lt;template #acciones&gt;
+        &lt;button&gt;Añadir al carrito&lt;/button&gt;
+      &lt;/template&gt;
+    &lt;/ProductoCard&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+const productos = [
+  { id: 1, nombre: 'Laptop', precio: 999 },
+  { id: 2, nombre: 'Mouse', precio: 29 }
+]
+&lt;/script&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-6-buenas-practicas-organizando-componentes">
+    <h2><i class="fa-solid fa-broom"></i> 4.6 Buenas prácticas organizando componentes</h2>
+    <div class="doc-content">
+<h3>Organización recomendada</h3>
+<ul>
+<li>Agrupa componentes por <strong>característica</strong> o <strong>dominio</strong></li>
+<li>Usa nombres descriptivos con prefijos de carpeta</li>
+<li>Separa componentes de presentación de los de lógica</li>
+<li>Evita componentes gigantes: divide en piezas pequeñas</li>
+</ul>
+<h3>Ejemplo de estructura por dominio</h3>
+<pre><code class="language-text">app/components/
+├── ui/               # Componentes genéricos (botones, inputs)
+│   ├── Boton.vue
+│   └── Modal.vue
+├── usuario/          # Lógica y vistas de usuario
+│   ├── Perfil.vue
+│   └── Avatar.vue
+└── tienda/           # Componentes de la tienda
+    ├── CarritoWidget.vue
+    └── ProductoCard.vue
+</code></pre>
+<blockquote class="aside aside-tip">
+Usa el atributo <code>defineOptions({ name: 'MiComponente' })</code> para dar nombres explícitos y facilitar la depuración.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los componentes en app/components/ se auto-importan automáticamente
+- Los layouts definen la estructura común de las páginas
+- Puedes crear layouts personalizados y asignarlos con definePageMeta
+- NuxtLayout y NuxtPage conectan páginas con layouts
+- Organiza los componentes por dominio para mantener el código limpio
+- Agrupa componentes reutilizables en una carpeta ui/
+</blockquote>
+    </div>
+  </section>

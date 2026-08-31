@@ -1,0 +1,244 @@
+<!-- 06. Formularios y mensajes flash - Flask (Frameworks) -->
+  <section id="6-1-manejar-formularios">
+    <h2><i class="fa-solid fa-rectangle-list"></i> 6.1 Manejar formularios</h2>
+    <div class="doc-content">
+<h3>Flujo de un formulario en Flask</h3>
+<ol>
+<li>El usuario ve un formulario HTML (ruta GET)</li>
+<li>El usuario lo envía con POST</li>
+<li>Flask recibe los datos con <code>request.form</code></li>
+<li>La aplicación valida y procesa los datos</li>
+<li>Redirige a otra página o muestra un mensaje</li>
+</ol>
+<h3>Formulario HTML</h3>
+<pre><code class="language-html">&lt;form method="POST" action="/contacto"&gt;
+    &lt;input type="text" name="nombre" placeholder="Tu nombre"&gt;
+    &lt;input type="email" name="email" placeholder="Tu correo"&gt;
+    &lt;textarea name="mensaje"&gt;&lt;/textarea&gt;
+    &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<h3>Recibir y procesar en Flask</h3>
+<pre><code class="language-python">from flask import Flask, request, render_template
+
+app = Flask(__name__)
+
+
+@app.route("/contacto", methods=["GET", "POST"])
+def contacto():
+    if request.method == "POST":
+        nombre = request.form.get("nombre")
+        email = request.form.get("email")
+        mensaje = request.form.get("mensaje")
+        return f"Gracias {nombre}, recibimos tu mensaje."
+    return render_template("contacto.html")</code></pre>
+<blockquote class="aside aside-tip">
+Separa la ruta GET (que muestra el formulario) de la POST (que procesa los datos) para mantener el flujo claro.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-2-flask-wtf-concepto">
+    <h2><i class="fa-solid fa-shield-halved"></i> 6.2 Flask-WTF (concepto)</h2>
+    <div class="doc-content">
+<h3>Qué es Flask-WTF</h3>
+<p><strong>Flask-WTF</strong> es una extensión que integra WTForms en Flask. Permite definir formularios como clases de Python, con validación integrada y protección <strong>CSRF</strong> automática.</p>
+<h3>Instalación</h3>
+<pre><code class="language-python">pip install flask-wtf</code></pre>
+<h3>Concepto: definir un formulario como clase</h3>
+<pre><code class="language-python">from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Email
+
+class RegistroForm(FlaskForm):
+    nombre = StringField("Nombre", validators=[DataRequired()])
+    email = StringField("Correo", validators=[DataRequired(), Email()])
+    password = PasswordField("Contraseña", validators=[DataRequired()])
+    enviar = SubmitField("Registrar")</code></pre>
+<h3>Ventajas de Flask-WTF</h3>
+<ul>
+<li>Validación declarativa y reutilizable</li>
+<li>Protección CSRF automática</li>
+<li>Renderizado de formularios en plantillas</li>
+<li>Manejo de errores de validación integrado</li>
+</ul>
+<blockquote class="aside aside-note">
+Flask-WTF simplifica el trabajo con formularios: defines todo en la clase y la extensión se encarga del resto.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-3-validacion-manual">
+    <h2><i class="fa-solid fa-circle-check"></i> 6.3 Validación manual</h2>
+    <div class="doc-content">
+<h3>Validar sin librerías externas</h3>
+<p>Puedes validar los datos manualmente comprobando los valores de <code>request.form</code>:</p>
+<pre><code class="language-python">from flask import Flask, request, redirect, url_for, flash
+
+app = Flask(__name__)
+app.secret_key = "clave_secreta"
+
+
+@app.route("/registro", methods=["GET", "POST"])
+def registro():
+    if request.method == "POST":
+        nombre = request.form.get("nombre", "").strip()
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "")
+
+        errores = []
+        if not nombre:
+            errores.append("El nombre es obligatorio")
+        if "@" not in email or "." not in email:
+            errores.append("El correo no es válido")
+        if len(password) &lt; 6:
+            errores.append("La contraseña debe tener al menos 6 caracteres")
+
+        if errores:
+            for error in errores:
+                flash(error, "error")
+            return render_template("registro.html")
+
+        flash("Registro exitoso", "exito")
+        return redirect(url_for("inicio"))
+    return render_template("registro.html")</code></pre>
+<blockquote class="aside aside-warning">
+La validación manual es útil para casos simples, pero para formularios complejos es preferible usar Flask-WTF que ya incluye validación y CSRF.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-4-mensajes-flash">
+    <h2><i class="fa-solid fa-bell"></i> 6.4 Mensajes flash</h2>
+    <div class="doc-content">
+<h3>Crear y mostrar mensajes flash</h3>
+<p>Los mensajes flash son la forma estándar de mostrar avisos tras un envío de formulario.</p>
+<pre><code class="language-python">from flask import Flask, flash, redirect, render_template, url_for
+
+app = Flask(__name__)
+app.secret_key = "clave_secreta"
+
+
+@app.route("/guardar", methods=["POST"])
+def guardar():
+    # Procesar datos...
+    flash("Tus cambios se guardaron correctamente", "exito")
+    flash("Revisa tu correo para confirmar", "aviso")
+    return redirect(url_for("perfil"))</code></pre>
+<h3>Mostrar con categorías</h3>
+<pre><code class="language-html">{% with mensajes = get_flashed_messages(with_categories=true) %}
+  {% if mensajes %}
+    {% for categoria, mensaje in mensajes %}
+      &lt;div class="alerta alerta-{{ categoria }}"&gt;
+        {{ mensaje }}
+      &lt;/div&gt;
+    {% endfor %}
+  {% endif %}
+{% endwith %}</code></pre>
+<h3>Categorías habituales</h3>
+<ul>
+<li><strong>exito</strong>: Operación completada correctamente</li>
+<li><strong>error</strong>: Algo salió mal</li>
+<li><strong>aviso</strong>: Información adicional</li>
+</ul>
+<blockquote class="aside aside-tip">
+Usa categorías en los mensajes flash para aplicar estilos distintos y mejorar la experiencia de usuario.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-5-url-for-y-redireccion">
+    <h2><i class="fa-solid fa-link"></i> 6.5 url_for y redirección</h2>
+    <div class="doc-content">
+<h3>Qué es url_for</h3>
+<p><code>url_for()</code> genera una URL a partir del <strong>nombre de la función de vista</strong>, evitando escribir rutas a mano.</p>
+<h3>Usos comunes de url_for</h3>
+<pre><code class="language-python">from flask import Flask, redirect, url_for, render_template
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def inicio():
+    return "Inicio"
+
+
+@app.route("/perfil/&lt;nombre&gt;")
+def perfil(nombre):
+    return f"Perfil de {nombre}"
+
+
+@app.route("/redirigir")
+def redirigir():
+    # Redirigir por nombre de función
+    return redirect(url_for("inicio"))
+
+
+@app.route("/ir-perfil")
+def ir_perfil():
+    # Redirigir pasando parámetros
+    return redirect(url_for("perfil", nombre="Ana"))</code></pre>
+<h3>Uso en plantillas</h3>
+<pre><code class="language-html">&lt;form method="POST" action="{{ url_for('guardar') }}"&gt;
+&lt;a href="{{ url_for('perfil', nombre='Ana') }}"&gt;Ver perfil&lt;/a&gt;</code></pre>
+<blockquote class="aside aside-note">
+Si renombras una función de vista, solo debes actualizar `url_for` y `redirect`; las URLs generadas se ajustan automáticamente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-6-pattern-post-redirect-get">
+    <h2><i class="fa-solid fa-shuffle"></i> 6.6 Patrón POST/Redirect/GET</h2>
+    <div class="doc-content">
+<h3>Qué es el patrón PRG</h3>
+<p>El patrón <strong>POST/Redirect/GET</strong> (PRG) consiste en que, tras procesar un formulario enviado por POST, la aplicación responda con una redirección (GET) en lugar de devolver la página directamente.</p>
+<h3>Por qué usarlo</h3>
+<ul>
+<li><strong>Evita reenvíos</strong>: Al recargar, no se reenvía el formulario</li>
+<li><strong>Mejora la experiencia</strong>: Evita avisos de "repetir el envío" en el navegador</li>
+<li><strong>Mantiene la URL limpia</strong>: Tras el POST, la URL apunta al GET</li>
+<li><strong>Correcto con flash</strong>: Los mensajes se muestran en la página de destino</li>
+</ul>
+<h3>Flujo PRG completo</h3>
+<pre><code class="language-python">from flask import Flask, request, redirect, url_for, flash, render_template
+
+app = Flask(__name__)
+app.secret_key = "clave_secreta"
+
+
+@app.route("/tarea", methods=["GET", "POST"])
+def tarea():
+    if request.method == "POST":
+        texto = request.form.get("texto")
+        if not texto:
+            flash("El texto es obligatorio", "error")
+            return redirect(url_for("tarea"))
+        # Guardar la tarea...
+        flash("Tarea creada correctamente", "exito")
+        return redirect(url_for("tarea"))
+    return render_template("tarea.html")</code></pre>
+<blockquote class="aside aside-warning">
+Siempre que proceses un formulario POST, responde con `redirect()` en lugar de renderizar directamente. Así aplicas el patrón PRG correctamente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los formularios se manejan combinando rutas GET (mostrar) y POST (procesar)
+- Flask-WTF permite definir formularios como clases con validación y CSRF
+- La validación manual comprueba los valores de `request.form`
+- Los mensajes flash muestran avisos temporales tras el envío
+- `url_for` genera URLs a partir de nombres de funciones
+- El patrón POST/Redirect/GET evita reenvíos y mejora la experiencia
+</blockquote>
+    </div>
+  </section>

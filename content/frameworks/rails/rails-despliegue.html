@@ -1,0 +1,212 @@
+<!-- 10. Pruebas y despliegue - Rails (Frameworks) -->
+  <section id="10-1-por-que-probar">
+    <h2><i class="fa-solid fa-circle-check"></i> 10.1 Por qué probar</h2>
+    <div class="doc-content">
+<h3>Beneficios de los tests</h3>
+<p>Los tests automatizados verifican que el código funciona y detectan errores antes de que lleguen a producción. Rails incluye una suite de pruebas (<code>MiniTest</code>) lista para usar.</p>
+<h3>Ventajas de la automatización</h3>
+<table><thead><tr><th>Beneficio</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Confianza</strong></td><td>Sabes que los cambios no rompen lo existente</td></tr><tr><td><strong>Regresión</strong></td><td>Detectas errores introducidos en refactorizaciones</td></tr><tr><td><strong>Documentación</strong></td><td>Los tests describen cómo debe comportarse el código</td></tr><tr><td><strong>Rapidez</strong></td><td>El feedback llega en segundos sin probar a mano</td></tr></tbody></table>
+<h3>Tipos de pruebas en Rails</h3>
+<table><thead><tr><th>Tipo</th><th>Qué verifica</th><th>Ubicación</th></tr></thead><tbody><tr><td><strong>Modelos</strong></td><td>Validaciones, asociaciones y lógica</td><td>test/models</td></tr><tr><td><strong>Controladores</strong></td><td>Respuestas y comportamiento HTTP</td><td>test/controllers</td></tr><tr><td><strong>Integración</strong></td><td>Flujos completos de la app</td><td>test/integration</td></tr><tr><td><strong>Sistema</strong></td><td>Páginas completas con navegador</td><td>test/system</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-2-pruebas-de-modelo">
+    <h2><i class="fa-solid fa-box"></i> 10.2 Pruebas de modelo</h2>
+    <div class="doc-content">
+<h3>Estructura de un test de modelo</h3>
+<pre><code class="language-ruby"># test/models/producto_test.rb
+require "test_helper"
+
+class ProductoTest &lt; ActiveSupport::TestCase
+  test "es válido con atributos correctos" do
+    producto = Producto.new(nombre: "Laptop", precio: 999.99)
+    assert producto.valid?
+  end
+
+  test "no es válido sin nombre" do
+    producto = Producto.new(nombre: "", precio: 10)
+    assert_not producto.valid?
+    assert_includes producto.errors[:nombre], "no puede estar vacío"
+  end
+
+  test "precio no puede ser negativo" do
+    producto = Producto.new(nombre: "Mouse", precio: -5)
+    assert_not producto.valid?
+  end
+end</code></pre>
+<h3>Aserciones más comunes</h3>
+<table><thead><tr><th>Aserción</th><th>Qué comprueba</th></tr></thead><tbody><tr><td><code>assert</code></td><td>La condición es verdadera</td></tr><tr><td><code>assert_not</code></td><td>La condición es falsa</td></tr><tr><td><code>assert_equal</code></td><td>Son iguales</td></tr><tr><td><code>assert_nil</code></td><td>El valor es nil</td></tr><tr><td><code>assert_includes</code></td><td>Contiene el elemento</td></tr></tbody></table>
+<h3>Pruebas de asociaciones y callbacks</h3>
+<pre><code class="language-ruby">test "pertenece a una categoría" do
+  assert_respond_to Producto.new, :categoria
+  assert_equal 1, Producto.reflect_on_association(:categoria).macro
+end
+
+test "asigna referencia automáticamente" do
+  pedido = Pedido.new
+  pedido.save
+  assert_match /\APED-/, pedido.referencia
+end</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-3-test-dir-y-factory-bot">
+    <h2><i class="fa-solid fa-boxes-stacked"></i> 10.3 test dir y FactoryBot</h2>
+    <div class="doc-content">
+<h3>El entorno de pruebas</h3>
+<p>Rails usa un entorno de pruebas separado (<code>RAILS_ENV=test</code>) con su propia base de datos para no contaminar los datos de desarrollo:</p>
+<pre><code class="language-bash"># Preparar la base de datos de pruebas
+rails db:migrate
+RAILS_ENV=test rails db:migrate
+
+# O crear, migrar y cargar seeds del entorno test
+rails db:test:prepare</code></pre>
+<h3>Fixtures por defecto</h3>
+<p>Rails genera <strong>fixtures</strong> (archivos YAML de muestra) en <code>test/fixtures/</code>. Se cargan automáticamente antes de cada test:</p>
+<pre><code class="language-yaml"># test/fixtures/productos.yml
+laptop:
+  nombre: Laptop
+  precio: 999.99
+
+mouse:
+  nombre: Mouse
+  precio: 29.99</code></pre>
+<h3>FactoryBot para datos más flexibles</h3>
+<pre><code class="language-ruby"># Gemfile
+gem "factory_bot_rails"</code></pre>
+<pre><code class="language-bash">bundle install</code></pre>
+<pre><code class="language-ruby"># test/factories/productos.rb
+FactoryBot.define do
+  factory :producto do
+    nombre { "Producto de prueba" }
+    precio { 49.99 }
+    association :categoria
+  end
+
+  factory :producto_barato, parent: :producto do
+    precio { 9.99 }
+  end
+end</code></pre>
+<pre><code class="language-ruby"># Uso en los tests
+producto = create(:producto)
+barato = create(:producto_barato, nombre: "Promoción")</code></pre>
+<blockquote class="aside aside-tip">
+FactoryBot evita crear datos a mano y permite sobreescribir atributos fácilmente, algo más flexible que los fixtures estáticos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-4-pruebas-de-sistema">
+    <h2><i class="fa-solid fa-display"></i> 10.4 Pruebas de sistema</h2>
+    <div class="doc-content">
+<h3>Qué son</h3>
+<p>Las <strong>pruebas de sistema</strong> simulan el comportamiento de un usuario en el navegador usando Capybara y Selenium. Verifican la interfaz completa de extremo a extremo.</p>
+<h3>Ejemplo de test de sistema</h3>
+<pre><code class="language-ruby"># test/system/productos_test.rb
+require "application_system_test_case"
+
+class ProductosTest &lt; ApplicationSystemTestCase
+  test "crea un producto desde el navegador" do
+    visit new_producto_path
+
+    fill_in "Nombre", with: "Laptop"
+    fill_in "Precio", with: "1299.99"
+    click_on "Guardar"
+
+    assert_text "Laptop"
+    assert_current_path producto_path(Producto.last)
+  end
+
+  test "muestra errores de validación" do
+    visit new_producto_path
+    click_on "Guardar"
+
+    assert_text "no puede estar vacío"
+  end
+end</code></pre>
+<h3>Comandos de Capybara</h3>
+<table><thead><tr><th>Comando</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>visit ruta</code></td><td>Navega a una página</td></tr><tr><td><code>fill_in "Campo", with: v</code></td><td>Rellena un campo</td></tr><tr><td><code>click_on "Texto"</code></td><td>Hace clic en un elemento</td></tr><tr><td><code>assert_text "Texto"</code></td><td>Comprueba que aparece el texto</td></tr><tr><td><code>assert_current_path</code></td><td>Comprueba la URL actual</td></tr></tbody></table>
+<pre><code class="language-bash"># Ejecutar solo los tests de sistema
+rails test:system</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-5-despliegue-y-produccion">
+    <h2><i class="fa-solid fa-cloud-arrow-up"></i> 10.5 Despliegue y producción</h2>
+    <div class="doc-content">
+<h3>Preparar la app para producción</h3>
+<p>Antes de desplegar conviene precompilar los assets, preparar la base de datos y comprobar que los tests pasan:</p>
+<pre><code class="language-bash"># Ejecutar todos los tests
+rails test
+
+# Precompilar los assets
+RAILS_ENV=production rails assets:precompile
+
+# Migrar la base de datos de producción
+RAILS_ENV=production rails db:migrate</code></pre>
+<h3>Opciones de despliegue</h3>
+<table><thead><tr><th>Opción</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Heroku</strong></td><td>Plataforma en la nube con soporte Rails fácil</td></tr><tr><td><strong>Capistrano</strong></td><td>Despliegue de capas sobre servidores propios</td></tr><tr><td><strong>Docker + Rails</strong></td><td>Contenedores reproducibles en cualquier servidor</td></tr><tr><td><strong>VPS manual</strong></td><td>Nginx + Puma + systemd sobre un servidor Linux</td></tr></tbody></table>
+<h3>Dockerfile básico para Rails</h3>
+<pre><code class="language-ruby"># Dockerfile
+# FROM ruby:3.2-slim
+# WORKDIR /app
+# COPY Gemfile Gemfile.lock ./
+# RUN bundle install
+# COPY . .
+# CMD ["rails", "server", "-b", "0.0.0.0"]</code></pre>
+<h3>Variables de entorno</h3>
+<p>No guardes secretos en el código. Usa variables de entorno para claves, credenciales y configuraciones sensibles:</p>
+<pre><code class="language-bash">export SECRET_KEY_BASE="valor_secreto_largo"
+export DATABASE_URL="postgres://usuario:pass@host/bbdd"</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-6-seguridad-y-buenas-practicas">
+    <h2><i class="fa-solid fa-shield-halved"></i> 10.6 Seguridad y buenas prácticas</h2>
+    <div class="doc-content">
+<h3>Medidas de seguridad esenciales</h3>
+<table><thead><tr><th>Riesgo</th><th>Protección en Rails</th></tr></thead><tbody><tr><td><strong>XSS</strong></td><td>Escape automático con &lt;%= %&gt;</td></tr><tr><td><strong>CSRF</strong></td><td>protect_from_forgery activo por defecto</td></tr><tr><td><strong>SQL Injection</strong></td><td>Consultas parametrizadas con </code>where("col = ?", v)</td></tr><tr><td><strong>Asignación masiva</strong></td><td>Strong Parameters</td></tr><tr><td><strong>Datos expuestos</strong></td><td>No loguear ni serializar credenciales</td></tr></tbody></table>
+<h3>Buenas prácticas</h3>
+<ul>
+<li>Usa el entorno <code>production</code> solo en servidores reales</li>
+<li>Mantén un <code>SECRET_KEY_BASE</code> seguro y rotado</li>
+<li>Ejecuta los tests antes de cada despliegue</li>
+<li>Revisa los logs y la supervisión en producción</li>
+<li>Actualiza las gemas periódicamente con <code>bundle audit</code></li>
+</ul>
+<h3>Herramientas de reviews y calidad</h3>
+<pre><code class="language-bash"># Rubocop analiza el estilo de código
+bundle exec rubocop
+
+# Brakeman busca vulnerabilidades de seguridad
+bundle exec brakeman
+
+# Ver dependencias vulnerables
+bundle audit check --update</code></pre>
+<blockquote class="aside aside-note">
+El despliegue exitoso requiere tres pilares: tests que pasen, assets precompilados y una base de datos migrada; además de secretos bien gestionados.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los tests automatizados evitan errores y refactorizaciones peligrosas
+- Las pruebas de modelo verifican validaciones y lógica
+- Los fixtures y FactoryBot generan datos de prueba
+- Las pruebas de sistema simulan el comportamiento del usuario
+- El despliegue precompila assets y migra la base de datos
+- Rubocop, Brakeman y bundle audit mejoran calidad y seguridad
+</blockquote>
+    </div>
+  </section>

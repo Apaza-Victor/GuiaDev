@@ -1,0 +1,220 @@
+<!-- 08. Construir APIs REST - Express (Frameworks) -->
+  <section id="8-1-principios-de-api-rest">
+    <h2><i class="fa-solid fa-book"></i> 8.1 Principios de una API REST</h2>
+    <div class="doc-content">
+<h3>Qué es REST</h3>
+<p><strong>REST</strong> (Representational State Transfer) es un estilo arquitectónico para construir APIs. Se basa en recursos identificados por URLs y el uso de los métodos HTTP estándar para operar sobre ellos.</p>
+<h3>Principios fundamentales</h3>
+<table><thead><tr><th>Principio</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Recursos</strong></td><td>Todo es un recurso (usuarios, productos)</td></tr><tr><td><strong>URLs limpias</strong></td><td>Nombres en plural y sin verbos</td></tr><tr><td><strong>Métodos HTTP</strong></td><td>GET, POST, PUT, DELETE para cada operación</td></tr><tr><td><strong>Sin estado</strong></td><td>Cada petición es independiente</td></tr><tr><td><strong>JSON</strong></td><td>Formato estándar para intercambio de datos</td></tr></tbody></table>
+<h3>Ejemplo de endpoints REST</h3>
+<pre><code class="language-text">GET    /usuarios        -&gt; listar
+GET    /usuarios/1      -&gt; obtener uno
+POST   /usuarios        -&gt; crear
+PUT    /usuarios/1      -&gt; actualizar
+DELETE /usuarios/1      -&gt; eliminar</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-2-diseno-de-endpoints">
+    <h2><i class="fa-solid fa-map"></i> 8.2 Diseño de endpoints REST</h2>
+    <div class="doc-content">
+<h3>Buenas prácticas en el diseño</h3>
+<ul>
+<li>Usa sustantivos en plural para los recursos (<code>/productos</code>, no <code>/obtenerProductos</code>)</li>
+<li>Anida recursos con profundidad razonable (<code>/usuarios/1/pedidos</code>)</li>
+<li>Usa query string para filtros y paginación</li>
+<li>Devuelve códigos de estado coherentes</li>
+<li>Responde siempre en JSON</li>
+</ul>
+<h3>Ejemplo de API bien diseñada</h3>
+<pre><code class="language-javascript">const express = require('express');
+const router = express.Router();
+
+// GET /api/productos?categoria=x&amp;pagina=1
+router.get('/productos', (req, res) =&gt; {
+  const { categoria, pagina = 1 } = req.query;
+  res.json({ categoria, pagina, resultados: [] });
+});
+
+// GET /api/productos/:id
+router.get('/productos/:id', (req, res) =&gt; {
+  res.json({ id: req.params.id });
+});
+
+module.exports = router;</code></pre>
+<blockquote class="aside aside-tip">
+Mantén las URLs simples y consistentes. La legibilidad para otros desarrolladores es tan importante como la funcionalidad.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-3-responder-en-json">
+    <h2><i class="fa-solid fa-file-export"></i> 8.3 Responder en JSON</h2>
+    <div class="doc-content">
+<h3>Formato de respuestas JSON</h3>
+<p>Las APIs REST normalmente responden en JSON. <code>res.json()</code> establece automáticamente la cabecera <code>Content-Type: application/json</code>.</p>
+<pre><code class="language-javascript">app.get('/usuarios/:id', (req, res) =&gt; {
+  // Respuesta exitosa con datos
+  res.status(200).json({
+    id: 1,
+    nombre: 'Ana',
+    email: 'ana@example.com'
+  });
+});
+
+app.get('/error', (req, res) =&gt; {
+  // Respuesta de error estructurada
+  res.status(500).json({
+    error: 'Error interno',
+    detalle: 'No se pudo procesar la solicitud'
+  });
+});</code></pre>
+<h3>Estructura JSON de respuesta recomendada</h3>
+<pre><code class="language-json">{
+  "success": true,
+  "data": { "id": 1, "nombre": "Ana" },
+  "mensaje": "Usuario obtenido"
+}</code></pre>
+<blockquote class="aside aside-note">
+Ser consistente con la estructura de las respuestas facilita el consumo de la API desde el frontend.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-4-manejo-de-errores-en-api">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> 8.4 Manejo de errores en la API</h2>
+    <div class="doc-content">
+<h3>Middleware de error centralizado</h3>
+<p>Un buen manejo de errores devuelve respuestas útiles y estructuradas. Puedes crear un middleware de error global.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+// Rutas normales
+app.get('/usuario/:id', (req, res) =&gt; {
+  const id = req.params.id;
+  if (id !== '1') {
+    const err = new Error('Usuario no encontrado');
+    err.status = 404;
+    throw err;
+  }
+  res.json({ id: 1, nombre: 'Ana' });
+});
+
+// Middleware de error global (4 parámetros)
+app.use((err, req, res, next) =&gt; {
+  const status = err.status || 500;
+  res.status(status).json({
+    error: err.message || 'Error interno del servidor',
+    estado: status
+  });
+});
+
+app.listen(3000);</code></pre>
+<blockquote class="aside aside-warning">
+El middleware de error global debe ser el último y tener exactamente cuatro parámetros (<code>err, req, res, next</code>).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-5-validacion-de-datos">
+    <h2><i class="fa-solid fa-circle-check"></i> 8.5 Validación de datos</h2>
+    <div class="doc-content">
+<h3>Por qué validar</h3>
+<p>La validación garantiza que los datos que llegan a tu API sean correctos, evitando errores y datos corruptos en la base de datos.</p>
+<h3>Validación manual</h3>
+<pre><code class="language-javascript">app.use(express.json());
+
+app.post('/usuarios', (req, res) =&gt; {
+  const { nombre, email } = req.body;
+
+  const errores = [];
+  if (!nombre || nombre.trim() === '') {
+    errores.push('El nombre es obligatorio');
+  }
+  if (!email || !email.includes('@')) {
+    errores.push('Email inválido');
+  }
+
+  if (errores.length &gt; 0) {
+    return res.status(400).json({ errores });
+  }
+
+  res.status(201).json({ mensaje: 'Usuario válido', nombre, email });
+});</code></pre>
+<h3>Validación con librerías</h3>
+<pre><code class="language-javascript">npm install express-validator</code></pre>
+<pre><code class="language-javascript">const { body, validationResult } = require('express-validator');
+
+app.post(
+  '/registro',
+  [
+    body('email').isEmail().withMessage('Email inválido'),
+    body('password').isLength({ min: 6 }).withMessage('Mínimo 6 caracteres')
+  ],
+  (req, res) =&gt; {
+    const errores = validationResult(req);
+    if (!errores.isEmpty()) {
+      return res.status(400).json({ errores: errores.array() });
+    }
+    res.json({ mensaje: 'Registro válido' });
+  }
+);</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-6-consumir-api-con-fetch-y-axios">
+    <h2><i class="fa-solid fa-plug-circle-plus"></i> 8.6 Consumir la API con fetch y axios</h2>
+    <div class="doc-content">
+<h3>Usar fetch (nativo del navegador)</h3>
+<pre><code class="language-javascript">// GET con fetch
+fetch('http://localhost:3000/usuarios')
+  .then(res =&gt; res.json())
+  .then(data =&gt; console.log(data));
+
+// POST con fetch
+fetch('http://localhost:3000/usuarios', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ nombre: 'Carlos', email: 'carlos@example.com' })
+}).then(res =&gt; res.json())
+  .then(data =&gt; console.log(data));</code></pre>
+<h3>Usar axios (librería)</h3>
+<pre><code class="language-javascript">npm install axios</code></pre>
+<pre><code class="language-javascript">const axios = require('axios');
+
+async function obtenerUsuarios() {
+  try {
+    const { data } = await axios.get('http://localhost:3000/usuarios');
+    console.log(data);
+  } catch (error) {
+    console.error('Error al consumir la API:', error.response?.status);
+  }
+}
+
+obtenerUsuarios();</code></pre>
+<blockquote class="aside aside-note">
+fetch está integrado en el navegador y en Node 18+, mientras que axios ofrece una API más concisa y manejo de errores integrado.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- REST se basa en recursos, URLs limpias y métodos HTTP
+- Los endpoints se diseñan con sustantivos en plural y filtros por query
+- <code>res.json()</code> responde en formato JSON con el estado adecuado
+- Se usa un middleware de error global para respuestas consistentes
+- La validación (manual o con express-validator) evita datos inválidos
+- La API se consume con fetch o axios desde el frontend
+</blockquote>
+    </div>
+  </section>

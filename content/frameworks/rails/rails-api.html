@@ -1,0 +1,248 @@
+<!-- 09. Rails como API - Rails (Frameworks) -->
+  <section id="9-1-modo-api-de-rails">
+    <h2><i class="fa-solid fa-server"></i> 9.1 Modo API de Rails</h2>
+    <div class="doc-content">
+<h3>Qué es el modo API</h3>
+<p>Rails puede funcionar solo como <strong>API</strong>, sirviendo JSON o XML en lugar de vistas HTML. Se genera con la bandera <code>--api</code> y omite las capas relacionadas con la presentación en el navegador.</p>
+<pre><code class="language-bash"># Crear un proyecto en modo API
+rails new mi_api --api
+
+# O crearlo normal y comentar los módulos de middleware de vista</code></pre>
+<h3>Diferencias frente a una app normal</h3>
+<table><thead><tr><th>Característica</th><th>App normal</th><th>Modo API</th></tr></thead><tbody><tr><td><strong>Vistas</strong></td><td>ERB y layouts</td><td>No genera vistas</td></tr><tr><td><strong>CSRF</strong></td><td>Activo por defecto</td><td>Desactivado</td></tr><tr><td><strong>Cookies/sesión</strong></td><td>Dispuestas</td><td>Solo de forma opcional</td></tr><tr><td><strong>Respuestas</strong></td><td>HTML</td><td>JSON</td></tr></tbody></table>
+<h3>Controlador base API</h3>
+<pre><code class="language-ruby"># app/controllers/application_controller.rb
+class ApplicationController &lt; ActionController::API
+  # Hereda de ActionController::API, no de Base
+end</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-2-rutas-de-api-v1">
+    <h2><i class="fa-solid fa-route"></i> 9.2 Rutas de API versionada</h2>
+    <div class="doc-content">
+<h3>Namespacing de la API</h3>
+<p>Es una buena práctica versionar la API para no romper a los clientes existentes cuando cambias el contrato:</p>
+<pre><code class="language-ruby"># config/routes.rb
+Rails.application.routes.draw do
+  namespace :api do
+    namespace :v1 do
+      resources :productos, only: [:index, :show, :create, :update, :destroy]
+      resources :categorias, only: [:index, :show]
+    end
+  end
+end</code></pre>
+<p>Esto genera rutas como <code>/api/v1/productos</code> y <code>/api/v1/productos/1</code>.</p>
+<h3>Ver las rutas generadas</h3>
+<pre><code class="language-bash">rails routes | grep api</code></pre>
+<h3>Definir el controlador versionado</h3>
+<pre><code class="language-ruby"># app/controllers/api/v1/productos_controller.rb
+module Api
+  module V1
+    class ProductosController &lt; ApplicationController
+      def index
+        @productos = Producto.all
+        render json: @productos
+      end
+
+      def show
+        @producto = Producto.find(params[:id])
+        render json: @producto
+      end
+
+      def create
+        @producto = Producto.new(producto_params)
+        if @producto.save
+          render json: @producto, status: :created
+        else
+          render json: @producto.errors, status: :unprocessable_entity
+        end
+      end
+
+      private
+
+      def producto_params
+        params.require(:producto).permit(:nombre, :precio)
+      end
+    end
+  end
+end</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-3-respuesta-json">
+    <h2><i class="fa-solid fa-code"></i> 9.3 Respuesta JSON</h2>
+    <div class="doc-content">
+<h3>Usar render json</h3>
+<p>El método <code>render json:</code> serializa un objeto Ruby a JSON y lo envía en la respuesta:</p>
+<pre><code class="language-ruby"># Objeto simple
+render json: { mensaje: "Hola", ok: true }
+
+# Un registro con todas sus columnas
+render json: @producto
+
+# Una colección
+render json: Producto.all
+
+# Con estados HTTP
+render json: @producto, status: :ok
+render json: @producto, status: :created
+render json: { error: "No encontrado" }, status: :not_found</code></pre>
+<h3>Estados HTTP más usados en APIs</h3>
+<table><thead><tr><th>Código</th><th>Símbolo</th><th>Cuándo usarlo</th></tr></thead><tbody><tr><td>200</td><td><code>:ok</code></td><td>Respuesta correcta (leer)</td></tr><tr><td>201</td><td><code>:created</code></td><td>Recurso creado correctamente</td></tr><tr><td>204</td><td><code>:no_content</code></td><td>Eliminación exitosa</td></tr><tr><td>400</td><td><code>:bad_request</code></td><td>Petición malformada</td></tr><tr><td>401</td><td><code>:unauthorized</code></td><td>Sin autenticación</td></tr><tr><td>403</td><td><code>:forbidden</code></td><td>Sin permisos</td></tr><tr><td>404</td><td><code>:not_found</code></td><td>Recurso no existe</td></tr><tr><td>422</td><td><code>:unprocessable_entity</code></td><td>Errores de validación</td></tr></tbody></table>
+<pre><code class="language-ruby"># Respuesta sin cuerpo
+head :no_content</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-4-serializacion-con-serializers">
+    <h2><i class="fa-solid fa-layer-group"></i> 9.4 Serialización con serializers</h2>
+    <div class="doc-content">
+<h3>Por qué usar serializers</h3>
+<p>Por defecto, <code>render json: @producto</code> expone todas las columnas del modelo. Con <strong>serializers</strong> controlas exactamente qué se devuelve, evitas exponer datos sensibles y das formato a la salida.</p>
+<h3>Gemas populares</h3>
+<table><thead><tr><th>Gema</th><th>Enfoque</th></tr></thead><tbody><tr><td><strong>ActiveModel::Serializers</strong></td><td>Clases que definen atributos y asociaciones</td></tr><tr><td><strong>jsonapi-serializer</strong></td><td>Implementa el estándar JSON:API</td></tr><tr><td><strong>jbuilder</strong></td><td>Vistas basadas en archivos .jbuilder (incluido en Rails)</td></tr></tbody></table>
+<h3>Ejemplo con jbuilder</h3>
+<pre><code class="language-ruby"># app/views/api/v1/productos/show.json.jbuilder
+json.id @producto.id
+json.nombre @producto.nombre
+json.precio @producto.precio
+json.categoria do
+  json.nombre @producto.categoria.nombre
+end</code></pre>
+<h3>Ejemplo con ActiveModel::Serializers</h3>
+<pre><code class="language-ruby"># app/serializers/producto_serializer.rb
+class ProductoSerializer &lt; ActiveModel::Serializer
+  attributes :id, :nombre, :precio
+  belongs_to :categoria
+end
+
+# En el controlador
+render json: @producto</code></pre>
+<blockquote class="aside aside-tip">
+Nunca serialices el modelo completo si contiene campos sensibles como <code>password_digest</code> o <code>api_token</code>. Define siempre una serialización explícita.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-5-autenticacion-de-api">
+    <h2><i class="fa-solid fa-lock"></i> 9.5 Autenticación de API</h2>
+    <div class="doc-content">
+<h3>Métodos comunes</h3>
+<table><thead><tr><th>Método</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>API key simple</strong></td><td>Clave estática en cabecera o query</td></tr><tr><td><strong>Token de acceso</strong></td><td>Token generado al iniciar sesión</td></tr><tr><td><strong>JWT</strong></td><td>Token firmado sin estado en el servidor</td></tr><tr><td><strong>OAuth2</strong></td><td>Delegado a terceros (Google, GitHub)</td></tr></tbody></table>
+<h3>Token de acceso simple</h3>
+<pre><code class="language-bash">rails generate migration AddApiTokenToUsuarios api_token:string
+rails db:migrate</code></pre>
+<pre><code class="language-ruby"># app/models/usuario.rb
+class Usuario &lt; ApplicationRecord
+  has_secure_password
+  before_create :generar_api_token
+
+  private
+
+  def generar_api_token
+    self.api_token = SecureRandom.hex(20)
+  end
+end</code></pre>
+<h3>Controlador base autenticado</h3>
+<pre><code class="language-ruby"># app/controllers/api/v1/base_controller.rb
+module Api
+  module V1
+    class BaseController &lt; ApplicationController
+      before_action :autenticar
+
+      private
+
+      def autenticar
+        token = request.headers["Authorization"]&amp;.split(" ")&amp;.last
+        @usuario = Usuario.find_by(api_token: token)
+        render json: { error: "No autorizado" }, status: :unauthorized unless @usuario
+      end
+    end
+  end
+end</code></pre>
+<pre><code class="language-ruby"># Heredar de BaseController en los controladores protegidos
+module Api
+  module V1
+    class ProductosController &lt; BaseController
+      def index
+        render json: @usuario.productos
+      end
+    end
+  end
+end</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-6-pruebas-y-documentacion-de-api">
+    <h2><i class="fa-solid fa-flask"></i> 9.6 Pruebas y documentación de API</h2>
+    <div class="doc-content">
+<h3>Probar la API con curl</h3>
+<pre><code class="language-bash"># Listar productos
+curl http://localhost:3000/api/v1/productos
+
+# Crear un producto
+curl -X POST http://localhost:3000/api/v1/productos \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TU_TOKEN" \
+  -d '{"producto":{"nombre":"Laptop","precio":999.99}}'
+
+# Eliminar un producto
+curl -X DELETE http://localhost:3000/api/v1/productos/3 \
+  -H "Authorization: Bearer TU_TOKEN"</code></pre>
+<h3>Pruebas de integración en Rails</h3>
+<pre><code class="language-ruby"># test/controllers/api/v1/productos_controller_test.rb
+require "test_helper"
+
+module Api
+  module V1
+    class ProductosControllerTest &lt; ActionDispatch::IntegrationTest
+      test "lista productos" do
+        get "/api/v1/productos"
+        assert_response :success
+        cuerpo = JSON.parse(response.body)
+        assert_kind_of Array, cuerpo
+      end
+
+      test "crea un producto con token" do
+        post "/api/v1/productos",
+             params: { producto: { nombre: "Mouse", precio: 29.99 } },
+             headers: { "Authorization" =&gt; "Bearer #{api_token}" }
+        assert_response :created
+      end
+
+      test "rechaza sin token" do
+        get "/api/v1/productos"
+        assert_response :unauthorized
+      end
+    end
+  end
+end</code></pre>
+<h3>Herramientas de pruebas y documentación</h3>
+<table><thead><tr><th>Herramienta</th><th>Función</th></tr></thead><tbody><tr><td><strong>Postman / Insomnia</strong></td><td>Cliente gráfico para probar APIs</td></tr><tr><td><strong>Swagger/OpenAPI</strong></td><td>Documentación interactiva y generación de clientes</td></tr><tr><td><strong>Rswag</strong></td><td>Genera documentación Swagger desde los tests</td></tr><tr><td><strong>rspec-rails + FactoryBot</strong></td><td>Tests robustos con datos de fábrica</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+Documentar la API con OpenAPI/Swagger facilita que otros equipos la consuman y permite autogenerar clientes en distintos lenguajes.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El modo API (<code>--api</code>) sirve JSON en lugar de vistas HTML
+- Namespace :api :v1 permite versionar la API
+- render json: serializa objetos y define estados HTTP
+- Los serializers controlan exactamente qué se expone
+- La autenticación se hace con tokens o JWT en la cabecera Authorization
+- Las pruebas de integración y OpenAPI documentan y validan la API
+</blockquote>
+    </div>
+  </section>

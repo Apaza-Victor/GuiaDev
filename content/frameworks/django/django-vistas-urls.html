@@ -1,0 +1,194 @@
+<!-- 04. Vistas y URLs - Django (Frameworks) -->
+  <section id="4-1-que-es-una-vista-en-django">
+    <h2><i class="fa-solid fa-eye"></i> 4.1 Qué es una vista en Django</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Una <strong>vista</strong> es una función o clase que recibe una petición HTTP y devuelve una respuesta HTTP (normalmente HTML). Es el "cerebro" que conecta la URL con la lógica del negocio.</p>
+<h3>Estructura de una petición</h3>
+<table><thead><tr><th>Elemento</th><th>Descripción</th></tr></thead><tbody><tr><td><code>HttpRequest</code></td><td>Objeto con la petición (método, datos, usuario, etc.)</td></tr><tr><td><code>HttpResponse</code></td><td>Objeto con la respuesta (HTML, JSON, redirección)</td></tr><tr><td><code>Convención</code></td><td>Una vista siempre recibe <code>request</code> como primer parámetro</td></tr></tbody></table>
+<h3>Tipos de vistas</h3>
+<ul>
+<li><strong>FBV (Function Based Views)</strong>: Funciones simples, ideales para lógica puntual</li>
+<li><strong>CBV (Class Based Views)</strong>: Clases reutilizables, ideales para operaciones repetitivas (listar, crear, detalle)</li>
+</ul>
+<h3>Vista mínima</h3>
+<pre><code class="language-python"># blog/views.py
+from django.http import HttpResponse
+
+def saludo(request):
+    return HttpResponse("Hola desde una vista")</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-2-vistas-por-funcion-fbv">
+    <h2><i class="fa-solid fa-code"></i> 4.2 Vistas por función (FBV)</h2>
+    <div class="doc-content">
+<h3>Qué son</h3>
+<p>Las <strong>Function Based Views (FBV)</strong> son funciones de Python que reciben <code>request</code> y devuelven una respuesta. Son las más fáciles de leer y depurar.</p>
+<h3>Ejemplo: vista de listado</h3>
+<pre><code class="language-python"># blog/views.py
+from django.shortcuts import render, get_object_or_404
+from django.http import Http404
+from .models import Articulo
+
+def lista_articulos(request):
+    # Solo artículos publicados
+    articulos = Articulo.objects.filter(publicado=True)
+    return render(request, "blog/lista.html", {
+        "articulos": articulos,
+    })
+
+def detalle_articulo(request, slug):
+    # Devuelve 404 si no existe
+    articulo = get_object_or_404(Articulo, slug=slug)
+    return render(request, "blog/detalle.html", {
+        "articulo": articulo,
+    })
+
+def manejar_404(request):
+    raise Http404("Página no encontrada")</code></pre>
+<h3>Devolver distintos tipos de respuesta</h3>
+<pre><code class="language-python"># Tipos de respuesta más usados
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect
+
+def responder(request):
+    return HttpResponse("HTML simple")              # Texto/HTML
+    return JsonResponse({"ok": True})               # JSON
+    return redirect("home")                          # Redirección</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-3-vistas-por-clase-cbv">
+    <h2><i class="fa-solid fa-cube"></i> 4.3 Vistas por clase (CBV)</h2>
+    <div class="doc-content">
+<h3>Qué son</h3>
+<p>Las <strong>Class Based Views (CBV)</strong> son clases que organizan el comportamiento por métodos HTTP: <code>get()</code>, <code>post()</code>, etc. Django incluye vistas genéricas listas para usar.</p>
+<h3>Vistas genéricas más comunes</h3>
+<table><thead><tr><th>Vista</th><th>Función</th></tr></thead><tbody><tr><td><code>ListView</code></td><td>Listar todos los objetos de un modelo</td></tr><tr><td><code>DetailView</code></td><td>Mostrar un objeto individual</td></tr><tr><td><code>CreateView</code></td><td>Crear un registro con formulario</td></tr><tr><td><code>UpdateView</code></td><td>Editar un registro existente</td></tr><tr><td><code>DeleteView</code></td><td>Eliminar un registro</td></tr><tr><td><code>TemplateView</code></td><td>Renderizar una plantilla estática</td></tr></tbody></table>
+<h3>Ejemplo: ListView</h3>
+<pre><code class="language-python"># blog/views.py
+from django.views.generic import ListView, DetailView
+from .models import Articulo
+
+class ListaArticulos(ListView):
+    model = Articulo
+    template_name = "blog/lista.html"
+    context_object_name = "articulos"
+
+class DetalleArticulo(DetailView):
+    model = Articulo
+    template_name = "blog/detalle.html"</code></pre>
+<blockquote class="aside aside-tip">
+Las CBV reducen mucho código repetitivo, pero exigen conocer convenciones de nombres (por defecto buscan plantillas como `articulo_list.html`).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-4-patrones-de-url-con-path">
+    <h2><i class="fa-solid fa-road"></i> 4.4 Patrones de URL con path</h2>
+    <div class="doc-content">
+<h3>Qué es una URL conf</h3>
+<p>El archivo <code>urls.py</code> mapea URLs con vistas mediante la función <code>path()</code>. Cada entrada incluya una ruta, una vista y un nombre opcional.</p>
+<h3>Sintaxis de path</h3>
+<pre><code class="language-python"># blog/urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("", views.inicio, name="inicio"),
+    path("articulos/", views.lista_articulos, name="lista"),
+    path("articulos/&lt;int:pk&gt;/", views.detalle_articulo, name="detalle"),
+]</code></pre>
+<h3>Convertidores de ruta</h3>
+<table><thead><tr><th>Convertidor</th><th>Coincide con</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>str</code></td><td>Cualquier texto sin barra</td><td><code>&lt;str:slug&gt;</code></td></tr><tr><td><code>int</code></td><td>Números enteros</td><td><code>&lt;int:pk&gt;</code></td></tr><tr><td><code>slug</code></td><td>Slugs (letras, números, guiones)</td><td><code>&lt;slug:slug&gt;</code></td></tr><tr><td><code>uuid</code></td><td>Identificadores UUID</td><td><code>&lt;uuid:token&gt;</code></td></tr><tr><td><code>path</code></td><td>Cualquier ruta, incluso con barras</td><td><code>&lt;path:ruta&gt;</code></td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-5-mapeo-de-url-a-vistas">
+    <h2><i class="fa-solid fa-link"></i> 4.5 Mapeo URL a vistas</h2>
+    <div class="doc-content">
+<h3>Incluir las URLs de una app en el proyecto</h3>
+<pre><code class="language-python"># urls.py del proyecto (miapp/urls.py)
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("blog/", include("blog.urls")),
+]</code></pre>
+<h3>Resultado de las rutas</h3>
+<table><thead><tr><th>URL final</th><th>Vista ejecutada</th></tr></thead><tbody><tr><td><code>http://127.0.0.1:8000/</code></td><td><code>views.inicio</code> (si se incluye en la raíz)</td></tr><tr><td><code>http://127.0.0.1:8000/blog/</code></td><td><code>views.lista_articulos</code></td></tr><tr><td><code>http://127.0.0.1:8000/blog/articulos/5/</code></td><td><code>views.detalle_articulo</code> con pk=5</td></tr></tbody></table>
+<h3>Generar URLs en plantillas y código</h3>
+<pre><code class="language-python"># En Python: urlresolvers
+from django.urls import reverse
+url = reverse("detalle", args=[5])
+# Resultado: "/blog/articulos/5/"</code></pre>
+<pre><code class="language-html">&lt;!-- En una plantilla HTML --&gt;
+&lt;a href="{% url 'detalle' articulo.pk %}"&gt;Ver artículo&lt;/a&gt;</code></pre>
+<blockquote class="aside aside-tip">
+Usar el nombre de la ruta (parámetro `name`) evita romper enlaces al cambiar la URL.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-6-renderizado-de-templates">
+    <h2><i class="fa-solid fa-file"></i> 4.6 Renderizado de templates</h2>
+    <div class="doc-content">
+<h3>Función render</h3>
+<p><code>render()</code> combina una plantilla con un contexto (diccionario de datos) y devuelve un <code>HttpResponse</code> con el HTML final.</p>
+<h3>Ejemplo completo</h3>
+<pre><code class="language-python"># blog/views.py
+from django.shortcuts import render
+from .models import Articulo
+
+def inicio(request):
+    ultimos = Articulo.objects.filter(publicado=True).order_by("-fecha_publicacion")[:5]
+    return render(
+        request,
+        "blog/inicio.html",
+        {
+            "titulo_pagina": "Mi Blog",
+            "articulos": ultimos,
+        },
+    )</code></pre>
+<h3>Template asociado</h3>
+<pre><code class="language-html">&lt;!-- templates/blog/inicio.html --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;&lt;title&gt;{{ titulo_pagina }}&lt;/title&gt;&lt;/head&gt;
+  &lt;body&gt;
+    &lt;h1&gt;{{ titulo_pagina }}&lt;/h1&gt;
+    &lt;ul&gt;
+      {% for articulo in articulos %}
+        &lt;li&gt;{{ articulo.titulo }}&lt;/li&gt;
+      {% endfor %}
+    &lt;/ul&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<blockquote class="aside aside-note">
+El contexto puede contener modelos, listas, cadenas y cualquier objeto serializable por la plantilla.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Las vistas reciben un request y devuelven una respuesta HTTP
+- Vistas por función (FBV) para lógica simple y directa
+- Vistas por clase (CBV) y vistas genéricas para operaciones repetitivas
+- Definir rutas con `path()` y convertidores como `int`, `str` y `slug`
+- Incluir las URLs de una app con `include()`
+- Renderizar templates con `render(request, "plantilla.html", contexto)`
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,160 @@
+<!-- 04. Controladores y rutas - .NET (Frameworks) -->
+  <section id="4-1-que-es-un-controlador">
+    <h2><i class="fa-solid fa-sitemap"></i> 4.1 Qué es un controlador</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>controlador</strong> es una clase C# que hereda de <code>Controller</code> (o <code>ControllerBase</code>) y agrupa acciones relacionadas que responden a peticiones HTTP.</p>
+<h3>Ejemplo: Controlador básico</h3>
+<pre><code class="language-csharp">public class HomeController : Controller
+{
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+    public IActionResult Privacy()
+    {
+        return View();
+    }
+}</code></pre>
+<h3>Características</h3>
+<table><thead><tr><th>Característica</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Acciones</strong></td><td>Métodos públicos que responden peticiones</td></tr><tr><td><strong>Rutas</strong></td><td>Cada acción tiene una URL</td></tr><tr><td><strong>Resultados</strong></td><td>Devuelven vistas, JSON o redirecciones</td></tr><tr><td><strong>Verbos HTTP</strong></td><td>GET, POST, PUT, DELETE</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-2-acciones">
+    <h2><i class="fa-solid fa-bolt"></i> 4.2 Acciones</h2>
+    <div class="doc-content">
+<h3>Qué es una acción</h3>
+<p>Una <strong>acción</strong> es un método público de un controlador que maneja una petición. Su nombre y el controlador determinan la URL por convención.</p>
+<h3>Ejemplo: Acciones con distintos verbos</h3>
+<pre><code class="language-csharp">public class ProductoController : Controller
+{
+    // GET /Producto
+    public IActionResult Lista()
+    {
+        return View();
+    }
+
+    // GET /Producto/Crear
+    public IActionResult Crear()
+    {
+        return View();
+    }
+
+    // POST /Producto/Crear
+    [HttpPost]
+    public IActionResult Crear(Producto producto)
+    {
+        return RedirectToAction("Lista");
+    }
+}</code></pre>
+<h3>Atributos de verbo</h3>
+<ul>
+<li><strong>[HttpGet]</strong>: Solo responde peticiones GET</li>
+<li><strong>[HttpPost]</strong>: Solo responde peticiones POST</li>
+<li><strong>[HttpPut]</strong>: Solo peticiones PUT</li>
+<li><strong>[HttpDelete]</strong>: Solo peticiones DELETE</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-3-routing">
+    <h2><i class="fa-solid fa-route"></i> 4.3 Routing</h2>
+    <div class="doc-content">
+<h3>Qué es el routing</h3>
+<p>El <strong>routing</strong> asocia una URL solicitada con una acción concreta. En ASP.NET Core se define con convenciones (rutas por defecto) o con atributos.</p>
+<h3>Ruta por convención</h3>
+<pre><code class="language-csharp">app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");</code></pre>
+<p>Con este patrón: <code>/Producto/Detalle/5</code> llama a <code>ProductoController.Detalle(5)</code>.</p>
+<h3>Ruting con atributos</h3>
+<pre><code class="language-csharp">[Route("[controller]")]
+public class ProductoController : Controller
+{
+    [Route("")]
+    [Route("Lista")]
+    public IActionResult Lista() =&gt; View();
+
+    [Route("Detalle/{id:int}")]
+    public IActionResult Detalle(int id) =&gt; View();
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-4-iactionresult">
+    <h2><i class="fa-solid fa-reply-all"></i> 4.4 IActionResult y los resultados</h2>
+    <div class="doc-content">
+<h3>Qué devuelven las acciones</h3>
+<p>Las acciones devuelven un <code>IActionResult</code>, un objeto que describe la respuesta. Existen varios tipos de resultados.</p>
+<table><thead><tr><th>Resultado</th><th>Método</th><th>Uso</th></tr></thead><tbody><tr><td><strong>View</strong></td><td>View()</td><td>Devuelve una vista</td></tr><tr><td><strong>JSON</strong></td><td>Json()</td><td>Devuelve JSON</td></tr><tr><td><strong>Redirect</strong></td><td>RedirectToAction()</td><td>Redirige a otra acción</td></tr><tr><td><strong>NotFound</strong></td><td>NotFound()</td><td>Error 404</td></tr><tr><td><strong>Content</strong></td><td>Content()</td><td>Devuelve texto sencillo</td></tr></tbody></table>
+<h3>Ejemplo: Distintos resultados</h3>
+<pre><code class="language-csharp">public IActionResult Acciones(int id)
+{
+    if (id &lt;= 0)
+        return NotFound();
+
+    if (id == 1)
+        return Content("Texto plano");
+
+    if (id == 2)
+        return Json(new { Nombre = "Ana" });
+
+    return RedirectToAction("Index");
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-5-parametros">
+    <h2><i class="fa-solid fa-sliders"></i> 4.5 Parámetros y enlace de modelos</h2>
+    <div class="doc-content">
+<h3>Tipos de parámetros</h3>
+<p>Las acciones pueden recibir parámetros desde la ruta, la cadena de consulta (query) o el cuerpo de la petición.</p>
+<h3>Ejemplo: Parámetros desde la URL</h3>
+<pre><code class="language-csharp">// /Producto/Buscar?nombre=laptop&amp;orden=precio
+public IActionResult Buscar(string nombre, string orden = "precio")
+{
+    return Content($"Buscando: {nombre} ordenado por {orden}");
+}
+
+// /Producto/Detalle/7
+public IActionResult Detalle(int id)
+{
+    return Content($"Producto {id}");
+}</code></pre>
+<h3>Enlace de modelos (model binding)</h3>
+<pre><code class="language-csharp">public class ProductoController : Controller
+{
+    // Los datos del formulario se enlazan al objeto Producto
+    [HttpPost]
+    public IActionResult Guardar(Producto producto)
+    {
+        return Content($"{producto.Nombre} - {producto.Precio}");
+    }
+}</code></pre>
+<blockquote class="aside aside-note">
+El model binding convierte automáticamente los valores de la petición en tipos C#.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los controladores heredan de Controller y agrupan acciones
+- Cada acción es un método público que responde una petición
+- El routing asocia URLs con acciones (convención o atributos)
+- IActionResult permite devolver vistas, JSON, redirecciones y errores
+- Los parámetros llegan desde la ruta, query o el cuerpo de la petición
+- El model binding convierte los datos automáticamente
+</blockquote>
+    </div>
+  </section>

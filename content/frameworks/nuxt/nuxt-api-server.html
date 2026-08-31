@@ -1,0 +1,213 @@
+<!-- 08. Server API y Server Routes - Nuxt (Frameworks) -->
+  <section id="8-1-el-servidor-nitro">
+    <h2><i class="fa-solid fa-server"></i> 8.1 El servidor Nitro</h2>
+    <div class="doc-content">
+<h3>Qué es Nitro</h3>
+<p><strong>Nitro</strong> es el motor de servidor de Nuxt. Ofrece un backend completo integrado: puedes crear tus propios endpoints de API y middleware directamente en tu proyecto Nuxt, sin levantar un servidor aparte.</p>
+<h3>Ventajas de Nitro</h3>
+<ul>
+<li>Crea una <strong>API REST</strong> junto a tu frontend</li>
+<li>Despliegue universal: Node, serverless y edge</li>
+<li>Variables de entorno y configuración de runtime</li>
+<li>Caché y almacenamiento integrados</li>
+<li>Compatibilidad con rutas de archivo y middleware</li>
+</ul>
+<h3>Estructura del servidor</h3>
+<pre><code class="language-text">server/
+├── api/          # Endpoints REST (routes /api/*)
+├── routes/       # Rutas personalizadas del servidor
+└── middleware/   # Middleware de servidor
+</code></pre>
+<h3>Ejemplo: Endpoint raíz de la API</h3>
+<pre><code class="language-vue">&lt;!-- server/api/index.ts --&gt;
+export default defineEventHandler((event) =&gt; {
+  return { mensaje: 'API de Nuxt funcionando' }
+})</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-2-server-api-endpoints-http">
+    <h2><i class="fa-solid fa-code"></i> 8.2 Server API endpoints HTTP</h2>
+    <div class="doc-content">
+<h3>Crear endpoints REST</h3>
+<p>Los archivos dentro de <code>server/api/</code> se convierten en rutas accesibles bajo <code>/api/</code>. El nombre del archivo determina la ruta y el método HTTP la operación.</p>
+<h3>Ejemplo: CRUD de usuarios</h3>
+<pre><code class="language-vue">&lt;!-- server/api/usuarios.get.ts -&gt; GET /api/usuarios --&gt;
+export default defineEventHandler(() =&gt; {
+  return [
+    { id: 1, nombre: 'Ana' },
+    { id: 2, nombre: 'Carlos' }
+  ]
+})
+
+&lt;!-- server/api/usuarios.post.ts -&gt; POST /api/usuarios --&gt;
+export default defineEventHandler(async (event) =&gt; {
+  const body = await readBody(event)
+  return { id: 3, ...body }
+})</code></pre>
+<h3>Sufijos de método</h3>
+<table><thead><tr><th>Archivo</th><th>Método HTTP</th></tr></thead><tbody><tr><td><code>usuarios.get.ts</code></td><td>GET</td></tr><tr><td><code>usuarios.post.ts</code></td><td>POST</td></tr><tr><td><code>usuarios.put.ts</code></td><td>PUT</td></tr><tr><td><code>usuarios.delete.ts</code></td><td>DELETE</td></tr><tr><td><code>usuarios.patch.ts</code></td><td>PATCH</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Si el archivo no tiene sufijo de método, responde a todos los métodos HTTP.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-3-rutas-y-parametros-dinamicos-en-server">
+    <h2><i class="fa-solid fa-database"></i> 8.3 Rutas y parámetros dinámicos en server</h2>
+    <div class="doc-content">
+<h3>Parámetros en las rutas del servidor</h3>
+<p>Al igual que en pages/, puedes usar corchetes para crear rutas dinámicas en <code>server/api/</code>. Se accede a los parámetros con <code>getRouterParam</code>.</p>
+<h3>Ejemplo: Obtener un usuario por id</h3>
+<pre><code class="language-vue">&lt;!-- server/api/usuarios/[id].get.ts -&gt; GET /api/usuarios/5 --&gt;
+export default defineEventHandler((event) =&gt; {
+  const id = getRouterParam(event, 'id')
+  return { id, nombre: `Usuario ${id}` }
+})</code></pre>
+<h3>Server routes fuera de /api</h3>
+<p>Los archivos en <code>server/routes/</code> se sirven fuera del prefijo <code>/api</code>, para páginas o endpoints accesibles en rutas directas.</p>
+<pre><code class="language-vue">&lt;!-- server/routes/test.ts -&gt; /test --&gt;
+export default defineEventHandler(() =&gt; {
+  return { ruta: 'personalizada' }
+})</code></pre>
+<h3>Helpers útiles de event</h3>
+<table><thead><tr><th>Función</th><th>Propósito</th></tr></thead><tbody><tr><td><code>getQuery(event)</code></td><td>Obtener los parámetros de consulta</td></tr><tr><td><code>readBody(event)</code></td><td>Leer el cuerpo de la petición</td></tr><tr><td><code>getRouterParam(event, 'x')</code></td><td>Leer un parámetro de ruta</td></tr><tr><td><code>getCookie(event, 'x')</code></td><td>Leer una cookie</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-4-consumir-la-api-con-fetch">
+    <h2><i class="fa-solid fa-plug"></i> 8.4 Consumir la API con $fetch</h2>
+    <div class="doc-content">
+<h3>El helper global $fetch</h3>
+<p><code>$fetch</code> es un cliente HTTP disponible globalmente en Nuxt. Es ideal para consumir tus propios endpoints del servidor y APIs externas, con soporte para SSR.</p>
+<h3>Ejemplo: Obtener usuarios en una página</h3>
+<pre><code class="language-vue">&lt;!-- pages/usuarios.vue --&gt;
+&lt;script setup&gt;
+// Llamada a tu propia API (se ejecuta en el servidor con SSR)
+const { data: usuarios } = await useFetch('/api/usuarios')
+&lt;/script&gt;</code></pre>
+<h3>Otras operaciones con $fetch</h3>
+<pre><code class="language-vue">&lt;!-- Crear usuario --&gt;
+const nuevo = await $fetch('/api/usuarios', {
+  method: 'POST',
+  body: { nombre: 'Nuevo usuario' }
+})
+
+&lt;!-- Actualizar usuario --&gt;
+await $fetch('/api/usuarios/5', {
+  method: 'PUT',
+  body: { nombre: 'Actualizado' }
+})
+
+&lt;!-- Eliminar usuario --&gt;
+await $fetch('/api/usuarios/5', { method: 'DELETE' })</code></pre>
+<h3>Ventajas de $fetch</h3>
+<ul>
+<li>Funciona igual en servidor y cliente</li>
+<li>Se integra bien con useFetch y useAsyncData</li>
+<li>Devuelve el JSON parseado automáticamente</li>
+<li>Soporta interceptores y configuración global</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-5-manejar-errores-en-la-api">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> 8.5 Manejar errores en la API</h2>
+    <div class="doc-content">
+<h3>Errores del servidor</h3>
+<p>Para devolver errores desde un endpoint se usa <code>createError</code>. Esto permite enviar códigos de estado y mensajes claros al cliente.</p>
+<h3>Ejemplo: Validación en el servidor</h3>
+<pre><code class="language-vue">&lt;!-- server/api/usuarios/[id].get.ts --&gt;
+export default defineEventHandler((event) =&gt; {
+  const id = getRouterParam(event, 'id')
+
+  if (id === 'no-existe') {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Usuario no encontrado'
+    })
+  }
+
+  return { id, nombre: `Usuario ${id}` }
+})</code></pre>
+<h3>Capturar errores en el cliente</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+const { data, error } = await useFetch('/api/usuarios/no-existe')
+
+if (error.value) {
+  console.log(error.value.statusCode) // 404
+  console.log(error.value.message)
+}
+&lt;/script&gt;</code></pre>
+<h3>Zod para validar los datos recibidos</h3>
+<p>Un patrón habitual es validar el body con una librería como Zod antes de procesarlo:</p>
+<pre><code class="language-vue">&lt;!-- server/api/usuarios.post.ts --&gt;
+export default defineEventHandler(async (event) =&gt; {
+  const body = await readBody(event)
+
+  if (!body?.nombre || body.nombre.length &lt; 2) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'El nombre es obligatorio'
+    })
+  }
+
+  return { id: Date.now(), ...body }
+})</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-6-middleware-de-servidor-y-buenas-practicas">
+    <h2><i class="fa-solid fa-shield-halved"></i> 8.6 Middleware de servidor y buenas prácticas</h2>
+    <div class="doc-content">
+<h3>Middleware de servidor</h3>
+<p>Los archivos en <code>server/middleware/</code> se ejecutan en cada petición antes de llegar a los endpoints. Son útiles para añadir cabeceras, validar autenticación o registrar peticiones.</p>
+<pre><code class="language-vue">&lt;!-- server/middleware/log.ts --&gt;
+export default defineEventHandler((event) =&gt; {
+  const ruta = getRequestURL(event).pathname
+  console.log(`[${new Date().toISOString()}] ${ruta}`)
+})</code></pre>
+<h3>Buenas prácticas</h3>
+<ul>
+<li>Valida siempre los datos de entrada en el servidor</li>
+<li>Devolver códigos de estado HTTP correctos</li>
+<li>No exponer datos sensibles en las respuestas</li>
+<li>Organiza los endpoints por recurso en archivos separados</li>
+<li>Usa middleware para tareas globales como auth y logging</li>
+</ul>
+<h3>Ejemplo: Proteger un endpoint con clave API</h3>
+<pre><code class="language-vue">&lt;!-- server/middleware/auth.ts --&gt;
+export default defineEventHandler((event) =&gt; {
+  const clave = getHeader(event, 'x-api-key')
+
+  if (clave !== process.env.API_KEY) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'No autorizado'
+    })
+  }
+})</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Nitro es el motor de servidor integrado de Nuxt
+- Tienes endpoint own en server/api/* y rutas personalizadas en server/routes/
+- Los sufijos de archivo determinan el método HTTP
+- Los parámetros dinámicos se leen con getRouterParam
+- $fetch y useFetch consumen tus endpoints con soporte SSR
+- createError y el middleware de servidor gestionan errores y seguridad
+- Valida siempre los datos de entrada en el servidor
+</blockquote>
+    </div>
+  </section>

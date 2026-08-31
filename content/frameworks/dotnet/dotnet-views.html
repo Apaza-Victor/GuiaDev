@@ -1,0 +1,166 @@
+<!-- 05. Vistas y Razor - .NET (Frameworks) -->
+  <section id="5-1-que-es-razor">
+    <h2><i class="fa-solid fa-code"></i> 5.1 Qué es Razor</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p><strong>Razor</strong> es el motor de vistas de ASP.NET Core. Permite combinar HTML con código C# usando el símbolo arroba (<code>@</code>). Los archivos de view usan la extensión <code>.cshtml</code>.</p>
+<h3>Ejemplo: Sintaxis Razor</h3>
+<pre><code class="language-csharp">@{
+    var nombre = "Ana";
+    var hora = DateTime.Now;
+}
+
+&lt;h1&gt;Hola, @nombre&lt;/h1&gt;
+&lt;p&gt;Son las @hora.Hour horas&lt;/p&gt;</code></pre>
+<h3>Elementos de Razor</h3>
+<table><thead><tr><th>Sintaxis</th><th>Uso</th></tr></thead><tbody><tr><td><code>@expresion</code></td><td>Imprime el valor de una expresión</td></tr><tr><td><code>@if / @foreach</code></td><td>Estructuras de control</td></tr><tr><td><code>@model</code></td><td>Declara el modelo de la vista</td></tr><tr><td><code>@{ ... }</code></td><td>Bloque de código C#</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-2-archivos-cshtml">
+    <h2><i class="fa-solid fa-file-lines"></i> 5.2 Archivos .cshtml</h2>
+    <div class="doc-content">
+<h3>Estructura de una vista</h3>
+<p>Las vistas viven en la carpeta <code>Views/</code> siguiendo la convención <code>Views/[Controlador]/[Accion].cshtml</code>.</p>
+<h3>Ejemplo: una vista completa</h3>
+<pre><code class="language-csharp">@model List&lt;Producto&gt;
+
+&lt;h1&gt;Lista de productos&lt;/h1&gt;
+
+&lt;table&gt;
+    &lt;tr&gt;&lt;th&gt;Nombre&lt;/th&gt;&lt;th&gt;Precio&lt;/th&gt;&lt;/tr&gt;
+    @foreach (var p in Model)
+    {
+        &lt;tr&gt;
+            &lt;td&gt;@p.Nombre&lt;/td&gt;
+            &lt;td&gt;@p.Precio&lt;/td&gt;
+        &lt;/tr&gt;
+    }
+&lt;/table&gt;</code></pre>
+<blockquote class="aside aside-note">
+La convención de nombres permite que el controlador encuentre la vista automáticamente con View().
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-3-layout">
+    <h2><i class="fa-solid fa-object-group"></i> 5.3 Layout y plantillas</h2>
+    <div class="doc-content">
+<h3>Qué es el Layout</h3>
+<p>El <strong>layout</strong> define la estructura común de todas las páginas (encabezado, menú, pie). Se encuentra en <code>Views/Shared/_Layout.cshtml</code> y usa la sección <code>RenderBody()</code>.</p>
+<h3>Ejemplo: un layout básico</h3>
+<pre><code class="language-csharp">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;@ViewData["Title"]&lt;/title&gt;
+    &lt;link rel="stylesheet" href="~/css/site.css" /&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;header&gt;Mi sitio web&lt;/header&gt;
+    &lt;main&gt;
+        @RenderBody()
+    &lt;/main&gt;
+    &lt;footer&gt;© 2026&lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<h3>Forzar un layout desde una vista</h3>
+<pre><code class="language-csharp">@{
+    Layout = "_Layout";
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-4-partials">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> 5.4 Vistas parciales</h2>
+    <div class="doc-content">
+<h3>Qué son las vistas parciales</h3>
+<p>Las <strong>vistas parciales</strong> son fragmentos de vista reutilizables (por ejemplo, una tarjeta de producto). Se cargan desde otras vistas.</p>
+<h3>Ejemplo: carga una parcial</h3>
+<pre><code class="language-csharp">@model List&lt;Producto&gt;
+
+&lt;h1&gt;Productos&lt;/h1&gt;
+
+@foreach (var p in Model)
+{
+    &lt;partial name="_TarjetaProducto" model="p" /&gt;
+}</code></pre>
+<h3>Parcial: _TarjetaProducto.cshtml</h3>
+<pre><code class="language-csharp">@model Producto
+
+&lt;div class="card"&gt;
+    &lt;h3&gt;@Model.Nombre&lt;/h3&gt;
+    &lt;p&gt;Precio: @Model.Precio&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+<p>Las parciales llevan prefijo de guion bajo (<code>_Nombre.cshtml</code>).</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-5-tag-helpers">
+    <h2><i class="fa-solid fa-tags"></i> 5.5 Tag Helpers</h2>
+    <div class="doc-content">
+<h3>Qué son los Tag Helpers</h3>
+<p>Los <strong>Tag Helpers</strong> son atributos en etiquetas HTML que generan HTML del servidor. Ayudan a crear formularios y enlaces fuertemente tipados.</p>
+<h3>Ejemplo: formularios con Tag Helpers</h3>
+<pre><code class="language-csharp">@model Producto
+
+&lt;form asp-action="Guardar" method="post"&gt;
+    &lt;input asp-for="Nombre" /&gt;
+    &lt;input asp-for="Precio" /&gt;
+    &lt;button type="submit"&gt;Guardar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<h3>Tag Helpers comunes</h3>
+<ul>
+<li><strong>asp-action / asp-controller</strong>: Enlaces a acciones</li>
+<li><strong>asp-for</strong>: Enlaza campos a propiedades del modelo</li>
+<li><strong>asp-validation-for</strong>: Mensajes de validación</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-6-viewdata-y-model">
+    <h2><i class="fa-solid fa-forward"></i> 5.6 ViewData, ViewBag y Model</h2>
+    <div class="doc-content">
+<h3>Pasar datos a la vista</h3>
+<p>Hay varias formas de enviar datos desde el controlador a la vista:</p>
+<table><thead><tr><th>Mecanismo</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Model</strong></td><td>Objeto fuertemente tipado con @model</td></tr><tr><td><strong>ViewData</strong></td><td>Diccionario de clave-valor</td></tr><tr><td><strong>ViewBag</strong></td><td>Acceso dinámico sobre ViewData</td></tr></tbody></table>
+<h3>Ejemplo: desde el controlador</h3>
+<pre><code class="language-csharp">public IActionResult Index()
+{
+    ViewData["Titulo"] = "Bienvenida";
+    ViewBag.Mensaje = "Hola desde ViewBag";
+
+    var productos = new List&lt;Producto&gt; { /* ... */ };
+    return View(productos);
+}</code></pre>
+<h3>En la vista</h3>
+<pre><code class="language-csharp">@model List&lt;Producto&gt;
+
+&lt;h1&gt;@ViewData["Titulo"]&lt;/h1&gt;
+&lt;p&gt;@ViewBag.Mensaje&lt;/p&gt;
+&lt;p&gt;Hay @Model.Count productos&lt;/p&gt;</code></pre>
+<blockquote class="aside aside-tip">
+Prefiere el uso de `@model` fuertemente tipado siempre que sea posible, es más seguro y legible.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Razor combina HTML y C# con el símbolo @
+- Las vistas usan archivos .cshtml en la carpeta Views/
+- El layout define la estructura común usando RenderBody()
+- Las parciales son fragmentos reutilizables
+- Los Tag Helpers generan HTML fuertemente tipado
+- Los datos se pasan con Model, ViewData y ViewBag
+</blockquote>
+    </div>
+  </section>

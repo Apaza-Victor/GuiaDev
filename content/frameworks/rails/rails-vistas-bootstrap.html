@@ -1,0 +1,245 @@
+<!-- 08. Vistas con Bootstrap y helpers - Rails (Frameworks) -->
+  <section id="8-1-integrar-bootstrap-en-rails">
+    <h2><i class="fa-solid fa-palette"></i> 8.1 Integrar Bootstrap en Rails</h2>
+    <div class="doc-content">
+<h3>Al crear el proyecto</h3>
+<p>La forma más sencilla es crear el proyecto con Bootstrap desde el inicio:</p>
+<pre><code class="language-bash">rails new mi_app --css bootstrap</code></pre>
+<pre><code class="language-erb">&lt;!-- Dentro del layout el CSS ya está enlazado --&gt;
+&lt;%= stylesheet_link_tag "application", "data-turbo-track": "reload" %&gt;
+&lt;%= javascript_importmap_tags %&gt;</code></pre>
+<h3>Añadir Bootstrap a un proyecto existente</h3>
+<pre><code class="language-bash"># Instalar la gema bootstrap
+bundle add bootstrap
+
+# Añadir la importación del Sass
+rails css:install:bootstrap</code></pre>
+<h3>Verificar que funciona</h3>
+<pre><code class="language-bash">rails server</code></pre>
+<p>Abre <code>http://localhost:3000</code> y comprueba que las clases de Bootstrap (por ejemplo <code>btn btn-primary</code>) se ven correctamente.</p>
+<blockquote class="aside aside-tip">
+Con <code>--css bootstrap</code>, Rails configura el pipeline de CSS (dart-sass o importmap) y deja los estilos listos dentro de <code>app/assets</code>.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-2-plantillas-bootstrap-en-layouts">
+    <h2><i class="fa-solid fa-house"></i> 8.2 Plantillas Bootstrap en layouts</h2>
+    <div class="doc-content">
+<h3>Layout con navbar</h3>
+<pre><code class="language-erb">&lt;!-- app/views/layouts/application.html.erb --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;title&gt;&lt;%= content_for(:title) || "Mi App" %&gt;&lt;/title&gt;
+  &lt;%= csrf_meta_tags %&gt;
+  &lt;%= csp_meta_tag %&gt;
+  &lt;%= stylesheet_link_tag "application", "data-turbo-track": "reload" %&gt;
+  &lt;%= javascript_importmap_tags %&gt;
+&lt;/head&gt;
+&lt;body class="bg-light"&gt;
+  &lt;nav class="navbar navbar-expand-lg navbar-dark bg-dark"&gt;
+    &lt;div class="container"&gt;
+      &lt;%= link_to "Mi App", root_path, class: "navbar-brand" %&gt;
+      &lt;button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu"&gt;
+        &lt;span class="navbar-toggler-icon"&gt;&lt;/span&gt;
+      &lt;/button&gt;
+      &lt;div class="collapse navbar-collapse" id="navMenu"&gt;
+        &lt;ul class="navbar-nav ms-auto"&gt;
+          &lt;li class="nav-item"&gt;&lt;%= link_to "Inicio", root_path, class: "nav-link" %&gt;&lt;/li&gt;
+          &lt;li class="nav-item"&gt;&lt;%= link_to "Productos", productos_path, class: "nav-link" %&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/nav&gt;
+
+  &lt;main class="container py-4"&gt;
+    &lt;%= yield %&gt;
+  &lt;/main&gt;
+
+  &lt;footer class="bg-dark text-white text-center py-3"&gt;
+    &lt;p class="mb-0"&gt;Mi App &amp;copy; 2026&lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-3-vistas-con-react-bootstrap-y-grid">
+    <h2><i class="fa-solid fa-table-cells-large"></i> 8.3 Vistas con Bootstrap y grid</h2>
+    <div class="doc-content">
+<h3>Acciones con botones Bootstrap</h3>
+<pre><code class="language-erb">&lt;!-- app/views/productos/show.html.erb --&gt;
+&lt;div class="d-flex justify-content-between align-items-center mb-3"&gt;
+  &lt;h1&gt;&lt;%= @producto.nombre %&gt;&lt;/h1&gt;
+  &lt;div&gt;
+    &lt;%= link_to "Editar", edit_producto_path(@producto), class: "btn btn-warning" %&gt;
+    &lt;%= button_to "Eliminar", @producto, method: :delete, class: "btn btn-danger",
+                  form: { data: { turbo_confirm: "¿Seguro?" } } %&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+<h3>Sistema de rejilla (grid)</h3>
+<pre><code class="language-erb">&lt;!-- Lista de productos con grid responsivo --&gt;
+&lt;div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"&gt;
+  &lt;% @productos.each do |producto| %&gt;
+    &lt;div class="col"&gt;
+      &lt;div class="card h-100 shadow-sm"&gt;
+        &lt;div class="card-body"&gt;
+          &lt;h5 class="card-title"&gt;&lt;%= producto.nombre %&gt;&lt;/h5&gt;
+          &lt;p class="card-text"&gt;&lt;%= truncate(producto.descripcion, length: 100) %&gt;&lt;/p&gt;
+          &lt;strong class="text-success"&gt;&lt;%= number_to_currency(producto.precio) %&gt;&lt;/strong&gt;
+        &lt;/div&gt;
+        &lt;div class="card-footer"&gt;
+          &lt;%= link_to "Ver", producto, class: "btn btn-sm btn-outline-primary" %&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;% end %&gt;
+&lt;/div&gt;</code></pre>
+<h3>Alertas Bootstrap con flash</h3>
+<pre><code class="language-erb">&lt;% flash.each do |tipo, mensaje| %&gt;
+  &lt;div class="alert alert-&lt;%= bootstrap_alert(tipo) %&gt; alert-dismissible fade show" role="alert"&gt;
+    &lt;%= mensaje %&gt;
+  &lt;/div&gt;
+&lt;% end %&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-4-formularios-con-bootstrap">
+    <h2><i class="fa-solid fa-square-pen"></i> 8.4 Formularios con Bootstrap</h2>
+    <div class="doc-content">
+<h3>form_with con estilos Bootstrap</h3>
+<pre><code class="language-erb">&lt;!-- app/views/productos/new.html.erb --&gt;
+&lt;h1&gt;Nuevo producto&lt;/h1&gt;
+
+&lt;%= form_with model: @producto, class: "row g-3" do |form| %&gt;
+  &lt;% if @producto.errors.any? %&gt;
+    &lt;div class="alert alert-danger"&gt;
+      &lt;h4&gt;¡Revisa los errores!&lt;/h4&gt;
+      &lt;ul&gt;
+        &lt;% @producto.errors.full_messages.each do |msg| %&gt;
+          &lt;li&gt;&lt;%= msg %&gt;&lt;/li&gt;
+        &lt;% end %&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;% end %&gt;
+
+  &lt;div class="col-md-6"&gt;
+    &lt;%= form.label :nombre, class: "form-label" %&gt;
+    &lt;%= form.text_field :nombre, class: "form-control" %&gt;
+  &lt;/div&gt;
+
+  &lt;div class="col-md-6"&gt;
+    &lt;%= form.label :precio, class: "form-label" %&gt;
+    &lt;%= form.number_field :precio, step: "0.01", class: "form-control" %&gt;
+  &lt;/div&gt;
+
+  &lt;div class="col-12"&gt;
+    &lt;%= form.submit "Guardar", class: "btn btn-primary" %&gt;
+  &lt;/div&gt;
+&lt;% end %&gt;</code></pre>
+<h3>Campos con validation-required en Bootstrap</h3>
+<pre><code class="language-erb">&lt;div class="mb-3"&gt;
+  &lt;%= form.label :nombre, class: "form-label" %&gt;
+  &lt;%= form.text_field :nombre, class: "form-control", required: true %&gt;
+&lt;/div&gt;
+
+&lt;div class="form-check"&gt;
+  &lt;%= form.check_box :publicado, class: "form-check-input" %&gt;
+  &lt;%= form.label :publicado, class: "form-check-label" %&gt;
+&lt;/div&gt;</code></pre>
+<blockquote class="aside aside-tip">
+Rails añade automáticamente la clase <code>is-invalid</code> en los formularios de error si configuras un helper, o puedes aplicar <code>form-control</code> para que Bootstrap lo estilice de forma consistente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-5-helpers-de-rails">
+    <h2><i class="fa-solid fa-wrench"></i> 8.5 Helpers de Rails</h2>
+    <div class="doc-content">
+<h3>Helpers más usados</h3>
+<table><thead><tr><th>Helper</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>number_to_currency</code></td><td>Formatea un número como moneda</td></tr><tr><td><code>truncate</code></td><td>Corta un texto con puntos suspensivos</td></tr><tr><td><code>pluralize</code></td><td>Pluraliza una palabra según el número</td></tr><tr><td><code>link_to</code></td><td>Genera un enlace con URL helper</td></tr><tr><td><code>content_tag</code></td><td>Crea una etiqueta HTML con contenido</td></tr><tr><td><code>tag</code></td><td>Genera etiquetas HTML simples</td></tr></tbody></table>
+<h3>Ejemplos de uso</h3>
+<pre><code class="language-ruby"># app/helpers/productos_helper.rb
+module ProductosHelper
+  def precio_formateado(valor)
+    number_to_currency(valor, unit: "S/", precision: 2)
+  end
+
+  def resumen(texto, largo = 80)
+    truncate(texto, length: largo, separator: " ")
+  end
+end</code></pre>
+<pre><code class="language-erb">&lt;!-- Uso en la vista --&gt;
+&lt;p&gt;Precio: &lt;%= precio_formateado(@producto.precio) %&gt;&lt;/p&gt;
+&lt;p&gt;&lt;%= resumen(@producto.descripcion) %&gt;&lt;/p&gt;
+&lt;p&gt;&lt;%= pluralize(@productos.count, "producto") %&gt;&lt;/p&gt;</code></pre>
+<h3>Helpers de enlaces y contenido</h3>
+<pre><code class="language-erb">&lt;%= link_to "Ver", producto_path(@producto), class: "btn" %&gt;
+&lt;%= content_tag :span, "Nuevo", class: "badge bg-success" %&gt;
+&lt;%= tag.strong "Importante" %&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-6-generadores-de-vistas-y-stimulus">
+    <h2><i class="fa-solid fa-bolt"></i> 8.6 Generadores de vistas y Stimulus</h2>
+    <div class="doc-content">
+<h3>Generador de vistas</h3>
+<pre><code class="language-bash">rails generate controller Productos index show new create
+# Genera app/views/productos/index.html.erb, show.html.erb, etc.</code></pre>
+<pre><code class="language-bash"># Ver las rutas asociadas
+rails routes --controller productos</code></pre>
+<h3>Uso de Stimulus para interactividad</h3>
+<p>Stimulus es el framework de JavaScript mínimo incluido por defecto en Rails 7+. Se conecta a elementos del DOM mediante atributos de datos:</p>
+<pre><code class="language-erb">&lt;!-- Vista con controlador Stimulus --&gt;
+&lt;div data-controller="contador" class="row align-items-center g-2"&gt;
+  &lt;div class="col-auto"&gt;
+    &lt;button data-action="click-&gt;contador#restar" class="btn btn-secondary"&gt;-&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div class="col-auto"&gt;
+    &lt;span data-contador-target="valor" class="fs-4"&gt;0&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;div class="col-auto"&gt;
+    &lt;button data-action="click-&gt;contador#sumar" class="btn btn-primary"&gt;+&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+<pre><code class="language-javascript">// app/javascript/controllers/contador_controller.js
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["valor"]
+
+  sumar() {
+    this.valorTarget.textContent = parseInt(this.valorTarget.textContent) + 1
+  }
+
+  restar() {
+    this.valorTarget.textContent = parseInt(this.valorTarget.textContent) - 1
+  }
+}</code></pre>
+<blockquote class="aside aside-note">
+Combinar Bootstrap (estilos y componentes) con Stimulus (interactividad) cubre la mayoría de necesidades de una interfaz sin frameworks de JavaScript pesados.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- <code>rails new --css bootstrap</code> integra Bootstrap desde el inicio
+- Los layouts combinan navbar, grid y footer con clases Bootstrap
+- Los botones, cards y alertas se construyen con clases como btn y card
+- Los formularios usan form_with junto a form-control y form-label
+- Los helpers (number_to_currency, truncate, link_to) generan HTML
+- Stimulus añade interactividad mínima sin frameworks pesados
+</blockquote>
+    </div>
+  </section>

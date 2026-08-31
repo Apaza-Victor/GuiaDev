@@ -1,0 +1,262 @@
+<!-- 09. Blueprints y autenticación - Flask (Frameworks) -->
+  <section id="9-1-que-son-los-blueprints">
+    <h2><i class="fa-solid fa-cubes"></i> 9.1 Qué son los Blueprints</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>Blueprint</strong> es una forma de organizar una aplicación Flask en módulos separados, cada uno con sus propias rutas, plantillas y estáticos. Permite dividir un proyecto grande en secciones claras y reutilizables.</p>
+<h3>Beneficios de usar Blueprints</h3>
+<ul>
+<li><strong>Modularidad</strong>: Divide la app en partes independientes</li>
+<li><strong>Reutilización</strong>: Un blueprint puede usarse en varios proyectos</li>
+<li><strong>Mantenibilidad</strong>: Cada módulo se desarrolla por separado</li>
+<li><strong>Escalabilidad</strong>: Proyectos grandes más fáciles de gestionar</li>
+<li><strong>Organización</strong>: Separas rutas relacionadas en un mismo lugar</li>
+</ul>
+<h3>Estructura típica con blueprints</h3>
+<pre><code class="language-python">miapp/
+├── app.py
+├── auth/
+│   ├── __init__.py
+│   └── rutas.py
+├── main/
+│   ├── __init__.py
+│   └── rutas.py
+└── templates/
+    └── base.html</code></pre>
+<blockquote class="aside aside-note">
+Los Blueprints son ideales cuando tu aplicación empieza a crecer y quieres mantener las rutas organizadas por funcionalidad.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-2-crear-un-blueprint">
+    <h2><i class="fa-solid fa-layer-group"></i> 9.2 Crear un Blueprint</h2>
+    <div class="doc-content">
+<h3>Definir un blueprint</h3>
+<p>Creamos un archivo `main.py` con las rutas principales:</p>
+<pre><code class="language-python"># main.py
+from flask import Blueprint, render_template
+
+# Se crea el blueprint con nombre y prefijo de URL
+main = Blueprint("main", __name__)
+
+
+@main.route("/")
+def inicio():
+    return render_template("inicio.html")
+
+
+@main.route("/acerca")
+def acerca():
+    return "Acerca de nosotros"</code></pre>
+<h3>Registrar el blueprint en la app</h3>
+<pre><code class="language-python"># app.py
+from flask import Flask
+from main import main
+
+app = Flask(__name__)
+
+# Registrar el blueprint
+app.register_blueprint(main)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)</code></pre>
+<h3>Prefijos de URL</h3>
+<pre><code class="language-python"># main.py
+admin = Blueprint("admin", __name__, url_prefix="/admin")
+
+
+@admin.route("/")
+@admin.route("/panel")
+def panel():
+    return "Panel de administración"
+
+# Accesible en /admin/ y /admin/panel</code></pre>
+<blockquote class="aside aside-tip">
+El parámetro `url_prefix` añade un prefijo a todas las rutas del blueprint, ideal para agrupar secciones como `/admin` o `/api`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-3-registrar-blueprint">
+    <h2><i class="fa-solid fa-floppy-disk"></i> 9.3 Register_blueprint</h2>
+    <div class="doc-content">
+<h3>Cómo funciona register_blueprint</h3>
+<p>Para que la aplicación conozca un blueprint, hay que registrarlo con <code>app.register_blueprint()</code>. Puedes registrar varios blueprints en la misma app.</p>
+<h3>Registrar varios blueprints</h3>
+<pre><code class="language-python">from flask import Flask
+from main.rutas import main
+from auth.rutas import auth
+from admin.rutas import admin
+
+app = Flask(__name__)
+
+app.register_blueprint(main)
+app.register_blueprint(auth, url_prefix="/auth")
+app.register_blueprint(admin, url_prefix="/admin")
+
+
+if __name__ == "__main__":
+    app.run(debug=True)</code></pre>
+<h3>Opciones de register_blueprint</h3>
+<table><thead><tr><th>Opción</th><th>Descripción</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>url_prefix</code></td><td>Prefijo para todas las rutas</td><td><code>/api</code></td></tr><tr><td><code>name</code></td><td>Renombrar el blueprint</td><td>Evitar conflictos</td></tr><tr><td><code>template_folder</code></td><td>Carpeta de plantillas propia</td><td><code>templates</code></td></tr></tbody></table>
+<h3>url_for con blueprints</h3>
+<pre><code class="language-python"># En HTML: url_for('nombre_blueprint.nombre_vista')
+# Ejemplo: url_for('main.inicio')
+#          url_for('auth.login')</code></pre>
+<blockquote class="aside aside-warning">
+Cuando uses `url_for` con blueprints, recuerda el formato `nombre_blueprint.nombre_vista`, por ejemplo `main.inicio`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-4-autenticacion-basica">
+    <h2><i class="fa-solid fa-user-lock"></i> 9.4 Autenticación básica</h2>
+    <div class="doc-content">
+<h3>Qué es la autenticación</h3>
+<p>La <strong>autenticación</strong> verifica la identidad de un usuario. La forma más común en Flask es usar <strong>sesiones</strong> basadas en cookies firmadas.</p>
+<h3>Cómo funciona la sesión</h3>
+<ol>
+<li>El usuario se identifica (usuario y contraseña)</li>
+<li>Flask guarda sus datos en la sesión (cookie firmada)</li>
+<li>En cada petición, la sesión está disponible</li>
+<li>Al cerrar sesión se limpian los datos</li>
+</ol>
+<h3>Implementar login básico con sesiones</h3>
+<pre><code class="language-python">from flask import Flask, session, request, redirect, url_for
+
+app = Flask(__name__)
+app.secret_key = "clave_secreta_para_firmar_sesiones"
+
+usuarios = {"admin": "clave123"}
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        usuario = request.form.get("usuario")
+        clave = request.form.get("clave")
+        if usuarios.get(usuario) == clave:
+            session["usuario"] = usuario
+            return redirect(url_for("panel"))
+        return "Credenciales incorrectas"
+    return "Formulario de login"
+
+
+@app.route("/panel")
+def panel():
+    if "usuario" not in session:
+        return redirect(url_for("login"))
+    return f"Bienvenido, {session['usuario']}"
+
+
+@app.route("/logout")
+def logout():
+    session.pop("usuario", None)
+    return redirect(url_for("login"))</code></pre>
+<blockquote class="aside aside-warning">
+Definir `app.secret_key` es obligatorio para usar sesiones. Nunca pongas una clave real en el código; usa variables de entorno.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-5-proteger-rutas">
+    <h2><i class="fa-solid fa-shield-halved"></i> 9.5 Proteger rutas</h2>
+    <div class="doc-content">
+<h3>Qué es proteger una ruta</h3>
+<p>Proteger una ruta significa impedir el acceso a usuarios que no han iniciado sesión, redirigiéndolos al login o devolviendo un error 401/403.</p>
+<h3>Verificar sesión manualmente</h3>
+<pre><code class="language-python">from flask import session, redirect, url_for
+
+@app.route("/perfil")
+def perfil():
+    if "usuario" not in session:
+        return redirect(url_for("login"))
+    return "Contenido del perfil"
+
+
+@app.route("/admin")
+def admin():
+    if session.get("usuario") != "admin":
+        return "Acceso denegado", 403
+    return "Panel de administración"</code></pre>
+<h3>Decorador de protección reutilizable</h3>
+<pre><code class="language-python">from functools import wraps
+from flask import session, redirect, url_for
+
+
+def login_requerido(func):
+    @wraps(func)
+    def envoltura(*args, **kwargs):
+        if "usuario" not in session:
+            return redirect(url_for("login"))
+        return func(*args, **kwargs)
+    return envoltura
+
+
+@app.route("/privado")
+@login_requerido
+def privado():
+    return "Esta página solo para usuarios autenticados"</code></pre>
+<blockquote class="aside aside-tip">
+Con un decorador como `login_requerido` protegemos varias rutas sin repetir la comprobación en cada una.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-6-manejo-de-usuarios">
+    <h2><i class="fa-solid fa-users"></i> 9.6 Manejo de usuarios (concepto)</h2>
+    <div class="doc-content">
+<h3>Conceptos clave</h3>
+<ul>
+<li><strong>Registro</strong>: Crear una cuenta nueva</li>
+<li><strong>Login</strong>: Iniciar sesión con credenciales</li>
+<li><strong>Logout</strong>: Cerrar la sesión</li>
+<li><strong>Hashing de contraseñas</strong>: Guardar la contraseña cifrada, nunca en texto plano</li>
+<li><strong>Roles y permisos</strong>: Distintos niveles de acceso</li>
+</ul>
+<h3>Hashing de contraseñas</h3>
+<pre><code class="language-python"># Instala: pip install werkzeug
+from werkzeug.security import generate_password_hash, check_password_hash
+
+# Al registrar: guardar el hash
+hash_clave = generate_password_hash("clave123")
+
+# Al hacer login: comparar
+if check_password_hash(hash_clave, "clave123"):
+    print("Contraseña correcta")</code></pre>
+<h3>Flask-Login como alternativa</h3>
+<p>Para proyectos más avanzados, <strong>Flask-Login</strong> gestiona sesiones, "recuérdame" y protección de rutas de forma integrada:</p>
+<pre><code class="language-python">pip install flask-login
+
+# flask_login.login_user(usuario)   # Iniciar sesión
+# flask_login.logout_user()          # Cerrar sesión
+# @login_required                    # Proteger rutas
+# current_user.is_authenticated      # Comprobar estado</code></pre>
+<blockquote class="aside aside-note">
+Nunca guardes contraseñas en texto plano. Usa siempre hashing (como `generate_password_hash`) o una librería de autenticación probada.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los Blueprints modularizan la aplicación en secciones independientes
+- Un Blueprint se define con `Blueprint()` y se registra con `register_blueprint`
+- `url_prefix` agrupa rutas bajo un prefijo común
+- La autenticación básica usa sesiones basadas en cookies firmadas
+- Las rutas se protegen comprobando la sesión o con decoradores
+- Las contraseñas deben guardarse con hashing, nunca en texto plano
+</blockquote>
+    </div>
+  </section>

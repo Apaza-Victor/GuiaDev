@@ -1,0 +1,127 @@
+<!-- 09. Estilos, transiciones y animaciones - Svelte (Frameworks) -->
+  <section id="9-1-estilos-scoped">
+    <h2><i class="fa-solid fa-palette"></i> 9.1 Estilos con scope</h2>
+    <div class="doc-content">
+<h3>CSS aislado por componente</h3>
+<p>El bloque <code>&lt;style&gt;</code> de un componente Svelte aplica sus estilos de forma <strong>scoped</strong>: solo afectan a los elementos de ese componente y no se filtran a otros. Svelte añade una clase única a los elementos y reescribe los selectores durante la compilación.</p>
+<h3>Ejemplo: estilos de componente</h3>
+<pre><code class="language-svelte">&lt;style&gt;
+  p {
+    color: #ff3e00;
+    font-weight: bold;
+  }
+&lt;/style&gt;
+
+&lt;p&gt;Este párrafo está estilizado&lt;/p&gt;</code></pre>
+<p>Para estilar elementos internos de un componente hijo de forma puntual se usa la directiva <code>:global()</code>, que rompe el aislamiento.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-2-clases-dinamicas">
+    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> 9.2 Clases dinámicas</h2>
+    <div class="doc-content">
+<h3>Aplicar clases según estado</h3>
+<p>Puedes asignar clases de forma condicional enlazando el atributo <code>class</code> con una expresión, o usando el atajo <code>class:nombre</code> que añade la clase cuando la variable es verdadera.</p>
+<h3>Ejemplo: clase condicional</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  let activo = true;
+&lt;/script&gt;
+
+&lt;p class:activo&gt;Elemento con clase dinámica&lt;/p&gt;</code></pre>
+<p>Cuando <code>activo</code> es <code>true</code>, se añade la clase <code>activo</code>. También puedes enlazar con una expresión como <code>class:rojo={esRojo()}</code>.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-3-transicion-fade-fly">
+    <h2><i class="fa-solid fa-fade"></i> 9.3 Transiciones fade y fly</h2>
+    <div class="doc-content">
+<h3>Animar entrada y salida</h3>
+<p>Svelte incluye transiciones integradas como <code>fade</code>, <code>fly</code>, <code>scale</code> y <code>slide</code> que se aplican cuando un elemento entra o sale del DOM. Se usan con la directiva <code>transition:</code> y se importan desde <code>svelte/transition</code>.</p>
+<h3>Ejemplo: fade y fly</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  import { fade, fly } from 'svelte/transition';
+  let visible = true;
+&lt;/script&gt;
+
+{#if visible}
+  &lt;p transition:fade&gt;Aparece y desaparece&lt;/p&gt;
+  &lt;h1 transition:fly={{ y: 200, duration: 1000 }}&gt;
+    Vuela desde abajo
+  &lt;/h1&gt;
+{/if}
+
+&lt;button on:click={() =&gt; visible = !visible}&gt;Alternar&lt;/button&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-4-transiciones-in-out">
+    <h2><i class="fa-solid fa-right-left"></i> 9.4 Transiciones in y out</h2>
+    <div class="doc-content">
+<h3>Distintas animaciones de entrada y salida</h3>
+<p>Puedes usar <code>in:</code> y <code>out:</code> para definir animaciones diferentes al entrar y al salir, o <code>animate:</code> para animar el cambio de posición cuando un elemento se mueve dentro de una lista.</p>
+<h3>Ejemplo: in y out distintos</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  import { fly, fade } from 'svelte/transition';
+  let visible = true;
+&lt;/script&gt;
+
+{#if visible}
+  &lt;p in:fly={{ y: 100 }} out:fade&gt;
+    Entra volando y sale desvaneciéndose
+  &lt;/p&gt;
+{/if}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-5-animaciones-flip">
+    <h2><i class="fa-solid fa-arrows-up-down-left-right"></i> 9.5 Animaciones flip</h2>
+    <div class="doc-content">
+<h3>Reordenar listas con elegancia</h3>
+<p>La animación <code>flip</code> (First Last Invert Play) mueve suavemente los elementos restantes cuando un elemento se añade, elimina o reordena en una lista. Se usa con la directiva <code>animate:</code> sobre cada elemento de la lista.</p>
+<h3>Ejemplo: reordenar lista</h3>
+<pre><code class="language-svelte">&lt;script&gt;
+  import { flip } from 'svelte/animate';
+  let letras = ['a', 'b', 'c'];
+
+  function mover() {
+    letras = [letras[2], letras[0], letras[1]];
+  }
+&lt;/script&gt;
+
+{#each letras as letra (letra)}
+  &lt;p animate:flip&gt;{letra}&lt;/p&gt;
+{/each}
+
+&lt;button on:click={mover}&gt;Reordenar&lt;/button&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-6-resumen-transiciones">
+    <h2><i class="fa-solid fa-film"></i> 9.6 Directivas de movimiento</h2>
+    <div class="doc-content">
+<h3>Comparativa de directivas</h3>
+<table><thead><tr><th>Directiva</th><th>Función</th></tr></thead><tbody><tr><td><strong>transition:</strong></td><td>Anima entrada y salida igual</td></tr><tr><td><strong>in:</strong></td><td>Anima solo la entrada</td></tr><tr><td><strong>out:</strong></td><td>Anima solo la salida</td></tr><tr><td><strong>animate:</strong></td><td>Anima el cambio de posición en listas</td></tr><tr><td><strong>class:</strong></td><td>Aplica clases de forma condicional</td></tr><tr><td><strong>:global()</strong></td><td>Rompe el scope de los estilos</td></tr></tbody></table>
+<p>Combina estas directivas con bloques <code>{#if}</code> y <code>{#each}</code> para crear interfaces fluidas y dinámicas.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los estilos son scoped por componente por defecto
+- class: y :global() controlan el alcance de las clases
+- transition:fade y transition:fly animan entrada y salida
+- in: y out: definen animaciones distintas
+- animate:flip anima el reordenamiento de listas
+- Combina directivas con bloques de lógica para interfaces dinámicas
+</blockquote>
+    </div>
+  </section>

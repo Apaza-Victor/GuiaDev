@@ -1,0 +1,303 @@
+<!-- 04. Estado y setState - Flutter (Frameworks) -->
+  <section id="1-1-que-es-el-estado">
+    <h2><i class="fa-solid fa-database"></i> 1.1 Qué es el estado</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p><strong>Estado</strong> es la información que puede cambiar durante la vida de la aplicación y que afecta lo que se muestra en pantalla. Por ejemplo: un contador, la posición de scroll, los datos cargados de una API o la selección del usuario.</p>
+<h3>Tipos de estado</h3>
+<table><thead><tr><th>Tipo</th><th>Descripción</th><th>Ejemplo</th></tr></thead><tbody><tr><td><strong>Estado local</strong></td><td>Pertenece a un solo widget</td><td>Contador, checkbox</td></tr><tr><td><strong>Estado compartido</strong></td><td>Usado por varios widgets</td><td>Datos de sesión de usuario</td></tr><tr><td><strong>Estado persistente</strong></td><td>Se guarda en disco o base de datos</td><td>Preferencias, historial</td></tr></tbody></table>
+<h3>Ejemplo: Estado local en un widget</h3>
+<pre><code class="language-dart">class EstadoEjemplo extends StatefulWidget {
+  @override
+  _EstadoEjemploState createState() =&gt; _EstadoEjemploState();
+}
+
+class _EstadoEjemploState extends State&lt;EstadoEjemplo&gt; {
+  bool meGusta = false; // Estado local
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(meGusta ? Icons.favorite : Icons.favorite_border),
+      onPressed: () {
+        setState(() {
+          meGusta = !meGusta;
+        });
+      },
+    );
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-2-setstate">
+    <h2><i class="fa-solid fa-sync"></i> 1.2 setState()</h2>
+    <div class="doc-content">
+<h3>¿Qué es setState()?</h3>
+<p><code>setState()</code> es un método de <strong>StatefulWidget</strong> que le dice a Flutter que el estado del widget cambió y que debe reconstruir la UI.</p>
+<h3>Cómo funciona</h3>
+<pre><code class="language-dart">import 'package:flutter/material.dart';
+
+class ContadorApp extends StatefulWidget {
+  @override
+  _ContadorAppState createState() =&gt; _ContadorAppState();
+}
+
+class _ContadorAppState extends State&lt;ContadorApp&gt; {
+  int contador = 0;
+
+  void incrementar() {
+    setState(() {
+      contador++; // Cambiamos el estado
+    });
+    // La UI se reconstruye automáticamente
+  }
+
+  void decrementar() {
+    setState(() {
+      contador--;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text('Contador: $contador', style: TextStyle(fontSize: 32)),
+        Row(
+          children: [
+            ElevatedButton(
+              onPressed: incrementar,
+              child: Text('+1'),
+            ),
+            SizedBox(width: 16),
+            ElevatedButton(
+              onPressed: decrementar,
+              child: Text('-1'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}</code></pre>
+<h3>Reglas de setState()</h3>
+<ul>
+<li>Solo se usa en un StatefulWidget (en la clase State)</li>
+<li>Cambia el valor del estado antes de cerrar el bloque</li>
+<li>Se puede llamar dentro de callbacks y eventos</li>
+<li>Llamarlo sin cambios de estado es innecesario</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-3-interaccion-con-el-usuario">
+    <h2><i class="fa-solid fa-hand-pointer"></i> 1.3 Interacción con el usuario</h2>
+    <div class="doc-content">
+<h3>Widgets interactivos</h3>
+<table><thead><tr><th>Widget</th><th>Uso</th><th>Callback</th></tr></thead><tbody><tr><td><strong>Button</strong></td><td>Acciones</td><td>onPressed</td></tr><tr><td><strong>Switch</strong></td><td>Encender/apagar</td><td>onChanged</td></tr><tr><td><strong>Checkbox</strong></td><td>Selección múltiple</td><td>onChanged</td></tr><tr><td><strong>Slider</strong></td><td>Valores numéricos</td><td>onChanged</td></tr><tr><td><strong>TextField</strong></td><td>Entrada de texto</td><td>onChanged</td></tr><tr><td><strong>Radio</strong></td><td>Selección única</td><td>onChanged</td></tr></tbody></table>
+<h3>Ejemplo: Interacción con varios widgets</h3>
+<pre><code class="language-dart">class Configuracion extends StatefulWidget {
+  @override
+  _ConfiguracionState createState() =&gt; _ConfiguracionState();
+}
+
+class _ConfiguracionState extends State&lt;Configuracion&gt; {
+  bool notificaciones = true;
+  double volumen = 0.5;
+  String tema = 'Claro';
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SwitchListTile(
+          title: Text('Notificaciones'),
+          value: notificaciones,
+          onChanged: (valor) {
+            setState(() {
+              notificaciones = valor;
+            });
+          },
+        ),
+        ListTile(
+          title: Text('Volumen'),
+          trailing: Slider(
+            value: volumen,
+            onChanged: (valor) {
+              setState(() {
+                volumen = valor;
+              });
+            },
+          ),
+        ),
+        RadioListTile(
+          title: Text('Tema claro'),
+          value: 'Claro',
+          groupValue: tema,
+          onChanged: (valor) {
+            setState(() {
+              tema = valor.toString();
+            });
+          },
+        ),
+      ],
+    );
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-4-estado-en-pequenas-apps">
+    <h2><i class="fa-solid fa-chart-simple"></i> 1.4 Estado en aplicaciones pequeñas</h2>
+    <div class="doc-content">
+<h3>Gestión de estado para apps simples</h3>
+<p>Para aplicaciones pequeñas, el estado local con setState() es suficiente. No necesitas bibliotecas externas para manejar el estado básico.</p>
+<h3>Cuándo usar setState()</h3>
+<ul>
+<li>El estado pertenece a un solo widget</li>
+<li>La app es pequeña y simple</li>
+<li>No compartes mucho estado entre pantallas</li>
+<li>Quieres una solución rápida y directa</li>
+</ul>
+<h3>Ejemplo: App de lista de tareas con setState</h3>
+<pre><code class="language-dart">class ListaTareas extends StatefulWidget {
+  @override
+  _ListaTareasState createState() =&gt; _ListaTareasState();
+}
+
+class _ListaTareasState extends State&lt;ListaTareas&gt; {
+  final List&lt;String&gt; tareas = [];
+  final TextEditingController controlador = TextEditingController();
+
+  void agregarTarea() {
+    if (controlador.text.isNotEmpty) {
+      setState(() {
+        tareas.add(controlador.text);
+        controlador.clear();
+      });
+    }
+  }
+
+  void eliminarTarea(int indice) {
+    setState(() {
+      tareas.removeAt(indice);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Mis tareas')),
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controlador,
+                    decoration: InputDecoration(hintText: 'Nueva tarea'),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.add),
+                  onPressed: agregarTarea,
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: tareas.length,
+              itemBuilder: (context, indice) {
+                return ListTile(
+                  title: Text(tareas[indice]),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () =&gt; eliminarTarea(indice),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-5-estado-en-apps-grandes">
+    <h2><i class="fa-solid fa-diagram-project"></i> 1.5 Estado en aplicaciones grandes</h2>
+    <div class="doc-content">
+<h3>Limitaciones de setState()</h3>
+<p>En apps grandes, el estado compartido entre muchas pantallas se vuelve difícil de manejar solo con setState(). Se propagan demasiados callbacks y el código se complica.</p>
+<h3>Soluciones para estado complejo</h3>
+<table><thead><tr><th>Paquete</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Provider</strong></td><td>Simple y recomendado por Flutter para comenzar</td></tr><tr><td><strong>Riverpod</strong></td><td>Mejora de Provider, más seguro y testable</td></tr><tr><td><strong>Bloc</strong></td><td>Separación estricta en capas de lógica y UI</td></tr><tr><td><strong>GetX</strong></td><td>Todo en uno: estado, navegación y DI</td></tr></tbody></table>
+<h3>Ejemplo: Concepto con Provider (pubspec.yaml)</h3>
+<pre><code class="language-yaml">dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.0</code></pre>
+<h3>Cuándo migrar a una solución global</h3>
+<ul>
+<li>Múltiples pantallas comparten los mismos datos</li>
+<li>El estado se actualiza desde varios lugares</li>
+<li>Necesitas persistir o sincronizar datos en tiempo real</li>
+<li>El código con callbacks se vuelve inmanejable</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-6-buenas-practicas">
+    <h2><i class="fa-solid fa-thumbs-up"></i> 1.6 Buenas prácticas</h2>
+    <div class="doc-content">
+<h3>Recomendaciones para manejar el estado</h3>
+<table><thead><tr><th>Práctica</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Minimiza setState()</strong></td><td>Actualiza solo lo necesario</td></tr><tr><td><strong>Inmutabilidad</strong></td><td>Crea nuevas instancias, no modifiques listas en lugar</td></tr><tr><td><strong>Widgets pequeños</strong></td><td>Divide la UI para limitar las reconstrucciones</td></tr><tr><td><strong>Evita lógica en build()</strong></td><td>Mueve el cálculo a métodos</td></tr><tr><td><strong>Usa const</strong></td><td>Widgets constantes se construyen una sola vez</td></tr></tbody></table>
+<h3>Ejemplo: Actualización segura de listas</h3>
+<pre><code class="language-dart">// Correcto: crear una nueva lista al modificar
+void agregarItem(String item) {
+  setState(() {
+    items = [...items, item]; // Nueva lista
+  });
+}
+
+// Correcto: eliminar creando nueva lista
+void eliminarItem(int indice) {
+  setState(() {
+    items = items.where((_) =&gt; true).skip(indice).toList();
+  });
+}
+
+// Usar const para widgets que no cambian
+const Text('Este texto nunca cambia')</code></pre>
+<h3>Consejo final</h3>
+<blockquote class="aside aside-tip">
+Comienza siempre con setState() porque es simple y directo. Solo migra a Provider, Bloc u otra solución cuando el proyecto realmente lo necesite.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El estado es la información que cambia y afecta la UI
+- setState() notifica a Flutter que el estado cambió y reconstruye
+- Solo se usa setState() dentro de un StatefulWidget
+- Los widgets interactivos usan callbacks como onPressed y onChanged
+- Para apps pequeñas, setState() es suficiente
+- Para apps grandes, existen soluciones como Provider, Bloc y Riverpod
+</blockquote>
+    </div>
+  </section>

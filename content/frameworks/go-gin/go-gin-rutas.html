@@ -1,0 +1,271 @@
+<!-- 03. Rutas y handler - Go (Frameworks) -->
+  <section id="3-1-definir-rutas">
+    <h2><i class="fa-solid fa-route"></i> 3.1 Definir rutas</h2>
+    <div class="doc-content">
+<h3>gin.Default() vs gin.New()</h3>
+<p>Existen dos formas de crear un router en Gin:</p>
+<table><thead><tr><th>Método</th><th>Middleware incluido</th><th>Uso recomendado</th></tr></thead><tbody><tr><td><code>gin.Default()</code></td><td>Logger + Recovery</td><td>Desarrollo y producción</td></tr><tr><td><code>gin.New()</code></td><td>Ninguno</td><td>Cuando quieres control total</td></tr></tbody></table>
+<h3>Sintaxis de rutas</h3>
+<pre><code class="language-go">r := gin.Default()
+
+// Rutas simples
+r.GET("/inicio", handlerInicio)      // GET /inicio
+r.POST("/crear", handlerCrear)       // POST /crear
+r.PUT("/actualizar", handlerPut)     // PUT /actualizar
+r.DELETE("/borrar", handlerDelete)   // DELETE /borrar
+r.PATCH("/parcial", handlerPatch)    // PATCH /parcial
+
+// Cualquier método HTTP
+r.Any("/cualquiera", handlerCualquiera)
+
+// Ruta que no existe devuelve 404 automáticamente</code></pre>
+<h3>Handler signature</h3>
+<p>Un handler en Gin siempre recibe un puntero a <code>gin.Context</code>:</p>
+<pre><code class="language-go">func miHandler(c *gin.Context) {
+    // c contiene toda la información del request
+    c.String(200, "Respuesta de texto")
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-2-metodos-http">
+    <h2><i class="fa-solid fa-bars"></i> 3.2 Métodos HTTP</h2>
+    <div class="doc-content">
+<h3>Tabla de métodos</h3>
+<table><thead><tr><th>Método</th><th>Acción</th><th>Ejemplo de ruta</th></tr></thead><tbody><tr><td><code>GET</code></td><td>Obtener datos</td><td><code>r.GET("/usuarios", listar)</code></td></tr><tr><td><code>POST</code></td><td>Crear datos</td><td><code>r.POST("/usuarios", crear)</code></td></tr><tr><td><code>PUT</code></td><td>Actualizar completo</td><td><code>r.PUT("/usuarios/:id", actualizar)</code></td></tr><tr><td><code>PATCH</code></td><td>Actualizar parcial</td><td><code>r.PATCH("/usuarios/:id", parcial)</code></td></tr><tr><td><code>DELETE</code></td><td>Eliminar</td><td><code>r.DELETE("/usuarios/:id", eliminar)</code></td></tr></tbody></table>
+<h3>Ejemplo: CRUD completo</h3>
+<pre><code class="language-go">r.GET("/usuarios", func(c *gin.Context) {
+    c.JSON(200, gin.H{"accion": "listar todos"})
+})
+
+r.POST("/usuarios", func(c *gin.Context) {
+    c.JSON(201, gin.H{"accion": "crear"})
+})
+
+r.GET("/usuarios/:id", func(c *gin.Context) {
+    id := c.Param("id")
+    c.JSON(200, gin.H{"accion": "obtener", "id": id})
+})
+
+r.PUT("/usuarios/:id", func(c *gin.Context) {
+    id := c.Param("id")
+    c.JSON(200, gin.H{"accion": "actualizar", "id": id})
+})
+
+r.DELETE("/usuarios/:id", func(c *gin.Context) {
+    id := c.Param("id")
+    c.JSON(200, gin.H{"accion": "eliminar", "id": id})
+})</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-3-parametros-en-rutas">
+    <h2><i class="fa-solid fa-map-pin"></i> 3.3 Parámetros en rutas</h2>
+    <div class="doc-content">
+<h3>Tipos de parámetros</h3>
+<table><thead><tr><th>Tipo</th><th>Sintaxis</th><th>Ejemplo</th></tr></thead><tbody><tr><td>Path parameter</td><td><code>:nombre</code></td><td><code>/usuarios/:id</code></td></tr><tr><td>Wildcard</td><td><code>*nombre</code></td><td><code>/archivos/*ruta</code></td></tr></tbody></table>
+<h3>Usando c.Param()</h3>
+<pre><code class="language-go">// Parámetro simple
+r.GET("/usuarios/:id", func(c *gin.Context) {
+    id := c.Param("id")
+    c.JSON(200, gin.H{"id": id})
+})
+
+// Múltiples parámetros
+r.GET("/usuarios/:id/posts/:postId", func(c *gin.Context) {
+    id := c.Param("id")
+    postId := c.Param("postId")
+    c.JSON(200, gin.H{
+        "usuario_id": id,
+        "post_id":    postId,
+    })
+})
+
+// Wildcard (captura todo lo que sigue)
+r.GET("/archivos/*ruta", func(c *gin.Context) {
+    ruta := c.Param("ruta")
+    c.JSON(200, gin.H{"ruta": ruta})
+})</code></pre>
+<h3>Query strings con c.Query()</h3>
+<pre><code class="language-go">// GET /buscar?q=golang&page=2
+r.GET("/buscar", func(c *gin.Context) {
+    q := c.Query("q")         // "golang"
+    page := c.DefaultQuery("page", "1")  // "2" o "1" por defecto
+    c.JSON(200, gin.H{
+        "busqueda": q,
+        "pagina":   page,
+    })
+})</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-4-grupos-de-rutas">
+    <h2><i class="fa-solid fa-layer-group"></i> 3.4 Grupos de rutas</h2>
+    <div class="doc-content">
+<h3>Organización con grupos</h3>
+<p>Los grupos permiten organizar rutas relacionadas y aplicar middleware de forma específica:</p>
+<pre><code class="language-go">r := gin.Default()
+
+// Grupo de usuarios
+usuarios := r.Group("/api/usuarios")
+{
+    usuarios.GET("", listarUsuarios)
+    usuarios.POST("", crearUsuario)
+    usuarios.GET("/:id", obtenerUsuario)
+    usuarios.PUT("/:id", actualizarUsuario)
+    usuarios.DELETE("/:id", eliminarUsuario)
+}
+
+// Grupo de productos
+productos := r.Group("/api/productos")
+{
+    productos.GET("", listarProductos)
+    productos.POST("", crearProducto)
+    productos.GET("/:id", obtenerProducto)
+}
+
+// Grupo con middleware específico
+admin := r.Group("/api/admin", requireAuth())
+{
+    admin.GET("/dashboard", dashboardHandler)
+    admin.GET("/stats", statsHandler)
+}</code></pre>
+<h3>Jerarquía de grupos</h3>
+<pre><code class="language-go">api := r.Group("/api")
+{
+    v1 := api.Group("/v1")
+    {
+        v1.GET("/usuarios", listarV1)
+    }
+    v2 := api.Group("/v2")
+    {
+        v2.GET("/usuarios", listarV2)
+    }
+}
+// Resultado: /api/v1/usuarios y /api/v2/usuarios</code></pre>
+<h3>Middleware por grupo</h3>
+<pre><code class="language-go">// Logger personalizado solo para rutas de admin
+admin := r.Group("/admin", miLogger())</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-5-estructura-de-router">
+    <h2><i class="fa-solid fa-sitemap"></i> 3.5 Estructura de router</h2>
+    <div class="doc-content">
+<h3>Patrón recomendado</h3>
+<p>Separar las rutas en archivos dedicados para mantener el código organizado:</p>
+<pre><code class="language-go">// routes/routes.go
+package routes
+
+import (
+    "mi-api/handlers"
+    "github.com/gin-gonic/gin"
+)
+
+func SetupRouter() *gin.Engine {
+    r := gin.Default()
+
+    api := r.Group("/api")
+    {
+        api.GET("/usuarios", handlers.ListarUsuarios)
+        api.POST("/usuarios", handlers.CrearUsuario)
+        api.GET("/usuarios/:id", handlers.ObtenerUsuario)
+        api.PUT("/usuarios/:id", handlers.ActualizarUsuario)
+        api.DELETE("/usuarios/:id", handlers.EliminarUsuario)
+    }
+
+    return r
+}</code></pre>
+<h3>main.go simplificado</h3>
+<pre><code class="language-go">package main
+
+import "mi-api/routes"
+
+func main() {
+    r := routes.SetupRouter()
+    r.Run(":8080")
+}</code></pre>
+<h3>Conviene usar groups cuando</h3>
+<ul>
+<li>Tienes más de 10 endpoints</li>
+<li>Algunas rutas requieren autenticación y otras no</li>
+<li>Quieres versionar tu API (<code>/api/v1</code>, <code>/api/v2</code>)</li>
+<li>Los endpoints están agrupados por dominio (usuarios, productos, etc.)</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="3-6-ejemplo-completo-de-rutas">
+    <h2><i class="fa-solid fa-code"></i> 3.6 Ejemplo completo de rutas</h2>
+    <div class="doc-content">
+<h3>API de blog</h3>
+<pre><code class="language-go">package main
+
+import (
+    "net/http"
+    "github.com/gin-gonic/gin"
+)
+
+func main() {
+    r := gin.Default()
+
+    // Grupo público
+    publico := r.Group("/api")
+    {
+        publico.GET("/posts", func(c *gin.Context) {
+            c.JSON(http.StatusOK, gin.H{
+                "posts": []string{"Post 1", "Post 2"},
+            })
+        })
+        publico.GET("/posts/:id", func(c *gin.Context) {
+            c.JSON(http.StatusOK, gin.H{
+                "id":    c.Param("id"),
+                "titulo": "Mi post",
+            })
+        })
+    }
+
+    // Grupo privado (simulado)
+    privado := r.Group("/api/admin")
+    {
+        privado.POST("/posts", func(c *gin.Context) {
+            c.JSON(http.StatusCreated, gin.H{"mensaje": "Post creado"})
+        })
+        privado.DELETE("/posts/:id", func(c *gin.Context) {
+            c.JSON(http.StatusOK, gin.H{
+                "mensaje": "Post eliminado",
+                "id":     c.Param("id"),
+            })
+        })
+    }
+
+    r.Run(":8080")
+}</code></pre>
+<h3>Probar cada ruta</h3>
+<table><thead><tr><th>Comando</th><th>Ruta</th><th>Resultado</th></tr></thead><tbody><tr><td><code>curl</code></td><td><code>GET /api/posts</code></td><td>Lista de posts</td></tr><tr><td><code>curl</code></td><td><code>GET /api/posts/1</code></td><td>Post específico</td></tr><tr><td><code>curl</code></td><td><code>POST /api/admin/posts</code></td><td>Post creado</td></tr><tr><td><code>curl</code></td><td><code>DELETE /api/admin/posts/1</code></td><td>Post eliminado</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Usa <code>curl -X POST http://localhost:8080/api/admin/posts</code> para probar desde la terminal.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste:**
+- <code>gin.Default()</code> crea un router con middleware; <code>gin.New()</code> sin middleware
+- Cada método HTTP (GET, POST, PUT, DELETE) tiene su función de routing
+- Los parámetros de ruta se obtienen con <code>c.Param()</code>
+- Las query strings se obtienen con <code>c.Query()</code> o <code>c.DefaultQuery()</code>
+- Los grupos de rutas organizan endpoints y permiten middleware específico
+- Separar rutas en archivos dedicados mejora la mantenibilidad
+</blockquote>
+    </div>
+  </section>

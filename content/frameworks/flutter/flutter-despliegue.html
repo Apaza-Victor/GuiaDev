@@ -1,0 +1,232 @@
+<!-- 10. Build y despliegue - Flutter (Frameworks) -->
+  <section id="1-1-build-de-release">
+    <h2><i class="fa-solid fa-gem"></i> 1.1 Build de release</h2>
+    <div class="doc-content">
+<h3>¿Qué es un build de release?</h3>
+<p>La versión <strong>release</strong> es la compilación optimizada y lista para producción. Es más pequeña, rápida y sin las herramientas de desarrollo.</p>
+<h3>Diferencias entre debug y release</h3>
+<table><thead><tr><th>Aspecto</th><th>Debug</th><th>Release</th></tr></thead><tbody><tr><td><strong>Tamaño</strong></td><td>Grande</td><td>Pequeño</td></tr><tr><td><strong>Rendimiento</strong></td><td>Lento</td><td>Óptimo</td></tr><tr><td><strong>Hot Reload</strong></td><td>Sí</td><td>No</td></tr><tr><td><strong>Depuración</strong></td><td>Completa</td><td>Limitada</td></tr><tr><td><strong>Optimización</strong></td><td>Ninguna</td><td>Máxima (AOT)</td></tr></tbody></table>
+<h3>Comando de build</h3>
+<pre><code class="language-bash"># Android
+flutter build apk --release
+
+# Android - versión de aplicación
+flutter build appbundle --release
+
+# iOS
+flutter build ios --release
+
+# Web
+flutter build web --release
+
+# Windows desktop
+flutter build windows --release</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-2-flutter-build-apk">
+    <h2><i class="fa-solid fa-mobile"></i> 1.2 flutter build apk</h2>
+    <div class="doc-content">
+<h3>Tipos de APK</h3>
+<table><thead><tr><th>Apk</th><th>Descripción</th></tr></thead><tbody><tr><td><code>app-release.apk</code></td><td>Contiene código para todas las arquitecturas</td></tr><tr><td><code>app-release.apk (split)</code></td><td>Un APK por arquitectura (más pequeño)</td></tr></tbody></table>
+<h3>Construir el APK</h3>
+<pre><code class="language-bash"># Generar APK estándar
+flutter build apk --release
+
+# Resultado:
+# build/app/outputs/flutter-apk/app-release.apk
+
+# Generar APK dividido por arquitectura
+flutter build apk --split-per-abi
+
+# Resultado:
+# build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+# build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+# build/app/outputs/flutter-apk/app-x86_64-release.apk</code></pre>
+<h3>Variables de compilación</h3>
+<pre><code class="language-bash"># Compilaciónes para diferentes arquitecturas
+flutter build apk --target-platform android-arm64
+flutter build apk --target-platform android-arm
+flutter build apk --target-platform android-x64</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-3-pubspec-youtube-and-dependencias">
+    <h2><i class="fa-solid fa-box"></i> 1.3 pubspec.yaml y dependencias</h2>
+    <div class="doc-content">
+<h3>Estructura de pubspec.yaml</h3>
+<p>El archivo <code>pubspec.yaml</code> define la configuración del paquete, incluyendo metadatos y dependencias.</p>
+<pre><code class="language-yaml">name: mi_aplicacion
+description: Descripción de mi aplicación
+publish_to: 'none'
+version: 1.0.0+5
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.1.0
+  provider: ^6.1.0
+  # Recursos locales
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true</code></pre>
+<h3>Diccionario de versiones</h3>
+<table><thead><tr><th>Sintaxis</th><th>Significado</th></tr></thead><tbody><tr><td><code>^1.2.0</code></td><td>1.x.x compatible hacia arriba</td></tr><tr><td><code>1.2.0</code></td><td>Versión exacta</td></tr><tr><td><code>&gt;=1.0.0 &lt;2.0.0</code></td><td>Rango de versiones</td></tr><tr><td><code>any</code></td><td>Cualquier versión</td></tr></tbody></table>
+<h3>Comandos útiles de pub</h3>
+<pre><code class="language-bash"># Instalar dependencias
+flutter pub get
+
+# Actualizar dependencias
+flutter pub upgrade
+
+# Obtener un paquete nuevo
+flutter pub add nombre_paquete
+
+# Eliminar un paquete
+flutter pub remove nombre_paquete</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-4-flutter-dotenv">
+    <h2><i class="fa-solid fa-key"></i> 1.4 flutter_dotenv</h2>
+    <div class="doc-content">
+<h3>¿Qué es flutter_dotenv?</h3>
+<p><strong>flutter_dotenv</strong> permite cargar variables de entorno desde un archivo <code>.env</code>. Así almacenas claves de API, URLs de servidores y credenciales fuera de tu código.</p>
+<h3>Instalación</h3>
+<pre><code class="language-bash">flutter pub add flutter_dotenv</code></pre>
+<h3>Archivo .env</h3>
+<pre><code class="language-env">API_URL=https://api.example.com
+API_KEY=mi_clave_secreta_123
+DEBUG=true</code></pre>
+<h3>Configuración en pubspec.yaml</h3>
+<pre><code class="language-yaml">flutter:
+  uses-material-design: true
+  assets:
+    - .env</code></pre>
+<h3>Uso en la aplicación</h3>
+<pre><code class="language-dart">import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+Future&lt;void&gt; main() async {
+  // Cargar variables de entorno
+  await dotenv.load(fileName: ".env");
+  runApp(MiApp());
+}
+
+class MiApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Acceder a las variables
+    final apiUrl = dotenv.env['API_URL'];
+    final apiKey = dotenv.env['API_KEY'];
+
+    return MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Text('URL: $apiUrl'),
+        ),
+      ),
+    );
+  }
+}</code></pre>
+<blockquote class="aside aside-warning">
+Nunca subas el archivo .env a un repositorio público. Añádelo a .gitignore para proteger tus credenciales.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-5-publicar-en-tiendas">
+    <h2><i class="fa-solid fa-store"></i> 1.5 Publicar en tiendas</h2>
+    <div class="doc-content">
+<h3>Google Play Store</h3>
+<p>Pasos para publicar una app Flutter en Google Play:</p>
+<ol>
+<li>Crear una cuenta de desarrollador de Google (pago único)</li>
+<li>Generar una Keystore y firmar tu APK/AAB</li>
+<li>Dar de alta la app en la Play Console</li>
+<li>Completar ficha, fotos y política de privacidad</li>
+<li>Subir el App Bundle (AAB) y publicar</li>
+</ol>
+<h3>Generar Keystore y firmar</h3>
+<pre><code class="language-bash"># Generar Keystore (Linux/macOS)
+keytool -genkey -v -keystore ~/upload-keystore.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 -alias upload</code></pre>
+<h3>App Store (iOS)</h3>
+<p>Pasos para publicar en la App Store:</p>
+<ol>
+<li>Crear cuenta de desarrollador de Apple (tarifa anual)</li>
+<li>Configurar firma de código y certificados en Xcode</li>
+<li>Subir la app con Xcode o Transporter</li>
+<li>Completar ficha en App Store Connect</li>
+<li>Esperar revisión de Apple</li>
+</ol>
+<h3>Consideraciones</h3>
+<table><thead><tr><th>Aspecto</th><th>Google Play</th><th>App Store</th></tr></thead><tbody><tr><td><strong>Costo inicial</strong></td><td>Pago único $25</td><td>Anual $99</td></tr><tr><td><strong>Revisión</strong></td><td>Rápida (horas)</td><td>Lenta (días)</td></tr><tr><td><strong>Formato</strong></td><td>AAB</td><td>IPA</td></tr><tr><td><strong>Hardware</strong></td><td>Cualquier SO</td><td>Solo Mac</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="1-6-buenas-practicas">
+    <h2><i class="fa-solid fa-thumbs-up"></i> 1.6 Buenas prácticas de despliegue</h2>
+    <div class="doc-content">
+<h3>Recomendaciones antes de publicar</h3>
+<table><thead><tr><th>Práctica</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Versionado</strong></td><td>Usa versionName y versionCode correctamente</td></tr><tr><td><strong>Optimización</strong></td><td>Ejecuta flutter build --release con árbol de reducción</td></tr><tr><td><strong>Iconos</strong></td><td>Genera iconos para todas las resoluciones</td></tr><tr><td><strong>Seguridad</strong></td><td>Usa flutter_dotenv para claves y secretos</td></tr><tr><td><strong>Limpieza</strong></td><td>Elimina logs de debug en producción</td></tr><tr><td><strong>Testeo</strong></td><td>Prueba en dispositivos reales antes de publicar</td></tr></tbody></table>
+<h3>Reducción de tamaño</h3>
+<pre><code class="language-bash"># Habilitar reducción de código en build.gradle
+buildTypes {
+    release {
+        minifyEnabled true
+        shrinkResources true
+        proguardFiles getDefaultProguardFile('proguard-android.txt')
+    }
+}
+
+# Comando de build optimizado
+flutter build apk --release --obfuscate \
+  --split-debug-info=build/symbols</code></pre>
+<h3>Ejemplo: Configuración de versionado</h3>
+<pre><code class="language-yaml"># pubspec.yaml
+name: mi_aplicacion
+version: 1.2.3+45
+# versionName: 1.2.3
+# versionCode: 45</code></pre>
+<h3>Checklist final</h3>
+<ul>
+<li>Probar la versión release en múltiples dispositivos</li>
+<li>Verificar que las APIs y servidores usan HTTPS</li>
+<li>Revisionar la política de privacidad</li>
+<li>Configurar nombres de aplicación amigables</li>
+<li>Subir capturas de pantalla y descripciones</li>
+<li>Preparar notas de la versión</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El build de release está optimizado para producción
+- flutter build apk genera el APK de Android listo para publicar
+- pubspec.yaml define dependencias y configuración del proyecto
+- flutter_dotenv protege claves y secretos con variables de entorno
+- La publicación en tiendas requiere firmar y completar fichas
+- Las buenas prácticas incluyen versionado, seguridad y testeo
+</blockquote>
+    </div>
+  </section>

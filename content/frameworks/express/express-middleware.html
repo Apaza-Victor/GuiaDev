@@ -1,0 +1,210 @@
+<!-- 04. Middleware - Express (Frameworks) -->
+  <section id="4-1-que-es-middleware">
+    <h2><i class="fa-solid fa-plug"></i> 4.1 Qué es el middleware</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>middleware</strong> es una función que se ejecuta en algún punto del flujo entre la petición del cliente y la respuesta del servidor. Puede leer y modificar la petición (<code>req</code>), la respuesta (<code>res</code>) y decidir si continúa con la siguiente función mediante <code>next()</code>.</p>
+<h3>Firma de un middleware</h3>
+<pre><code class="language-javascript">function miMiddleware(req, res, next) {
+  // Trabajo a realizar
+  next(); // Pasa al siguiente middleware o ruta
+}</code></pre>
+<h3>Para qué se usa</h3>
+<ul>
+<li>Registro de peticiones (logs)</li>
+<li>Autenticación y autorización</li>
+<li>Parsing de datos (JSON, formularios)</li>
+<li>Manejo de CORS</li>
+<li>Manejo de errores</li>
+</ul>
+<blockquote class="aside aside-note">
+Piensen en el middleware como capas de una cebolla: cada petición atraviesa las capas en orden, desde afuera hacia la ruta final.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-2-middleware-de-aplicacion">
+    <h2><i class="fa-solid fa-layer-group"></i> 4.2 Middleware de aplicación (app.use)</h2>
+    <div class="doc-content">
+<h3>Qué es y cómo se usa</h3>
+<p>El middleware de aplicación se registra con <code>app.use()</code> y se ejecuta en cada petición entrante, sin importar la ruta. Se usa para lógica común a toda la aplicación.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+// Este middleware se ejecuta en todas las peticiones
+app.use((req, res, next) =&gt; {
+  const ahora = new Date().toISOString();
+  console.log(`[${ahora}] ${req.method} ${req.url}`);
+  next();
+});
+
+app.get('/', (req, res) =&gt; {
+  res.send('Página principal');
+});
+
+app.listen(3000);</code></pre>
+<h3>Aplicar a una ruta específica</h3>
+<pre><code class="language-javascript">app.use('/api', (req, res, next) =&gt; {
+  console.log('Solo para rutas que empiezan con /api');
+  next();
+});</code></pre>
+<blockquote class="aside aside-warning">
+El orden importa: los middleware registrados antes se ejecutan primero. Registra el middleware global antes de las rutas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-3-express-json">
+    <h2><i class="fa-solid fa-braille"></i> 4.3 express.json() para datos JSON</h2>
+    <div class="doc-content">
+<h3>Para qué sirve</h3>
+<p><code>express.json()</code> es un middleware integrado que analiza el cuerpo de las peticiones en formato JSON y lo pone a disposición en <code>req.body</code>.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+// Habilita la lectura de cuerpos JSON
+app.use(express.json());
+
+app.post('/usuarios', (req, res) =&gt; {
+  // req.body contiene los datos enviados en JSON
+  console.log(req.body);
+  res.json({
+    mensaje: 'Usuario recibido',
+    datos: req.body
+  });
+});
+
+app.listen(3000);</code></pre>
+<h3>Antes y después</h3>
+<table><thead><tr><th>Sin express.json()</th><th>Con express.json()</th></tr></thead><tbody><tr><td><code>req.body</code> está vacío o indefinido</td><td><code>req.body</code> contiene los datos JSON</td></tr><tr><td>No puedes leer el cuerpo de POST</td><td>Puedes procesar datos del cliente</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+También existe <code>express.urlencoded({ extended: true })</code> para leer datos de formularios HTML.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-4-orden-de-ejecucion">
+    <h2><i class="fa-solid fa-arrow-down-wide-short"></i> 4.4 Orden de ejecución del middleware</h2>
+    <div class="doc-content">
+<h3>Cómo fluye la petición</h3>
+<p>Las peticiones pasan por los middleware y rutas en el orden exacto en que se registran. Cuando un middleware llama a <code>next()</code>, la petición continúa; si no lo llama, la respuesta queda detenida en ese middleware.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+// 1º: primer middleware
+app.use((req, res, next) =&gt; {
+  console.log('Middleware 1');
+  next();
+});
+
+// 2º: segundo middleware
+app.use((req, res, next) =&gt; {
+  console.log('Middleware 2');
+  next();
+});
+
+// 3º: ruta final
+app.get('/', (req, res) =&gt; {
+  console.log('Ruta /');
+  res.send('Respuesta final');
+});
+
+app.listen(3000);
+// Salida en consola: Middleware 1, Middleware 2, Ruta /</code></pre>
+<h3>Reglas clave</h3>
+<ul>
+<li>Sin llamar a <code>next()</code>, el flujo se detiene</li>
+<li>Cada middleware puede terminar la respuesta (por ejemplo, con un error)</li>
+<li>Los middleware de error tienen 4 parámetros</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-5-middleware-personalizado">
+    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> 4.5 Middleware personalizado</h2>
+    <div class="doc-content">
+<h3>Crear tu propio middleware</h3>
+<p>Puedes crear middleware reutilizables para autenticación, logs o validaciones específicas.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+// Middleware de autenticación personalizado
+function autenticar(req, res, next) {
+  const token = req.headers['authorization'];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token requerido' });
+  }
+
+  if (token !== 'secreto123') {
+    return res.status(403).json({ error: 'Token inválido' });
+  }
+
+  req.usuario = { id: 1, nombre: 'Ana' };
+  next();
+}
+
+// Ruta protegida
+app.get('/perfil', autenticar, (req, res) =&gt; {
+  res.json({ mensaje: 'Bienvenido', usuario: req.usuario });
+});
+
+app.listen(3000);</code></pre>
+<h3>Middleware separado en archivo</h3>
+<pre><code class="language-javascript">// middleware/auth.js
+module.exports = function autenticar(req, res, next) {
+  // lógica de autenticación
+  next();
+};
+
+// index.js
+const autenticar = require('./middleware/auth');
+app.use(autenticar);</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-6-morgan">
+    <h2><i class="fa-solid fa-chart-line"></i> 4.6 Morgan (registro de peticiones)</h2>
+    <div class="doc-content">
+<h3>Qué es Morgan</h3>
+<p><strong>Morgan</strong> es un popular middleware de terceros que registra cada petición HTTP en la consola, mostrando información como el método, la URL, el estado y el tiempo de respuesta.</p>
+<h3>Instalación y uso</h3>
+<pre><code class="language-javascript">npm install morgan</code></pre>
+<pre><code class="language-javascript">const express = require('express');
+const morgan = require('morgan');
+const app = express();
+
+// Modo 'dev' para desarrollo: logs concisos y de colores
+app.use(morgan('dev'));
+
+app.get('/', (req, res) =&gt; {
+  res.send('Hola mundo');
+});
+
+app.listen(3000);
+// Salida: GET / 200 3.25 ms - 11</code></pre>
+<h3>Formatos comunes</h3>
+<table><thead><tr><th>Formato</th><th>Descripción</th></tr></thead><tbody><tr><td><code>dev</code></td><td>Logs cortos y de colores para desarrollo</td></tr><tr><td><code>combined</code></td><td>Formato estándar completo para producción</td></tr><tr><td><code>tiny</code></td><td>Mínima información</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El middleware son funciones entre la petición y la respuesta
+- <code>app.use()</code> registra middleware de aplicación para todas las rutas
+- <code>express.json()</code> permite leer el cuerpo JSON en <code>req.body</code>
+- El orden de registro determina el orden de ejecución
+- Puedes crear middleware personalizados reutilizables
+- Morgan registra automáticamente las peticiones en consola
+</blockquote>
+    </div>
+  </section>

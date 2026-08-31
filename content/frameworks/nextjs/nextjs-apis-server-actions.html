@@ -1,0 +1,230 @@
+<!-- 06. APIs y Server Actions - Next.js (Frameworks) -->
+  <section id="6-1-route-handlers-en-app-api">
+    <h2><i class="fa-solid fa-code-branch"></i> 6.1 Route Handlers en app/api</h2>
+    <div class="doc-content">
+<h3>Qué es un Route Handler</h3>
+<p>Un Route Handler es una función que responde a peticiones HTTP. Se define exportando funciones con nombres de métodos HTTP dentro de <code>app/api/</code>:</p>
+<pre><code class="language-bash">app/
+└── api/
+    └── usuarios/
+        └── route.ts   # /api/usuarios</code></pre>
+<h3>Crear un endpoint GET</h3>
+<pre><code class="language-tsx">// app/api/usuarios/route.ts
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  const usuarios = [
+    { id: 1, nombre: "Ana" },
+    { id: 2, nombre: "Carlos" },
+  ];
+
+  return NextResponse.json(usuarios);
+}</code></pre>
+<h3>Estructura de una ruta API</h3>
+<table><thead><tr><th>Función</th><th>Método HTTP</th></tr></thead><tbody><tr><td><code>GET</code></td><td>Leer datos</td></tr><tr><td><code>POST</code></td><td>Crear datos</td></tr><tr><td><code>PUT</code></td><td>Actualizar completos</td></tr><tr><td><code>PATCH</code></td><td>Actualización parcial</td></tr><tr><td><code>DELETE</code></td><td>Eliminar</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Usa `NextResponse.json()` para devolver respuestas JSON correctamente formateadas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-2-crear-endpoints-con-metodos-post-y-put">
+    <h2><i class="fa-solid fa-file-arrow-up"></i> 6.2 Crear endpoints con POST y PUT</h2>
+    <div class="doc-content">
+<h3>Endpoint POST para crear</h3>
+<pre><code class="language-tsx">// app/api/usuarios/route.ts
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+
+  // Validación básica
+  if (!body.nombre) {
+    return NextResponse.json(
+      { error: "El nombre es obligatorio" },
+      { status: 400 }
+    );
+  }
+
+  // Aquí guardarías en la base de datos
+  const nuevoUsuario = { id: Date.now(), nombre: body.nombre };
+
+  return NextResponse.json(nuevoUsuario, { status: 201 });
+}</code></pre>
+<h3>Endpoint PUT para actualizar</h3>
+<pre><code class="language-tsx">// app/api/usuarios/[id]/route.ts
+import { NextRequest, NextResponse } from "next/server";
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const body = await request.json();
+  // Actualizar el usuario con id = params.id
+  return NextResponse.json({
+    id: params.id,
+    nombre: body.nombre,
+  });
+}</code></pre>
+<blockquote class="aside aside-note">
+El `request` de tipo `NextRequest` permite leer el cuerpo con `request.json()` y los headers.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-3-que-son-las-server-actions">
+    <h2><i class="fa-solid fa-server"></i> 6.3 Qué son las Server Actions</h2>
+    <div class="doc-content">
+<h3>Concepto</h3>
+<p>Las <strong>Server Actions</strong> son funciones asíncronas que se ejecutan en el servidor y se pueden invocar desde componentes cliente. Evitan escribir endpoints manuales para operaciones simples:</p>
+<pre><code class="language-tsx">// app/actions.ts
+"use server";
+
+export async function guardarPost(formData: FormData) {
+  const titulo = formData.get("titulo");
+  const contenido = formData.get("contenido");
+
+  // Aquí se podría guardar en una base de datos
+  console.log("Guardando:", titulo, contenido);
+
+  return { ok: true };
+}</code></pre>
+<h3>Diferencias con Route Handlers</h3>
+<table><thead><tr><th>Route Handler</th><th>Server Action</th></tr></thead><tbody><tr><td>Endpoint HTTP explícito</td><td>Función transparente</td></tr><tr><td>Se llama con fetch</td><td>Se invoca directamente</td></tr><tr><td>Más control sobre la URL</td><td>Más simple para formularios</td></tr><tr><td>Ideal para APIs públicas</td><td>Ideal para acciones internas</td></tr></tbody></table>
+<blockquote class="aside aside-warning">
+Cualquier archivo que exporte acciones debe comenzar con la directiva `"use server"`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-4-uso-de-server-actions-con-formularios">
+    <h2><i class="fa-solid fa-file-signature"></i> 6.4 Uso de Server Actions con formularios</h2>
+    <div class="doc-content">
+<h3>Acción en un componente servidor</h3>
+<pre><code class="language-tsx">// app/contacto/page.tsx
+import { guardarContacto } from "./actions";
+
+export default function Contacto() {
+  return (
+    &lt;form action={guardarContacto}&gt;
+      &lt;input name="email" type="email" placeholder="Email" /&gt;
+      &lt;input name="mensaje" placeholder="Mensaje" /&gt;
+      &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>Definir la action en actions.ts</h3>
+<pre><code class="language-tsx">// app/contacto/actions.ts
+"use server";
+
+export async function guardarContacto(formData: FormData) {
+  const email = formData.get("email");
+  const mensaje = formData.get("mensaje");
+
+  if (!email || !mensaje) {
+    return { error: "Faltan datos" };
+  }
+
+  // Guardar o enviar el contacto
+  return { ok: true };
+}</code></pre>
+<h3>Ventajas de las Server Actions</h3>
+<ul>
+<li>No necesitas escribir <code>fetch</code> manual</li>
+<li>Progresive enhancement: funciona sin JavaScript</li>
+<li>Gestionan la revalidación de rutas automáticamente</li>
+<li>Simplifican el código de formularios</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-5-interaccion-con-estado-y-pendiente">
+    <h2><i class="fa-solid fa-hourglass-half"></i> 6.5 Interacción con estado y pendiente</h2>
+    <div class="doc-content">
+<h3>Usar useActionState para gestionar formularios</h3>
+<pre><code class="language-tsx">// app/formulario-con-estado.tsx (Client Component)
+"use client";
+
+import { useActionState } from "react";
+import { crearUsuario } from "./actions";
+
+export default function FormularioConEstado() {
+  const [estado, formAction] = useActionState(crearUsuario, {
+    mensaje: null,
+  });
+
+  return (
+    &lt;form action={formAction}&gt;
+      &lt;input name="nombre" placeholder="Nombre" /&gt;
+      &lt;button type="submit"&gt;Crear usuario&lt;/button&gt;
+      {estado.mensaje ? &lt;p&gt;{estado.mensaje}&lt;/p&gt; : null}
+    &lt;/form&gt;
+  );
+}</code></pre>
+<h3>Revalidar rutas tras una acción</h3>
+<pre><code class="language-tsx">// app/actions.ts
+"use server";
+
+import { revalidatePath } from "next/cache";
+
+export async function crearPost() {
+  // Crear el post en la base de datos
+  revalidatePath("/blog");
+  return { ok: true };
+}</code></pre>
+<blockquote class="aside aside-tip">
+'useActionState' reemplaza a 'useFormState' en React 19 y permite gestionar el estado y los errores de formularios.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-6-buenas-practicas-de-apis-y-acciones">
+    <h2><i class="fa-solid fa-shield-halved"></i> 6.6 Buenas prácticas de APIs y acciones</h2>
+    <div class="doc-content">
+<h3>Recomendaciones</h3>
+<ul>
+<li><strong>Valida siempre</strong> los datos recibidos antes de procesarlos</li>
+<li><strong>Responde códigos HTTP</strong> correctos (200, 201, 400, 404...)</li>
+<li>Protege las <strong>Server Actions</strong> con comprobaciones de permisos</li>
+<li>No expongas datos sensibles en las respuestas</li>
+<li>Usa <code>revalidatePath</code> para refrescar rutas tras mutar datos</li>
+</ul>
+<h3>Manejo de errores típico</h3>
+<pre><code class="language-tsx">// app/api/productos/route.ts
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(request: NextRequest, { params }: any) {
+  try {
+    const datos = await obtenerProductos();
+    return NextResponse.json(datos);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Error interno del servidor" },
+      { status: 500 }
+    );
+  }
+}</code></pre>
+<table><thead><tr><th>Código</th><th>Significado</th></tr></thead><tbody><tr><td>200</td><td>Operación correcta</td></tr><tr><td>201</td><td>Recurso creado</td></tr><tr><td>400</td><td>Petición inválida</td></tr><tr><td>401</td><td>No autenticado</td></tr><tr><td>404</td><td>No encontrado</td></tr><tr><td>500</td><td>Error de servidor</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los Route Handlers son funciones dentro de <code>app/api/</code>
+- Cada método HTTP se exporta como una función con su nombre
+- Las Server Actions se ejecutan en el servidor con <code>"use server"</code>
+- Se enlazan a formularios mediante la prop <code>action</code>
+- <code>revalidatePath</code> refresca rutas tras mutar datos
+- Valida siempre los datos y responde códigos HTTP correctos
+</blockquote>
+    </div>
+  </section>

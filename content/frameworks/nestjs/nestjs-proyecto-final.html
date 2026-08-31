@@ -1,0 +1,287 @@
+<!-- 10. Proyecto final y despliegue - NestJS (Frameworks) -->
+  <section id="10-1-planificacion-del-proyecto">
+    <h2><i class="fa-solid fa-bullseye"></i> 10.1 Planificación del proyecto</h2>
+    <div class="doc-content">
+<h3>Definir el alcance</h3>
+<p>El proyecto final integra todo lo aprendido: módulos, controladores, servicios, inyección de dependencias, pipes, guards, JWT y TypeORM. Se construye una API de tareas (todo) con autenticación.</p>
+<h3>Rutas planificadas</h3>
+<table><thead><tr><th>Método</th><th>Ruta</th><th>Acceso</th><th>Descripción</th></tr></thead><tbody><tr><td>POST</td><td><code>/auth/registro</code></td><td>Público</td><td>Registrar usuario</td></tr><tr><td>POST</td><td><code>/auth/login</code></td><td>Público</td><td>Iniciar sesión y obtener JWT</td></tr><tr><td>GET</td><td><code>/tareas</code></td><td>Protegido</td><td>Listar tareas del usuario</td></tr><tr><td>POST</td><td><code>/tareas</code></td><td>Protegido</td><td>Crear tarea</td></tr><tr><td>PUT</td><td><code>/tareas/:id</code></td><td>Protegido</td><td>Actualizar tarea</td></tr><tr><td>DELETE</td><td><code>/tareas/:id</code></td><td>Protegido</td><td>Eliminar tarea</td></tr></tbody></table>
+<h3>Estructura de carpetas final</h3>
+<pre><code class="language-text">src/
+├── auth/
+├── usuarios/
+├── tareas/
+├── app.module.ts
+└── main.ts</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-2-entidades-del-proyecto">
+    <h2><i class="fa-solid fa-table"></i> 10.2 Entidades del proyecto</h2>
+    <div class="doc-content">
+<h3>Entidad Usuario</h3>
+<pre><code class="language-typescript">// usuario.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Tarea } from '../tareas/tarea.entity';
+
+@Entity('usuarios')
+export class Usuario {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ unique: true })
+  email: string;
+
+  @Column()
+  password: string;
+
+  @OneToMany(() =&gt; Tarea, (tarea) =&gt; tarea.usuario)
+  tareas: Tarea[];
+}</code></pre>
+<h3>Entidad Tarea</h3>
+<pre><code class="language-typescript">// tarea.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Usuario } from '../usuarios/usuario.entity';
+
+@Entity('tareas')
+export class Tarea {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  titulo: string;
+
+  @Column({ default: false })
+  completada: boolean;
+
+  @ManyToOne(() =&gt; Usuario, (usuario) =&gt; usuario.tareas)
+  @JoinColumn({ name: 'usuario_id' })
+  usuario: Usuario;
+
+  @Column({ name: 'usuario_id' })
+  usuarioId: number;
+}</code></pre>
+<h3>Registrar entidades</h3>
+<pre><code class="language-typescript">// En cada módulo, por ejemplo TareasModule
+TypeOrmModule.forFeature([Tarea])</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-3-autenticacion-integrada">
+    <h2><i class="fa-solid fa-user-lock"></i> 10.3 Autenticación integrada</h2>
+    <div class="doc-content">
+<h3>Servicio de autenticación</h3>
+<pre><code class="language-typescript">import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { Usuario } from '../usuarios/usuario.entity';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    @InjectRepository(Usuario)
+    private readonly usuarios: Repository&lt;Usuario&gt;,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async registrar(email: string, password: string) {
+    const encriptada = await bcrypt.hash(password, 10);
+    const usuario = this.usuarios.create({ email, password: encriptada });
+    return this.usuarios.save(usuario);
+  }
+
+  async login(email: string, password: string) {
+    const usuario = await this.usuarios.findOne({ where: { email } });
+    if (!usuario || !(await bcrypt.compare(password, usuario.password))) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+    const payload = { sub: usuario.id, email: usuario.email };
+    return { access_token: this.jwtService.sign(payload) };
+  }
+}</code></pre>
+<h3>Controlador en /auth</h3>
+<pre><code class="language-typescript">@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('registro')
+  registrar(@Body() dto: RegistrarDto) {
+    return this.authService.registrar(dto.email, dto.password);
+  }
+
+  @Post('login')
+  login(@Body() dto: LoginDto) {
+    return this.authService.login(dto.email, dto.password);
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-4-crud-de-tareas-protegido">
+    <h2><i class="fa-solid fa-list-check"></i> 10.4 CRUD de tareas protegido</h2>
+    <div class="doc-content">
+<h3>Servicio de tareas vinculado al usuario</h3>
+<pre><code class="language-typescript">import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Tarea } from './tarea.entity';
+
+@Injectable()
+export class TareasService {
+  constructor(
+    @InjectRepository(Tarea)
+    private readonly tareas: Repository&lt;Tarea&gt;,
+  ) {}
+
+  listar(usuarioId: number): Promise&lt;Tarea[]&gt; {
+    return this.tareas.find({ where: { usuarioId } });
+  }
+
+  crear(usuarioId: number, titulo: string): Promise&lt;Tarea&gt; {
+    return this.tareas.save({ usuarioId, titulo });
+  }
+
+  async actualizar(usuarioId: number, id: number, datos: Partial&lt;Tarea&gt;) {
+    const tarea = await this.tareas.findOne({ where: { id, usuarioId } });
+    if (!tarea) throw new NotFoundException('Tarea no encontrada');
+    Object.assign(tarea, datos);
+    return this.tareas.save(tarea);
+  }
+
+  async eliminar(usuarioId: number, id: number) {
+    const tarea = await this.tareas.findOne({ where: { id, usuarioId } });
+    if (!tarea) throw new NotFoundException('Tarea no encontrada');
+    await this.tareas.remove(tarea);
+  }
+}</code></pre>
+<h3>Controlador protegido</h3>
+<pre><code class="language-typescript">import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe, UseGuards, Request } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { TareasService } from './tareas.service';
+
+@Controller('tareas')
+@UseGuards(AuthGuard('jwt'))
+export class TareasController {
+  constructor(private readonly tareasService: TareasService) {}
+
+  @Get()
+  listar(@Request() req) {
+    return this.tareasService.listar(req.user.userId);
+  }
+
+  @Post()
+  crear(@Request() req, @Body('titulo') titulo: string) {
+    return this.tareasService.crear(req.user.userId, titulo);
+  }
+
+  @Put(':id')
+  actualizar(@Request() req, @Param('id', ParseIntPipe) id: number, @Body() datos: any) {
+    return this.tareasService.actualizar(req.user.userId, id, datos);
+  }
+
+  @Delete(':id')
+  eliminar(@Request() req, @Param('id', ParseIntPipe) id: number) {
+    return this.tareasService.eliminar(req.user.userId, id);
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-5-despliegue-en-produccion">
+    <h2><i class="fa-solid fa-rocket"></i> 10.5 Despliegue en producción</h2>
+    <div class="doc-content">
+<h3>Compilar para producción</h3>
+<pre><code class="language-bash"># Compilar a la carpeta dist
+npm run build
+
+# Ejecutar la versión compilada
+npm run start:prod
+
+# Ejecutar directamente desde dist
+node dist/main</code></pre>
+<h3>Variables de entorno</h3>
+<pre><code class="language-bash"># .env de producción
+PORT=8080
+JWT_SECRET=clave_produccion_muy_larga
+DB_HOST=db.internal.com
+DB_PORT=5432
+DB_USER=app_user
+DB_PASSWORD=segura</code></pre>
+<h3>Cargar variables con @nestjs/config</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+  ],
+})
+export class AppModule {}</code></pre>
+<h3>Usar la configuración</h3>
+<pre><code class="language-typescript">const port = process.env.PORT ?? 3000;
+await app.listen(port);</code></pre>
+<blockquote class="aside aside-warning">
+En producción desactiva `synchronize: true` y usa migraciones. Asegúrate de que el JWT_SECRET sea largo, aleatorio y nunca se suba al repositorio.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-6-buenas-practicas-y-despliegue-en-la-nube">
+    <h2><i class="fa-solid fa-cloud"></i> 10.6 Buenas prácticas y despliegue en la nube</h2>
+    <div class="doc-content">
+<h3>Buenas prácticas</h3>
+<ul>
+<li><strong>Usar DTOs y ValidationPipe</strong> para validar toda la entrada</li>
+<li><strong>Proteger todas las rutas privadas</strong> con guards de autenticación</li>
+<li><strong>No exponer errores internos</strong>: registrar y devolver mensajes genéricos</li>
+<li><strong>Usar variables de entorno</strong> para secretos y configuración</li>
+<li><strong>Escribir pruebas</strong> con Jest (unitarias y e2e)</li>
+<li><strong>Aplicar migraciones</strong> en lugar de sincronización automática</li>
+</ul>
+<h3>Plataformas de despliegue comunes</h3>
+<table><thead><tr><th>Plataforma</th><th>Característica</th></tr></thead><tbody><tr><td><strong>Render</strong></td><td>Despliegue sencillo de servicios y bases de datos</td></tr><tr><td><strong>Railway</strong></td><td>Integración con repositorios y variables de entorno</td></tr><tr><td><strong>Fly.io</strong></td><td>Contenedores distribuidos a nivel global</td></tr><tr><td><strong>Docker + VPS</strong></td><td>Máximo control sobre el entorno</td></tr><tr><td><strong>AWS / GCP / Azure</strong></td><td>Escalado empresarial</td></tr></tbody></table>
+<h3>Dockerfile de ejemplo</h3>
+<pre><code class="language-docker">FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package*.json ./
+RUN npm install --omit=dev
+EXPOSE 3000
+CMD ["node", "dist/main"]</code></pre>
+<blockquote class="aside aside-note">
+Antes de desplegar, prueba localmente con `npm run build` y `npm run start:prod` para detectar errores de compilación o de dependencias omitidas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El proyecto final integra módulos, controladores, servicios, validación y JWT
+- Las entidades Usuario y Tarea modelan la base de datos con TypeORM
+- La autenticación protege los endpoints de tareas por usuario
+- `npm run build` y `start:prod` preparan la app para producción
+- Las variables de entorno se cargan con `@nestjs/config`
+- Se recomienda migraciones, buenas prácticas de seguridad y pruebas
+</blockquote>
+    </div>
+  </section>

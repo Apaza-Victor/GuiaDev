@@ -1,0 +1,252 @@
+<!-- 08. Construir APIs REST con Flask - Flask (Frameworks) -->
+  <section id="8-1-que-es-una-rest-api">
+    <h2><i class="fa-solid fa-server"></i> 8.1 Qué es una REST API</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Una <strong>API REST</strong> (Representational State Transfer) es un conjunto de reglas para construir servicios web que se comunican mediante HTTP y JSON. Cada recurso tiene una URL y se manipula con métodos HTTP.</p>
+<h3>Principios REST</h3>
+<ul>
+<li><strong>Recursos</strong>: Entidades como usuarios, productos o tareas</li>
+<li><strong>URLs descriptivas</strong>: `/usuarios`, `/productos/5`</li>
+<li><strong>Métodos HTTP</strong>: GET, POST, PUT, DELETE</li>
+<li><strong>Sin estado</strong>: Cada petición es independiente</li>
+<li><strong>JSON como formato</strong>: Formato estándar de intercambio</li>
+</ul>
+<h3>Mapeo de operaciones REST</h3>
+<table><thead><tr><th>Método</th><th>URL</th><th>Acción</th></tr></thead><tbody><tr><td><code>GET</code></td><td>/usuarios</td><td>Listar usuarios</td></tr><tr><td><code>GET</code></td><td>/usuarios/1</td><td>Obtener un usuario</td></tr><tr><td><code>POST</code></td><td>/usuarios</td><td>Crear un usuario</td></tr><tr><td><code>PUT</code></td><td>/usuarios/1</td><td>Actualizar un usuario</td></tr><tr><td><code>DELETE</code></td><td>/usuarios/1</td><td>Eliminar un usuario</td></tr></tbody></table>
+<blockquote class="aside aside-note">
+REST se basa en recursos y métodos HTTP. El estado del cliente no se guarda en el servidor (sin estado).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-2-jsonify">
+    <h2><i class="fa-solid fa-file-code"></i> 8.2 Devolver JSON con jsonify</h2>
+    <div class="doc-content">
+<h3>Qué es jsonify</h3>
+<p><code>jsonify()</code> convierte objetos de Python (diccionarios y listas) a formato JSON y crea una respuesta HTTP con el tipo de contenido correcto.</p>
+<h3>Devolver un diccionario</h3>
+<pre><code class="language-python">from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+
+@app.route("/usuario")
+def usuario():
+    return jsonify({"id": 1, "nombre": "Ana", "email": "ana@correo.com"})</code></pre>
+<h3>Devolver una lista</h3>
+<pre><code class="language-python">@app.route("/usuarios")
+def usuarios():
+    lista = [
+        {"id": 1, "nombre": "Ana"},
+        {"id": 2, "nombre": "Carlos"},
+    ]
+    return jsonify(lista)</code></pre>
+<h3>Respuesta con código de estado</h3>
+<pre><code class="language-python">@app.route("/crear", methods=["POST"])
+def crear():
+    return jsonify({"mensaje": "Creado"}), 201</code></pre>
+<h3>Alternativa: devolver dict directamente</h3>
+<pre><code class="language-python"># Flask convierte automáticamente los dicts a JSON
+@app.route("/info")
+def info():
+    return {"aplicacion": "Mi API", "version": "1.0"}</code></pre>
+<blockquote class="aside aside-tip">
+`jsonify` te permite fijar el código de estado de la respuesta, útil para indicar si fue una creación (201) o un error (404).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-3-metodos-en-rutas">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 8.3 Métodos en las rutas</h2>
+    <div class="doc-content">
+<h3>Crear una API CRUD completa</h3>
+<p>Definimos distintos endpoints para gestionar recursos con cada método HTTP:</p>
+<pre><code class="language-python">from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+tareas = []
+contador = 1
+
+
+# GET - Listar todas las tareas
+@app.route("/tareas", methods=["GET"])
+def listar():
+    return jsonify(tareas)
+
+
+# GET - Obtener una tarea
+@app.route("/tareas/&lt;int:tarea_id&gt;", methods=["GET"])
+def obtener(tarea_id):
+    for t in tareas:
+        if t["id"] == tarea_id:
+            return jsonify(t)
+    return jsonify({"error": "Tarea no encontrada"}), 404
+
+
+# POST - Crear una tarea
+@app.route("/tareas", methods=["POST"])
+def crear():
+    global contador
+    datos = request.json
+    nueva = {"id": contador, "titulo": datos.get("titulo"), "hecha": False}
+    contador += 1
+    tareas.append(nueva)
+    return jsonify(nueva), 201</code></pre>
+<h3>Actualizar y eliminar</h3>
+<pre><code class="language-python"># PUT - Actualizar una tarea
+@app.route("/tareas/&lt;int:tarea_id&gt;", methods=["PUT"])
+def actualizar(tarea_id):
+    datos = request.json
+    for t in tareas:
+        if t["id"] == tarea_id:
+            t["titulo"] = datos.get("titulo", t["titulo"])
+            t["hecha"] = datos.get("hecha", t["hecha"])
+            return jsonify(t)
+    return jsonify({"error": "Tarea no encontrada"}), 404
+
+
+# DELETE - Eliminar una tarea
+@app.route("/tareas/&lt;int:tarea_id&gt;", methods=["DELETE"])
+def eliminar(tarea_id):
+    global tareas
+    tareas = [t for t in tareas if t["id"] != tarea_id]
+    return jsonify({"mensaje": "Tarea eliminada"})</code></pre>
+<blockquote class="aside aside-warning">
+Cada endpoint define su método explícitamente: GET para leer, POST para crear, PUT para actualizar y DELETE para eliminar.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-4-manejo-de-errores-api">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> 8.4 Manejo de errores en la API</h2>
+    <div class="doc-content">
+<h3>Devolver errores en JSON</h3>
+<p>Las APIs deben responder con códigos de estado y mensajes útiles en JSON:</p>
+<pre><code class="language-python">from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+
+# Manejo global de errores 404 en JSON
+@app.errorhandler(404)
+def no_encontrado(error):
+    return jsonify({"error": "Recurso no encontrado", "codigo": 404}), 404
+
+
+@app.errorhandler(500)
+def error_interno(error):
+    return jsonify({"error": "Error interno del servidor", "codigo": 500}), 500</code></pre>
+<h3>Validación de entrada</h3>
+<pre><code class="language-python">@app.route("/usuario", methods=["POST"])
+def crear_usuario():
+    datos = request.json or {}
+    if not datos.get("nombre"):
+        return jsonify({"error": "El campo nombre es obligatorio"}), 400
+    return jsonify({"mensaje": "Usuario creado", "nombre": datos["nombre"]}), 201</code></pre>
+<h3>Códigos de error REST habituales</h3>
+<table><thead><tr><th>Código</th><th>Significado</th><th>Uso típico</th></tr></thead><tbody><tr><td><code>400</code></td><td>Solicitud incorrecta</td><td>Datos de entrada inválidos</td></tr><tr><td><code>401</code></td><td>No autenticado</td><td>Falta token o credenciales</td></tr><tr><td><code>403</code></td><td>Prohibido</td><td>Sin permisos</td></tr><tr><td><code>404</code></td><td>No encontrado</td><td>Recurso inexistente</td></tr><tr><td><code>500</code></td><td>Error interno</td><td>Fallo del servidor</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Siempre usa el código de estado correcto: ayuda a los clientes a entender el resultado sin leer el mensaje.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-5-consumir-la-api">
+    <h2><i class="fa-solid fa-cloud-arrow-down"></i> 8.5 Consumir la API</h2>
+    <div class="doc-content">
+<h3>Probar la API con herramientas</h3>
+<ul>
+<li><strong>Navegador</strong>: Ideal para peticiones GET sencillas</li>
+<li><strong>curl</strong>: Consumir desde la terminal</li>
+<li><strong>Postman / Insomnia</strong>: Herramientas gráficas para probar APIs</li>
+</ul>
+<h3>Consumir con curl</h3>
+<pre><code class="language-python"># GET - listar
+curl http://127.0.0.1:5000/tareas
+
+# POST - crear
+curl -X POST -H "Content-Type: application/json" \
+     -d '{"titulo": "Comprar pan"}' http://127.0.0.1:5000/tareas
+
+# DELETE - eliminar
+curl -X DELETE http://127.0.0.1:5000/tareas/1</code></pre>
+<h3>Consumir desde Python con requests</h3>
+<pre><code class="language-python">import requests
+
+# GET
+respuesta = requests.get("http://127.0.0.1:5000/tareas")
+print(respuesta.json())
+
+# POST
+respuesta = requests.post(
+    "http://127.0.0.1:5000/tareas",
+    json={"titulo": "Hacer ejercicio"}
+)
+print(respuesta.json())</code></pre>
+<h3>Consumir desde JavaScript (fetch)</h3>
+<pre><code class="language-python">// POST desde el navegador
+fetch("/tareas", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({titulo: "Estudiar"})
+}).then(r =&gt; r.json()).then(datos =&gt; console.log(datos));</code></pre>
+<blockquote class="aside aside-note">
+Una API REST puede ser consumida desde cualquier cliente: navegador, terminal, Python, JavaScript u otras aplicaciones.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="8-6-estructura-de-una-rest-api">
+    <h2><i class="fa-solid fa-sitemap"></i> 8.6 Estructura de una REST API</h2>
+    <div class="doc-content">
+<h3>Buenas prácticas de estructura</h3>
+<ul>
+<li><strong>URLs en plural y en minúsculas</strong>: `/usuarios`, no `/Usuario`</li>
+<li><strong>Recursos anidados</strong>: `/usuarios/1/posts` para posts de un usuario</li>
+<li><strong>Verbos fuera de las URLs</strong>: Usa métodos HTTP, no `/crear-usuario`</li>
+<li><strong>Listas paginadas</strong>: Devuelve fragmentos con metadatos de paginación</li>
+<li><strong>Respuestas JSON consistentes</strong>: Mismo formato en toda la API</li>
+</ul>
+<h3>Ejemplo de respuesta paginada</h3>
+<pre><code class="language-python">@app.route("/usuarios")
+def listar_usuarios():
+    pagina = request.args.get("pagina", 1, type=int)
+    por_pagina = request.args.get("limite", 10, type=int)
+    inicio = (pagina - 1) * por_pagina
+    fin = inicio + por_pagina
+    datos = usuarios[inicio:fin]
+    return jsonify({
+        "pagina": pagina,
+        "total": len(usuarios),
+        "resultados": datos
+    })</code></pre>
+<h3>Métodos de cada recurso</h3>
+<table><thead><tr><th>Recurso</th><th>GET</th><th>POST</th><th>PUT</th><th>DELETE</th></tr></thead><tbody><tr><td>/usuarios</td><td>Listar</td><td>Crear</td><td>-</td><td>-</td></tr><tr><td>/usuarios/{id}</td><td>Obtener</td><td>-</td><td>Actualizar</td><td>Eliminar</td></tr></tbody></table>
+<blockquote class="aside aside-warning">
+Evita poner verbos en las URLs (ej. `/usuarios/crear`). REST se apoya en los métodos HTTP para representar las acciones.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Una REST API usa recursos, URLs descriptivas y métodos HTTP
+- `jsonify` convierte datos Python a respuestas JSON
+- Cada método HTTP define una operación sobre el recurso
+- Los errores se devuelven con códigos de estado y mensajes JSON
+- La API puede consumirse con curl, requests, fetch o Postman
+- Una buena estructura usa URLs plurales y consistencia en las respuestas
+</blockquote>
+    </div>
+  </section>

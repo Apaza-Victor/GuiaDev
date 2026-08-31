@@ -1,0 +1,248 @@
+<!-- 05. Servicios e inyección de dependencias - NestJS (Frameworks) -->
+  <section id="5-1-que-es-un-servicio">
+    <h2><i class="fa-solid fa-gear"></i> 5.1 Qué es un servicio</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>servicio</strong> en NestJS es una clase anotada con <code>@Injectable</code> que concentra la lógica de negocio: validaciones, acceso a datos, cálculos y comunicación con sistemas externos. Los controladores delegan en los servicios y se mantienen delgados.</p>
+<h3>Por qué separar la lógica</h3>
+<table><thead><tr><th>Motivo</th><th>Ventaja</th></tr></thead><tbody><tr><td><strong>Separación de responsabilidades</strong></td><td>El controlador solo maneja HTTP</td></tr><tr><td><strong>Reutilización</strong></td><td>Un servicio se usa desde varios controladores</td></tr><tr><td><strong>Pruebas</strong></td><td>El servicio se prueba de forma aislada</td></tr><tr><td><strong>Mantenimiento</strong></td><td>La lógica vive en un solo lugar</td></tr></tbody></table>
+<h3>Ejemplo: servicio simple</h3>
+<pre><code class="language-typescript">import { Injectable } from '@nestjs/common';
+
+export interface Gato {
+  id: number;
+  nombre: string;
+  edad: number;
+}
+
+@Injectable()
+export class GatosService {
+  private gatos: Gato[] = [{ id: 1, nombre: 'Michi', edad: 3 }];
+
+  obtenerTodos(): Gato[] {
+    return this.gatos;
+  }
+
+  obtenerUno(id: number): Gato | undefined {
+    return this.gatos.find((gato) =&gt; gato.id === id);
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-2-la-anotacion-injectable">
+    <h2><i class="fa-solid fa-syringe"></i> 5.2 La anotación @Injectable</h2>
+    <div class="doc-content">
+<h3>Qué hace @Injectable</h3>
+<p>El decorador <code>@Injectable()</code> marca la clase como un <strong>provider</strong> que NestJS puede gestionar dentro de su contenedor de inyección de dependencias. Sin este decorador la clase no puede inyectarse en otro lugar.</p>
+<h3>Tipos de providers</h3>
+<table><thead><tr><th>Tipo</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>Servicios</strong></td><td>Clases con lógica de negocio</td></tr><tr><td><strong>Repositorios</strong></td><td>Acceso a la base de datos</td></tr><tr><td><strong>Helpers</strong></td><td>Utilidades compartidas (formateo, hash, etc.)</td></tr><tr><td><strong>Factories</strong></td><td>Creación de objetos de configuración</td></tr></tbody></table>
+<h3>Ejemplo: provider inyectable</h3>
+<pre><code class="language-typescript">import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class LoggerService {
+  mensajes: string[] = [];
+
+  registrar(mensaje: string) {
+    const linea = `[${new Date().toISOString()}] ${mensaje}`;
+    this.mensajes.push(linea);
+    console.log(linea);
+  }
+}</code></pre>
+<blockquote class="aside aside-note">
+El CLI genera un servicio ya anotado con `@Injectable` usando `nest g service nombre`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-3-inyeccion-de-dependencias">
+    <h2><i class="fa-solid fa-plug"></i> 5.3 Inyección de dependencias</h2>
+    <div class="doc-content">
+<h3>Concepto</h3>
+<p>La <strong>inyección de dependencias</strong> (DI) es un patrón en el que las dependencias de una clase se entregan desde fuera, en lugar de crearlas dentro. NestJS la implementa con un contenedor IoC que resuelve automáticamente las dependencias declaradas en el constructor.</p>
+<h3>Inyección por constructor</h3>
+<pre><code class="language-typescript">import { Controller, Get } from '@nestjs/common';
+import { GatosService } from './gatos.service';
+
+@Controller('gatos')
+export class GatosController {
+  constructor(private readonly gatosService: GatosService) {}
+
+  @Get()
+  obtenerTodos() {
+    return this.gatosService.obtenerTodos();
+  }
+}</code></pre>
+<p>NestJS detecta el tipo <code>GatosService</code> en el constructor, busca una instancia en el contenedor y la inyecta.</p>
+<h3>Cadena de inyecciones</h3>
+<p>Las dependencias pueden encadenarse: un controlador depende de un servicio, y ese servicio puede depender de otro provider, como un cliente HTTP o un repositorio.</p>
+<pre><code class="language-typescript">import { Injectable } from '@nestjs/common';
+import { LoggerService } from './logger.service';
+
+@Injectable()
+export class GatosService {
+  constructor(private readonly logger: LoggerService) {}
+
+  obtenerTodos() {
+    this.logger.registrar('Se consultaron los gatos');
+    return [{ id: 1, nombre: 'Michi' }];
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-4-registro-de-providers">
+    <h2><i class="fa-solid fa-list-check"></i> 5.4 Registro de providers</h2>
+    <div class="doc-content">
+<h3>Registro en un módulo</h3>
+<p>Para que NestJS pueda inyectar un provider, debe declararse en la propiedad <code>providers</code> de un módulo.</p>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { GatosController } from './gatos.controller';
+import { GatosService } from './gatos.service';
+import { LoggerService } from './logger.service';
+
+@Module({
+  controllers: [GatosController],
+  providers: [GatosService, LoggerService],
+})
+export class GatosModule {}</code></pre>
+<h3>Formas equivalentes de registro</h3>
+<pre><code class="language-typescript">// Forma corta (clase directa)
+providers: [GatosService]
+
+// Forma extendida
+providers: [
+  {
+    provide: GatosService,
+    useClass: GatosService,
+  },
+]</code></pre>
+<h3>Si el provider está en otro módulo</h3>
+<p>Cuando el provider pertenece a otro módulo, ese módulo debe exportarlo y el módulo actual debe importarlo:</p>
+<pre><code class="language-typescript">// core.module.ts
+@Module({
+  providers: [LoggerService],
+  exports: [LoggerService],
+})
+export class CoreModule {}
+
+// gatos.module.ts
+import { CoreModule } from '../core/core.module';
+
+@Module({
+  imports: [CoreModule],
+  controllers: [GatosController],
+  providers: [GatosService],
+})
+export class GatosModule {}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-5-ambito-de-los-providers">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 5.5 Ámbito de los providers</h2>
+    <div class="doc-content">
+<h3>Qué es el ámbito</h3>
+<p>El <strong>ámbito (scope)</strong> de un provider determina durante cuánto tiempo vive su instancia. NestJS usa por defecto el ámbito singleton.</p>
+<table><thead><tr><th>Ámbito</th><th>Vida de la instancia</th><th>Cuándo usarlo</th></tr></thead><tbody><tr><td><code>DEFAULT</code> (Singleton)</td><td>Una única instancia para toda la aplicación</td><td>Caso habitual</td></tr><tr><td><code>REQUEST</code></td><td>Una instancia por cada petición</td><td>Datos propios de la petición</td></tr><tr><td><code>TRANSIENT</code></td><td>Una instancia nueva por cada inyección</td><td>Estado por uso</td></tr></tbody></table>
+<h3>Definir el ámbito por clase</h3>
+<pre><code class="language-typescript">import { Injectable, Scope } from '@nestjs/common';
+
+@Injectable({ scope: Scope.REQUEST })
+export class ContextoService {
+  usuario: string | undefined;
+}</code></pre>
+<h3>Definir el ámbito por módulo</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { ContextoService } from './contexto.service';
+
+@Module({
+  providers: [
+    {
+      provide: ContextoService,
+      useClass: ContextoService,
+      scope: Scope.REQUEST,
+    },
+  ],
+})
+export class AppModule {}</code></pre>
+<blockquote class="aside aside-warning">
+Los providers con ámbito `REQUEST` degradan ligeramente el rendimiento y complican la composición con providers singleton. Úsalos solo cuando realmente necesites estado por petición.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-6-providers-personalizados">
+    <h2><i class="fa-solid fa-wand-magic-sparkles"></i> 5.6 Providers personalizados</h2>
+    <div class="doc-content">
+<h3>Fábricas y valores</h3>
+<p>Además de clases, NestJS permite registrar providers mediante <strong>valores</strong> y <strong>fábricas</strong>, útiles para configuraciones o dependencias de terceros.</p>
+<table><thead><tr><th>Opción</th><th>Qué hace</th></tr></thead><tbody><tr><td><code>useValue</code></td><td>Inyecta un valor fijo</td></tr><tr><td><code>useFactory</code></td><td>Crea la instancia con una función que puede tener dependencias</td></tr><tr><td><code>useExisting</code></td><td>Alias de otro provider</td></tr><tr><td><code>useClass</code></td><td>Instancia a partir de una clase</td></tr></tbody></table>
+<h3>Ejemplo con useValue</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+
+export interface Configuracion {
+  nombreApp: string;
+  entorno: string;
+}
+
+export const CONFIGURACION = Symbol('CONFIGURACION');
+
+const config: Configuracion = {
+  nombreApp: 'MiAPI',
+  entorno: 'desarrollo',
+};
+
+@Module({
+  providers: [
+    {
+      provide: CONFIGURACION,
+      useValue: config,
+    },
+  ],
+})
+export class ConfiguracionModule {}</code></pre>
+<h3>Ejemplo con useFactory</h3>
+<pre><code class="language-typescript">import { Module } from '@nestjs/common';
+import { LoggerService } from './logger.service';
+
+export const URL_BASE_DATOS = Symbol('URL_BASE_DATOS');
+
+@Module({
+  providers: [
+    LoggerService,
+    {
+      provide: URL_BASE_DATOS,
+      useFactory: (logger: LoggerService) =&gt; {
+        const url = process.env.DATABASE_URL ?? 'postgres://localhost/db';
+        logger.registrar(`Conectando a ${url}`);
+        return url;
+      },
+      inject: [LoggerService],
+    },
+  ],
+})
+export class DatabaseModule {}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Un servicio concentra la lógica de negocio y se anota con `@Injectable`
+- La inyección de dependencias entrega dependencias a través del constructor
+- Los providers se registran en el array `providers` del módulo
+- Los ámbitos pueden ser singleton, por petición o transitorios
+- `useValue`, `useFactory` y `useExisting` permiten providers personalizados
+- Los módulos exportan providers para compartirlos con otros módulos
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,301 @@
+<!-- 04. Middleware - Go (Frameworks) -->
+  <section id="4-1-que-es-middleware">
+    <h2><i class="fa-solid fa-layer-group"></i> 4.1 Qué es middleware</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>middleware</strong> es una función que se ejecuta antes o después de un handler. Permite agregar funcionalidades transversales como autenticación, logging, compresión y protección contra errores sin repetir código en cada handler.</p>
+<h3>Flujo de ejecución</h3>
+<pre><code class="language-text">Cliente -&gt; Request -&gt; Middleware 1 -&gt; Middleware 2 -&gt; Handler -&gt; Response -&gt; Cliente
+               ^                                        |
+               +------------- c.Next() -----------------+</code></pre>
+<h3>Firma de un middleware</h3>
+<pre><code class="language-go">func miMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        // Código ANTES de llegar al handler
+        // Ej: registrar la hora de inicio
+
+        c.Next()  // Continúa con el siguiente middleware/handler
+
+        // Código DESPUÉS de ejecutarse el handler
+        // Ej: registrar la duración
+    }
+}</code></pre>
+<h3>Funciones clave</h3>
+<table><thead><tr><th>Función</th><th>Descripción</th></tr></thead><tbody><tr><td><code>c.Next()</code></td><td>Pasa el control al siguiente middleware o handler</td></tr><tr><td><code>c.Abort()</code></td><td>Detiene la cadena y termina la respuesta</td></tr><tr><td><code>c.AbortWithStatusJSON()</code></td><td>Aborta y responde JSON con un código de estado</td></tr><tr><td><code>c.Set()</code></td><td>Guarda datos en el contexto para el siguiente handler</td></tr><tr><td><code>c.Get()</code></td><td>Recupera datos guardados en el contexto</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-2-middleware-global">
+    <h2><i class="fa-solid fa-globe"></i> 4.2 Middleware global</h2>
+    <div class="doc-content">
+<h3>Uso global</h3>
+<p>Un middleware global se aplica a todas las rutas del router:</p>
+<pre><code class="language-go">r := gin.New()
+
+// Logger: registra cada request
+r.Use(gin.Logger())
+
+// Recovery: captura panics y devuelve 500
+r.Use(gin.Recovery())
+
+// Middleware del router (solo para un router específico)
+router.Use(miMiddleware())
+
+// Middleware global (aplica a todos los routers)
+gin.SetMode(gin.ReleaseMode)</code></pre>
+<h3>Middleware personalizado global</h3>
+<pre><code class="language-go">// middleware/request_id.go
+package middleware
+
+import (
+    "github.com/google/uuid"
+    "github.com/gin-gonic/gin"
+)
+
+func RequestID() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        c.Set("request_id", uuid.New().String())
+        c.Next()
+    }
+}
+
+func main() {
+    r := gin.New()
+    r.Use(gin.Recovery())
+    r.Use(RequestID())
+    r.GET("/", func(c *gin.Context) {
+        id, _ := c.Get("request_id")
+        c.JSON(200, gin.H{"request_id": id})
+    })
+    r.Run(":8080")
+}</code></pre>
+<h3>Orden de ejecución</h3>
+<p>Los middlewares se ejecutan en el orden en que se registran con <code>Use</code>. Para la misma ruta, se ejecutan en el orden definido.</p>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-3-middleware-por-grupo">
+    <h2><i class="fa-solid fa-folder-open"></i> 4.3 Middleware por grupo</h2>
+    <div class="doc-content">
+<h3>Aplicar a grupos específicos</h3>
+<p>Es la forma más común de proteger rutas: el middleware de autenticación solo se aplica a ciertos grupos:</p>
+<pre><code class="language-go">r := gin.Default()
+
+// Rutas públicas (sin auth)
+api := r.Group("/api")
+{
+    api.POST("/login", loginHandler)
+    api.POST("/registro", registroHandler)
+}
+
+// Rutas protegidas (con auth)
+protegido := r.Group("/api/protegido", requireAuth())
+{
+    protegido.GET("/perfil", perfilHandler)
+    protegido.GET("/config", configHandler)
+}
+
+// También se puede agregar después de crear el grupo
+privado := r.Group("/api/privado")
+privado.Use(requireAuth(), requireAdmin())
+{
+    privado.GET("/admin", adminHandler)
+}</code></pre>
+<h3>Middleware con parámetros</h3>
+<pre><code class="language-go">// Middleware factory con configuración
+func limitadorPorIp(maxRequests int) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        c.Set("max_requests", maxRequests)
+        c.Next()
+    }
+}
+
+r := gin.Default()
+r.Use(limitadorPorIp(100))</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-4-cors">
+    <h2><i class="fa-solid fa-shield-halved"></i> 4.4 CORS</h2>
+    <div class="doc-content">
+<h3>Qué es CORS</h3>
+<p><strong>CORS</strong> (Cross-Origin Resource Sharing) controla qué dominios pueden acceder a tu API desde el navegador. Sin configuración CORS, los navegadores bloquean peticiones entre dominios distintos.</p>
+<h3>Instalación del middleware</h3>
+<pre><code class="language-bash">go get github.com/gin-contrib/cors</code></pre>
+<h3>Configuración</h3>
+<pre><code class="language-go">package main
+
+import (
+    "github.com/gin-gonic/gin"
+    "github.com/gin-contrib/cors"
+)
+
+func main() {
+    r := gin.Default()
+
+    // Configuración permitida (todas las origenes)
+    r.Use(cors.Default())
+
+    // Configuración personalizada
+    r.Use(cors.New(cors.Config{
+        AllowOrigins:     []string{"https://miapp.com", "http://localhost:3000"},
+        AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+        AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+        ExposeHeaders:    []string{"Content-Length"},
+        AllowCredentials: true,
+        MaxAge:           12 * 3600, // Caché de la preflight (horas en segundos)
+    }))
+
+    r.GET("/", func(c *gin.Context) {
+        c.JSON(200, gin.H{"mensaje": "CORS configurado"})
+    })
+    r.Run(":8080")
+}</code></pre>
+<h3>Alternativa manual</h3>
+<pre><code class="language-go">func corsMixto() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        c.Header("Access-Control-Allow-Origin", "*")
+        c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        if c.Request.Method == "OPTIONS" {
+            c.AbortWithStatus(204)
+            return
+        }
+        c.Next()
+    }
+}</code></pre>
+<blockquote class="aside aside-warning">
+No uses <code>cors.Default()</code> en producción sin restringir las origenes. Permitir cualquier origen (<code>*</code>) puede ser un riesgo de seguridad.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-5-logging-y-panic-recovery">
+    <h2><i class="fa-solid fa-chart-line"></i> 4.5 Logging y panic recovery</h2>
+    <div class="doc-content">
+<h3>gin.Logger()</h3>
+<p>Genera un log por cada request con método, ruta, status, latencia y IP. Puedes personalizar su formato:</p>
+<pre><code class="language-go">r := gin.Default()
+
+// Formato personalizado
+r.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
+    return log.Printf("[%s] %s %s - %d - %s\n",
+        param.TimeStamp.Format("2006-01-02 15:04:05"),
+        param.Method,
+        param.Path,
+        param.StatusCode,
+        param.Latency,
+    )
+}))</code></pre>
+<h3>gin.Recovery()</h3>
+<p>Captura panics (errores que detendrían el programa) y devuelve un error 500 sin matar el proceso:</p>
+<pre><code class="language-go">r.Use(gin.Recovery())</code></pre>
+<h3>Logger personalizado</h3>
+<pre><code class="language-go">func registroTiempo() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        inicio := time.Now()
+        c.Next()
+        latencia := time.Since(inicio)
+        c.Header("X-Latencia", latencia.String())
+        fmt.Printf("%s %s en %s\n", c.Request.Method, c.Request.URL.Path, latencia)
+    }
+}</code></pre>
+<h3>Manejo de errores global</h3>
+<pre><code class="language-go">r := gin.New()
+r.Use(gin.Recovery())
+r.Use(gin.ErrorLoggerT(gin.ErrorTypePrivate))
+
+r.GET("/panico", func(c *gin.Context) {
+    // Si algo lanza un panic aqui, Recovery lo captura
+    panic("error inesperado")
+})</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="4-6-ejemplo-practico">
+    <h2><i class="fa-solid fa-code"></i> 4.6 Ejemplo práctico</h2>
+    <div class="doc-content">
+<h3>Middleware aplicados juntos</h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "time"
+    "net/http"
+    "github.com/gin-gonic/gin"
+    "github.com/gin-contrib/cors"
+)
+
+func latencia() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        inicio := time.Now()
+        c.Next()
+        fmt.Printf("Latencia: %s\n", time.Since(inicio))
+    }
+}
+
+func autenticar() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        token := c.GetHeader("Authorization")
+        if token == "" {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+                "error": "token requerido",
+            })
+            return
+        }
+        c.Set("usuario", "juan")
+        c.Next()
+    }
+}
+
+func main() {
+    r := gin.Default()
+
+    // Middleware global
+    r.Use(latencia())
+    r.Use(cors.Default())
+
+    // Rutas públicas
+    r.POST("/login", func(c *gin.Context) {
+        c.JSON(200, gin.H{"mensaje": "inicia sesión"})
+    })
+
+    // Grupo con middleware de auth
+    privado := r.Group("/api", autenticar())
+    {
+        privado.GET("/perfil", func(c *gin.Context) {
+            usuario, _ := c.Get("usuario")
+            c.JSON(200, gin.H{"usuario": usuario})
+        })
+    }
+
+    r.Run(":8080")
+}</code></pre>
+<h3>Probar flujo</h3>
+<table><thead><tr><th>Comando</th><th>Resultado</th></tr></thead><tbody><tr><td><code>curl http://localhost:8080/api/perfil</code></td><td>401 sin token</td></tr><tr><td><code>curl -H "Authorization: Bearer abc" http://localhost:8080/api/perfil</code></td><td>200 con usuario</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Los middlewares bien diseñados eliminan la duplicación de código y centralizan la lógica transversal de tu aplicación.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste:**
+- El middleware ejecuta código antes y después de los handlers
+- <code>c.Next()</code> continúa la cadena; <code>c.Abort()</code> la detiene
+- Los middleware globales se registran con <code>r.Use()</code>
+- Los middleware por grupo protegen subsets específicos de rutas
+- CORS se configura con gin-contrib/cors
+- gin.Recovery() evita que los panics detengan el servidor
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,244 @@
+<!-- 07. Estilos e imágenes - Next.js (Frameworks) -->
+  <section id="7-1-css-modules-en-nextjs">
+    <h2><i class="fa-solid fa-box"></i> 7.1 CSS Modules en Next.js</h2>
+    <div class="doc-content">
+<h3>Qué son los CSS Modules</h3>
+<p>Los CSS Modules permiten escribir estilos con ámbito local: las clases se generan con un hash único para no chocar con otras. Se crean archivos con extensión <code>.module.css</code>:</p>
+<pre><code class="language-jsx">// app/components/Tarjeta.module.css
+.tarjeta {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f9f9f9;
+}
+.titulo {
+  font-size: 1.25rem;
+  color: #333;
+}</code></pre>
+<h3>Importar y usar los estilos</h3>
+<pre><code class="language-jsx">// app/components/Tarjeta.jsx
+import styles from "./Tarjeta.module.css";
+
+export default function Tarjeta({ titulo, children }) {
+  return (
+    &lt;div className={styles.tarjeta}&gt;
+      &lt;h3 className={styles.titulo}&gt;{titulo}&lt;/h3&gt;
+      {children}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-tip">
+Las clases de un CSS module se acceden como propiedades del objeto `styles` importado.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-2-css-global-y-tailwind-css">
+    <h2><i class="fa-solid fa-palette"></i> 7.2 CSS global y Tailwind CSS</h2>
+    <div class="doc-content">
+<h3>CSS global</h3>
+<p>Los estilos globales se importan en el <code>layout.tsx</code> y aplican a toda la app:</p>
+<pre><code class="language-jsx">// app/globals.css
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #fff;
+}
+a {
+  color: #0070f3;
+}</code></pre>
+<pre><code class="language-jsx">// app/layout.tsx
+import "./globals.css";
+
+export default function RootLayout({ children }) {
+  return (
+    &lt;html lang="es"&gt;
+      &lt;body&gt;{children}&lt;/body&gt;
+    &lt;/html&gt;
+  );
+}</code></pre>
+<h3>Tailwind CSS (preconfigurado)</h3>
+<p><code>create-next-app</code> puede configurar Tailwind que permite estilizar con clases utilitarias directamente en JSX:</p>
+<pre><code class="language-jsx">// app/page.tsx
+export default function Home() {
+  return (
+    &lt;div className="min-h-screen flex items-center justify-center bg-gray-100"&gt;
+      &lt;h1 className="text-3xl font-bold text-blue-600"&gt;
+        Hecho con Tailwind
+      &lt;/h1&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Comparativa</h3>
+<table><thead><tr><th>Enfoque</th><th>Ventaja</th></tr></thead><tbody><tr><td>CSS Modules</td><td>Ámbito local y ordenado en archivos</td></tr><tr><td>CSS global</td><td>Valores por defecto y reset en todo el sitio</td></tr><tr><td>Tailwind</td><td>Utilidades rápidas sin escribir CSS propio</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-3-estilado-condicional-y-dinamico">
+    <h2><i class="fa-solid fa-toggle-on"></i> 7.3 Estilado condicional y dinámico</h2>
+    <div class="doc-content">
+<h3>Clases condicionales</h3>
+<pre><code class="language-jsx">// app/components/Boton.tsx
+"use client";
+
+import { useState } from "react";
+
+export default function Boton() {
+  const [activado, setActivado] = useState(false);
+
+  return (
+    &lt;button
+      onClick={() =&gt; setActivado(!activado)}
+      className={`btn ${activado ? "btn-activo" : "btn-inactivo"}`}
+    &gt;
+      {activado ? "Activado" : "Desactivado"}
+    &lt;/button&gt;
+  );
+}</code></pre>
+<h3>Combinar con la librería clsx (opcional)</h3>
+<pre><code class="language-jsx">import clsx from "clsx";
+
+className={clsx("base", activado ? "activo" : "inactivo", {
+  "oculto": !visible,
+})}</code></pre>
+<h3>Estilos inline dinámicos</h3>
+<pre><code class="language-jsx">const estilo = {
+  color: riesgo ? "red" : "green",
+  fontWeight: "bold",
+};
+
+return &lt;p style={estilo}&gt;Estado del servicio&lt;/p&gt;;</code></pre>
+<blockquote class="aside aside-tip">
+Para combinar varias clases de forma sencilla y segura usa la librería `clsx` o `tailwind-merge`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-4-optimizacion-de-imagenes-con-next-image">
+    <h2><i class="fa-solid fa-image"></i> 7.4 Optimización de imágenes con next/image</h2>
+    <div class="doc-content">
+<h3>Ventajas del componente Image</h3>
+<p>Next.js trae un componente <code>Image</code> que optimiza las imágenes automáticamente: carga diferida, redimensionado y formato WebP:</p>
+<pre><code class="language-jsx">// app/page.tsx
+import Image from "next/image";
+
+export default function Home() {
+  return (
+    &lt;Image
+      src="/hero.png"
+      alt="Imagen de portada"
+      width={800}
+      height={400}
+      priority
+    /&gt;
+  );
+}</code></pre>
+<h3>Opciones principales</h3>
+<table><thead><tr><th>Prop</th><th>Descripción</th></tr></thead><tbody><tr><td><code>src</code></td><td>Ruta o URL de la imagen</td></tr><tr><td><code>alt</code></td><td>Texto alternativo (obligatorio)</td></tr><tr><td><code>width</code> / <code>height</code></td><td>Dimensiones para evitar saltos de layout</td></tr><tr><td><code>priority</code></td><td>Carga prioritaria (imágenes clave)</td></tr><tr><td><code>sizes</code></td><td>Define tamaños para imágenes responsive</td></tr></tbody></table>
+<h3>Rotación automática a WebP</h3>
+<pre><code class="language-jsx">&lt;Image
+  src="/paisaje.jpg"
+  alt="Paisaje"
+  fill
+  style={{ objectFit: "cover" }}
+/&gt;</code></pre>
+<blockquote class="aside aside-note">
+Con `fill` la imagen ocupa todo el contenedor padre y con `objectFit: "cover"` se recorta para cubrirlo.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-5-fuentes-optimizadas-con-next-font">
+    <h2><i class="fa-solid fa-font"></i> 7.5 Fuentes optimizadas con next/font</h2>
+    <div class="doc-content">
+<h3>Usar fuentes de Google sin coste de red</h3>
+<p><code>next/font</code> carga fuentes de Google de forma optimizada: se auto-alojan y no bloquean el renderizado:</p>
+<pre><code class="language-jsx">// app/layout.tsx
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export default function RootLayout({ children }) {
+  return (
+    &lt;html lang="es"&gt;
+      &lt;body className={inter.className}&gt;{children}&lt;/body&gt;
+    &lt;/html&gt;
+  );
+}</code></pre>
+<h3>Configurar peso y estilos</h3>
+<pre><code class="language-jsx">import { Roboto } from "next/font/google";
+
+const roboto = Roboto({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+});</code></pre>
+<h3>Variables de fuente</h3>
+<pre><code class="language-jsx">const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+// Uso en CSS: font-family: var(--font-inter);</code></pre>
+<blockquote class="aside aside-tip">
+Al autohospedar las fuentes mejoras el rendimiento y el SEO porque evitas llamadas externas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-6-temas-oscuro-y-oscuro-con-css">
+    <h2><i class="fa-solid fa-moon"></i> 7.6 Tema claro/oscuro con CSS</h2>
+    <div class="doc-content">
+<h3>Variables CSS para temas</h3>
+<pre><code class="language-css">/* app/globals.css */
+:root {
+  --color-fondo: #ffffff;
+  --color-texto: #111111;
+  --color-primario: #0070f3;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-fondo: #111111;
+    --color-texto: #eeeeee;
+  }
+}
+
+body {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+}</code></pre>
+<h3>Aplicar el tema en los componentes</h3>
+<pre><code class="language-jsx">// app/components/Encabezado.tsx
+import styles from "./Encabezado.module.css";
+
+export default function Encabezado() {
+  return (
+    &lt;header className={styles.header}&gt;
+      &lt;h1 className={styles.logo}&gt;Mi App&lt;/h1&gt;
+    &lt;/header&gt;
+  );
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los CSS Modules dan ámbito local a los estilos
+- Tailwind y CSS global se configuran desde el layout
+- Las clases condicionales usan la sintaxis de strings de plantilla
+- <code>next/image</code> optimiza y redimensiona imágenes
+- <code>next/font</code> carga fuentes auto-alojadas sin coste
+- Las variables CSS permiten temas claro/oscuro
+</blockquote>
+    </div>
+  </section>

@@ -1,0 +1,237 @@
+<!-- 09. Optimización y SEO - Next.js (Frameworks) -->
+  <section id="9-1-metadatos-dinamicos-para-seo">
+    <h2><i class="fa-solid fa-chart-line"></i> 9.1 Metadatos dinámicos para SEO</h2>
+    <div class="doc-content">
+<h3>Por qué importan los metadatos</h3>
+<p>Los metadatos (título, descripción, canónicos) ayudan a los buscadores a indexar y mostrar tu página correctamente:</p>
+<pre><code class="language-tsx">// app/blog/[slug]/page.tsx
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise&lt;Metadata&gt; {
+  const res = await fetch(
+    `https://api.example.com/posts/${params.slug}`
+  );
+  const post = await res.json();
+
+  return {
+    title: `${post.title} | Mi Blog`,
+    description: post.excerpt,
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      images: [post.imagen],
+    },
+    alternates: {
+      canonical: `/blog/${post.slug}`,
+    },
+  };
+}
+
+export default async function Post({ params }) {
+  const res = await fetch(
+    `https://api.example.com/posts/${params.slug}`
+  );
+  const post = await res.json();
+
+  return (
+    &lt;article&gt;
+      &lt;h1&gt;{post.title}&lt;/h1&gt;
+      &lt;p&gt;{post.body}&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-tip">
+Usa `generateMetadata` cuando el SEO de la página dependa de datos dinámicos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-2-sitemap-y-robots-txt">
+    <h2><i class="fa-solid fa-sitemap"></i> 9.2 Sitemap y robots.txt</h2>
+    <div class="doc-content">
+<h3>Generar un sitemap</h3>
+<p>Un sitemap lista todas las rutas de tu sitio para que los buscadores las encuentren:</p>
+<pre><code class="language-tsx">// app/sitemap.ts
+import type { MetadataRoute } from "next";
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  return [
+    {
+      url: "https://mitienda.com",
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 1,
+    },
+    {
+      url: "https://mitienda.com/blog",
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+  ];
+}</code></pre>
+<h3>Configurar robots.txt</h3>
+<pre><code class="language-tsx">// app/robots.ts
+import type { MetadataRoute } from "next";
+
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: {
+      userAgent: "*",
+      allow: "/",
+      disallow: "/admin",
+    },
+    sitemap: "https://mitienda.com/sitemap.xml",
+  };
+}</code></pre>
+<h3>Opciones del sitemap</h3>
+<table><thead><tr><th>Campo</th><th>Descripción</th></tr></thead><tbody><tr><td><code>url</code></td><td>URL absoluta de la página</td></tr><tr><td><code>lastModified</code></td><td>Fecha de última actualización</td></tr><tr><td><code>changeFrequency</code></td><td>Frecuencia de cambios</td></tr><tr><td><code>priority</code></td><td>Prioridad de 0 a 1</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-3-rendimiento-y-metricas-web-vitals">
+    <h2><i class="fa-solid fa-gauge-high"></i> 9.3 Rendimiento y métricas Web Vitals</h2>
+    <div class="doc-content">
+<h3>Qué son las Core Web Vitals</h3>
+<table><thead><tr><th>Métrica</th><th>Qué mide</th><th>Buen valor</th></tr></thead><tbody><tr><td><strong>LCP</strong></td><td>Tiempo de carga del contenido principal</td><td>Menos de 2.5s</td></tr><tr><td><strong>INP</strong></td><td>Capacidad de respuesta a interacciones</td><td>Menos de 200ms</td></tr><tr><td><strong>CLS</strong></td><td>Saltos de diseño inesperados</td><td>Menos de 0.1</td></tr></tbody></table>
+<h3>Medir los Web Vitals en la app</h3>
+<pre><code class="language-jsx">// app/reporte-visitas.tsx
+"use client";
+
+import { useReportWebVitals } from "next/web-vitals";
+
+export default function ReporteVisitas() {
+  useReportWebVitals((metric) =&gt; {
+    console.log(metric.name, metric.value);
+    // Envía la métrica a tu servicio de analytics
+  });
+
+  return null;
+}</code></pre>
+<blockquote class="aside aside-tip">
+Buen LCP, INP y CLS mejoran el ranking en Google y la experiencia del usuario.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-4-carga-diferida-lazy-loading">
+    <h2><i class="fa-solid fa-ban"></i> 9.4 Carga diferida (lazy loading)</h2>
+    <div class="doc-content">
+<h3>Cargar componentes bajo demanda</h3>
+<p>Usa <code>next/dynamic</code> para cargar componentes pesados solo cuando el usuario los necesite:</p>
+<pre><code class="language-jsx">// app/page.tsx
+import dynamic from "next/dynamic";
+
+const GraficoPesado = dynamic(() =&gt;
+  import("../components/Grafico"),
+  {
+    loading: () =&gt; &lt;p&gt;Cargando gráfico...&lt;/p&gt;,
+    ssr: false,
+  }
+);
+
+export default function Home() {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Panel&lt;/h1&gt;
+      &lt;GraficoPesado /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<h3>Imágenes con carga diferida</h3>
+<pre><code class="language-jsx">import Image from "next/image";
+
+// Por defecto las imágenes usan lazy loading
+&lt;Image
+  src="/galeria/imagen-2.jpg"
+  alt="Imagen de la galería"
+  width={600}
+  height={400}
+  loading="lazy"
+/&gt;;</code></pre>
+<blockquote class="aside aside-note">
+`next/dynamic` y `next/image` integran la carga diferida por defecto para mejorar el rendimiento.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-5-optimizacion-automatica-y-streaming">
+    <h2><i class="fa-solid fa-bolt"></i> 9.5 Optimización automática y streaming</h2>
+    <div class="doc-content">
+<h3>Optimizaciones automáticas de Next.js</h3>
+<ul>
+<li><strong>Code splitting</strong>: cada página carga solo su JavaScript</li>
+<li><strong>Prefetch</strong>: <code>Link</code> precarga las rutas visibles</li>
+<li><strong>Compresión</strong>: respuestas gzip/brotli automáticas</li>
+<li><strong>Minificación</strong>: JS y CSS se comprimen al compilar</li>
+</ul>
+<h3>Streaming con Suspense</h3>
+<p><code>Suspense</code> permite mostrar parte de la página mientras el resto se carga:</p>
+<pre><code class="language-jsx">// app/blog/page.tsx
+import { Suspense } from "react";
+import ListaPosts from "./ListaPosts";
+import Skeleton from "./Skeleton";
+
+export default function Blog() {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Blog&lt;/h1&gt;
+      &lt;Suspense fallback={&lt;Skeleton /&gt;}&gt;
+        &lt;ListaPosts /&gt;
+      &lt;/Suspense&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+<blockquote class="aside aside-tip">
+El streaming con Suspense mejora la percepción de velocidad y el primer pintado (FCP).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-6-buenas-practicas-de-seo-y-rendimiento">
+    <h2><i class="fa-solid fa-circle-check"></i> 9.6 Buenas prácticas de SEO y rendimiento</h2>
+    <div class="doc-content">
+<h3>Checklist de optimización</h3>
+<table><thead><tr><th>Práctica</th><th>Beneficio</th></tr></thead><tbody><tr><td>Siempre incluir <code>alt</code> en imágenes</td><td>Accesibilidad y SEO</td></tr><tr><td>Usar metadatos únicos por página</td><td>Mejor indexación</td></tr><tr><td>Evitar JavaScript pesado en servidor</td><td>Menor carga inicial</td></tr><tr><td><code>priority</code> en imágenes clave</td><td>Mejor LCP</td></tr><tr><td>Fijar <code>width/height</code> en imágenes</td><td>Menos CLS</td></tr></tbody></table>
+<h3>Evitar saltos de layout (CLS)</h3>
+<pre><code class="language-jsx">// Reserva el espacio de la imagen para no saltar el layout
+import Image from "next/image";
+
+&lt;div style={{ position: "relative", height: "400px" }}&gt;
+  &lt;Image
+    src="/hero.png"
+    alt="Portada"
+    fill
+    style={{ objectFit: "cover" }}
+  /&gt;
+&lt;/div&gt;;</code></pre>
+<blockquote class="aside aside-warning">
+Revisa tu app con Lighthouse para detectar y corregir problemas de SEO, rendimiento y accesibilidad.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Los metadatos dinámicos mejoran el SEO de las páginas
+- Un sitemap y robots.txt guían a los buscadores
+- Las Core Web Vitals (LCP, INP, CLS) miden la experiencia
+- <code>next/dynamic</code> permite carga diferida bajo demanda
+- El streaming con Suspense acelera el primer pintado
+- Las buenas prácticas de SEO y rendimiento van de la mano
+</blockquote>
+    </div>
+  </section>

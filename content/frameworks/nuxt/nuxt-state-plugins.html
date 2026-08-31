@@ -1,0 +1,190 @@
+<!-- 06. Estado global y Plugins - Nuxt (Frameworks) -->
+  <section id="6-1-estado-global-con-usestate">
+    <h2><i class="fa-solid fa-globe"></i> 6.1 Estado global con useState</h2>
+    <div class="doc-content">
+<h3>Qué es useState</h3>
+<p><code>useState</code> es un composable de Nuxt para crear estado global con capacidad de <strong>simulación de servidor</strong>. Esto significa que el mismo estado se comparte entre servidor y cliente sin perder sincronización, algo clave con SSR.</p>
+<h3>Ejemplo: Contador global</h3>
+<pre><code class="language-vue">&lt;!-- composables/useContadorGlobal.ts --&gt;
+export function useContadorGlobal() {
+  const contador = useState('contador-global', () =&gt; 0)
+  const incrementar = () =&gt; contador.value++
+  return { contador, incrementar }
+}
+
+&lt;!-- Cualquier componente --&gt;
+&lt;script setup&gt;
+const { contador, incrementar } = useContadorGlobal()
+&lt;/script&gt;</code></pre>
+<h3>Cómo funciona</h3>
+<ul>
+<li><code>useState</code> necesita una <strong>clave única</strong> para identificar el estado</li>
+<li>El valor inicial solo se establece la primera vez</li>
+<li>Con SSR, el estado se serializa y se reenvía al cliente</li>
+</ul>
+<h3>Diferencias con ref</h3>
+<table><thead><tr><th>Característica</th><th>useState</th><th>ref</th></tr></thead><tbody><tr><td><strong>Compartido</strong></td><td>Sí, de forma global</td><td>No, solo local</td></tr><tr><td><strong>SSR friendly</strong></td><td>Sí, se sincroniza</td><td>No, se pierde en el servidor</td></tr><tr><td><strong>Requiere clave</strong></td><td>Sí</td><td>No</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-2-introduccion-a-pinia-en-nuxt">
+    <h2><i class="fa-solid fa-store"></i> 6.2 Introducción a Pinia en Nuxt</h2>
+    <div class="doc-content">
+<h3>Qué es Pinia</h3>
+<p><strong>Pinia</strong> es la librería de gestión de estado recomendada para Vue 3 y Nuxt. Ofrece una API basada en la Composition API con stores tipadas y reactivas. En Nuxt se instala como un módulo con soporte SSR integrado.</p>
+<h3>Cómo funciona un store</h3>
+<p>Un <strong>store</strong> es un contenedor de estado y acciones relacionadas. Se define con la función <code>defineStore</code> y se usa en cualquier componente.</p>
+<pre><code class="language-ts">// stores/contador.ts
+export const useContadorStore = defineStore('contador', {
+  state: () =&gt; ({ valor: 0 }),
+  getters: {
+    doble: (state) =&gt; state.valor * 2
+  },
+  actions: {
+    incrementar() {
+      this.valor++
+    }
+  }
+})</code></pre>
+<h3>Ventajas de Pinia frente a useState</h3>
+<ul>
+<li>Organización más clara con stores dedicados</li>
+<li>Soporte para DevTools y time-travel debugging</li>
+<li>Getters y actions bien definidos</li>
+<li>Módulo oficial de Nuxt con SSR automático</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-3-plugins-en-nuxt">
+    <h2><i class="fa-solid fa-puzzle-piece"></i> 6.3 Plugins en Nuxt</h2>
+    <div class="doc-content">
+<h3>Qué son los plugins</h3>
+<p>Los <strong>plugins</strong> son pequeños módulos que se ejecutan cuando la aplicación se inicia. Sirven para registrar librerías externas, inyectar funcionalidades o ejecutar código de inicialización. Se guardan en <code>app/plugins/</code>.</p>
+<h3>Crear un plugin sencillo</h3>
+<pre><code class="language-vue">&lt;!-- app/plugins/cambios.js --&gt;
+export default defineNuxtPlugin(() =&gt; {
+  console.log('La aplicación Nuxt ha iniciado')
+})</code></pre>
+<h3>Inyectar una variable global</h3>
+<pre><code class="language-ts">// app/plugins/helpers.ts
+export default defineNuxtPlugin((nuxtApp) =&gt; {
+  return {
+    provide: {
+      formatoMoneda: (valor) =&gt; `$${valor.toFixed(2)}`
+    }
+  }
+})
+
+// Uso en cualquier parte:
+// const { $formatoMoneda } = useNuxtApp()</code></pre>
+<h3>Tipos de plugins</h3>
+<table><thead><tr><th>Tipo</th><th>Ejecución</th></tr></thead><tbody><tr><td><strong>Cliente</strong></td><td>Nombre con sufijo <code>.client.ts</code></td></tr><tr><td><strong>Servidor</strong></td><td>Nombre con sufijo <code>.server.ts</code></td></tr><tr><td><strong>Ambos</strong></td><td>Sin sufijo, se ejecuta en los dos</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-4-middleware-de-navegacion">
+    <h2><i class="fa-solid fa-shield-halved"></i> 6.4 Middleware de navegación</h2>
+    <div class="doc-content">
+<h3>Qué es el middleware de navegación</h3>
+<p>Los <strong>middlewares</strong> de Nuxt son funciones que se ejecutan antes de renderizar una página. Son ideales para proteger rutas, redirigir usuarios o validar condiciones. Se guardan en <code>app/middleware/</code>.</p>
+<h3>Ejemplo: Proteger rutas privadas</h3>
+<pre><code class="language-ts">// app/middleware/auth.ts
+export default defineNuxtRouteMiddleware((to, from) =&gt; {
+  const sesion = useState('sesion', () =&gt; null)
+
+  if (!sesion.value) {
+    // Redirigir al login si no hay sesión
+    return navigateTo('/login')
+  }
+})</code></pre>
+<h3>Aplicar el middleware a una página</h3>
+<pre><code class="language-vue">&lt;!-- pages/perfil.vue --&gt;
+&lt;script setup&gt;
+definePageMeta({
+  middleware: 'auth'
+})
+&lt;/script&gt;</code></pre>
+<h3>Middleware inline</h3>
+<p>También puedes definir un middleware directamente en la definición de la página:</p>
+<pre><code class="language-vue">&lt;script setup&gt;
+definePageMeta({
+  middleware: [function (to, from) {
+    // lógica de validación
+  }]
+})
+&lt;/script&gt;</code></pre>
+<blockquote class="aside aside-tip">
+Usa <code>navigateTo</code> para redirigir y <code>abortNavigation</code> para cancelar la navegación a una ruta.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-5-composables-personalizados">
+    <h2><i class="fa-solid fa-boxes-stacked"></i> 6.5 Composables personalizados</h2>
+    <div class="doc-content">
+<h3>Qué son los composables</h3>
+<p>Los <strong>composables</strong> son funciones que encapsulan lógica reutilizable usando la Composition API. En Nuxt, los que se colocan en <code>app/composables/</code> se <strong>auto-importan</strong> automáticamente.</p>
+<h3>Ejemplo: Composable de formato de fecha</h3>
+<pre><code class="language-ts">// app/composables/useFormatoFecha.ts
+export function useFormatoFecha() {
+  const formatear = (fecha) =&gt; {
+    return new Intl.DateTimeFormat('es', {
+      day: '2-digit', month: 'long', year: 'numeric'
+    }).format(new Date(fecha))
+  }
+
+  return { formatear }
+}</code></pre>
+<h3>Usar el composable sin importar</h3>
+<pre><code class="language-vue">&lt;script setup&gt;
+const { formatear } = useFormatoFecha()
+const hoy = formatear(new Date()) // "30 de agosto de 2026"
+&lt;/script&gt;</code></pre>
+<h3>Buenas prácticas</h3>
+<ul>
+<li>Nómbralos con el prefijo <code>use</code></li>
+<li>Mantén una única responsabilidad por composable</li>
+<li>Devuelve un objeto explícito con los valores y funciones</li>
+<li>Combínalos con useState para lógica global compartida</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-6-resumen-de-estado-y-ciclo-de-vida">
+    <h2><i class="fa-solid fa-diagram-project"></i> 6.6 Resumen de estado y ciclo de vida</h2>
+    <div class="doc-content">
+<h3>Qué herramienta usar</h3>
+<table><thead><tr><th>Necesidad</th><th>Herramienta</th></tr></thead><tbody><tr><td>Estado local de un componente</td><td><code>ref</code> o <code>reactive</code></td></tr><tr><td>Estado global simple con SSR</td><td><code>useState</code></td></tr><tr><td>Estado global complejo con getters y actions</td><td><strong>Pinia</strong></td></tr><tr><td>Lógica reutilizable</td><td>Composables en <code>app/composables/</code></td></tr><tr><td>Inicialización o librerías externas</td><td>Plugins en <code>app/plugins/</code></td></tr><tr><td>Protección de rutas</td><td>Middleware en <code>app/middleware/</code></td></tr></tbody></table>
+<h3>Flujo típico de una petición</h3>
+<pre><code class="language-text">Petición
+  -&gt; Middleware (validación de ruta)
+  -&gt; Plugins (inicialización)
+  -&gt; Carga de datos con useAsyncData/useFetch
+  -&gt; Renderizado del layout y la página
+  -&gt; Estado compartido con useState/Pinia
+  -&gt; Hidratación en el cliente
+</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- useState crea estado global con soporte SSR y una clave única
+- Pinia es el store recomendado para estado global complejo
+- Los plugins inicializan la app y registran librerías
+- El middleware protege y valida el acceso a las rutas
+- Los composables en app/composables/ se auto-importan
+- Cada herramienta (estado, plugins, middleware) tiene su propósito
+</blockquote>
+    </div>
+  </section>

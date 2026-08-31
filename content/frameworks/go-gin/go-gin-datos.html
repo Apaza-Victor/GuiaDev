@@ -1,0 +1,292 @@
+<!-- 06. Parámetros y consultas - Go (Frameworks) -->
+  <section id="6-1-path-parameters">
+    <h2><i class="fa-solid fa-link"></i> 6.1 Path parameters</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Los <strong>path parameters</strong> son segmentos de la URL que capturan valores dinámicos. Se definen con dos puntos (<code>:parametro</code>) y se acceden con <code>c.Param()</code>.</p>
+<pre><code class="language-go">r.GET("/usuarios/:id", func(c *gin.Context) {
+    id := c.Param("id")
+    c.JSON(200, gin.H{"id": id})
+})
+
+// Múltiples parámetros
+r.GET("/usuarios/:id/posts/:postID/comentarios/:comentarioID", func(c *gin.Context) {
+    c.JSON(200, gin.H{
+        "usuario":     c.Param("id"),
+        "post":        c.Param("postID"),
+        "comentario":   c.Param("comentarioID"),
+    })
+})
+
+// Wildcard: captura cualquier ruta restante
+r.GET("/archivos/*ruta", func(c *gin.Context) {
+    c.JSON(200, gin.H{"ruta_completa": c.Param("ruta")})
+})</code></pre>
+<h3>Conversión de tipos</h3>
+<pre><code class="language-go">r.GET("/usuarios/:id", func(c *gin.Context) {
+    idStr := c.Param("id")
+    id, err := strconv.Atoi(idStr) // string -&gt; int
+    if err != nil {
+        c.JSON(400, gin.H{"error": "id debe ser numérico"})
+        return
+    }
+    c.JSON(200, gin.H{"id_entero": id, "id_aumentado": id + 1})
+})</code></pre>
+<h3>Conteo de parámetros</h3>
+<table><thead><tr><th>Sintaxis</th><th>Resultado</th></tr></thead><tbody><tr><td><code>/:id</code></td><td>Captura un segmento</td></tr><tr><td><code>/*ruta</code></td><td>Captura todo lo restante</td></tr><tr><td><code>/:id/:page</code></td><td>Captura varios segmentos</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-2-query-strings">
+    <h2><i class="fa-solid fa-magnifying-glass"></i> 6.2 Query strings</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Los <strong>query strings</strong> son pares clave-valor que van después de <code>?</code> en la URL. Se usan para filtros, paginación y opciones.</p>
+<pre><code class="language-go">// URL: /buscar?q=golang&amp;page=2&amp;limite=10
+r.GET("/buscar", func(c *gin.Context) {
+    q := c.Query("q")             // "golang"
+    page := c.DefaultQuery("page", "1")  // "2" o "1" por defecto
+    limite := c.Query("limite")   // "10"
+
+    c.JSON(200, gin.H{
+        "q":      q,
+        "page":   page,
+        "limite": limite,
+    })
+})</code></pre>
+<h3>Búsqueda por URL</h3>
+<pre><code class="language-go">r.GET("/productos", func(c *gin.Context) {
+    categoria := c.Query("categoria")      // opcional
+    precioMax := c.DefaultQuery("precio_max", "999999")
+    orden := c.DefaultQuery("orden", "desc")
+
+    c.JSON(200, gin.H{
+        "filtro_categoria": categoria,
+        "precio_maximo":    precioMax,
+        "orden":            orden,
+    })
+})
+// GET /productos?categoria=ropa -&gt; filtra solo ropa
+// GET /productos -&gt; devuelve todo con defaults</code></pre>
+<h3>Diferencia entre Query y PostForm</h3>
+<table><thead><tr><th>Método</th><th>Fuente de datos</th><th>Ejemplo de URL</th></tr></thead><tbody><tr><td><code>c.Query()</code></td><td>Query string de la URL</td><td><code>/buscar?q=go</code></td></tr><tr><td><code>c.PostForm()</code></td><td>Cuerpo del formulario</td><td><code>POST /registro</code></td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-3-formularios">
+    <h2><i class="fa-solid fa-file-lines"></i> 6.3 Formularios</h2>
+    <div class="doc-content">
+<h3>Recibir formularios con c.PostForm()</h3>
+<pre><code class="language-go">r.POST("/registro", func(c *gin.Context) {
+    nombre := c.PostForm("nombre")
+    email := c.PostForm("email")
+    edad := c.PostForm("edad")
+
+    // PostForm con valor por defecto
+    genero := c.DefaultPostForm("genero", "no_especificado")
+
+    c.JSON(200, gin.H{
+        "nombre": nombre,
+        "email":  email,
+        "edad":   edad,
+        "genero": genero,
+    })
+})</code></pre>
+<h3>Form + Query combinados</h3>
+<pre><code class="language-go">r.POST("/alternativa", func(c *gin.Context) {
+    // Otros métodos para obtener datos
+    v1 := c.Request.FormValue("campo1")        // forma del stdlib
+    v2 := c.GetPostForm("campo2")              // (valor, existe)
+
+    valor, existe := c.GetPostForm("campo2")
+    if !existe {
+        c.JSON(400, gin.H{"error": "campo2 es requerido"})
+        return
+    }
+    c.JSON(200, gin.H{"campo1": v1, "campo2": valor})
+})</code></pre>
+<h3>Ejemplo completo</h3>
+<pre><code class="language-go">// HTML del formulario (resources/form.html)
+// &lt;form action="/editar-perfil" method="POST"&gt;
+//   Nombre: &lt;input type="text" name="nombre"&gt;
+//   Email:  &lt;input type="email" name="email"&gt;
+//   &lt;button&gt;Guardar&lt;/button&gt;
+// &lt;/form&gt;
+
+r.POST("/editar-perfil", func(c *gin.Context) {
+    nombre := c.PostForm("nombre")
+    email := c.PostForm("email")
+    c.JSON(200, gin.H{"guardado": true, "nombre": nombre, "email": email})
+})</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-4-validacion-de-entrada">
+    <h2><i class="fa-solid fa-circle-check"></i> 6.4 Validación de entrada</h2>
+    <div class="doc-content">
+<h3>Validar con formatos</h3>
+<p>Combina <code>ShouldBind</code> con tags para validar formularios y queries:</p>
+<pre><code class="language-go">type BusquedaLibro struct {
+    Titulo  string `form:"titulo" binding:"omitempty"`
+    Autor   string `form:"autor" binding:"omitempty"`
+    Anio    int    `form:"anio" binding:"gte=1000,lte=2100,omitempty"`
+    Pagina  int    `form:"page" binding:"gte=1"`
+}
+
+r.GET("/libros", func(c *gin.Context) {
+    var busqueda BusquedaLibro
+    if err := c.ShouldBindQuery(&amp;busqueda); err != nil {
+        c.JSON(400, gin.H{"error": "filtros inválidos", "detalle": err.Error()})
+        return
+    }
+    c.JSON(200, busqueda)
+})</code></pre>
+<h3>Validación manual</h3>
+<pre><code class="language-go">func esEmailValido(email string) bool {
+    return strings.Contains(email, "@") &amp;&amp; strings.Contains(email, ".")
+}
+
+r.POST("/contacto", func(c *gin.Context) {
+    email := c.PostForm("email")
+    mensaje := c.PostForm("mensaje")
+
+    if len(mensaje) &lt; 10 {
+        c.JSON(400, gin.H{"error": "el mensaje debe tener al menos 10 caracteres"})
+        return
+    }
+    if !esEmailValido(email) {
+        c.JSON(400, gin.H{"error": "email no válido"})
+        return
+    }
+    c.JSON(200, gin.H{"recibido": true})
+})</code></pre>
+<h3>Buenas prácticas</h3>
+<ul>
+<li>Valida siempre los datos de entrada, nunca confíes en el cliente</li>
+<li>Devuelve errores descriptivos en español para el usuario final</li>
+<li>Usa <code>binding:</code> para reglas comunes y validación manual para lógica compleja</li>
+<li>Convierte strings a tipos con <code>strconv</code> manejando el error</li>
+</ul>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="6-5-ejemplo-practico">
+    <h2><i class="fa-solid fa-briefcase"></i> 6.5 Ejemplo práctico</h2>
+    <div class="doc-content">
+<h3>API de productos con filtros</h3>
+<pre><code class="language-go">package main
+
+import (
+    "fmt"
+    "strconv"
+    "net/http"
+    "github.com/gin-gonic/gin"
+)
+
+type Producto struct {
+    ID       int     `json:"id"`
+    Nombre   string  `json:"nombre"`
+    Categoria string `json:"categoria"`
+    Precio   float64 `json:"precio"`
+}
+
+var catalogo = []Producto{
+    {ID: 1, Nombre: "Laptop", Categoria: "tecnologia", Precio: 999.99},
+    {ID: 2, Nombre: "Mouse", Categoria: "tecnologia", Precio: 29.99},
+    {ID: 3, Nombre: "Camisa", Categoria: "ropa", Precio: 19.00},
+}
+
+func main() {
+    r := gin.Default()
+
+    // LISTAR con filtros y paginación
+    r.GET("/productos", func(c *gin.Context) {
+        categoria := c.Query("categoria")
+        precioMax, _ := strconv.ParseFloat(c.DefaultQuery("precio_max", "999999"), 64)
+        pagina, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+        porPagina := 10
+
+        var resultados []Producto
+        for _, p := range catalogo {
+            if categoria != "" &amp;&amp; p.Categoria != categoria {
+                continue
+            }
+            if p.Precio &gt; precioMax {
+                continue
+            }
+            resultados = append(resultados, p)
+        }
+
+        // Paginación simple
+        inicio := (pagina - 1) * porPagina
+        if inicio &gt; len(resultados) {
+            inicio = len(resultados)
+        }
+        fin := inicio + porPagina
+        if fin &gt; len(resultados) {
+            fin = len(resultados)
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+            "total":     len(resultados),
+            "pagina":    pagina,
+            "productos": resultados[inicio:fin],
+        })
+    })
+
+    // OBTENER por ID (path parameter)
+    r.GET("/productos/:id", func(c *gin.Context) {
+        idStr := c.Param("id")
+        id, err := strconv.Atoi(idStr)
+        if err != nil || id &lt;= 0 {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "id inválido"})
+            return
+        }
+        for _, p := range catalogo {
+            if p.ID == id {
+                c.JSON(http.StatusOK, p)
+                return
+            }
+        }
+        c.JSON(http.StatusNotFound, gin.H{"error": "producto no encontrado"})
+    })
+
+    r.Run(":8080")
+}</code></pre>
+<h3>Probando los endpoints</h3>
+<pre><code class="language-bash"># Todos los productos
+curl http://localhost:8080/productos
+
+# Filtrar por categoría
+curl "http://localhost:8080/productos?categoria=tecnologia"
+
+# Filtrar por precio máximo
+curl "http://localhost:8080/productos?precio_max=100"
+
+# Con paginación
+curl "http://localhost:8080/productos?page=2"
+
+# Por ID
+curl http://localhost:8080/productos/2</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste:**
+- Los path parameters (<code>:id</code>) se obtienen con <code>c.Param()</code>
+- Las query strings se obtienen con <code>c.Query()</code> y <code>c.DefaultQuery()</code>
+- Los formularios se reciben con <code>c.PostForm()</code>
+- Usa <code>strconv</code> para convertir strings a números validos
+- <code>ShouldBindQuery</code> valida filtros con tags binding
+- Valida siempre las entradas y responde errores descriptivos
+</blockquote>
+    </div>
+  </section>

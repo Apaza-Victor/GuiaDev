@@ -1,0 +1,266 @@
+<!-- 07. Servicios e inyección de dependencias - Angular (Frameworks) -->
+  <section id="7-1-que-es-un-servicio">
+    <h2><i class="fa-solid fa-gears"></i> 7.1 Qué es un servicio</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>servicio</strong> es una clase TypeScript reutilizable que encapsula lógica de negocio o funcionalidad compartida: consumo de APIs, cálculo, almacenamiento, autenticación, logs, etc. Los componentes se encargan de la vista; los servicios, de los datos y las operaciones.</p>
+<h3>Ventajas de usar servicios</h3>
+<ul>
+<li><strong>Reutilización</strong>: la misma lógica se comparte entre varios componentes</li>
+<li><strong>Separación de responsabilidades</strong>: componentes más ligeros y legibles</li>
+<li><strong>Testeabilidad</strong>: la lógica se prueba de forma aislada</li>
+<li><strong>Estado centralizado</strong>: se pueden compartir datos entre componentes sin prop-drilling</li>
+</ul>
+<h3>Creación con el CLI</h3>
+<pre><code class="language-typescript">ng generate service productoServicio
+# abreviado
+ng g s productoServicio</code></pre>
+<h3>Ejemplo básico de servicio</h3>
+<pre><code class="language-typescript">// productov.servicio.ts (simplificado)
+import { Injectable } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CalculadoraService {
+  sumar(a: number, b: number): number {
+    return a + b;
+  }
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-2-el-decorador-injectable">
+    <h2><i class="fa-solid fa-stamp"></i> 7.2 El decorador @Injectable</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>El decorador <code>@Injectable</code> marca una clase como <strong>inyectable</strong>: el sistema de inyección de dependencias de Angular puede crearla y administrarla. Es el decorador que acompaña a todos los servicios.</p>
+<h3>Sintaxis</h3>
+<pre><code class="language-typescript">import { Injectable } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UsuarioService {
+  private usuarios: string[] = [];
+
+  listar(): string[] {
+    return [...this.usuarios];
+  }
+
+  agregar(usuario: string): void {
+    this.usuarios.push(usuario);
+  }
+}</code></pre>
+<h3>Opciones del decorador</h3>
+<table><thead><tr><th>Opción</th><th>Descripción</th></tr></thead><tbody><tr><td><code>providedIn: 'root'</code></td><td>El servicio es singleton global; se crea una sola vez en la app</td></tr><tr><td><code>providedIn: UsuarioModule</code></td><td>Solo disponible dentro de ese NgModule</td></tr><tr><td><code>providedIn: 'platform' / 'any'</code></td><td>Ámbitos alternativos de singleton (plataforma) o nueva instancia por inyector</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+`providedIn: 'root'` permite que el servicio esté disponible sin tener que registrarlo manualmente en ningún módulo: se importa y se inyecta directamente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-3-inyeccion-de-dependencias">
+    <h2><i class="fa-solid fa-plug"></i> 7.3 Inyección de dependencias</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>La <strong>inyección de dependencias</strong> (DI) es un patrón en el que Angular proporciona automáticamente las instancias que una clase necesita, en lugar de que la clase las cree o las busque por sí misma.</p>
+<h3>Formas de inyección</h3>
+<pre><code class="language-typescript">// 1) Inyección por constructor (la más común)
+export class ListaComponente {
+  constructor(private usuarioService: UsuarioService) {}
+}
+
+// 2) Inyección con inject() en campos (Angular moderno)
+import { inject } from '@angular/core';
+
+export class ListaComponente {
+  private usuarioService = inject(UsuarioService);
+}</code></pre>
+<h3>Beneficios del patrón DI</h3>
+<ul>
+<li><strong>Desacoplamiento</strong>: los componentes no crean sus dependencias</li>
+<li><strong>Testeabilidad</strong>: es fácil pasar mocks o falsos en las pruebas</li>
+<li><strong>Singleton automático</strong>: Angular reutiliza la misma instancia cuando procede</li>
+</ul>
+<h3>Inyección con tokens alternativos</h3>
+<pre><code class="language-typescript">import { Injectable, InjectionToken, inject } from '@angular/core';
+
+export const API_URL = new InjectionToken&lt;string&gt;('api.url');
+
+@Injectable({ providedIn: 'root' })
+export class DatosService {
+  private apiUrl = inject(API_URL);
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-4-providers">
+    <h2><i class="fa-solid fa-box"></i> 7.4 Providers: dónde se registran</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>Un <strong>provider</strong> es el registro que le dice a Angular cómo crear una dependencia y en qué ámbito estará disponible. Existen varios niveles de registro.</p>
+<h3>Niveles de registro</h3>
+<table><thead><tr><th>Nivel</th><th>Cómo se registra</th><th>Alcance</th></tr></thead><tbody><tr><td><strong>Raíz (root)</strong></td><td><code>providedIn: 'root'</code> en @Injectable</td><td>Toda la aplicación (singleton)</td></tr><tr><td><strong>Módulo</strong></td><td>Arreglo <code>providers</code> en @NgModule</td><td>Todos los componentes del módulo</td></tr><tr><td><strong>Componente</strong></td><td>Arreglo <code>providers</code> en @Component</td><td>El componente y sus hijos (nueva instancia)</td></tr></tbody></table>
+<h3>Ejemplo de provider a nivel de componente</h3>
+<pre><code class="language-typescript">import { Component } from '@angular/core';
+import { UsuarioService } from './usuario.service';
+
+@Component({
+  selector: 'app-lista',
+  templateUrl: './lista.component.html',
+  providers: [UsuarioService] // instancia dedicada a este componente
+})
+export class ListaComponent {
+  constructor(private usuarioService: UsuarioService) {}
+}</code></pre>
+<h3>Puntos a recordar</h3>
+<ul>
+<li><code>providedIn: 'root'</code> es la opción por defecto y recomendada para la mayoría de servicios</li>
+<li>Registrar a nivel de componente crea una <strong>nueva instancia</strong> por cada ocurrencia del componente</li>
+<li>El nivel de módulo es útil para servicios de funcionalidades con lazy loading</li>
+</ul>
+<blockquote class="aside aside-note">
+Si dos componentes se registran su propio `providers` del mismo servicio, cada uno tendrá una instancia distinta y no compartirán estado.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-5-uso-de-servicios-en-componentes">
+    <h2><i class="fa-solid fa-bolt"></i> 7.5 Uso de servicios en componentes</h2>
+    <div class="doc-content">
+<h3>Inyección y consumo</h3>
+<p>Una vez registrado, el servicio se inyecta en el constructor (o con <code>inject()</code>) y sus métodos se llaman desde el componente.</p>
+<h3>Ejemplo completo</h3>
+<pre><code class="language-typescript">// tarea.service.ts
+import { Injectable } from '@angular/core';
+
+export interface Tarea { id: number; titulo: string; }
+
+@Injectable({ providedIn: 'root' })
+export class TareaService {
+  private tareas: Tarea[] = [];
+  private siguienteId = 1;
+
+  listar(): Tarea[] {
+    return [...this.tareas];
+  }
+
+  agregar(titulo: string): void {
+    this.tareas.push({ id: this.siguienteId++, titulo });
+  }
+
+  eliminar(id: number): void {
+    this.tareas = this.tareas.filter(t =&gt; t.id !== id);
+  }
+}</code></pre>
+<pre><code class="language-typescript">// app.component.ts
+import { Component, OnInit } from '@angular/core';
+import { TareaService, Tarea } from './tarea.service';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html'
+})
+export class AppComponent implements OnInit {
+  tareas: Tarea[] = [];
+  nuevaTarea = '';
+
+  constructor(private tareaService: TareaService) {}
+
+  ngOnInit(): void {
+    this.tareas = this.tareaService.listar();
+  }
+
+  crear(): void {
+    if (!this.nuevaTarea.trim()) return;
+    this.tareaService.agregar(this.nuevaTarea);
+    this.tareas = this.tareaService.listar();
+    this.nuevaTarea = '';
+  }
+}</code></pre>
+<pre><code class="language-typescript">&lt;input [(ngModel)]="nuevaTarea" placeholder="Nueva tarea"&gt;
+&lt;button (click)="crear()"&gt;Añadir&lt;/button&gt;
+&lt;ul&gt;
+  &lt;li *ngFor="let tarea of tareas"&gt;{{ tarea.titulo }}&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="7-6-compartir-datos-entre-componentes">
+    <h2><i class="fa-solid fa-share-nodes"></i> 7.6 Compartir datos entre componentes</h2>
+    <div class="doc-content">
+<h3>Por qué los servicios para compartir estado</h3>
+<p>Para comunicar datos entre componentes que no tienen relación directa (padre-hijo), los servicios con estado <strong>singleton</strong> son la solución natural: varios componentes leen y escriben en la misma instancia del servicio.</p>
+<h3>Con BehaviorSubject para notificar cambios</h3>
+<pre><code class="language-typescript">import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class CarritoService {
+  private totalSubject = new BehaviorSubject&lt;number&gt;(0);
+  total$ = this.totalSubject.asObservable();
+
+  actualizarTotal(nuevaCantidad: number): void {
+    this.totalSubject.next(nuevaCantidad);
+  }
+}</code></pre>
+<h3>Componentes que lo consumen</h3>
+<pre><code class="language-typescript">// header.component.ts
+import { Component, OnInit } from '@angular/core';
+import { CarritoService } from './carrito.service';
+
+@Component({
+  selector: 'app-header',
+  template: '&lt;p&gt;Total carrito: {{ total }}&lt;/p&gt;'
+})
+export class HeaderComponent implements OnInit {
+  total = 0;
+
+  constructor(private carritoService: CarritoService) {}
+
+  ngOnInit(): void {
+    this.carritoService.total$.subscribe(t =&gt; this.total = t);
+  }
+}</code></pre>
+<pre><code class="language-typescript">// producto.component.ts
+import { Component } from '@angular/core';
+import { CarritoService } from './carrito.service';
+
+@Component({
+  selector: 'app-producto',
+  template: '&lt;button (click)="comprar()"&gt;Comprar&lt;/button&gt;'
+})
+export class ProductoComponent {
+  constructor(private carritoService: CarritoService) {}
+
+  comprar(): void {
+    this.carritoService.actualizarTotal(this.carritoService.total$ ? 1 : 1);
+  }
+}</code></pre>
+<blockquote class="aside aside-tip">
+`BehaviorSubject` siempre entrega el último valor a los nuevos suscriptores, por lo que los componentes que se montan tarde reciben el estado actual sin problemas.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Un servicio encapsula lógica de negocio y datos compartidos fuera de los componentes
+- @Injectable marca la clase como inyectable; providedIn: 'root' crea un singleton global
+- La inyección de dependencias entrega automáticamente las instancias necesarias
+- Los providers definen el ámbito: raíz, módulo o componente
+- Los componentes inyectan servicios en el constructor o con inject() y llaman a sus métodos
+- Los servicios singleton permiten compartir datos entre componentes, por ejemplo con BehaviorSubject
+</blockquote>
+    </div>
+  </section>

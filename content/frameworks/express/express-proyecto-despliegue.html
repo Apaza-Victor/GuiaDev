@@ -1,0 +1,201 @@
+<!-- 10. Proyecto completo y despliegue - Express (Frameworks) -->
+  <section id="10-1-estructura-de-un-proyecto-real">
+    <h2><i class="fa-solid fa-folder-tree"></i> 10.1 Estructura de un proyecto Express real</h2>
+    <div class="doc-content">
+<h3>Organización profesional</h3>
+<p>Un proyecto Express real se organiza en módulos y capas para facilitar el mantenimiento y la escalabilidad.</p>
+<pre><code class="language-text">mi-api/
+|-- src/
+|   |-- config/
+|   |   `-- db.js
+|   |-- models/
+|   |   `-- Usuario.js
+|   |-- controllers/
+|   |   `-- usuarioController.js
+|   |-- routes/
+|   |   `-- usuarioRoutes.js
+|   |-- middleware/
+|   |   `-- auth.js
+|   `-- app.js
+|-- .env
+|-- .gitignore
+|-- package.json
+`-- index.js</code></pre>
+<h3>Propósito de cada capa</h3>
+<table><thead><tr><th>Capa</th><th>Responsabilidad</th></tr></thead><tbody><tr><td><strong>config</strong></td><td>Conexiones y configuración (base de datos)</td></tr><tr><td><strong>models</strong></td><td>Definición de los datos/esquemas</td></tr><tr><td><strong>controllers</strong></td><td>Lógica de negocio de cada recurso</td></tr><tr><td><strong>routes</strong></td><td>Definición de las rutas HTTP</td></tr><tr><td><strong>middleware</strong></td><td>Funciones reutilizables (auth, errores)</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Separar rutas, controladores y modelos hace el proyecto mucho más fácil de entender y mantener a medida que crece.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-2-uso-de-routers">
+    <h2><i class="fa-solid fa-shuffle"></i> 10.2 Uso de Routers para separar módulos</h2>
+    <div class="doc-content">
+<h3>Qué es un Router</h3>
+<p><code>express.Router()</code> permite agrupar rutas relacionadas y montarlas en la aplicación principal. Es la forma estándar de modularizar Express.</p>
+<h3>routes/usuarioRoutes.js</h3>
+<pre><code class="language-javascript">const express = require('express');
+const router = express.Router();
+
+// GET /api/usuarios
+router.get('/', (req, res) =&gt; {
+  res.json({ mensaje: 'Lista de usuarios' });
+});
+
+// GET /api/usuarios/:id
+router.get('/:id', (req, res) =&gt; {
+  res.json({ id: req.params.id });
+});
+
+module.exports = router;</code></pre>
+<h3>Montar el router en la app</h3>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+const usuarioRoutes = require('./routes/usuarioRoutes');
+
+// Todas las rutas del router quedan bajo /api/usuarios
+app.use('/api/usuarios', usuarioRoutes);
+
+app.listen(3000);</code></pre>
+<blockquote class="aside aside-note">
+Cada módulo gestiona sus propias rutas y se monta con un prefijo, manteniendo la aplicación principal limpia.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-3-cors-y-seguridad-basica">
+    <h2><i class="fa-solid fa-earth-americas"></i> 10.3 CORS y seguridad básica</h2>
+    <div class="doc-content">
+<h3>Qué es CORS</h3>
+<p><strong>CORS</strong> (Cross-Origin Resource Sharing) controla qué dominios pueden acceder a tu API. Por defecto, un navegador bloquea las peticiones a otros orígenes.</p>
+<pre><code class="language-javascript">npm install cors</code></pre>
+<pre><code class="language-javascript">const express = require('express');
+const cors = require('cors');
+const app = express();
+
+// Permitir todos los orígenes (solo para desarrollo)
+app.use(cors());
+
+// Permitir solo orígenes específicos
+app.use(cors({
+  origin: ['http://localhost:3001', 'https://miapp.com']
+}));
+
+app.listen(3000);</code></pre>
+<h3>Otras medidas de seguridad</h3>
+<ul>
+<li><strong>helmet</strong>: Añade cabeceras de seguridad HTTP</li>
+<li><strong>rate limiting</strong>: Limita peticiones por usuario/IP</li>
+<li><strong>Validación</strong>: Valida siempre los datos de entrada</li>
+<li><strong>Variables de entorno</strong>: Nunca expongas secretos</li>
+</ul>
+<pre><code class="language-javascript">npm install helmet</code></pre>
+<pre><code class="language-javascript">const helmet = require('helmet');
+app.use(helmet());</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-4-manejo-de-errores-global">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> 10.4 Manejo de errores global</h2>
+    <div class="doc-content">
+<h3>Centralizar los errores</h3>
+<p>Un middleware de error global captura las excepciones y devuelve respuestas estructuradas sin exponer detalles internos.</p>
+<pre><code class="language-javascript">const express = require('express');
+const app = express();
+
+// Ruta que lanza un error asíncrono
+app.get('/dividir', (req, res) =&gt; {
+  const { a, b } = req.query;
+  const numero = Number(a) / Number(b);
+  if (!isFinite(numero)) {
+    const err = new Error('División no válida');
+    err.status = 400;
+    throw err;
+  }
+  res.json({ resultado: numero });
+});
+
+// Rutas no encontradas -&gt; 404
+app.use((req, res) =&gt; {
+  res.status(404).json({ error: 'Ruta no encontrada' });
+});
+
+// Middleware de error global
+app.use((err, req, res, next) =&gt; {
+  console.error('Error:', err.message);
+  res.status(err.status || 500).json({
+    error: err.status ? err.message : 'Error interno del servidor'
+  });
+});
+
+app.listen(3000);</code></pre>
+<blockquote class="aside aside-warning">
+En producción, evita devolver mensajes internos del error; registra los detalles en el servidor y responde con un mensaje genérico al cliente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-5-despliegue">
+    <h2><i class="fa-solid fa-cloud-arrow-up"></i> 10.5 Opciones de despliegue</h2>
+    <div class="doc-content">
+<h3>Dónde desplegar una app Express</h3>
+<table><thead><tr><th>Plataforma</th><th>Tipo</th><th>Característica</th></tr></thead><tbody><tr><td><strong>Render</strong></td><td>PaaS</td><td>Gratis con límites, fácil integración con Git</td></tr><tr><td><strong>Heroku</strong></td><td>PaaS</td><td>Muy popular, ahora de pago</td></tr><tr><td><strong>Railway</strong></td><td>PaaS</td><td>Simple, con base de datos integrada</td></tr><tr><td><strong>Vercel/Netlify</strong></td><td>Serverless</td><td>Funciones serverless</td></tr><tr><td><strong>AWS/GCP/Azure</strong></td><td>Cloud</td><td>Escala y control total</td></tr></tbody></table>
+<h3>Preparar para producción</h3>
+<pre><code class="language-javascript">const PORT = process.env.PORT || 3000;
+app.listen(PORT, () =&gt; console.log(`Servidor en ${PORT}`));</code></pre>
+<pre><code class="language-json">// package.json
+{
+  "scripts": {
+    "start": "node index.js"
+  }
+}</code></pre>
+<blockquote class="aside aside-tip">
+Las plataformas PaaS detectan automáticamente el <code>start</code> script e inyectan la variable <code>PORT</code>.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-6-buenas-practicas">
+    <h2><i class="fa-solid fa-circle-check"></i> 10.6 Buenas prácticas</h2>
+    <div class="doc-content">
+<h3>Recomendaciones para producción</h3>
+<ul>
+<li>Usa <code>dotenv</code> para configuración y mantén los secretos fuera del código</li>
+<li>Añade CORS y helmet para una capa base de seguridad</li>
+<li>Centraliza el manejo de errores en un middleware global</li>
+<li>Valida todas las entradas antes de procesarlas</li>
+<li>Organiza el código en routers, controllers y models</li>
+<li>Escribe logs útiles (morgan) y un manejo ante fallos</li>
+<li>Define scripts limpios en package.json (start, dev)</li>
+</ul>
+<h3>Comando para producción</h3>
+<pre><code class="language-javascript">npm install --production</code></pre>
+<p>Este comando instala solo las dependencias de producción, sin las de desarrollo, reduciendo el tamaño de la imagen desplegada.</p>
+<blockquote class="aside aside-note">
+Combinar buena estructura, seguridad y logs hace que la aplicación sea robusta, mantenible y lista para escalar.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Un proyecto real se organiza en config, models, controllers, routes y middleware
+- <code>express.Router()</code> permite modularizar las rutas por recurso
+- CORS controla el acceso entre orígenes y helmet añade seguridad
+- Un middleware global centraliza el manejo de errores
+- Render, Heroku y otros PaaS facilitan el despliegue
+- Las buenas prácticas garantizan una aplicación robusta y mantenible
+</blockquote>
+    </div>
+  </section>

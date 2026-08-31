@@ -1,0 +1,298 @@
+<!-- 10. Buenas prácticas y despliegue - Angular (Frameworks) -->
+  <section id="10-1-organizacion-del-proyecto">
+    <h2><i class="fa-solid fa-folder-tree"></i> 10.1 Organización del proyecto</h2>
+    <div class="doc-content">
+<h3>Estructura recomendada por funcionalidades</h3>
+<p>Una buena organización del código facilita el mantenimiento, la incorporación de nuevos desarrolladores y la escalabilidad. La comunidad Angular recomienda agrupar el código por <strong>funcionalidades</strong> (feature modules) en lugar de por tipo de archivo.</p>
+<pre><code class="language-text">src/
+├── app/
+│   ├── core/                    # Servicios singleton, guards, interceptores
+│   │   ├── services/
+│   │   ├── guards/
+│   │   └── interceptors/
+│   ├── shared/                  # Componentes, directivas y pipes reutilizables
+│   │   ├── components/
+│   │   ├── directives/
+│   │   └── pipes/
+│   ├── features/                # Módulos de funcionalidad
+│   │   ├── auth/
+│   │   │   ├── login/
+│   │   │   ├── registro/
+│   │   │   └── auth.module.ts
+│   │   ├── productos/
+│   │   │   ├── lista/
+│   │   │   ├── detalle/
+│   │   │   └── productos.module.ts
+│   │   └── admin/
+│   ├── app.component.ts
+│   ├── app.routes.ts
+│   └── app.config.ts
+├── assets/
+├── environments/
+└── styles.scss</code></pre>
+<h3>Capas de la arquitectura</h3>
+<table><thead><tr><th>Carpeta</th><th>Propósito</th><th>Ejemplo</th></tr></thead><tbody><tr><td><strong>core</strong></td><td>Servicios globales, guards, interceptores</td><td>AuthService, AuthGuard</td></tr><tr><td><strong>shared</strong></td><td>Piezas reutilizables en toda la app</td><td>Botón, CardComponent, pipes</td></tr><tr><td><strong>features</strong></td><td>Funcionalidades completas de negocio</td><td>Login, Productos, Dashboard</td></tr></tbody></table>
+<h3>Reglas clave</h3>
+<ul>
+<li><strong>Un componente por archivo</strong>: cada componente vive en su propia carpeta con su template y estilos</li>
+<li><strong>Nombres descriptivos</strong>: usa el sufijo del tipo ( LoginComponent, AuthService, auth.guard.ts )</li>
+<li><strong>Barrel exports</strong>: usa archivos index.ts para simplificar importaciones</li>
+<li><strong>Separación de responsabilidades</strong>: los componentes solo manejan la vista, la lógica va en servicios</li>
+</ul>
+<blockquote class="aside aside-tip">
+No importes directamente desde `node_modules` o desde carpetas lejanas. Usa importaciones relativas dentro de features y absolutas para core y shared.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-2-standalone-components-en-angular-moderno">
+    <h2><i class="fa-solid fa-code-branch"></i> 10.2 Standalone components en Angular moderno</h2>
+    <div class="doc-content">
+<h3>¿Qué cambia con standalone?</h3>
+<p>Desde Angular 14+ y consolidado en Angular 17+, los <strong>standalone components</strong> eliminan la necesidad de crear NgModules para cada funcionalidad. Cada componente se declara independiente e importa sus propias dependencias directamente.</p>
+<h3>Componente standalone vs. con módulo</h3>
+<pre><code class="language-typescript">// Antes (con NgModule)
+@Component({
+  selector: 'app-lista',
+  templateUrl: './lista.component.html'
+})
+export class ListaComponent {}
+
+// Después (standalone)
+@Component({
+  selector: 'app-lista',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  templateUrl: './lista.component.html'
+})
+export class ListaComponent {}</code></pre>
+<h3>Configuración de la aplicación standalone</h3>
+<pre><code class="language-typescript">// app.config.ts
+import { ApplicationConfig } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { routes } from './app.routes';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes),
+    provideHttpClient(withInterceptors([authInterceptor]))
+  ]
+};</code></pre>
+<pre><code class="language-typescript">// main.ts
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app.component';
+import { appConfig } from './app/app.config';
+
+bootstrapApplication(AppComponent, appConfig);</code></pre>
+<h3>Ventajas de standalone</h3>
+<ul>
+<li><strong>Menos boilerplate</strong>: no es necesario crear un NgModule para cada feature</li>
+<li><strong>Lazy loading por componente</strong>: <code>loadComponent</code> carga un componente individual</li>
+<li><strong>Importaciones explícitas</strong>: cada componente lista sus dependencias directamente</li>
+<li><strong>Más simple</strong>: menos archivos y menos indirección conceptual</li>
+</ul>
+<blockquote class="aside aside-note">
+Para todos los proyectos nuevos, Angular recomienda empezar con standalone. Los NgModules siguen siendo válidos para mantener proyectos existentes y muchas librerías de terceros aún los usan.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-3-estilos-y-arquitectura-de-componentes">
+    <h2><i class="fa-solid fa-palette"></i> 10.3 Estilos y arquitectura de componentes</h2>
+    <div class="doc-content">
+<h3>Encapsulación de estilos</h3>
+<p>Angular encapsula los estilos de cada componente por defecto usando <strong>ViewEncapsulation.Emulated</strong>. Los estilos de un componente no afectan a otros componentes.</p>
+<h3>Opciones de encapsulación</h3>
+<table><thead><tr><th>Opción</th><th>Comportamiento</th><th>Uso típico</th></tr></thead><tbody><tr><td><strong>Emulated</strong></td><td>Simula Shadow DOM con atributos</td><td>Por defecto, recomendado</td></tr><tr><td><strong>None</strong></td><td>No encapsula; los estilos son globales</td><td>Estilos que deben afectar a toda la app</td></tr><tr><td><strong>ShadowDom</strong></td><td>Usa Shadow DOM nativo del navegador</td><td>Casos específicos con Web Components</td></tr></tbody></table>
+<h3>Consejos de arquitectura</h3>
+<ul>
+<li><strong>Componentes pequeños</strong>: cada componente debería hacer una sola cosa (Single Responsibility)</li>
+<li><strong>Contenedor vs. presentacional</strong>: separa componentes que gestionan estado (container) de componentes que solo muestran datos (presentational)</li>
+<li><strong>OnPush change detection</strong>: usa <code>changeDetection: ChangeDetectionStrategy.OnPush</code> para mejorar el rendimiento</li>
+<li><strong>Pipes para transformaciones</strong>: no formatees datos en el template; crea pipes reutilizables</li>
+</ul>
+<h3>Ejemplo: componente con OnPush</h3>
+<pre><code class="language-typescript">import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+
+@Component({
+  selector: 'app-tarjeta-producto',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    &lt;div class="tarjeta"&gt;
+      &lt;h3&gt;{{ titulo }}&lt;/h3&gt;
+      &lt;p&gt;${{ precio }}&lt;/p&gt;
+    &lt;/div&gt;
+  `
+})
+export class TarjetaProductoComponent {
+  @Input() titulo!: string;
+  @Input() precio!: number;
+}</code></pre>
+<blockquote class="aside aside-tip">
+OnPush solo vuelve a renderizar el componente cuando cambia una referencia de Input, un evento del usuario o una suscripción manual. Es significativamente más rápido que la estrategia por defecto.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-4-compilacion-para-produccion-ng-build">
+    <h2><i class="fa-solid fa-hammer"></i> 10.4 Compilación para producción (ng build)</h2>
+    <div class="doc-content">
+<h3>¿Qué hace ng build?</h3>
+<p>El comando <code>ng build</code> compila la aplicación Angular para producción: optimiza el código, reduce el tamaño de los bundles, elimina código muerto y genera archivos estáticos listos para desplegar.</p>
+<h3>Configuraciones de compilación</h3>
+<table><thead><tr><th>Configuración</th><th>Comando</th><th>Descripción</th></tr></thead><tbody><tr><td><strong>development</strong></td><td><code>ng build --configuration development</code></td><td>Sin optimización, más rápido</td></tr><tr><td><strong>production</strong></td><td><code>ng build</code></td><td>Optimizado por defecto</td></tr></tbody></table>
+<h3>Opciones útiles</h3>
+<pre><code class="language-bash"># Build estándar para producción
+ng build
+
+# Build con configuración específica
+ng build --configuration=production
+
+# Build con basename personalizado (si se sirve desde /app/)
+ng build --base-href=/app/
+
+# Build sin generar sourcemaps (menor tamaño)
+ng build --source-map=false
+
+# Build y abrir en el navegador (para probar el resultado)
+ng build --open</code></pre>
+<h3>Resultado del build</h3>
+<pre><code class="language-text">dist/mi-app/
+├── browser/
+│   ├── index.html
+│   ├── main.abc123.js          # Bundle principal
+│   ├── polyfills.def456.js     # Compatibilidad con navegadores
+│   ├── styles.ghi789.css       # Estilos globales
+│   └── lazy.chunk.jkl012.js    # Módulos lazy-loaded (si los hay)</code></pre>
+<h3>Tips de rendimiento</h3>
+<ul>
+<li><strong>Lazy loading</strong>: reduce el bundle inicial cargando módulos bajo demanda</li>
+<li><strong>Tree shaking</strong>: Angular elimina automáticamente el código no utilizado</li>
+<li><strong>Source maps</strong>: desactivarlos en producción reduce el tamaño del build</li>
+<li><strong>Análisis de tamaño</strong>: usa <code>ng build --stats-json</code> con webpack-bundle-analyzer</li>
+</ul>
+<blockquote class="aside aside-note">
+Ejecuta `ng build` antes de desplegar. El resultado en `dist/` es lo que se sube al servidor o CDN. Nunca desplegues el código fuente ni la carpeta `node_modules`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-5-despliegue-de-la-aplicacion">
+    <h2><i class="fa-solid fa-cloud-arrow-up"></i> 10.5 Despliegue de la aplicación</h2>
+    <div class="doc-content">
+<h3>Opciones de despliegue</h3>
+<table><thead><tr><th>Plataforma</th><th>Descripción</th><th>Ideal para</th></tr></thead><tbody><tr><td><strong>GitHub Pages</strong></td><td>Hosting estático gratuito para proyectos públicos</td><td>Prototipos y portfolios</td></tr><tr><td><strong>Netlify</strong></td><td>Despliegue automático desde Git, HTTPS gratuito</td><td>Proyectos pequeños y medianos</td></tr>
+<tr><td><strong>Vercel</strong></td><td>Deploy instantáneo con preview en PRs</td><td>SPAs modernas</td></tr>
+<tr><td><strong>Firebase Hosting</strong></td><td>Integración nativa con Angular y Google Cloud</td><td>Apps con backend Firebase</td></tr>
+<tr><td><strong>AWS S3 + CloudFront</strong></td><td>CDN global, alta disponibilidad</td><td>Producción empresarial</td></tr>
+<tr><td><strong>Docker + Nginx</strong></td><td>Contenedor portátil con Nginx como servidor</td><td>Despliegues con orquestación</td></tr></tbody></table>
+<h3>Despliegue en GitHub Pages</h3>
+<pre><code class="language-bash"># Instalar el paquete de despliegue
+npm install -g angular-cli-ghpages
+
+# Build con base href correcto
+ng build --configuration=production --base-href=/nombre-repo/
+
+# Desplegar la carpeta dist/browser
+npx angular-cli-ghpages --dir=dist/mi-app/browser</code></pre>
+<h3>Despliegue con Docker + Nginx</h3>
+<pre><code class="language-dockerfile">FROM node:18-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN ng build --configuration=production
+
+FROM nginx:alpine
+COPY --from=build /app/dist/mi-app/browser /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]</code></pre>
+<h3>Configuración del servidor para SPA</h3>
+<p>Independientemente de la plataforma, el servidor debe redirigir todas las rutas hacia <code>index.html</code> para que Angular gestione la navegación client-side:</p>
+<pre><code class="language-nginx"># Configuración Nginx para SPA
+location / {
+  try_files $uri $uri/ /index.html;
+}</code></pre>
+<blockquote class="aside aside-warning">
+Configurar la redirección del servidor para SPA es obligatorio. Sin ella, refrescar la página o acceder directamente a una ruta producirá un error 404.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-6-testing-y-buenas-practicas">
+    <h2><i class="fa-solid fa-list-check"></i> 10.6 Testing y buenas prácticas</h2>
+    <div class="doc-content">
+<h3>Testing en Angular</h3>
+<p>Angular incluye herramientas de testing integradas: <strong>Karma</strong> para pruebas unitarias y <strong>Jasmine</strong> como framework de aserciones. La CLI genera archivos <code>.spec.ts</code> junto a cada componente y servicio.</p>
+<h3>Tipos de testing</h3>
+<table><thead><tr><th>Tipo</th><th>Herramienta</th><th>Qué valida</th></tr></thead><tbody><tr><td><strong>Unitarias</strong></td><td>Karma + Jasmine</td><td>Clases, servicios, pipes de forma aislada</td></tr><tr><td><strong>Componentes</strong></td><td>Angular TestBed</td><td>Componentes renderizados con su template</td></tr>
+<tr><td><strong>Integración</strong></td><td>Karma + HttpClientTestingModule</td><td>Flujos completos con servicios mockeados</td></tr>
+<tr><td><strong>E2E</strong></td><td>Protractor (legado) / Cypress / Playwright</td><td>Flujos completos en el navegador</td></tr></tbody></table>
+<h3>Ejemplo: test de un componente</h3>
+<pre><code class="language-typescript">import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { SaludoComponent } from './saludo.component';
+
+describe('SaludoComponent', () =&gt; {
+  let component: SaludoComponent;
+  let fixture: ComponentFixture&lt;SaludoComponent&gt;;
+
+  beforeEach(async () =&gt; {
+    await TestBed.configureTestingModule({
+      imports: [SaludoComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(SaludoComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('debería crear el componente', () =&gt; {
+    expect(component).toBeTruthy();
+  });
+
+  it('debería mostrar el nombre del usuario', () =&gt; {
+    component.nombre = 'Carlos';
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('p')?.textContent).toContain('Carlos');
+  });
+});</code></pre>
+<h3>Buenas prácticas resumidas</h3>
+<ul>
+<li><strong>Testea servicios primero</strong>: son la lógica más importante y la más fácil de testear</li>
+<li><strong>Usa dependencias inyectadas</strong>: evita crear instancias directamente; usa DI para poder sustituir en tests</li>
+<li><strong>Tipa todo</strong>: evita el uso de <code>any</code>; define interfaces para los modelos de datos</li>
+<li><strong>No mutas estado directamente</strong>: usa spread operator o immer para actualizaciones inmutables</li>
+<li><strong>Un componente, un archivo</strong>: no combines varios componentes en un solo archivo</li>
+<li><strong>Usa la CLI</strong>: genera componentes, servicios y módulos con <code>ng generate</code> para mantener convenciones</li>
+<li><strong>Linting</strong>: ejecuta <code>ng lint</code> regularmente para detectar errores y malas prácticas</li>
+</ul>
+<blockquote class="aside aside-tip">
+Invierte tiempo en tests desde el principio. Un proyecto con buena cobertura de tests es más fácil de mantener, refactorizar y desplegar con confianza.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Organiza el proyecto por **funcionalidades** (core, shared, features) para mantener la escalabilidad
+- Los **standalone components** eliminan la necesidad de NgModules en proyectos nuevos
+- Usa **OnPush change detection** y componentes pequeños para mejorar el rendimiento
+- **ng build** compila y optimiza la aplicación; el resultado en `dist/` se despliega al servidor
+- Configura siempre la **redirección del servidor** para que todas las rutas lleguen a index.html
+- Los **tests** (unitarias, componentes y E2E) garantizan la calidad y facilitan el mantenimiento
+</blockquote>
+    </div>
+  </section>

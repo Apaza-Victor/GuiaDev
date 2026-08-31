@@ -1,0 +1,371 @@
+<!-- 09. Peticiones HTTP y formularios - Angular (Frameworks) -->
+  <section id="9-1-httpclient-configuracion">
+    <h2><i class="fa-solid fa-plug"></i> 9.1 HttpClient: configuración</h2>
+    <div class="doc-content">
+<h3>¿Qué es HttpClient?</h3>
+<p><strong>HttpClient</strong> es el servicio oficial de Angular para realizar peticiones HTTP (GET, POST, PUT, DELETE, etc.) a APIs REST o cualquier servidor. Está basado en RxJS y devuelve observables.</p>
+<h3>Importación y configuración</h3>
+<pre><code class="language-typescript">import { NgModule } from '@angular/core';
+import { HttpClientModule } from '@angular/common/http';
+
+@NgModule({
+  imports: [
+    HttpClientModule  // habilita HttpClient en toda la aplicación
+  ]
+})
+export class AppModule {}</code></pre>
+<h3>Uso con standalone components</h3>
+<pre><code class="language-typescript">import { bootstrapApplication } from '@angular/platform-browser';
+import { provideHttpClient } from '@angular/common/http';
+import { AppComponent } from './app/app.component';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideHttpClient()
+  ]
+});</code></pre>
+<h3>Inyección en un servicio</h3>
+<pre><code class="language-typescript">import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class ProductoService {
+  private apiUrl = 'https://api.ejemplo.com/productos';
+
+  constructor(private http: HttpClient) {}
+
+  obtenerTodos(): Observable&lt;any[]&gt; {
+    return this.http.get&lt;any[]&gt;(this.apiUrl);
+  }
+}</code></pre>
+<blockquote class="aside aside-tip">
+Configura HttpClient una sola vez en el módulo raíz o en los providers de bootstrap. Una vez habilitado, está disponible para inyectar en cualquier servicio o componente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-2-peticiones-get-post-put-delete">
+    <h2><i class="fa-solid fa-arrows-left-right"></i> 9.2 Peticiones GET, POST, PUT, DELETE</h2>
+    <div class="doc-content">
+<h3>Operaciones CRUD con HttpClient</h3>
+<table><thead><tr><th>Método HTTP</th><th>HttpClient</th><th>Uso típico</th></tr></thead><tbody><tr><td><strong>GET</strong></td><td><code>http.get&lt;T&gt;(url)</code></td><td>Obtener datos</td></tr><tr><td><strong>POST</strong></td><td><code>http.post&lt;T&gt;(url, body)</code></td><td>Crear un recurso</td></tr><tr><td><strong>PUT</strong></td><td><code>http.put&lt;T&gt;(url, body)</code></td><td>Actualizar un recurso completo</td></tr><tr><td><strong>PATCH</strong></td><td><code>http.patch&lt;T&gt;(url, body)</code></td><td>Actualizar parcialmente</td></tr><tr><td><strong>DELETE</strong></td><td><code>http.delete&lt;T&gt;(url)</code></td><td>Eliminar un recurso</td></tr></tbody></table>
+<h3>Ejemplo completo: servicio de productos</h3>
+<pre><code class="language-typescript">import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+export interface Producto {
+  id: number;
+  nombre: string;
+  precio: number;
+}
+
+@Injectable({ providedIn: 'root' })
+export class ProductoService {
+  private apiUrl = 'https://api.ejemplo.com/productos';
+
+  constructor(private http: HttpClient) {}
+
+  // GET: obtener todos
+  listar(): Observable&lt;Producto[]&gt; {
+    return this.http.get&lt;Producto[]&gt;(this.apiUrl);
+  }
+
+  // GET: obtener uno por ID
+  obtenerPorId(id: number): Observable&lt;Producto&gt; {
+    return this.http.get&lt;Producto&gt;(`${this.apiUrl}/${id}`);
+  }
+
+  // POST: crear
+  crear(producto: Producto): Observable&lt;Producto&gt; {
+    return this.http.post&lt;Producto&gt;(this.apiUrl, producto);
+  }
+
+  // PUT: actualizar
+  actualizar(id: number, producto: Producto): Observable&lt;Producto&gt; {
+    return this.http.put&lt;Producto&gt;(`${this.apiUrl}/${id}`, producto);
+  }
+
+  // DELETE: eliminar
+  eliminar(id: number): Observable&lt;void&gt; {
+    return this.http.delete&lt;void&gt;(`${this.apiUrl}/${id}`);
+  }
+}</code></pre>
+<h3>Uso en un componente</h3>
+<pre><code class="language-typescript">export class ProductosComponent implements OnInit {
+  productos: Producto[] = [];
+
+  constructor(private productoService: ProductoService) {}
+
+  ngOnInit(): void {
+    this.productoService.listar().subscribe({
+      next: (data) =&gt; this.productos = data,
+      error: (err) =&gt; console.error('Error al cargar productos', err)
+    });
+  }
+}</code></pre>
+<blockquote class="aside aside-warning">
+Siempre suscríbete a los observables que devuelve HttpClient. Si no te suscribes, la petición HTTP no se ejecutá nunca (los observables son "cold" por defecto).
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-3-manejo-de-errores-e-interceptores">
+    <h2><i class="fa-solid fa-triangle-exclamation"></i> 9.3 Manejo de errores e interceptores</h2>
+    <div class="doc-content">
+<h3>Manejo de errores con catchError</h3>
+<p>Las peticiones HTTP pueden fallar por muchos motivos: red, servidor, datos inválidos. Angular proporciona el operador <code>catchError</code> de RxJS para manejar errores de forma elegante.</p>
+<pre><code class="language-typescript">import { catchError, throwError } from 'rxjs';
+
+obtenerPorId(id: number): Observable&lt;Producto&gt; {
+  return this.http.get&lt;Producto&gt;(`${this.apiUrl}/${id}`).pipe(
+    catchError(error =&gt; {
+      console.error('Error obteniendo producto:', error);
+      return throwError(() =&gt; new Error('No se pudo cargar el producto'));
+    })
+  );
+}</code></pre>
+<h3>¿Qué son los interceptores?</h3>
+<p>Un <strong>interceptor</strong> es un servicio que puede capturar, modificar o reenviar todas las peticiones HTTP salientes y las respuestas entrantes, antes de que lleguen al componente o servicio.</p>
+<h3>Ejemplo: interceptor de autenticación</h3>
+<pre><code class="language-typescript">import { Injectable } from '@angular/core';
+import {
+  HttpInterceptor, HttpRequest, HttpHandler, HttpEvent
+} from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+  intercept(
+    req: HttpRequest&lt;any&gt;,
+    next: HttpHandler
+  ): Observable&lt;HttpEvent&lt;any&gt;&gt; {
+    const token = localStorage.getItem('token');
+
+    if (token) {
+      const authReq = req.clone({
+        setHeaders: { Authorization: `Bearer ${token}` }
+      });
+      return next.handle(authReq);
+    }
+
+    return next.handle(req);
+  }
+}</code></pre>
+<h3>Registro del interceptor</h3>
+<pre><code class="language-typescript">import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthInterceptor } from './auth.interceptor';
+
+@NgModule({
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
+  ]
+})
+export class AppModule {}</code></pre>
+<blockquote class="aside aside-note">
+Los interceptores son ideales para añadir tokens de autenticación, registrar logs, mostrar spinners globales de carga o manejar errores 401/403 de forma centralizada.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-4-formularios-template-driven">
+    <h2><i class="fa-solid fa-file-lines"></i> 9.4 Formularios template-driven</h2>
+    <div class="doc-content">
+<h3>¿Qué son los formularios template-driven?</h3>
+<p>En los formularios <strong>template-driven</strong>, la lógica del formulario se define mayoritariamente en el template HTML usando directivas como <code>ngModel</code> y <code>ngForm</code>. Son ideales para formularios simples.</p>
+<h3>Configuración: importar FormsModule</h3>
+<pre><code class="language-typescript">import { FormsModule } from '@angular/forms';
+
+@NgModule({
+  imports: [FormsModule]
+})
+export class AppModule {}</code></pre>
+<h3>Ejemplo completo</h3>
+<pre><code class="language-typescript">import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-contacto',
+  templateUrl: './contacto.component.html'
+})
+export class ContactoComponent {
+  contacto = {
+    nombre: '',
+    email: '',
+    mensaje: ''
+  };
+
+  enviar(): void {
+    console.log('Datos enviados:', this.contacto);
+  }
+}</code></pre>
+<pre><code class="language-html">&lt;form #contactoForm="ngForm" (ngSubmit)="enviar(contactoForm)"&gt;
+  &lt;label&gt;Nombre:
+    &lt;input name="nombre" [(ngModel)]="contacto.nombre" required minlength="3" #nombre="ngModel"&gt;
+  &lt;/label&gt;
+  &lt;div *ngIf="nombre.invalid &amp;&amp; nombre.touched"&gt;
+    &lt;p&gt;El nombre es obligatorio (mínimo 3 caracteres)&lt;/p&gt;
+  &lt;/div&gt;
+
+  &lt;label&gt;Email:
+    &lt;input name="email" [(ngModel)]="contacto.email" required email #email="ngModel"&gt;
+  &lt;/label&gt;
+  &lt;div *ngIf="email.invalid &amp;&amp; email.touched"&gt;
+    &lt;p&gt;Introduce un email válido&lt;/p&gt;
+  &lt;/div&gt;
+
+  &lt;label&gt;Mensaje:
+    &lt;textarea name="mensaje" [(ngModel)]="contacto.mensaje" required&gt;&lt;/textarea&gt;
+  &lt;/label&gt;
+
+  &lt;button type="submit" [disabled]="contactoForm.invalid"&gt;Enviar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<h3>Clases CSS de estado del formulario</h3>
+<table><thead><tr><th>Clase</th><th>Qué indica</th></tr></thead><tbody><tr><td><code>ng-pristine</code></td><td>El usuario no ha modificado el campo</td></tr><tr><td><code>ng-dirty</code></td><td>El usuario ha modificado el campo</td></tr><tr><td><code>ng-valid</code></td><td>El campo cumple todas las validaciones</td></tr><tr><td><code>ng-invalid</code></td><td>El campo no cumple alguna validación</td></tr><tr><td><code>ng-touched</code></td><td>El usuario ha dado foco y luego ha salido</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Los formularios template-driven son perfectos para formularios simples (login, contacto). Para formularios complejos con validaciones dinámicas, considera los formularios reactivos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-5-formularios-reactivos">
+    <h2><i class="fa-solid fa-code"></i> 9.5 Formularios reactivos</h2>
+    <div class="doc-content">
+<h3>¿Qué son los formularios reactivos?</h3>
+<p>Los formularios <strong>reactivos</strong> (basados en código) definen la estructura y validación del formulario en la clase TypeScript usando <code>FormControl</code>, <code>FormGroup</code> y <code>FormBuilder</code>. Son más potentes, testeables y escalables.</p>
+<h3>Configuración: importar ReactiveFormsModule</h3>
+<pre><code class="language-typescript">import { ReactiveFormsModule } from '@angular/forms';
+
+@NgModule({
+  imports: [ReactiveFormsModule]
+})
+export class AppModule {}</code></pre>
+<h3>Ejemplo: formulario de registro</h3>
+<pre><code class="language-typescript">import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
+@Component({
+  selector: 'app-registro',
+  templateUrl: './registro.component.html'
+})
+export class RegistroComponent implements OnInit {
+  registroForm!: FormGroup;
+
+  constructor(private fb: FormBuilder) {}
+
+  ngOnInit(): void {
+    this.registroForm = this.fb.group({
+      nombre: ['', [Validators.required, Validators.minLength(3)]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmarPassword: ['', Validators.required]
+    });
+  }
+
+  get f() { return this.registroForm.controls; }
+
+  enviar(): void {
+    if (this.registroForm.valid) {
+      console.log(this.registroForm.value);
+    }
+  }
+}</code></pre>
+<h3>Template del formulario reactivo</h3>
+<pre><code class="language-html">&lt;form [formGroup]="registroForm" (ngSubmit)="enviar()"&gt;
+  &lt;input formControlName="nombre" placeholder="Nombre"&gt;
+  &lt;div *ngIf="f['nombre'].invalid &amp;&amp; f['nombre'].touched"&gt;
+    &lt;p&gt;El nombre es obligatorio (mín. 3 caracteres)&lt;/p&gt;
+  &lt;/div&gt;
+
+  &lt;input formControlName="email" placeholder="Email"&gt;
+  &lt;div *ngIf="f['email'].invalid &amp;&amp; f['email'].touched"&gt;
+    &lt;p&gt;Introduce un email válido&lt;/p&gt;
+  &lt;/div&gt;
+
+  &lt;input formControlName="password" type="password" placeholder="Contraseña"&gt;
+  &lt;input formControlName="confirmarPassword" type="password" placeholder="Confirmar"&gt;
+
+  &lt;button type="submit" [disabled]="registroForm.invalid"&gt;Registrarse&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<blockquote class="aside aside-note">
+Los formularios reactivos son la opción recomendada para formularios complejos. Permiten validaciones asíncronas, validadores personalizados y un control total sobre el estado del formulario desde la clase.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="9-6-validacion-y-envio-de-formularios">
+    <h2><i class="fa-solid fa-check-double"></i> 9.6 Validación y envío de formularios</h2>
+    <div class="doc-content">
+<h3>Validaciones integradas en Angular</h3>
+<table><thead><tr><th>Validador</th><th>Disponible en</th><th>Descripción</th></tr></thead><tbody><tr><td><code>required</code></td><td>Ambos</td><td>Campo obligatorio</td></tr><tr><td><code>minLength(n)</code></td><td>Ambos</td><td>Longitud mínima de texto</td></tr><tr><td><code>maxLength(n)</code></td><td>Ambos</td><td>Longitud máxima de texto</td></tr><tr><td><code>pattern(exp)</code></td><td>Ambos</td><td>Cumple una expresión regular</td></tr><tr><td><code>email</code></td><td>Ambos</td><td>Formato de email válido</td></tr></tbody></table>
+<h3>Validador personalizado (reactivos)</h3>
+<pre><code class="language-typescript">import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+
+export function passwordsIguales(
+  password: string, confirmar: string
+): ValidatorFn {
+  return (group: AbstractControl): ValidationErrors | null =&gt; {
+    const pass = group.get(password);
+    const conf = group.get(confirmar);
+
+    if (pass &amp;&amp; conf &amp;&amp; pass.value !== conf.value) {
+      conf.setErrors({ passwordsNoCoinciden: true });
+      return { passwordsNoCoinciden: true };
+    }
+    return null;
+  };
+}</code></pre>
+<h3>Envío de datos a la API</h3>
+<pre><code class="language-typescript">export class RegistroComponent implements OnInit {
+  registroForm!: FormGroup;
+
+  constructor(
+    private fb: FormBuilder,
+    private http: HttpClient
+  ) {}
+
+  ngOnInit(): void {
+    this.registroForm = this.fb.group({
+      nombre: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
+    });
+  }
+
+  enviar(): void {
+    if (this.registroForm.valid) {
+      this.http.post('/api/usuarios', this.registroForm.value).subscribe({
+        next: () =&gt; console.log('Registro exitoso'),
+        error: (err) =&gt; console.error('Error:', err)
+      });
+    }
+  }
+}</code></pre>
+<h3>Diferencias clave: template-driven vs. reactivo</h3>
+<table><thead><tr><th>Aspecto</th><th>Template-driven</th><th>Reactivo</th></tr></thead><tbody><tr><td>Definición</td><td>En el template HTML</td><td>En la clase TypeScript</td></tr><tr><td>Complejidad ideal</td><td>Formularios simples</td><td>Formularios complejos</td></tr><tr><td>Testeabilidad</td><td>Difícil (depende del DOM)</td><td>Fácil (se puede probar sin renderizar)</td></tr><tr><td>Validaciones dinámicas</td><td>Límite</td><td>Total control</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Para formularios nuevos, usa formularios reactivos: son más explícitos, testeables y escalables. Los template-driven solo son prácticos para casos muy sencillos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- **HttpClient** se configura una vez y permite realizar peticiones GET, POST, PUT y DELETE a APIs REST
+- Las peticiones HTTP devuelven **observables** y se consumen con `subscribe()`
+- Los **interceptores** modifican o registran todas las peticiones de forma centralizada
+- Los formularios **template-driven** usan `ngModel` y `ngForm` en el template; son ideales para casos simples
+- Los formularios **reactivos** usan `FormGroup`, `FormControl` y `FormBuilder` en la clase; son más potentes
+- Ambos tipos de formulario integran **validaciones** de Angular y permiten validadores personalizados
+</blockquote>
+    </div>
+  </section>

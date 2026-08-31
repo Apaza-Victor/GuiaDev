@@ -1,0 +1,250 @@
+<!-- 10. Proyecto completo y despliegue - Flask (Frameworks) -->
+  <section id="10-1-estructura-profesional">
+    <h2><i class="fa-solid fa-folder-tree"></i> 10.1 Estructura profesional de un proyecto</h2>
+    <div class="doc-content">
+<h3>Estructura recomendada</h3>
+<pre><code class="language-python">miapp/
+├── app/
+│   ├── __init__.py          # Crea la aplicación Flask
+│   ├── rutas.py             # Vistas y rutas
+│   ├── modelos.py           # Modelos de base de datos
+│   ├── templates/           # Plantillas Jinja2
+│   └── static/              # CSS, JS, imágenes
+├── migrations/              # Migraciones del esquema
+├── tests/                   # Pruebas automatizadas
+├── venv/                    # Entorno virtual
+├── requirements.txt         # Dependencias
+├── config.py                # Configuración
+├── run.py                   # Punto de entrada
+└── .env                     # Variables de entorno (no se sube)</code></pre>
+<h3>Fábrica de aplicaciones (app factory)</h3>
+<pre><code class="language-python"># app/__init__.py
+from flask import Flask
+
+
+def crear_app():
+    app = Flask(__name__)
+    app.config.from_object("config.Config")
+
+    from .rutas import main
+    app.register_blueprint(main)
+
+    return app</code></pre>
+<h3>Punto de entrada</h3>
+<pre><code class="language-python"># run.py
+from app import crear_app
+
+app = crear_app()
+
+if __name__ == "__main__":
+    app.run(debug=True)</code></pre>
+<blockquote class="aside aside-tip">
+La fábrica de aplicaciones permite crear varias instancias (una para desarrollo, otra para pruebas, otra para producción) de forma limpia.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-2-requirements-y-dependencias">
+    <h2><i class="fa-solid fa-file-circle-check"></i> 10.2 requirements.txt</h2>
+    <div class="doc-content">
+<h3>Qué es requirements.txt</h3>
+<p>Es un archivo que lista las dependencias de tu proyecto con sus versiones, permitiendo reproducir el entorno en cualquier máquina.</p>
+<h3>Generarlo automáticamente</h3>
+<pre><code class="language-python"># Genera la lista de todas las dependencias instaladas
+pip freeze &gt; requirements.txt</code></pre>
+<h3>Ejemplo de contenido</h3>
+<pre><code class="language-python">flask==3.0.0
+flask-sqlalchemy==3.1.1
+flask-migrate==4.0.5
+flask-wtf==1.2.1
+gunicorn==21.2.0
+python-dotenv==1.0.0</code></pre>
+<h3>Instalar desde requirements.txt</h3>
+<pre><code class="language-python">pip install -r requirements.txt</code></pre>
+<h3>Buenas prácticas</h3>
+<ul>
+<li>Bloquea las versiones con <code>==</code> para reproducibilidad</li>
+<li>Separa `requirements-dev.txt` para herramientas de desarrollo</li>
+<li>Actualiza el archivo cada vez que agregues una dependencia</li>
+</ul>
+<blockquote class="aside aside-note">
+`pip freeze` incluye todas las dependencias transitivas; filtrar las principales en un archivo manual es más legible.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-3-variables-de-entorno">
+    <h2><i class="fa-solid fa-gears"></i> 10.3 Variables de entorno</h2>
+    <div class="doc-content">
+<h3>Qué son las variables de entorno</h3>
+<p>Las <strong>variables de entorno</strong> guardan datos de configuración (claves secretas, URIs de base de datos, puertos) fuera del código, para no exponerlos en el repositorio.</p>
+<h3>Archivo .env</h3>
+<pre><code class="language-python"># .env (no se sube a git)
+SECRET_KEY=clave_muy_secreta
+DATABASE_URL=sqlite:///datos.db
+FLASK_DEBUG=1</code></pre>
+<h3>Cargar variables con python-dotenv</h3>
+<pre><code class="language-python">pip install python-dotenv</code></pre>
+<pre><code class="language-python"># run.py
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # Carga el archivo .env
+
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")</code></pre>
+<h3>Archivo .gitignore</h3>
+<pre><code class="language-python">venv/
+.env
+__pycache__/
+*.pyc
+instance/</code></pre>
+<blockquote class="aside aside-warning">
+Nunca subas el archivo `.env` al repositorio: contiene secretos. Añádelo siempre a `.gitignore`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-4-despliegue-con-gunicorn">
+    <h2><i class="fa-solid fa-cloud-arrow-up"></i> 10.4 Despliegue con Gunicorn</h2>
+    <div class="doc-content">
+<h3>Por qué Gunicorn</h3>
+<p>El servidor de desarrollo de Flask no es apto para producción. <strong>Gunicorn</strong> es un servidor WSGI robusto y orientado a producción.</p>
+<h3>Instalar Gunicorn</h3>
+<pre><code class="language-python">pip install gunicorn</code></pre>
+<h3>Ejecutar la aplicación con Gunicorn</h3>
+<pre><code class="language-python"># gunicorn app.fabrica:objeto
+gunicorn -w 4 -b 0.0.0.0:8000 "app:crear_app()"</code></pre>
+<h3>Opciones principales</h3>
+<table><thead><tr><th>Opción</th><th>Descripción</th></tr></thead><tbody><tr><td><code>-w 4</code></td><td>Número de workers (procesos)</td></tr><tr><td><code>-b 0.0.0.0:8000</code></td><td>Dirección y puerto</td></tr><tr><td><code>--timeout 120</code></td><td>Tiempo máximo por petición</td></tr><tr><td><code>--access-logfile</code></td><td>Archivo de logs de acceso</td></tr></tbody></table>
+<h3>Despliegue flujo completo</h3>
+<ol>
+<li>Instala dependencias con pip</li>
+<li>Carga variables de entorno</li>
+<li>Ejecuta migraciones de base de datos</li>
+<li>Arranca Gunicorn</li>
+<li>Configura un proxy inverso (Nginx) delante de Gunicorn</li>
+</ol>
+<blockquote class="aside aside-tip">
+En entornos Linux suele usarse Nginx como proxy inverso delante de Gunicorn para servir estáticos y manejar conexiones.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-5-buenas-practicas-seguridad">
+    <h2><i class="fa-solid fa-shield-halved"></i> 10.5 Buenas prácticas de seguridad</h2>
+    <div class="doc-content">
+<h3>Secret key</h3>
+<p>La <strong>secret key</strong> firma cookies y sesiones. Debe ser larga, aleatoria y guardada en una variable de entorno:</p>
+<pre><code class="language-python">import secrets
+# Genera una clave aleatoria segura
+clave = secrets.token_hex(32)
+print(clave)</code></pre>
+<pre><code class="language-python"># app.py
+import os
+app.secret_key = os.getenv("SECRET_KEY")</code></pre>
+<h3>Protección CSRF</h3>
+<p><strong>CSRF</strong> (Cross-Site Request Forgery) es un ataque que envía peticiones no autorizadas en nombre del usuario. Flask-WTF la protege automáticamente:</p>
+<pre><code class="language-python">pip install flask-wtf
+
+from flask_wtf.csrf import CSRFProtect
+
+csrf = CSRFProtect(app)
+# En cada formulario: &lt;input type="hidden" name="csrf_token" value="{{ csrf_token() }}"&gt;</code></pre>
+<h3>Otras buenas prácticas</h3>
+<ul>
+<li><strong>Desactiva debug en producción</strong>: Nunca uses <code>debug=True</code></li>
+<li><strong>Cifra contraseñas</strong>: Usa hashing, nunca texto plano</li>
+<li><strong>Valida entradas</strong>: Evita inyección y datos maliciosos</li>
+<li><strong>Usa HTTPS</strong>: Asegura la comunicación con el cliente</li>
+<li><strong>Actualiza dependencias</strong>: Mantén Flask y sus extensiones al día</li>
+</ul>
+<blockquote class="aside aside-warning">
+En producción: debug desactivado, secret key desde variable de entorno, HTTPS activo y CSRF habilitado en los formularios.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="10-6-ejemplo-completo">
+    <h2><i class="fa-solid fa-lightbulb"></i> 10.6 Ejemplo completo organizado</h2>
+    <div class="doc-content">
+<h3>Estructura final</h3>
+<pre><code class="language-python">miapp/
+├── app/
+│   ├── __init__.py
+│   ├── rutas.py
+│   ├── modelos.py
+│   ├── templates/
+│   └── static/
+├── config.py
+├── run.py
+├── requirements.txt
+└── .env</code></pre>
+<h3>config.py</h3>
+<pre><code class="language-python">import os
+
+class Config:
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")</code></pre>
+<h3>app/__init__.py</h3>
+<pre><code class="language-python">from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from dotenv import load_dotenv
+
+load_dotenv()
+
+db = SQLAlchemy()
+
+
+def crear_app():
+    app = Flask(__name__)
+    app.config.from_object("config.Config")
+
+    db.init_app(app)
+
+    from .rutas import main
+    app.register_blueprint(main)
+
+    return app</code></pre>
+<h3>app/rutas.py</h3>
+<pre><code class="language-python">from flask import Blueprint, jsonify
+from .modelos import Usuario
+
+main = Blueprint("main", __name__)
+
+
+@main.route("/")
+def inicio():
+    return jsonify({"mensaje": "API funcionando"})
+
+
+@main.route("/usuarios")
+def listar_usuarios():
+    usuarios = Usuario.query.all()
+    return jsonify([{"id": u.id, "nombre": u.nombre} for u in usuarios])</code></pre>
+<blockquote class="aside aside-note">
+Este ejemplo separa configuración, creación de la app, modelos y rutas en archivos distintos para mantener el proyecto limpio y profesional.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- Una estructura profesional separa la app en módulos (config, rutas, modelos)
+- `requirements.txt` permite reproducir el entorno con `pip install -r`
+- Las variables de entorno ocultan secretos y configuración sensible
+- Gunicorn es el servidor WSGI recomendado para producción
+- La secret key, CSRF y desactivar debug son esenciales para la seguridad
+- Una app fábrica organiza mejor proyectos grandes
+</blockquote>
+    </div>
+  </section>

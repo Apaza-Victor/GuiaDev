@@ -1,0 +1,285 @@
+<!-- 05. APIs JSON y binding - Go (Frameworks) -->
+  <section id="5-1-respuestas-json">
+    <h2><i class="fa-solid fa-code"></i> 5.1 Respuestas JSON</h2>
+    <div class="doc-content">
+<h3>c.JSON()</h3>
+<p>Gin serializa automáticamente structs, mapas y slices a JSON con la función <code>c.JSON()</code>:</p>
+<pre><code class="language-go">r.GET("/simple", func(c *gin.Context) {
+    c.JSON(200, gin.H{
+        "nombre": "Juan",
+        "edad":   30,
+    })
+})
+
+r.GET("/struct", func(c *gin.Context) {
+    c.JSON(200, Usuario{
+        Nombre: "Ana",
+        Email:  "ana@mail.com",
+    })
+})
+
+r.GET("/lista", func(c *gin.Context) {
+    c.JSON(200, []string{"rojo", "verde", "azul"})
+})
+
+r.GET("/nulo", func(c *gin.Context) {
+    c.JSON(200, nil) // devuelve null
+})</code></pre>
+<h3>Métodos de respuesta</h3>
+<table><thead><tr><th>Método</th><th>Formato</th></tr></thead><tbody><tr><td><code>c.JSON()</code></td><td>JSON</td></tr><tr><td><code>c.XML()</code></td><td>XML</td></tr><tr><td><code>c.YAML()</code></td><td>YAML</td></tr><tr><td><code>c.String()</code></td><td>Texto plano</td></tr><tr><td><code>c.HTML()</code></td><td>Página HTML</td></tr><tr><td><code>c.Data()</code></td><td>Bytes crudos (binarios)</td></tr></tbody></table>
+<h3>JSON con headers personalizados</h3>
+<pre><code class="language-go">c.Header("X-Custom-Header", "valor")
+c.JSON(200, gin.H{"ok": true})</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-2-structs-y-modelos">
+    <h2><i class="fa-solid fa-cubes"></i> 5.2 Structs y modelos</h2>
+    <div class="doc-content">
+<h3>Definir modelos</h3>
+<pre><code class="language-go">// models/usuario.go
+package models
+
+type Usuario struct {
+    ID        int       `json:"id"`
+    Nombre    string    `json:"nombre"`
+    Email     string    `json:"email"`
+    Edad      int       `json:"edad,omitempty"`
+    Password  string    `json:"-"`
+    CreadoEnv time.Time `json:"creado_en"`
+}
+
+type Respuesta struct {
+    Exito   bool        `json:"exito"`
+    Mensaje string      `json:"mensaje"`
+    Datos   interface{} `json:"datos,omitempty"`
+}</code></pre>
+<h3>Tags de JSON</h3>
+<table><thead><tr><th>Tag</th><th>Efecto</th></tr></thead><tbody><tr><td><code>json:"id"</code></td><td>Nombre de la clave en JSON</td></tr><tr><td><code>json:"edad,omitempty"</code></td><td>Omite el campo si es cero/vacío</td></tr><tr><td><code>json:"-"</code></td><td>Excluye el campo del JSON</td></tr></tbody></table>
+<h3>Uso en handlers</h3>
+<pre><code class="language-go">func usuarioHandler(c *gin.Context) {
+    usuario := models.Usuario{
+        ID:    1,
+        Nombre: "Maria",
+        Email: "maria@mail.com",
+        Edad:  25,
+    }
+    // Password no aparece en la respuesta
+    c.JSON(200, models.Respuesta{
+        Exito:   true,
+        Mensaje: "Usuario obtenido",
+        Datos:   usuario,
+    })
+}</code></pre>
+<blockquote class="aside aside-tip">
+Nombra tus claves JSON en <strong>snake_case</strong> (<code>creado_en</code>) para seguir la convención de Go y la mayoría de las APIs REST.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-3-binding-de-request">
+    <h2><i class="fa-solid fa-right-left"></i> 5.3 Binding de request</h2>
+    <div class="doc-content">
+<h3>ShouldBindJSON</h3>
+<p>El binding convierte automáticamente el cuerpo JSON de un request en un struct:</p>
+<pre><code class="language-go">type UsuarioCrear struct {
+    Nombre   string `json:"nombre" binding:"required"`
+    Email    string `json:"email" binding:"required,email"`
+    Password string `json:"password" binding:"required,min=6"`
+}
+
+r.POST("/usuarios", func(c *gin.Context) {
+    var u UsuarioCrear
+    if err := c.ShouldBindJSON(&amp;u); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(201, gin.H{
+        "mensaje": "usuario creado",
+        "usuario": u,
+    })
+})</code></pre>
+<h3>Otras formas de binding</h3>
+<table><thead><tr><th>Método de binding</th><th>Fuente de datos</th></tr></thead><tbody><tr><td><code>ShouldBindJSON</code></td><td>Cuerpo JSON</td></tr><tr><td><code>ShouldBindQuery</code></td><td>Query strings</td></tr><tr><td><code>ShouldBindUri</code></td><td>Parámetros de la URL</td></tr><tr><td><code>ShouldBindForm</code></td><td>Formularios</td></tr><tr><td><code>ShouldBind</code></td><td>Detecta automáticamente según Content-Type</td></tr></tbody></table>
+<h3>Combinación de fuentes</h3>
+<pre><code class="language-go">type UsuarioBusqueda struct {
+    Termino string `form:"q" json:"q"`
+    Pagina  int    `form:"page" json:"page" binding:"gte=1"`
+}
+
+r.GET("/buscar", func(c *gin.Context) {
+    var filtro UsuarioBusqueda
+    if err := c.ShouldBindQuery(&amp;filtro); err != nil {
+        c.JSON(400, gin.H{"error": "query inválida"})
+        return
+    }
+    c.JSON(200, filtro)
+})</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-4-validacion-de-datos">
+    <h2><i class="fa-solid fa-check-double"></i> 5.4 Validación de datos</h2>
+    <div class="doc-content">
+<h3>Tags de validación</h3>
+<p>Gin usa el validador <code>go-playground/validator</code> mediante tags <code>binding:</code>:</p>
+<pre><code class="language-go">type Producto struct {
+    Nombre      string   `json:"nombre" binding:"required"`
+    Precio      float64  `json:"precio" binding:"gt=0"`
+    Stock       int      `json:"stock" binding:"gte=0"`
+    CategoriaID int      `json:"categoria_id" binding:"required"`
+    Etiquetas   []string `json:"etiquetas" binding:"max=5"`
+    Email       string   `json:"email" binding:"omitempty,email"`
+    FechaVe     string   `json:"fecha_vencimiento" binding:"required,datetime=2006-01-02"`
+}</code></pre>
+<h3>Tabla de validadores</h3>
+<table><thead><tr><th>Validador</th><th>Regla</th></tr></thead><tbody><tr><td><code>required</code></td><td>Campo obligatorio</td></tr><tr><td><code>omitempty</code></td><td>Valida solo si viene con valor</td></tr><tr><td><code>min=6</code></td><td>Longitud o valor mínimo</td></tr><tr><td><code>max=10</code></td><td>Longitud o valor máximo</td></tr><tr><td><code>email</code></td><td>Formato de email</td></tr><tr><td><code>gte=0</code></td><td>Mayor o igual que</td></tr><tr><td><code>lte=100</code></td><td>Menor o igual que</td></tr><tr><td><code>oneof=rojo verde</code></td><td>Uno de los valores</td></tr><tr><td><code>datetime=2006-01-02</code></td><td>Formato de fecha</td></tr><tr></tbody></table>
+<h3>Errores legibles</h3>
+<pre><code class="language-go">import "github.com/go-playground/validator/v10"
+
+type ErrorValidacion struct {
+    Campo   string `json:"campo"`
+    Mensaje string `json:"mensaje"`
+}
+
+func procesarErrores(verr validator.ValidationErrors) []ErrorValidacion {
+    var errores []ErrorValidacion
+    for _, e := range verr {
+        errores = append(errores, ErrorValidacion{
+            Campo:   e.Field(),
+            Mensaje: "valor inválido para la regla " + e.Tag(),
+        })
+    }
+    return errores
+}
+
+// En el handler:
+if err := c.ShouldBindJSON(&amp;u); err != nil {
+    c.JSON(400, gin.H{"errores": procesarErrores(err.(validator.ValidationErrors))})
+    return
+}</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-5-codigos-de-estado">
+    <h2><i class="fa-solid fa-circle-info"></i> 5.5 Códigos de estado</h2>
+    <div class="doc-content">
+<h3>Usando net/http</h3>
+<pre><code class="language-go">import "net/http"
+
+// 200 - OK
+c.JSON(http.StatusOK, gin.H{"ok": true})
+
+// 201 - Creado
+c.JSON(http.StatusCreated, gin.H{"id": 1})
+
+// 204 - Sin contenido
+c.Status(http.StatusNoContent)
+
+// 400 - Request inválido (validación falló)
+c.JSON(http.StatusBadRequest, gin.H{"error": "datos inválidos"})
+
+// 401 - No autenticado
+c.JSON(http.StatusUnauthorized, gin.H{"error": "requiere token"})
+
+// 403 - Sin permisos
+c.JSON(http.StatusForbidden, gin.H{"error": "acceso denegado"})
+
+// 404 - No encontrado
+c.JSON(http.StatusNotFound, gin.H{"error": "recurso no existe"})
+
+// 500 - Error interno
+c.JSON(http.StatusInternalServerError, gin.H{"error": "error del servidor"})</code></pre>
+<h3>Tabla de estados comunes</h3>
+<table><thead><tr><th>Código</th><th>Texto</th><th>Uso</th></tr></thead><tbody><tr><td>200</td><td>OK</td><td>Respuestas exitosas</td></tr><tr><td>201</td><td>Created</td><td>Recurso creado</td></tr><tr><td>204</td><td>No Content</td><td>Éxito sin cuerpo (DELETE)</td></tr><tr><td>400</td><td>Bad Request</td><td>Datos inválidos</td></tr><tr><td>401</td><td>Unauthorized</td><td>Sin autenticación</td></tr><tr><td>403</td><td>Forbidden</td><td>Sin permiso</td></tr><tr><td>404</td><td>Not Found</td><td>No existe la ruta/recurso</td></tr><tr><td>409</td><td>Conflict</td><td>Conflicto con el estado actual</td></tr><tr><td>500</td><td>Internal Server Error</td><td>Error del servidor</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-6-ejemplo-de-api-json">
+    <h2><i class="fa-solid fa-laptop-code"></i> 5.6 Ejemplo de API JSON</h2>
+    <div class="doc-content">
+<h3>API compacta con validación</h3>
+<pre><code class="language-go">package main
+
+import (
+    "net/http"
+    "github.com/gin-gonic/gin"
+)
+
+type Tarea struct {
+    ID          int    `json:"id"`
+    Titulo      string `json:"titulo" binding:"required"`
+    Completada  bool   `json:"completada"`
+    Prioridad   int    `json:"prioridad" binding:"gte=1,lte=5"`
+}
+
+var tareas = []Tarea{}
+var secuencia = 1
+
+func main() {
+    r := gin.Default()
+
+    r.GET("/tareas", func(c *gin.Context) {
+        c.JSON(http.StatusOK, gin.H{
+            "total":  len(tareas),
+            "tareas": tareas,
+        })
+    })
+
+    r.POST("/tareas", func(c *gin.Context) {
+        var t Tarea
+        if err := c.ShouldBindJSON(&amp;t); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+        t.ID = secuencia
+        secuencia++
+        tareas = append(tareas, t)
+        c.JSON(http.StatusCreated, t)
+    })
+
+    r.GET("/tareas/:id", func(c *gin.Context) {
+        id := c.Param("id")
+        for _, t := range tareas {
+            if fmt.Sprint(t.ID) == id {
+                c.JSON(http.StatusOK, t)
+                return
+            }
+        }
+        c.JSON(http.StatusNotFound, gin.H{"error": "tarea no encontrada"})
+    })
+
+    r.Run(":8080")
+}</code></pre>
+<h3>Probar con curl</h3>
+<pre><code class="language-bash">curl -X POST http://localhost:8080/tareas \
+  -H "Content-Type: application/json" \
+  -d '{"titulo": "Aprender Gin", "prioridad": 5}'
+
+curl http://localhost:8080/tareas</code></pre>
+<blockquote class="aside aside-note">
+Siempre responde con códigos de estado correctos: 201 al crear, 404 si no existe, 400 si la validación falla.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste:**
+- <code>c.JSON()</code> serializa structs y mapas a JSON automáticamente
+- Los structs con tags organizan la respuesta y ocultan campos sensibles
+- <code>ShouldBindJSON</code> convierte el request en struct validado
+- Los tags de validación evalúan required, email, min, max, gte, etc.
+- Los códigos de estado correctos hacen la API predecible
+- Puedes construir APIs completas combinando JSON, binding y validación
+</blockquote>
+    </div>
+  </section>

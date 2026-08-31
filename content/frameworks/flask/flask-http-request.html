@@ -1,0 +1,230 @@
+<!-- 05. Métodos HTTP y datos del request - Flask (Frameworks) -->
+  <section id="5-1-objeto-request">
+    <h2><i class="fa-solid fa-box-open"></i> 5.1 El objeto request</h2>
+    <div class="doc-content">
+<h3>Qué es el objeto request</h3>
+<p>El objeto <code>request</code> de Flask contiene toda la información de la petición HTTP entrante: método, cabeceras, datos del formulario, argumentos de la URL, JSON, cookies y más.</p>
+<h3>Método de la petición</h3>
+<pre><code class="language-python">from flask import Flask, request
+
+app = Flask(__name__)
+
+
+@app.route("/info", methods=["GET", "POST"])
+def info():
+    return f"Se usó el método: {request.method}"</code></pre>
+<h3>Partes principales del request</h3>
+<table><thead><tr><th>Atributo</th><th>Contenido</th></tr></thead><tbody><tr><td><code>request.method</code></td><td>Método HTTP (GET, POST, etc.)</td></tr><tr><td><code>request.args</code></td><td>Parámetros de la query string</td></tr><tr><td><code>request.form</code></td><td>Datos de un formulario (POST)</td></tr><tr><td><code>request.json</code></td><td>Datos enviados en formato JSON</td></tr><tr><td><code>request.files</code></td><td>Archivos subidos</td></tr><tr><td><code>request.headers</code></td><td>Cabeceras de la petición</td></tr><tr><td><code>request.cookies</code></td><td>Cookies del cliente</td></tr></tbody></table>
+<blockquote class="aside aside-tip">
+Para usar `request` debes importarlo: `from flask import request`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-2-request-form">
+    <h2><i class="fa-solid fa-rectangle-list"></i> 5.2 request.form</h2>
+    <div class="doc-content">
+<h3>Qué es request.form</h3>
+<p><code>request.form</code> contiene los datos enviados mediante un formulario HTML con método <strong>POST</strong>. Cada campo se accede por su atributo <code>name</code>.</p>
+<h3>Formulario HTML</h3>
+<pre><code class="language-html">&lt;form method="POST" action="/registro"&gt;
+    &lt;input type="text" name="nombre"&gt;
+    &lt;input type="email" name="email"&gt;
+    &lt;button type="submit"&gt;Registrar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<h3>Recibir los datos en Flask</h3>
+<pre><code class="language-python">from flask import Flask, request
+
+app = Flask(__name__)
+
+
+@app.route("/registro", methods=["POST"])
+def registro():
+    nombre = request.form.get("nombre")
+    email = request.form.get("email")
+    return f"Registro: {nombre} - {email}"</code></pre>
+<h3>Diferencias entre get y notación directa</h3>
+<ul>
+<li><code>request.form["nombre"]</code>: Lanza un error si el campo no existe</li>
+<li><code>request.form.get("nombre")</code>: Devuelve <code>None</code> si el campo no existe</li>
+<li><code>request.form.get("nombre", "Anónimo")</code>: Devuelve un valor por defecto</li>
+</ul>
+<blockquote class="aside aside-warning">
+Usa `.get()` siempre que un campo pueda faltar, para evitar errores que detengan la aplicación.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-3-request-args">
+    <h2><i class="fa-solid fa-filter"></i> 5.3 request.args</h2>
+    <div class="doc-content">
+<h3>Qué es request.args</h3>
+<p><code>request.args</code> contiene los <strong>parámetros de consulta</strong> (query string) que viajan en la URL después del signo <code>?</code>.</p>
+<h3>Ejemplo de URL con parámetros</h3>
+<pre><code class="language-python"># URL: /buscar?q=laptop&amp;orden=precio</code></pre>
+<h3>Leer los parámetros en Flask</h3>
+<pre><code class="language-python">from flask import Flask, request
+
+app = Flask(__name__)
+
+
+@app.route("/buscar")
+def buscar():
+    query = request.args.get("q", "")
+    orden = request.args.get("orden", "relevancia")
+    return f"Buscando: {query} - Orden: {orden}"</code></pre>
+<h3>Parámetros repetidos</h3>
+<pre><code class="language-python"># URL: /filtrar?a=1&amp;a=2&amp;a=3
+@app.route("/filtrar")
+def filtrar():
+    valores = request.args.getlist("a")
+    return f"Valores: {valores}"</code></pre>
+<blockquote class="aside aside-tip">
+`request.args` siempre es mejor accederlo con `.get()` y un valor por defecto, porque el parámetro puede venir o no en la URL.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-4-request-json">
+    <h2><i class="fa-solid fa-database"></i> 5.4 request.json</h2>
+    <div class="doc-content">
+<h3>Qué es request.json</h3>
+<p><code>request.json</code> contiene los datos que el cliente envía en el <strong>cuerpo de la petición</strong> con formato JSON, muy habitual en APIs.</p>
+<h3>Cliente que envía JSON</h3>
+<pre><code class="language-python">// Ejemplo con fetch desde JavaScript
+fetch("/api/usuario", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({nombre: "Ana", edad: 25})
+})</code></pre>
+<h3>Recibir JSON en Flask</h3>
+<pre><code class="language-python">from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+
+@app.route("/api/usuario", methods=["POST"])
+def crear_usuario():
+    datos = request.json
+    nombre = datos.get("nombre")
+    edad = datos.get("edad")
+    return jsonify({"recibido": True, "nombre": nombre, "edad": edad})</code></pre>
+<h3>Verificar si hay JSON</h3>
+<pre><code class="language-python">@app.route("/api/cliente", methods=["POST"])
+def recibir_cliente():
+    if request.is_json:
+        return jsonify(request.json)
+    return "El contenido no era JSON", 400</code></pre>
+<blockquote class="aside aside-warning">
+Recuerda que el cliente debe enviar la cabecera `Content-Type: application/json` para que `request.json` funcione correctamente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-5-manejo-get-post">
+    <h2><i class="fa-solid fa-arrows-rotate"></i> 5.5 Manejo de GET y POST</h2>
+    <div class="doc-content">
+<h3>Combinar ambos métodos en una ruta</h3>
+<p>Una vista puede comportarse de forma distinta según el método HTTP recibido:</p>
+<pre><code class="language-python">from flask import Flask, request
+
+app = Flask(__name__)
+
+tareas = []
+
+
+@app.route("/tareas", methods=["GET", "POST"])
+def manejar_tareas():
+    if request.method == "POST":
+        nueva = request.form.get("tarea")
+        tareas.append(nueva)
+        return f"Tarea añadida: {nueva}"
+
+    return f"Tareas: {tareas}"</code></pre>
+<h3>Separar por método</h3>
+<pre><code class="language-python">@app.route("/mensajes", methods=["GET"])
+def listar_mensajes():
+    return "Mostrar mensajes"
+
+
+@app.route("/mensajes", methods=["POST"])
+def crear_mensaje():
+    return "Crear mensaje"</code></pre>
+<h3>Redirección tras un POST (PRG)</h3>
+<pre><code class="language-python">from flask import Flask, request, redirect, url_for
+
+app = Flask(__name__)
+
+
+@app.route("/crear", methods=["POST"])
+def crear():
+    # Procesar los datos y luego redirigir
+    return redirect(url_for("exito"))
+
+
+@app.route("/exito")
+def exito():
+    return "Registro creado correctamente"</code></pre>
+<blockquote class="aside aside-note">
+El patrón POST/Redirect/GET evita reenviar el formulario al actualizar la página.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-6-flash-messages">
+    <h2><i class="fa-solid fa-bell"></i> 5.6 Mensajes flash</h2>
+    <div class="doc-content">
+<h3>Qué son los mensajes flash</h3>
+<p>Los <strong>mensajes flash</strong> permiten mostrar avisos temporales (éxito, error, aviso) al usuario. Se guardan en la sesión y solo se muestran una vez.</p>
+<h3>Crear mensajes con flash()</h3>
+<pre><code class="language-python">from flask import Flask, flash, redirect, render_template, url_for
+
+app = Flask(__name__)
+app.secret_key = "clave_secreta_para_sesiones"  # Necesaria para flash
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    flash("Iniciaste sesión correctamente", "exito")
+    return redirect(url_for("inicio"))
+
+
+@app.route("/")
+def inicio():
+    return render_template("inicio.html")</code></pre>
+<h3>Mostrar los mensajes en la plantilla</h3>
+<pre><code class="language-html">{% with mensajes = get_flashed_messages(with_categories=true) %}
+  {% if mensajes %}
+    &lt;ul&gt;
+    {% for categoria, mensaje in mensajes %}
+      &lt;li class="{{ categoria }}"&gt;{{ mensaje }}&lt;/li&gt;
+    {% endfor %}
+    &lt;/ul&gt;
+  {% endif %}
+{% endwith %}</code></pre>
+<blockquote class="aside aside-warning">
+Debes definir `app.secret_key` para que los mensajes flash y las sesiones funcionen correctamente.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- El objeto `request` contiene todos los datos de la petición HTTP
+- `request.form` lee datos de formularios POST
+- `request.args` lee parámetros de la URL (query string)
+- `request.json` accede al cuerpo JSON de una petición
+- Puedes combinar GET y POST en una misma ruta según `request.method`
+- Los mensajes flash muestran avisos temporales usando la sesión
+</blockquote>
+    </div>
+  </section>

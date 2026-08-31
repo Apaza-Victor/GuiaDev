@@ -1,0 +1,206 @@
+<!-- 05. Templates y Data Binding - Angular (Frameworks) -->
+  <section id="5-1-interpolacion">
+    <h2><i class="fa-solid fa-braces"></i> 5.1 Interpolación {{ }}</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>La <strong>interpolación</strong> (doble llave) permite mostrar los valores de propiedades de la clase TypeScript directamente en el template. Es el binding más sencillo: va de un solo sentido, de la clase hacia la vista.</p>
+<h3>Sintaxis</h3>
+<pre><code class="language-typescript">&lt;!-- app.component.html --&gt;
+&lt;h1&gt;Hola, {{ nombre }}&lt;/h1&gt;
+&lt;p&gt;Tu edad es {{ edad }} años&lt;/p&gt;</code></pre>
+<pre><code class="language-typescript">// app.component.ts
+export class AppComponent {
+  nombre: string = 'Carlos';
+  edad: number = 30;
+}</code></pre>
+<h3>Expresiones permitidas</h3>
+<ul>
+<li><strong>Variables</strong>: <code>{{ usuario }}</code></li>
+<li><strong>Métodos</strong>: <code>{{ obtenerTotal() }}</code></li>
+<li><strong>Operaciones</strong>: <code>{{ precio * cantidad }}</code></li>
+<li><strong>Operador ternario</strong>: <code>{{ activo ? 'Sí' : 'No' }}</code></li>
+</ul>
+<h3>Ejemplo completo</h3>
+<pre><code class="language-typescript">export class ProductoComponent {
+  nombre: string = 'Laptop Gamer';
+  precio: number = 1200;
+  stock: number = 3;
+
+  tieneStock(): string {
+    return this.stock &gt; 0 ? 'Disponible' : 'Agotado';
+  }
+}</code></pre>
+<pre><code class="language-typescript">&lt;h2&gt;{{ nombre }}&lt;/h2&gt;
+&lt;p&gt;Precio: ${{ precio }}&lt;/p&gt;
+&lt;p&gt;Estado: {{ tieneStock() }}&lt;/p&gt;</code></pre>
+<blockquote class="aside aside-warning">
+La interpolación solo admite expresiones simples sin efectos secundarios: no uses asignaciones, `++`, ni operaciones con múltiples sentencias dentro de `{{ }}`.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-2-property-binding">
+    <h2><i class="fa-solid fa-caret-right"></i> 5.2 Property binding [ ]</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>El <strong>property binding</strong> vincula el valor de una propiedad de un elemento, componente o directiva con una expresión de la clase. Se escribe con corchetes: <code>[propiedad]</code>.</p>
+<h3>Sintaxis</h3>
+<pre><code class="language-typescript">&lt;!-- Vinculación de propiedades HTML --&gt;
+&lt;img [src]="imagenUrl" [alt]="textoAlternativo"&gt;
+&lt;input [disabled]="estaDeshabilitado" [placeholder]="textoPlaceholder"&gt;</code></pre>
+<h3>Vincular propiedades de componentes hijos</h3>
+<pre><code class="language-typescript">&lt;!-- app.component.html --&gt;
+&lt;app-persona [nombre]="persona.nombre" [edad]="persona.edad"&gt;&lt;/app-persona&gt;</code></pre>
+<pre><code class="language-typescript">// persona.component.ts
+import { Component, Input } from '@angular/core';
+
+@Component({
+  selector: 'app-persona',
+  template: '&lt;p&gt;{{ nombre }} - {{ edad }} años&lt;/p&gt;'
+})
+export class PersonaComponent {
+  @Input() nombre!: string;
+  @Input() edad!: number;
+}</code></pre>
+<h3>Diferencias con la interpolación</h3>
+<table><thead><tr><th>Interpolación {{ }}</th><th>Property binding [ ]</th></tr></thead><tbody><tr><td>Muestra texto en el contenido del elemento</td><td>Asigna valores a propiedades o atributos</td></tr><tr><td><code>&lt;p&gt;{{ texto }}&lt;/p&gt;</code></td><td><code>&lt;input [value]="texto"&gt;</code></td></tr><tr><td>Solo salida (one-way)</td><td>Solo salida (one-way)</td></tr></tbody></table>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-3-event-binding">
+    <h2><i class="fa-solid fa-bolt"></i> 5.3 Event binding ( )</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>El <strong>event binding</strong> responde a eventos del usuario (clics, teclado, envío de formularios...) ejecutando métodos de la clase. Se escribe con paréntesis: <code>(evento)</code>.</p>
+<h3>Sintaxis</h3>
+<pre><code class="language-typescript">&lt;button (click)="guardar()"&gt;Guardar&lt;/button&gt;
+&lt;input (input)="actualizarTexto($event)"&gt;
+&lt;form (ngSubmit)="enviarFormulario()"&gt;</code></pre>
+<h3>Ejemplo con variables de plantilla</h3>
+<pre><code class="language-typescript">// contador.component.ts
+export class ContadorComponent {
+  contador: number = 0;
+
+  incrementar(): void {
+    this.contador++;
+  }
+
+  decrementar(): void {
+    this.contador--;
+  }
+
+  reiniciar(): void {
+    this.contador = 0;
+  }
+}</code></pre>
+<pre><code class="language-typescript">&lt;p&gt;Valor: {{ contador }}&lt;/p&gt;
+&lt;button (click)="incrementar()"&gt;+1&lt;/button&gt;
+&lt;button (click)="decrementar()"&gt;-1&lt;/button&gt;
+&lt;button (click)="reiniciar()"&gt;Reiniciar&lt;/button&gt;</code></pre>
+<h3>Eventos de entrada de texto</h3>
+<pre><code class="language-typescript">&lt;input (keyup.enter)="buscar()" placeholder="Escribe y pulsa Enter"&gt;
+&lt;input (blur)="validar()" placeholder="Déjalo al salir"&gt;
+&lt;input (input)="mostrarEnVivo($event)" placeholder="Escribe... "&gt;</code></pre>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-4-two-way-binding">
+    <h2><i class="fa-solid fa-right-left"></i> 5.4 Two-way binding [(ngModel)]</h2>
+    <div class="doc-content">
+<h3>Definición</h3>
+<p>El <strong>two-way binding</strong> sincroniza en ambos sentidos: la vista actualiza la propiedad y la propiedad actualiza la vista. En Angular se logra con la directiva <code>ngModel</code> usando la sintaxis <code>[(ngModel)]</code> (corchetes + paréntesis = "banana in a box").</p>
+<h3>Sintaxis</h3>
+<pre><code class="language-typescript">&lt;input [(ngModel)]="nombre" placeholder="Escribe tu nombre"&gt;
+&lt;p&gt;Hola, {{ nombre }}&lt;/p&gt;</code></pre>
+<h3>Requisito: importar FormsModule</h3>
+<pre><code class="language-typescript">import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+
+import { AppComponent } from './app.component';
+
+@NgModule({
+  declarations: [AppComponent],
+  imports: [BrowserModule, FormsModule],
+  bootstrap: [AppComponent]
+})
+export class AppModule {}</code></pre>
+<h3>Ejemplo de uso con un objeto</h3>
+<pre><code class="language-typescript">export class FormularioComponent {
+  usuario = {
+    nombre: '',
+    email: '',
+    activo: false
+  };
+}</code></pre>
+<pre><code class="language-typescript">&lt;input [(ngModel)]="usuario.nombre" placeholder="Nombre"&gt;
+&lt;input [(ngModel)]="usuario.email" placeholder="Email"&gt;
+&lt;input type="checkbox" [(ngModel)]="usuario.activo"&gt; Activo
+&lt;p&gt;Resumen: {{ usuario | json }}&lt;/p&gt;</code></pre>
+<blockquote class="aside aside-tip">
+`[(ngModel)]` no es magic: es la unión de property binding (entrada `[ngModel]`) + event binding (salida `(ngModelChange)`). Puedes escribir cualquiera de las dos formas por separado.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-5-comparativa-de-bindings">
+    <h2><i class="fa-solid fa-table"></i> 5.5 Comparativa de bindings</h2>
+    <div class="doc-content">
+<h3>Tabla resumen de los tipos de binding</h3>
+<table><thead><tr><th>Binding</th><th>Sintaxis</th><th>Dirección</th><th>Uso</th></tr></thead><tbody><tr><td><strong>Interpolación</strong></td><td><code>{{ expresion }}</code></td><td>Clase &rarr; Vista</td><td>Mostrar texto</td></tr><tr><td><strong>Property binding</strong></td><td><code>[propiedad]</code></td><td>Clase &rarr; Vista</td><td>Asignar atributos/propiedades</td></tr><tr><td><strong>Event binding</strong></td><td><code>(evento)</code></td><td>Vista &rarr; Clase</td><td>Reaccionar a eventos</td></tr><tr><td><strong>Two-way binding</strong></td><td><code>[(ngModel)]</code></td><td>Clase &harr; Vista</td><td>Sincronizar formularios e inputs</td></tr></tbody></table>
+<h3>Resumen visual</h3>
+<pre><code class="language-typescript">&lt;img [src]="imagen" alt="Interpolación: {{ titulo }}"&gt;   &lt;!-- [ ] entrada, {{ }} texto --&gt;
+&lt;button (click)="accion()" [disabled]="cargando"&gt;Enviar&lt;/button&gt; &lt;!-- ( ) salida, [ ] entrada --&gt;
+&lt;input [(ngModel)]="campo"&gt;                              &lt;!-- banana in a box --&gt;</code></pre>
+<blockquote class="aside aside-note">
+Recuerda la regla mnemotécnica: `[property]` de la clase a la vista, `(event)` de la vista a la clase, y `[(...)]` para ambos sentidos.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="5-6-ngmodel-y-formsmodule">
+    <h2><i class="fa-solid fa-database"></i> 5.6 ngModel y FormsModule</h2>
+    <div class="doc-content">
+<h3>Qué es FormsModule</h3>
+<p><code>FormsModule</code> es el módulo de Angular que proporciona la directiva <code>ngModel</code> y las funcionalidades de los formularios <strong>template-driven</strong> (basados en el template). Sin importarlo, usar <code>[(ngModel)]</code> produce un error.</p>
+<h3>ngModel en solitario: de una sola vía</h3>
+<pre><code class="language-typescript">&lt;!-- Actúa como una "clase CSS de forma": valida y añade clases --&gt;
+&lt;input name="email" ngModel&gt;</code></pre>
+<h3>ngModel con tracking del estado del formulario</h3>
+<pre><code class="language-typescript">&lt;form #miFormulario="ngForm" (ngSubmit)="enviar(miFormulario)"&gt;
+  &lt;input name="nombre" [(ngModel)]="datos.nombre" required ngModel #nombre="ngModel"&gt;
+  &lt;p *ngIf="nombre.invalid &amp;&amp; nombre.touched"&gt;El nombre es obligatorio&lt;/p&gt;
+  &lt;button type="submit" [disabled]="miFormulario.invalid"&gt;Enviar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<h3>Pasos para usar ngModel</h3>
+<ul>
+<li><strong>1</strong>: Importar <code>FormsModule</code> en el módulo que usa el formulario</li>
+<li><strong>2</strong>: Escribir <code>&lt;input [(ngModel)]="propiedad" name="campo"&gt;</code></li>
+<li><strong>3</strong>: Declarar la propiedad en la clase del componente</li>
+</ul>
+<blockquote class="aside aside-warning">
+La directiva `ngModel` requiere que el elemento tenga un atributo `name` para registrarse en el formulario y permitir su validación y envío.
+</blockquote>
+<p>---</p>
+    </div>
+  </section>
+
+  <section id="resumen">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Resumen</h2>
+    <div class="doc-content">
+<blockquote class="aside aside-note">
+**Lo que aprendiste en esta sección:**
+- La interpolación {{ }} visualiza valores y expresiones de la clase en la vista
+- El property binding [propiedad] envía valores de la clase a atributos o componentes hijos
+- El event binding (evento) ejecuta métodos cuando el usuario interactúa
+- El two-way binding [(ngModel)] sincroniza la vista y la clase en ambos sentidos
+- [(ngModel)] requiere importar FormsModule y el atributo name en el input
+- Cada binding tiene una dirección: clase &rarr; vista, vista &rarr; clase, o ambas
+</blockquote>
+    </div>
+  </section>
